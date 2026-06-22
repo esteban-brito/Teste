@@ -212,7 +212,7 @@ function derivaCaracteristica(time,POOL){const D=CFG_QUIMICA.DERIVA;const js=tim
   const pilares=!!igl&&igl.ovr>=CFG_QUIMICA.IGL_FRACO_OVR&&temFn("AWPer")&&(temFn("Lurker")||temFn("Support"));
   const score={Gestor:estrelas.length>=2?Math.max(0,estrelas.reduce((s,j)=>s+(j.ovr-17),0)-3):0,
     Desenvolvedor:D.DESENV_RESULTADO_MIN.includes(time.colocacao)?Math.max(0,13-min)+Math.max(0,media-min-2.5)*.5:0,
-    Estrategista:(pilares?2:0)-estrelas.length*.7-Math.max(0,(max-min)-5)*.3,
+    Estrategista:(pilares?2:0)-estrelas.length*1.05-Math.max(0,(max-min)-5)*.3, // estrelas puxam pra longe do Estrategista (caller que gerencia egos vira Motivador/Gestor)
     Motivador:(D.SOMA_ESPERADA[time.colocacao]-soma)/5};
   const[carac,val]=Object.entries(score).sort((a,b)=>b[1]-a[1])[0];return val>=D.LIMIAR?carac:"Motivador";}
 
