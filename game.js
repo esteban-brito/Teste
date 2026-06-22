@@ -1,3 +1,14 @@
+/* ════════════════════════════════════════════════════════════════════
+   draft9-0 · lógica do jogo
+   ────────────────────────────────────────────────────────────────────
+   Organização do arquivo (de cima para baixo):
+     1. MOTOR        — avaliação de jogadores (OVR), química, rating HLTV,
+                       simulação de mapa e série. Blocos CFG_* = balanceamento.
+     2. DADOS        — jogadores (ATRIBUTOS), times (TIMES_DEF), POOL/TEAMS.
+     3. ESTADO + UI  — roleta, montagem de elenco, fase suíça, playoffs e o
+                       reprodutor de partidas.
+   Convenção: nomes e comentários em pt-BR; helpers curtos no topo de cada bloco.
+   ════════════════════════════════════════════════════════════════════ */
 /* ——— MOTORES A/B/C · avaliação de jogadores e química ——— */
 const CFG_IDENTIDADE={K_APOIO:.30,PARADOXOS:[["Entry","Support"],["Entry","Lurker"]],
   AWP_SUPREMO:{min:85,bonus:25},LURKER_SOLO:{enRef:20,fator:.6},LURKER_FILTRO:{enRef:45,fator:2.5},LURKER_GATE:{opMin:40},
@@ -1420,15 +1431,15 @@ function montarScoreboard(jogo){
   const linha=(s,meu)=>`<div class="ls-row${meu?" mine":""}" data-nick="${esc(s.nick)}">
     <span class="ls-nick">${esc(s.nick)}</span>
     <span class="ls-kd-val"><b>0</b> <s>/</s> 0</span>
-    <span class="ls-rate"></span></div>`;
-  const head=(nome,meu,lado)=>`<div class="ls-head">
-    <span class="ls-team">${esc(nome)}</span>
-    <span class="ls-side-tag ${lado}">${lado.toUpperCase()}</span>
-    <span class="ls-kd">K / D</span></div>`;
+    <span class="ls-rate">–</span></div>`;
+  const head=(nome,meu,lado,cor)=>`<div class="ls-head">
+    <span class="ls-team-id"><span class="ls-mono" style="background:${esc(cor||"#888")}">${esc(mono(nome))}</span><span class="ls-team">${esc(nome)}</span><span class="ls-side-tag ${lado}">${lado.toUpperCase()}</span></span>
+    <span class="ls-col">K–D</span>
+    <span class="ls-col">Rating</span></div>`;
   $("lsSideA").className="ls-side"+(jogo.meuA?" mine":"");
   $("lsSideB").className="ls-side"+(jogo.meuB?" mine":"");
-  $("lsSideA").innerHTML=head(jogo.nomeA,jogo.meuA,"ct")+jogo.statsA.map(s=>linha(s,jogo.meuA)).join("");
-  $("lsSideB").innerHTML=head(jogo.nomeB,jogo.meuB,"tr")+jogo.statsB.map(s=>linha(s,jogo.meuB)).join("");
+  $("lsSideA").innerHTML=head(jogo.nomeA,jogo.meuA,"ct",jogo.corA)+jogo.statsA.map(s=>linha(s,jogo.meuA)).join("");
+  $("lsSideB").innerHTML=head(jogo.nomeB,jogo.meuB,"tr",jogo.corB)+jogo.statsB.map(s=>linha(s,jogo.meuB)).join("");
   // cacheia linhas e células uma vez (evita re-query a cada round)
   const cacheLado=sideId=>[...$(sideId).querySelectorAll(".ls-row")].map(r=>({row:r,kd:r.querySelector(".ls-kd-val"),rate:r.querySelector(".ls-rate")}));
   MP.sb={A:cacheLado("lsSideA"),B:cacheLado("lsSideB")};
