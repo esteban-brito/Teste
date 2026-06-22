@@ -558,3 +558,111 @@ footer{text-align:center;color:#283344;font-size:.6rem;letter-spacing:.2em;margi
   .rs-cell.pop,.feed-item.impacto,.feed-item.impacto .feed-selo,.sb-score .bump,.sb-score .flash-ct,.sb-score .flash-tr,
   .feed-item.epico.impacto,.feed-item.epico.impacto .feed-selo,.rs-cell.key::after{animation:none!important}
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   CAMADA DE REFINAMENTO DE DESIGN · "Tactical Broadcast"
+   Adições não-destrutivas sobre o tema base. Cada bloco sobrescreve por
+   ordem de cascata. Toda animação contínua é desligada no fim do arquivo
+   para quem prefere movimento reduzido.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* — Sistema: seleção de texto, rolagem e foco por teclado — */
+::selection{background:rgba(255,90,31,.32);color:#fff}
+html{scroll-behavior:smooth}
+*{scrollbar-width:thin;scrollbar-color:#26324a transparent}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#243049,#1a2336);border-radius:6px;
+  border:2px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:#36456180;background-clip:padding-box}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:3px;border-radius:8px}
+button:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+
+/* — Fundo em camadas: brilho de palco + grade tática + vinheta — */
+body{background:
+    radial-gradient(1200px 600px at 50% -10%,#17212f 0%,transparent 60%),
+    radial-gradient(820px 480px at 100% -5%,rgba(255,90,31,.06),transparent 55%),
+    radial-gradient(820px 520px at 0% 18%,rgba(57,211,255,.05),transparent 55%),
+    var(--bg)}
+body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background-image:linear-gradient(rgba(124,156,196,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(124,156,196,.045) 1px,transparent 1px);
+  background-size:48px 48px;
+  -webkit-mask:radial-gradient(120% 92% at 50% 0%,#000 26%,transparent 76%);
+          mask:radial-gradient(120% 92% at 50% 0%,#000 26%,transparent 76%)}
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(145% 125% at 50% 38%,transparent 56%,rgba(0,0,0,.55) 100%)}
+.wrap{position:relative;animation:wrapIn .55s var(--ease) both}
+@keyframes wrapIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* — Cabeçalho + logo — */
+.logo b{text-shadow:0 0 20px rgba(255,90,31,.5)}
+header{box-shadow:0 1px 0 rgba(255,90,31,.14)}
+
+/* — HUD: leituras de transmissão (chips com barra de acento) — */
+.hud .s{position:relative;padding:8px 14px 8px 17px;border-radius:12px;text-align:right;
+  border:1px solid var(--line);background:linear-gradient(180deg,rgba(20,27,43,.55),rgba(11,14,21,.55));
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.hud .s::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;
+  background:var(--accent);box-shadow:0 0 10px var(--accent)}
+.hud .s:last-child::before{background:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+.hud .v.pwr{text-shadow:0 0 20px rgba(57,211,255,.5)}
+.hud .v.bump{animation:hudBump .42s var(--ease)}
+@keyframes hudBump{0%{transform:scale(1)}42%{transform:scale(1.2)}100%{transform:scale(1)}}
+
+/* — Etiquetas de seção: marcador tático no início — */
+.section-tag::before{content:"";width:3px;height:.95em;border-radius:2px;flex:0 0 auto;
+  background:var(--accent);box-shadow:0 0 8px rgba(255,90,31,.6)}
+
+/* — Botões: varredura de brilho + relevo — */
+button.roll{position:relative;overflow:hidden;box-shadow:0 8px 22px -8px rgba(255,90,31,.65)}
+button.roll::after{content:"";position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;
+  background:linear-gradient(110deg,transparent 36%,rgba(255,255,255,.42) 50%,transparent 64%);
+  transform:translateX(-130%)}
+button.roll:hover::after{animation:btnSheen .7s var(--ease)}
+@keyframes btnSheen{to{transform:translateX(130%)}}
+button.ghost{transition:transform .12s var(--ease),border-color .14s,background .14s,box-shadow .14s}
+button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,90,31,.4);
+  box-shadow:0 8px 20px -10px rgba(0,0,0,.7)}
+
+/* — Cartas: leve elevação no hover (picks sobem mais) — */
+.card,.coachcard{transition:box-shadow .16s var(--ease),border-color .14s,outline-color .14s,transform .18s var(--ease)}
+.lineup .card:hover,.lineup .coachcard:hover{transform:translateY(-4px)}
+.picks .card:not(.taken):hover,.picks .coachcard:not(.taken):hover{transform:translateY(-6px) scale(1.02)}
+.winner-pill{box-shadow:0 0 16px -4px currentColor}
+
+/* — Slots vazios: respiração que convida ao preenchimento — */
+.slot.avail{animation:slotInvite 1.7s ease-in-out infinite}
+@keyframes slotInvite{0%,100%{box-shadow:0 0 0 0 transparent}
+  50%{box-shadow:0 0 0 3px rgba(255,90,31,.12),0 0 20px rgba(255,90,31,.16)}}
+.slot.coach.avail{animation:slotInviteCoach 1.7s ease-in-out infinite}
+@keyframes slotInviteCoach{0%,100%{box-shadow:0 0 0 0 transparent}
+  50%{box-shadow:0 0 0 3px rgba(255,200,50,.14),0 0 20px rgba(255,200,50,.18)}}
+.slot .ph{transition:transform .25s var(--ease)}
+.slot:hover .ph{transform:scale(1.12)}
+
+/* — Roleta: marcador e profundidade — */
+.roulette{box-shadow:inset 0 0 70px rgba(0,0,0,.45)}
+.marker{box-shadow:0 0 12px var(--accent)}
+
+/* — Análise: força efetiva com pulso premium — */
+.stat{transition:border-color .2s,box-shadow .2s,transform .2s var(--ease)}
+.stat:hover{transform:translateY(-2px);box-shadow:0 12px 26px -16px rgba(0,0,0,.8)}
+.stat--eff{position:relative;overflow:hidden}
+.stat--eff::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(circle at 50% 125%,rgba(255,90,31,.16),transparent 62%)}
+.stat--eff .stat-v{position:relative;animation:effPulse 3s ease-in-out infinite}
+@keyframes effPulse{0%,100%{text-shadow:0 0 20px rgba(255,90,31,.35)}
+  50%{text-shadow:0 0 30px rgba(255,90,31,.62)}}
+
+/* — Overlays de torneio: título com brilho de acento — */
+.overlay-title::before{box-shadow:0 0 14px var(--accent)}
+.match:hover{border-color:rgba(124,156,196,.4)}
+
+/* Movimento reduzido: silencia as animações contínuas desta camada */
+@media(prefers-reduced-motion:reduce){
+  .wrap,.hud .v.bump,.slot.avail,.slot.coach.avail,.stat--eff .stat-v,
+  button.roll:hover::after{animation:none!important}
+  .card:hover,.coachcard:hover,.picks .card:hover,.picks .coachcard:hover,
+  .stat:hover,button.ghost:hover{transform:none!important}
+}

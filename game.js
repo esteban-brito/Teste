@@ -733,9 +733,28 @@ function forcaTotal(){
   return S.jogadores.filter(Boolean).reduce((s,x)=>s+x.ovr,0)||null;
 }
 
+// HUD: count-up suave da força total + pulso ao mudar (respeita movimento reduzido)
+const _reduzMov=window.matchMedia&&window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+const _bump=el=>{if(!el||_reduzMov)return;el.classList.remove("bump");void el.offsetWidth;el.classList.add("bump");};
+let _pwrCur=0,_pwrRaf=0,_cntPrev=-1;
+function animarPwr(val){
+  const el=$("pwr");if(!el)return;
+  cancelAnimationFrame(_pwrRaf);
+  if(val==null){_pwrCur=0;el.textContent="—";return;}
+  if(_reduzMov){_pwrCur=val;el.textContent=val;return;}
+  const from=_pwrCur||0,to=val,t0=performance.now(),dur=420;
+  const step=now=>{const k=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-k,3);
+    el.textContent=Math.round(from+(to-from)*e);
+    if(k<1)_pwrRaf=requestAnimationFrame(step);else _pwrCur=to;};
+  _pwrRaf=requestAnimationFrame(step);
+  _bump(el);
+}
 function updateHud(){
-  $("cnt").textContent=(S.jogadores.filter(Boolean).length+(S.treinador?1:0))+"/6";
-  $("pwr").textContent=forcaTotal()??"—";
+  const n=S.jogadores.filter(Boolean).length+(S.treinador?1:0);
+  const cnt=$("cnt");cnt.textContent=n+"/6";
+  if(_cntPrev!==-1&&n!==_cntPrev)_bump(cnt);
+  _cntPrev=n;
+  animarPwr(forcaTotal());
   renderResultado();
 }
 
