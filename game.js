@@ -971,9 +971,13 @@ function renderPicks(){
   winnerPill.style.border=`1px solid color-mix(in srgb,${S.drawn.cor} 45%,transparent)`;
 
   const cartas=[...S.drawn.jogadores,S.drawn.treinador].filter(Boolean);
+  // apelidos já na line: bloqueia jogador repetido (mesmo nick, OVR diferente) na própria seleção
+  const nicksNaLine=new Set(S.jogadores.filter(Boolean).map(j=>j.nick));
   picksEl.innerHTML=cartas.map((p,i)=>{
     const preso=S.taken.has(p.id);
-    return`<div class="${cardClass(p)} deal${preso?" taken":""}" data-pick="${esc(p.id)}" ${preso?"":'tabindex="0"'}
+    const dup=!preso&&p.tipo!=="coach"&&nicksNaLine.has(p.nick);
+    const trava=preso?" taken":dup?" dup":"";
+    return`<div class="${cardClass(p)} deal${trava}" data-pick="${esc(p.id)}" ${preso||dup?"":'tabindex="0"'}
       style="--sel:${esc(S.drawn.cor)};animation-delay:${i*55}ms">${cardHTML(p)}</div>`;
   }).join("");
 }
@@ -1089,10 +1093,11 @@ document.addEventListener("click",e=>{
   if(e.target.closest("#mutebtn,#rollbtn,#respinbtn,#resetbtn"))return; // botões têm handler próprio
   if(S.spinning)return;                                                 // trava interação durante o giro
   const pickEl=e.target.closest("[data-pick]");
-  if(pickEl&&picksEl.contains(pickEl)&&!pickEl.classList.contains("taken")&&S.drawn){
+  if(pickEl&&picksEl.contains(pickEl)&&!pickEl.classList.contains("taken")&&!pickEl.classList.contains("dup")&&S.drawn){
     const carta=[...S.drawn.jogadores,S.drawn.treinador].filter(Boolean).find(c=>c.id===pickEl.dataset.pick);
     if(!carta)return;
     if(carta.tipo==="coach"&&S.treinador)return hint("Vaga de treinador já ocupada.");
+    if(carta.tipo!=="coach"&&S.jogadores.some(j=>j&&j.nick===carta.nick))return hint(`${carta.nick} já está na sua line.`);
     if(carta.tipo!=="coach"&&S.jogadores.every(Boolean))return hint("As 5 vagas estão cheias.");
     selecionar("pick",carta.tipo==="coach"?"coach":"player",carta);
     hint("Clique no slot destacado.");
@@ -1114,7 +1119,7 @@ document.addEventListener("click",e=>{
 document.addEventListener("keydown",e=>{
   if(e.key!=="Enter"&&e.key!==" ")return;
   if(S.spinning)return;
-  const alvo=e.target.closest("[data-pick]:not(.taken),[data-move],.slot.avail");
+  const alvo=e.target.closest("[data-pick]:not(.taken):not(.dup),[data-move],.slot.avail");
   if(!alvo)return;
   e.preventDefault();
   alvo.click();

@@ -214,13 +214,21 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .slot.coach.avail{border-color:rgba(255,200,50,.5)}
 .slot.avail .ph{color:var(--accent)} .slot.coach.avail .ph{color:var(--t1-gold)}
 .card.dim,.coachcard.dim{pointer-events:none}
-/* carta já escolhida: neutraliza cor do tier, fica cinza e travada */
-.picks .card.taken,.picks .coachcard.taken{
+/* carta travada: já escolhida (mesma carta) OU jogador já presente na line (.dup) */
+.picks .card.taken,.picks .coachcard.taken,.picks .card.dup{
   border-color:rgba(90,100,115,.4)!important;background:#0c0f16!important;opacity:.55;pointer-events:none;position:relative}
-.picks .card.taken *,.picks .coachcard.taken *{color:#5c6878!important;border-color:rgba(90,100,115,.25)!important;background:transparent!important}
-.picks .card.taken::after,.picks .coachcard.taken::after{content:"NO ELENCO";position:absolute;inset:0;z-index:6;
-  display:flex;align-items:center;justify-content:center;font-family:var(--ff);font-size:.6rem;font-weight:700;
-  letter-spacing:.18em;color:#8794a4;background:rgba(8,10,16,.55);animation:none}
+.picks .card.taken *,.picks .coachcard.taken *,.picks .card.dup *{color:#5c6878!important;border-color:rgba(90,100,115,.25)!important;background:transparent!important}
+/* neutraliza texto holográfico (tier-h), senão o nome/OVR fica transparente e a carta parece sumir */
+.picks .card.taken .ovr,.picks .card.taken .nick,.picks .card.taken .starsig,
+.picks .card.dup .ovr,.picks .card.dup .nick,.picks .card.dup .starsig{
+  -webkit-text-fill-color:#5c6878!important;color:#5c6878!important;background:none!important;animation:none!important}
+/* etiqueta sobreposta — anula a máscara/padding herdados do tier-h, senão o rótulo some */
+.picks .card.taken::after,.picks .coachcard.taken::after,.picks .card.dup::after{
+  position:absolute;inset:0;z-index:7;display:flex;align-items:center;justify-content:center;
+  font-family:var(--ff);font-size:.6rem;font-weight:700;letter-spacing:.18em;color:#9aa6b6;
+  background:rgba(8,10,16,.72);-webkit-mask:none;mask:none;padding:0;animation:none}
+.picks .card.taken::after,.picks .coachcard.taken::after{content:"NO ELENCO"}
+.picks .card.dup::after{content:"JÁ NA LINE"}
 .sel{outline:2px solid var(--sel,var(--accent));outline-offset:3px;z-index:6;filter:brightness(1.08)}
 .swp{outline:2px dashed rgba(57,211,255,.5);outline-offset:2px;cursor:pointer}
 
@@ -505,7 +513,7 @@ footer{text-align:center;color:#283344;font-size:.6rem;letter-spacing:.2em;margi
 /* scoreboard ao vivo: um painel por time, colunas alinhadas (jogador · K-D · rating) */
 .livescore{flex:1;overflow-y:auto;padding:clamp(12px,2.5vw,20px);display:flex;flex-direction:column;gap:14px;
   width:100%;max-width:580px;margin:0 auto;box-sizing:border-box;-webkit-overflow-scrolling:touch}
-.ls-side{display:flex;flex-direction:column;border-radius:14px;overflow:hidden;--ls-accent:#7aa0ff;
+.ls-side{display:flex;flex-direction:column;flex:0 0 auto;border-radius:14px;overflow:hidden;--ls-accent:#7aa0ff;
   border:1px solid var(--line);background:linear-gradient(180deg,rgba(20,27,43,.5),rgba(11,14,21,.55))}
 .ls-side.mine{--ls-accent:var(--cyan);border-color:rgba(57,211,255,.32);
   box-shadow:0 0 0 1px rgba(57,211,255,.16),0 10px 28px -18px rgba(57,211,255,.6)}
