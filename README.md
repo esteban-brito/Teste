@@ -33,8 +33,25 @@ O projeto é dividido em três arquivos:
   - **UI** (parte de baixo): roleta, montagem de elenco, fase suíça, playoffs
     e o reprodutor cinematográfico de partidas.
 
-## Acessibilidade e desempenho
+## Onde mexer no balanceamento
 
+Os números do motor ficam concentrados em blocos `CFG_*` no topo do `game.js`:
+
+- **`CFG_IDENTIDADE` / `CFG_AVALIACAO`** — como o jogador é classificado (role) e
+  como vira OVR. Ex.: `CFG_AVALIACAO.ANC` (esteira Âncora, inclui o piso de
+  clutch `clRef`/`kCl`), `ELITE_REF`/`eliteMul` (bônus por rating de elite).
+- **`CFG_QUIMICA`** — química do elenco e OVR do treinador. Ex.:
+  `ESPERADO_POR_SOMA` e `PISO_TREINADOR` (nota do treinador), `derivaCaracteristica`
+  decide a característica (Gestor/Estrategista/Desenvolvedor/Motivador).
+- **`CFG_SIM`** — simulação da partida (lados, economia, momentum, mapas).
+- **`CFG_FA`** — rating estilo HLTV (FALLEnANGELs). Inclui `FP` (bônus de
+  firepower) e `FA_IMPACTO` (peso por função). É **cosmético**: muda o rating
+  exibido, não o resultado das partidas.
+
+## Acessibilidade, mobile e desempenho
+
+- **Responsivo**: 6 colunas no PC, 3 no celular; suporta o notch/barra do iPhone
+  (`viewport-fit=cover` + `safe-area-insets`) e altura dinâmica (`100dvh`).
 - Respeita `prefers-reduced-motion` (desliga animações pesadas).
-- Overlays marcados como diálogos (`role="dialog"`/`aria-modal`).
+- Overlays marcados como diálogos (`role="dialog"`/`aria-modal`); foco por teclado.
 - Áudio sintetizado via Web Audio (sem arquivos externos); botão de mudo.
