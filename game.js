@@ -33,7 +33,6 @@ const CFG_QUIMICA={RESULTADO:{Campeao:5,Final:4,Top4:3,Top8:2,Grupos:1},
   TREINADOR_FORCA:{neutro:15,porPonto:.025},
   PEN:{semIGL:.25,iglFraco:.10,semAWP:.20,semAncora:.11,semIniciativa:.12,estrelaExtra:.07},BONUS_ESTRUTURA:.08,QUIMICA_MIN:.50,QUIMICA_MAX:1.20,
   CORTE_IGL_ESTRATEGISTA:.10, // só o Estrategista ameniza a falta de IGL, e só 10% (Motivador não mexe)
-  BONUS_IGL_SEM_COACH:0, // (removido a pedido)
   TALENTO:{refBruta:78,divisor:15,peso:1.0,teto:1.12}, // firepower alto resiste à química ruim (preenche o gap até o teto)
   IDEAL:{IGL:1,AWPer:1,Lurker:1,Support:2,Entry:2,Rifler:3},
   DUREZA:{IGL:.08,AWPer:.07,Lurker:.04,Support:.04,Entry:.03,Rifler:.03},
@@ -343,11 +342,10 @@ const TEAMS=TIMES_DEF.map((t,i)=>{
   return{
     id:"t"+i,nome:t.nome,cor:t.cor,camp:t.camp,coloc:t.colocacao,
     jogadores:t.jogadores.map(n=>{const j=POOL[n];
-      const boost=(!t.coach&&j.primario==="IGL")?CFG_QUIMICA.BONUS_IGL_SEM_COACH:0;const ovr=j.ovr+boost;
       return{
       id:"p"+(pid++),nick:j.nick,pais:j.pais,time:t.nome,tipo:"player",
-      ovr,prim:j.primario,sec:j.secundario,esteira:j.esteira,estrela:j.estrela,
-      _eng:boost?{...j,ovr}:j /* objeto do motor p/ química (clonado se houver boost) */
+      ovr:j.ovr,prim:j.primario,sec:j.secundario,esteira:j.esteira,estrela:j.estrela,
+      _eng:j /* objeto do motor (avaliação A/B/C) usado no cálculo de química */
     };}),
     treinador:t.coach?{id:"c"+i,nick:t.coach,pais:PAISES_MAP[t.coach]||"—",time:t.nome,tipo:"coach",
       ovr:ovrTreinador(somaOVR,t.colocacao),carac,caracCor:CARAC_COR[carac],caracSlug:CARAC_SLUG[carac]}:null
@@ -604,7 +602,7 @@ function simularSerie(A,B,fdA,fdB,md){
   const need=Math.ceil(md/2);let wa=0,wb=0;const mapas=[];
   while(wa<need&&wb<need){
     const g=simularMapa(A,B,fdA(),fdB());
-    mapas.push(g);g.vencedorNome===A.nome?wa++:wb++;
+    mapas.push(g);g.vencedor===A?wa++:wb++; // por referência: robusto a times homônimos
   }
   return {vencedor:wa>wb?A:B,vencedorNome:wa>wb?A.nome:B.nome,placarSerie:[wa,wb],mapas};
 }
@@ -1208,7 +1206,7 @@ function telaFinal(){
 function suicaCompleta(){return TG.times&&TG.classificados.length>=8;}
 
 function avancarSuica(){
-  if(!TG.times||suicaCompleta()||TG.emPartida)return;
+  if(!TG.times||suicaCompleta())return;
   TG.rodada++;
   const ativos=TG.times.filter(t=>t.vivo);
   const buckets={};ativos.forEach(t=>{const k=t.v+"-"+t.d;(buckets[k]=buckets[k]||[]).push(t);});
@@ -1282,22 +1280,21 @@ function garantirPlayoffs(){
     semi:[null,null,null,null],final:[null,null],campeao:null,fase:0,res:{}};
 }
 function avancarPlayoff(){
-  const P=TG.playoffs;if(!P||P.campeao||TG.emPartida)return;
+  const P=TG.playoffs;if(!P||P.campeao)return;
   const fd=t=>()=>forcaDoDia(t.ef,t.quim);
-  const jogar=(a,b)=>simularSerie(a.time,b.time,fd(a),fd(b),3);
+  // resolve a série e guarda o SEED vencedor por referência (robusto a times homônimos)
+  const jogar=(a,b)=>{const r=simularSerie(a.time,b.time,fd(a),fd(b),3);r.vencedorSeed=r.vencedor===a.time?a:b;return r;};
   // pares da fase atual
   let pares,aplicar;
   if(P.fase===0){
     pares=P.quartas.map((p,i)=>({par:p,key:"q"+i}));
-    aplicar=()=>{const vs=P.quartas.map((p,i)=>P.res["q"+i].vencedorNome===p[0].nome?p[0]:p[1]);
-      P.semi=[vs[0],vs[1],vs[2],vs[3]];P.fase=1;};
+    aplicar=()=>{P.semi=P.quartas.map((p,i)=>P.res["q"+i].vencedorSeed);P.fase=1;};
   }else if(P.fase===1){
     pares=[{par:[P.semi[0],P.semi[1]],key:"s0"},{par:[P.semi[2],P.semi[3]],key:"s1"}];
-    aplicar=()=>{P.final=[P.res.s0.vencedorNome===P.semi[0].nome?P.semi[0]:P.semi[1],
-      P.res.s1.vencedorNome===P.semi[2].nome?P.semi[2]:P.semi[3]];P.fase=2;};
+    aplicar=()=>{P.final=[P.res.s0.vencedorSeed,P.res.s1.vencedorSeed];P.fase=2;};
   }else{
     pares=[{par:[P.final[0],P.final[1]],key:"f"}];
-    aplicar=()=>{P.campeao=P.res.f.vencedorNome===P.final[0].nome?P.final[0]:P.final[1];P.fase=3;};
+    aplicar=()=>{P.campeao=P.res.f.vencedorSeed;P.fase=3;};
   }
   // separa a série do jogador
   const meuPar=pares.find(({par})=>par[0]?.meu||par[1]?.meu);
@@ -1310,10 +1307,10 @@ function avancarPlayoff(){
       // placar vem como [vMeu, vAdv]; mapeia pra ordem [a,b] do par do bracket
       const [vMeu,vAdv]=placar;
       const pa=(a.meu?vMeu:vAdv),pb=(b.meu?vMeu:vAdv);
-      P.res[meuPar.key]={vencedorNome:venc.nome,placarSerie:[pa,pb]};
+      P.res[meuPar.key]={vencedorNome:venc.nome,placarSerie:[pa,pb],vencedorSeed:venc};
       outros.forEach(({par,key})=>{P.res[key]=jogar(par[0],par[1]);});
       aplicar();renderBracket();
-      const meuPerdeu=venc.nome!==meu.nome;
+      const meuPerdeu=venc!==meu;
       if(meuPerdeu&&TG.campanha){TG.campanha.fim="eliminado";telaFinal();}
       else if(P.campeao&&P.campeao.meu){TG.campanha.fim="campeao";telaFinal();}
       else abrir("playoffOverlay");
@@ -1326,7 +1323,7 @@ function avancarPlayoff(){
 function serieEl(a,b,key,fase,faseAtual){
   const P=TG.playoffs,r=P&&P.res[key];
   const pendente=!a||!b;
-  const aWin=r&&r.vencedorNome===a.nome,bWin=r&&r.vencedorNome===b.nome;
+  const aWin=r&&r.vencedorSeed===a,bWin=r&&r.vencedorSeed===b;
   const ativa=!pendente&&!r&&fase===faseAtual;
   return `<div class="series${(a?.meu||b?.meu)?" mine":""}${r?" done":""}${ativa?" ativa":""}">
     <div class="series-row${aWin?" win":""}${r&&!aWin?" lose":""}">${chip(a)}<span class="sc">${r?r.placarSerie[0]:""}</span></div>
@@ -1402,7 +1399,7 @@ function reproduzirMapa(jogo,A,B,contexto){
   let i=0;
   const passo=()=>{
     if(meuGen!==MP.gen||!MP.ativo)return; // timer órfão de outra reprodução: ignora
-    if(i>=total)return finalizarReproducao(jogo,A,B,contexto,meuGen);
+    if(i>=total)return finalizarReproducao(jogo,meuGen);
     const rd=jogo.rounds[i];
     const ladoVenc=rd.venceA?rd.ladoA:rd.ladoB;
     if(rd.venceA)setScore(elScA,rd.pa,ladoVenc);else setScore(elScB,rd.pb,ladoVenc);
@@ -1457,7 +1454,7 @@ function atualizarScoreboard(jogo,rd){
   upd(MP.sb.A,jogo.statsA,rd.snapA);
   upd(MP.sb.B,jogo.statsB,rd.snapB);
 }
-function finalizarReproducao(jogo,A,B,contexto,meuGen){
+function finalizarReproducao(jogo,meuGen){
   if(meuGen!==MP.gen)return; // reprodução já substituída
   MP.ativo=false;
   $("sbScoreA").textContent=jogo.placar[0];$("sbScoreB").textContent=jogo.placar[1];
@@ -1481,7 +1478,7 @@ function pularMapa(){
   $("roundStrip").innerHTML="";
   jogo.rounds.forEach(rd=>addCelula(rd,rd.venceA?rd.ladoA:rd.ladoB));
   $("sbScoreA").textContent=jogo.placar[0];$("sbScoreB").textContent=jogo.placar[1];
-  finalizarReproducao(jogo,MATCH.A,MATCH.B,MP.ctx,MP.gen);
+  finalizarReproducao(jogo,MP.gen);
 }
 function pararReproducao(){MP.ativo=false;MP.gen++;clearTimeout(MP.timer);MATCH.rodando=false;}
 

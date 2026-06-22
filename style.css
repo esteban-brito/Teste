@@ -542,9 +542,6 @@ footer{text-align:center;color:#283344;font-size:.6rem;letter-spacing:.2em;margi
 .ls-kd-val b{color:var(--win)}.ls-kd-val s{color:var(--dim);text-decoration:none;margin:0 1px}
 .ls-rate{font-family:var(--ff);font-weight:800;font-size:.92rem;font-variant-numeric:tabular-nums;text-align:right;color:var(--dim)}
 .ls-rate.r-top{color:var(--win)}.ls-rate.r-mid{color:var(--neutral)}.ls-rate.r-low{color:var(--loss)}
-.feed-troca{align-self:center;display:flex;align-items:center;gap:10px;padding:8px 18px;border-radius:20px;
-  background:var(--panel2);border:1px solid var(--line);font-family:var(--ff);font-weight:700;
-  font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
 .livemap-foot{padding:16px;display:flex;justify-content:center;gap:12px;border-top:1px solid var(--line);
   background:linear-gradient(0deg,rgba(20,27,43,.5),transparent)}
 @media(max-width:640px){.sb-team .sb-name{font-size:.86rem}.pm-team{min-width:96px}.ls-nick{font-size:.8rem}}
@@ -576,8 +573,7 @@ footer{text-align:center;color:#283344;font-size:.6rem;letter-spacing:.2em;margi
   .card.tier-h::after,.card.tier-h .ovr,.card.tier-h .nick,.card.tier-h .starsig{animation:none!important}
   .overlay{animation:none!important}
   .series.ativa,.champion .cup-tag{animation:none!important}
-  .rs-cell.pop,.feed-item.impacto,.feed-item.impacto .feed-selo,.sb-score .bump,.sb-score .flash-ct,.sb-score .flash-tr,
-  .feed-item.epico.impacto,.feed-item.epico.impacto .feed-selo,.rs-cell.key::after{animation:none!important}
+  .rs-cell.pop,.sb-score .bump,.sb-score .flash-ct,.sb-score .flash-tr,.rs-cell.key::after{animation:none!important}
 }
 
 /* ════════════════════════════════════════════════════════════════════
