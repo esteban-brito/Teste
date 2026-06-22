@@ -23,11 +23,11 @@ const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:20,ELITE_REF:1.25,
   ART:{r:6.5,sn:.04,fp:.01,secMul:.015,base:3.5,eliteMul:15,secCap:75},
   ASS:{r:7.5,fp:.04,base:4.0,subRef:55,subDiv:28,subClamp:.8,eliteMul:8},
   ESP:{mecR:9.0,mecBase:6.0,funcMul:14,funcMulSup:11.5,funcBase:5,convRef:25,convDiv:10,convClamp:2.5},
-  ANC:{wM:.62,wF:.32,wMp:.50,wFp:.49,eliteMul:18},OPR:{wM:.50,wF:.50},
+  ANC:{wM:.62,wF:.32,wMp:.50,wFp:.49,eliteMul:18,clRef:60,kCl:.10},OPR:{wM:.50,wF:.50}, // clRef/kCl: âncora com clutch baixo (cl<clRef) perde um pouco
   CMD:{FM:9.86,FB:2.68,BR:2.32,UTW:8.64,FADE:0.7,PC:4.08,bonusEntry:1,bonusFpRef:45,bonusFpDiv:20},
   PISO_COLOCACAO:{Campeao:6,Final:4,Top4:3,Top8:2,Grupos:0}};
 const CFG_QUIMICA={RESULTADO:{Campeao:5,Final:4,Top4:3,Top8:2,Grupos:1},
-  ESPERADO_POR_SOMA:[{min:85,e:5},{min:78,e:4},{min:70,e:3},{min:60,e:2},{min:0,e:1}],
+  ESPERADO_POR_SOMA:[{min:86,e:5},{min:78,e:4},{min:70,e:3},{min:60,e:2},{min:0,e:1}],
   TREINADOR_BASE:15,TREINADOR_K_BONUS:2.5,TREINADOR_K_PUN:1.5,PISO_TREINADOR:{Campeao:16,Final:15,Top4:15,Top8:12,Grupos:10},
   TREINADOR_MIN:10,TREINADOR_MAX:20,IGL_FRACO_OVR:13,ESTRELA_LIMITE:2,
   TREINADOR_FORCA:{neutro:15,porPonto:.025},
@@ -88,7 +88,8 @@ function ovrAncora(p,s){const k=CFG_AVALIACAO.ANC;const pm=SUBARQ.Lurker.eixo(p)
   // Playmaker e avaliado pelo frag/pick (op+fp) com peso proprio; Clutcher pela posicao/clutch (cl)
   const fnAtr=pm?(0.5*p.op+0.5*p.fp):p.cl;
   const{M,F,modConv}=nucleoOperario(p,s,fnAtr,CFG_AVALIACAO.ESP.funcMul);
-  return clipOVR((pm?k.wMp:k.wM)*M+(pm?k.wFp:k.wF)*F+modConv+bonusElite(p.rating,k.eliteMul));}
+  const pisoClutch=k.kCl*Math.min(0,p.cl-k.clRef); // âncora pouco clutcher (cl baixo) vale um tico menos; cl alto não muda
+  return clipOVR((pm?k.wMp:k.wM)*M+(pm?k.wFp:k.wF)*F+modConv+pisoClutch+bonusElite(p.rating,k.eliteMul));}
 function ovrSistema(p,s){const{M,F,modConv}=nucleoOperario(p,s,p.ut,CFG_AVALIACAO.ESP.funcMulSup);
   return clipOVR(CFG_AVALIACAO.OPR.wM*M+CFG_AVALIACAO.OPR.wF*F+modConv);}
 function ovrComando(p,s){const k=CFG_AVALIACAO.CMD;
