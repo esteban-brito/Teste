@@ -8,7 +8,8 @@ playoffs.
 ## Como jogar
 
 Abra o arquivo `index.html` em qualquer navegador moderno. Não precisa instalar
-nada nem rodar servidor — é um único arquivo autossuficiente.
+nada — o jogo é só HTML, CSS e JavaScript estáticos. Mantenha os três arquivos
+(`index.html`, `style.css`, `game.js`) na mesma pasta.
 
 1. **Sorteie um time** na roleta.
 2. **Escolha 1 carta** (jogador ou treinador) do time sorteado por rodada.
@@ -19,15 +20,18 @@ nada nem rodar servidor — é um único arquivo autossuficiente.
 
 ## Estrutura
 
-Tudo vive em `index.html`, dividido em três partes:
+O projeto é dividido em três arquivos:
 
-- **CSS** (`<style>`): tema, cartas por tier, roleta, overlays de torneio e
-  tela de partida ao vivo.
-- **Motor** (início do `<script>`): avaliação de jogadores (OVR), química de
-  composição, rating contextual estilo HLTV e simulação de partida round a
-  round. Os blocos `CFG_*` concentram os números de balanceamento.
-- **UI** (final do `<script>`): roleta, montagem de elenco, fase suíça,
-  playoffs e o reprodutor cinematográfico de partidas.
+- **`index.html`** — a marcação: cabeçalho, roleta, elenco, análise e os
+  overlays de torneio/partida/tela final.
+- **`style.css`** — todo o visual: tema, cartas por tier, roleta, overlays de
+  torneio e tela de partida ao vivo.
+- **`game.js`** — toda a lógica, em duas camadas:
+  - **Motor** (parte de cima): avaliação de jogadores (OVR), química de
+    composição, rating contextual estilo HLTV e simulação de partida round a
+    round. Os blocos `CFG_*` concentram os números de balanceamento.
+  - **UI** (parte de baixo): roleta, montagem de elenco, fase suíça, playoffs
+    e o reprodutor cinematográfico de partidas.
 
 ## Acessibilidade e desempenho
 
