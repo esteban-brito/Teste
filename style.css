@@ -82,7 +82,7 @@ header{display:flex;align-items:center;justify-content:space-between;flex-wrap:w
 .mutebtn:hover{opacity:1;transform:scale(1.1)}
 .mutebtn.muted{opacity:.4;filter:grayscale(1)}
 .spinwrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:6;
-  background:rgba(7,9,14,.45);backdrop-filter:blur(1px)}
+  background:rgba(7,9,14,.45);-webkit-backdrop-filter:blur(1px);backdrop-filter:blur(1px)}
 .spinwrap.gone{opacity:0;pointer-events:none;transition:opacity .2s}
 button.roll,button.ghost{font-family:var(--ff);font-weight:700;letter-spacing:.1em;text-transform:uppercase;
   cursor:pointer;border-radius:10px;-webkit-tap-highlight-color:transparent;transition:transform .12s var(--ease)}
@@ -256,7 +256,7 @@ footer{text-align:center;color:#283344;font-size:.6rem;letter-spacing:.2em;margi
 .is-hidden{display:none!important}
 .overlay{position:fixed;inset:0;z-index:50;
   background:radial-gradient(1200px 600px at 50% -10%,#121a26 0%,transparent 65%),rgba(7,9,14,.985);
-  backdrop-filter:blur(8px);display:flex;flex-direction:column;animation:overlayIn .28s var(--ease)}
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;flex-direction:column;animation:overlayIn .28s var(--ease)}
 @keyframes overlayIn{from{opacity:0;transform:scale(.99)}to{opacity:1;transform:scale(1)}}
 .overlay.fechando{animation:overlayOut .2s var(--ease) forwards;pointer-events:none}
 @keyframes overlayOut{to{opacity:0;transform:scale(.992)}}
