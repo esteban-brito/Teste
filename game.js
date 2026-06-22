@@ -382,7 +382,9 @@ const faSwingMorte=(meu,ini)=>faWP(meu-1,ini)-faWP(meu,ini);  // <=0
 const FA_ECO={full:{full:1,force:.9,eco:.62,pistol:.55},force:{full:1.18,force:1,eco:.78,pistol:.68},
   eco:{full:1.6,force:1.3,eco:1,pistol:.85},pistol:{full:1.55,force:1.25,eco:.95,pistol:1}};
 const faEco=(mb,vb)=>(FA_ECO[mb]&&FA_ECO[mb][vb])||1;
-const CFG_FA={BASE:.345,W_EK:.74,W_SURV:.132,W_KAST:.204,W_MULTI:.042,W_SWING:.10,PESO_MORTE:.95,PESO_OPEN:.216};
+const CFG_FA={BASE:.345,W_EK:.74,W_SURV:.132,W_KAST:.204,W_MULTI:.042,W_SWING:.10,PESO_MORTE:.95,PESO_OPEN:.216,
+  // bônus de firepower: poder de fogo bruto puxa o rating pra cima (ajuda entries de fp alto). Cosmético — não muda resultado.
+  FP:{ref:62,per:.0026,min:-.04,max:.105}};
 // impacto por função no kill: entry/rifler que fragga gera mais valor que support/igl (centrado ~1.0)
 const FA_IMPACTO={Entry:1.07,Lurker:1.06,Rifler:1.03,AWPer:.99,Support:.93,IGL:.91}; // lurker é função de frag/clutch — pontua entre os mais altos
 // rating FALLEnANGELs de um jogador a partir do seu log de eventos no mapa
@@ -395,7 +397,8 @@ function fallenAngels(ev){const C=CFG_FA,R=ev.totalRounds||1;
   ev.kills.forEach(k=>{if(k.roundGanho)swing+=faSwingKill(k.estadoMeu,k.estadoInim);});
   ev.mortes.forEach(mo=>{swing+=faSwingMorte(mo.estadoMeu,mo.estadoInim)*C.PESO_MORTE;});
   const openPR=((ev.opK||0)-(ev.opD||0))/R*C.PESO_OPEN;
-  const rating=C.BASE+ekpr*C.W_EK*(ev.impacto??1)+survPR*C.W_SURV+kast*C.W_KAST+multiScore*C.W_MULTI+(swing/R)*C.W_SWING+openPR;
+  const fpBonus=Math.max(C.FP.min,Math.min(C.FP.max,((ev.fp??60)-C.FP.ref)*C.FP.per)); // poder de fogo bruto soma ao rating
+  const rating=C.BASE+ekpr*C.W_EK*(ev.impacto??1)+survPR*C.W_SURV+kast*C.W_KAST+multiScore*C.W_MULTI+(swing/R)*C.W_SWING+openPR+fpBonus;
   return Math.max(.30,Math.min(3.0,rating));}
 
 // PARTE 2 — forma do dia: a inspiração da noite (tier × OVR × firepower) que MOVE o combate
@@ -470,7 +473,7 @@ function prepTime(t,mapa){
   return {nome:t.nome,meu:!!t.meu,js,
     // skill de combate = OVR × forma da noite × afinidade de mapa (modulação leve, ±MAPA_CAP)
     skills:js.map((j,i)=>skillDuelo(j)*Math.pow(formas[i],1.0)*mapMult(j,mapa)),cls:js.map(j=>j.cl||40),agr:js.map(j=>subAgr(j)),
-    stats:js.map(j=>({nick:j.nick||t.nome,impacto:FA_IMPACTO[j.primario]??1,k:0,d:0,a:0,
+    stats:js.map(j=>({nick:j.nick||t.nome,impacto:FA_IMPACTO[j.primario]??1,fp:j.fp??60,k:0,d:0,a:0,
       fa:{kills:[],mortes:[],assists:0,roundsKAST:0,multi:{},opK:0,opD:0},_kRound:0,_contribRound:false}))};
 }
 // resolve o combate de um round respeitando conservação (cada kill = uma morte)
@@ -591,7 +594,7 @@ function simularMapa(A,B,fA,fB,mapaForcado){
   // rating FALLEnANGELs por jogador (contextual: swing, eco, KAST, multi-kills)
   const totalR=pa+pb;
   const rate=stats=>stats.map(s=>{
-    const rating=fallenAngels({...s.fa,totalRounds:totalR,impacto:s.impacto});
+    const rating=fallenAngels({...s.fa,totalRounds:totalR,impacto:s.impacto,fp:s.fp});
     return {nick:s.nick,k:s.k,d:s.d,a:s.a,rating:+rating.toFixed(2)};});
   return {placar:[pa,pb],vencedorNome:pa>pb?A.nome:B.nome,vencedor:pa>pb?A:B,rounds,
     half1,mapa,
