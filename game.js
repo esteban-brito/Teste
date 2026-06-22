@@ -554,7 +554,9 @@ function simularMapa(A,B,fA,fB,mapaForcado){
   const ladoDe=(time,round)=>{const aCT=round<13;const ehA=time===A;return (ehA===aCT)?"CT":"TR";};
   const mediaSkill=t=>t.skills.reduce((s,v)=>s+v,0)/5;
   let half1=null;
-  const fim=()=>((pa>=13||pb>=13)&&Math.abs(pa-pb)>=2)||pa>=16||pb>=16;
+  // CS2 (MR12): vence quem chega a 13 na regulação. Se empatar 12-12, vai pra
+  // prorrogação e vence o primeiro a 16 (pode terminar 16-12 .. 16-15).
+  const fim=()=>{const ot=pa>=12&&pb>=12; return ot?(pa>=16||pb>=16):(pa>=13||pb>=13);};
   while(!fim()){
     r++;
     if(r===13){half1=[pa,pb];lsA=0;lsB=0;sA=0;sB=0;mA=800;mB=800;} // reset economia/momentum no 2º tempo
