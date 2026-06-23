@@ -122,7 +122,7 @@ function subArquetipo(role,p){const s=SUBARQ[role];if(!s)return null;const e=s.e
   return{nome:s.nomes[e>=0?0:1],eixo:+e.toFixed(1),lado:e>=0?"A":"B"};}
 // STAR PLAYERS — definidos por curadoria (não se calcula: NiKo é star com OVR 15 ou 22).
 const TIER_LENDA=["s1mple","ZywOo","device","dev1ce","NiKo","coldzera","donk","GeT_RiGhT","olofmeister"];
-const TIER_STAR=["kennyS","m0NESY","KSCERATO","blameF","shox","XANTARES","JW"];
+const TIER_STAR=["kennyS","m0NESY","KSCERATO","blameF","shox","XANTARES","JW","ropz"];
 function avaliarJogador(p){const classe=motorA(p);const{esteira,ovr}=motorB(p,classe);
   const ab=CFG_AVALIACAO.ABERRACAO;const ovrFinal=p.rating>ab.r22?22:p.rating>ab.r21?21:ovr;
   const _nk=p.nick||p.nome;const estrela=TIER_LENDA.includes(_nk)||TIER_STAR.includes(_nk);
@@ -623,7 +623,9 @@ const tierOf=o=>o>=22?"tier-h":o>=21?"tier-s":o>=18?"tier-1":o>=15?"tier-2":"tie
 /* ——— ÁUDIO · Web Audio sintetizado ————————————————— */
 const Audio={ctx:null,mudo:false,
   init(){if(!this.ctx){try{this.ctx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}
-    if(this.ctx&&this.ctx.state==="suspended")this.ctx.resume();},
+    if(this.ctx&&this.ctx.state==="suspended")this.ctx.resume();
+    // iOS só libera o áudio se um som tocar DENTRO do gesto do usuário — buffer mudo de 1 amostra
+    if(this.ctx&&!this._unlocked){try{const s=this.ctx.createBufferSource();s.buffer=this.ctx.createBuffer(1,1,22050);s.connect(this.ctx.destination);s.start(0);}catch(e){}this._unlocked=true;}},
   // tom curto e brilhante (moeda/crédito)
   _blip(f,t,vol=.1,dur=.08,type="square"){const ctx=this.ctx,o=ctx.createOscillator(),g=ctx.createGain();
     o.type=type;o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+.006);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
@@ -1567,6 +1569,9 @@ function atualizarMajorUI(){
   $("majorSection").hidden=!pronto;
   if(!pronto){TG.times=null;TG.playoffs=null;fechar("suicaOverlay");fechar("playoffOverlay");}
 }
+
+// desbloqueia o áudio (iOS/Safari) no primeiro gesto do usuário, em qualquer lugar da página
+["pointerdown","touchend","keydown"].forEach(ev=>document.addEventListener(ev,()=>Audio.init(),{once:true,passive:true}));
 
 idleTrack();
 renderLineup();

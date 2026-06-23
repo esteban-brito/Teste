@@ -62,7 +62,7 @@ header{display:flex;align-items:center;justify-content:space-between;flex-wrap:w
 .marker::before{top:0;border-top:9px solid var(--accent)}
 .marker::after{bottom:0;border-bottom:9px solid var(--accent)}
 .viewport{overflow:hidden;padding:14px 0}
-.track{display:flex;gap:var(--gap);padding:0 calc(50% - var(--tw)/2);align-items:stretch}
+.track{display:flex;gap:var(--gap);padding:0 calc(50% - var(--tw)/2);align-items:stretch;min-height:76px}
 .track>*{flex:0 0 var(--tw)}
 .tcard{position:relative;border-radius:10px;padding:10px 12px;height:76px;display:flex;flex-direction:column;
   align-items:center;justify-content:center;text-align:center;border:1px solid color-mix(in srgb,var(--col) 50%,#333);
