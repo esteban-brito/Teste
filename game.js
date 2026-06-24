@@ -753,8 +753,7 @@ const coachHTML=p=>`<div class="banner">Treinador</div>
 const STAT_VERSO=[["Firepower","fp"],["Abertura","op"],["Clutch","cl"],["Utilitário","ut"]];
 const CARAC_DESC={Gestor:"Gerencia egos e estrelas",Estrategista:"Estrutura tática e comando",
   Desenvolvedor:"Lapida elencos crus",Motivador:"Eleva o time inteiro"};
-const statBar=(lab,v)=>`<div class="statbar"><span class="sb-lab">${esc(lab)}</span>`+
-  `<span class="sb-track"><i style="width:${clamp(v||0,0,100)}%"></i></span><span class="sb-val">${Math.round(v||0)}</span></div>`;
+const statBar=(lab,v)=>`<div class="statbar"><span class="sb-lab">${esc(lab)}</span><span class="sb-val">${Math.round(v||0)}</span></div>`;
 const backPlayer=p=>{const e=p._eng||{};return `<div class="cb-head">${esc(p.nick)}</div>`+
   `<div class="cb-stats">${STAT_VERSO.map(([lab,k])=>statBar(lab,e[k])).join("")}</div>`+
   `<div class="cb-foot">${esc(e.sub?e.sub.nome:(p.prim||""))}</div>`;};
