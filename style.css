@@ -120,7 +120,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 
 /* ——— CSS · CARTAS —————————————————————————————————— */
 .card,.coachcard{position:relative;border-radius:13px;cursor:pointer;text-align:center;overflow:hidden;
-  display:flex;flex-direction:column;align-items:center;min-height:148px;
+  display:flex;flex-direction:column;align-items:center;min-height:148px;aspect-ratio:5/7;
   background:transparent;
   transition:box-shadow .16s var(--ease),border-color .14s,outline-color .14s}
 .card:hover,.coachcard:hover{box-shadow:0 0 0 1px var(--tcol,var(--cc-main,#fff)),0 0 18px -2px var(--tcol,var(--cc-main,#fff))}
@@ -237,8 +237,8 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   border-bottom:1px solid color-mix(in srgb,var(--tcol,#fff) 26%,transparent)}
 .cb-sub{display:block;font-family:var(--ff);font-weight:600;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;
   color:var(--tcol,#39d3ff);opacity:.9;margin-top:2px}
-.cb-stats{display:flex;flex-direction:column;width:100%}
-.statbar{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:8px;padding:2.5px 1px;
+.cb-stats{display:flex;flex-direction:column;width:100%;flex:1;justify-content:space-evenly;margin-top:2px}
+.statbar{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:8px;padding:4px 1px;
   border-bottom:1px solid color-mix(in srgb,var(--tcol,#888) 12%,transparent)}
 .statbar:last-child{border-bottom:none}
 .sb-lab{font-family:var(--ff);font-weight:600;font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;
@@ -247,7 +247,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   color:var(--lit,#fff);text-align:right;line-height:1}
 @media(prefers-reduced-motion:reduce){.cface{transition:none}}
 
-.slot{border:1px dashed rgba(52,65,85,.5);border-radius:13px;min-height:148px;
+.slot{border:1px dashed rgba(52,65,85,.5);border-radius:13px;min-height:148px;aspect-ratio:5/7;
   display:flex;align-items:center;justify-content:center}
 .slot .ph{color:#243145;font-size:1.6rem}
 .slot.coach{border-color:rgba(255,200,50,.25)} .slot.coach .ph{color:rgba(255,200,50,.28)}
@@ -305,10 +305,7 @@ footer{text-align:center;color:#283344;font-size:.6rem;letter-spacing:.2em;margi
   .picks,.lineup,.squad{grid-template-columns:repeat(3,1fr)}
 }
 
-/* Desktop (PC): cartas um pouco mais altas (proporção de carta, sem exagero) */
-@media(min-width:641px){
-  .card,.coachcard,.slot{min-height:178px}
-}
+/* proporção de card (5/7) padroniza a altura em todas as telas; min-height é só o piso no mobile estreito */
 
 /* ——— CSS · OVERLAYS DE TORNEIO ————————————————————— */
 .overlay[hidden]{display:none}
