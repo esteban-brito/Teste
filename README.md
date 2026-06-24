@@ -40,9 +40,12 @@ Os números do motor ficam concentrados em blocos `CFG_*` no topo do `game.js`:
 - **`CFG_IDENTIDADE` / `CFG_AVALIACAO`** — como o jogador é classificado (role) e
   como vira OVR. Ex.: `CFG_AVALIACAO.ANC` (esteira Âncora, inclui o piso de
   clutch `clRef`/`kCl`), `ELITE_REF`/`eliteMul` (bônus por rating de elite).
-- **`CFG_QUIMICA`** — química do elenco e OVR do treinador. Ex.:
-  `ESPERADO_POR_SOMA` e `PISO_TREINADOR` (nota do treinador), `derivaCaracteristica`
-  decide a característica (Gestor/Estrategista/Desenvolvedor/Motivador).
+- **`CFG_QUIMICA`** — química do elenco e OVR do treinador. A química vai de
+  **50% a 100%** (100% = composição perfeita); cada falta de role, saturação ou
+  excesso de estrela **subtrai**. As características do treinador são
+  **mitigadores** de penalidade (recuperam rumo a 100%, nunca acima). Ex.:
+  `PEN`/`DUREZA` (tamanho das penalidades), `ESPERADO_POR_SOMA` e `PISO_TREINADOR`
+  (nota do treinador), `derivaCaracteristica` decide a característica.
 - **`CFG_SIM`** — simulação da partida (lados, economia, momentum, mapas).
 - **`CFG_FA`** — rating estilo HLTV (FALLEnANGELs). Inclui `FP` (bônus de
   firepower) e `FA_IMPACTO` (peso por função). É **cosmético**: muda o rating

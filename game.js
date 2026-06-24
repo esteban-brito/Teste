@@ -31,17 +31,20 @@ const CFG_QUIMICA={RESULTADO:{Campeao:5,Final:4,Top4:3,Top8:2,Grupos:1},
   TREINADOR_BASE:15,TREINADOR_K_BONUS:2.5,TREINADOR_K_PUN:1.5,PISO_TREINADOR:{Campeao:16,Final:15,Top4:15,Top8:12,Grupos:10},
   TREINADOR_MIN:10,TREINADOR_MAX:20,IGL_FRACO_OVR:13,ESTRELA_LIMITE:2,
   TREINADOR_FORCA:{neutro:15,porPonto:.025},
-  PEN:{semIGL:.25,iglFraco:.10,semAWP:.20,semAncora:.11,semIniciativa:.12,estrelaExtra:.07},BONUS_ESTRUTURA:.08,QUIMICA_MIN:.50,QUIMICA_MAX:1.20,
-  CORTE_IGL_ESTRATEGISTA:.10, // só o Estrategista ameniza a falta de IGL, e só 10% (Motivador não mexe)
-  TALENTO:{refBruta:78,divisor:15,peso:1.0,teto:1.12}, // firepower alto resiste à química ruim (preenche o gap até o teto)
+  PEN:{semIGL:.25,iglFraco:.10,semAWP:.20,semAncora:.11,semIniciativa:.12,estrelaExtra:.07},QUIMICA_MIN:.50,QUIMICA_MAX:1.00,
+  TALENTO:{refBruta:78,divisor:15,peso:1.0,teto:1.00}, // firepower alto resiste à química ruim, recuperando rumo a 100% (nunca acima)
   IDEAL:{IGL:1,AWPer:1,Lurker:1,Support:2,Entry:2,Rifler:3},
   DUREZA:{IGL:.08,AWPer:.07,Lurker:.04,Support:.04,Entry:.03,Rifler:.03},
-  SAT_LEVE:.05, // limite de saturação que ainda permite bônus de estrutura
+  SAT_LEVE:.05, // limite de saturação que ainda conta como "estruturado" (selo de Estrutura)
   SEC_NOMINAL_PESO:.5, // secundário nominal cobre metade do que um secundário forte cobriria
   RIFLER_VERSATIL_ALIVIO:.5, // Rifler com 2ª função (Entry/Lurker/Support) conta meio na saturação (não é rifler "puro")
   FUNC_EGO:["Entry","Rifler","AWPer","Lurker"], // estrelas nessas funções geram atrito; IGL/Support não
   RIFLER_INICIATIVA:.5, // Rifler sem Entry cobre o pilar Iniciativa só pela metade
-  CARAC:{Gestor:{tetoEstrelasBonus:1,estrelaExtraPen:.04},Desenvolvedor:{cruRef:14,cruPorJogador:.03,cruTeto:.08},Estrategista:{bonusEstrutura:.13},Motivador:{cortePenalidade:.40}},
+  // características do treinador = MITIGADORES de penalidade (recuperam rumo a 100%, nunca acima):
+  CARAC:{Gestor:{tetoEstrelasBonus:1,estrelaExtraPen:.04},        // tolera +1 estrela e suaviza o atrito de ego
+    Desenvolvedor:{cruRef:14,cruPorJogador:.05,cruTeto:.18},      // reduz penalidades de elencos crus (escala c/ nº de crus)
+    Estrategista:{corteEstrutura:.15,corteComando:.30},           // reduz penalidades estruturais e de comando
+    Motivador:{cortePenalidade:.40}},                             // reduz todas as penalidades de cobertura/saturação
   DERIVA:{SOMA_ESPERADA:{Campeao:85,Final:80,Top4:74,Top8:66,Grupos:56},DESENV_RESULTADO_MIN:["Campeao","Final","Top4"],LIMIAR:.3}};
 
 const clamp=(x,lo,hi)=>Math.max(lo,Math.min(hi,x));
@@ -134,17 +137,24 @@ function ovrTreinador(somaOVR,colocacao){const C=CFG_QUIMICA;
   return Math.max(C.PISO_TREINADOR[colocacao]??C.TREINADOR_MIN,Math.min(C.TREINADOR_MAX,Math.round(C.TREINADOR_BASE+ajuste)));}
 function quimicaComposicao(jogadores,caracTreinador=null){const C=CFG_QUIMICA;
   const car=caracTreinador?(C.CARAC[caracTreinador]??{}):{};const alertas=[];
-  const igl=jogadores.find(j=>j.primario==="IGL");
-  // primário de qualquer um OU 2ª função do IGL (IGL acumula duas funções)
-  const temPrim=fn=>jogadores.some(j=>j.primario===fn)||(!!igl&&igl.secundario===fn);
+  // IGLs acumulam DUAS funções (IGL + sua role 2). a cobertura considera a role 2 de TODOS os IGLs;
+  // o IGL de maior OVR é quem lidera (comando). Assim a cobertura independe da ordem dos slots.
+  const igls=jogadores.filter(j=>j.primario==="IGL");
+  const melhorIgl=igls.reduce((b,j)=>(!b||j.ovr>b.ovr)?j:b,null);
+  const temPrim=fn=>jogadores.some(j=>j.primario===fn)||igls.some(j=>j.secundario===fn);
   // cobertura secundária ponderada (forte=cheio, nominal=meio) p/ o tamanho da penalidade parcial
   const nSec=fn=>jogadores.filter(j=>j.secundario===fn&&j.primario!==fn)
     .reduce((s,j)=>s+(j.secForte?1:C.SEC_NOMINAL_PESO),0);
   // headcount cru (forte OU nominal) p/ a regra de dupla cobertura: 2 jogadores com a função 2 = 1 primário
   const nSecRaw=fn=>jogadores.filter(j=>j.secundario===fn&&j.primario!==fn).length;
-  const corte=car.cortePenalidade?(1-car.cortePenalidade):1;let mult=1;
-  // comando (falta/fraqueza de IGL) é estrutural: Motivador NÃO ameniza. só o Estrategista, e pouco.
-  const corteIGL=caracTreinador==="Estrategista"?(1-C.CORTE_IGL_ESTRATEGISTA):1;
+  // mitigação de penalidade pela característica do treinador (recupera rumo a 100%, nunca acima)
+  const crus=car.cruRef!=null?jogadores.filter(j=>j.ovr<=car.cruRef).length:0;
+  let corteFrac=car.cortePenalidade||0;                                  // Motivador: corta tudo
+  if(car.corteEstrutura)corteFrac=Math.max(corteFrac,car.corteEstrutura); // Estrategista: corta estrutura
+  if(car.cruPorJogador&&crus>0)corteFrac=Math.max(corteFrac,Math.min(car.cruTeto,crus*car.cruPorJogador)); // Desenvolvedor: escala c/ crus
+  const corte=1-corteFrac;
+  const corteIGL=car.corteComando?(1-car.corteComando):1; // comando é estrutural: só o Estrategista ameniza
+  let mult=1;
   // pilar com 3 estados: primário=0% | 2+ jogadores com a função 2=dupla cobertura | 1 secundário=penalidade parcial | nenhum=cheia
   const pilar=(nome,pen,temP,secs,secsRaw)=>{
     if(temP){alertas.push(`${nome}`);return;}
@@ -152,15 +162,14 @@ function quimicaComposicao(jogadores,caracTreinador=null){const C=CFG_QUIMICA;
     if(secs>0){const p=pen*Math.pow(0.5,secs)*corte;mult*=(1-p);alertas.push(`${nome} secundária −${Math.round(p*100)}%`);return;}
     mult*=(1-pen*corte);alertas.push(`${nome} falta −${Math.round(pen*corte*100)}%`);
   };
-  const isIglFraco=igl&&igl.ovr<C.IGL_FRACO_OVR;
+  const isIglFraco=melhorIgl&&melhorIgl.ovr<C.IGL_FRACO_OVR;
   let penCmd=1; // comando é estrutural: aplicado FORA da resistência de talento (em forcaTime)
-  if(!igl){penCmd=1-C.PEN.semIGL*corteIGL;alertas.push(`Comando falta −${Math.round(C.PEN.semIGL*corteIGL*100)}%`);}
+  if(!melhorIgl){penCmd=1-C.PEN.semIGL*corteIGL;alertas.push(`Comando falta −${Math.round(C.PEN.semIGL*corteIGL*100)}%`);}
   else if(isIglFraco){penCmd=1-C.PEN.iglFraco*corteIGL;alertas.push(`Comando fraco −${Math.round(C.PEN.iglFraco*corteIGL*100)}%`);}
   else alertas.push("Comando");
   pilar("AWP",C.PEN.semAWP,temPrim("AWPer"),nSec("AWPer"),nSecRaw("AWPer"));
   pilar("Âncora",C.PEN.semAncora,temPrim("Lurker")||temPrim("Support"),nSec("Lurker")+nSec("Support"),nSecRaw("Lurker")+nSecRaw("Support"));
   // Iniciativa: Entry abre o round (preenche completo); Rifler é fogo sem abertura (cobre parcial)
-  // temPrim já considera a 2ª função do IGL, sem precisar checar igl.secundario de novo
   if(temPrim("Entry")){alertas.push("Iniciativa");}
   else if(nSecRaw("Entry")>=2){alertas.push("Iniciativa (dupla cobertura)");} // 2 jogadores com Entry 2 = 1 primário
   else if(temPrim("Rifler")){const eSec=nSec("Entry");const fator=eSec>0?C.RIFLER_INICIATIVA*Math.pow(0.5,eSec):C.RIFLER_INICIATIVA;const p=C.PEN.semIniciativa*fator*corte;mult*=(1-p);alertas.push(`Iniciativa ${eSec>0?"parcial":"limitada"} −${Math.round(p*100)}%`);}
@@ -168,10 +177,10 @@ function quimicaComposicao(jogadores,caracTreinador=null){const C=CFG_QUIMICA;
     if(secsRaw>=2){alertas.push("Iniciativa (dupla cobertura)");}
     else if(secs>0){const p=C.PEN.semIniciativa*Math.pow(0.5,secs)*corte;mult*=(1-p);alertas.push(`Iniciativa secundária −${Math.round(p*100)}%`);}
     else{mult*=(1-C.PEN.semIniciativa*corte);alertas.push(`Iniciativa falta −${Math.round(C.PEN.semIniciativa*corte*100)}%`);}}
-  // saturação: excesso de uma função primária além do ideal, ponderado pela dureza da função
+  // saturação: excesso de uma função primária além do ideal (a role 2 de cada IGL conta como +1 naquela função)
   let satTotal=0;
   ["IGL","AWPer","Lurker","Support","Entry","Rifler"].forEach(fn=>{
-    let n=jogadores.filter(j=>j.primario===fn).length+(igl&&igl.secundario===fn?1:0); // 2ª função do IGL conta como primária
+    let n=jogadores.filter(j=>j.primario===fn).length+igls.filter(j=>j.secundario===fn).length;
     if(fn==="Rifler"){const vers=jogadores.filter(j=>j.primario==="Rifler"&&["Entry","Lurker","Support"].includes(j.secundario)).length;n-=vers*C.RIFLER_VERSATIL_ALIVIO;}
     const excesso=Math.max(0,n-C.IDEAL[fn]);
     if(excesso>0){const p=excesso*C.DUREZA[fn]*corte;satTotal+=p;mult*=(1-p);
@@ -182,11 +191,10 @@ function quimicaComposicao(jogadores,caracTreinador=null){const C=CFG_QUIMICA;
   const limiteEstrelas=C.ESTRELA_LIMITE+(car.tetoEstrelasBonus||0);const extras=Math.max(0,nEstrelasEgo-limiteEstrelas);
   if(extras>0){const pe=(car.estrelaExtraPen??C.PEN.estrelaExtra)*corte;mult*=Math.pow(1-pe,extras);
     alertas.push(`Estrelas (${nEstrelasEgo}) −${Math.round(pe*extras*100)}%`);}else alertas.push(`Estrelas (${nEstrelasEgo})`);
-  const temPilares=igl&&igl.ovr>=C.IGL_FRACO_OVR&&temPrim("AWPer")&&(temPrim("Lurker")||temPrim("Support"))&&(temPrim("Entry")||temPrim("Rifler"));
-  if(temPilares&&nEstrelasEgo<=limiteEstrelas&&satTotal<=C.SAT_LEVE){const b=car.bonusEstrutura??C.BONUS_ESTRUTURA;mult*=(1+b);alertas.push(`Estrutura +${Math.round(b*100)}%`);}else alertas.push("Estrutura falta");
-  // Desenvolvedor: extrai química de elencos crus — bônus por jogador de OVR baixo que faz render
-  if(car.cruRef!=null){const crus=jogadores.filter(j=>j.ovr<=car.cruRef).length;
-    if(crus>0){const bd=Math.min(car.cruTeto,crus*car.cruPorJogador);mult*=(1+bd);alertas.push(`Desenvolvimento (${crus} cru${crus>1?"s":""}) +${Math.round(bd*100)}%`);}}
+  // SEM bônus aditivo: um time perfeito já fica em 100% por não ter penalidade nenhuma.
+  const temPilares=melhorIgl&&melhorIgl.ovr>=C.IGL_FRACO_OVR&&temPrim("AWPer")&&(temPrim("Lurker")||temPrim("Support"))&&(temPrim("Entry")||temPrim("Rifler"));
+  alertas.push(temPilares&&nEstrelasEgo<=limiteEstrelas&&satTotal<=C.SAT_LEVE?"Estrutura":"Estrutura falta");
+  if(car.cruPorJogador&&crus>0)alertas.push(`Desenvolvimento (${crus} cru${crus>1?"s":""})`); // selo: a mitigação já entrou no corte
   const quimSemCmd=Math.max(C.QUIMICA_MIN,Math.min(C.QUIMICA_MAX,mult));
   return{quimica:+Math.max(C.QUIMICA_MIN,Math.min(C.QUIMICA_MAX,mult*penCmd)).toFixed(3),quimicaSemCmd:+quimSemCmd.toFixed(3),penCmd:+penCmd.toFixed(3),alertas};}
 const arred=x=>Math.floor(x+0.4); // arredonda: fracionário ≥.6 sobe, ≤.5 desce
@@ -198,10 +206,8 @@ function forcaTime(jogadores,caracTreinador=null,ovrTreinador=null){const bruta=
   // (FaZe/SK têm bruta enorme mas química comprometida — o talento individual ganha rounds no CS real.)
   const tal=C.TALENTO;
   const resist=Math.max(0,(bruta-tal.refBruta)/tal.divisor)*tal.peso;
-  // resistência preenche só a química NÃO-estrutural (cobertura de função). o comando vem depois.
-  // penalizado (química<1): talento recupera só ATÉ o neutro (cap resist em 1) — penalidades não viram cosmético.
-  // estruturado (≥1): inalterado, o bônus de química vem da estrutura, não do firepower.
-  const baseEf=q.quimicaSemCmd>=1?Math.min(tal.teto,q.quimicaSemCmd+(1-q.quimicaSemCmd)*resist):Math.min(tal.teto,q.quimicaSemCmd+(1-q.quimicaSemCmd)*Math.min(1,resist));
+  // firepower alto recupera parte da química penalizada, mas só ATÉ 100% (nunca acima). Comando vem depois.
+  const baseEf=Math.min(tal.teto,q.quimicaSemCmd+(1-q.quimicaSemCmd)*Math.min(1,resist));
   const quimicaEf=+Math.max(C.QUIMICA_MIN,Math.min(C.QUIMICA_MAX,baseEf*q.penCmd)).toFixed(3); // comando é estrutural: firepower não compra um caller
   return{bruta,...q,quimica:quimicaEf,quimicaBase:q.quimica,fatorTreinador:fatorT,efetiva:arred(bruta*quimicaEf*fatorT)};}
 function derivaCaracteristica(time,POOL){const D=CFG_QUIMICA.DERIVA;const js=time.jogadores.map(n=>POOL[n]);
@@ -523,7 +529,8 @@ function combateRound(venc,perd,ctx){
 
 // força do dia: oscila inverso à química (coeso=consistente, caótico=imprevisível)
 function forcaDoDia(efetiva,quimica){
-  const consist=clamp((quimica-.50)/(1.20-.50),0,1);
+  // química 50%→0 (volátil) .. 100%→1 (consistente). normalizado pelo teto atual (1.00)
+  const consist=clamp((quimica-CFG_QUIMICA.QUIMICA_MIN)/(CFG_QUIMICA.QUIMICA_MAX-CFG_QUIMICA.QUIMICA_MIN),0,1);
   const amp=CFG_SIM.AMP_MAX*(1-consist*CFG_SIM.AMP_CONSIST);
   return efetiva+(rndF()*2-1)*amp;
 }
