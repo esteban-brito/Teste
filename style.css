@@ -210,14 +210,17 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 /* ——— CARTAS · flip frente/verso ——————————————————————
    A moldura/tier fica em .card (intacta); só o CONTEÚDO gira em 3D dentro dela.
    O botão de virar é filho direto de .card (fora das faces) → fica sempre visível. */
-.card,.coachcard{perspective:700px;-webkit-perspective:700px}
-.cfaces{position:absolute;inset:0;z-index:2;transform-style:preserve-3d;-webkit-transform-style:preserve-3d;
-  transition:transform .5s var(--ease)}
-.card.flipped .cfaces,.coachcard.flipped .cfaces{transform:rotateY(180deg)}
-.cface{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;border-radius:inherit;
-  overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden}
-.cback{transform:rotateY(180deg);justify-content:center;gap:9px;padding:14px 13px;
-  background:linear-gradient(165deg,color-mix(in srgb,var(--tcol,var(--cc-main,#39d3ff)) 20%,#0b0e15),#080a10)}
+.card,.coachcard{perspective:800px;-webkit-perspective:800px}
+.cfaces{position:absolute;inset:0;z-index:2;transform-style:preserve-3d;-webkit-transform-style:preserve-3d}
+/* cada face gira independente; o que define o que aparece é a OPACIDADE (0/1).
+   assim nunca há sobreposição nem texto espelhado, mesmo se o Safari achatar o 3D. */
+.cface{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;border-radius:inherit;overflow:hidden;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;transition:transform .45s var(--ease),opacity .3s var(--ease)}
+.cfront{transform:rotateY(0deg);opacity:1}
+.cback{transform:rotateY(180deg);opacity:0;justify-content:center;gap:9px;padding:14px 13px;
+  background:linear-gradient(165deg,color-mix(in srgb,var(--tcol,var(--cc-main,#39d3ff)) 22%,#0b0e15),#080a10)}
+.card.flipped .cfront,.coachcard.flipped .cfront{transform:rotateY(-180deg);opacity:0}
+.card.flipped .cback,.coachcard.flipped .cback{transform:rotateY(0deg);opacity:1}
 .cardflip{position:absolute;top:5px;right:5px;z-index:6;width:24px;height:24px;border-radius:7px;cursor:pointer;padding:0;
   border:1px solid color-mix(in srgb,var(--tcol,var(--cc-main,#fff)) 45%,transparent);background:rgba(8,10,16,.55);
   color:var(--tcol,var(--cc-main,#fff));font-size:.8rem;line-height:1;display:flex;align-items:center;justify-content:center;
@@ -241,7 +244,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   color:var(--tcol,var(--cc-main,#fff));opacity:.85}
 .cb-carac{font-family:var(--ff);font-weight:700;font-size:1rem;color:var(--cc-lit,var(--cc-main,#fff))}
 .cb-desc{font-size:.62rem;color:var(--dim,#8593a6);max-width:92%;line-height:1.3}
-@media(prefers-reduced-motion:reduce){.cfaces{transition:none}}
+@media(prefers-reduced-motion:reduce){.cface{transition:none}}
 
 .slot{border:1px dashed rgba(52,65,85,.5);border-radius:13px;min-height:148px;
   display:flex;align-items:center;justify-content:center}
