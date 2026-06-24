@@ -751,18 +751,15 @@ const coachHTML=p=>`<div class="banner">Treinador</div>
 
 // ——— VERSO da carta: 4 stats fixas em barras (jogador) ou característica (treinador) ———
 const STAT_VERSO=[["Firepower","fp"],["Abertura","op"],["Clutch","cl"],["Utilitário","ut"]];
-const CARAC_DESC={Gestor:"Gerencia egos e estrelas",Estrategista:"Estrutura tática e comando",
-  Desenvolvedor:"Lapida elencos crus",Motivador:"Eleva o time inteiro"};
 const statBar=(lab,v)=>`<div class="statbar"><span class="sb-lab">${esc(lab)}</span><span class="sb-val">${Math.round(v||0)}</span></div>`;
-const backPlayer=p=>{const e=p._eng||{};return `<div class="cb-stats">${STAT_VERSO.map(([lab,k])=>statBar(lab,e[k])).join("")}</div>`+
-  `<div class="cb-foot">${esc(e.sub?e.sub.nome:(p.prim||""))}</div>`;};
-const backCoach=p=>`<div class="cb-carac">${esc(p.carac)}</div><div class="cb-desc">${esc(CARAC_DESC[p.carac]||"")}</div>`+
-  `<div class="cb-foot">OVR ${p.ovr}</div>`;
-const frontHTML=p=>p.tipo==="coach"?coachHTML(p):playerHTML(p);
-const backHTML=p=>p.tipo==="coach"?backCoach(p):backPlayer(p);
-// carta = botão de virar (fixo) + faces que giram em 3D (frente/verso)
-const cardHTML=p=>`<button class="cardflip" type="button" aria-label="Ver estatísticas" tabindex="-1">⟲</button>`+
-  `<div class="cfaces"><div class="cface cfront">${frontHTML(p)}</div><div class="cface cback">${backHTML(p)}</div></div>`;
+// verso do jogador: nome + estilo no topo (preenche o topo) e as 4 stats embaixo
+const backPlayer=p=>{const e=p._eng||{};return `<div class="cb-name">${esc(p.nick)}<span class="cb-sub">${esc(e.sub?e.sub.nome:(p.prim||""))}</span></div>`+
+  `<div class="cb-stats">${STAT_VERSO.map(([lab,k])=>statBar(lab,e[k])).join("")}</div>`;};
+// treinador NÃO vira (só frente). jogador = botão de virar + faces que giram em 3D.
+const cardHTML=p=>p.tipo==="coach"
+  ? coachHTML(p)
+  : `<button class="cardflip" type="button" aria-label="Ver estatísticas" tabindex="-1">⟲</button>`+
+    `<div class="cfaces"><div class="cface cfront">${playerHTML(p)}</div><div class="cface cback">${backPlayer(p)}</div></div>`;
 
 function elencoCheio(){return S.jogadores.every(Boolean)&&!!S.treinador}
 
@@ -1594,7 +1591,7 @@ function atualizarMajorUI(){
 }
 
 // desbloqueia o áudio (iOS/Safari) no primeiro gesto do usuário, em qualquer lugar da página
-["pointerdown","touchend","keydown"].forEach(ev=>document.addEventListener(ev,()=>Audio.init(),{once:true,passive:true}));
+["pointerdown","touchstart","touchend","mousedown","click","keydown"].forEach(ev=>document.addEventListener(ev,()=>Audio.init(),{once:true,passive:true}));
 
 idleTrack();
 renderLineup();
