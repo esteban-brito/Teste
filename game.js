@@ -749,7 +749,23 @@ const coachHTML=p=>`<div class="banner">Treinador</div>
   <div class="ccore"><div class="ovr">${p.ovr}</div><div class="nick">${esc(p.nick)}</div></div>
   <div class="carac">${esc(p.carac)}</div>`;
 
-const cardHTML=p=>p.tipo==="coach"?coachHTML(p):playerHTML(p);
+// ——— VERSO da carta: 4 stats fixas em barras (jogador) ou característica (treinador) ———
+const STAT_VERSO=[["Firepower","fp"],["Abertura","op"],["Clutch","cl"],["Utilitário","ut"]];
+const CARAC_DESC={Gestor:"Gerencia egos e estrelas",Estrategista:"Estrutura tática e comando",
+  Desenvolvedor:"Lapida elencos crus",Motivador:"Eleva o time inteiro"};
+const statBar=(lab,v)=>`<div class="statbar"><span class="sb-lab">${esc(lab)}</span>`+
+  `<span class="sb-track"><i style="width:${clamp(v||0,0,100)}%"></i></span><span class="sb-val">${Math.round(v||0)}</span></div>`;
+const backPlayer=p=>{const e=p._eng||{};return `<div class="cb-head">${esc(p.nick)}</div>`+
+  `<div class="cb-stats">${STAT_VERSO.map(([lab,k])=>statBar(lab,e[k])).join("")}</div>`+
+  `<div class="cb-foot">${esc(e.sub?e.sub.nome:(p.prim||""))}</div>`;};
+const backCoach=p=>`<div class="cb-head">${esc(p.nick)}</div>`+
+  `<div class="cb-carac">${esc(p.carac)}</div><div class="cb-desc">${esc(CARAC_DESC[p.carac]||"")}</div>`+
+  `<div class="cb-foot">OVR ${p.ovr}</div>`;
+const frontHTML=p=>p.tipo==="coach"?coachHTML(p):playerHTML(p);
+const backHTML=p=>p.tipo==="coach"?backCoach(p):backPlayer(p);
+// carta = botão de virar (fixo) + faces que giram em 3D (frente/verso)
+const cardHTML=p=>`<button class="cardflip" type="button" aria-label="Ver estatísticas" tabindex="-1">⟲</button>`+
+  `<div class="cfaces"><div class="cface cfront">${frontHTML(p)}</div><div class="cface cback">${backHTML(p)}</div></div>`;
 
 function elencoCheio(){return S.jogadores.every(Boolean)&&!!S.treinador}
 
@@ -1106,6 +1122,9 @@ $("resetbtn").onclick=resetar;
 
 document.addEventListener("click",e=>{
   if(e.target.closest("#mutebtn,#rollbtn,#respinbtn,#resetbtn"))return; // botões têm handler próprio
+  // virar a carta (frente/verso) — não dispara seleção/posicionamento
+  const flip=e.target.closest(".cardflip");
+  if(flip){const c=flip.closest(".card,.coachcard");if(c)c.classList.toggle("flipped");return;}
   if(S.spinning)return;                                                 // trava interação durante o giro
   const pickEl=e.target.closest("[data-pick]");
   if(pickEl&&picksEl.contains(pickEl)&&!pickEl.classList.contains("taken")&&!pickEl.classList.contains("dup")&&S.drawn){

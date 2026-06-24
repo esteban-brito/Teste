@@ -18,6 +18,10 @@ nada — o jogo é só HTML, CSS e JavaScript estáticos. Mantenha os três arqu
    de análise do elenco.
 5. Entre no **Major** e dispute a fase suíça e os playoffs rumo ao título.
 
+Toque no ícone **⟲** no canto de qualquer carta para **virá-la** e ver o verso
+com 4 stats (Firepower, Abertura, Clutch, Utilitário). Tocar no corpo da carta
+continua escolhendo/posicionando normalmente.
+
 ## Estrutura
 
 O projeto é dividido em três arquivos:
