@@ -217,9 +217,13 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .cface{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;border-radius:inherit;overflow:hidden;
   backface-visibility:hidden;-webkit-backface-visibility:hidden;transition:transform .45s var(--ease),opacity .3s var(--ease)}
 .cfront{transform:rotateY(0deg);opacity:1}
-.cback{transform:rotateY(180deg);opacity:0;justify-content:flex-start;gap:4px;padding:26px 13px 10px;
+.cback{transform:rotateY(180deg);opacity:0;gap:6px;
   background:linear-gradient(165deg,color-mix(in srgb,var(--tcol,var(--cc-main,#39d3ff)) 24%,#0b0e15) 0%,#0a0c12 62%,#070910 100%);
   box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tcol,var(--cc-main,#fff)) 16%,transparent)}
+/* jogador: stats alinhados ao topo (abaixo do botão), preenchendo a carta */
+.card .cback{justify-content:flex-start;padding:27px 14px 9px}
+/* treinador: conteúdo leve, centralizado */
+.coachcard .cback{justify-content:center;padding:24px 15px 16px;gap:3px}
 .card.flipped .cfront,.coachcard.flipped .cfront{transform:rotateY(-180deg);opacity:0}
 .card.flipped .cback,.coachcard.flipped .cback{transform:rotateY(0deg);opacity:1}
 .cardflip{position:absolute;top:5px;right:5px;z-index:6;width:22px;height:22px;border-radius:7px;cursor:pointer;padding:0;
@@ -231,20 +235,17 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .cardflip:active{transform:scale(.95)}
 /* a frente reserva o canto sup. direito p/ o botão não cobrir o time/nick */
 .cfront .cmeta{padding-right:24px}
-/* verso · ficha de stats premium (sem barras): rótulo + número */
-.cb-head{font-family:var(--ff);font-weight:700;font-size:.95rem;letter-spacing:.02em;color:var(--lit,#fff);
-  width:100%;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  padding-bottom:4px;border-bottom:1px solid color-mix(in srgb,var(--tcol,var(--cc-main,#fff)) 28%,transparent)}
-.cb-stats{display:flex;flex-direction:column;width:100%;margin-top:2px}
-.statbar{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:8px;padding:3px 1px;
-  border-bottom:1px solid color-mix(in srgb,var(--tcol,#888) 12%,transparent)}
-.statbar:last-child{border-bottom:none}
-.sb-lab{font-family:var(--ff);font-weight:600;font-size:.54rem;letter-spacing:.12em;text-transform:uppercase;
+/* verso · ficha de stats premium (sem cabeçalho, sem barras): rótulo + número */
+.cb-stats{display:flex;flex-direction:column;width:100%}
+.statbar{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:8px;padding:2px 1px;
+  border-bottom:1px solid color-mix(in srgb,var(--tcol,#888) 13%,transparent)}
+.statbar:first-child{border-top:1px solid color-mix(in srgb,var(--tcol,#888) 13%,transparent)}
+.sb-lab{font-family:var(--ff);font-weight:600;font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;
   color:var(--dim,#8593a6);text-align:left}
-.sb-val{font-family:var(--ff);font-weight:800;font-size:.95rem;font-variant-numeric:tabular-nums;
+.sb-val{font-family:var(--ff);font-weight:800;font-size:1.02rem;font-variant-numeric:tabular-nums;
   color:var(--lit,#fff);text-align:right;line-height:1}
 .cb-foot{font-family:var(--ff);font-weight:700;font-size:.5rem;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--tcol,var(--cc-main,#fff));align-self:center;margin-top:auto;padding:3px 11px;border-radius:20px;
+  color:var(--tcol,var(--cc-main,#fff));align-self:center;margin-top:3px;padding:3px 11px;border-radius:20px;
   border:1px solid color-mix(in srgb,var(--tcol,var(--cc-main,#fff)) 35%,transparent);
   background:color-mix(in srgb,var(--tcol,var(--cc-main,#fff)) 10%,transparent)}
 .cb-carac{font-family:var(--ff);font-weight:700;font-size:1.05rem;color:var(--cc-lit,var(--cc-main,#fff));margin-top:4px}

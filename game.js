@@ -754,11 +754,9 @@ const STAT_VERSO=[["Firepower","fp"],["Abertura","op"],["Clutch","cl"],["UtilitÃ
 const CARAC_DESC={Gestor:"Gerencia egos e estrelas",Estrategista:"Estrutura tÃ¡tica e comando",
   Desenvolvedor:"Lapida elencos crus",Motivador:"Eleva o time inteiro"};
 const statBar=(lab,v)=>`<div class="statbar"><span class="sb-lab">${esc(lab)}</span><span class="sb-val">${Math.round(v||0)}</span></div>`;
-const backPlayer=p=>{const e=p._eng||{};return `<div class="cb-head">${esc(p.nick)}</div>`+
-  `<div class="cb-stats">${STAT_VERSO.map(([lab,k])=>statBar(lab,e[k])).join("")}</div>`+
+const backPlayer=p=>{const e=p._eng||{};return `<div class="cb-stats">${STAT_VERSO.map(([lab,k])=>statBar(lab,e[k])).join("")}</div>`+
   `<div class="cb-foot">${esc(e.sub?e.sub.nome:(p.prim||""))}</div>`;};
-const backCoach=p=>`<div class="cb-head">${esc(p.nick)}</div>`+
-  `<div class="cb-carac">${esc(p.carac)}</div><div class="cb-desc">${esc(CARAC_DESC[p.carac]||"")}</div>`+
+const backCoach=p=>`<div class="cb-carac">${esc(p.carac)}</div><div class="cb-desc">${esc(CARAC_DESC[p.carac]||"")}</div>`+
   `<div class="cb-foot">OVR ${p.ovr}</div>`;
 const frontHTML=p=>p.tipo==="coach"?coachHTML(p):playerHTML(p);
 const backHTML=p=>p.tipo==="coach"?backCoach(p):backPlayer(p);
