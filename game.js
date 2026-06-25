@@ -10,22 +10,19 @@
    Convenção: nomes e comentários em pt-BR; helpers curtos no topo de cada bloco.
    ════════════════════════════════════════════════════════════════════ */
 /* ——— MOTORES A/B/C · avaliação de jogadores e química ——— */
-const CFG_IDENTIDADE={K_APOIO:.30,PARADOXOS:[["Entry","Support"],["Entry","Lurker"]],
-  AWP_SUPREMO:{min:85,bonus:25},LURKER_SOLO:{enRef:20,fator:.6},LURKER_FILTRO:{enRef:45,fator:2.5},LURKER_GATE:{opMin:40},
-  SUPPORT_UT_REF:70, // acima deste ut, a penalidade de fp no support encolhe (rifler-support legítimo)
-  SUPPORT_TR_MIN:25, // abaixo deste trade, o support é descontado (fragger solo não joga de apoio)
-  SUPPORT_CL_REF:55,SUPPORT_K_CLUTCH:.35, // clutch alto puxa pra longe de support (perfil solo, não coletivo)
-  SEC_FORTE_GAP:.35,
-  LK_CTRL:{w:1.21,ref:65.95,fpRef:84.95}, // lurker-controlador: ut+op alto vira lurk, amortecido por fp elite (fp alto=rifler)
-  SUPP_K_OP:0.33,SUPP_OP_REF:59.44};   // support penalizado por op alto (apoio segura, nao abre) // gap relativo de afinidade ≤35% = secundário genuíno; acima disso é nominal
-const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:20,ELITE_REF:1.25,
-  ABERRACAO:{r22:1.65,r21:1.45}, // rating acima destes limiares força OVR 22 / 21 (sobre-humano)
-  ART:{r:6.5,sn:.04,fp:.01,secMul:.015,base:3.5,eliteMul:15,secCap:75},
-  ASS:{r:7.5,fp:.04,base:4.0,subRef:55,subDiv:28,subClamp:.8,eliteMul:8},
-  ESP:{mecR:9.0,mecBase:6.0,funcMul:14,funcMulSup:11.5,funcBase:5,convRef:25,convDiv:10,convClamp:2.5},
-  ANC:{wM:.62,wF:.32,wMp:.50,wFp:.49,eliteMul:18,clRef:60,kCl:.10},OPR:{wM:.50,wF:.50}, // clRef/kCl: âncora com clutch baixo (cl<clRef) perde um pouco
-  CMD:{FM:9.86,FB:2.68,BR:2.32,UTW:8.64,FADE:0.7,PC:4.08,bonusEntry:1,bonusFpRef:45,bonusFpDiv:20},
-  PISO_COLOCACAO:{Campeao:6,Final:4,Top4:3,Top8:2,Grupos:0}};
+/* Perfil por função: AFIN (pesos da identidade) + OVR (pesos do nível) + wR (peso do
+   rating HLTV no OVR daquela função) + crédito intrínseco (cérebro/cola, não por título). */
+const ROLE_PERFIL={
+  AWPer:  {afin:{sn:.80,op:.12,fp:.05},        ovr:{sn:.45,fp:.25,op:.20,cl:.10},       wR:.55,credito:0},
+  Rifler: {afin:{fp:.42,op:.24,tr:.16,cl:.18}, ovr:{fp:.45,op:.25,tr:.15,cl:.15},       wR:.58,credito:0},
+  Entry:  {afin:{en:.46,op:.34,fp:.20},        ovr:{en:.40,op:.30,fp:.20,tr:.10},       wR:.58,credito:0},
+  Lurker: {afin:{cl:.50,op:.28,fp:.22},        ovr:{cl:.40,op:.28,fp:.22,ut:.10},       wR:.55,credito:0},
+  Support:{afin:{ut:.55,tr:.25,fp:.10,op:.10}, ovr:{ut:.45,tr:.22,fp:.15,op:.10,cl:.08},wR:.42,credito:3},
+  IGL:    {afin:null,                          ovr:{ut:.38,fp:.22,op:.18,cl:.12,en:.10},wR:.42,credito:6}};
+const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22,
+  RAT_LO:.85,RAT_HI:1.55,RAT_CAP:1.2,        // mapa do rating HLTV -> 0..~120 (sem cliffs)
+  OVR_BASE:6.5,OVR_SLOPE:.158,               // core -> OVR (curva única; clip em 22 = só lendas)
+  PARADOXO:[["Entry","Support"],["Entry","Lurker"]],PARADOXO_PEN:.85};
 const CFG_QUIMICA={RESULTADO:{Campeao:5,Final:4,Top4:3,Top8:2,Grupos:1},
   ESPERADO_POR_SOMA:[{min:86,e:5},{min:78,e:4},{min:70,e:3},{min:60,e:2},{min:0,e:1}],
   TREINADOR_BASE:15,TREINADOR_K_BONUS:2.5,TREINADOR_K_PUN:1.5,PISO_TREINADOR:{Campeao:16,Final:15,Top4:15,Top8:12,Grupos:10},
@@ -49,69 +46,28 @@ const CFG_QUIMICA={RESULTADO:{Campeao:5,Final:4,Top4:3,Top8:2,Grupos:1},
 
 const clamp=(x,lo,hi)=>Math.max(lo,Math.min(hi,x));
 const clipOVR=x=>clamp(Math.round(x),CFG_AVALIACAO.OVR_MIN,CFG_AVALIACAO.OVR_MAX);
-const BACKBONE={Rifler:"fp",AWPer:"sn",Lurker:"cl",Support:"ut",Entry:"en"};
-const backbone=(p,s)=>p[BACKBONE[s]]??0;
-const bonusElite=(r,m)=>r>=CFG_AVALIACAO.ELITE_REF?(r-CFG_AVALIACAO.ELITE_REF)*m:0;
-const ehParadoxo=(a,b)=>CFG_IDENTIDADE.PARADOXOS.some(([x,y])=>(a===x&&b===y)||(a===y&&b===x));
-const GATES_PRIMARIO={Lurker:p=>p.op>=CFG_IDENTIDADE.LURKER_GATE.opMin||p.cl>=86,AWPer:p=>p.sn>=CFG_IDENTIDADE.AWP_SUPREMO.min};
-function afinidades(p){const cfg=CFG_IDENTIDADE;let awp=p.sn;if(p.sn>=cfg.AWP_SUPREMO.min)awp+=cfg.AWP_SUPREMO.bonus;
-  let lurker=p.cl+Math.max(0,cfg.LURKER_SOLO.enRef-p.en)*cfg.LURKER_SOLO.fator;
-  if(p.en>cfg.LURKER_FILTRO.enRef)lurker-=(p.en-cfg.LURKER_FILTRO.enRef)*cfg.LURKER_FILTRO.fator;
-  // boost de lurker-controlador: ut+op alto (controla o mapa) com cl real, amortecido por fp elite
-  if(p.cl>=45&&p.en<=45){const lk=cfg.LK_CTRL;const ctrl=(0.55*p.ut+0.45*p.op)-lk.ref;
-    const damp=Math.max(0,Math.min(1,(100-p.fp)/(100-lk.fpRef)));if(ctrl>0)lurker+=lk.w*ctrl*damp;}
-  let supp=Math.max(0,(.75*p.ut+.25*p.tr-cfg.K_APOIO*p.fp*Math.max(0,Math.min(1,(cfg.SUPPORT_UT_REF-p.ut)/cfg.SUPPORT_UT_REF))-cfg.SUPPORT_K_CLUTCH*Math.max(0,p.cl-cfg.SUPPORT_CL_REF))*(p.tr>=cfg.SUPPORT_TR_MIN?1:p.tr/cfg.SUPPORT_TR_MIN));
-  supp-=cfg.SUPP_K_OP*Math.max(0,p.op-cfg.SUPP_OP_REF);
-  return{AWPer:awp,Entry:.74*p.en+.26*p.op,Rifler:.55*p.fp+.30*p.tr+.15*p.op,
-    Support:Math.max(0,supp),Lurker:Math.max(0,lurker)};}
-function motorA(p){if(p.classeCravada){const c=p.classeCravada.split("-");c.secForte=true;return c;}
-  const sc=afinidades(p);
-  const ordem=Object.keys(sc).sort((a,b)=>sc[b]-sc[a]);
+const dot=(w,p)=>{let s=0;for(const k in w)s+=w[k]*(p[k]||0);return s;}; // produto-escalar pesos·atributos
+const ROLES_COMBATE=["AWPer","Rifler","Entry","Lurker","Support"];
+// MOTOR A — classificação de função por AFINIDADE contínua (sem gates nem números mágicos).
+// primário = maior afinidade; secundário = 2ª (paradoxo = leve desconto na escolha, não veto).
+function classificar(p){
+  const sc={};ROLES_COMBATE.forEach(r=>sc[r]=dot(ROLE_PERFIL[r].afin,p));
+  const ordem=ROLES_COMBATE.slice().sort((a,b)=>sc[b]-sc[a]);
   if(p.isIGL){const c=["IGL",ordem[0]];c.secForte=true;return c;}
-  // AWP supremo: SN altíssimo força AWPer como primário (recurso único do time)
-  const awpSupremo=p.sn>=CFG_IDENTIDADE.AWP_SUPREMO.min;
-  const prim=awpSupremo?"AWPer":(ordem.find(s=>!GATES_PRIMARIO[s]||GATES_PRIMARIO[s](p))??ordem[0]);
-  const sec=ordem.find(s=>s!==prim&&!ehParadoxo(prim,s));
-  // secundário é "forte" (jogador genuinamente bi-funcional) se a afinidade dele
-  // for próxima do primário; se o gap for grande, o 2º papel é só nominal
-  const ref=Math.max(1,sc[prim]);const gap=(sc[prim]-(sc[sec]??0))/ref;
-  const c=[prim,sec];c.secForte=gap<=CFG_IDENTIDADE.SEC_FORTE_GAP;return c;}
+  const prim=ordem[0],par=CFG_AVALIACAO.PARADOXO;
+  const ehPar=(a,b)=>par.some(([x,y])=>(a===x&&b===y)||(a===y&&b===x));
+  let sec=ordem[1];
+  if(ehPar(prim,sec)&&ordem[2]&&sc[ordem[2]]>=sc[sec]*CFG_AVALIACAO.PARADOXO_PEN)sec=ordem[2];
+  const c=[prim,sec];
+  c.secForte=(sc[sec]/Math.max(1,sc[prim]))>=.82; // bi-funcional de verdade (grau contínuo -> bool p/ química)
+  return c;}
 const ESTEIRA={AWPer:"Artilharia",Rifler:"Assalto",Entry:"Vanguarda",Lurker:"Ancora",Support:"Sistema",IGL:"Comando"};
-function ovrArtilharia(p,s){const k=CFG_AVALIACAO.ART;const sc=Math.min(backbone(p,s),k.secCap);
-  return clipOVR(k.r*p.rating+k.sn*p.sn+k.fp*p.fp+sc*k.secMul+k.base+bonusElite(p.rating,k.eliteMul));}
-function ovrAssalto(p,s){const k=CFG_AVALIACAO.ASS;
-  const sub={Entry:.60*p.en+.40*p.op,Lurker:.60*p.cl+.40*p.tr,Support:.60*p.ut+.40*p.tr,AWPer:.70*p.sn+.30*p.op}[s]??0;
-  const mod=clamp((sub-k.subRef)/k.subDiv,-k.subClamp,k.subClamp);
-  return clipOVR(k.r*p.rating+k.fp*p.fp+k.base+mod+bonusElite(p.rating,k.eliteMul));}
-function nucleoOperario(p,s,fnAtr,mul){const k=CFG_AVALIACAO.ESP;
-  return{M:k.mecR*p.rating+k.mecBase,F:(fnAtr/100)*mul+k.funcBase,modConv:clamp((backbone(p,s)-k.convRef)/k.convDiv,-k.convClamp,0)};}
-function ovrVanguarda(p,s){const{M,F,modConv}=nucleoOperario(p,s,.70*p.en+.30*p.op,CFG_AVALIACAO.ESP.funcMul);
-  return clipOVR(CFG_AVALIACAO.OPR.wM*M+CFG_AVALIACAO.OPR.wF*F+modConv);}
-function ovrAncora(p,s){const k=CFG_AVALIACAO.ANC;const pm=SUBARQ.Lurker.eixo(p)>=0;
-  // Playmaker e avaliado pelo frag/pick (op+fp) com peso proprio; Clutcher pela posicao/clutch (cl)
-  const fnAtr=pm?(0.5*p.op+0.5*p.fp):p.cl;
-  const{M,F,modConv}=nucleoOperario(p,s,fnAtr,CFG_AVALIACAO.ESP.funcMul);
-  const pisoClutch=k.kCl*Math.min(0,p.cl-k.clRef); // âncora pouco clutcher (cl baixo) vale um tico menos; cl alto não muda
-  return clipOVR((pm?k.wMp:k.wM)*M+(pm?k.wFp:k.wF)*F+modConv+pisoClutch+bonusElite(p.rating,k.eliteMul));}
-function ovrSistema(p,s){const{M,F,modConv}=nucleoOperario(p,s,p.ut,CFG_AVALIACAO.ESP.funcMulSup);
-  return clipOVR(CFG_AVALIACAO.OPR.wM*M+CFG_AVALIACAO.OPR.wF*F+modConv);}
-function ovrComando(p,s){const k=CFG_AVALIACAO.CMD;
-  // O IGL não é role de combate — avalia-se em DUAS CAMADAS.
-  // CAMADA 1 — frag herdado do SECUNDÁRIO: o que o IGL rende no tiroteio depende do que ele joga.
-  const frag={AWPer:.50*p.sn+.30*p.op+.20*p.fp,Rifler:.60*p.fp+.25*p.op+.15*p.tr,
-    Entry:.50*p.en+.30*p.op+.20*p.fp,Lurker:.45*p.cl+.30*p.fp+.25*p.op,
-    Support:.40*p.ut+.25*p.en+.20*p.op+.15*p.tr}[s]??(.50*p.fp+.50*p.op);
-  const fn=clamp(frag/100,0,1);
-  const combate=(frag/100)*k.FM+k.FB+(s==="Entry"?k.bonusEntry:0);
-  // CAMADA 2 — prêmio de comando: o valor que o frag NÃO mede.
-  // colocação (título prova o caller) + forma (rating) + cérebro tático (ut),
-  // este COMPENSANDO quem fraga pouco: caller puro vale pela cabeça; IGL-fragger já é pago no frag.
-  const piso={Campeao:k.PC,Final:k.PC*0.70,Top4:k.PC*0.55,Top8:k.PC*0.38,Grupos:0}[p.colocacao]??0;
-  const cerebro=piso+(p.rating-1.0)*k.BR+(p.ut/100)*k.UTW*(1-fn*k.FADE)+Math.max(0,p.fp-k.bonusFpRef)/k.bonusFpDiv;
-  return clipOVR(combate+cerebro);}
-function motorB(p,classe){const esteira=ESTEIRA[classe[0]];
-  const fns={Artilharia:ovrArtilharia,Assalto:ovrAssalto,Vanguarda:ovrVanguarda,Ancora:ovrAncora,Sistema:ovrSistema,Comando:ovrComando};
-  return{esteira,ovr:fns[esteira](p,classe[1])};}
+// MOTOR B — OVR unificado p/ TODAS as funções (escala única, sem cliffs nem dependência de título):
+//   core = wR·rating + (1−wR)·atributos-da-função + crédito; OVR = curva suave clip 5..22.
+const ratingScore=r=>clamp((r-CFG_AVALIACAO.RAT_LO)/(CFG_AVALIACAO.RAT_HI-CFG_AVALIACAO.RAT_LO),0,CFG_AVALIACAO.RAT_CAP)*100;
+function ovrUnificado(role,p){const C=CFG_AVALIACAO,prof=ROLE_PERFIL[role];
+  const core=prof.wR*ratingScore(p.rating)+(1-prof.wR)*dot(prof.ovr,p)+prof.credito;
+  return clipOVR(C.OVR_BASE+C.OVR_SLOPE*core);}
 // ——— Sub-arquétipos: eixo ponderado por esteira (detecção automática, multi-atributo) ———
 // eixo>0 = sub A, <0 = sub B; magnitude = quão definido é o arquétipo. Define COMO o jogador joga.
 const SUBARQ={
@@ -126,11 +82,11 @@ function subArquetipo(role,p){const s=SUBARQ[role];if(!s)return null;const e=s.e
 // STAR PLAYERS — definidos por curadoria (não se calcula: NiKo é star com OVR 15 ou 22).
 const TIER_LENDA=["s1mple","ZywOo","device","dev1ce","NiKo","coldzera","donk","GeT_RiGhT","olofmeister"];
 const TIER_STAR=["kennyS","m0NESY","KSCERATO","blameF","shox","XANTARES","JW","ropz"];
-function avaliarJogador(p){const classe=motorA(p);const{esteira,ovr}=motorB(p,classe);
-  const ab=CFG_AVALIACAO.ABERRACAO;const ovrFinal=p.rating>ab.r22?22:p.rating>ab.r21?21:ovr;
+function avaliarJogador(p){const classe=classificar(p);const role=classe[0];
+  const ovr=ovrUnificado(role,p);
   const _nk=p.nick||p.nome;const estrela=TIER_LENDA.includes(_nk)||TIER_STAR.includes(_nk);
-  const _roleSub=classe[0]==="IGL"?classe[1]:classe[0];const sub=subArquetipo(_roleSub,p);
-  return{primario:classe[0],secundario:classe[1],secForte:classe.secForte!==false,classe:classe.join("-"),esteira,ovr:ovrFinal,estrela,sub};}
+  const _roleSub=role==="IGL"?classe[1]:role;const sub=subArquetipo(_roleSub,p);
+  return{primario:role,secundario:classe[1],secForte:classe.secForte!==false,classe:classe.join("-"),esteira:ESTEIRA[role],ovr,estrela,sub};}
 function ovrTreinador(somaOVR,colocacao){const C=CFG_QUIMICA;
   const delta=(C.RESULTADO[colocacao]??1)-(C.ESPERADO_POR_SOMA.find(x=>somaOVR>=x.min)??{e:1}).e;
   const ajuste=delta>=0?C.TREINADOR_K_BONUS*delta:C.TREINADOR_K_PUN*delta;
