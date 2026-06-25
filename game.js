@@ -13,15 +13,15 @@
 /* Perfil por função: AFIN (pesos da identidade) + OVR (pesos do nível) + wR (peso do
    rating HLTV no OVR daquela função) + crédito intrínseco (cérebro/cola, não por título). */
 const ROLE_PERFIL={
-  AWPer:  {afin:{sn:.80,op:.12,fp:.05},        ovr:{sn:.45,fp:.25,op:.20,cl:.10},       wR:.55,credito:0},
-  Rifler: {afin:{fp:.42,op:.24,tr:.16,cl:.18}, ovr:{fp:.45,op:.25,tr:.15,cl:.15},       wR:.58,credito:0},
-  Entry:  {afin:{en:.46,op:.34,fp:.20},        ovr:{en:.40,op:.30,fp:.20,tr:.10},       wR:.58,credito:0},
-  Lurker: {afin:{cl:.50,op:.28,fp:.22},        ovr:{cl:.40,op:.28,fp:.22,ut:.10},       wR:.55,credito:0},
-  Support:{afin:{ut:.55,tr:.25,fp:.10,op:.10}, ovr:{ut:.45,tr:.22,fp:.15,op:.10,cl:.08},wR:.42,credito:3},
-  IGL:    {afin:null,                          ovr:{ut:.38,fp:.22,op:.18,cl:.12,en:.10},wR:.42,credito:6}};
+  AWPer:  {afin:{sn:.80,op:.12,fp:.05},        ovr:{sn:.45,fp:.25,op:.20,cl:.10},       wR:.66},
+  Rifler: {afin:{fp:.42,op:.24,tr:.16,cl:.18}, ovr:{fp:.45,op:.25,tr:.15,cl:.15},       wR:.66},
+  Entry:  {afin:{en:.46,op:.34,fp:.20},        ovr:{en:.40,op:.30,fp:.20,tr:.10},       wR:.64},
+  Lurker: {afin:{cl:.50,op:.28,fp:.22},        ovr:{cl:.40,op:.24,fp:.26,ut:.10},       wR:.66},
+  Support:{afin:{ut:.55,tr:.25,fp:.10,op:.10}, ovr:{ut:.45,tr:.22,fp:.15,op:.10,cl:.08},wR:.45,credito:3}};
 const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22,
-  RAT_LO:.85,RAT_HI:1.55,RAT_CAP:1.2,        // mapa do rating HLTV -> 0..~120 (sem cliffs)
-  OVR_BASE:6.5,OVR_SLOPE:.158,               // core -> OVR (curva única; clip em 22 = só lendas)
+  RAT_LO:.85,RAT_HI:1.50,RAT_CAP:1.25,       // mapa do rating HLTV -> 0..125 (sem cliffs)
+  FLOOR:5.7,SPAN:18,K:.0417,MID:54,          // core -> OVR (logística: plana no meio, íngreme no topo, satura em 22)
+  IGL_RAT_K:.80,IGL_CREDITO:9,               // IGL: rating descontado (sacrifica stats) + crédito de liderança intrínseco
   PARADOXO:[["Entry","Support"],["Entry","Lurker"]],PARADOXO_PEN:.85};
 const CFG_QUIMICA={RESULTADO:{Campeao:5,Final:4,Top4:3,Top8:2,Grupos:1},
   ESPERADO_POR_SOMA:[{min:86,e:5},{min:78,e:4},{min:70,e:3},{min:60,e:2},{min:0,e:1}],
@@ -63,11 +63,18 @@ function classificar(p){
   return c;}
 const ESTEIRA={AWPer:"Artilharia",Rifler:"Assalto",Entry:"Vanguarda",Lurker:"Ancora",Support:"Sistema",IGL:"Comando"};
 // MOTOR B — OVR unificado p/ TODAS as funções (escala única, sem cliffs nem dependência de título):
-//   core = wR·rating + (1−wR)·atributos-da-função + crédito; OVR = curva suave clip 5..22.
+//   core = wR·rating + (1−wR)·atributos-da-função + crédito; OVR = curva logística clip 5..22.
+// O IGL herda o PERFIL DO SEU ROLE DE COMBATE (secundário): um IGL/AWPer pondera o rating como
+// AWPer, um IGL/Support como Support (o peso do rating depende do role, como pediu o usuário).
+// Como o IGL sacrifica stats individuais, o peso de rating é descontado (IGL_RAT_K) e ele recebe
+// um crédito de liderança intrínseco (não vem do título do time).
 const ratingScore=r=>clamp((r-CFG_AVALIACAO.RAT_LO)/(CFG_AVALIACAO.RAT_HI-CFG_AVALIACAO.RAT_LO),0,CFG_AVALIACAO.RAT_CAP)*100;
-function ovrUnificado(role,p){const C=CFG_AVALIACAO,prof=ROLE_PERFIL[role];
-  const core=prof.wR*ratingScore(p.rating)+(1-prof.wR)*dot(prof.ovr,p)+prof.credito;
-  return clipOVR(C.OVR_BASE+C.OVR_SLOPE*core);}
+const curvaOVR=core=>{const C=CFG_AVALIACAO;return clipOVR(C.FLOOR+C.SPAN/(1+Math.exp(-C.K*(core-C.MID))));};
+function ovrUnificado(role,p,sec){const C=CFG_AVALIACAO;
+  if(role==="IGL"){const prof=ROLE_PERFIL[sec],wR=prof.wR*C.IGL_RAT_K;
+    return curvaOVR(wR*ratingScore(p.rating)+(1-wR)*dot(prof.ovr,p)+C.IGL_CREDITO);}
+  const prof=ROLE_PERFIL[role];
+  return curvaOVR(prof.wR*ratingScore(p.rating)+(1-prof.wR)*dot(prof.ovr,p)+(prof.credito||0));}
 // ——— Sub-arquétipos: eixo ponderado por esteira (detecção automática, multi-atributo) ———
 // eixo>0 = sub A, <0 = sub B; magnitude = quão definido é o arquétipo. Define COMO o jogador joga.
 const SUBARQ={
@@ -83,7 +90,7 @@ function subArquetipo(role,p){const s=SUBARQ[role];if(!s)return null;const e=s.e
 const TIER_LENDA=["s1mple","ZywOo","device","dev1ce","NiKo","coldzera","donk","GeT_RiGhT","olofmeister"];
 const TIER_STAR=["kennyS","m0NESY","KSCERATO","blameF","shox","XANTARES","JW","ropz"];
 function avaliarJogador(p){const classe=classificar(p);const role=classe[0];
-  const ovr=ovrUnificado(role,p);
+  const ovr=ovrUnificado(role,p,classe[1]);
   const _nk=p.nick||p.nome;const estrela=TIER_LENDA.includes(_nk)||TIER_STAR.includes(_nk);
   const _roleSub=role==="IGL"?classe[1]:role;const sub=subArquetipo(_roleSub,p);
   return{primario:role,secundario:classe[1],secForte:classe.secForte!==false,classe:classe.join("-"),esteira:ESTEIRA[role],ovr,estrela,sub};}
