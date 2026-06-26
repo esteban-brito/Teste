@@ -356,7 +356,7 @@ const faSwingMorte=(meu,ini)=>faWP(meu-1,ini)-faWP(meu,ini);  // <=0
 const FA_ECO={full:{full:1,force:.9,eco:.62,pistol:.55},force:{full:1.18,force:1,eco:.78,pistol:.68},
   eco:{full:1.6,force:1.3,eco:1,pistol:.85},pistol:{full:1.55,force:1.25,eco:.95,pistol:1}};
 const faEco=(mb,vb)=>(FA_ECO[mb]&&FA_ECO[mb][vb])||1;
-const CFG_FA={BASE:.345,W_EK:.74,W_SURV:.132,W_KAST:.204,W_MULTI:.042,W_SWING:.10,PESO_MORTE:.95,PESO_OPEN:.216,
+const CFG_FA={BASE:.455,W_EK:.62,W_SURV:.160,W_KAST:.240,W_MULTI:.042,W_SWING:.10,PESO_MORTE:.95,PESO_OPEN:.216,
   // bônus de firepower: poder de fogo bruto puxa o rating pra cima (ajuda entries de fp alto). Cosmético — não muda resultado.
   FP:{ref:62,per:.0026,min:-.04,max:.105}};
 // impacto por função no kill: entry/rifler que fragga gera mais valor que support/igl (centrado ~1.0)
@@ -455,7 +455,7 @@ function prepTime(t,mapa){
     skills:js.map((j,i)=>skillDuelo(j)*Math.pow(formas[i],1.0)*mapMult(j,mapa)),
     frags:js.map((j,i)=>fragPeso(j)*Math.pow(formas[i],1.0)*mapMult(j,mapa)),
     cls:js.map(j=>j.cl||40),agr:js.map(j=>subAgr(j)),
-    stats:js.map(j=>({nick:j.nick||t.nome,impacto:FA_IMPACTO[j.primario]??1,fp:j.fp??60,k:0,d:0,a:0,
+    stats:js.map(j=>({nick:j.nick||t.nome,impacto:FA_IMPACTO[j.primario]??1,fp:j.fp??60,ut:j.ut??50,k:0,d:0,a:0,
       fa:{kills:[],mortes:[],assists:0,roundsKAST:0,multi:{},opK:0,opD:0},_kRound:0,_contribRound:false}))};
 }
 // resolve o combate de um round respeitando conservação (cada kill = uma morte)
@@ -492,7 +492,9 @@ function combateRound(venc,perd,ctx){
       venc.stats[tV].fa.mortes.push({estadoMeu:vV.length,estadoInim:vP.length});
       venc.stats[tV].d++;vV=vV.filter(x=>x!==tV);mortosV++;}
   }
-  if(rndF()<.45){const ai=vV[Math.floor(rndF()*vV.length)];if(ai!=null){venc.stats[ai].a++;venc.stats[ai].fa.assists++;venc.stats[ai]._contribRound=true;}}
+  // assistência ponderada por UTILIDADE: quem dá utility (granada/flash/setup) habilita a kill.
+  // é o crédito que faltava pro support de fp baixo — gera KAST/assist (→ rating), como no HLTV.
+  if(rndF()<.55&&vV.length){const ai=pick(vV,i=>18+(venc.stats[i].ut||40));venc.stats[ai].a++;venc.stats[ai].fa.assists++;venc.stats[ai]._contribRound=true;}
   // multi-kills + KAST do round, pra ambos os times
   [venc,perd].forEach((t,lado)=>{t.stats.forEach((s,i)=>{
     const kr=s._kRound||0;if(kr>=2)s.fa.multi[kr]=(s.fa.multi[kr]||0)+1;
