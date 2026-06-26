@@ -361,7 +361,7 @@ const faEco=(mb,vb)=>(FA_ECO[mb]&&FA_ECO[mb][vb])||1;
 const CFG_FA={BASE:.520,W_EK:.42,W_SURV:.160,W_KAST:.240,W_MULTI:.042,W_SWING:.10,PESO_MORTE:.95,PESO_OPEN:.216,
   // W_EK menor + BASE maior = tiers comprimidos (topo desce, 19-22 se sobrepõem) sem matar a variação (forma é que oscila)
   // bônus de firepower: poder de fogo bruto puxa o rating pra cima (ajuda entries de fp alto). Cosmético — não muda resultado.
-  FP:{ref:62,per:.0026,min:-.04,max:.05}};
+  FP:{ref:62,per:.0030,min:-.04,max:.09}};
 // impacto por função no kill: entry/rifler que fragga gera mais valor que support/igl (centrado ~1.0)
 const FA_IMPACTO={Entry:1.07,Lurker:1.06,Rifler:1.03,AWPer:.99,Support:.93,IGL:.91}; // lurker é função de frag/clutch — pontua entre os mais altos
 // rating FALLEnANGELs de um jogador a partir do seu log de eventos no mapa
@@ -416,7 +416,7 @@ function formaDoDia(j){const a=j._eng||j;const t=tierDe(j),p=PERFIL_TIER[t];
 // o rating global, só faz CADA run ser diferente (o motor de variância do roguelike).
 // forma de campanha: lenda/estrela varia POUCO no Major (confiável); role player balança mais.
 // AMP_TIME maior = o time "clica" ou não no evento com mais força (mais zebras de campanha).
-const CFG_CAMP={AMP_TIME:0.11,AMP_JOG:{Lenda:0.07,Star:0.10,Solido:0.18,Role:0.23}};
+const CFG_CAMP={AMP_TIME:0.11,AMP_JOG:{Lenda:0.12,Star:0.13,Solido:0.18,Role:0.23}};
 function sortearFormaCampanha(times){
   times.forEach(t=>{
     const seedTime=gaussF()*CFG_CAMP.AMP_TIME;
