@@ -16,7 +16,7 @@ const ROLE_PERFIL={
   AWPer:  {afin:{sn:.80,op:.12,fp:.05},        ovr:{sn:.45,fp:.25,op:.20,cl:.10},       wR:.66},
   Rifler: {afin:{fp:.42,op:.24,tr:.16,cl:.18}, ovr:{fp:.45,op:.25,tr:.15,cl:.15},       wR:.66},
   Entry:  {afin:{en:.46,op:.42,fp:.12},        ovr:{en:.40,op:.30,fp:.20,tr:.10},       wR:.64},
-  Lurker: {afin:{cl:.50,op:.28,fp:.22},        ovr:{cl:.40,op:.24,fp:.26,ut:.10},       wR:.66},
+  Lurker: {afin:{cl:.58,op:.22,fp:.20},        ovr:{cl:.40,op:.24,fp:.26,ut:.10},       wR:.66},
   Support:{afin:{ut:.55,tr:.25,fp:.10,op:.10}, ovr:{ut:.45,tr:.22,fp:.15,op:.10,cl:.08},wR:.45,credito:3}};
 const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22,
   RAT_LO:.85,RAT_HI:1.50,RAT_CAP:1.25,       // mapa do rating HLTV -> 0..125 (sem cliffs)
