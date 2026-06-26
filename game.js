@@ -337,6 +337,7 @@ const CFG_SIM={D_MAPA:30,D_ROUND:78,D_PISTOL:90,AMP_MAX:12,AMP_CONSIST:.7,
   LADO_CT:2.2,FORMA_DIA:9,
   MOM_STEP:.05,MOM_MAX:.14,TILT_STEP:.018,TILT_MAX:.10,CLUTCH_SWING:.20,
   EXP_KILL:1.4,EXP_VITIMA:.55,BAIXAS_PERD:5.0,BAIXAS_VENC:2.0,TRADE_CHANCE:.7,
+  FRAG_FP_BASE:35,FRAG_OVR:.018, // distribuição de kills: fp manda (base baixa=mais spiky), OVR pesa leve
   MAPA_SCALE:380,MAPA_CAP:.06,SUB_ABRE:0.72,SUB_SURV:0.34,SUB_INT:40};
 
 /* ——— MOTOR FALLEnANGELs · rating contextual (estilo HLTV 3.0) ——— */
@@ -419,11 +420,17 @@ function sortearFormaCampanha(times){
 }
 
 /* ——— ENGINE DE SIMULAÇÃO · mapa round a round —————— */
-// skill de combate ancorado no OVR (veredito dos Motores A/B/C), com textura leve por função.
-// fraggers convertem OVR em duelo quase cheio; support/IGL um pouco menos no tiroteio direto.
+// DOIS eixos DESACOPLADOS (correlação fp×rating_real=0.835 nos dados):
+//  • skillDuelo (OVR)  → FORÇA DO TIME: quem GANHA o round/jogo. Um IGL de OVR alto e fp baixo
+//    puxa a vitória do time mesmo fragando pouco. Ancorado no veredito dos Motores A/B/C.
+//  • fragPeso (FIREPOWER) → QUEM FRAGA dentro do time: distribui as kills (→ rating individual).
+//    fp manda; OVR dá só um empurrão leve de habilidade. IGL fp 2 fraga pouco (rating baixo) ainda
+//    que decisivo pra vitória; fragger fp alto fraga muito (rating alto). É o que o CS real mostra.
 const CONV_FUNC={Rifler:1.0,AWPer:1.0,Entry:.98,Lurker:.97,Support:.92,IGL:.90};
 function skillDuelo(j){const a=j._eng||j;const ovr=j.ovr??a.ovr??13;const prim=j.primario||a.primario||"Rifler";
   return (12+(ovr-5)*4.6)*(CONV_FUNC[prim]??.95);}
+function fragPeso(j){const a=j._eng||j;const C=CFG_SIM;const fp=a.fp??60,ovr=j.ovr??a.ovr??13;
+  return (C.FRAG_FP_BASE+fp)*(1+(ovr-13)*C.FRAG_OVR);} // firepower domina o frag; OVR = leve skill
 
 // prepara um time pro combate: skills (com forma da noite), clutch e acumulador de stats
 // agressão de playstyle derivada do sub-arquétipo: quão na frente o jogador joga o round
@@ -444,8 +451,10 @@ function prepTime(t,mapa){
   // forma do dia por jogador: a inspiração da noite move o COMBATE (gera kills reais)
   const formas=js.map(j=>formaDoDia(j));
   return {nome:t.nome,meu:!!t.meu,js,
-    // skill de combate = OVR × forma da noite × afinidade de mapa (modulação leve, ±MAPA_CAP)
-    skills:js.map((j,i)=>skillDuelo(j)*Math.pow(formas[i],1.0)*mapMult(j,mapa)),cls:js.map(j=>j.cl||40),agr:js.map(j=>subAgr(j)),
+    // skill de combate (OVR) = força do time/round; frag (firepower) = distribuição de kills
+    skills:js.map((j,i)=>skillDuelo(j)*Math.pow(formas[i],1.0)*mapMult(j,mapa)),
+    frags:js.map((j,i)=>fragPeso(j)*Math.pow(formas[i],1.0)*mapMult(j,mapa)),
+    cls:js.map(j=>j.cl||40),agr:js.map(j=>subAgr(j)),
     stats:js.map(j=>({nick:j.nick||t.nome,impacto:FA_IMPACTO[j.primario]??1,fp:j.fp??60,k:0,d:0,a:0,
       fa:{kills:[],mortes:[],assists:0,roundsKAST:0,multi:{},opK:0,opD:0},_kRound:0,_contribRound:false}))};
 }
@@ -454,8 +463,9 @@ function prepTime(t,mapa){
 function combateRound(venc,perd,ctx){
   const C=CFG_SIM;let vV=[0,1,2,3,4],vP=[0,1,2,3,4];
   const killsRound=[0,0,0,0,0]; // kills do vencedor SÓ neste round
-  const pk=(t,i)=>Math.pow(Math.max(t.skills[i],8),C.EXP_KILL);   // peso de quem mata (ligado a skill)
-  const pv=(t,i)=>Math.pow(Math.max(t.skills[i],8),C.EXP_VITIMA); // peso de quem morre (mais plano)
+  const pk=(t,i)=>Math.pow(Math.max(t.frags[i],8),C.EXP_KILL);   // quem MATA: firepower (frag)
+  const pv=(t,i)=>Math.pow(Math.max(t.frags[i],8),C.EXP_VITIMA); // quem MORRE: exposição (fp), mais plano
+  // → fp baixo (IGL/support) entra em menos duelos: fraga pouco E morre pouco (sobrevive, joga seguro)
   const baixasP=Math.round(clamp(C.BAIXAS_PERD+gaussF()*.6,3,5));
   const baixasV=Math.round(clamp(C.BAIXAS_VENC+gaussF()*1.0,0,4));
   const pick=(arr,fn)=>{const ps=arr.map(fn),tot=ps.reduce((a,b)=>a+b,0);let r=rndF()*tot;
@@ -474,7 +484,7 @@ function combateRound(venc,perd,ctx){
     if(primeiraKill){venc.stats[mV].fa.opK++;perd.stats[tP].fa.opD++;primeiraKill=false;}
     vP=vP.filter(x=>x!==tP);mortosP++;
     if(mortosV<baixasV&&vV.length>1&&rndF()<C.TRADE_CHANCE){ // perdedor revida (trade)
-      const matador=vP.length?vP[Math.floor(rndF()*vP.length)]:perd.skills.indexOf(Math.max(...perd.skills));
+      const matador=vP.length?pick(vP,i=>pk(perd,i)):perd.frags.indexOf(Math.max(...perd.frags));
       const tV=pick(vV,i=>pv(venc,i)*(1+C.SUB_SURV*(venc.agr[i]||0)));
       // kill do perdedor: round perdido pra ele → swing não conta (roundGanho:false)
       perd.stats[matador].fa.kills.push({estadoMeu:vP.length,estadoInim:vV.length,buyMatador:bP,buyVitima:bV,roundGanho:false});
