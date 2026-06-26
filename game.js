@@ -20,7 +20,7 @@ const ROLE_PERFIL={
   Support:{afin:{ut:.55,tr:.25,fp:.10,op:.10}, ovr:{ut:.45,tr:.22,fp:.15,op:.10,cl:.08},wR:.45,credito:3}};
 const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22,
   RAT_LO:.85,RAT_HI:1.50,RAT_CAP:1.25,       // mapa do rating HLTV -> 0..125 (sem cliffs)
-  FLOOR:5.7,SPAN:18,K:.0417,MID:54,          // core -> OVR (logística: plana no meio, íngreme no topo, satura em 22)
+  FLOOR:9,SPAN:14,K:.0495,MID:55.8,          // core -> OVR (logística; piso mais alto = menos discrepância: role player decente não despenca)
   IGL_RAT_K:.80,IGL_CREDITO:9,               // IGL: rating descontado (sacrifica stats) + crédito de liderança intrínseco
   IGL_TITULO:{Campeao:3,Final:2,Top4:1,Top8:0,Grupos:0}, // liderança comprovada por título soma OVR (só p/ IGL)
   IGL_TETO:20,                               // nenhum IGL passa de 20 (o jogo é decidido pelos fraggers)
