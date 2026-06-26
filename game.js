@@ -23,6 +23,7 @@ const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22,
   FLOOR:5.7,SPAN:18,K:.0417,MID:54,          // core -> OVR (logística: plana no meio, íngreme no topo, satura em 22)
   IGL_RAT_K:.80,IGL_CREDITO:9,               // IGL: rating descontado (sacrifica stats) + crédito de liderança intrínseco
   IGL_TITULO:{Campeao:3,Final:2,Top4:1,Top8:0,Grupos:0}, // liderança comprovada por título soma OVR (só p/ IGL)
+  IGL_TETO:20,                               // nenhum IGL passa de 20 (o jogo é decidido pelos fraggers)
   PARADOXO:[["Entry","Support"],["Entry","Lurker"]],PARADOXO_PEN:.85};
 const CFG_QUIMICA={RESULTADO:{Campeao:5,Final:4,Top4:3,Top8:2,Grupos:1},
   ESPERADO_POR_SOMA:[{min:86,e:5},{min:78,e:4},{min:70,e:3},{min:60,e:2},{min:0,e:1}],
@@ -75,7 +76,7 @@ const curvaOVR=core=>{const C=CFG_AVALIACAO;return clipOVR(C.FLOOR+C.SPAN/(1+Mat
 function ovrUnificado(role,p,sec){const C=CFG_AVALIACAO;
   if(role==="IGL"){const prof=ROLE_PERFIL[sec],wR=prof.wR*C.IGL_RAT_K;
     const base=curvaOVR(wR*ratingScore(p.rating)+(1-wR)*dot(prof.ovr,p)+C.IGL_CREDITO);
-    return clipOVR(base+(C.IGL_TITULO[p.colocacao]||0));} // + bônus de título (liderança comprovada)
+    return Math.min(C.IGL_TETO,clipOVR(base+(C.IGL_TITULO[p.colocacao]||0)));} // + bônus de título, teto IGL
   const prof=ROLE_PERFIL[role];
   return curvaOVR(prof.wR*ratingScore(p.rating)+(1-prof.wR)*dot(prof.ovr,p)+(prof.credito||0));}
 // ——— Sub-arquétipos: eixo ponderado por esteira (detecção automática, multi-atributo) ———
