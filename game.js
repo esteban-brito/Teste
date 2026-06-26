@@ -332,13 +332,19 @@ const rndF=()=>Math.random();
 const gaussF=()=>{let u=0,v=0;while(u===0)u=rndF();while(v===0)v=rndF();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
 const logistica=(fa,fb,D)=>1/(1+Math.pow(10,(fb-fa)/D));
 
-const CFG_SIM={D_MAPA:30,D_ROUND:86,D_PISTOL:96,AMP_MAX:11,AMP_CONSIST:.7,
+const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7,
   PESO_EF:.60,                  // 60% força do time (OVR+química+treinador), 40% skill individual cru
   // motor de combate por jogador (validado vs CS2 real: KPR~0.67, rating~1.0, fiel HLTV)
   LADO_CT:0.8,FORMA_DIA:7,      // vantagem-base de CT (pequena; a composição é que decide o lado)
   LADO_COMP:1.05,               // escala da vantagem de lado por COMPOSIÇÃO (lurker/anchor→CT, entry→T)
-  MOM_STEP:.05,MOM_MAX:.14,TILT_STEP:.018,TILT_MAX:.10,CLUTCH_SWING:.20,
-  EXP_KILL:1.45,EXP_VITIMA:.55,BAIXAS_PERD:5.0,BAIXAS_VENC:2.0,TRADE_CHANCE:.7,
+  MOM_STEP:.05,MOM_MAX:.14,TILT_STEP:.018,TILT_MAX:.10,
+  // ROUND VIVO: o round é uma SEQUÊNCIA DE DUELOS; o vencedor EMERGE (não é um dado só).
+  // D_DUELO = decisão de UM duelo (bem mais raso que o round; o round é a soma de ~5-9 duelos).
+  // pistol é quase cara-ou-coroa (D alto) → o azarão ganha pistol/anti-eco e o 13-0 fica raro.
+  D_DUELO:112,D_DUELO_PIST:360,OPEN_SCALE:520,CLUTCH_DUEL:.22,
+  SAVE_BASE:.24,SAVE_MEN:.07,CLOSE_MEN:.13, // salvar (eco em desvantagem) e fechar bomb/tempo (vantagem de homem)
+  EXP_KILL:1.45,EXP_OPEN:1.10,EXP_VITIMA:.55,TRADE_CHANCE:.62, // EXP_OPEN: abertura é menos sobre fp puro
+  ADR_KILL:95,ADR_VIT:55,ADR_AST:40,ADR_CHIP:14, // dano por evento → alimenta o ADR (fidelidade HLTV)
   FRAG_FP_BASE:35,FRAG_OVR:.018, // distribuição de kills: fp manda; concentra (alguém estoura no mapa, varia pela forma)
   MAPA_SCALE:380,MAPA_CAP:.06,SUB_ABRE:0.72,SUB_SURV:0.34,SUB_INT:40};
 
@@ -358,12 +364,15 @@ const faSwingMorte=(meu,ini)=>faWP(meu-1,ini)-faWP(meu,ini);  // <=0
 const FA_ECO={full:{full:1,force:.9,eco:.62,pistol:.55},force:{full:1.18,force:1,eco:.78,pistol:.68},
   eco:{full:1.6,force:1.3,eco:1,pistol:.85},pistol:{full:1.55,force:1.25,eco:.95,pistol:1}};
 const faEco=(mb,vb)=>(FA_ECO[mb]&&FA_ECO[mb][vb])||1;
-const CFG_FA={BASE:.520,W_EK:.42,W_SURV:.160,W_KAST:.240,W_MULTI:.042,W_SWING:.10,PESO_MORTE:.95,PESO_OPEN:.216,
+const CFG_FA={BASE:.520,W_EK:.385,W_SURV:.160,W_KAST:.240,W_MULTI:.042,W_SWING:.10,PESO_MORTE:.95,PESO_OPEN:.216,
   // W_EK menor + BASE maior = tiers comprimidos (topo desce, 19-22 se sobrepõem) sem matar a variação (forma é que oscila)
+  // ADR (dano por round) entra como sinal independente das kills: parte do peso saiu de W_EK pra cá,
+  // então quem dá muito dano sem converter (ou vice-versa) varia → mais sobreposição entre OVRs (vida).
+  W_ADR:.0019,ADR_REF:76,W_TRADE:.075, // fidelidade: dano + eficiência de trade (refrag) — conceitos reais do HLTV 3.0
   // bônus de firepower: poder de fogo bruto puxa o rating pra cima (ajuda entries de fp alto). Cosmético — não muda resultado.
   FP:{ref:62,per:.0030,min:-.04,max:.09}};
 // impacto por função no kill: entry/rifler que fragga gera mais valor que support/igl (centrado ~1.0)
-const FA_IMPACTO={Entry:1.07,Lurker:1.06,Rifler:1.03,AWPer:.99,Support:.93,IGL:.91}; // lurker é função de frag/clutch — pontua entre os mais altos
+const FA_IMPACTO={AWPer:1.075,Entry:1.06,Lurker:1.05,Rifler:1.03,Support:.93,IGL:.91}; // AWP de elite = maior impacto por kill (pick que abre/segura o round); entry/lurker logo abaixo
 // rating FALLEnANGELs de um jogador a partir do seu log de eventos no mapa
 function fallenAngels(ev){const C=CFG_FA,R=ev.totalRounds||1;
   const ekpr=ev.kills.reduce((s,k)=>s+faEco(k.buyMatador,k.buyVitima),0)/R; // kills eco-ajustadas
@@ -374,8 +383,11 @@ function fallenAngels(ev){const C=CFG_FA,R=ev.totalRounds||1;
   ev.kills.forEach(k=>{if(k.roundGanho)swing+=faSwingKill(k.estadoMeu,k.estadoInim);});
   ev.mortes.forEach(mo=>{swing+=faSwingMorte(mo.estadoMeu,mo.estadoInim)*C.PESO_MORTE;});
   const openPR=((ev.opK||0)-(ev.opD||0))/R*C.PESO_OPEN;
+  const adr=(ev.dmg||0)/R;                                   // dano por round (ADR) — sinal de impacto independente das kills
+  const adrTerm=(adr-C.ADR_REF)*C.W_ADR;                     // centrado: quem dá muito dano sobe, pouco dano desce (suave)
+  const tradePR=(ev.tradeK||0)/R*C.W_TRADE;                  // eficiência de trade: refrag pelo time vale rating
   const fpBonus=Math.max(C.FP.min,Math.min(C.FP.max,((ev.fp??60)-C.FP.ref)*C.FP.per)); // poder de fogo bruto soma ao rating
-  const rating=C.BASE+ekpr*C.W_EK*(ev.impacto??1)+survPR*C.W_SURV+kast*C.W_KAST+multiScore*C.W_MULTI+(swing/R)*C.W_SWING+openPR+fpBonus;
+  const rating=C.BASE+ekpr*C.W_EK*(ev.impacto??1)+survPR*C.W_SURV+kast*C.W_KAST+multiScore*C.W_MULTI+(swing/R)*C.W_SWING+openPR+adrTerm+tradePR+fpBonus;
   return Math.max(.30,Math.min(3.0,rating));}
 
 // PARTE 2 — forma do dia: a inspiração da noite (tier × OVR × firepower) que MOVE o combate
@@ -478,55 +490,85 @@ function prepTime(t,mapa){
     ctEdge:js.reduce((s,j)=>s+ladoFit(j)[0],0)/js.length,
     tEdge:js.reduce((s,j)=>s+ladoFit(j)[1],0)/js.length,
     cls:js.map(j=>j.cl||40),agr:js.map(j=>subAgr(j)),
-    stats:js.map(j=>({nick:j.nick||t.nome,impacto:FA_IMPACTO[j.primario]??1,fp:j.fp??60,ut:j.ut??50,k:0,d:0,a:0,
+    // força de abertura do time (op/entry/sniper): inclina o PRIMEIRO duelo do round
+    open:js.reduce((s,j)=>s+((j.op??50)*.4+(j.en??45)*.35+(j.sn??0)*.25),0)/js.length,
+    stats:js.map(j=>({nick:j.nick||t.nome,impacto:FA_IMPACTO[j.primario]??1,fp:j.fp??60,ut:j.ut??50,k:0,d:0,a:0,dmg:0,tradeK:0,
       fa:{kills:[],mortes:[],assists:0,roundsKAST:0,multi:{},opK:0,opD:0},_kRound:0,_contribRound:false}))};
 }
-// resolve o combate de um round respeitando conservação (cada kill = uma morte)
-// emite contexto por kill (estado XvX, buys, opening) pro FALLEnANGELs; ctx={buyVenc,buyPerd}
-function combateRound(venc,perd,ctx){
-  const C=CFG_SIM;let vV=[0,1,2,3,4],vP=[0,1,2,3,4];
-  const killsRound=[0,0,0,0,0]; // kills do vencedor SÓ neste round
-  const pk=(t,i)=>Math.pow(Math.max(t.frags[i],8),C.EXP_KILL);   // quem MATA: firepower (frag)
-  const pv=(t,i)=>Math.pow(Math.max(t.frags[i],8),C.EXP_VITIMA); // quem MORRE: exposição (fp), mais plano
-  // → fp baixo (IGL/support) entra em menos duelos: fraga pouco E morre pouco (sobrevive, joga seguro)
-  const baixasP=Math.round(clamp(C.BAIXAS_PERD+gaussF()*.6,3,5));
-  const baixasV=Math.round(clamp(C.BAIXAS_VENC+gaussF()*1.0,0,4));
-  const pick=(arr,fn)=>{const ps=arr.map(fn),tot=ps.reduce((a,b)=>a+b,0);let r=rndF()*tot;
+// ROUND VIVO — o round é uma SEQUÊNCIA DE DUELOS e o vencedor EMERGE deles.
+//  • quem GANHA cada duelo = força do time (pEdgeA, vinda do OVR/efetiva/lado/momentum/economia);
+//  • quem FRAGA dentro do time = firepower (pondera matador e vítima). Eixos desacoplados.
+//  • a vantagem de homem se acumula sozinha (é uma corrida pra eliminar → 5v4 vale mais, como no real);
+//  • clutch 1vX tem vida própria (o solitário luta pelo cl); trade/refrag revida na hora;
+//  • lado em desvantagem + eco pode SALVAR (não morre, guarda economia); lado em vantagem FECHA (bomb/tempo).
+// ctx={pEdgeA,openEdgeA,buyA,buyB}. Retorna quem venceu (venceA), sobreviventes e o destaque.
+function combateRound(a,b,ctx){
+  const C=CFG_SIM;
+  let vivA=[0,1,2,3,4],vivB=[0,1,2,3,4];
+  const buyA=ctx.buyA,buyB=ctx.buyB;
+  const roundKills=[]; // {team,rec} → roundGanho marcado no fim (só kills do vencedor contam swing)
+  const pick=(arr,fn)=>{const ps=arr.map(fn),tot=ps.reduce((x,y)=>x+y,0)||1;let r=rndF()*tot;
     for(let i=0;i<arr.length;i++)if((r-=ps[i])<0)return arr[i];return arr[arr.length-1];};
-  const bV=ctx?ctx.buyVenc:"full",bP=ctx?ctx.buyPerd:"full";
-  let mortosP=0,mortosV=0,g=0,primeiraKill=true;
-  while(vP.length>0&&mortosP<baixasP&&g++<25){
-    // sub-arquétipo molda o round: agressivo abre o duelo (e se expõe); posicional/clutcher sobrevive
-    const mV=pick(vV,i=>pk(venc,i)*(1+(primeiraKill?C.SUB_ABRE:0)*(venc.agr[i]||0)));
-    const tP=pick(vP,i=>pv(perd,i)*(1+(primeiraKill?C.SUB_ABRE:C.SUB_SURV)*(perd.agr[i]||0)));
-    // estado ANTES da kill: vencedor com vV.length vivos, perdedor com vP.length
-    venc.stats[mV].fa.kills.push({estadoMeu:vV.length,estadoInim:vP.length,buyMatador:bV,buyVitima:bP,roundGanho:true});
-    venc.stats[mV].k++;killsRound[mV]++;venc.stats[mV]._kRound++;venc.stats[mV]._contribRound=true;
-    perd.stats[tP].fa.mortes.push({estadoMeu:vP.length,estadoInim:vV.length});
-    perd.stats[tP].d++;
-    if(primeiraKill){venc.stats[mV].fa.opK++;perd.stats[tP].fa.opD++;primeiraKill=false;}
-    vP=vP.filter(x=>x!==tP);mortosP++;
-    if(mortosV<baixasV&&vV.length>1&&rndF()<C.TRADE_CHANCE){ // perdedor revida (trade)
-      const matador=vP.length?pick(vP,i=>pk(perd,i)):perd.frags.indexOf(Math.max(...perd.frags));
-      const tV=pick(vV,i=>pv(venc,i)*(1+C.SUB_SURV*(venc.agr[i]||0)));
-      // kill do perdedor: round perdido pra ele → swing não conta (roundGanho:false)
-      perd.stats[matador].fa.kills.push({estadoMeu:vP.length,estadoInim:vV.length,buyMatador:bP,buyVitima:bV,roundGanho:false});
-      perd.stats[matador].k++;perd.stats[matador]._contribRound=true;
-      venc.stats[tV].fa.mortes.push({estadoMeu:vV.length,estadoInim:vP.length});
-      venc.stats[tV].d++;vV=vV.filter(x=>x!==tV);mortosV++;}
+  // um duelo: o lado VENCEDOR mata um do PERDEDOR. opening = 1º duelo; trade = refrag imediato.
+  function duelo(venc,vivV,buyV,perd,vivP,buyP,opening,trade){
+    const expK=opening?C.EXP_OPEN:C.EXP_KILL;
+    const ki=pick(vivV,i=>Math.pow(Math.max(venc.frags[i],8),expK)*(1+(opening?C.SUB_ABRE:0)*(venc.agr[i]||0)));
+    const vi=pick(vivP,i=>Math.pow(Math.max(perd.frags[i],8),C.EXP_VITIMA)*(1+(opening?C.SUB_ABRE:C.SUB_SURV)*(perd.agr[i]||0)));
+    const rec={estadoMeu:vivV.length,estadoInim:vivP.length,buyMatador:buyV,buyVitima:buyP,roundGanho:true};
+    venc.stats[ki].fa.kills.push(rec);roundKills.push({team:venc,rec});
+    venc.stats[ki].k++;venc.stats[ki]._kRound++;venc.stats[ki]._contribRound=true;
+    venc.stats[ki].dmg+=C.ADR_KILL+rndF()*40;          // dano letal
+    if(trade)venc.stats[ki].tradeK++;                   // refrag = trade kill
+    const mo={estadoMeu:vivP.length,estadoInim:vivV.length};
+    perd.stats[vi].fa.mortes.push(mo);perd.stats[vi].d++;
+    perd.stats[vi].dmg+=rndF()*C.ADR_VIT;               // atirou de volta antes de cair
+    if(opening){venc.stats[ki].fa.opK++;perd.stats[vi].fa.opD++;}
+    return vi;
   }
-  // assistência ponderada por UTILIDADE: quem dá utility (granada/flash/setup) habilita a kill.
-  // é o crédito que faltava pro support de fp baixo — gera KAST/assist (→ rating), como no HLTV.
-  if(rndF()<.55&&vV.length){const ai=pick(vV,i=>18+(venc.stats[i].ut||40));venc.stats[ai].a++;venc.stats[ai].fa.assists++;venc.stats[ai]._contribRound=true;}
-  // multi-kills + KAST do round, pra ambos os times
-  [venc,perd].forEach((t,lado)=>{t.stats.forEach((s,i)=>{
+  let primeira=true,fim=null,g=0; // fim: "A"/"B" se o round fecha por save/objetivo antes da eliminação
+  while(vivA.length>0&&vivB.length>0&&fim===null&&g++<30){
+    let p=ctx.pEdgeA;
+    if(primeira)p=clamp(p+ctx.openEdgeA,.03,.97);                // abertura: melhor entry/AWP leva o 1º pick
+    if(vivA.length===1&&vivB.length>1)p=clamp(p+((a.cls[vivA[0]]||45)-50)/100*C.CLUTCH_DUEL,.03,.97); // clutch A
+    if(vivB.length===1&&vivA.length>1)p=clamp(p-((b.cls[vivB[0]]||45)-50)/100*C.CLUTCH_DUEL,.03,.97); // clutch B
+    const aWins=rndF()<p;
+    const venc=aWins?a:b,perd=aWins?b:a,vivV=aWins?vivA:vivB,vivP=aWins?vivB:vivA,buyV=aWins?buyA:buyB,buyP=aWins?buyB:buyA;
+    const vi=duelo(venc,vivV,buyV,perd,vivP,buyP,primeira,false);
+    if(aWins)vivB=vivB.filter(x=>x!==vi);else vivA=vivA.filter(x=>x!==vi);
+    primeira=false;
+    // TRADE/refrag: o time que LEVOU a kill troca na hora (o entry abriu, mas é trocado)
+    const vVnow=aWins?vivA:vivB,vPnow=aWins?vivB:vivA; // venc do duelo segue vivo; perd perdeu 1
+    if(vPnow.length>0&&vVnow.length>0&&rndF()<C.TRADE_CHANCE){
+      const vi2=duelo(perd,vPnow,buyP,venc,vVnow,buyV,false,true);
+      if(aWins)vivA=vivA.filter(x=>x!==vi2);else vivB=vivB.filter(x=>x!==vi2);
+    }
+    if(vivA.length===0||vivB.length===0)break;
+    // SAVE (desvantagem+eco) e CLOSE (vantagem fecha bomb/tempo): round acaba sem eliminar todo mundo.
+    // só encerra cedo se o lado em baixa tem >=2 vivos → 1vX SEMPRE é jogado (o clutch tem vida própria).
+    const difA=vivA.length-vivB.length,downMen=Math.abs(difA),downEco=difA>0?buyB:buyA;
+    if(Math.min(vivA.length,vivB.length)>=2){
+      if(downMen>=2){const ecoFraco=downEco==="eco"||downEco==="force";
+        if(rndF()<(ecoFraco?C.SAVE_BASE:C.SAVE_BASE*0.35)+downMen*C.SAVE_MEN){fim=difA>0?"A":"B";break;}}
+      if(rndF()<C.CLOSE_MEN*downMen){fim=difA>0?"A":"B";break;}
+    }
+  }
+  const venceA=fim!==null?fim==="A":vivA.length>0;
+  const vencT=venceA?a:b,vivVfinal=venceA?vivA:vivB;
+  roundKills.forEach(rk=>{rk.rec.roundGanho=(rk.team===vencT);}); // só o vencedor pontua swing
+  // destaque factual: quem do vencedor mais matou neste round (antes de zerar _kRound)
+  let mvp=0;for(let i=1;i<5;i++)if((vencT.stats[i]._kRound||0)>(vencT.stats[mvp]._kRound||0))mvp=i;
+  const destaque=vencT.stats[mvp].nick;
+  // assistência por UTILIDADE: quem dá utility habilita a kill (crédito do support/IGL → KAST/assist/ADR)
+  if(rndF()<.55&&vivVfinal.length){const ai=pick(vivVfinal,i=>18+(vencT.stats[i].ut||40));
+    vencT.stats[ai].a++;vencT.stats[ai].fa.assists++;vencT.stats[ai]._contribRound=true;vencT.stats[ai].dmg+=C.ADR_AST+rndF()*30;}
+  // chip de utilidade pros que participaram sem kill (dano de granada/spray) + multi/KAST do round
+  const setA=new Set(vivA),setB=new Set(vivB);
+  [a,b].forEach((t,lado)=>{t.stats.forEach((s,i)=>{
     const kr=s._kRound||0;if(kr>=2)s.fa.multi[kr]=(s.fa.multi[kr]||0)+1;
-    const vivo=(lado===0&&vV.includes(i)); // sobreviveu (só o vencedor tem vivos garantidos)
-    if(s._contribRound||vivo)s.fa.roundsKAST++;
+    const vivo=lado===0?setA.has(i):setB.has(i);
+    if(s._contribRound||vivo){s.fa.roundsKAST++;if(kr===0)s.dmg+=rndF()*C.ADR_CHIP;} // participou: chip de dano
     s._kRound=0;s._contribRound=false;});});
-  // destaque factual: quem do vencedor mais matou neste round (nick, pra pulsar a linha)
-  let mvp=0;for(let i=1;i<5;i++)if(killsRound[i]>killsRound[mvp])mvp=i;
-  return {sobreviventes:vV.length,destaque:venc.stats[mvp].nick};
+  return {venceA,sobreviventes:vivVfinal.length,destaque};
 }
 
 // força do dia: oscila inverso à química (coeso=consistente, caótico=imprevisível)
@@ -587,13 +629,12 @@ function simularMapa(A,B,fA,fB,mapaForcado){
     const baseB=mediaSkill(b)*(1-C.PESO_EF)+(fB||mediaSkill(b))*C.PESO_EF;
     const fRA=(baseA+ladoBonusA+formaDiaA)*(0.55+0.45*BUY[buyA])*(1+momA-tiltA);
     const fRB=(baseB+ladoBonusB+formaDiaB)*(0.55+0.45*BUY[buyB])*(1+momB-tiltB);
-    let p=logistica(fRA,fRB,pistol?C.D_PISTOL:C.D_ROUND);
-    const apertado=p>.38&&p<.62;
-    // round apertado pode virar pelo melhor clutcher individual (vida própria)
-    if(apertado)p=clamp(p+(Math.max(...a.cls)-Math.max(...b.cls))/100*C.CLUTCH_SWING,.05,.95);
-    const venceA=rndF()<p;
-    const venc=venceA?a:b,perd=venceA?b:a;
-    const res=combateRound(venc,perd,{buyVenc:venceA?buyA:buyB,buyPerd:venceA?buyB:buyA}); // + contexto FA
+    // pEdge = prob de A vencer UM duelo (raso); o VENCEDOR DO ROUND emerge da sequência de duelos
+    // (vantagem de homem, clutch, save, trade nascem daí). pistol ≈ cara-ou-coroa → azarão tem chance.
+    const pEdgeA=logistica(fRA,fRB,pistol?C.D_DUELO_PIST:C.D_DUELO);
+    const openEdgeA=clamp((a.open-b.open)/C.OPEN_SCALE,-.12,.12); // melhor abertura leva o 1º duelo
+    const res=combateRound(a,b,{pEdgeA,openEdgeA,buyA,buyB});
+    const venceA=res.venceA;
     if(venceA){pa++;lsA=0;lsB++;sA++;sB=0;mA+=premio(true,buyA,0);mB+=premio(false,buyB,lsB);}
     else{pb++;lsB=0;lsA++;sB++;sA=0;mB+=premio(true,buyB,0);mA+=premio(false,buyA,lsA);}
     mA=Math.min(16000,mA);mB=Math.min(16000,mB);
@@ -605,7 +646,7 @@ function simularMapa(A,B,fA,fB,mapaForcado){
   // rating FALLEnANGELs por jogador (contextual: swing, eco, KAST, multi-kills)
   const totalR=pa+pb;
   const rate=stats=>stats.map(s=>{
-    const rating=fallenAngels({...s.fa,totalRounds:totalR,impacto:s.impacto,fp:s.fp});
+    const rating=fallenAngels({...s.fa,totalRounds:totalR,impacto:s.impacto,fp:s.fp,dmg:s.dmg,tradeK:s.tradeK});
     return {nick:s.nick,k:s.k,d:s.d,a:s.a,rating:+rating.toFixed(2)};});
   return {placar:[pa,pb],vencedorNome:pa>pb?A.nome:B.nome,vencedor:pa>pb?A:B,rounds,
     half1,mapa,
