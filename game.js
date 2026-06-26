@@ -206,7 +206,7 @@ const ATRIBUTOS=[
   {nome:"b1t",fp:84,en:9,tr:10,op:72,cl:55,sn:4,ut:66,rating:1.27,colocacao:"Campeao",isIGL:false},
   {nome:"Perfecto",fp:25,en:58,tr:61,op:21,cl:54,sn:0,ut:57,rating:1.08,colocacao:"Campeao",isIGL:false},
   {nome:"Boombl4",fp:26,en:73,tr:42,op:20,cl:58,sn:0,ut:58,rating:1.06,colocacao:"Campeao",isIGL:true},
-  {nome:"donk",fp:100,en:42,tr:74,op:96,cl:13,sn:10,ut:34,rating:1.57,colocacao:"Top4",isIGL:false},
+  {nome:"donk",fp:100,en:42,tr:74,op:96,cl:13,sn:10,ut:34,rating:1.52,colocacao:"Top4",isIGL:false},
   {nome:"sh1ro",fp:69,en:17,tr:31,op:24,cl:75,sn:94,ut:73,rating:1.16,colocacao:"Top4",isIGL:false},
   {nome:"tN1R",fp:48,en:87,tr:18,op:26,cl:63,sn:0,ut:56,rating:1.05,colocacao:"Top4",isIGL:false},
   {nome:"zweih",fp:24,en:36,tr:8,op:68,cl:22,sn:2,ut:42,rating:0.97,colocacao:"Top4",isIGL:false},
