@@ -332,14 +332,14 @@ const rndF=()=>Math.random();
 const gaussF=()=>{let u=0,v=0;while(u===0)u=rndF();while(v===0)v=rndF();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
 const logistica=(fa,fb,D)=>1/(1+Math.pow(10,(fb-fa)/D));
 
-const CFG_SIM={D_MAPA:30,D_ROUND:86,D_PISTOL:96,AMP_MAX:16,AMP_CONSIST:.7,
+const CFG_SIM={D_MAPA:30,D_ROUND:86,D_PISTOL:96,AMP_MAX:11,AMP_CONSIST:.7,
   PESO_EF:.60,                  // 60% força do time (OVR+química+treinador), 40% skill individual cru
   // motor de combate por jogador (validado vs CS2 real: KPR~0.67, rating~1.0, fiel HLTV)
-  LADO_CT:0.8,FORMA_DIA:13,     // vantagem-base de CT (pequena; a composição é que decide o lado)
+  LADO_CT:0.8,FORMA_DIA:7,      // vantagem-base de CT (pequena; a composição é que decide o lado)
   LADO_COMP:1.05,               // escala da vantagem de lado por COMPOSIÇÃO (lurker/anchor→CT, entry→T)
   MOM_STEP:.05,MOM_MAX:.14,TILT_STEP:.018,TILT_MAX:.10,CLUTCH_SWING:.20,
-  EXP_KILL:1.4,EXP_VITIMA:.55,BAIXAS_PERD:5.0,BAIXAS_VENC:2.0,TRADE_CHANCE:.7,
-  FRAG_FP_BASE:35,FRAG_OVR:.018, // distribuição de kills: fp manda (base baixa=mais spiky), OVR pesa leve
+  EXP_KILL:1.45,EXP_VITIMA:.55,BAIXAS_PERD:5.0,BAIXAS_VENC:2.0,TRADE_CHANCE:.7,
+  FRAG_FP_BASE:35,FRAG_OVR:.018, // distribuição de kills: fp manda; concentra (alguém estoura no mapa, varia pela forma)
   MAPA_SCALE:380,MAPA_CAP:.06,SUB_ABRE:0.72,SUB_SURV:0.34,SUB_INT:40};
 
 /* ——— MOTOR FALLEnANGELs · rating contextual (estilo HLTV 3.0) ——— */
@@ -358,9 +358,10 @@ const faSwingMorte=(meu,ini)=>faWP(meu-1,ini)-faWP(meu,ini);  // <=0
 const FA_ECO={full:{full:1,force:.9,eco:.62,pistol:.55},force:{full:1.18,force:1,eco:.78,pistol:.68},
   eco:{full:1.6,force:1.3,eco:1,pistol:.85},pistol:{full:1.55,force:1.25,eco:.95,pistol:1}};
 const faEco=(mb,vb)=>(FA_ECO[mb]&&FA_ECO[mb][vb])||1;
-const CFG_FA={BASE:.455,W_EK:.62,W_SURV:.160,W_KAST:.240,W_MULTI:.042,W_SWING:.10,PESO_MORTE:.95,PESO_OPEN:.216,
+const CFG_FA={BASE:.520,W_EK:.42,W_SURV:.160,W_KAST:.240,W_MULTI:.042,W_SWING:.10,PESO_MORTE:.95,PESO_OPEN:.216,
+  // W_EK menor + BASE maior = tiers comprimidos (topo desce, 19-22 se sobrepõem) sem matar a variação (forma é que oscila)
   // bônus de firepower: poder de fogo bruto puxa o rating pra cima (ajuda entries de fp alto). Cosmético — não muda resultado.
-  FP:{ref:62,per:.0026,min:-.04,max:.105}};
+  FP:{ref:62,per:.0026,min:-.04,max:.05}};
 // impacto por função no kill: entry/rifler que fragga gera mais valor que support/igl (centrado ~1.0)
 const FA_IMPACTO={Entry:1.07,Lurker:1.06,Rifler:1.03,AWPer:.99,Support:.93,IGL:.91}; // lurker é função de frag/clutch — pontua entre os mais altos
 // rating FALLEnANGELs de um jogador a partir do seu log de eventos no mapa
@@ -388,8 +389,8 @@ function tierDe(j){const a=j._eng||j;const nick=a.nick||j.nick;
 // perfil de distribuição por tier (piso=resistência a cair, vol=largura, teto modulado por fp)
 // vol = largura da oscilação da forma. Estrela/lenda OSCILA MENOS (consistente, piso alto); role
 // player é mais streaky (vol maior). É o que separa o craque confiável do jogador de altos e baixos.
-const PERFIL_TIER={Lenda:{piso:.28,vol:.14,tetoBase:2.05,tetoFp:.65},Star:{piso:.17,vol:.17,tetoBase:1.70,tetoFp:.50},
-  Solido:{piso:.07,vol:.23,tetoBase:1.45,tetoFp:.40},Role:{piso:.05,vol:.24,tetoBase:1.30,tetoFp:.20}};
+const PERFIL_TIER={Lenda:{piso:.16,vol:.27,tetoBase:2.05,tetoFp:.65},Star:{piso:.13,vol:.28,tetoBase:1.70,tetoFp:.50},
+  Solido:{piso:.07,vol:.28,tetoBase:1.45,tetoFp:.40},Role:{piso:.05,vol:.29,tetoBase:1.30,tetoFp:.20}};
 // explosividade por função: teto e largura da cauda de cima próprios de cada role (AWP/entry/rifler explodem; support/IGL travados)
 const PERFIL_ROLE={AWPer:{expl:1.32,teto:1.32},Rifler:{expl:1.28,teto:1.24},Entry:{expl:1.26,teto:1.16},Lurker:{expl:1.14,teto:1.16},Support:{expl:1.12,teto:1.12},IGL:{expl:1.02,teto:1.02}};
 const centroOVR=ovr=>clamp(0.28+(ovr-5)*0.060,0.53,1.44); // OVR puxa o centro (média esperada)
@@ -403,7 +404,7 @@ function formaDoDia(j){const a=j._eng||j;const t=tierDe(j),p=PERFIL_TIER[t];
   const piso=0.50+p.piso*((a.ovr??13)-5)/17+pisoExtra*0.3;
   const teto=(p.tetoBase+p.tetoFp*clamp((fp-50)/50,0,1.3))*(1.35+(pr.teto-1)*1.4); // teto livre, modulado pelo role
   const g=gaussF();let desvio;
-  if(g>=0)desvio=g*p.vol*(0.45+(combust+apoio)*1.35)*pr.expl*(1+ovrAmp); // cauda pra cima: firepower × explosão do role × OVR
+  if(g>=0)desvio=g*p.vol*(0.45+(combust+apoio)*1.0)*pr.expl*(1+ovrAmp); // cauda pra cima: firepower × explosão do role × OVR (amortecida: 1.50 é pico, não média)
   else desvio=g*p.vol*(1-p.piso*1.1);                  // queda amortecida por tier
   let r=centro+desvio;
   if(r<piso)r=piso-(piso-r)*0.35;                       // piso resistente, não parede
@@ -765,7 +766,7 @@ const CARAC_DESC={
   Estrategista:"Mestre da estrutura: reduz as penalidades de cobertura de função e de comando.",
   Motivador:"Levanta o grupo: reduz as penalidades de cobertura e saturação do elenco."};
 // verso do treinador: característica + o que ela significa (pra todo mundo entender o role)
-const backCoach=p=>`<div class="cb-name">${esc(p.carac)}<span class="cb-sub">Característica</span></div>`+
+const backCoach=p=>`<div class="cb-name cb-carac">${esc(p.carac)}</div>`+
   `<div class="cb-desc">${esc(CARAC_DESC[p.carac]||"")}</div>`;
 // jogador vira p/ as stats; treinador vira p/ o significado da característica. Faces giram em 3D.
 const cardHTML=p=>{const verso=p.tipo==="coach"?backCoach(p):backPlayer(p);const frente=p.tipo==="coach"?coachHTML(p):playerHTML(p);

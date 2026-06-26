@@ -234,9 +234,11 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 /* a frente reserva o canto sup. direito p/ o botão não cobrir o time */
 .cfront .cmeta{padding-right:24px}
 /* verso · nome + estilo no topo (preenche o topo) e 4 stats embaixo */
-.cb-name{font-family:var(--ff);font-weight:700;font-size:.92rem;line-height:1.02;color:var(--lit,#fff);width:100%;
-  text-align:left;padding:0 28px 4px 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+.cb-name{font-family:var(--ff);font-weight:700;font-size:clamp(.6rem,3vw,.9rem);line-height:1.04;color:var(--lit,#fff);width:100%;
+  text-align:left;padding:0 25px 4px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   border-bottom:1px solid color-mix(in srgb,var(--tcol,#fff) 26%,transparent)}
+/* título do verso do treinador: nome da característica é longo → fonte menor e quebra se precisar (nunca corta) */
+.cb-carac{white-space:normal;overflow-wrap:anywhere;font-size:clamp(.52rem,2.2vw,.8rem);line-height:1.08;padding-bottom:5px}
 .cb-sub{display:block;font-family:var(--ff);font-weight:600;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;
   color:var(--tcol,#39d3ff);opacity:.9;margin-top:2px}
 .cb-stats{display:flex;flex-direction:column;width:100%;flex:1;justify-content:space-evenly;margin-top:2px}
