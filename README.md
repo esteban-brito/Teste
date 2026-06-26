@@ -42,19 +42,27 @@ O projeto é dividido em três arquivos:
 
 Os números do motor ficam concentrados em blocos `CFG_*` no topo do `game.js`:
 
-- **`CFG_IDENTIDADE` / `CFG_AVALIACAO`** — como o jogador é classificado (role) e
-  como vira OVR. Ex.: `CFG_AVALIACAO.ANC` (esteira Âncora, inclui o piso de
-  clutch `clRef`/`kCl`), `ELITE_REF`/`eliteMul` (bônus por rating de elite).
+- **`ROLE_PERFIL` / `CFG_AVALIACAO`** — Motores A e B. `ROLE_PERFIL` traz, por
+  função, os pesos de **afinidade** (classificação do role), os pesos de
+  **atributo no OVR** e o **`wR`** (quanto o rating HLTV pesa no OVR daquele
+  role). `CFG_AVALIACAO` tem a curva única `core → OVR` (logística, satura em 22,
+  sem cliffs) e as regras do IGL: `IGL_CREDITO` (crédito de liderança),
+  `IGL_TITULO` (bônus de OVR por título — Campeão +3, Final +2, Top4 +1) e
+  `IGL_TETO` (teto de 20). O IGL herda o perfil do seu **role de combate**.
 - **`CFG_QUIMICA`** — química do elenco e OVR do treinador. A química vai de
   **50% a 100%** (100% = composição perfeita); cada falta de role, saturação ou
   excesso de estrela **subtrai**. As características do treinador são
   **mitigadores** de penalidade (recuperam rumo a 100%, nunca acima). Ex.:
   `PEN`/`DUREZA` (tamanho das penalidades), `ESPERADO_POR_SOMA` e `PISO_TREINADOR`
   (nota do treinador), `derivaCaracteristica` decide a característica.
-- **`CFG_SIM`** — simulação da partida (lados, economia, momentum, mapas).
-- **`CFG_FA`** — rating estilo HLTV (FALLEnANGELs). Inclui `FP` (bônus de
-  firepower) e `FA_IMPACTO` (peso por função). É **cosmético**: muda o rating
-  exibido, não o resultado das partidas.
+- **`CFG_SIM`** — simulação da partida (lados, economia, momentum, mapas). Dois
+  eixos **desacoplados**: `skillDuelo` (OVR) decide **quem ganha** o round/jogo;
+  `fragPeso` (`FRAG_FP_BASE`/`FRAG_OVR`, firepower) decide **quem fraga** (kills e
+  exposição). Assim um IGL de OVR alto e fp baixo ganha jogos mas fraga pouco.
+- **`CFG_FA`** — rating estilo HLTV (FALLEnANGELs). `W_EK`/`W_SURV`/`W_KAST`
+  (pesos de kill, sobrevivência, consistência), `FP` (bônus de firepower) e
+  `FA_IMPACTO` (peso por função). A assistência é ponderada por **utilidade**.
+  É **cosmético**: muda o rating exibido, não o resultado das partidas.
 
 ## Acessibilidade, mobile e desempenho
 
