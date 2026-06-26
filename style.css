@@ -220,8 +220,10 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .cback{transform:rotateY(180deg);opacity:0;justify-content:flex-start;gap:5px;padding:9px 14px 11px;
   background:linear-gradient(165deg,color-mix(in srgb,var(--tcol,#39d3ff) 24%,#0b0e15) 0%,#0a0c12 62%,#070910 100%);
   box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tcol,#fff) 16%,transparent)}
-.card.flipped .cfront{transform:rotateY(-180deg);opacity:0}
-.card.flipped .cback{transform:rotateY(0deg);opacity:1}
+.card.flipped .cfront,.coachcard.flipped .cfront{transform:rotateY(-180deg);opacity:0}
+.card.flipped .cback,.coachcard.flipped .cback{transform:rotateY(0deg);opacity:1}
+/* o verso do treinador usa a cor da característica dele (mapeia --cc-* p/ os tokens do verso) */
+.coachcard{--tcol:var(--cc-main);--lit:var(--cc-lit,var(--cc-main));--dim:var(--cc-dim,var(--cc-main))}
 .cardflip{position:absolute;top:5px;right:5px;z-index:6;width:22px;height:22px;border-radius:7px;cursor:pointer;padding:0;
   border:1px solid color-mix(in srgb,var(--tcol,#fff) 45%,transparent);background:rgba(8,10,16,.6);
   color:var(--tcol,#fff);font-size:.72rem;line-height:1;display:flex;align-items:center;justify-content:center;
@@ -241,6 +243,9 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .statbar{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:8px;padding:4px 1px;
   border-bottom:1px solid color-mix(in srgb,var(--tcol,#888) 12%,transparent)}
 .statbar:last-child{border-bottom:none}
+/* verso do treinador: o que a característica significa (texto explicativo, centralizado no espaço) */
+.cb-desc{font-family:'Barlow Semi Condensed',sans-serif;font-size:.74rem;line-height:1.32;
+  color:var(--txt,#eaf1f8);text-align:left;padding:7px 2px 2px;flex:1;display:flex;align-items:center}
 .sb-lab{font-family:var(--ff);font-weight:600;font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;
   color:var(--dim,#8593a6);text-align:left}
 .sb-val{font-family:var(--ff);font-weight:800;font-size:1rem;font-variant-numeric:tabular-nums;

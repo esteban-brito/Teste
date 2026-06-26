@@ -758,11 +758,19 @@ const statBar=(lab,v)=>`<div class="statbar"><span class="sb-lab">${esc(lab)}</s
 // verso do jogador: nome + estilo no topo (preenche o topo) e as 4 stats embaixo
 const backPlayer=p=>{const e=p._eng||{};return `<div class="cb-name">${esc(p.nick)}<span class="cb-sub">${esc(e.sub?e.sub.nome:(p.prim||""))}</span></div>`+
   `<div class="cb-stats">${STAT_VERSO.map(([lab,k])=>statBar(lab,e[k])).join("")}</div>`;};
-// treinador NÃO vira (só frente). jogador = botão de virar + faces que giram em 3D.
-const cardHTML=p=>p.tipo==="coach"
-  ? coachHTML(p)
-  : `<button class="cardflip" type="button" aria-label="Ver estatísticas" tabindex="-1">⟲</button>`+
-    `<div class="cfaces"><div class="cface cfront">${playerHTML(p)}</div><div class="cface cback">${backPlayer(p)}</div></div>`;
+// o que cada característica de treinador FAZ (texto padronizado p/ o verso da carta dele)
+const CARAC_DESC={
+  Gestor:"Gerencia os egos do elenco: tolera uma estrela a mais e suaviza o atrito entre craques.",
+  Desenvolvedor:"Lapida talentos crus: reduz as penalidades de um elenco de OVR baixo.",
+  Estrategista:"Mestre da estrutura: reduz as penalidades de cobertura de função e de comando.",
+  Motivador:"Levanta o grupo: reduz as penalidades de cobertura e saturação do elenco."};
+// verso do treinador: característica + o que ela significa (pra todo mundo entender o role)
+const backCoach=p=>`<div class="cb-name">${esc(p.carac)}<span class="cb-sub">Característica</span></div>`+
+  `<div class="cb-desc">${esc(CARAC_DESC[p.carac]||"")}</div>`;
+// jogador vira p/ as stats; treinador vira p/ o significado da característica. Faces giram em 3D.
+const cardHTML=p=>{const verso=p.tipo==="coach"?backCoach(p):backPlayer(p);const frente=p.tipo==="coach"?coachHTML(p):playerHTML(p);
+  return `<button class="cardflip" type="button" aria-label="${p.tipo==="coach"?"Ver o que esse treinador faz":"Ver estatísticas"}" tabindex="-1">⟲</button>`+
+    `<div class="cfaces"><div class="cface cfront">${frente}</div><div class="cface cback">${verso}</div></div>`;};
 
 function elencoCheio(){return S.jogadores.every(Boolean)&&!!S.treinador}
 

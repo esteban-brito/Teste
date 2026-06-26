@@ -23,10 +23,12 @@ só HTML, CSS e JavaScript estáticos. Mantenha os três arquivos (`index.html`,
    de análise do elenco.
 5. Entre no **Major** e dispute a fase suíça e os playoffs rumo ao título.
 
-Toque no ícone **⟲** no canto de uma **carta de jogador** para **virá-la** e ver o
-verso com o estilo do jogador e 4 stats (Firepower, Abertura, Clutch, Utilitário).
-Tocar no corpo da carta continua escolhendo/posicionando normalmente. (Cartas de
-treinador não viram.) As cartas usam proporção 5/7 e se adaptam a qualquer tela.
+Toque no ícone **⟲** no canto de uma carta para **virá-la**: o verso de um
+**jogador** mostra o estilo dele e 4 stats (Firepower, Abertura, Clutch,
+Utilitário); o verso de um **treinador** explica o que a característica dele
+(Gestor, Desenvolvedor, Estrategista, Motivador) faz pelo time. Tocar no corpo
+da carta continua escolhendo/posicionando normalmente. As cartas usam proporção
+5/7 e se adaptam a qualquer tela.
 
 ## Estrutura
 
