@@ -20,7 +20,7 @@ const ROLE_PERFIL={
   Support:{afin:{ut:.55,tr:.25,fp:.10,op:.10}, ovr:{ut:.45,tr:.22,fp:.15,op:.10,cl:.08},wR:.45,credito:3}};
 const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22,
   RAT_LO:.85,RAT_HI:1.50,RAT_CAP:1.25,       // mapa do rating HLTV -> 0..125 (sem cliffs)
-  FLOOR:9,SPAN:14,K:.0495,MID:55.8,          // core -> OVR (logística; piso mais alto = menos discrepância: role player decente não despenca)
+  FLOOR:9,SPAN:13.7,K:.0495,MID:55,          // core -> OVR (logística). teto um pouco mais seletivo: o 22 exige elite clara (rating ~1.6+), não satura cedo; MID recentrado mantém o miolo do elenco intacto
   IGL_RAT_K:.80,IGL_CREDITO:9,               // IGL: rating descontado (sacrifica stats) + crédito de liderança intrínseco
   IGL_TITULO:{Campeao:3,Final:2,Top4:1,Top8:0,Grupos:0}, // liderança comprovada por título soma OVR (só p/ IGL)
   IGL_TETO:20,                               // nenhum IGL passa de 20 (o jogo é decidido pelos fraggers)
@@ -206,7 +206,7 @@ const ATRIBUTOS=[
   {nome:"b1t",fp:84,en:9,tr:10,op:72,cl:55,sn:4,ut:66,rating:1.27,colocacao:"Campeao",isIGL:false},
   {nome:"Perfecto",fp:25,en:58,tr:61,op:21,cl:54,sn:0,ut:57,rating:1.08,colocacao:"Campeao",isIGL:false},
   {nome:"Boombl4",fp:26,en:73,tr:42,op:20,cl:58,sn:0,ut:58,rating:1.06,colocacao:"Campeao",isIGL:true},
-  {nome:"donk",fp:100,en:42,tr:74,op:96,cl:13,sn:10,ut:34,rating:1.52,colocacao:"Top4",isIGL:false},
+  {nome:"donk",fp:100,en:42,tr:74,op:96,cl:13,sn:10,ut:34,rating:1.57,colocacao:"Top4",isIGL:false},
   {nome:"sh1ro",fp:69,en:17,tr:31,op:24,cl:75,sn:94,ut:73,rating:1.16,colocacao:"Top4",isIGL:false},
   {nome:"tN1R",fp:48,en:87,tr:18,op:26,cl:63,sn:0,ut:56,rating:1.05,colocacao:"Top4",isIGL:false},
   {nome:"zweih",fp:24,en:36,tr:8,op:68,cl:22,sn:2,ut:42,rating:0.97,colocacao:"Top4",isIGL:false},
