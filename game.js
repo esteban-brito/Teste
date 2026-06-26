@@ -177,7 +177,7 @@ function forcaTime(jogadores,caracTreinador=null,ovrTreinador=null){const bruta=
   // firepower alto recupera parte da química penalizada — mas no MÁX recMax do buraco (nunca tudo). Comando vem depois.
   const baseEf=Math.min(tal.teto,q.quimicaSemCmd+(1-q.quimicaSemCmd)*resist);
   const quimicaEf=+Math.max(C.QUIMICA_MIN,Math.min(C.QUIMICA_MAX,baseEf*q.penCmd)).toFixed(3); // comando é estrutural: firepower não compra um caller
-  return{bruta,...q,quimica:quimicaEf,quimicaBase:q.quimica,fatorTreinador:fatorT,efetiva:arred(bruta*quimicaEf*fatorT)};}
+  return{bruta,...q,quimica:quimicaEf,fatorTreinador:fatorT,efetiva:arred(bruta*quimicaEf*fatorT)};}
 function derivaCaracteristica(time,POOL){const D=CFG_QUIMICA.DERIVA;const js=time.jogadores.map(n=>POOL[n]);
   const ovrs=js.map(j=>j.ovr);const min=Math.min(...ovrs),max=Math.max(...ovrs),soma=ovrs.reduce((a,b)=>a+b,0),media=soma/js.length;
   const estrelas=js.filter(j=>j.estrela);
