@@ -1,15 +1,20 @@
 # draft9-0 · Simulador de Counter-Strike
 
-Jogo de navegador (HTML/CSS/JavaScript, sem dependências) onde você monta um
-elenco de Counter-Strike sorteando times históricos, escolhe jogadores e um
-treinador, e tenta a campanha invicta (9-0) em um Major com fase suíça e
+> **▶ Jogue agora:** <https://estebanbrito04-arch.github.io/Teste/>
+
+Jogo de navegador (HTML/CSS/JavaScript, sem dependências nem build) onde você
+monta um elenco de Counter-Strike sorteando times históricos, escolhe jogadores
+e um treinador, e tenta a campanha invicta (9-0) em um Major com fase suíça e
 playoffs.
+
+![draft9-0](og-image.png)
 
 ## Como jogar
 
-Abra o arquivo `index.html` em qualquer navegador moderno. Não precisa instalar
-nada — o jogo é só HTML, CSS e JavaScript estáticos. Mantenha os três arquivos
-(`index.html`, `style.css`, `game.js`) na mesma pasta.
+Abra <https://estebanbrito04-arch.github.io/Teste/> — ou baixe e abra o
+`index.html` em qualquer navegador moderno. Não precisa instalar nada: o jogo é
+só HTML, CSS e JavaScript estáticos. Mantenha os três arquivos (`index.html`,
+`style.css`, `game.js`) na mesma pasta.
 
 1. **Sorteie um time** na roleta.
 2. **Escolha 1 carta** (jogador ou treinador) do time sorteado por rodada.
