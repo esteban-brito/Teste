@@ -31,7 +31,7 @@ const CFG_QUIMICA={
   TREINADOR_MIN:10,TREINADOR_MAX:20,IGL_FRACO_OVR:13,ESTRELA_LIMITE:2,
   TREINADOR_FORCA:{neutro:15,porPonto:.025},
   PEN:{semIGL:.25,iglFraco:.10,semAWP:.20,semAncora:.11,semIniciativa:.12,estrelaExtra:.07},QUIMICA_MIN:.50,QUIMICA_MAX:1.00,
-  TALENTO:{refBruta:78,divisor:15,peso:1.0,teto:1.00}, // firepower alto resiste à química ruim, recuperando rumo a 100% (nunca acima)
+  TALENTO:{refBruta:82,divisor:22,recMax:.45,teto:1.00}, // talento resiste à química ruim, mas fecha no MÁX 45% do buraco (composição importa mesmo em time forte)
   IDEAL:{IGL:1,AWPer:1,Lurker:1,Support:2,Entry:2,Rifler:3},
   DUREZA:{IGL:.08,AWPer:.07,Lurker:.04,Support:.04,Entry:.03,Rifler:.03},
   SAT_LEVE:.05, // limite de saturação que ainda conta como "estruturado" (selo de Estrutura)
@@ -43,7 +43,7 @@ const CFG_QUIMICA={
   CARAC:{Gestor:{tetoEstrelasBonus:1,estrelaExtraPen:.04},        // tolera +1 estrela e suaviza o atrito de ego
     Desenvolvedor:{cruRef:14,cruPorJogador:.05,cruTeto:.18},      // reduz penalidades de elencos crus (escala c/ nº de crus)
     Estrategista:{corteEstrutura:.15,corteComando:.30},           // reduz penalidades estruturais e de comando
-    Motivador:{cortePenalidade:.40}},                             // reduz todas as penalidades de cobertura/saturação
+    Motivador:{cortePenalidade:.30}},                             // reduz as penalidades de cobertura/saturação (não apaga comp ruim)
   DERIVA:{SOMA_ESPERADA:{Campeao:85,Final:80,Top4:74,Top8:66,Grupos:56},DESENV_RESULTADO_MIN:["Campeao","Final","Top4"],LIMIAR:.3}};
 
 const clamp=(x,lo,hi)=>Math.max(lo,Math.min(hi,x));
@@ -173,9 +173,9 @@ function forcaTime(jogadores,caracTreinador=null,ovrTreinador=null){const bruta=
   // Talento resiste à química ruim: times de firepower alto preenchem parte do que falta até o teto.
   // (FaZe/SK têm bruta enorme mas química comprometida — o talento individual ganha rounds no CS real.)
   const tal=C.TALENTO;
-  const resist=Math.max(0,(bruta-tal.refBruta)/tal.divisor)*tal.peso;
-  // firepower alto recupera parte da química penalizada, mas só ATÉ 100% (nunca acima). Comando vem depois.
-  const baseEf=Math.min(tal.teto,q.quimicaSemCmd+(1-q.quimicaSemCmd)*Math.min(1,resist));
+  const resist=clamp((bruta-tal.refBruta)/tal.divisor,0,1)*tal.recMax;
+  // firepower alto recupera parte da química penalizada — mas no MÁX recMax do buraco (nunca tudo). Comando vem depois.
+  const baseEf=Math.min(tal.teto,q.quimicaSemCmd+(1-q.quimicaSemCmd)*resist);
   const quimicaEf=+Math.max(C.QUIMICA_MIN,Math.min(C.QUIMICA_MAX,baseEf*q.penCmd)).toFixed(3); // comando é estrutural: firepower não compra um caller
   return{bruta,...q,quimica:quimicaEf,quimicaBase:q.quimica,fatorTreinador:fatorT,efetiva:arred(bruta*quimicaEf*fatorT)};}
 function derivaCaracteristica(time,POOL){const D=CFG_QUIMICA.DERIVA;const js=time.jogadores.map(n=>POOL[n]);
