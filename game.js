@@ -562,10 +562,9 @@ function combateRound(a,b,ctx){
   if(rndF()<.55&&vivVfinal.length){const ai=pick(vivVfinal,i=>18+(vencT.stats[i].ut||40));
     vencT.stats[ai].a++;vencT.stats[ai].fa.assists++;vencT.stats[ai]._contribRound=true;vencT.stats[ai].dmg+=C.ADR_AST+rndF()*30;}
   // chip de utilidade pros que participaram sem kill (dano de granada/spray) + multi/KAST do round
-  const setA=new Set(vivA),setB=new Set(vivB);
-  [a,b].forEach((t,lado)=>{t.stats.forEach((s,i)=>{
+  [a,b].forEach((t,lado)=>{const viv=lado===0?vivA:vivB;t.stats.forEach((s,i)=>{
     const kr=s._kRound||0;if(kr>=2)s.fa.multi[kr]=(s.fa.multi[kr]||0)+1;
-    const vivo=lado===0?setA.has(i):setB.has(i);
+    const vivo=viv.includes(i);
     if(s._contribRound||vivo){s.fa.roundsKAST++;if(kr===0)s.dmg+=rndF()*C.ADR_CHIP;} // participou: chip de dano
     s._kRound=0;s._contribRound=false;});});
   return {venceA,sobreviventes:vivVfinal.length,destaque};
@@ -608,6 +607,10 @@ function simularMapa(A,B,fA,fB,mapaForcado){
   const rounds=[];
   const ladoDe=(time,round)=>{const aCT=round<13;const ehA=time===A;return (ehA===aCT)?"CT":"TR";};
   const mediaSkill=t=>t.skills.reduce((s,v)=>s+v,0)/5;
+  // base do round e edge de abertura são CONSTANTES no mapa → calcula uma vez (fora do loop)
+  const baseA=mediaSkill(a)*(1-C.PESO_EF)+(fA||mediaSkill(a))*C.PESO_EF;
+  const baseB=mediaSkill(b)*(1-C.PESO_EF)+(fB||mediaSkill(b))*C.PESO_EF;
+  const openEdgeA=clamp((a.open-b.open)/C.OPEN_SCALE,-.12,.12); // melhor abertura leva o 1º duelo
   let half1=null;
   // CS2 (MR12): vence quem chega a 13 na regulação. Se empatar 12-12, vai pra
   // prorrogação e vence o primeiro a 16 (pode terminar 16-12 .. 16-15).
@@ -622,17 +625,14 @@ function simularMapa(A,B,fA,fB,mapaForcado){
     const momA=clamp(sA*C.MOM_STEP,0,C.MOM_MAX),momB=clamp(sB*C.MOM_STEP,0,C.MOM_MAX);
     const tiltA=clamp((lsA-2)*C.TILT_STEP,0,C.TILT_MAX),tiltB=clamp((lsB-2)*C.TILT_STEP,0,C.TILT_MAX);
     // vantagem de lado = base de CT + composição do time (CT puxado por anchor/lurker; T por entry)
-    const ladoBonusA=ladoDe(A,r)==="CT"?(C.LADO_CT+C.LADO_COMP*a.ctEdge):(C.LADO_COMP*a.tEdge);
-    const ladoBonusB=ladoDe(B,r)==="CT"?(C.LADO_CT+C.LADO_COMP*b.ctEdge):(C.LADO_COMP*b.tEdge);
-    // base do round = mix de skill bruto individual e força efetiva do time (carrega química+treinador)
-    const baseA=mediaSkill(a)*(1-C.PESO_EF)+(fA||mediaSkill(a))*C.PESO_EF;
-    const baseB=mediaSkill(b)*(1-C.PESO_EF)+(fB||mediaSkill(b))*C.PESO_EF;
+    const ladoA=ladoDe(A,r),ladoB=ladoDe(B,r);
+    const ladoBonusA=ladoA==="CT"?(C.LADO_CT+C.LADO_COMP*a.ctEdge):(C.LADO_COMP*a.tEdge);
+    const ladoBonusB=ladoB==="CT"?(C.LADO_CT+C.LADO_COMP*b.ctEdge):(C.LADO_COMP*b.tEdge);
     const fRA=(baseA+ladoBonusA+formaDiaA)*(0.55+0.45*BUY[buyA])*(1+momA-tiltA);
     const fRB=(baseB+ladoBonusB+formaDiaB)*(0.55+0.45*BUY[buyB])*(1+momB-tiltB);
     // pEdge = prob de A vencer UM duelo (raso); o VENCEDOR DO ROUND emerge da sequência de duelos
     // (vantagem de homem, clutch, save, trade nascem daí). pistol ≈ cara-ou-coroa → azarão tem chance.
     const pEdgeA=logistica(fRA,fRB,pistol?C.D_DUELO_PIST:C.D_DUELO);
-    const openEdgeA=clamp((a.open-b.open)/C.OPEN_SCALE,-.12,.12); // melhor abertura leva o 1º duelo
     const res=combateRound(a,b,{pEdgeA,openEdgeA,buyA,buyB});
     const venceA=res.venceA;
     if(venceA){pa++;lsA=0;lsB++;sA++;sB=0;mA+=premio(true,buyA,0);mB+=premio(false,buyB,lsB);}
@@ -640,7 +640,7 @@ function simularMapa(A,B,fA,fB,mapaForcado){
     mA=Math.min(16000,mA);mB=Math.min(16000,mB);
     // snapshot do K-D acumulado dos 10 jogadores até este round (pro scoreboard ao vivo animar)
     const snapA=a.stats.map(s=>({k:s.k,d:s.d})),snapB=b.stats.map(s=>({k:s.k,d:s.d}));
-    rounds.push({r,pa,pb,venceA,ladoA:ladoDe(A,r),ladoB:ladoDe(B,r),troca:(r===13),
+    rounds.push({r,pa,pb,venceA,ladoA,ladoB,troca:(r===13),
       destaque:res.destaque,snapA,snapB});
   }
   // rating FALLEnANGELs por jogador (contextual: swing, eco, KAST, multi-kills)
