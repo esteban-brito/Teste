@@ -331,10 +331,11 @@ const rndF=()=>Math.random();
 const gaussF=()=>{let u=0,v=0;while(u===0)u=rndF();while(v===0)v=rndF();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
 const logistica=(fa,fb,D)=>1/(1+Math.pow(10,(fb-fa)/D));
 
-const CFG_SIM={D_MAPA:30,D_ROUND:78,D_PISTOL:90,AMP_MAX:12,AMP_CONSIST:.7,
-  PESO_EF:.78,
+const CFG_SIM={D_MAPA:30,D_ROUND:86,D_PISTOL:96,AMP_MAX:16,AMP_CONSIST:.7,
+  PESO_EF:.60,                  // 60% força do time (OVR+química+treinador), 40% skill individual cru
   // motor de combate por jogador (validado vs CS2 real: KPR~0.67, rating~1.0, fiel HLTV)
-  LADO_CT:2.2,FORMA_DIA:9,
+  LADO_CT:0.8,FORMA_DIA:13,     // vantagem-base de CT (pequena; a composição é que decide o lado)
+  LADO_COMP:1.05,               // escala da vantagem de lado por COMPOSIÇÃO (lurker/anchor→CT, entry→T)
   MOM_STEP:.05,MOM_MAX:.14,TILT_STEP:.018,TILT_MAX:.10,CLUTCH_SWING:.20,
   EXP_KILL:1.4,EXP_VITIMA:.55,BAIXAS_PERD:5.0,BAIXAS_VENC:2.0,TRADE_CHANCE:.7,
   FRAG_FP_BASE:35,FRAG_OVR:.018, // distribuição de kills: fp manda (base baixa=mais spiky), OVR pesa leve
@@ -384,15 +385,17 @@ function tierDe(j){const a=j._eng||j;const nick=a.nick||j.nick;
   if((prim==="IGL"||prim==="Support")&&fp<55)return "Role"; // IGL/support sem fp → modesto
   return "Solido";}
 // perfil de distribuição por tier (piso=resistência a cair, vol=largura, teto modulado por fp)
-const PERFIL_TIER={Lenda:{piso:.26,vol:.25,tetoBase:2.05,tetoFp:.65},Star:{piso:.15,vol:.25,tetoBase:1.70,tetoFp:.50},
-  Solido:{piso:.07,vol:.22,tetoBase:1.45,tetoFp:.40},Role:{piso:.05,vol:.16,tetoBase:1.30,tetoFp:.20}};
+// vol = largura da oscilação da forma. Estrela/lenda OSCILA MENOS (consistente, piso alto); role
+// player é mais streaky (vol maior). É o que separa o craque confiável do jogador de altos e baixos.
+const PERFIL_TIER={Lenda:{piso:.28,vol:.14,tetoBase:2.05,tetoFp:.65},Star:{piso:.17,vol:.17,tetoBase:1.70,tetoFp:.50},
+  Solido:{piso:.07,vol:.23,tetoBase:1.45,tetoFp:.40},Role:{piso:.05,vol:.24,tetoBase:1.30,tetoFp:.20}};
 // explosividade por função: teto e largura da cauda de cima próprios de cada role (AWP/entry/rifler explodem; support/IGL travados)
 const PERFIL_ROLE={AWPer:{expl:1.32,teto:1.32},Rifler:{expl:1.28,teto:1.24},Entry:{expl:1.26,teto:1.16},Lurker:{expl:1.14,teto:1.16},Support:{expl:1.12,teto:1.12},IGL:{expl:1.02,teto:1.02}};
 const centroOVR=ovr=>clamp(0.28+(ovr-5)*0.060,0.53,1.44); // OVR puxa o centro (média esperada)
 // sorteia a forma do dia do jogador: o "humor competitivo" daquele mapa (assimétrica, com vida)
 function formaDoDia(j){const a=j._eng||j;const t=tierDe(j),p=PERFIL_TIER[t];
   const centro=centroOVR(a.ovr??13)+(a._formaCamp??0); // forma de campanha: o "humor" do jogador no Major inteiro
-  const fp=a.fp??60,sn=a.sn??0,cl=a.cl??45;const pr=PERFIL_ROLE[a.primario]||{expl:1,teto:1};const ovrAmp=clamp(((a.ovr??13)-13)/30,0,.38); // OVR amplifica a explosão
+  const fp=a.fp??60,sn=a.sn??0,cl=a.cl??45;const pr=PERFIL_ROLE[a.primario]||{expl:1,teto:1};const ovrAmp=clamp(((a.ovr??13)-13)/55,0,.18); // OVR amplifica a explosão (suave: craque é consistente, não mais volátil)
   const combust=clamp((fp-45)/50,0.05,1.35);        // firepower explode (cauda pra cima)
   const apoio=clamp((sn*0.3+cl*0.4)/100,0,0.4);     // awp/clutch dão empurrão menor
   const pisoExtra=clamp((sn*0.5+cl*0.3)/100,0,0.35);// awp/clutch sobem o piso (consistência)
@@ -409,7 +412,9 @@ function formaDoDia(j){const a=j._eng||j;const t=tierDe(j),p=PERFIL_TIER[t];
 // um componente coletivo (o time "clica" ou não no evento) + um individual por tier
 // (lenda balança mais — é ela que ganha ou perde o campeonato). zero-média: não desloca
 // o rating global, só faz CADA run ser diferente (o motor de variância do roguelike).
-const CFG_CAMP={AMP_TIME:0.14,AMP_JOG:{Lenda:0.20,Star:0.18,Solido:0.16,Role:0.15}};
+// forma de campanha: lenda/estrela varia POUCO no Major (confiável); role player balança mais.
+// AMP_TIME maior = o time "clica" ou não no evento com mais força (mais zebras de campanha).
+const CFG_CAMP={AMP_TIME:0.11,AMP_JOG:{Lenda:0.07,Star:0.10,Solido:0.18,Role:0.23}};
 function sortearFormaCampanha(times){
   times.forEach(t=>{
     const seedTime=gaussF()*CFG_CAMP.AMP_TIME;
@@ -438,6 +443,19 @@ function fragPeso(j){const a=j._eng||j;const C=CFG_SIM;const fp=a.fp??60,ovr=j.o
 const AGR_SUB={Agressivo:1,Posicional:-1,Fogo:.6,Conector:-.5,Abertura:1,Trade:-.9,Playmaker:1,Clutcher:-1,Apoio:.4,Utilitario:-.5};
 function subAgr(j){const a=j._eng||j,sb=a.sub;if(!sb)return 0;
   const inten=Math.max(.35,Math.min(1,Math.abs(sb.eixo||0)/CFG_SIM.SUB_INT));return (AGR_SUB[sb.nome]||0)*inten;}
+// ——— AFINIDADE DE LADO (composição): CT = segurar/anchor, T = tomar espaço/entry ———
+// derivada dos STATS (cl/ut/sn seguram bombsite; en/op/fp tomam espaço) + role + sub-arquétipo.
+// lurker/support/âncora puxam o time pro CT; entry/agressivo puxam pro T. zero-centrado: time
+// equilibrado fica ~0 (só a vantagem-base de CT), composição desbalanceada inclina o lado.
+const LADO_ROLE={Lurker:[5,1],Support:[4,0],AWPer:[2,2],IGL:[1,1],Rifler:[-1,3],Entry:[-4,5]};
+const LADO_SUB={Clutcher:[4,-1],Posicional:[3,-1],Utilitario:[2,0],Apoio:[2,0],Conector:[1,1],Trade:[1,2],
+  Playmaker:[0,3],Fogo:[-1,4],Agressivo:[-2,4],Abertura:[-2,5]};
+function ladoFitRaw(a){const r=LADO_ROLE[a.primario]||[0,0],s=LADO_SUB[a.sub&&a.sub.nome]||[0,0];
+  return [.08*((a.cl||45)-50)+.06*((a.ut||50)-50)+.05*((a.sn||0)-35)+r[0]+s[0],   // segurar (CT)
+          .08*((a.en||45)-50)+.07*((a.op||50)-50)+.05*((a.fp||60)-55)+r[1]+s[1]];} // tomar espaço (T)
+// média da liga p/ ZERO-CENTRAR: a afinidade vira DESVIO (time equilibrado ~0; só composição inclina)
+const LADO_MEAN=(()=>{const ps=Object.values(POOL);let c=0,t=0;ps.forEach(p=>{const f=ladoFitRaw(p);c+=f[0];t+=f[1];});return[c/ps.length,t/ps.length];})();
+function ladoFit(j){const a=j._eng||j;if(a._lado)return a._lado;const f=ladoFitRaw(a);return a._lado=[f[0]-LADO_MEAN[0],f[1]-LADO_MEAN[1]];}
 function prepTime(t,mapa){
   const C=CFG_SIM;
   // aceita {jogadores:[...]} ou {time:{jogadores:[...]}}; normaliza pra lista de _eng
@@ -454,6 +472,9 @@ function prepTime(t,mapa){
     // skill de combate (OVR) = força do time/round; frag (firepower) = distribuição de kills
     skills:js.map((j,i)=>skillDuelo(j)*Math.pow(formas[i],1.0)*mapMult(j,mapa)),
     frags:js.map((j,i)=>fragPeso(j)*Math.pow(formas[i],1.0)*mapMult(j,mapa)),
+    // afinidade de lado do time = média da composição (ct, t) — define a vantagem por lado
+    ctEdge:js.reduce((s,j)=>s+ladoFit(j)[0],0)/js.length,
+    tEdge:js.reduce((s,j)=>s+ladoFit(j)[1],0)/js.length,
     cls:js.map(j=>j.cl||40),agr:js.map(j=>subAgr(j)),
     stats:js.map(j=>({nick:j.nick||t.nome,impacto:FA_IMPACTO[j.primario]??1,fp:j.fp??60,ut:j.ut??50,k:0,d:0,a:0,
       fa:{kills:[],mortes:[],assists:0,roundsKAST:0,multi:{},opK:0,opD:0},_kRound:0,_contribRound:false}))};
@@ -556,7 +577,9 @@ function simularMapa(A,B,fA,fB,mapaForcado){
     // força do round por time = média de skill × economia × lado × momentum − tilt + forma do dia
     const momA=clamp(sA*C.MOM_STEP,0,C.MOM_MAX),momB=clamp(sB*C.MOM_STEP,0,C.MOM_MAX);
     const tiltA=clamp((lsA-2)*C.TILT_STEP,0,C.TILT_MAX),tiltB=clamp((lsB-2)*C.TILT_STEP,0,C.TILT_MAX);
-    const ladoBonusA=ladoDe(A,r)==="CT"?C.LADO_CT:0,ladoBonusB=ladoDe(B,r)==="CT"?C.LADO_CT:0;
+    // vantagem de lado = base de CT + composição do time (CT puxado por anchor/lurker; T por entry)
+    const ladoBonusA=ladoDe(A,r)==="CT"?(C.LADO_CT+C.LADO_COMP*a.ctEdge):(C.LADO_COMP*a.tEdge);
+    const ladoBonusB=ladoDe(B,r)==="CT"?(C.LADO_CT+C.LADO_COMP*b.ctEdge):(C.LADO_COMP*b.tEdge);
     // base do round = mix de skill bruto individual e força efetiva do time (carrega química+treinador)
     const baseA=mediaSkill(a)*(1-C.PESO_EF)+(fA||mediaSkill(a))*C.PESO_EF;
     const baseB=mediaSkill(b)*(1-C.PESO_EF)+(fB||mediaSkill(b))*C.PESO_EF;
