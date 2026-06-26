@@ -25,9 +25,9 @@ const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22,
   IGL_TITULO:{Campeao:3,Final:2,Top4:1,Top8:0,Grupos:0}, // liderança comprovada por título soma OVR (só p/ IGL)
   IGL_TETO:20,                               // nenhum IGL passa de 20 (o jogo é decidido pelos fraggers)
   PARADOXO:[["Entry","Support"],["Entry","Lurker"]],PARADOXO_PEN:.85};
-const CFG_QUIMICA={RESULTADO:{Campeao:5,Final:4,Top4:3,Top8:2,Grupos:1},
-  ESPERADO_POR_SOMA:[{min:86,e:5},{min:78,e:4},{min:70,e:3},{min:60,e:2},{min:0,e:1}],
-  TREINADOR_BASE:15,TREINADOR_K_BONUS:2.5,TREINADOR_K_PUN:1.5,PISO_TREINADOR:{Campeao:16,Final:15,Top4:15,Top8:12,Grupos:10},
+const CFG_QUIMICA={
+  TREINADOR_PLACAR:{Campeao:16,Final:14,Top4:13,Top8:12,Grupos:10}, // base por conquista: vencer Major já é respeitado
+  TREINADOR_STR:.14,                                                // prestígio por liderar elenco acima do típico daquela conquista
   TREINADOR_MIN:10,TREINADOR_MAX:20,IGL_FRACO_OVR:13,ESTRELA_LIMITE:2,
   TREINADOR_FORCA:{neutro:15,porPonto:.025},
   PEN:{semIGL:.25,iglFraco:.10,semAWP:.20,semAncora:.11,semIniciativa:.12,estrelaExtra:.07},QUIMICA_MIN:.50,QUIMICA_MAX:1.00,
@@ -99,9 +99,10 @@ function avaliarJogador(p){const classe=classificar(p);const role=classe[0];
   const _roleSub=role==="IGL"?classe[1]:role;const sub=subArquetipo(_roleSub,p);
   return{primario:role,secundario:classe[1],secForte:classe.secForte!==false,classe:classe.join("-"),esteira:ESTEIRA[role],ovr,estrela,sub};}
 function ovrTreinador(somaOVR,colocacao){const C=CFG_QUIMICA;
-  const delta=(C.RESULTADO[colocacao]??1)-(C.ESPERADO_POR_SOMA.find(x=>somaOVR>=x.min)??{e:1}).e;
-  const ajuste=delta>=0?C.TREINADOR_K_BONUS*delta:C.TREINADOR_K_PUN*delta;
-  return Math.max(C.PISO_TREINADOR[colocacao]??C.TREINADOR_MIN,Math.min(C.TREINADOR_MAX,Math.round(C.TREINADOR_BASE+ajuste)));}
+  const base=C.TREINADOR_PLACAR[colocacao]??C.TREINADOR_MIN;       // o que o time conquistou
+  const tip=C.DERIVA.SOMA_ESPERADA[colocacao]??70;                 // soma de OVR típica p/ essa conquista
+  const prestigio=C.TREINADOR_STR*Math.max(0,somaOVR-tip);         // liderar elenco acima do típico agrega (não pune time fraco)
+  return clamp(Math.round(base+prestigio),C.TREINADOR_MIN,C.TREINADOR_MAX);}
 function quimicaComposicao(jogadores,caracTreinador=null){const C=CFG_QUIMICA;
   const car=caracTreinador?(C.CARAC[caracTreinador]??{}):{};const alertas=[];
   // IGLs acumulam DUAS funções (IGL + sua role 2). a cobertura considera a role 2 de TODOS os IGLs;
