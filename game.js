@@ -25,6 +25,7 @@ const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22,
   IGL_TITULO:{Campeao:3,Final:2,Top4:1,Top8:0,Grupos:0}, // liderança comprovada por título soma OVR (só p/ IGL)
   IGL_TETO:20,                               // nenhum IGL passa de 20 (o jogo é decidido pelos fraggers)
   VERS_REF:40,VERS_W:.4,VERS_CAP:3,VERS_FADE:60,VERS_SPAN:14, // "Coringa": polivalência (piso alto em TODOS os atributos) resgata quem é subvalorizado; desvanece conforme o core sobe (não empurra quem já é bem avaliado); especialista recebe 0
+  SUP_FRAG:72,                               // fp acima disso: não é Support role 1, é Lurker de utilidade (frag + util)
   PARADOXO:[["Entry","Support"],["Entry","Lurker"]],PARADOXO_PEN:.85};
 const CFG_QUIMICA={
   TREINADOR_PLACAR:{Campeao:16,Final:14,Top4:13,Top8:12,Grupos:10}, // base por conquista: vencer Major já é respeitado
@@ -55,6 +56,8 @@ const ROLES_COMBATE=["AWPer","Rifler","Entry","Lurker","Support"];
 // primário = maior afinidade; secundário = 2ª (paradoxo = leve desconto na escolha, não veto).
 function classificar(p){
   const sc={};ROLES_COMBATE.forEach(r=>sc[r]=dot(ROLE_PERFIL[r].afin,p));
+  // "support" que fragueia (fp alto) é LURKER de utilidade, não support role 1 → Lurker passa pra frente, Support vira o 2º
+  if((p.fp||0)>=CFG_AVALIACAO.SUP_FRAG&&sc.Support>sc.Lurker)sc.Lurker=sc.Support+.01;
   const ordem=ROLES_COMBATE.slice().sort((a,b)=>sc[b]-sc[a]);
   if(p.isIGL){const c=["IGL",ordem[0]];c.secForte=true;return c;}
   const prim=ordem[0],par=CFG_AVALIACAO.PARADOXO;
@@ -111,7 +114,8 @@ function avaliarJogador(p){const classe=classificar(p);const role=classe[0];
 // idempotente (deriva da afinidade dos atributos, nunca do estado atual → seguro re-rodar). NÃO mexe em
 // OVR (fica no melhor encaixe do jogador, ninguém é rebaixado) nem na esteira/sub.
 function distribuirRoles(engs){
-  const afin=e=>{const sc={};ROLES_COMBATE.forEach(r=>sc[r]=dot(ROLE_PERFIL[r].afin,e));return sc;};
+  const afin=e=>{const sc={};ROLES_COMBATE.forEach(r=>sc[r]=dot(ROLE_PERFIL[r].afin,e));
+    if((e.fp||0)>=CFG_AVALIACAO.SUP_FRAG&&sc.Support>sc.Lurker)sc.Lurker=sc.Support+.01;return sc;}; // support-fragger = lurker de utilidade
   const naoIgl=engs.filter(e=>!e.isIGL);
   const sc=new Map(naoIgl.map(e=>[e,afin(e)]));
   const cand=[];naoIgl.forEach(e=>ROLES_COMBATE.forEach(r=>cand.push({e,r,s:sc.get(e)[r]})));
