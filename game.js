@@ -263,11 +263,17 @@ const ATRIBUTOS=[
   {nome:"FalleN",fp:68,en:46,tr:17,op:78,cl:51,sn:95,ut:55,rating:1.19,colocacao:"Campeao",isIGL:true},
   {nome:"fnx",fp:79,en:48,tr:24,op:52,cl:33,sn:0,ut:82,rating:1.19,colocacao:"Campeao",isIGL:false},
   {nome:"fer",fp:72,en:25,tr:10,op:89,cl:32,sn:0,ut:17,rating:1.12,colocacao:"Campeao",isIGL:false},
-  {nome:"kennyS",fp:61,en:0,tr:2,op:69,cl:55,sn:93,ut:5,rating:1.31,colocacao:"Campeao",isIGL:false},
-  {nome:"NBK-",fp:57,en:0,tr:0,op:11,cl:49,sn:1,ut:3,rating:1.14,colocacao:"Campeao",isIGL:false},
-  {nome:"Happy",fp:63,en:0,tr:0,op:73,cl:15,sn:28,ut:64,rating:1.14,colocacao:"Campeao",isIGL:true},
-  {id:"apEX_envy",nome:"apEX",fp:56,en:0,tr:1,op:87,cl:0,sn:0,ut:4,rating:1.11,colocacao:"Campeao",isIGL:false},
-  {nome:"kioShiMa",fp:45,en:0,tr:2,op:30,cl:11,sn:1,ut:5,rating:1.07,colocacao:"Campeao",isIGL:false},
+  {nome:"kennyS",fp:88,en:15,tr:35,op:75,cl:55,sn:96,ut:20,rating:1.32,colocacao:"Campeao",isIGL:false}, // curadoria 2026: era Rating 1.0 → escala atual
+  {nome:"NBK-",fp:62,en:50,tr:60,op:55,cl:58,sn:20,ut:72,rating:1.08,colocacao:"Campeao",isIGL:false},
+  {nome:"Happy",fp:58,en:28,tr:44,op:58,cl:58,sn:10,ut:52,rating:1.04,colocacao:"Campeao",isIGL:true},
+  {id:"apEX_envy",nome:"apEX",fp:72,en:85,tr:50,op:80,cl:35,sn:0,ut:45,rating:1.08,colocacao:"Campeao",isIGL:false},
+  {nome:"kioShiMa",fp:60,en:45,tr:58,op:50,cl:45,sn:15,ut:70,rating:1.02,colocacao:"Campeao",isIGL:false},
+  // Virtus.pro · EMS One Katowice 2014 (curadoria: era Rating 1.0 traduzida pra escala atual, por papel real)
+  {nome:"pashaBiceps",pais:"POL",fp:88,en:40,tr:50,op:85,cl:65,sn:90,ut:35,rating:1.38,colocacao:"Campeao",isIGL:false}, // A AWP do time, MVP do major
+  {nome:"NEO",pais:"POL",fp:86,en:45,tr:58,op:82,cl:62,sn:20,ut:50,rating:1.22,colocacao:"Campeao",isIGL:false},
+  {nome:"Snax",pais:"POL",fp:78,en:35,tr:50,op:72,cl:78,sn:22,ut:75,rating:1.12,colocacao:"Campeao",isIGL:false},
+  {nome:"byali",pais:"POL",fp:68,en:55,tr:62,op:58,cl:55,sn:12,ut:70,rating:1.04,colocacao:"Campeao",isIGL:false},
+  {nome:"TaZ",pais:"POL",fp:30,en:40,tr:44,op:36,cl:46,sn:8,ut:45,rating:0.92,colocacao:"Campeao",isIGL:true},
   {nome:"tarik",fp:93,en:42,tr:59,op:53,cl:25,sn:24,ut:49,rating:1.22,colocacao:"Campeao",isIGL:true},
   {nome:"autimatic",fp:89,en:58,tr:37,op:53,cl:28,sn:14,ut:42,rating:1.20,colocacao:"Campeao",isIGL:false},
   {nome:"RUSH",fp:68,en:84,tr:88,op:27,cl:47,sn:0,ut:43,rating:1.16,colocacao:"Campeao",isIGL:false},
@@ -330,7 +336,8 @@ const TIMES_DEF=[
   {nome:"Immortals",cor:"#00c2a8",coach:"zakk",camp:"PGL Major Krakow 2017",colocacao:"Final",jogadores:["kNgV-","HEN1","LUCAS1","boltz","steel"]},
   {nome:"G2",cor:"#e4002b",coach:"Swani",camp:"IEM Sydney 2023",colocacao:"Top4",jogadores:["m0NESY","jks","NiKo_g2","huNter-","HooXi"]},
   {nome:"Spirit",cor:"#7d8aa0",coach:"hally",camp:"IEM Katowice 2024",colocacao:"Campeao",jogadores:["donk_kato24","sh1ro_kato24","zont1x","magixx","chopper_kato24"]},
-  {nome:"FURIA",cor:"#1faa59",coach:"sidde",camp:"IEM Chengdu 2025",colocacao:"Campeao",jogadores:["FalleN_furia25","YEKINDAR","yuurih_furia25","KSCERATO_furia25","molodoy"]}
+  {nome:"FURIA",cor:"#1faa59",coach:"sidde",camp:"IEM Chengdu 2025",colocacao:"Campeao",jogadores:["FalleN_furia25","YEKINDAR","yuurih_furia25","KSCERATO_furia25","molodoy"]},
+  {nome:"Virtus.pro",cor:"#f0a020",coach:null,camp:"EMS One Katowice 2014",colocacao:"Campeao",jogadores:["pashaBiceps","NEO","Snax","byali","TaZ"]}
 ];
 
 const CARAC_SLUG={Gestor:"gestor",Estrategista:"estrategista",Desenvolvedor:"desenvolvedor",Motivador:"motivador"};
@@ -1256,7 +1263,10 @@ function montarMeuTime(){
     ef:r.efetiva,quim:r.quimica,v:0,d:0,vivo:true,hist:[],meu:true};
 }
 function iniciarTorneio(){
-  const base=TEAMS.slice(0,15).map(t=>{const r=efT(t);
+  // sorteia 15 dos times (Fisher-Yates) → Major de 16 com o seu time; campo varia a cada run
+  const npc=TEAMS.slice();
+  for(let i=npc.length-1;i>0;i--){const j=Math.floor(rndF()*(i+1));[npc[i],npc[j]]=[npc[j],npc[i]];}
+  const base=npc.slice(0,15).map(t=>{const r=efT(t);
     return {time:t,nome:t.nome,cor:t.cor,camp:t.camp,ef:r.efetiva,quim:r.quimica,v:0,d:0,vivo:true,hist:[]};});
   base.push(montarMeuTime());
   TG.times=base;TG.rodada=0;TG.classificados=[];TG.eliminados=[];TG.playoffs=null;
