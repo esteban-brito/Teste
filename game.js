@@ -105,6 +105,26 @@ function avaliarJogador(p){const classe=classificar(p);const role=classe[0];
   const _nk=p.nick||p.nome;const estrela=TIER_LENDA.includes(_nk)||TIER_STAR.includes(_nk);
   const _roleSub=role==="IGL"?classe[1]:role;const sub=subArquetipo(_roleSub,p);
   return{primario:role,secundario:classe[1],secForte:classe.secForte!==false,classe:classe.join("-"),esteira:ESTEIRA[role],ovr,estrela,sub};}
+// MOTOR A · passe de TIME: distribui as funções olhando o elenco, não o jogador isolado.
+//  • cap 2 no role 1: no máx 2 jogadores com a mesma função primária; o excedente desce pra 2ª melhor afinidade.
+//  • AWP: todo time tem AWPer — se ninguém é, o de maior sn assume (role 1; role 2 se for o IGL).
+// idempotente (deriva da afinidade dos atributos, nunca do estado atual → seguro re-rodar). NÃO mexe em
+// OVR (fica no melhor encaixe do jogador, ninguém é rebaixado) nem na esteira/sub.
+function distribuirRoles(engs){
+  const afin=e=>{const sc={};ROLES_COMBATE.forEach(r=>sc[r]=dot(ROLE_PERFIL[r].afin,e));return sc;};
+  const naoIgl=engs.filter(e=>!e.isIGL);
+  const sc=new Map(naoIgl.map(e=>[e,afin(e)]));
+  const cand=[];naoIgl.forEach(e=>ROLES_COMBATE.forEach(r=>cand.push({e,r,s:sc.get(e)[r]})));
+  cand.sort((a,b)=>b.s-a.s);
+  const count={};ROLES_COMBATE.forEach(r=>count[r]=0);const prim=new Map();
+  cand.forEach(c=>{if(prim.has(c.e)||count[c.r]>=2)return;prim.set(c.e,c.r);count[c.r]++;}); // cap 2 só no primário
+  naoIgl.forEach(e=>{const p=prim.get(e),s=sc.get(e);const ord=ROLES_COMBATE.slice().sort((a,b)=>s[b]-s[a]);
+    e.primario=p;e.secundario=ord.find(r=>r!==p);e.secForte=(s[e.secundario]/Math.max(1,s[p]))>=.82;});
+  // AWP: ninguém AWPer (primário, nem IGL com AWP no role 2)? → maior sn assume (role 1; role 2 se IGL)
+  if(!engs.some(j=>j.primario==="AWPer"||(j.primario==="IGL"&&j.secundario==="AWPer"))){
+    const c=engs.reduce((b,j)=>((j.sn??0)>(b.sn??0)?j:b),engs[0]);
+    if(c.primario==="IGL")c.secundario="AWPer";else{c.secundario=c.primario;c.primario="AWPer";}}
+  return engs;}
 function ovrTreinador(somaOVR,colocacao){const C=CFG_QUIMICA;
   const base=C.TREINADOR_PLACAR[colocacao]??C.TREINADOR_MIN;       // o que o time conquistou
   const tip=C.DERIVA.SOMA_ESPERADA[colocacao]??70;                 // soma de OVR típica p/ essa conquista
@@ -319,6 +339,7 @@ const ROLE_COR={IGL:"var(--r-igl)",AWPer:"var(--r-awper)",Entry:"var(--r-entry)"
 
 let pid=0;
 const TEAMS=TIMES_DEF.map((t,i)=>{
+  distribuirRoles(t.jogadores.map(n=>POOL[n])); // funções no CONTEXTO do time (cap 2 + AWP); cada jogador está em 1 time só
   const carac=t.coach?derivaCaracteristica(t,POOL):null;
   const somaOVR=t.jogadores.reduce((s,n)=>s+POOL[n].ovr,0);
   return{
@@ -873,8 +894,9 @@ function construirCartao(alertas,dt){
 function renderResultado(){
   const box=$("result");
   if(!elencoCheio()){box.hidden=true;return;}
-  // usa os objetos do motor (_eng) p/ química real
-  const eng=S.jogadores.map(j=>j._eng);
+  // usa os objetos do motor (_eng) p/ química real; cópias + distribuição no contexto do SEU time
+  // (cap 2 + AWP) sem corromper os times-fonte de onde os jogadores vieram
+  const eng=distribuirRoles(S.jogadores.map(j=>({...j._eng})));
   const r=forcaTime(eng,S.treinador.carac,S.treinador.ovr);
   $("rBruta").textContent=r.bruta;
   $("rQuim").textContent=arred(r.quimica*100)+"%";
@@ -1225,9 +1247,12 @@ function chip(t,perdedor){
 // monta o objeto-time do jogador a partir do elenco montado
 function montarMeuTime(){
   const cartas=S.jogadores.filter(Boolean);
-  const js=cartas.map(p=>p._eng);
+  // cópias dos _eng + distribuição no contexto do SEU time (cap 2 + AWP) — não corrompe os times-fonte.
+  // o sim lê cada carta._eng, então as cartas do time apontam pras cópias com as funções do contexto.
+  const js=distribuirRoles(cartas.map(p=>({...p._eng})));
+  const cartasSim=cartas.map((c,i)=>({...c,_eng:js[i]}));
   const r=forcaTime(js,S.treinador?.carac||null,S.treinador?.ovr||null);
-  return {time:{nome:"SEU TIME",cor:"#39d3ff",jogadores:cartas},nome:"SEU TIME",cor:"#39d3ff",camp:"",
+  return {time:{nome:"SEU TIME",cor:"#39d3ff",jogadores:cartasSim},nome:"SEU TIME",cor:"#39d3ff",camp:"",
     ef:r.efetiva,quim:r.quimica,v:0,d:0,vivo:true,hist:[],meu:true};
 }
 function iniciarTorneio(){
