@@ -24,6 +24,7 @@ const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22,
   IGL_RAT_K:.80,IGL_CREDITO:9,               // IGL: rating descontado (sacrifica stats) + crédito de liderança intrínseco
   IGL_TITULO:{Campeao:3,Final:2,Top4:1,Top8:0,Grupos:0}, // liderança comprovada por título soma OVR (só p/ IGL)
   IGL_TETO:20,                               // nenhum IGL passa de 20 (o jogo é decidido pelos fraggers)
+  VERS_REF:40,VERS_W:.4,VERS_CAP:3,          // "Coringa": polivalência (piso alto em TODOS os atributos) vale OVR; especialista recebe 0
   PARADOXO:[["Entry","Support"],["Entry","Lurker"]],PARADOXO_PEN:.85};
 const CFG_QUIMICA={
   TREINADOR_PLACAR:{Campeao:16,Final:14,Top4:13,Top8:12,Grupos:10}, // base por conquista: vencer Major já é respeitado
@@ -74,11 +75,14 @@ const ESTEIRA={AWPer:"Artilharia",Rifler:"Assalto",Entry:"Vanguarda",Lurker:"Anc
 const ratingScore=r=>clamp((r-CFG_AVALIACAO.RAT_LO)/(CFG_AVALIACAO.RAT_HI-CFG_AVALIACAO.RAT_LO),0,CFG_AVALIACAO.RAT_CAP)*100;
 const curvaOVR=core=>{const C=CFG_AVALIACAO;return clipOVR(C.FLOOR+C.SPAN/(1+Math.exp(-C.K*(core-C.MID))));};
 function ovrUnificado(role,p,sec){const C=CFG_AVALIACAO;
+  // bônus "Coringa" (polivalência): quem não tem ponto fraco (piso alto em todos os atributos) ganha
+  // crédito de versatilidade. Especialista (tem um stat baixo) recebe 0. Não muda a função, só o OVR.
+  const versBonus=Math.min(C.VERS_CAP,Math.max(0,Math.min(p.fp||0,p.en||0,p.tr||0,p.op||0,p.cl||0,p.ut||0)-C.VERS_REF)*C.VERS_W);
   if(role==="IGL"){const prof=ROLE_PERFIL[sec],wR=prof.wR*C.IGL_RAT_K;
-    const base=curvaOVR(wR*ratingScore(p.rating)+(1-wR)*dot(prof.ovr,p)+C.IGL_CREDITO);
+    const base=curvaOVR(wR*ratingScore(p.rating)+(1-wR)*dot(prof.ovr,p)+C.IGL_CREDITO+versBonus);
     return Math.min(C.IGL_TETO,clipOVR(base+(C.IGL_TITULO[p.colocacao]||0)));} // + bônus de título, teto IGL
   const prof=ROLE_PERFIL[role];
-  return curvaOVR(prof.wR*ratingScore(p.rating)+(1-prof.wR)*dot(prof.ovr,p)+(prof.credito||0));}
+  return curvaOVR(prof.wR*ratingScore(p.rating)+(1-prof.wR)*dot(prof.ovr,p)+(prof.credito||0)+versBonus);}
 // ——— Sub-arquétipos: eixo ponderado por esteira (detecção automática, multi-atributo) ———
 // eixo>0 = sub A, <0 = sub B; magnitude = quão definido é o arquétipo. Define COMO o jogador joga.
 const SUBARQ={
