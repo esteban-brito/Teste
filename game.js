@@ -26,6 +26,7 @@ const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22,
   IGL_TETO:20,                               // nenhum IGL passa de 20 (o jogo é decidido pelos fraggers)
   VERS_REF:40,VERS_W:.4,VERS_CAP:3,VERS_FADE:60,VERS_SPAN:14, // "Coringa": polivalência (piso alto em TODOS os atributos) resgata quem é subvalorizado; desvanece conforme o core sobe (não empurra quem já é bem avaliado); especialista recebe 0
   SUP_FRAG:72,                               // fp acima disso: não é Support role 1, é Lurker de utilidade (frag + util)
+  CORINGA_PISO:42,CORINGA_SPREAD:24,         // sub "Coringa": piso alto E sem especialidade dominante (spread baixo) = polivalente
   PARADOXO:[["Entry","Support"],["Entry","Lurker"]],PARADOXO_PEN:.85};
 const CFG_QUIMICA={
   TREINADOR_PLACAR:{Campeao:16,Final:14,Top4:13,Top8:12,Grupos:10}, // base por conquista: vencer Major já é respeitado
@@ -98,7 +99,12 @@ const SUBARQ={
   Lurker:{eixo:p=>0.50*p.op+0.38*p.fp-0.72*p.cl,nomes:["Playmaker","Clutcher"]},
   Support:{eixo:p=>0.55*p.fp+0.25*p.op-0.50*p.ut-0.30*p.tr,nomes:["Apoio","Utilitario"]}
 };
-function subArquetipo(role,p){const s=SUBARQ[role];if(!s)return null;const e=s.eixo(p);
+// Coringa: jogador POLIVALENTE — piso alto em tudo E sem especialidade dominante (joga de tudo, sem estilo fixo)
+const ehCoringa=p=>{const v=[p.fp||0,p.en||0,p.tr||0,p.op||0,p.cl||0,p.ut||0],mn=Math.min(...v),mx=Math.max(...v);
+  return mn>=CFG_AVALIACAO.CORINGA_PISO&&(mx-mn)<=CFG_AVALIACAO.CORINGA_SPREAD;};
+function subArquetipo(role,p){const s=SUBARQ[role];if(!s)return null;
+  if(ehCoringa(p))return{nome:"Coringa",eixo:0,lado:"C"}; // polivalente: sub Coringa (sobrepõe o estilo da função)
+  const e=s.eixo(p);
   return{nome:s.nomes[e>=0?0:1],eixo:+e.toFixed(1),lado:e>=0?"A":"B"};}
 // STAR PLAYERS — definidos por curadoria (não se calcula: NiKo é star com OVR 15 ou 22).
 const TIER_LENDA=["s1mple","ZywOo","device","dev1ce","NiKo","coldzera","donk","GeT_RiGhT","olofmeister"];
@@ -841,7 +847,8 @@ const SUB_STATS={
   Fogo:["fp","op","en","cl"],      Conector:["tr","ut","cl","fp"],      // Rifler
   Abertura:["en","op","fp","tr"],  Trade:["tr","en","ut","cl"],         // Entry
   Playmaker:["op","fp","cl","ut"], Clutcher:["cl","op","ut","fp"],      // Lurker
-  Apoio:["fp","op","ut","tr"],     Utilitario:["ut","tr","cl","en"]};   // Support
+  Apoio:["fp","op","ut","tr"],     Utilitario:["ut","tr","cl","en"],    // Support
+  Coringa:["fp","op","cl","ut"]};  // polivalente: as 4 stats de base (bom em tudo)
 const STAT_VERSO_DEF=["fp","op","cl","ut"]; // fallback (sem sub)
 const statBar=(lab,v)=>`<div class="statbar"><span class="sb-lab">${esc(lab)}</span><span class="sb-val">${Math.round(v||0)}</span></div>`;
 // verso do jogador: nome + estilo no topo e as 4 stats do sub-arquétipo embaixo
