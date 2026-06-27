@@ -267,17 +267,17 @@ const ATRIBUTOS=[
   {nome:"FalleN",fp:68,en:46,tr:17,op:78,cl:51,sn:95,ut:55,rating:1.19,colocacao:"Campeao",isIGL:true},
   {nome:"fnx",fp:79,en:48,tr:24,op:52,cl:33,sn:0,ut:82,rating:1.19,colocacao:"Campeao",isIGL:false},
   {nome:"fer",fp:72,en:25,tr:10,op:89,cl:32,sn:0,ut:17,rating:1.12,colocacao:"Campeao",isIGL:false},
-  {nome:"kennyS",fp:88,en:15,tr:35,op:75,cl:55,sn:96,ut:20,rating:1.32,colocacao:"Campeao",isIGL:false}, // curadoria 2026: era Rating 1.0 → escala atual
-  {nome:"NBK-",fp:62,en:50,tr:60,op:55,cl:58,sn:20,ut:72,rating:1.08,colocacao:"Campeao",isIGL:false},
-  {nome:"Happy",fp:58,en:28,tr:44,op:58,cl:58,sn:10,ut:52,rating:1.04,colocacao:"Campeao",isIGL:true},
-  {id:"apEX_envy",nome:"apEX",fp:72,en:85,tr:50,op:80,cl:35,sn:0,ut:45,rating:1.08,colocacao:"Campeao",isIGL:false},
-  {nome:"kioShiMa",fp:60,en:45,tr:58,op:50,cl:45,sn:15,ut:70,rating:1.02,colocacao:"Campeao",isIGL:false},
+  {nome:"kennyS",fp:88,en:15,tr:35,op:75,cl:55,sn:96,ut:20,rating:1.31,colocacao:"Campeao",isIGL:false}, // curadoria 2026: era Rating 1.0 → escala atual
+  {nome:"NBK-",fp:62,en:50,tr:60,op:55,cl:58,sn:20,ut:72,rating:1.14,colocacao:"Campeao",isIGL:false},
+  {nome:"Happy",fp:58,en:28,tr:44,op:58,cl:58,sn:10,ut:52,rating:1.14,colocacao:"Campeao",isIGL:true},
+  {id:"apEX_envy",nome:"apEX",fp:72,en:85,tr:50,op:80,cl:35,sn:0,ut:45,rating:1.11,colocacao:"Campeao",isIGL:false},
+  {nome:"kioShiMa",fp:60,en:45,tr:58,op:50,cl:45,sn:15,ut:70,rating:1.07,colocacao:"Campeao",isIGL:false},
   // Virtus.pro · EMS One Katowice 2014 (curadoria: era Rating 1.0 traduzida pra escala atual, por papel real)
   {nome:"pashaBiceps",pais:"POL",fp:88,en:40,tr:50,op:85,cl:65,sn:90,ut:35,rating:1.38,colocacao:"Campeao",isIGL:false}, // A AWP do time, MVP do major
-  {nome:"NEO",pais:"POL",fp:86,en:45,tr:58,op:82,cl:62,sn:20,ut:50,rating:1.22,colocacao:"Campeao",isIGL:false},
-  {nome:"Snax",pais:"POL",fp:78,en:35,tr:50,op:72,cl:78,sn:22,ut:75,rating:1.12,colocacao:"Campeao",isIGL:false},
-  {nome:"byali",pais:"POL",fp:68,en:55,tr:62,op:58,cl:55,sn:12,ut:70,rating:1.04,colocacao:"Campeao",isIGL:false},
-  {nome:"TaZ",pais:"POL",fp:30,en:40,tr:44,op:36,cl:46,sn:8,ut:45,rating:0.92,colocacao:"Campeao",isIGL:true},
+  {nome:"NEO",pais:"POL",fp:86,en:45,tr:58,op:82,cl:62,sn:20,ut:50,rating:1.16,colocacao:"Campeao",isIGL:false},
+  {nome:"Snax",pais:"POL",fp:78,en:35,tr:50,op:72,cl:78,sn:22,ut:75,rating:1.20,colocacao:"Campeao",isIGL:false},
+  {nome:"byali",pais:"POL",fp:68,en:55,tr:62,op:58,cl:55,sn:12,ut:70,rating:1.31,colocacao:"Campeao",isIGL:false},
+  {nome:"TaZ",pais:"POL",fp:30,en:40,tr:44,op:36,cl:46,sn:8,ut:45,rating:0.85,colocacao:"Campeao",isIGL:true},
   {nome:"tarik",fp:93,en:42,tr:59,op:53,cl:25,sn:24,ut:49,rating:1.22,colocacao:"Campeao",isIGL:true},
   {nome:"autimatic",fp:89,en:58,tr:37,op:53,cl:28,sn:14,ut:42,rating:1.20,colocacao:"Campeao",isIGL:false},
   {nome:"RUSH",fp:68,en:84,tr:88,op:27,cl:47,sn:0,ut:43,rating:1.16,colocacao:"Campeao",isIGL:false},
