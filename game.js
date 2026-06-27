@@ -833,12 +833,21 @@ const coachHTML=p=>`<div class="banner">Treinador</div>
   <div class="ccore"><div class="ovr">${p.ovr}</div><div class="nick">${esc(p.nick)}</div></div>
   <div class="carac">${esc(p.carac)}</div>`;
 
-// ——— VERSO da carta: 4 stats fixas em barras (jogador) ou característica (treinador) ———
-const STAT_VERSO=[["Firepower","fp"],["Abertura","op"],["Clutch","cl"],["Utilitário","ut"]];
+// ——— VERSO da carta: 4 stats que MUDAM conforme o SUB-ARQUÉTIPO (o estilo do jogador) ———
+const STAT_LABEL={fp:"Firepower",op:"Abertura",cl:"Clutch",ut:"Utilitário",en:"Entrada",tr:"Trade",sn:"AWP"};
+// cada sub mostra as 4 stats que DEFINEM o estilo dele (1ª = a assinatura)
+const SUB_STATS={
+  Agressivo:["sn","op","fp","en"], Posicional:["sn","cl","ut","op"],   // AWPer
+  Fogo:["fp","op","en","cl"],      Conector:["tr","ut","cl","fp"],      // Rifler
+  Abertura:["en","op","fp","tr"],  Trade:["tr","en","ut","cl"],         // Entry
+  Playmaker:["op","fp","cl","ut"], Clutcher:["cl","op","ut","fp"],      // Lurker
+  Apoio:["fp","op","ut","tr"],     Utilitario:["ut","tr","cl","en"]};   // Support
+const STAT_VERSO_DEF=["fp","op","cl","ut"]; // fallback (sem sub)
 const statBar=(lab,v)=>`<div class="statbar"><span class="sb-lab">${esc(lab)}</span><span class="sb-val">${Math.round(v||0)}</span></div>`;
-// verso do jogador: nome + estilo no topo (preenche o topo) e as 4 stats embaixo
-const backPlayer=p=>{const e=p._eng||{};return `<div class="cb-name">${esc(p.nick)}<span class="cb-sub">${esc(e.sub?e.sub.nome:(p.prim||""))}</span></div>`+
-  `<div class="cb-stats">${STAT_VERSO.map(([lab,k])=>statBar(lab,e[k])).join("")}</div>`;};
+// verso do jogador: nome + estilo no topo e as 4 stats do sub-arquétipo embaixo
+const backPlayer=p=>{const e=p._eng||{};const keys=SUB_STATS[e.sub&&e.sub.nome]||STAT_VERSO_DEF;
+  return `<div class="cb-name">${esc(p.nick)}<span class="cb-sub">${esc(e.sub?e.sub.nome:(p.prim||""))}</span></div>`+
+  `<div class="cb-stats">${keys.map(k=>statBar(STAT_LABEL[k],e[k])).join("")}</div>`;};
 // o que cada característica de treinador FAZ (texto padronizado p/ o verso da carta dele)
 const CARAC_DESC={
   Gestor:"Gerencia os egos do elenco: tolera uma estrela a mais e suaviza o atrito entre craques.",
