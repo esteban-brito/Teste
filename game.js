@@ -407,7 +407,7 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7,
   // pré-plant: o T tenta plantar (cresce com tempo e vantagem de homem); se o relógio estoura sem plant, o CT vence (default/hold).
   RND_TEMPO:6,PLANT_BASE:.05,PLANT_TEMPO:.05,PLANT_MEN:.11,
   // pós-plant: a bomba tem 40s. T segura ângulos (edge POST_EDGE); CT precisa retomar+defusar antes da detonação.
-  PP_TEMPO:3,POST_EDGE:.07,DEFUSE_BASE:.24,DEFUSE_MEN:.22,PLANT_BONUS:800,
+  PP_TEMPO:3,POST_EDGE:.07,DEFUSE_BASE:.24,DEFUSE_MEN:.22,PLANT_BONUS:800,KILL_REWARD:90,
   EXP_KILL:1.45,EXP_OPEN:1.10,EXP_VITIMA:.55,TRADE_CHANCE:.62, // EXP_OPEN: abertura é menos sobre fp puro
   W_OP_KILL:.28,W_EN_VIT:.28,W_TR_KILL:.32, // tipo de kill segue a categoria HLTV: abertura→op, morte de abertura→en (entry), trade→tr (tilt suave: macro-neutro)
   ADR_KILL:95,ADR_VIT:55,ADR_AST:40,ADR_CHIP:14, // dano por evento → alimenta o ADR (fidelidade HLTV)
@@ -660,7 +660,8 @@ function combateRound(a,b,ctx){
     const vivo=viv.includes(i);
     if(s._contribRound||vivo){s.fa.roundsKAST++;if(kr===0)s.dmg+=rndF()*C.ADR_CHIP;} // participou: chip de dano
     s._kRound=0;s._contribRound=false;});});
-  return {venceA,sobreviventes:vivVfinal.length,destaque,plantado};
+  let kA=0,kB=0;roundKills.forEach(rk=>{rk.team===a?kA++:kB++;}); // kills por time no round → recompensa econômica
+  return {venceA,sobreviventes:vivVfinal.length,destaque,plantado,killsA:kA,killsB:kB};
 }
 
 // força do dia: oscila inverso à química (coeso=consistente, caótico=imprevisível)
@@ -670,9 +671,20 @@ function forcaDoDia(efetiva,quimica){
   const amp=CFG_SIM.AMP_MAX*(1-consist*CFG_SIM.AMP_CONSIST);
   return efetiva+(rndF()*2-1)*amp;
 }
-const BUY={pistol:.5,eco:.30,force:.62,full:1.0};
-const decidirBuy=(m,pist)=>pist?"pistol":m>=4500?"full":m>=2200?(rndF()<.5?"force":"eco"):"eco";
-const premio=(v,buy,ls)=>v?3250+(buy==="eco"?1000:500):[1400,1900,2400,2900,3400][Math.min(ls,4)]+(buy==="eco"?900:0);
+const BUY={pistol:.5,eco:.12,force:.62,full:1.0};
+// ECONOMIA REAL: comprar GASTA dinheiro; morrer PERDE equipamento (sobrevivente carrega a arma).
+const COMPRA_CUSTO={pistol:0,eco:200,force:2400,full:4300}; // custo de equipar 5 do zero
+const EQUIP_CARRY=500; // valor de equipamento que cada sobrevivente leva pro próximo round (não precisa recomprar)
+const custoReal=(buy,surv)=>Math.max(0,COMPRA_CUSTO[buy]-(surv||0)*EQUIP_CARRY); // só repõe quem morreu
+// compra inteligente, ciente do carregamento: full se dá pra equipar; senão força (com folga) ou eco
+// pra RESETAR; force-buy de LEITURA quando vem de poucas derrotas (negar o anti-eco / pegar de surpresa).
+const decidirBuy=(m,pist,ls,surv)=>{
+  if(pist)return"pistol";
+  if(m>=custoReal("full",surv))return"full";
+  if(m>=custoReal("force",surv)+1500)return"force";
+  if((ls||0)<=1&&m>=custoReal("force",surv)&&rndF()<.45)return"force";
+  return"eco";};
+const premio=(v,ls)=>v?3250:[1400,1900,2400,2900,3400][Math.min(ls,4)]; // recompensa CS2 (kills/plant somam à parte)
 // ——— identidade de mapa: cada mapa recompensa atributos diferentes (modula, não determina) ———
 // peso por atributo (soma ~1). a afinidade é medida CONTRA a média do próprio jogador em todos os
 // mapas, então lenda equilibrada varia quase nada (boa em tudo); só o especialista sente o mapa.
@@ -697,6 +709,7 @@ function simularMapa(A,B,fA,fB,mapaForcado){
   const formaDiaA=gaussF()*C.FORMA_DIA,formaDiaB=gaussF()*C.FORMA_DIA;
   let pa=0,pb=0,mA=800,mB=800,lsA=0,lsB=0,r=0;
   let sA=0,sB=0; // sequências de vitória (momentum)
+  let survA=5,survB=5; // sobreviventes do round anterior (carregam equipamento → barateia a próxima compra)
   const rounds=[];
   const ladoDe=(time,round)=>{const aCT=round<13;const ehA=time===A;return (ehA===aCT)?"CT":"TR";};
   const mediaSkill=t=>t.skills.reduce((s,v)=>s+v,0)/5;
@@ -710,10 +723,11 @@ function simularMapa(A,B,fA,fB,mapaForcado){
   const fim=()=>{const ot=pa>=12&&pb>=12; return ot?(pa>=16||pb>=16):(pa>=13||pb>=13);};
   while(!fim()){
     r++;
-    if(r===13){half1=[pa,pb];lsA=0;lsB=0;sA=0;sB=0;mA=800;mB=800;} // reset economia/momentum no 2º tempo
+    if(r===13){half1=[pa,pb];lsA=0;lsB=0;sA=0;sB=0;mA=800;mB=800;survA=5;survB=5;} // reset economia/momentum no 2º tempo
     const pistol=(r===1||r===13);
-    if(pistol){mA=800;mB=800;}
-    const buyA=decidirBuy(mA,pistol),buyB=decidirBuy(mB,pistol);
+    if(pistol){mA=800;mB=800;survA=5;survB=5;}
+    const buyA=decidirBuy(mA,pistol,lsA,survA),buyB=decidirBuy(mB,pistol,lsB,survB);
+    mA=Math.max(0,mA-custoReal(buyA,survA));mB=Math.max(0,mB-custoReal(buyB,survB)); // GASTA na compra (repõe só quem morreu)
     // força do round por time = média de skill × economia × lado × momentum − tilt + forma do dia
     const momA=clamp(sA*C.MOM_STEP,0,C.MOM_MAX),momB=clamp(sB*C.MOM_STEP,0,C.MOM_MAX);
     const tiltA=clamp((lsA-2)*C.TILT_STEP,0,C.TILT_MAX),tiltB=clamp((lsB-2)*C.TILT_STEP,0,C.TILT_MAX);
@@ -721,21 +735,27 @@ function simularMapa(A,B,fA,fB,mapaForcado){
     const ladoA=ladoDe(A,r),ladoB=ladoDe(B,r);
     const ladoBonusA=ladoA==="CT"?(C.LADO_CT+C.LADO_COMP*a.ctEdge):(C.LADO_COMP*a.tEdge);
     const ladoBonusB=ladoB==="CT"?(C.LADO_CT+C.LADO_COMP*b.ctEdge):(C.LADO_COMP*b.tEdge);
-    const fRA=(baseA+ladoBonusA+formaDiaA)*(0.55+0.45*BUY[buyA])*(1+momA-tiltA);
-    const fRB=(baseB+ladoBonusB+formaDiaB)*(0.55+0.45*BUY[buyB])*(1+momB-tiltB);
+    const fRA=(baseA+ladoBonusA+formaDiaA)*(0.42+0.58*BUY[buyA])*(1+momA-tiltA);
+    const fRB=(baseB+ladoBonusB+formaDiaB)*(0.42+0.58*BUY[buyB])*(1+momB-tiltB);
     // pEdge = prob de A vencer UM duelo (raso); o VENCEDOR DO ROUND emerge da sequência de duelos
     // (vantagem de homem, clutch, save, trade nascem daí). pistol ≈ cara-ou-coroa → azarão tem chance.
     const pEdgeA=logistica(fRA,fRB,pistol?C.D_DUELO_PIST:C.D_DUELO);
     const res=combateRound(a,b,{pEdgeA,openEdgeA,buyA,buyB,aIsCT:ladoA==="CT"});
     const venceA=res.venceA;
-    if(venceA){pa++;lsA=0;lsB++;sA++;sB=0;mA+=premio(true,buyA,0);mB+=premio(false,buyB,lsB);}
-    else{pb++;lsB=0;lsA++;sB++;sA=0;mB+=premio(true,buyB,0);mA+=premio(false,buyA,lsA);}
+    if(venceA){pa++;lsA=0;lsB++;sA++;sB=0;mA+=premio(true,0);mB+=premio(false,lsB);}
+    else{pb++;lsB=0;lsA++;sB++;sA=0;mB+=premio(true,0);mA+=premio(false,lsA);}
     // bônus de plant (CS2): o T que plantou ganha $800 mesmo perdendo o round — mantém o lado perdedor vivo na economia
     if(res.plantado){const tÉA=ladoA!=="CT"; if(tÉA){if(!venceA)mA+=C.PLANT_BONUS;}else{if(venceA)mB+=C.PLANT_BONUS;}}
+    // recompensa por kill: cada abate dá dinheiro (independe de ganhar/perder) — fragar mantém a economia viva, sustenta force-buy e anti-eco
+    mA+=res.killsA*C.KILL_REWARD;mB+=res.killsB*C.KILL_REWARD;
     mA=Math.min(16000,mA);mB=Math.min(16000,mB);
+    // sobreviventes carregam equipamento pro próximo round (só quem comprou arma de verdade: force/full)
+    const deadA=res.killsB,deadB=res.killsA;
+    survA=(buyA==="force"||buyA==="full")?Math.max(0,5-deadA):0;
+    survB=(buyB==="force"||buyB==="full")?Math.max(0,5-deadB):0;
     // snapshot do K-D acumulado dos 10 jogadores até este round (pro scoreboard ao vivo animar)
     const snapA=a.stats.map(s=>({k:s.k,d:s.d})),snapB=b.stats.map(s=>({k:s.k,d:s.d}));
-    rounds.push({r,pa,pb,venceA,ladoA,ladoB,troca:(r===13),plantado:res.plantado,
+    rounds.push({r,pa,pb,venceA,ladoA,ladoB,troca:(r===13),plantado:res.plantado,buyA,buyB,
       destaque:res.destaque,snapA,snapB});
   }
   // rating FALLEnANGELs por jogador (contextual: swing, eco, KAST, multi-kills)
