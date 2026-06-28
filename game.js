@@ -401,7 +401,7 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7,
   // ROUND VIVO: o round é uma SEQUÊNCIA DE DUELOS; o vencedor EMERGE (não é um dado só).
   // D_DUELO = decisão de UM duelo (bem mais raso que o round; o round é a soma de ~5-9 duelos).
   // pistol é quase cara-ou-coroa (D alto) → o azarão ganha pistol/anti-eco e o 13-0 fica raro.
-  D_DUELO:112,D_DUELO_PIST:360,OPEN_SCALE:520,CLUTCH_DUEL:.22,
+  D_DUELO:112,D_DUELO_PIST:360,OPEN_SCALE:520,CLUTCH_DUEL:.22,CLUTCH_X:.092,
   SAVE_BASE:.30,SAVE_MEN:.10,CLOSE_MEN:.18, // salvar (eco em desvantagem) e fechar bomb/tempo (vantagem de homem)
   // ——— BOMBA / RELÓGIO (assimetria real T×CT): o round tem fases, não é só eliminar ———
   // pré-plant: o T tenta plantar (cresce com tempo e vantagem de homem); se o relógio estoura sem plant, o CT vence (default/hold).
@@ -599,12 +599,15 @@ function combateRound(a,b,ctx){
   const ctVence=()=>aCT?"A":"B", tVence=()=>aCT?"B":"A"; // quem leva o round se o objetivo decide
   let primeira=true,fim=null,g=0;               // fim: "A"/"B" se o round fecha por objetivo/save antes da eliminação
   let plantado=false,tempo=0,pp=0;              // tempo = relógio pré-plant; pp = relógio da bomba (pós-plant)
+  let clutch=null;                              // 1ª vez que um lado fica em 1vX (pra medir/registrar o clutch)
   while(vivA.length>0&&vivB.length>0&&fim===null&&g++<30){
     let p=ctx.pEdgeA;
     if(primeira)p=clamp(p+ctx.openEdgeA,.03,.97);                // abertura: melhor entry/AWP leva o 1º pick
     if(plantado)p=clamp(p+(aCT?-C.POST_EDGE:C.POST_EDGE),.03,.97); // pós-plant: o T segura ângulos do bombsite (edge defensivo)
-    if(vivA.length===1&&vivB.length>1)p=clamp(p+((a.cls[vivA[0]]||45)-50)/100*C.CLUTCH_DUEL,.03,.97); // clutch A
-    if(vivB.length===1&&vivA.length>1)p=clamp(p-((b.cls[vivB[0]]||45)-50)/100*C.CLUTCH_DUEL,.03,.97); // clutch B
+    // clutch: o último vivo segura ângulos e isola os inimigos que empurram → edge por duelo que CRESCE com X
+    // (mantém a força de time no duelo, só soma o bônus de clutch + habilidade cl). Calibrado p/ ~real.
+    if(vivA.length===1&&vivB.length>1)p=clamp(p+Math.pow(vivB.length-1,1.35)*C.CLUTCH_X+((a.cls[vivA[0]]||45)-50)/100*C.CLUTCH_DUEL,.03,.97);
+    if(vivB.length===1&&vivA.length>1)p=clamp(p-Math.pow(vivA.length-1,1.35)*C.CLUTCH_X-((b.cls[vivB[0]]||45)-50)/100*C.CLUTCH_DUEL,.03,.97);
     const aWins=rndF()<p;
     const venc=aWins?a:b,perd=aWins?b:a,vivV=aWins?vivA:vivB,vivP=aWins?vivB:vivA,buyV=aWins?buyA:buyB,buyP=aWins?buyB:buyA;
     const vi=duelo(venc,vivV,buyV,perd,vivP,buyP,primeira,false);
@@ -612,17 +615,20 @@ function combateRound(a,b,ctx){
     primeira=false;
     // TRADE/refrag: o time que LEVOU a kill troca na hora (o entry abriu, mas é trocado)
     const vVnow=aWins?vivA:vivB,vPnow=aWins?vivB:vivA; // venc do duelo segue vivo; perd perdeu 1
-    // frequência de trade fixa (calibrada); QUEM pega o trade kill é que pende pra tr (fidelidade na stat)
-    if(vPnow.length>0&&vVnow.length>0&&rndF()<C.TRADE_CHANCE){
+    // frequência de trade fixa (calibrada); QUEM pega o trade kill é que pende pra tr (fidelidade na stat).
+    // NÃO troca contra um CLUTCHER (vencedor sozinho): o último vivo isola os duelos — sem isso o 1vX morre injusto.
+    if(vPnow.length>0&&vVnow.length>1&&rndF()<C.TRADE_CHANCE){
       const vi2=duelo(perd,vPnow,buyP,venc,vVnow,buyV,false,true);
       if(aWins)vivA=vivA.filter(x=>x!==vi2);else vivB=vivB.filter(x=>x!==vi2);
       perd.stats[vi]._contribRound=true; // KAST: quem morreu (entry abrindo / support) e foi TROCADO ganha crédito de "traded" — fiel ao "T" do KAST
     }
     if(vivA.length===0||vivB.length===0)break; // eliminação total decide na hora
+    // registra a 1ª situação de clutch (1vX): o solitário enfrenta X inimigos. medido/aproveitado depois.
+    if(!clutch){if(vivA.length===1)clutch={aLone:true,x:vivB.length};else if(vivB.length===1)clutch={aLone:false,x:vivA.length};}
     // CLOSE por vantagem de homem: o lado dominante FECHA o round (executa o plant+detona / segura / retoma)
-    // sem precisar duelar até o último homem — como no CS real. 1vX nunca encerra aqui (o clutch é jogado).
+    // sem precisar duelar até o último homem — como no CS real. 1vX NUNCA encerra aqui (o clutch é sempre jogado).
     const adv=Math.abs(vivA.length-vivB.length);
-    if(adv>=2&&Math.min(vivA.length,vivB.length)>=1&&rndF()<C.CLOSE_MEN*adv){fim=vivA.length>vivB.length?"A":"B";break;}
+    if(adv>=2&&Math.min(vivA.length,vivB.length)>=2&&rndF()<C.CLOSE_MEN*adv){fim=vivA.length>vivB.length?"A":"B";break;}
     // estado por LADO (não por time): o objetivo é assimétrico
     const vivT=aCT?vivB:vivA,vivCT=aCT?vivA:vivB,buyT=aCT?buyB:buyA,buyCT=aCT?buyA:buyB;
     tempo++;
@@ -661,7 +667,8 @@ function combateRound(a,b,ctx){
     if(s._contribRound||vivo){s.fa.roundsKAST++;if(kr===0)s.dmg+=rndF()*C.ADR_CHIP;} // participou: chip de dano
     s._kRound=0;s._contribRound=false;});});
   let kA=0,kB=0;roundKills.forEach(rk=>{rk.team===a?kA++:kB++;}); // kills por time no round → recompensa econômica
-  return {venceA,sobreviventes:vivVfinal.length,destaque,plantado,killsA:kA,killsB:kB};
+  const clutchWon=clutch?(clutch.aLone?venceA:!venceA):null; // o solitário venceu o round?
+  return {venceA,sobreviventes:vivVfinal.length,destaque,plantado,killsA:kA,killsB:kB,clutchX:clutch&&clutch.x,clutchWon};
 }
 
 // força do dia: oscila inverso à química (coeso=consistente, caótico=imprevisível)
@@ -756,7 +763,7 @@ function simularMapa(A,B,fA,fB,mapaForcado){
     // snapshot do K-D acumulado dos 10 jogadores até este round (pro scoreboard ao vivo animar)
     const snapA=a.stats.map(s=>({k:s.k,d:s.d})),snapB=b.stats.map(s=>({k:s.k,d:s.d}));
     rounds.push({r,pa,pb,venceA,ladoA,ladoB,troca:(r===13),plantado:res.plantado,buyA,buyB,
-      destaque:res.destaque,snapA,snapB});
+      clutchX:res.clutchX,clutchWon:res.clutchWon,destaque:res.destaque,snapA,snapB});
   }
   // rating FALLEnANGELs por jogador (contextual: swing, eco, KAST, multi-kills)
   const totalR=pa+pb;
