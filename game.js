@@ -402,7 +402,12 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7,
   // D_DUELO = decisão de UM duelo (bem mais raso que o round; o round é a soma de ~5-9 duelos).
   // pistol é quase cara-ou-coroa (D alto) → o azarão ganha pistol/anti-eco e o 13-0 fica raro.
   D_DUELO:112,D_DUELO_PIST:360,OPEN_SCALE:520,CLUTCH_DUEL:.22,
-  SAVE_BASE:.24,SAVE_MEN:.07,CLOSE_MEN:.13, // salvar (eco em desvantagem) e fechar bomb/tempo (vantagem de homem)
+  SAVE_BASE:.30,SAVE_MEN:.10,CLOSE_MEN:.18, // salvar (eco em desvantagem) e fechar bomb/tempo (vantagem de homem)
+  // ——— BOMBA / RELÓGIO (assimetria real T×CT): o round tem fases, não é só eliminar ———
+  // pré-plant: o T tenta plantar (cresce com tempo e vantagem de homem); se o relógio estoura sem plant, o CT vence (default/hold).
+  RND_TEMPO:6,PLANT_BASE:.05,PLANT_TEMPO:.05,PLANT_MEN:.11,
+  // pós-plant: a bomba tem 40s. T segura ângulos (edge POST_EDGE); CT precisa retomar+defusar antes da detonação.
+  PP_TEMPO:3,POST_EDGE:.07,DEFUSE_BASE:.24,DEFUSE_MEN:.22,PLANT_BONUS:800,
   EXP_KILL:1.45,EXP_OPEN:1.10,EXP_VITIMA:.55,TRADE_CHANCE:.62, // EXP_OPEN: abertura é menos sobre fp puro
   W_OP_KILL:.28,W_EN_VIT:.28,W_TR_KILL:.32, // tipo de kill segue a categoria HLTV: abertura→op, morte de abertura→en (entry), trade→tr (tilt suave: macro-neutro)
   ADR_KILL:95,ADR_VIT:55,ADR_AST:40,ADR_CHIP:14, // dano por evento → alimenta o ADR (fidelidade HLTV)
@@ -589,10 +594,15 @@ function combateRound(a,b,ctx){
     if(opening){venc.stats[ki].fa.opK++;perd.stats[vi].fa.opD++;}
     return vi;
   }
-  let primeira=true,fim=null,g=0; // fim: "A"/"B" se o round fecha por save/objetivo antes da eliminação
+  // ——— FASES DO ROUND: o T tenta plantar; pós-plant o T segura, o CT retoma. Relógio resolve o que não é eliminado.
+  const aCT=ctx.aIsCT;                          // time a está no CT neste round? (b é o T, e vice-versa)
+  const ctVence=()=>aCT?"A":"B", tVence=()=>aCT?"B":"A"; // quem leva o round se o objetivo decide
+  let primeira=true,fim=null,g=0;               // fim: "A"/"B" se o round fecha por objetivo/save antes da eliminação
+  let plantado=false,tempo=0,pp=0;              // tempo = relógio pré-plant; pp = relógio da bomba (pós-plant)
   while(vivA.length>0&&vivB.length>0&&fim===null&&g++<30){
     let p=ctx.pEdgeA;
     if(primeira)p=clamp(p+ctx.openEdgeA,.03,.97);                // abertura: melhor entry/AWP leva o 1º pick
+    if(plantado)p=clamp(p+(aCT?-C.POST_EDGE:C.POST_EDGE),.03,.97); // pós-plant: o T segura ângulos do bombsite (edge defensivo)
     if(vivA.length===1&&vivB.length>1)p=clamp(p+((a.cls[vivA[0]]||45)-50)/100*C.CLUTCH_DUEL,.03,.97); // clutch A
     if(vivB.length===1&&vivA.length>1)p=clamp(p-((b.cls[vivB[0]]||45)-50)/100*C.CLUTCH_DUEL,.03,.97); // clutch B
     const aWins=rndF()<p;
@@ -608,14 +618,31 @@ function combateRound(a,b,ctx){
       if(aWins)vivA=vivA.filter(x=>x!==vi2);else vivB=vivB.filter(x=>x!==vi2);
       perd.stats[vi]._contribRound=true; // KAST: quem morreu (entry abrindo / support) e foi TROCADO ganha crédito de "traded" — fiel ao "T" do KAST
     }
-    if(vivA.length===0||vivB.length===0)break;
-    // SAVE (desvantagem+eco) e CLOSE (vantagem fecha bomb/tempo): round acaba sem eliminar todo mundo.
-    // só encerra cedo se o lado em baixa tem >=2 vivos → 1vX SEMPRE é jogado (o clutch tem vida própria).
-    const difA=vivA.length-vivB.length,downMen=Math.abs(difA),downEco=difA>0?buyB:buyA;
-    if(Math.min(vivA.length,vivB.length)>=2){
-      if(downMen>=2){const ecoFraco=downEco==="eco"||downEco==="force";
-        if(rndF()<(ecoFraco?C.SAVE_BASE:C.SAVE_BASE*0.35)+downMen*C.SAVE_MEN){fim=difA>0?"A":"B";break;}}
-      if(rndF()<C.CLOSE_MEN*downMen){fim=difA>0?"A":"B";break;}
+    if(vivA.length===0||vivB.length===0)break; // eliminação total decide na hora
+    // CLOSE por vantagem de homem: o lado dominante FECHA o round (executa o plant+detona / segura / retoma)
+    // sem precisar duelar até o último homem — como no CS real. 1vX nunca encerra aqui (o clutch é jogado).
+    const adv=Math.abs(vivA.length-vivB.length);
+    if(adv>=2&&Math.min(vivA.length,vivB.length)>=1&&rndF()<C.CLOSE_MEN*adv){fim=vivA.length>vivB.length?"A":"B";break;}
+    // estado por LADO (não por time): o objetivo é assimétrico
+    const vivT=aCT?vivB:vivA,vivCT=aCT?vivA:vivB,buyT=aCT?buyB:buyA,buyCT=aCT?buyA:buyB;
+    tempo++;
+    if(!plantado){
+      // SAVE do T: muito atrás (>=2) e sem dinheiro → desiste do plant, guarda armas → CT vence no tempo (sobreviventes vivem)
+      if(vivCT.length-vivT.length>=2){const eco=buyT==="eco"||buyT==="force";
+        if(rndF()<(eco?C.SAVE_BASE:C.SAVE_BASE*.35)+(vivCT.length-vivT.length)*C.SAVE_MEN){fim=ctVence();break;}}
+      // PLANT: chance cresce com o tempo e com a vantagem de homem do T (tomou o site)
+      const pPlant=clamp(C.PLANT_BASE+tempo*C.PLANT_TEMPO+(vivT.length-vivCT.length)*C.PLANT_MEN,0,.92);
+      if(rndF()<pPlant){plantado=true;pp=0;}
+      else if(tempo>=C.RND_TEMPO){fim=ctVence();break;} // relógio estourou sem plant → CT segura (default/hold)
+    }else{
+      pp++;
+      // SAVE do CT: pós-plant muito atrás (>=2) e sem grana → não retoma → T detona (sobreviventes CT vivem)
+      if(vivT.length-vivCT.length>=2){const eco=buyCT==="eco"||buyCT==="force";
+        if(rndF()<(eco?C.SAVE_BASE:C.SAVE_BASE*.35)+(vivT.length-vivCT.length)*C.SAVE_MEN){fim=tVence();break;}}
+      // DEFUSE: CT com pelo menos paridade limpa o site e defusa (cresce com a vantagem de homem)
+      if(vivCT.length>=vivT.length&&rndF()<C.DEFUSE_BASE+Math.max(0,vivCT.length-vivT.length)*C.DEFUSE_MEN){fim=ctVence();break;}
+      // DETONAÇÃO: relógio da bomba estourou → T vence o post-plant
+      if(pp>=C.PP_TEMPO){fim=tVence();break;}
     }
   }
   const venceA=fim!==null?fim==="A":vivA.length>0;
@@ -633,7 +660,7 @@ function combateRound(a,b,ctx){
     const vivo=viv.includes(i);
     if(s._contribRound||vivo){s.fa.roundsKAST++;if(kr===0)s.dmg+=rndF()*C.ADR_CHIP;} // participou: chip de dano
     s._kRound=0;s._contribRound=false;});});
-  return {venceA,sobreviventes:vivVfinal.length,destaque};
+  return {venceA,sobreviventes:vivVfinal.length,destaque,plantado};
 }
 
 // força do dia: oscila inverso à química (coeso=consistente, caótico=imprevisível)
@@ -699,14 +726,16 @@ function simularMapa(A,B,fA,fB,mapaForcado){
     // pEdge = prob de A vencer UM duelo (raso); o VENCEDOR DO ROUND emerge da sequência de duelos
     // (vantagem de homem, clutch, save, trade nascem daí). pistol ≈ cara-ou-coroa → azarão tem chance.
     const pEdgeA=logistica(fRA,fRB,pistol?C.D_DUELO_PIST:C.D_DUELO);
-    const res=combateRound(a,b,{pEdgeA,openEdgeA,buyA,buyB});
+    const res=combateRound(a,b,{pEdgeA,openEdgeA,buyA,buyB,aIsCT:ladoA==="CT"});
     const venceA=res.venceA;
     if(venceA){pa++;lsA=0;lsB++;sA++;sB=0;mA+=premio(true,buyA,0);mB+=premio(false,buyB,lsB);}
     else{pb++;lsB=0;lsA++;sB++;sA=0;mB+=premio(true,buyB,0);mA+=premio(false,buyA,lsA);}
+    // bônus de plant (CS2): o T que plantou ganha $800 mesmo perdendo o round — mantém o lado perdedor vivo na economia
+    if(res.plantado){const tÉA=ladoA!=="CT"; if(tÉA){if(!venceA)mA+=C.PLANT_BONUS;}else{if(venceA)mB+=C.PLANT_BONUS;}}
     mA=Math.min(16000,mA);mB=Math.min(16000,mB);
     // snapshot do K-D acumulado dos 10 jogadores até este round (pro scoreboard ao vivo animar)
     const snapA=a.stats.map(s=>({k:s.k,d:s.d})),snapB=b.stats.map(s=>({k:s.k,d:s.d}));
-    rounds.push({r,pa,pb,venceA,ladoA,ladoB,troca:(r===13),
+    rounds.push({r,pa,pb,venceA,ladoA,ladoB,troca:(r===13),plantado:res.plantado,
       destaque:res.destaque,snapA,snapB});
   }
   // rating FALLEnANGELs por jogador (contextual: swing, eco, KAST, multi-kills)
