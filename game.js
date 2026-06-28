@@ -404,6 +404,7 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7,
   D_DUELO:112,D_DUELO_PIST:360,OPEN_SCALE:520,CLUTCH_DUEL:.22,
   SAVE_BASE:.24,SAVE_MEN:.07,CLOSE_MEN:.13, // salvar (eco em desvantagem) e fechar bomb/tempo (vantagem de homem)
   EXP_KILL:1.45,EXP_OPEN:1.10,EXP_VITIMA:.55,TRADE_CHANCE:.62, // EXP_OPEN: abertura é menos sobre fp puro
+  W_OP_KILL:.28,W_EN_VIT:.28,W_TR_KILL:.32, // tipo de kill segue a categoria HLTV: abertura→op, morte de abertura→en (entry), trade→tr (tilt suave: macro-neutro)
   ADR_KILL:95,ADR_VIT:55,ADR_AST:40,ADR_CHIP:14, // dano por evento → alimenta o ADR (fidelidade HLTV)
   FRAG_FP_BASE:35,FRAG_OVR:.018, // distribuição de kills: fp manda; concentra (alguém estoura no mapa, varia pela forma)
   MAPA_SCALE:380,MAPA_CAP:.06,SUB_ABRE:0.72,SUB_SURV:0.34,SUB_INT:40};
@@ -547,8 +548,9 @@ function prepTime(t,mapa){
     ctEdge:js.reduce((s,j)=>s+ladoFit(j)[0],0)/js.length,
     tEdge:js.reduce((s,j)=>s+ladoFit(j)[1],0)/js.length,
     cls:js.map(j=>j.cl||40),agr:js.map(j=>subAgr(j)),
-    // força de abertura do time (op/entry/sniper): inclina o PRIMEIRO duelo do round
-    open:js.reduce((s,j)=>s+((j.op??50)*.4+(j.en??45)*.35+(j.sn??0)*.25),0)/js.length,
+    ops:js.map(j=>j.op??50),ens:js.map(j=>j.en??45),trs:js.map(j=>j.tr??50), // categorias HLTV por jogador (tipo de kill)
+    // força de abertura do time (op/entry/sniper/util — flashes ajudam a abrir): inclina o PRIMEIRO duelo
+    open:js.reduce((s,j)=>s+((j.op??50)*.35+(j.en??45)*.30+(j.sn??0)*.20+(j.ut??50)*.15),0)/js.length,
     stats:js.map(j=>({nick:j.nick||t.nome,impacto:FA_IMPACTO[j.primario]??1,fp:j.fp??60,ut:j.ut??50,k:0,d:0,a:0,dmg:0,tradeK:0,
       fa:{kills:[],mortes:[],assists:0,roundsKAST:0,multi:{},opK:0,opD:0},_kRound:0,_contribRound:false}))};
 }
@@ -569,8 +571,12 @@ function combateRound(a,b,ctx){
   // um duelo: o lado VENCEDOR mata um do PERDEDOR. opening = 1º duelo; trade = refrag imediato.
   function duelo(venc,vivV,buyV,perd,vivP,buyP,opening,trade){
     const expK=opening?C.EXP_OPEN:C.EXP_KILL;
-    const ki=pick(vivV,i=>Math.pow(Math.max(venc.frags[i],8),expK)*(1+(opening?C.SUB_ABRE:0)*(venc.agr[i]||0)));
-    const vi=pick(vivP,i=>Math.pow(Math.max(perd.frags[i],8),C.EXP_VITIMA)*(1+(opening?C.SUB_ABRE:C.SUB_SURV)*(perd.agr[i]||0)));
+    // quem FRAGA: firepower é o VOLUME; o TIPO de kill pende pra categoria HLTV (abertura→op, trade→tr)
+    const tilt=i=>opening?Math.max(.25,1+C.W_OP_KILL*((venc.ops[i]-50)/50)):trade?Math.max(.25,1+C.W_TR_KILL*((venc.trs[i]-50)/50)):1;
+    const ki=pick(vivV,i=>Math.pow(Math.max(venc.frags[i],8),expK)*tilt(i)*(1+(opening?C.SUB_ABRE:0)*(venc.agr[i]||0)));
+    // quem MORRE: na abertura, o entry (en alto) que avançou cai primeiro
+    const vTilt=i=>opening?Math.max(.25,1+C.W_EN_VIT*((perd.ens[i]-50)/50)):1;
+    const vi=pick(vivP,i=>Math.pow(Math.max(perd.frags[i],8),C.EXP_VITIMA)*vTilt(i)*(1+(opening?C.SUB_ABRE:C.SUB_SURV)*(perd.agr[i]||0)));
     const rec={estadoMeu:vivV.length,estadoInim:vivP.length,buyMatador:buyV,buyVitima:buyP,roundGanho:true};
     venc.stats[ki].fa.kills.push(rec);roundKills.push({team:venc,rec});
     venc.stats[ki].k++;venc.stats[ki]._kRound++;venc.stats[ki]._contribRound=true;
@@ -595,6 +601,7 @@ function combateRound(a,b,ctx){
     primeira=false;
     // TRADE/refrag: o time que LEVOU a kill troca na hora (o entry abriu, mas é trocado)
     const vVnow=aWins?vivA:vivB,vPnow=aWins?vivB:vivA; // venc do duelo segue vivo; perd perdeu 1
+    // frequência de trade fixa (calibrada); QUEM pega o trade kill é que pende pra tr (fidelidade na stat)
     if(vPnow.length>0&&vVnow.length>0&&rndF()<C.TRADE_CHANCE){
       const vi2=duelo(perd,vPnow,buyP,venc,vVnow,buyV,false,true);
       if(aWins)vivA=vivA.filter(x=>x!==vi2);else vivB=vivB.filter(x=>x!==vi2);
