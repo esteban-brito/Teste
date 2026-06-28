@@ -1,15 +1,47 @@
 /* ════════════════════════════════════════════════════════════════════
    draft9-0 · lógica do jogo
-   ────────────────────────────────────────────────────────────────────
-   Organização do arquivo (de cima para baixo):
-     1. MOTOR        — avaliação de jogadores (OVR), química, rating HLTV,
-                       simulação de mapa e série. Blocos CFG_* = balanceamento.
-     2. DADOS        — jogadores (ATRIBUTOS), times (TIMES_DEF), POOL/TEAMS.
-     3. ESTADO + UI  — roleta, montagem de elenco, fase suíça, playoffs e o
-                       reprodutor de partidas.
+   ════════════════════════════════════════════════════════════════════
+   SEIS MOTORES, UM PIPELINE. Cada um tem nome próprio e uma só
+   responsabilidade; a saída de um alimenta o próximo. Da carta crua ao
+   veredito do mapa, o dado flui sempre na mesma direção:
+
+      atributos crus
+          │
+      ┌───▼──── PRISMA ───────┐  refrata o jogador: função (role) + 2ª função
+      │  classificar / sub /  │  + sub-arquétipo + lado (CT/T). Sem gates: tudo
+      │  distribuirRoles      │  por afinidade contínua. Decide QUEM é o jogador.
+      └───┬───────────────────┘
+      ┌───▼──── ZÊNITE ───────┐  condensa identidade + atributos + rating HLTV
+      │  ovrUnificado         │  num ÚNICO número numa escala só (OVR 5–22).
+      │  avaliarJogador       │  Decide QUÃO BOM ele é. (curva, sem cliffs)
+      └───┬───────────────────┘
+      ┌───▼──── SINAPSE ──────┐  lê o elenco montado: cobertura de pilares,
+      │  quimicaComposicao    │  saturação, egos, treinador → QUÍMICA e FORÇA
+      │  forcaTime            │  EFETIVA. Decide quanto o time RENDE junto.
+      └───┬───────────────────┘
+      ┌───▼──── MARÉ ─────────┐  o "humor competitivo": tier × OVR × firepower
+      │  formaDoDia           │  → a forma da noite/campanha que oscila e MOVE
+      │  sortearFormaCampanha │  o combate. É o motor de variância do roguelike.
+      └───┬───────────────────┘
+      ┌───▼──── PÓLVORA ──────┐  o combate VIVO, round a round: sequência de
+      │  combateRound         │  duelos, vantagem de homem, clutch, plant/
+      │  simularMapa/Serie    │  post-plant/retake/relógio. Quem GANHA emerge.
+      │   └─ COFRE            │     sub-motor de ECONOMIA: compra/gasto, carrego
+      │      decidirBuy/premio│     de equipamento, recompensa por kill, anti-eco.
+      └───┬───────────────────┘
+      ┌───▼──── FALLEnANGELs ─┐  o veredito contextual pós-combate: KAST, ADR,
+      │  fallenAngels         │  swing, multi-kill, abertura, trade, eco → o
+      └───────────────────────┘  RATING (estilo HLTV) de cada jogador no mapa.
+
+   Blocos CFG_* = o balanceamento de cada motor (números, não lógica).
+   Layout do arquivo: PRISMA·ZÊNITE·SINAPSE (avaliam jogador/time) → DADOS
+   (jogadores/times, já passados pelos três) → MARÉ·PÓLVORA·COFRE·FALLEnANGELs
+   (a partida) → ESTADO + UI (roleta, elenco, suíça, playoffs, reprodutor).
    Convenção: nomes e comentários em pt-BR; helpers curtos no topo de cada bloco.
    ════════════════════════════════════════════════════════════════════ */
-/* ——— MOTORES A/B/C · avaliação de jogadores e química ——— */
+/* ╔═══════════════════════════════════════════════════════════════════╗
+   ║  PRISMA · ZÊNITE · SINAPSE — avaliação de jogador e de elenco       ║
+   ╚═══════════════════════════════════════════════════════════════════╝ */
 /* Perfil por função: AFIN (pesos da identidade) + OVR (pesos do nível) + wR (peso do
    rating HLTV no OVR daquela função) + crédito intrínseco (cérebro/cola, não por título). */
 const ROLE_PERFIL={
@@ -18,7 +50,7 @@ const ROLE_PERFIL={
   Entry:  {afin:{en:.46,op:.42,fp:.12},        ovr:{en:.40,op:.30,fp:.20,tr:.10},       wR:.64},
   Lurker: {afin:{cl:.58,op:.22,fp:.20},        ovr:{cl:.40,op:.24,fp:.26,ut:.10},       wR:.66},
   Support:{afin:{ut:.55,tr:.25,fp:.10,op:.10}, ovr:{ut:.45,tr:.22,fp:.15,op:.10,cl:.08},wR:.45,credito:3}};
-const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22,
+const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22, // ⚙ balanceamento do PRISMA (afinidade/sub) + ZÊNITE (curva de OVR)
   RAT_LO:.85,RAT_HI:1.50,RAT_CAP:1.25,       // mapa do rating HLTV -> 0..125 (sem cliffs)
   FLOOR:9,SPAN:13.7,K:.0495,MID:55,          // core -> OVR (logística). teto um pouco mais seletivo: o 22 exige elite clara (rating ~1.6+), não satura cedo; MID recentrado mantém o miolo do elenco intacto
   IGL_RAT_K:.80,IGL_CREDITO:9,               // IGL: rating descontado (sacrifica stats) + crédito de liderança intrínseco
@@ -28,7 +60,7 @@ const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22,
   SUP_FRAG:72,                               // fp acima disso: não é Support role 1, é Lurker de utilidade (frag + util)
   CORINGA_PISO:42,CORINGA_SPREAD:24,         // sub "Coringa": piso alto E sem especialidade dominante (spread baixo) = polivalente
   PARADOXO:[["Entry","Support"],["Entry","Lurker"]],PARADOXO_PEN:.85};
-const CFG_QUIMICA={
+const CFG_QUIMICA={ // ⚙ balanceamento do SINAPSE (química, treinador, pilares de composição)
   TREINADOR_PLACAR:{Campeao:16,Final:14,Top4:13,Top8:12,Grupos:10}, // base por conquista: vencer Major já é respeitado
   TREINADOR_STR:.14,                                                // prestígio por liderar elenco acima do típico daquela conquista
   TREINADOR_MIN:10,TREINADOR_MAX:20,IGL_FRACO_OVR:13,ESTRELA_LIMITE:2,
@@ -53,12 +85,16 @@ const clamp=(x,lo,hi)=>Math.max(lo,Math.min(hi,x));
 const clipOVR=x=>clamp(Math.round(x),CFG_AVALIACAO.OVR_MIN,CFG_AVALIACAO.OVR_MAX);
 const dot=(w,p)=>{let s=0;for(const k in w)s+=w[k]*(p[k]||0);return s;}; // produto-escalar pesos·atributos
 const ROLES_COMBATE=["AWPer","Rifler","Entry","Lurker","Support"];
-// MOTOR A — classificação de função por AFINIDADE contínua (sem gates nem números mágicos).
-// primário = maior afinidade; secundário = 2ª (paradoxo = leve desconto na escolha, não veto).
+// afinidade do jogador por cada função (núcleo do PRISMA): produto-escalar atributos·perfil.
+// regra única: "support" que fragueia (fp alto) é LURKER de utilidade, não support role 1.
+// usada tanto na classificação individual quanto no passe de time (distribuirRoles) — fonte única.
+const afinidades=p=>{const sc={};ROLES_COMBATE.forEach(r=>sc[r]=dot(ROLE_PERFIL[r].afin,p));
+  if((p.fp||0)>=CFG_AVALIACAO.SUP_FRAG&&sc.Support>sc.Lurker)sc.Lurker=sc.Support+.01;return sc;};
+/* ┌─ PRISMA ─ classificação de função ────────────────────────────────┐
+   AFINIDADE contínua (sem gates nem números mágicos): primário = maior
+   afinidade; secundário = 2ª (paradoxo = leve desconto na escolha, não veto). */
 function classificar(p){
-  const sc={};ROLES_COMBATE.forEach(r=>sc[r]=dot(ROLE_PERFIL[r].afin,p));
-  // "support" que fragueia (fp alto) é LURKER de utilidade, não support role 1 → Lurker passa pra frente, Support vira o 2º
-  if((p.fp||0)>=CFG_AVALIACAO.SUP_FRAG&&sc.Support>sc.Lurker)sc.Lurker=sc.Support+.01;
+  const sc=afinidades(p);
   const ordem=ROLES_COMBATE.slice().sort((a,b)=>sc[b]-sc[a]);
   if(p.isIGL){const c=["IGL",ordem[0]];c.secForte=true;return c;}
   const prim=ordem[0],par=CFG_AVALIACAO.PARADOXO;
@@ -69,7 +105,8 @@ function classificar(p){
   c.secForte=(sc[sec]/Math.max(1,sc[prim]))>=.82; // bi-funcional de verdade (grau contínuo -> bool p/ química)
   return c;}
 const ESTEIRA={AWPer:"Artilharia",Rifler:"Assalto",Entry:"Vanguarda",Lurker:"Ancora",Support:"Sistema",IGL:"Comando"};
-// MOTOR B — OVR unificado p/ TODAS as funções (escala única, sem cliffs):
+/* ┌─ ZÊNITE ─ OVR unificado ───────────────────────────────────────────┐ */
+// OVR unificado p/ TODAS as funções (escala única, sem cliffs):
 //   core = wR·rating + (1−wR)·atributos-da-função + crédito; OVR = curva logística clip 5..22.
 // O IGL herda o PERFIL DO SEU ROLE DE COMBATE (secundário): um IGL/AWPer pondera o rating como
 // AWPer, um IGL/Support como Support (o peso do rating depende do role, como pediu o usuário).
@@ -90,6 +127,7 @@ function ovrUnificado(role,p,sec){const C=CFG_AVALIACAO;
   const prof=ROLE_PERFIL[role];
   const core0=prof.wR*ratingScore(p.rating)+(1-prof.wR)*dot(prof.ovr,p)+(prof.credito||0);
   return curvaOVR(core0+vers(core0));}
+/* ┌─ PRISMA ─ sub-arquétipos (o estilo dentro da função) ──────────────┐ */
 // ——— Sub-arquétipos: arquétipos FIÉIS do CS, detectados por ASSINATURA de atributos (= categorias HLTV) ———
 // cada sub: sig (assinatura p/ detecção) · agr (agressão no round, −1..+1) · lado [CT,T] · stats (4 do verso).
 // o jogador recebe o sub de MAIOR match dentro da função; eixo = quão definido (margem pro 2º) → intensidade no sim.
@@ -124,21 +162,20 @@ function subArquetipo(role,p){const subs=SUBARQ[role];if(!subs)return null;
 // STAR PLAYERS — definidos por curadoria (não se calcula: NiKo é star com OVR 15 ou 22).
 const TIER_LENDA=["s1mple","ZywOo","device","dev1ce","NiKo","coldzera","donk","GeT_RiGhT","olofmeister"];
 const TIER_STAR=["kennyS","m0NESY","KSCERATO","blameF","shox","XANTARES","JW","ropz","rain"];
+// ORQUESTRADOR PRISMA→ZÊNITE: classifica (função+sub) e avalia (OVR) um jogador de uma vez.
 function avaliarJogador(p){const classe=classificar(p);const role=classe[0];
   const ovr=ovrUnificado(role,p,classe[1]);
   const _nk=p.nick||p.nome;const estrela=TIER_LENDA.includes(_nk)||TIER_STAR.includes(_nk);
   const _roleSub=role==="IGL"?classe[1]:role;const sub=subArquetipo(_roleSub,p);
   return{primario:role,secundario:classe[1],secForte:classe.secForte!==false,classe:classe.join("-"),esteira:ESTEIRA[role],ovr,estrela,sub};}
-// MOTOR A · passe de TIME: distribui as funções olhando o elenco, não o jogador isolado.
+// PRISMA · passe de TIME: distribui as funções olhando o elenco, não o jogador isolado.
 //  • cap 2 no role 1: no máx 2 jogadores com a mesma função primária; o excedente desce pra 2ª melhor afinidade.
 //  • AWP: todo time tem AWPer — se ninguém é, o de maior sn assume (role 1; role 2 se for o IGL).
 // idempotente (deriva da afinidade dos atributos, nunca do estado atual → seguro re-rodar). NÃO mexe em
 // OVR (fica no melhor encaixe do jogador, ninguém é rebaixado) nem na esteira/sub.
 function distribuirRoles(engs){
-  const afin=e=>{const sc={};ROLES_COMBATE.forEach(r=>sc[r]=dot(ROLE_PERFIL[r].afin,e));
-    if((e.fp||0)>=CFG_AVALIACAO.SUP_FRAG&&sc.Support>sc.Lurker)sc.Lurker=sc.Support+.01;return sc;}; // support-fragger = lurker de utilidade
   const naoIgl=engs.filter(e=>!e.isIGL);
-  const sc=new Map(naoIgl.map(e=>[e,afin(e)]));
+  const sc=new Map(naoIgl.map(e=>[e,afinidades(e)])); // mesma afinidade do PRISMA (fonte única)
   const cand=[];naoIgl.forEach(e=>ROLES_COMBATE.forEach(r=>cand.push({e,r,s:sc.get(e)[r]})));
   cand.sort((a,b)=>b.s-a.s);
   const count={};ROLES_COMBATE.forEach(r=>count[r]=0);const prim=new Map();
@@ -150,6 +187,11 @@ function distribuirRoles(engs){
     const c=engs.reduce((b,j)=>((j.sn??0)>(b.sn??0)?j:b),engs[0]);
     if(c.primario==="IGL")c.secundario="AWPer";else{c.secundario=c.primario;c.primario="AWPer";}}
   return engs;}
+/* ╔═══════════════════════════════════════════════════════════════════╗
+   ║  SINAPSE — química de elenco e força efetiva                        ║
+   ║  Lê as funções/OVRs do PRISMA+ZÊNITE e mede como o time se LIGA:    ║
+   ║  cobertura de pilares, saturação, egos e o efeito do treinador.     ║
+   ╚═══════════════════════════════════════════════════════════════════╝ */
 function ovrTreinador(somaOVR,colocacao){const C=CFG_QUIMICA;
   const base=C.TREINADOR_PLACAR[colocacao]??C.TREINADOR_MIN;       // o que o time conquistou
   const tip=C.DERIVA.SOMA_ESPERADA[colocacao]??70;                 // soma de OVR típica p/ essa conquista
@@ -242,7 +284,11 @@ function derivaCaracteristica(time,POOL){const D=CFG_QUIMICA.DERIVA;const js=tim
     Motivador:(D.SOMA_ESPERADA[time.colocacao]-soma)/5};
   const[carac,val]=Object.entries(score).sort((a,b)=>b[1]-a[1])[0];return val>=D.LIMIAR?carac:"Motivador";}
 
-/* ——— DADOS · jogadores, times e estruturas da UI ——— */
+/* ╔═══════════════════════════════════════════════════════════════════╗
+   ║  DADOS — jogadores e times (já refratados por PRISMA·ZÊNITE·SINAPSE)║
+   ║  ATRIBUTOS (cartas) → POOL (avaliado) → TEAMS (funções no contexto  ║
+   ║  do time + química do treinador). Daqui pra baixo: a PARTIDA e a UI. ║
+   ╚═══════════════════════════════════════════════════════════════════╝ */
 const PAISES_MAP={s1mple:"UKR",electroNic:"RUS",b1t:"UKR",Perfecto:"RUS",Boombl4:"RUS",donk:"RUS",sh1ro:"RUS",tN1R:"BLR",zweih:"RUS",chopper:"RUS",
   ZywOo:"FRA",ropz:"EST",mezii:"GBR",flameZ:"ISR",apEX:"FRA",mzinho:"MNG",bLitz:"MNG","910":"MNG",controlez:"MNG",Techno:"MNG",
   KSCERATO:"BRA",yuurih:"BRA",saffee:"BRA",arT:"BRA",drop:"BRA",FL1T:"RUS",fame:"RUS",n0rb3r7:"RUS",Qikert:"KAZ",Jame:"RUS",
@@ -387,12 +433,16 @@ const TEAMS=TIMES_DEF.map((t,i)=>{
   };
 });
 
-/* ——— ENGINE · helpers e configuração ————————————————— */
+/* ╔═══════════════════════════════════════════════════════════════════╗
+   ║  A PARTIDA — MARÉ · PÓLVORA · COFRE · FALLEnANGELs                  ║
+   ║  Helpers de azar compartilhados pelos quatro motores do mapa:       ║
+   ║  rndF (uniforme), gaussF (normal, p/ a MARÉ) e logistica (duelo).   ║
+   ╚═══════════════════════════════════════════════════════════════════╝ */
 const rndF=()=>Math.random();
 const gaussF=()=>{let u=0,v=0;while(u===0)u=rndF();while(v===0)v=rndF();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
 const logistica=(fa,fb,D)=>1/(1+Math.pow(10,(fb-fa)/D));
 
-const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7,
+const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓLVORA (combate) + COFRE (economia)
   PESO_EF:.60,                  // 60% força do time (OVR+química+treinador), 40% skill individual cru
   // motor de combate por jogador (validado vs CS2 real: KPR~0.67, rating~1.0, fiel HLTV)
   LADO_CT:0.8,FORMA_DIA:7,      // vantagem-base de CT (pequena; a composição é que decide o lado)
@@ -414,8 +464,11 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7,
   FRAG_FP_BASE:35,FRAG_OVR:.018, // distribuição de kills: fp manda; concentra (alguém estoura no mapa, varia pela forma)
   MAPA_SCALE:380,MAPA_CAP:.06,SUB_ABRE:0.72,SUB_SURV:0.34,SUB_INT:40};
 
-/* ——— MOTOR FALLEnANGELs · rating contextual (estilo HLTV 3.0) ——— */
-// PARTE 1 — cálculo do rating a partir dos eventos reais do mapa (swing + eco + KAST + multi)
+/* ╔═══════════════════════════════════════════════════════════════════╗
+   ║  FALLEnANGELs — rating contextual (estilo HLTV)                     ║
+   ║  Lê o LOG de eventos que a PÓLVORA gera por jogador no mapa e devolve║
+   ║  uma nota: swing + eco + KAST + multi + abertura + trade + ADR + fp.║
+   ╚═══════════════════════════════════════════════════════════════════╝ */
 // win-probability por estado XvX (dados de CS profissional: vantagem de homem vale muito)
 const FA_WP={"5v5":.50,"5v4":.74,"5v3":.88,"5v2":.95,"5v1":.99,
   "4v5":.26,"4v4":.50,"4v3":.73,"4v2":.87,"4v1":.95,
@@ -430,7 +483,7 @@ const faSwingMorte=(meu,ini)=>faWP(meu-1,ini)-faWP(meu,ini);  // <=0
 const FA_ECO={full:{full:1,force:.9,eco:.62,pistol:.55},force:{full:1.18,force:1,eco:.78,pistol:.68},
   eco:{full:1.6,force:1.3,eco:1,pistol:.85},pistol:{full:1.55,force:1.25,eco:.95,pistol:1}};
 const faEco=(mb,vb)=>(FA_ECO[mb]&&FA_ECO[mb][vb])||1;
-const CFG_FA={BASE:.520,W_EK:.385,W_SURV:.160,W_KAST:.240,W_MULTI:.042,W_SWING:.10,PESO_MORTE:.95,PESO_OPEN:.216,
+const CFG_FA={BASE:.520,W_EK:.385,W_SURV:.160,W_KAST:.240,W_MULTI:.042,W_SWING:.10,PESO_MORTE:.95,PESO_OPEN:.216, // ⚙ balanceamento do FALLEnANGELs (pesos do rating)
   // W_EK menor + BASE maior = tiers comprimidos (topo desce, 19-22 se sobrepõem) sem matar a variação (forma é que oscila)
   // ADR (dano por round) entra como sinal independente das kills: parte do peso saiu de W_EK pra cá,
   // então quem dá muito dano sem converter (ou vice-versa) varia → mais sobreposição entre OVRs (vida).
@@ -457,7 +510,12 @@ function fallenAngels(ev){const C=CFG_FA,R=ev.totalRounds||1;
   const rating=C.BASE+ekpr*C.W_EK*(ev.impacto??1)+survPR*C.W_SURV+kast*C.W_KAST+multiScore*C.W_MULTI+(swing/R)*C.W_SWING+openPR+adrTerm+tradePR+fpBonus;
   return Math.max(.30,Math.min(3.0,rating));}
 
-// PARTE 2 — forma do dia: a inspiração da noite (tier × OVR × firepower) que MOVE o combate
+/* ╔═══════════════════════════════════════════════════════════════════╗
+   ║  MARÉ — forma do dia e de campanha (o motor de variância)          ║
+   ║  A inspiração da noite (tier × OVR × firepower) que MOVE o combate: ║
+   ║  craque oscila pouco e tem piso alto; role player é streaky. É o    ║
+   ║  que faz cada run do roguelike ser diferente sem deslocar a média.  ║
+   ╚═══════════════════════════════════════════════════════════════════╝ */
 // curadoria de tiers (legado histórico): Lenda explode e raramente cai; Role travado e modesto
 function tierDe(j){const a=j._eng||j;const nick=a.nick||j.nick;
   if(TIER_LENDA.includes(nick))return "Lenda";
@@ -505,10 +563,16 @@ function sortearFormaCampanha(times){
   });
 }
 
-/* ——— ENGINE DE SIMULAÇÃO · mapa round a round —————— */
+/* ╔═══════════════════════════════════════════════════════════════════╗
+   ║  PÓLVORA — combate vivo, round a round (mapa e série)              ║
+   ║  O round é uma SEQUÊNCIA DE DUELOS; o vencedor EMERGE dela (vantagem ║
+   ║  de homem, clutch, trade, plant/post-plant/retake/relógio). Consome ║
+   ║  OVR (PRISMA·ZÊNITE), química (SINAPSE), forma (MARÉ) e economia     ║
+   ║  (COFRE); produz placar + o log que o FALLEnANGELs vira rating.      ║
+   ╚═══════════════════════════════════════════════════════════════════╝ */
 // DOIS eixos DESACOPLADOS (correlação fp×rating_real=0.835 nos dados):
 //  • skillDuelo (OVR)  → FORÇA DO TIME: quem GANHA o round/jogo. Um IGL de OVR alto e fp baixo
-//    puxa a vitória do time mesmo fragando pouco. Ancorado no veredito dos Motores A/B/C.
+//    puxa a vitória do time mesmo fragando pouco. Ancorado no veredito de PRISMA·ZÊNITE·SINAPSE.
 //  • fragPeso (FIREPOWER) → QUEM FRAGA dentro do time: distribui as kills (→ rating individual).
 //    fp manda; OVR dá só um empurrão leve de habilidade. IGL fp 2 fraga pouco (rating baixo) ainda
 //    que decisivo pra vitória; fragger fp alto fraga muito (rating alto). É o que o CS real mostra.
@@ -678,6 +742,10 @@ function forcaDoDia(efetiva,quimica){
   const amp=CFG_SIM.AMP_MAX*(1-consist*CFG_SIM.AMP_CONSIST);
   return efetiva+(rndF()*2-1)*amp;
 }
+/* ┌─ COFRE ─ economia (sub-motor da PÓLVORA) ──────────────────────────┐
+   Comprar GASTA; morrer PERDE equipamento (sobrevivente carrega a arma);
+   cada kill paga. A decisão de compra é ciente do carrego. Daí emergem
+   eco, force-buy de leitura, anti-eco e a conversão pós-pistol. */
 const BUY={pistol:.5,eco:.12,force:.62,full:1.0};
 // ECONOMIA REAL: comprar GASTA dinheiro; morrer PERDE equipamento (sobrevivente carrega a arma).
 const COMPRA_CUSTO={pistol:0,eco:200,force:2400,full:4300}; // custo de equipar 5 do zero
@@ -700,11 +768,11 @@ const MAPA_PERFIL={
   Nuke:{sn:.30,cl:.26,ut:.24,tr:.20},     Ancient:{cl:.30,op:.26,ut:.24,tr:.20},
   Anubis:{fp:.30,cl:.26,op:.26,ut:.18},   Dust2:{fp:.34,sn:.30,op:.26,en:.10},
   Train:{sn:.30,ut:.30,cl:.22,tr:.18},    Overpass:{ut:.30,cl:.26,tr:.24,op:.20}};
-const mapScore=(a,perfil)=>{let s=0;for(const k in perfil)s+=(a[k]??0)*perfil[k];return s;};
 // multiplicador de combate por mapa: 1 ± pouco. auto-centrado (média dos mults do jogador ≈ 1).
+// afinidade de mapa = dot(perfil-do-mapa, atributos) — reusa o produto-escalar do PRISMA.
 function mapMult(j,mapa){const a=j._eng||j;const perfil=MAPA_PERFIL[mapa];if(!perfil)return 1;
-  if(a._mapBase===undefined){let s=0,n=0;for(const m in MAPA_PERFIL){s+=mapScore(a,MAPA_PERFIL[m]);n++;}a._mapBase=s/n;}
-  const fit=mapScore(a,perfil)-a._mapBase; // >0 mapa favorece o perfil dele, <0 desfavorece
+  if(a._mapBase===undefined){let s=0,n=0;for(const m in MAPA_PERFIL){s+=dot(MAPA_PERFIL[m],a);n++;}a._mapBase=s/n;}
+  const fit=dot(perfil,a)-a._mapBase; // >0 mapa favorece o perfil dele, <0 desfavorece
   return clamp(1+fit/CFG_SIM.MAPA_SCALE,1-CFG_SIM.MAPA_CAP,1+CFG_SIM.MAPA_CAP);}
 const MAPAS_POOL=["Mirage","Inferno","Nuke","Ancient","Anubis","Dust2","Train","Overpass"];
 
@@ -776,8 +844,8 @@ function simularMapa(A,B,fA,fB,mapaForcado){
     statsA:rate(a.stats),statsB:rate(b.stats),totalRounds:totalR};
 }
 
-/* ——— ENGINE · série best-of (MD1/MD3) —————————————— */
-// série best-of (MD1 na suíça, MD3 nos playoffs); usa força do dia a cada mapa
+/* ┌─ PÓLVORA ─ série best-of (MD1 na suíça, MD3 nos playoffs) ─────────┐ */
+// série best-of; usa força do dia a cada mapa
 function simularSerie(A,B,fdA,fdB,md){
   const need=Math.ceil(md/2);let wa=0,wb=0;const mapas=[];
   while(wa<need&&wb<need){
@@ -787,6 +855,11 @@ function simularSerie(A,B,fdA,fdB,md){
   return {vencedor:wa>wb?A:B,vencedorNome:wa>wb?A.nome:B.nome,placarSerie:[wa,wb],mapas};
 }
 
+/* ╔═══════════════════════════════════════════════════════════════════╗
+   ║  ESTADO + UI — roleta de draft, montagem de elenco, fase suíça,    ║
+   ║  playoffs e o reprodutor de partidas. Consome TEAMS e os motores    ║
+   ║  acima; daqui pra baixo é apresentação (DOM/áudio/animação).        ║
+   ╚═══════════════════════════════════════════════════════════════════╝ */
 const SPIN_MS=2700; // giro mais rápido (era 4000)
 const WIN_INDEX=44;
 const rnd=n=>Math.floor(Math.random()*n);
