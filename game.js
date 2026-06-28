@@ -975,6 +975,16 @@ const roulette=$("roulette"),track=$("track"),picksEl=$("picks"),lineupEl=$("lin
 const hintEl=$("hint"),spinwrap=$("spinwrap"),picksTag=$("picksTag"),picksNote=$("picksNote"),winnerPill=$("winnerPill");
 const hint=t=>{hintEl.textContent=t};
 
+// MODO VIRAR: quando ativo, clicar numa carta VIRA (frente/verso) em vez de selecioná-la.
+let modoVirar=false;
+const limparFlips=()=>document.querySelectorAll(".card.flipped,.coachcard.flipped").forEach(c=>c.classList.remove("flipped"));
+function setModoVirar(on){
+  modoVirar=on;
+  const b=$("flipModeBtn");
+  if(b){b.classList.toggle("ativo",on);b.setAttribute("aria-pressed",on?"true":"false");b.textContent=on?"Virando ✓":"Virar cartas";}
+  if(!on)limparFlips();
+}
+
 const teamCardHTML=(t,extra="")=>`<div class="tcard ${extra}" data-team="${esc(t.id)}" style="--col:${esc(t.cor)}">
   <div class="tcoloc">${esc(t.coloc)}</div><div class="tname">${esc(t.nome)}</div><div class="tcamp">${esc(t.camp)}</div></div>`;
 
@@ -984,7 +994,8 @@ const playerHTML=p=>`<div class="cmeta"><span>${esc(p.pais)}</span><span>${esc(p
   <div class="ccore"><div class="ovr">${p.ovr}</div><div class="nick">${esc(p.nick)}</div><div class="starsig">${p.estrela?"STAR ★ PLAYER":""}</div></div>
   <div class="roles"><span class="role prim" style="--rc:${ROLE_COR[p.prim]}">${esc(p.prim)}</span><span class="role sec">${esc(p.sec)}</span></div>`;
 
-const coachHTML=p=>`<div class="cmeta"><span>${esc(p.pais)}</span><span>${esc(p.time)}</span></div>
+const coachHTML=p=>`<div class="coach-seal">Treinador</div>
+  <div class="cmeta"><span>${esc(p.pais)}</span><span>${esc(p.time)}</span></div>
   <div class="ccore"><div class="ovr">${p.ovr}</div><div class="nick">${esc(p.nick)}</div></div>
   <div class="carac">${esc(p.carac)}</div>`;
 
@@ -1006,8 +1017,7 @@ const CARAC_DESC={
 const backCoach=p=>`<div class="cb-desc">${esc(CARAC_DESC[p.carac]||"")}</div>`;
 // jogador vira p/ as stats; treinador vira p/ o significado da característica. Faces giram em 3D.
 const cardHTML=p=>{const verso=p.tipo==="coach"?backCoach(p):backPlayer(p);const frente=p.tipo==="coach"?coachHTML(p):playerHTML(p);
-  return `<button class="cardflip" type="button" aria-label="${p.tipo==="coach"?"Ver o que esse treinador faz":"Ver estatísticas"}" tabindex="-1">⟲</button>`+
-    `<div class="cfaces"><div class="cface cfront">${frente}</div><div class="cface cback">${verso}</div></div>`;};
+  return `<div class="cfaces"><div class="cface cfront">${frente}</div><div class="cface cback">${verso}</div></div>`;};
 
 function elencoCheio(){return S.jogadores.every(Boolean)&&!!S.treinador}
 
@@ -1235,6 +1245,7 @@ function renderPicks(){
     picksTag.hidden=true;
     picksNote.hidden=true;
     winnerPill.textContent="";
+    setModoVirar(false); // some o controle junto com as cartas → não vaza o modo pro lineup
     return;
   }
   picksTag.hidden=false;
@@ -1362,12 +1373,13 @@ $("mutebtn").onclick=e=>{Audio.init();Audio.mudo=!Audio.mudo;
   if(!Audio.mudo)Audio.tick();};
 $("respinbtn").onclick=abortarSpin;
 $("resetbtn").onclick=resetar;
+$("flipModeBtn").onclick=()=>{setModoVirar(!modoVirar);
+  hint(modoVirar?"Modo virar ativo: clique numa carta para ver o verso.":(S.drawn?`Time sorteado: ${S.drawn.nome}. Escolha 1 carta.`:""));};
 
 document.addEventListener("click",e=>{
-  if(e.target.closest("#mutebtn,#rollbtn,#respinbtn,#resetbtn"))return; // botões têm handler próprio
-  // virar a carta (frente/verso) — não dispara seleção/posicionamento
-  const flip=e.target.closest(".cardflip");
-  if(flip){const c=flip.closest(".card,.coachcard");if(c)c.classList.toggle("flipped");return;}
+  if(e.target.closest("#mutebtn,#rollbtn,#respinbtn,#resetbtn,#flipModeBtn"))return; // botões têm handler próprio
+  // MODO VIRAR ativo: qualquer carta clicada VIRA (frente/verso), sem selecionar/posicionar
+  if(modoVirar){const c=e.target.closest(".card,.coachcard");if(c){c.classList.toggle("flipped");return;}}
   if(S.spinning)return;                                                 // trava interação durante o giro
   const pickEl=e.target.closest("[data-pick]");
   if(pickEl&&picksEl.contains(pickEl)&&!pickEl.classList.contains("taken")&&!pickEl.classList.contains("dup")&&S.drawn){
@@ -1396,6 +1408,7 @@ document.addEventListener("click",e=>{
 document.addEventListener("keydown",e=>{
   if(e.key!=="Enter"&&e.key!==" ")return;
   if(S.spinning)return;
+  if(modoVirar){const c=e.target.closest(".card,.coachcard");if(c){e.preventDefault();c.classList.toggle("flipped");return;}}
   const alvo=e.target.closest("[data-pick]:not(.taken):not(.dup),[data-move],.slot.avail");
   if(!alvo)return;
   e.preventDefault();

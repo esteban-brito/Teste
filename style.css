@@ -48,6 +48,12 @@ header{display:flex;align-items:center;justify-content:space-between;flex-wrap:w
 .section-tag{font-family:var(--ff);font-size:.66rem;letter-spacing:.24em;color:var(--dim);
   text-transform:uppercase;font-weight:700;margin:18px 0 8px;display:flex;align-items:center;gap:10px}
 .section-tag::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+/* botão "Virar cartas" no cabeçalho do elenco revelado: alterna o modo global de virar carta */
+#picksTag::after{display:none} /* sem a linha: o botão ocupa a direita */
+.flipmode{margin-left:auto;font-size:.6rem;letter-spacing:.1em;padding:6px 11px;border-radius:8px;
+  display:inline-flex;align-items:center;gap:5px;line-height:1;flex:none}
+.flipmode.ativo{border-color:var(--accent);color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 16%,var(--panel2));box-shadow:0 0 12px -3px var(--accent)}
 .section-note{font-size:.62rem;letter-spacing:.06em;color:var(--dim);margin:-4px 0 8px}
 .section-note strong{color:var(--txt);font-weight:600}
 .winner-pill{display:inline-block;font-family:var(--ff);font-size:.62rem;font-weight:700;
@@ -142,17 +148,17 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   font-weight:700;letter-spacing:.06em;z-index:4;color:var(--dim,#8593a6)}
 .cmeta span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .cmeta span:first-child{flex:none} /* país (3 letras) nunca encolhe; o time é que trunca se precisar */
-.starsig{height:.7em;line-height:.7em;text-align:center;
-  font-family:var(--ff);font-weight:700;font-size:clamp(6px,5.6cqw,9px);letter-spacing:.18em;text-transform:uppercase;
-  color:var(--tcol,#fff);opacity:.6;text-shadow:0 0 6px var(--tcol,#fff);white-space:nowrap;pointer-events:none;
-  margin-top:5px}
+.starsig{height:.8em;line-height:.8em;text-align:center;
+  font-family:var(--ff);font-weight:700;font-size:clamp(7px,6.4cqw,11px);letter-spacing:.18em;text-transform:uppercase;
+  color:var(--tcol,#fff);opacity:.62;text-shadow:0 0 6px var(--tcol,#fff);white-space:nowrap;pointer-events:none;
+  margin-top:6px}
 .card .ccore,.coachcard .ccore{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
   width:100%;padding:clamp(10px,12cqw,18px) 8px 4px;z-index:4;position:relative}
-.card .ovr,.coachcard .ovr{font-family:var(--ff);font-weight:700;font-size:clamp(26px,31cqw,50px);line-height:.82}
-.card .nick,.coachcard .nick{font-family:var(--ff);font-weight:700;font-size:clamp(10px,10.6cqw,18px);
-  margin-top:1px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .ovr,.coachcard .ovr{font-family:var(--ff);font-weight:700;font-size:clamp(30px,34cqw,58px);line-height:.82}
+.card .nick,.coachcard .nick{font-family:var(--ff);font-weight:700;font-size:clamp(12px,12cqw,21px);
+  margin-top:2px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .roles{display:flex;gap:clamp(3px,4cqw,5px);width:100%;z-index:4;position:relative;
-  padding:0 clamp(20px,23cqw,28px) clamp(8px,9cqw,12px) clamp(7px,8cqw,10px)} /* folga à direita p/ o botão de virar */
+  padding:0 clamp(7px,8cqw,10px) clamp(8px,9cqw,12px)} /* simétrico (sem botão de virar na carta) */
 .role{flex:1;font-family:var(--ff);font-size:clamp(6px,6.2cqw,9px);letter-spacing:.03em;text-transform:uppercase;
   font-weight:700;padding:clamp(3px,4cqw,5px) 2px;border-radius:clamp(4px,5cqw,6px);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -197,16 +203,26 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .card.tier-h .cmeta{color:#c9b8e0}
 @keyframes holoHue{to{filter:hue-rotate(360deg)}}
 
-/* Treinador — mesmo layout do jogador (meta topo, core central, faixa embaixo) + barra */
-.coachcard{border:2px solid var(--cc-main,var(--t1-gold))}
-.coachcard .cmeta{color:var(--cc-dim)} /* mesma meta do player (posição/tamanho herdados); só a cor muda */
+/* Treinador — MESMO esqueleto do jogador, mas MOLDURA bem distinta: fundo colorido na cor da
+   característica, selo "TREINADOR" no topo, borda dupla e padrão diagonal reforçado. */
+.coachcard{border:2px solid var(--cc-main,var(--t1-gold));isolation:isolate;contain:paint;
+  background:linear-gradient(165deg,color-mix(in srgb,var(--cc-main) 30%,#0b0e15) 0%,#0a0c12 58%,color-mix(in srgb,var(--cc-main) 16%,#0a0c12) 100%);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cc-main) 38%,transparent),inset 0 0 26px -8px color-mix(in srgb,var(--cc-main) 55%,transparent)}
+.coachcard::before{background:radial-gradient(circle at 50% -20%,color-mix(in srgb,var(--cc-main) 26%,transparent),transparent 60%),repeating-linear-gradient(135deg,color-mix(in srgb,var(--cc-main) 9%,transparent) 0 3px,transparent 3px 8px)}
+/* selo de topo: identifica a carta como treinador na hora */
+.coach-seal{position:absolute;top:0;left:0;right:0;z-index:5;text-align:center;font-family:var(--ff);font-weight:700;
+  text-transform:uppercase;letter-spacing:.22em;font-size:clamp(6px,6.2cqw,9px);padding:clamp(3px,3.6cqw,5px) 0;color:#0a0c12;
+  background:linear-gradient(90deg,var(--cc-dim),var(--cc-lit,var(--cc-main)),var(--cc-dim));
+  box-shadow:0 1px 0 color-mix(in srgb,var(--cc-main) 45%,transparent)}
+.coachcard .cmeta{top:clamp(19px,22cqw,28px);color:var(--cc-dim)} /* meta abaixo do selo */
+.coachcard .ccore{padding-top:clamp(26px,30cqw,40px)}              /* core abaixo de selo+meta */
 .coachcard .ovr{color:var(--cc-lit,var(--cc-main))}
 .coachcard .nick{color:var(--cc-lit,var(--cc-main))}
-.coachcard .carac{width:100%;padding:clamp(4px,5cqw,7px) clamp(20px,23cqw,28px) clamp(4px,5cqw,7px) clamp(6px,7cqw,9px);
+.coachcard .carac{width:100%;padding:clamp(4px,5cqw,7px) clamp(6px,7cqw,9px);
   margin-top:auto;font-family:var(--ff);font-size:clamp(6px,6.2cqw,9px);letter-spacing:.05em;text-transform:uppercase;
-  font-weight:700;border-radius:0;z-index:2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;
+  font-weight:700;border-radius:0;z-index:2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;
   color:var(--cc-lit,var(--cc-main));border-top:1px solid color-mix(in srgb,var(--cc-main) 40%,transparent);
-  background:color-mix(in srgb,var(--cc-main) 10%,transparent)} /* folga à direita p/ o botão de virar */
+  background:color-mix(in srgb,var(--cc-main) 14%,transparent)}
 .coachcard:hover{border-color:var(--cc-lit,var(--cc-main))}
 /* variantes por característica */
 .coach-gestor{--cc-main:var(--c-gestor);--cc-dim:var(--c-gestor-dim);--cc-lit:#e0c294}
@@ -231,29 +247,20 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .card.flipped .cback,.coachcard.flipped .cback{transform:rotateY(0deg);opacity:1}
 /* o verso do treinador usa a cor da característica dele (mapeia --cc-* p/ os tokens do verso) */
 .coachcard{--tcol:var(--cc-main);--lit:var(--cc-lit,var(--cc-main));--dim:var(--cc-dim,var(--cc-main))}
-.cardflip{position:absolute;bottom:clamp(5px,6cqw,8px);right:clamp(5px,6cqw,8px);z-index:6;
-  width:clamp(17px,19cqw,23px);height:clamp(17px,19cqw,23px);border-radius:clamp(5px,6cqw,8px);cursor:pointer;padding:0;
-  border:1px solid color-mix(in srgb,var(--tcol,#fff) 45%,transparent);background:rgba(8,10,16,.6);
-  color:var(--tcol,#fff);font-size:clamp(9px,11cqw,13px);line-height:1;display:flex;align-items:center;justify-content:center;
-  -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);-webkit-tap-highlight-color:transparent;
-  transition:transform .12s var(--ease),background .14s}
-.cardflip:hover{transform:scale(1.12);background:rgba(8,10,16,.85)}
-.cardflip:active{transform:scale(.95)}
 /* VERSO PADRONIZADO (tamanhos em cqw = % da largura da carta → idêntico em qualquer tela).
-   Jogador: estilo (sub-arquétipo) no topo + 4 stats. Treinador: só a descrição do efeito. */
-/* topo do verso do jogador: o estilo de jogo. clareia o canto p/ o botão de virar; quebra limpo se preciso */
-.cb-head{font-family:var(--ff);font-weight:700;font-size:clamp(8px,10.5cqw,15px);line-height:1.08;
+   Jogador: estilo (sub-arquétipo) no topo + 4 stats. Treinador: só a descrição do efeito.
+   Sem botão na carta (virar é por modo global) → o verso usa a carta toda. */
+.cb-head{font-family:var(--ff);font-weight:700;font-size:clamp(9px,11cqw,16px);line-height:1.08;
   letter-spacing:.01em;color:var(--lit,#fff);width:100%;text-align:left;padding:0 3px 5px 3px;
   white-space:normal;overflow-wrap:break-word;
   border-bottom:1px solid color-mix(in srgb,var(--tcol,#fff) 26%,transparent)}
-.cb-stats{display:flex;flex-direction:column;width:100%;flex:1;justify-content:space-evenly;margin-top:2px;
-  padding-bottom:clamp(14px,17cqw,22px)} /* folga inferior p/ o botão de virar (canto inf.-dir.) */
+.cb-stats{display:flex;flex-direction:column;width:100%;flex:1;justify-content:space-evenly;margin-top:2px}
 .statbar{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:6cqw;padding:4cqw 1px;
   border-bottom:1px solid color-mix(in srgb,var(--tcol,#888) 12%,transparent)}
 .statbar:last-child{border-bottom:none}
 /* verso do treinador: descrição objetiva do efeito, ocupando o corpo da carta */
-.cb-desc{font-family:'Barlow Semi Condensed',sans-serif;font-size:clamp(8px,8.6cqw,13px);line-height:1.34;
-  color:var(--txt,#eaf1f8);text-align:left;padding:clamp(5px,6cqw,9px) 2px clamp(15px,18cqw,23px);flex:1;display:flex;align-items:center}
+.cb-desc{font-family:'Barlow Semi Condensed',sans-serif;font-size:clamp(8px,8.8cqw,14px);line-height:1.36;
+  color:var(--txt,#eaf1f8);text-align:left;padding:clamp(6px,7cqw,10px) 3px clamp(6px,7cqw,10px);flex:1;display:flex;align-items:center}
 .sb-lab{font-family:var(--ff);font-weight:600;font-size:clamp(6px,6.4cqw,9px);letter-spacing:.06em;text-transform:uppercase;
   color:var(--dim,#8593a6);text-align:left;line-height:1.05;overflow-wrap:break-word}
 .sb-val{font-family:var(--ff);font-weight:800;font-size:clamp(13px,15cqw,20px);font-variant-numeric:tabular-nums;
