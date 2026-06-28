@@ -984,8 +984,7 @@ const playerHTML=p=>`<div class="cmeta"><span>${esc(p.pais)}</span><span>${esc(p
   <div class="ccore"><div class="ovr">${p.ovr}</div><div class="nick">${esc(p.nick)}</div><div class="starsig">${p.estrela?"STAR ★ PLAYER":""}</div></div>
   <div class="roles"><span class="role prim" style="--rc:${ROLE_COR[p.prim]}">${esc(p.prim)}</span><span class="role sec">${esc(p.sec)}</span></div>`;
 
-const coachHTML=p=>`<div class="banner">Treinador</div>
-  <div class="cmeta"><span>${esc(p.pais)}</span><span>${esc(p.time)}</span></div>
+const coachHTML=p=>`<div class="cmeta"><span>${esc(p.pais)}</span><span>${esc(p.time)}</span></div>
   <div class="ccore"><div class="ovr">${p.ovr}</div><div class="nick">${esc(p.nick)}</div></div>
   <div class="carac">${esc(p.carac)}</div>`;
 
