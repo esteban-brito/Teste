@@ -90,22 +90,37 @@ function ovrUnificado(role,p,sec){const C=CFG_AVALIACAO;
   const prof=ROLE_PERFIL[role];
   const core0=prof.wR*ratingScore(p.rating)+(1-prof.wR)*dot(prof.ovr,p)+(prof.credito||0);
   return curvaOVR(core0+vers(core0));}
-// ——— Sub-arquétipos: eixo ponderado por esteira (detecção automática, multi-atributo) ———
-// eixo>0 = sub A, <0 = sub B; magnitude = quão definido é o arquétipo. Define COMO o jogador joga.
+// ——— Sub-arquétipos: arquétipos FIÉIS do CS, detectados por ASSINATURA de atributos (= categorias HLTV) ———
+// cada sub: sig (assinatura p/ detecção) · agr (agressão no round, −1..+1) · lado [CT,T] · stats (4 do verso).
+// o jogador recebe o sub de MAIOR match dentro da função; eixo = quão definido (margem pro 2º) → intensidade no sim.
 const SUBARQ={
-  AWPer:{eixo:p=>0.60*p.op+0.40*p.fp-0.60*p.cl-0.40*p.ut,nomes:["Agressivo","Posicional"]},
-  Rifler:{eixo:p=>0.55*p.op+0.30*p.fp-0.50*p.tr-0.45*p.cl,nomes:["Fogo","Conector"]},
-  Entry:{eixo:p=>0.45*p.op+0.42*p.fp-0.62*p.tr-0.22*p.ut,nomes:["Abertura","Trade"]},
-  Lurker:{eixo:p=>0.50*p.op+0.38*p.fp-0.72*p.cl,nomes:["Playmaker","Clutcher"]},
-  Support:{eixo:p=>0.55*p.fp+0.25*p.op-0.50*p.ut-0.30*p.tr,nomes:["Apoio","Utilitario"]}
+  AWPer:[
+    {nome:"AWP Agressiva",sig:{en:.48,op:.27,fp:.25},agr:.9, lado:[-1,3],stats:["sn","op","fp","en"]}, // entra/abre com pick (en = agressão)
+    {nome:"AWP Reativa",  sig:{cl:.48,sn:.30,ut:.22},agr:-.9,lado:[3,-1],stats:["sn","cl","ut","op"]}],// segura ângulos, espera o pick
+  Rifler:[
+    {nome:"Fragger",    sig:{fp:.55,op:.45},        agr:.6, lado:[-1,2],stats:["fp","op","en","cl"]}, // pura mira/impacto
+    {nome:"Conector",   sig:{tr:.45,cl:.30,ut:.25}, agr:-.4,lado:[1,1], stats:["tr","cl","ut","fp"]}, // liga as jogadas
+    {nome:"Mid-rounder",sig:{op:.42,cl:.33,ut:.25}, agr:0,  lado:[1,1], stats:["op","cl","ut","fp"]}],// controla o meio/info
+  Entry:[
+    {nome:"Ponta-de-lança",sig:{en:.55,op:.45},        agr:1, lado:[-3,5],stats:["en","op","fp","tr"]}, // 1º contato puro
+    {nome:"Spacetaker",    sig:{op:.40,fp:.40,en:.20}, agr:.8,lado:[-2,4],stats:["op","fp","en","cl"]}],// 2º homem, toma espaço fragando
+  Lurker:[
+    {nome:"Infiltrador",sig:{cl:.50,fp:.28,op:.22},agr:-.3,lado:[2,1], stats:["cl","fp","op","ut"]}, // solo, flanco, info
+    {nome:"Playmaker",  sig:{op:.50,fp:.30,cl:.20},agr:.4, lado:[0,2], stats:["op","fp","cl","ut"]}, // cria a jogada
+    {nome:"Âncora",     sig:{cl:.40,ut:.40,tr:.20},agr:-1, lado:[5,-2],stats:["cl","ut","tr","op"]}],// segura o bombsite (CT)
+  Support:[
+    {nome:"Pop-flasher",sig:{ut:.55,op:.25,en:.20},agr:.2, lado:[1,1], stats:["ut","op","en","tr"]}, // flashes p/ abrir
+    {nome:"Refrag",     sig:{tr:.50,fp:.30,ut:.20},agr:.3, lado:[1,2], stats:["tr","fp","ut","cl"]}] // troca e fecha o round
 };
 // Coringa: jogador POLIVALENTE — piso alto em tudo E sem especialidade dominante (joga de tudo, sem estilo fixo)
 const ehCoringa=p=>{const v=[p.fp||0,p.en||0,p.tr||0,p.op||0,p.cl||0,p.ut||0],mn=Math.min(...v),mx=Math.max(...v);
   return mn>=CFG_AVALIACAO.CORINGA_PISO&&(mx-mn)<=CFG_AVALIACAO.CORINGA_SPREAD;};
-function subArquetipo(role,p){const s=SUBARQ[role];if(!s)return null;
-  if(ehCoringa(p))return{nome:"Coringa",eixo:0,lado:"C"}; // polivalente: sub Coringa (sobrepõe o estilo da função)
-  const e=s.eixo(p);
-  return{nome:s.nomes[e>=0?0:1],eixo:+e.toFixed(1),lado:e>=0?"A":"B"};}
+const SUB_CORINGA={nome:"Coringa",eixo:0,agr:0,lado:[0,0],stats:["fp","op","cl","ut"]};
+function subArquetipo(role,p){const subs=SUBARQ[role];if(!subs)return null;
+  if(ehCoringa(p))return{...SUB_CORINGA}; // polivalente: sobrepõe o estilo da função
+  let best=subs[0],bs=-1,second=-1;
+  subs.forEach(s=>{const sc=dot(s.sig,p);if(sc>bs){second=bs;bs=sc;best=s;}else if(sc>second)second=sc;});
+  return{nome:best.nome,eixo:+(bs-Math.max(0,second)).toFixed(1),agr:best.agr,lado:best.lado,stats:best.stats};}
 // STAR PLAYERS — definidos por curadoria (não se calcula: NiKo é star com OVR 15 ou 22).
 const TIER_LENDA=["s1mple","ZywOo","device","dev1ce","NiKo","coldzera","donk","GeT_RiGhT","olofmeister"];
 const TIER_STAR=["kennyS","m0NESY","KSCERATO","blameF","shox","XANTARES","JW","ropz","rain"];
@@ -499,17 +514,14 @@ function fragPeso(j){const a=j._eng||j;const C=CFG_SIM;const fp=a.fp??60,ovr=j.o
 // prepara um time pro combate: skills (com forma da noite), clutch e acumulador de stats
 // agressão de playstyle derivada do sub-arquétipo: quão na frente o jogador joga o round
 // (abre duelos e se expõe) vs quão posicional/clutcher ele é. Escala pela definição do arquétipo.
-const AGR_SUB={Agressivo:1,Posicional:-1,Fogo:.6,Conector:-.5,Abertura:1,Trade:-.9,Playmaker:1,Clutcher:-1,Apoio:.4,Utilitario:-.5};
-function subAgr(j){const a=j._eng||j,sb=a.sub;if(!sb)return 0;
-  const inten=Math.max(.35,Math.min(1,Math.abs(sb.eixo||0)/CFG_SIM.SUB_INT));return (AGR_SUB[sb.nome]||0)*inten;}
+function subAgr(j){const a=j._eng||j,sb=a.sub;if(!sb)return 0; // agressão = direção do sub × quão definido ele é
+  const inten=Math.max(.35,Math.min(1,Math.abs(sb.eixo||0)/CFG_SIM.SUB_INT));return (sb.agr||0)*inten;}
 // ——— AFINIDADE DE LADO (composição): CT = segurar/anchor, T = tomar espaço/entry ———
 // derivada dos STATS (cl/ut/sn seguram bombsite; en/op/fp tomam espaço) + role + sub-arquétipo.
 // lurker/support/âncora puxam o time pro CT; entry/agressivo puxam pro T. zero-centrado: time
 // equilibrado fica ~0 (só a vantagem-base de CT), composição desbalanceada inclina o lado.
 const LADO_ROLE={Lurker:[5,1],Support:[4,0],AWPer:[2,2],IGL:[1,1],Rifler:[-1,3],Entry:[-4,5]};
-const LADO_SUB={Clutcher:[4,-1],Posicional:[3,-1],Utilitario:[2,0],Apoio:[2,0],Conector:[1,1],Trade:[1,2],
-  Playmaker:[0,3],Fogo:[-1,4],Agressivo:[-2,4],Abertura:[-2,5]};
-function ladoFitRaw(a){const r=LADO_ROLE[a.primario]||[0,0],s=LADO_SUB[a.sub&&a.sub.nome]||[0,0];
+function ladoFitRaw(a){const r=LADO_ROLE[a.primario]||[0,0],s=(a.sub&&a.sub.lado)||[0,0];
   return [.08*((a.cl||45)-50)+.06*((a.ut||50)-50)+.05*((a.sn||0)-35)+r[0]+s[0],   // segurar (CT)
           .08*((a.en||45)-50)+.07*((a.op||50)-50)+.05*((a.fp||60)-55)+r[1]+s[1]];} // tomar espaço (T)
 // média da liga p/ ZERO-CENTRAR: a afinidade vira DESVIO (time equilibrado ~0; só composição inclina)
@@ -839,20 +851,12 @@ const coachHTML=p=>`<div class="banner">Treinador</div>
   <div class="ccore"><div class="ovr">${p.ovr}</div><div class="nick">${esc(p.nick)}</div></div>
   <div class="carac">${esc(p.carac)}</div>`;
 
-// ——— VERSO da carta: 4 stats que MUDAM conforme o SUB-ARQUÉTIPO (o estilo do jogador) ———
+// ——— VERSO da carta: as 4 stats vêm do próprio SUB-ARQUÉTIPO (sub.stats, definido no SUBARQ) ———
 const STAT_LABEL={fp:"Firepower",op:"Abertura",cl:"Clutch",ut:"Utilitário",en:"Entrada",tr:"Trade",sn:"AWP"};
-// cada sub mostra as 4 stats que DEFINEM o estilo dele (1ª = a assinatura)
-const SUB_STATS={
-  Agressivo:["sn","op","fp","en"], Posicional:["sn","cl","ut","op"],   // AWPer
-  Fogo:["fp","op","en","cl"],      Conector:["tr","ut","cl","fp"],      // Rifler
-  Abertura:["en","op","fp","tr"],  Trade:["tr","en","ut","cl"],         // Entry
-  Playmaker:["op","fp","cl","ut"], Clutcher:["cl","op","ut","fp"],      // Lurker
-  Apoio:["fp","op","ut","tr"],     Utilitario:["ut","tr","cl","en"],    // Support
-  Coringa:["fp","op","cl","ut"]};  // polivalente: as 4 stats de base (bom em tudo)
 const STAT_VERSO_DEF=["fp","op","cl","ut"]; // fallback (sem sub)
 const statBar=(lab,v)=>`<div class="statbar"><span class="sb-lab">${esc(lab)}</span><span class="sb-val">${Math.round(v||0)}</span></div>`;
 // verso do jogador: nome + estilo no topo e as 4 stats do sub-arquétipo embaixo
-const backPlayer=p=>{const e=p._eng||{};const keys=SUB_STATS[e.sub&&e.sub.nome]||STAT_VERSO_DEF;
+const backPlayer=p=>{const e=p._eng||{};const keys=(e.sub&&e.sub.stats)||STAT_VERSO_DEF;
   return `<div class="cb-name">${esc(p.nick)}<span class="cb-sub">${esc(e.sub?e.sub.nome:(p.prim||""))}</span></div>`+
   `<div class="cb-stats">${keys.map(k=>statBar(STAT_LABEL[k],e[k])).join("")}</div>`;};
 // o que cada característica de treinador FAZ (texto padronizado p/ o verso da carta dele)
