@@ -429,11 +429,12 @@ const CFG_FA={BASE:.520,W_EK:.385,W_SURV:.160,W_KAST:.240,W_MULTI:.042,W_SWING:.
   // W_EK menor + BASE maior = tiers comprimidos (topo desce, 19-22 se sobrepõem) sem matar a variação (forma é que oscila)
   // ADR (dano por round) entra como sinal independente das kills: parte do peso saiu de W_EK pra cá,
   // então quem dá muito dano sem converter (ou vice-versa) varia → mais sobreposição entre OVRs (vida).
-  W_ADR:.0019,ADR_REF:76,W_TRADE:.075, // fidelidade: dano + eficiência de trade (refrag) — conceitos reais do HLTV 3.0
+  W_ADR:.0019,ADR_REF:76,W_TRADE:.075,OPEN_D_W:.6, // fidelidade: dano + trade (refrag); morte-de-abertura pesa menos (tentar a entrada é a função) — HLTV
+
   // bônus de firepower: poder de fogo bruto puxa o rating pra cima (ajuda entries de fp alto). Cosmético — não muda resultado.
   FP:{ref:62,per:.0030,min:-.04,max:.09}};
 // impacto por função no kill: entry/rifler que fragga gera mais valor que support/igl (centrado ~1.0)
-const FA_IMPACTO={AWPer:1.055,Entry:1.05,Lurker:1.045,Rifler:1.03,Support:.965,IGL:.95}; // leque comprimido: AWP ainda no topo, mas Support/IGL creditam mais o "intangível" (validação real×sim)
+const FA_IMPACTO={AWPer:1.045,Entry:1.065,Lurker:1.045,Rifler:1.03,Support:.97,IGL:.955}; // calibrado por validação real×sim: kill de abertura do entry é de alto valor; AWP recentrado; Support/IGL creditam o "intangível"
 // rating FALLEnANGELs de um jogador a partir do seu log de eventos no mapa
 function fallenAngels(ev){const C=CFG_FA,R=ev.totalRounds||1;
   const ekpr=ev.kills.reduce((s,k)=>s+faEco(k.buyMatador,k.buyVitima),0)/R; // kills eco-ajustadas
@@ -443,7 +444,7 @@ function fallenAngels(ev){const C=CFG_FA,R=ev.totalRounds||1;
   let swing=0;
   ev.kills.forEach(k=>{if(k.roundGanho)swing+=faSwingKill(k.estadoMeu,k.estadoInim);});
   ev.mortes.forEach(mo=>{swing+=faSwingMorte(mo.estadoMeu,mo.estadoInim)*C.PESO_MORTE;});
-  const openPR=((ev.opK||0)-(ev.opD||0))/R*C.PESO_OPEN;
+  const openPR=((ev.opK||0)-(ev.opD||0)*C.OPEN_D_W)/R*C.PESO_OPEN; // abertura: ganhar o duelo vale cheio; morrer abrindo penaliza menos (risco inerente ao entry)
   const adr=(ev.dmg||0)/R;                                   // dano por round (ADR) — sinal de impacto independente das kills
   const adrTerm=(adr-C.ADR_REF)*C.W_ADR;                     // centrado: quem dá muito dano sobe, pouco dano desce (suave)
   const tradePR=(ev.tradeK||0)/R*C.W_TRADE;                  // eficiência de trade: refrag pelo time vale rating
@@ -605,6 +606,7 @@ function combateRound(a,b,ctx){
     if(vPnow.length>0&&vVnow.length>0&&rndF()<C.TRADE_CHANCE){
       const vi2=duelo(perd,vPnow,buyP,venc,vVnow,buyV,false,true);
       if(aWins)vivA=vivA.filter(x=>x!==vi2);else vivB=vivB.filter(x=>x!==vi2);
+      perd.stats[vi]._contribRound=true; // KAST: quem morreu (entry abrindo / support) e foi TROCADO ganha crédito de "traded" — fiel ao "T" do KAST
     }
     if(vivA.length===0||vivB.length===0)break;
     // SAVE (desvantagem+eco) e CLOSE (vantagem fecha bomb/tempo): round acaba sem eliminar todo mundo.
