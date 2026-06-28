@@ -995,17 +995,16 @@ const STAT_VERSO_DEF=["fp","op","cl","ut"]; // fallback (sem sub)
 const statBar=(lab,v)=>`<div class="statbar"><span class="sb-lab">${esc(lab)}</span><span class="sb-val">${Math.round(v||0)}</span></div>`;
 // verso do jogador: nome + estilo no topo e as 4 stats do sub-arquétipo embaixo
 const backPlayer=p=>{const e=p._eng||{};const keys=(e.sub&&e.sub.stats)||STAT_VERSO_DEF;
-  return `<div class="cb-name">${esc(p.nick)}<span class="cb-sub">${esc(e.sub?e.sub.nome:(p.prim||""))}</span></div>`+
+  return `<div class="cb-head">${esc(e.sub?e.sub.nome:(p.prim||""))}</div>`+
   `<div class="cb-stats">${keys.map(k=>statBar(STAT_LABEL[k],e[k])).join("")}</div>`;};
-// o que cada característica de treinador FAZ (texto padronizado p/ o verso da carta dele)
+// o que cada característica de treinador FAZ — objetivo, com os números reais do efeito no SINAPSE
 const CARAC_DESC={
-  Gestor:"Gerencia os egos do elenco: tolera uma estrela a mais e suaviza o atrito entre craques.",
-  Desenvolvedor:"Lapida talentos crus: reduz as penalidades de um elenco de OVR baixo.",
-  Estrategista:"Mestre da estrutura: reduz as penalidades de cobertura de função e de comando.",
-  Motivador:"Levanta o grupo: reduz as penalidades de cobertura e saturação do elenco."};
-// verso do treinador: característica + o que ela significa (pra todo mundo entender o role)
-const backCoach=p=>`<div class="cb-name cb-carac">${esc(p.carac)}</div>`+
-  `<div class="cb-desc">${esc(CARAC_DESC[p.carac]||"")}</div>`;
+  Gestor:"Tolera +1 estrela no elenco e reduz a penalidade por estrela extra de 7% para 4%.",
+  Desenvolvedor:"Reduz as penalidades de elenco cru em 5% por jogador de OVR 14 ou menos, até o limite de 18%.",
+  Estrategista:"Reduz as penalidades de estrutura (cobertura de funções) em 15% e as de comando do IGL em 30%.",
+  Motivador:"Reduz em 30% as penalidades de cobertura de função e de saturação do elenco."};
+// verso do treinador: só o que a característica FAZ (o nome dela já está na frente da carta)
+const backCoach=p=>`<div class="cb-desc">${esc(CARAC_DESC[p.carac]||"")}</div>`;
 // jogador vira p/ as stats; treinador vira p/ o significado da característica. Faces giram em 3D.
 const cardHTML=p=>{const verso=p.tipo==="coach"?backCoach(p):backPlayer(p);const frente=p.tipo==="coach"?coachHTML(p):playerHTML(p);
   return `<button class="cardflip" type="button" aria-label="${p.tipo==="coach"?"Ver o que esse treinador faz":"Ver estatísticas"}" tabindex="-1">⟲</button>`+
