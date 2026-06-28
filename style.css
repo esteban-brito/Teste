@@ -1,7 +1,11 @@
 /* ════════════════════════════════════════════════════════════════════
    draft9-0 · estilos
+   ════════════════════════════════════════════════════════════════════
+   A APRESENTAÇÃO. Se game.js são os seis motores (PRISMA·ZÊNITE·SINAPSE·
+   MARÉ·PÓLVORA·FALLEnANGELs), este arquivo é a VITRINE: dá rosto às cartas,
+   à roleta, à química e ao veredito do mapa que aqueles motores produzem.
    ────────────────────────────────────────────────────────────────────
-   Ordem das seções:
+   Ordem das seções (a ORDEM importa — é cascata):
      :root (tokens de cor/tipografia) · roleta · grids · cartas · resultado
      · overlays de torneio (suíça/playoffs) · partida ao vivo · tela final
      · responsivo · movimento reduzido · CAMADA DE REFINAMENTO (no fim).
@@ -49,7 +53,7 @@ header{display:flex;align-items:center;justify-content:space-between;flex-wrap:w
 .winner-pill{display:inline-block;font-family:var(--ff);font-size:.62rem;font-weight:700;
   letter-spacing:.14em;padding:3px 10px;border-radius:20px;margin-left:6px;vertical-align:middle}
 
-/* ——— CSS · ROLETA —————————————————————————————————— */
+/* ╔══════════════ ROLETA · draft de times ══════════════╗ */
 .roulette{position:relative;border-radius:16px;overflow:hidden;min-height:96px;border:1px solid #2b3346;
   background:radial-gradient(120% 180% at 50% -60%,#1b2436 0%,#0c1119 60%)}
 .roulette::before,.roulette::after{content:'';position:absolute;top:0;bottom:0;width:64px;z-index:3;pointer-events:none}
@@ -104,7 +108,7 @@ button.roll:active{transform:translateY(1px) scale(.97)}
 button.ghost{font-size:.76rem;padding:11px 20px;border:1px solid var(--line);background:var(--panel2);color:var(--txt)}
 button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 
-/* ——— CSS · GRIDS ——————————————————————————————————— */
+/* ╔══════════════ GRIDS · elenco e bancada ══════════════╗ */
 .picks,.lineup{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
 .picks{perspective:900px}
 /* caixa de carbono — mesma métrica do elenco revelado, 3 colunas */
@@ -118,7 +122,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .squad .lineup{display:contents}
 .lineup--coach{max-width:none}
 
-/* ——— CSS · CARTAS —————————————————————————————————— */
+/* ╔══════════════ CARTAS · jogador e treinador ══════════════╗ */
 .card,.coachcard{position:relative;border-radius:13px;cursor:pointer;text-align:center;overflow:hidden;
   display:flex;flex-direction:column;align-items:center;min-height:148px;aspect-ratio:5/7;
   background:transparent;
@@ -314,7 +318,7 @@ footer{text-align:center;color:#283344;font-size:.6rem;letter-spacing:.2em;margi
 
 /* proporção de card (5/7) padroniza a altura em todas as telas; min-height é só o piso no mobile estreito */
 
-/* ——— CSS · OVERLAYS DE TORNEIO ————————————————————— */
+/* ╔══════════════ OVERLAYS DE TORNEIO · suíça e playoffs ══════════════╗ */
 .overlay[hidden]{display:none}
 .is-hidden{display:none!important}
 .overlay{position:fixed;inset:0;z-index:50;
@@ -494,7 +498,7 @@ footer{text-align:center;color:#283344;font-size:.6rem;letter-spacing:.2em;margi
 .fr-nick{font-family:var(--ff);font-weight:600;font-size:.92rem;color:var(--txt);text-align:left}
 .fr-rate{font-family:var(--ff);font-weight:700;font-size:1rem;font-variant-numeric:tabular-nums}
 .r-top{color:var(--win)}.r-mid{color:var(--neutral)}.r-low{color:var(--loss)}
-/* ——— tela final redesenhada (premium) ——— */
+/* ╔══════════════ TELA FINAL · pódio e relatório da campanha ══════════════╗ */
 .final-trophy{width:62px;height:62px;color:#3a4458;margin-bottom:2px;display:flex}
 .final-trophy svg{width:100%;height:100%;filter:drop-shadow(0 4px 14px rgba(0,0,0,.5))}
 .final-overlay.is-champ .final-trophy{color:var(--gold);animation:trophyRise .7s var(--ease) both,champGlow 2.4s ease-in-out infinite .7s}
