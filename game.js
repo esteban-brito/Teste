@@ -975,6 +975,22 @@ const roulette=$("roulette"),track=$("track"),picksEl=$("picks"),lineupEl=$("lin
 const hintEl=$("hint"),spinwrap=$("spinwrap"),picksTag=$("picksTag"),picksNote=$("picksNote"),winnerPill=$("winnerPill");
 const hint=t=>{hintEl.textContent=t};
 
+// AUTO-FIT do verso do treinador: ajusta a fonte da descrição p/ o MAIOR tamanho que
+// preenche a carta sem cortar (cada texto tem comprimento diferente). Mede o .cb-desc
+// (que tem o tamanho da carta via .cback position:absolute) e faz busca binária.
+function fitText(el,min,max){
+  const avail=el.parentElement.clientHeight;         // altura útil do verso (.cback); el cresce com o conteúdo
+  if(!avail)return;
+  el.style.fontSize=max+"px";
+  if(el.scrollHeight<=avail)return;                  // já cabe no máximo
+  let lo=min,hi=max;
+  for(let i=0;i<14;i++){const m=(lo+hi)/2;el.style.fontSize=m+"px";
+    if(el.scrollHeight<=avail)lo=m;else hi=m;}
+  el.style.fontSize=lo+"px";
+}
+function ajustarVersos(){document.querySelectorAll(".cb-desc").forEach(el=>{if(el.clientHeight)fitText(el,10,28);});}
+let _fitRaf;addEventListener("resize",()=>{cancelAnimationFrame(_fitRaf);_fitRaf=requestAnimationFrame(ajustarVersos);});
+
 // MODO VIRAR: quando ativo, clicar numa carta VIRA (frente/verso) em vez de selecioná-la.
 let modoVirar=false;
 const limparFlips=()=>document.querySelectorAll(".card.flipped,.coachcard.flipped").forEach(c=>c.classList.remove("flipped"));
@@ -1009,10 +1025,10 @@ const backPlayer=p=>{const e=p._eng||{};const keys=(e.sub&&e.sub.stats)||STAT_VE
   `<div class="cb-stats">${keys.map(k=>statBar(STAT_LABEL[k],e[k])).join("")}</div>`;};
 // o que cada característica de treinador FAZ — objetivo, com os números reais do efeito no SINAPSE
 const CARAC_DESC={
-  Gestor:"Tolera +1 estrela no elenco e reduz a penalidade por estrela extra de 7% para 4%.",
-  Desenvolvedor:"Reduz as penalidades de elenco cru em 5% por jogador de OVR 14 ou menos, até o limite de 18%.",
-  Estrategista:"Reduz as penalidades de estrutura (cobertura de funções) em 15% e as de comando do IGL em 30%.",
-  Motivador:"Reduz em 30% as penalidades de cobertura de função e de saturação do elenco."};
+  Gestor:"Tolera +1 estrela no elenco. Penalidade por estrela extra: 7% → 4%.",
+  Desenvolvedor:"Reduz penalidades de elenco cru: 5% por jogador de OVR ≤14, até 18%.",
+  Estrategista:"Reduz penalidades de estrutura em 15% e de comando (IGL) em 30%.",
+  Motivador:"Reduz em 30% as penalidades de cobertura e saturação do elenco."};
 // verso do treinador: só o que a característica FAZ (o nome dela já está na frente da carta)
 const backCoach=p=>`<div class="cb-desc">${esc(CARAC_DESC[p.carac]||"")}</div>`;
 // jogador vira p/ as stats; treinador vira p/ o significado da característica. Faces giram em 3D.
@@ -1237,6 +1253,7 @@ function renderLineup(){
   S.justPlaced=null;
   if(S.sel)iluminarSlots();
   updateHud();
+  ajustarVersos();
 }
 
 function renderPicks(){
@@ -1265,6 +1282,7 @@ function renderPicks(){
     return`<div class="${cardClass(p)} deal${trava}" data-pick="${esc(p.id)}" ${preso||dup?"":'tabindex="0"'}
       style="--sel:${esc(S.drawn.cor)};animation-delay:${i*55}ms">${cardHTML(p)}</div>`;
   }).join("");
+  ajustarVersos();
 }
 
 function iluminarSlots(){
