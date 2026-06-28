@@ -259,8 +259,9 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   border-bottom:1px solid color-mix(in srgb,var(--tcol,#888) 12%,transparent)}
 .statbar:last-child{border-bottom:none}
 /* verso do treinador: descrição objetiva do efeito, ocupando o corpo da carta */
-.cb-desc{font-family:'Barlow Semi Condensed',sans-serif;font-size:clamp(8px,8.8cqw,14px);line-height:1.36;
-  color:var(--txt,#eaf1f8);text-align:left;padding:clamp(6px,7cqw,10px) 3px clamp(6px,7cqw,10px);flex:1;display:flex;align-items:center}
+.cb-desc{font-family:'Barlow Semi Condensed',sans-serif;font-size:clamp(12px,12.5cqw,20px);line-height:1.38;font-weight:500;
+  color:var(--txt,#eaf1f8);text-align:left;padding:clamp(5px,6cqw,10px) clamp(7px,8cqw,12px);
+  flex:1;display:flex;align-items:center} /* ocupa o verso inteiro; padding enxuto p/ a descrição mais longa caber folgada */
 .sb-lab{font-family:var(--ff);font-weight:600;font-size:clamp(6px,6.4cqw,9px);letter-spacing:.06em;text-transform:uppercase;
   color:var(--dim,#8593a6);text-align:left;line-height:1.05;overflow-wrap:break-word}
 .sb-val{font-family:var(--ff);font-weight:800;font-size:clamp(13px,15cqw,20px);font-variant-numeric:tabular-nums;
