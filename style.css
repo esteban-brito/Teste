@@ -251,9 +251,9 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 /* VERSO PADRONIZADO (tamanhos em cqw = % da largura da carta → idêntico em qualquer tela).
    Jogador: estilo (sub-arquétipo) no topo + 4 stats. Treinador: só a descrição do efeito.
    Sem botão na carta (virar é por modo global) → o verso usa a carta toda. */
-.cb-head{font-family:var(--ff);font-weight:700;font-size:clamp(9px,11cqw,16px);line-height:1.08;
+.cb-head{font-family:var(--ff);font-weight:700;font-size:clamp(9px,11cqw,16px);line-height:1.12;
   letter-spacing:.01em;color:var(--lit,#fff);width:100%;text-align:left;padding:0 3px 5px 3px;
-  white-space:normal;overflow-wrap:break-word;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis; /* nome do estilo SEMPRE em 1 linha (a fonte encolhe via JS se precisar) */
   border-bottom:1px solid color-mix(in srgb,var(--tcol,#fff) 26%,transparent)}
 .cb-stats{display:flex;flex-direction:column;width:100%;flex:1;justify-content:space-evenly;margin-top:2px}
 .statbar{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:6cqw;padding:4cqw 1px;

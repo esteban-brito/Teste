@@ -988,7 +988,20 @@ function fitText(el,min,max){
     if(el.scrollHeight<=avail)lo=m;else hi=m;}
   el.style.fontSize=lo+"px";
 }
-function ajustarVersos(){document.querySelectorAll(".cb-desc").forEach(el=>{if(el.clientHeight)fitText(el,10,28);});}
+// encolhe a fonte de um título até caber em UMA linha (parte do tamanho do CSS; só reduz se precisar).
+function fitOneLine(el){
+  el.style.fontSize="";                               // volta ao tamanho do CSS (clamp por largura da carta)
+  if(el.scrollWidth<=el.clientWidth)return;           // já cabe em 1 linha → mantém o tamanho cheio
+  const css=parseFloat(getComputedStyle(el).fontSize)||16;
+  let lo=8,hi=css;
+  for(let i=0;i<12;i++){const m=(lo+hi)/2;el.style.fontSize=m+"px";
+    if(el.scrollWidth<=el.clientWidth)lo=m;else hi=m;}
+  el.style.fontSize=lo+"px";
+}
+function ajustarVersos(){
+  document.querySelectorAll(".cb-desc").forEach(el=>{if(el.clientHeight)fitText(el,10,28);});      // treinador: preenche a altura
+  document.querySelectorAll(".cb-head").forEach(el=>{if(el.clientWidth)fitOneLine(el);});            // jogador: nome do estilo em 1 linha
+}
 let _fitRaf;const reajustar=()=>{cancelAnimationFrame(_fitRaf);_fitRaf=requestAnimationFrame(ajustarVersos);};
 addEventListener("resize",reajustar);
 // re-ajusta quando a fonte web (Barlow) termina de carregar: no mobile ela chega DEPOIS do
