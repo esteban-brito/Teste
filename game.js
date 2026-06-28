@@ -433,7 +433,7 @@ const CFG_FA={BASE:.520,W_EK:.385,W_SURV:.160,W_KAST:.240,W_MULTI:.042,W_SWING:.
   // bônus de firepower: poder de fogo bruto puxa o rating pra cima (ajuda entries de fp alto). Cosmético — não muda resultado.
   FP:{ref:62,per:.0030,min:-.04,max:.09}};
 // impacto por função no kill: entry/rifler que fragga gera mais valor que support/igl (centrado ~1.0)
-const FA_IMPACTO={AWPer:1.075,Entry:1.06,Lurker:1.05,Rifler:1.03,Support:.93,IGL:.91}; // AWP de elite = maior impacto por kill (pick que abre/segura o round); entry/lurker logo abaixo
+const FA_IMPACTO={AWPer:1.055,Entry:1.05,Lurker:1.045,Rifler:1.03,Support:.965,IGL:.95}; // leque comprimido: AWP ainda no topo, mas Support/IGL creditam mais o "intangível" (validação real×sim)
 // rating FALLEnANGELs de um jogador a partir do seu log de eventos no mapa
 function fallenAngels(ev){const C=CFG_FA,R=ev.totalRounds||1;
   const ekpr=ev.kills.reduce((s,k)=>s+faEco(k.buyMatador,k.buyVitima),0)/R; // kills eco-ajustadas
