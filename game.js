@@ -989,7 +989,11 @@ function fitText(el,min,max){
   el.style.fontSize=lo+"px";
 }
 function ajustarVersos(){document.querySelectorAll(".cb-desc").forEach(el=>{if(el.clientHeight)fitText(el,10,28);});}
-let _fitRaf;addEventListener("resize",()=>{cancelAnimationFrame(_fitRaf);_fitRaf=requestAnimationFrame(ajustarVersos);});
+let _fitRaf;const reajustar=()=>{cancelAnimationFrame(_fitRaf);_fitRaf=requestAnimationFrame(ajustarVersos);};
+addEventListener("resize",reajustar);
+// re-ajusta quando a fonte web (Barlow) termina de carregar: no mobile ela chega DEPOIS do
+// 1º ajuste, mudando a métrica do texto → sem isto, sobra/falta espaço (FOUT).
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(ajustarVersos);
 
 // MODO VIRAR: quando ativo, clicar numa carta VIRA (frente/verso) em vez de selecioná-la.
 let modoVirar=false;
