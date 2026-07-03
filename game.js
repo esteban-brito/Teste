@@ -1037,7 +1037,8 @@ const STAT_LABEL={fp:"Firepower",op:"Abertura",cl:"Clutch",ut:"Utilitário",en:"
 const STAT_VERSO_DEF=["fp","op","cl","ut"]; // fallback (sem sub)
 const statBar=(lab,v)=>`<div class="statbar"><span class="sb-lab">${esc(lab)}</span><span class="sb-val">${Math.round(v||0)}</span></div>`;
 // verso do jogador: nome + estilo no topo e as 4 stats do sub-arquétipo embaixo
-const backPlayer=p=>{const e=p._eng||{};const keys=(e.sub&&e.sub.stats)||STAT_VERSO_DEF;
+const backPlayer=p=>{const e=p._eng||{};const base=(e.sub&&e.sub.stats)||STAT_VERSO_DEF;
+  const keys=["fp",...base.filter(k=>k!=="fp")].slice(0,4); // Firepower sempre 1º; os outros 3 na ordem de relevância do sub
   return `<div class="cb-head">${esc(e.sub?e.sub.nome:(p.prim||""))}</div>`+
   `<div class="cb-stats">${keys.map(k=>statBar(STAT_LABEL[k],e[k])).join("")}</div>`;};
 // o que cada característica de treinador FAZ — objetivo, com os números reais do efeito no SINAPSE
