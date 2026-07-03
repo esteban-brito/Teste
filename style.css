@@ -136,10 +136,10 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .card:hover,.coachcard:hover{box-shadow:0 0 0 1px var(--tcol,var(--cc-main,#fff)),0 0 18px -2px var(--tcol,var(--cc-main,#fff))}
 /* textura + profundidade por tier */
 .card::before,.coachcard::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1}
-.card.tier-3::before{background:linear-gradient(180deg,rgba(255,255,255,.55),transparent 16%),radial-gradient(120% 70% at 50% 30%,rgba(255,255,255,.28),transparent 62%),repeating-linear-gradient(100deg,rgba(255,255,255,.1) 0 1px,transparent 1px 4px)} /* prata escovada com reflexo */
-.card.tier-2::before{background:linear-gradient(180deg,rgba(140,240,190,.16),transparent 16%),radial-gradient(120% 80% at 50% 26%,rgba(62,192,126,.3),transparent 64%),repeating-linear-gradient(135deg,rgba(140,240,190,.05) 0 3px,transparent 3px 9px)} /* esmeralda facetada */
-.card.tier-1::before{background:linear-gradient(180deg,rgba(255,246,200,.5),transparent 16%),radial-gradient(120% 75% at 50% 30%,rgba(255,244,190,.4),transparent 60%),repeating-linear-gradient(135deg,rgba(120,85,10,.06) 0 3px,transparent 3px 7px)} /* ouro polido com explosão de luz atrás do OVR */
-.card.tier-s::before{background:linear-gradient(180deg,rgba(255,120,140,.2),transparent 16%),radial-gradient(120% 80% at 50% 26%,rgba(255,45,72,.35),transparent 64%),repeating-linear-gradient(135deg,rgba(255,92,110,.06) 0 3px,transparent 3px 8px)} /* rubi lapidado incandescente */
+.card.tier-3::before{background:linear-gradient(180deg,rgba(198,208,219,.09),transparent 14%),radial-gradient(circle at 50% -25%,rgba(170,182,196,.08),transparent 58%),repeating-linear-gradient(100deg,rgba(198,208,219,.025) 0 1px,transparent 1px 4px)} /* prata escovada */
+.card.tier-2::before{background:linear-gradient(180deg,rgba(111,217,159,.1),transparent 14%),radial-gradient(circle at 50% -25%,rgba(62,192,126,.12),transparent 58%)}
+.card.tier-1::before{background:linear-gradient(180deg,rgba(255,224,51,.12),transparent 14%),radial-gradient(circle at 50% -25%,rgba(255,190,0,.14),transparent 58%),repeating-linear-gradient(135deg,rgba(255,190,0,.045) 0 3px,transparent 3px 7px)} /* ouro polido */
+.card.tier-s::before{background:linear-gradient(180deg,rgba(255,92,110,.14),transparent 14%),radial-gradient(circle at 50% -25%,rgba(255,45,72,.18),transparent 58%),repeating-linear-gradient(135deg,rgba(255,45,72,.05) 0 3px,transparent 3px 8px)} /* rubi lapidado */
 .coachcard::before{background:radial-gradient(circle at 50% -25%,color-mix(in srgb,var(--cc-main) 16%,transparent),transparent 58%),repeating-linear-gradient(135deg,color-mix(in srgb,var(--cc-main) 4%,transparent) 0 3px,transparent 3px 7px)}
 /* FRENTE PADRONIZADA (tamanhos em cqw = % da largura da carta): meta · OVR+nick · base.
    Coach e player compartilham o mesmo esqueleto; tudo escala do celular-mini à TV sem colidir. */
@@ -169,37 +169,23 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 /* cor de OVR+nome (--lit) e metadados (--dim) — cada tier só seta as vars */
 .card .ovr,.card .nick{color:var(--lit,#fff)}
 
-/* ═══ TIERS PREENCHIDOS (estilo colecionável FUT): a carta É da cor do tier ═══ */
-/* Tier 3 — PRATA sólida: metal claro, texto tinta */
-.card.tier-3{border:1px solid #d8dfe7;--tcol:#8d99a8;--lit:#232b36;--dim:#5a6675;isolation:isolate;contain:paint;
-  background:linear-gradient(160deg,#e9edf2 0%,#c2cbd6 34%,#98a4b3 68%,#c6cfd9 100%)}
-.card.tier-3:hover{border-color:#fff}
+/* Tier 3 — prata discreta, fundo escuro (detalhes legíveis) */
+.card.tier-3{border:1px solid rgba(170,182,196,.45);--tcol:var(--t3-silver);--lit:var(--t3-silver-lit);--dim:var(--t3-silver-dim)}
+.card.tier-3:hover{border-color:rgba(170,182,196,.6)}
 
-/* Tier 2 — ESMERALDA profunda, texto claro */
-.card.tier-2{border:2px solid var(--t2-green);--tcol:var(--t2-green);--lit:#eafff3;--dim:#9fe0bd;isolation:isolate;contain:paint;
-  background:linear-gradient(160deg,#0e5c38 0%,#0a3d27 45%,#062418 100%)}
+/* Tier 2 — verde imponente, fundo escuro */
+.card.tier-2{border:2px solid var(--t2-green);--tcol:var(--t2-green);--lit:var(--t2-green-lit);--dim:var(--t2-green-dim)}
 .card.tier-2:hover{border-color:var(--t2-green-lit)}
 
-/* Tier 1 — OURO maciço, texto tinta escura (a carta dourada clássica) */
-.card.tier-1{border:2px solid #8a6a10;--tcol:#a87e12;--lit:#2b1d04;--dim:#6b5312;isolation:isolate;contain:paint;
-  background:linear-gradient(160deg,#f5d876 0%,#e3b53e 36%,#c2911f 66%,#e8c257 100%)}
-.card.tier-1:hover{border-color:#5e470a}
+/* Tier 1 — dourado imponente, fundo escuro */
+.card.tier-1{border:2px solid var(--t1-gold);--tcol:var(--t1-gold);--lit:var(--t1-gold-lit);--dim:var(--t1-gold-dim)}
+.card.tier-1:hover{border-color:var(--t1-gold-lit)}
 
-/* Tier S — RUBI profundo, texto quente */
+/* Tier S — única com fundo sólido */
 .card.tier-s{isolation:isolate;contain:paint;
-  background:linear-gradient(160deg,#7a1024 0%,#4a0916 48%,#2a040c 100%);
-  border:2px solid var(--s-red);--tcol:var(--s-red);--lit:#ffdfe4;--dim:#e08a97}
+  background:linear-gradient(165deg,rgba(255,45,72,.28) 0%,var(--s-red-bg) 55%,rgba(120,16,32,.9) 100%);
+  border:2px solid var(--s-red);--tcol:var(--s-red);--lit:var(--s-red-lit);--dim:var(--s-red-dim)}
 .card.tier-s:hover{border-color:var(--s-red-lit)}
-
-/* o VERSO continua escuro em todos os tiers → nos tiers claros, o verso restaura texto claro */
-.card.tier-1 .cback{--lit:#ffe9a8;--dim:#c9a94e}
-.card.tier-3 .cback{--lit:#e6ecf3;--dim:#97a5b7}
-/* legibilidade nas cartas CLARAS (prata/ouro): chips de role e meta com fundo escuro translúcido */
-.card.tier-1 .role,.card.tier-3 .role{background:rgba(14,12,6,.5);border-color:rgba(14,12,6,.35);color:#f4e7c8}
-.card.tier-3 .role{color:#eef2f7;background:rgba(16,20,27,.5);border-color:rgba(16,20,27,.35)}
-.card.tier-1 .role.sec,.card.tier-3 .role.sec{opacity:.75}
-.card.tier-1 .starsig{color:#3a2a08;text-shadow:none;opacity:.85}
-.card.tier-3 .starsig{color:#2c3644;text-shadow:none;opacity:.8}
 
 /* Tier H — OVR 22, holográfico. RGB cicla via hue-rotate (matiz é circular: nunca tem salto) */
 .card.tier-h{isolation:isolate;contain:paint;
@@ -220,9 +206,8 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 /* Treinador — MESMO esqueleto do jogador, mas MOLDURA bem distinta: fundo colorido na cor da
    característica, selo "TREINADOR" no topo, borda dupla e padrão diagonal reforçado. */
 .coachcard{border:2px solid var(--cc-main,var(--t1-gold));isolation:isolate;contain:paint;
-  background:linear-gradient(160deg,color-mix(in srgb,var(--cc-main) 58%,#0a0c12) 0%,color-mix(in srgb,var(--cc-main) 30%,#0a0c12) 46%,color-mix(in srgb,var(--cc-main) 14%,#080a10) 100%);
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cc-main) 45%,transparent),inset 0 0 30px -8px color-mix(in srgb,var(--cc-main) 65%,transparent)}
-.coachcard .ovr,.coachcard .nick{color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.5)}
+  background:linear-gradient(165deg,color-mix(in srgb,var(--cc-main) 30%,#0b0e15) 0%,#0a0c12 58%,color-mix(in srgb,var(--cc-main) 16%,#0a0c12) 100%);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cc-main) 38%,transparent),inset 0 0 26px -8px color-mix(in srgb,var(--cc-main) 55%,transparent)}
 .coachcard::before{background:radial-gradient(circle at 50% -20%,color-mix(in srgb,var(--cc-main) 26%,transparent),transparent 60%),repeating-linear-gradient(135deg,color-mix(in srgb,var(--cc-main) 9%,transparent) 0 3px,transparent 3px 8px)}
 /* selo de topo: identifica a carta como treinador na hora */
 .coach-seal{position:absolute;top:0;left:0;right:0;z-index:5;text-align:center;font-family:var(--ff);font-weight:700;
@@ -827,6 +812,51 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,90,31,.4);
     radial-gradient(2px 2px at 10% 58%,rgba(255,214,120,.6),transparent 60%);
   background-size:340px 340px;animation:sparkleFall 13s linear infinite}
 @keyframes sparkleFall{to{transform:translateY(340px)}}
+
+/* ════ MAJOR PROFISSIONAL: um só sistema de painel em todas as telas de torneio ════
+   Padrão: raio 13px · borda rgba(124,156,196,.16) · vidro (gradiente + fio de luz no topo)
+   · sombra ambiente. Suíça, bracket, antessala, scoreboard e tela final falam a mesma língua. */
+/* — Fase suíça — */
+.swiss{gap:clamp(14px,2.4vw,22px)}
+.swiss-col{min-width:172px;gap:10px}
+.swiss-colhead{letter-spacing:.2em;padding:9px 0;border-radius:11px;font-size:.66rem}
+.match{border-radius:13px;padding:10px 12px;min-height:50px;
+  border-color:rgba(124,156,196,.16);background:linear-gradient(180deg,rgba(22,30,48,.55),rgba(13,17,26,.6));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 12px 26px -20px rgba(0,0,0,.8)}
+.qualified-slot{border-radius:13px;min-height:50px}
+.team-mono{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.22),inset 0 -8px 12px -6px rgba(0,0,0,.35),0 3px 8px rgba(0,0,0,.45)}
+/* — Bracket — */
+.bracket-round-title{display:flex;align-items:center;justify-content:center;gap:8px}
+.bracket-round-title::before,.bracket-round-title::after{content:"";width:6px;height:6px;border-radius:1.5px;
+  transform:rotate(45deg);background:linear-gradient(135deg,#ff8a4a,var(--accent));box-shadow:0 0 7px rgba(255,90,31,.55)}
+.series{border-radius:13px;padding:12px 14px;min-width:200px;
+  background:linear-gradient(180deg,rgba(24,32,51,.6),rgba(13,17,26,.65));border-color:rgba(124,156,196,.16)}
+.series-row .sc{font-size:1.15rem;min-width:20px}
+.series-sep::after{background:#151b29;border-radius:4px;padding:1px 7px}
+.champion{border-radius:16px}
+/* — Antessala: blocos de time em vidro — */
+.pm-team{padding:20px 22px;border-radius:16px;border:1px solid rgba(124,156,196,.16);
+  background:linear-gradient(180deg,rgba(22,30,48,.55),rgba(13,17,26,.55));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 18px 40px -26px rgba(0,0,0,.9)}
+.pm-team.mine{border-color:rgba(57,211,255,.4);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 0 0 1px rgba(57,211,255,.22),0 18px 40px -24px rgba(57,211,255,.35)}
+.prematch-ctx{padding:8px 18px;border-radius:20px;border:1px solid rgba(255,90,31,.35);
+  background:rgba(255,90,31,.08);box-shadow:0 0 18px -6px rgba(255,90,31,.5)}
+/* — Mapa ao vivo: tira de rounds com divisor de troca de lado (round 13) — */
+.rs-cell:nth-child(13){margin-left:16px;position:relative}
+.rs-cell:nth-child(13)::before{content:"";position:absolute;left:-10px;top:-2px;bottom:-2px;width:2px;
+  border-radius:2px;background:linear-gradient(180deg,transparent,rgba(124,156,196,.5),transparent)}
+.ls-side{border-radius:13px;border-color:rgba(124,156,196,.16)}
+.ls-head{padding:11px 14px}
+.ls-row{padding:10px 14px}
+/* — Tela final: cartões padronizados — */
+.final-mvp-card{border-radius:13px}
+.fr-row,.jt,.rec{border-radius:13px;border-color:rgba(124,156,196,.14);
+  background:linear-gradient(180deg,rgba(22,30,48,.4),rgba(13,17,26,.4));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.sec-lbl{display:flex;align-items:center;gap:7px}
+.sec-lbl::before{content:"";width:6px;height:6px;border-radius:1.5px;transform:rotate(45deg);
+  background:linear-gradient(135deg,#ff8a4a,var(--accent));box-shadow:0 0 7px rgba(255,90,31,.5)}
 
 /* Movimento reduzido: silencia as animações contínuas desta camada */
 @media(prefers-reduced-motion:reduce){
