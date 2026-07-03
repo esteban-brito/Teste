@@ -39,6 +39,18 @@
    (a partida) → ESTADO + UI (roleta, elenco, suíça, playoffs, reprodutor).
    Convenção: nomes e comentários em pt-BR; helpers curtos no topo de cada bloco.
    ════════════════════════════════════════════════════════════════════ */
+/* ── CONTRATOS (o dado que circula entre os motores) ────────────────────
+   @typedef {Object} Eng  — jogador avaliado (POOL[id]; vive em carta._eng)
+     atributos crus: fp,en,tr,op,cl,sn,ut (0-100) · rating (HLTV real) · isIGL
+     do PRISMA: primario, secundario, secForte, sub{nome,eixo,agr,lado,stats}
+     do ZÊNITE: ovr (5-22) · estrela · esteira · caches: _lado,_mapBase,_formaCamp
+   @typedef {Object} TimePronto — {nome,jogadores:[{_eng,...}],ef,quim} (após SINAPSE)
+   @typedef {Object} ResultadoMapa — retorno de simularMapa:
+     placar[2] · vencedor/vencedorNome · mapa · totalRounds · half1
+     rounds[]: {r,pa,pb,venceA,ladoA/B,troca,plantado,buyA/B,clutchX,clutchWon,destaque,snapA/B}
+     statsA/B[]: {nick,k,d,a,rating}  (vazios em modo leve)
+   Fluxo: ATRIBUTOS → avaliarJogador → POOL → TEAMS → forcaTime → simularMapa/Serie.
+   ──────────────────────────────────────────────────────────────────── */
 /* ╔═══════════════════════════════════════════════════════════════════╗
    ║  PRISMA · ZÊNITE · SINAPSE — avaliação de jogador e de elenco       ║
    ╚═══════════════════════════════════════════════════════════════════╝ */
@@ -438,7 +450,12 @@ const TEAMS=TIMES_DEF.map((t,i)=>{
    ║  Helpers de azar compartilhados pelos quatro motores do mapa:       ║
    ║  rndF (uniforme), gaussF (normal, p/ a MARÉ) e logistica (duelo).   ║
    ╚═══════════════════════════════════════════════════════════════════╝ */
-const rndF=()=>Math.random();
+// RNG SEMEADO (mulberry32): todo o azar dos motores passa por rndF. srand(n) fixa a semente →
+// simulações REPRODUZÍVEIS (bancada compara antes/depois bit a bit; abre a porta p/ "Major com seed").
+// Por padrão a semente é aleatória (cada jogo é único, como sempre foi).
+let _rng=(Math.random()*4294967296)>>>0;
+const srand=s=>{_rng=(s>>>0)||1;};
+const rndF=()=>{let t=_rng+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};
 const gaussF=()=>{let u=0,v=0;while(u===0)u=rndF();while(v===0)v=rndF();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
 const logistica=(fa,fb,D)=>1/(1+Math.pow(10,(fb-fa)/D));
 
@@ -462,6 +479,7 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓL
   W_OP_KILL:.28,W_EN_VIT:.28,W_TR_KILL:.32, // tipo de kill segue a categoria HLTV: abertura→op, morte de abertura→en (entry), trade→tr (tilt suave: macro-neutro)
   ADR_KILL:95,ADR_VIT:55,ADR_AST:40,ADR_CHIP:14, // dano por evento → alimenta o ADR (fidelidade HLTV)
   FRAG_FP_BASE:35,FRAG_OVR:.018, // distribuição de kills: fp manda; concentra (alguém estoura no mapa, varia pela forma)
+  DUELO_BASE:12,DUELO_OVR:4.6,   // skillDuelo: força de combate por OVR (base + inclinação) — quem GANHA o round
   MAPA_SCALE:380,MAPA_CAP:.06,SUB_ABRE:0.72,SUB_SURV:0.34,SUB_INT:40};
 
 /* ╔═══════════════════════════════════════════════════════════════════╗
@@ -577,8 +595,8 @@ function sortearFormaCampanha(times){
 //    fp manda; OVR dá só um empurrão leve de habilidade. IGL fp 2 fraga pouco (rating baixo) ainda
 //    que decisivo pra vitória; fragger fp alto fraga muito (rating alto). É o que o CS real mostra.
 const CONV_FUNC={Rifler:1.0,AWPer:1.0,Entry:.98,Lurker:.97,Support:.92,IGL:.90};
-function skillDuelo(j){const a=j._eng||j;const ovr=j.ovr??a.ovr??13;const prim=j.primario||a.primario||"Rifler";
-  return (12+(ovr-5)*4.6)*(CONV_FUNC[prim]??.95);}
+function skillDuelo(j){const a=j._eng||j;const C=CFG_SIM;const ovr=j.ovr??a.ovr??13;const prim=j.primario||a.primario||"Rifler";
+  return (C.DUELO_BASE+(ovr-5)*C.DUELO_OVR)*(CONV_FUNC[prim]??.95);}
 function fragPeso(j){const a=j._eng||j;const C=CFG_SIM;const fp=a.fp??60,ovr=j.ovr??a.ovr??13;
   return (C.FRAG_FP_BASE+fp)*(1+(ovr-13)*C.FRAG_OVR);} // firepower domina o frag; OVR = leve skill
 
@@ -633,7 +651,8 @@ function prepTime(t,mapa){
 // ctx={pEdgeA,openEdgeA,buyA,buyB}. Retorna quem venceu (venceA), sobreviventes e o destaque.
 function combateRound(a,b,ctx){
   const C=CFG_SIM;
-  let vivA=[0,1,2,3,4],vivB=[0,1,2,3,4];
+  const vivA=[0,1,2,3,4],vivB=[0,1,2,3,4];
+  const mata=(arr,i)=>arr.splice(arr.indexOf(i),1); // remoção in-place (mesma ordem dos vivos; zero alocação por kill)
   const buyA=ctx.buyA,buyB=ctx.buyB;
   const roundKills=[]; // {team,rec} → roundGanho marcado no fim (só kills do vencedor contam swing)
   const pick=(arr,fn)=>{const ps=arr.map(fn),tot=ps.reduce((x,y)=>x+y,0)||1;let r=rndF()*tot;
@@ -675,7 +694,7 @@ function combateRound(a,b,ctx){
     const aWins=rndF()<p;
     const venc=aWins?a:b,perd=aWins?b:a,vivV=aWins?vivA:vivB,vivP=aWins?vivB:vivA,buyV=aWins?buyA:buyB,buyP=aWins?buyB:buyA;
     const vi=duelo(venc,vivV,buyV,perd,vivP,buyP,primeira,false);
-    if(aWins)vivB=vivB.filter(x=>x!==vi);else vivA=vivA.filter(x=>x!==vi);
+    mata(aWins?vivB:vivA,vi);
     primeira=false;
     // TRADE/refrag: o time que LEVOU a kill troca na hora (o entry abriu, mas é trocado)
     const vVnow=aWins?vivA:vivB,vPnow=aWins?vivB:vivA; // venc do duelo segue vivo; perd perdeu 1
@@ -683,7 +702,7 @@ function combateRound(a,b,ctx){
     // NÃO troca contra um CLUTCHER (vencedor sozinho): o último vivo isola os duelos — sem isso o 1vX morre injusto.
     if(vPnow.length>0&&vVnow.length>1&&rndF()<C.TRADE_CHANCE){
       const vi2=duelo(perd,vPnow,buyP,venc,vVnow,buyV,false,true);
-      if(aWins)vivA=vivA.filter(x=>x!==vi2);else vivB=vivB.filter(x=>x!==vi2);
+      mata(aWins?vivA:vivB,vi2);
       perd.stats[vi]._contribRound=true; // KAST: quem morreu (entry abrindo / support) e foi TROCADO ganha crédito de "traded" — fiel ao "T" do KAST
     }
     if(vivA.length===0||vivB.length===0)break; // eliminação total decide na hora
@@ -759,7 +778,8 @@ const decidirBuy=(m,pist,ls,surv)=>{
   if(m>=custoReal("force",surv)+1500)return"force";
   if((ls||0)<=1&&m>=custoReal("force",surv)&&rndF()<.45)return"force";
   return"eco";};
-const premio=(v,ls)=>v?3250:[1400,1900,2400,2900,3400][Math.min(ls,4)]; // recompensa CS2 (kills/plant somam à parte)
+const PREMIO_VITORIA=3250,LOSS_BONUS=[1400,1900,2400,2900,3400],TETO_GRANA=16000; // recompensa CS2 (kills/plant somam à parte)
+const premio=(v,ls)=>v?PREMIO_VITORIA:LOSS_BONUS[Math.min(ls,4)];
 // ——— identidade de mapa: cada mapa recompensa atributos diferentes (modula, não determina) ———
 // peso por atributo (soma ~1). a afinidade é medida CONTRA a média do próprio jogador em todos os
 // mapas, então lenda equilibrada varia quase nada (boa em tudo); só o especialista sente o mapa.
@@ -776,8 +796,10 @@ function mapMult(j,mapa){const a=j._eng||j;const perfil=MAPA_PERFIL[mapa];if(!pe
   return clamp(1+fit/CFG_SIM.MAPA_SCALE,1-CFG_SIM.MAPA_CAP,1+CFG_SIM.MAPA_CAP);}
 const MAPAS_POOL=["Mirage","Inferno","Nuke","Ancient","Anubis","Dust2","Train","Overpass"];
 
-// simula um mapa completo round a round; retorna placar, vencedor, timeline e stats por jogador
-function simularMapa(A,B,fA,fB,mapaForcado){
+// simula um mapa completo round a round; retorna placar, vencedor, timeline e stats por jogador.
+// leve=true (jogos que ninguém assiste: playoffs NPC / bancadas): pula snapshots do scoreboard e o
+// cálculo de rating — MESMO combate, mesmo consumo de RNG (placar idêntico sob a mesma semente).
+function simularMapa(A,B,fA,fB,mapaForcado,leve){
   const C=CFG_SIM;
   const mapa=mapaForcado||MAPAS_POOL[Math.floor(rndF()*MAPAS_POOL.length)]; // mapa decidido ANTES (modula o combate)
   const a=prepTime(A,mapa),b=prepTime(B,mapa);
@@ -792,6 +814,9 @@ function simularMapa(A,B,fA,fB,mapaForcado){
   const baseA=mediaSkill(a)*(1-C.PESO_EF)+(fA||mediaSkill(a))*C.PESO_EF;
   const baseB=mediaSkill(b)*(1-C.PESO_EF)+(fB||mediaSkill(b))*C.PESO_EF;
   const openEdgeA=clamp((a.open-b.open)/C.OPEN_SCALE,-.12,.12); // melhor abertura leva o 1º duelo
+  // bônus de lado por time: 2 valores possíveis cada (CT/T) — precomputados fora do loop de rounds
+  const bonusCtA=C.LADO_CT+C.LADO_COMP*a.ctEdge,bonusTA=C.LADO_COMP*a.tEdge;
+  const bonusCtB=C.LADO_CT+C.LADO_COMP*b.ctEdge,bonusTB=C.LADO_COMP*b.tEdge;
   let half1=null;
   // CS2 (MR12): vence quem chega a 13 na regulação. Se empatar 12-12, vai pra
   // prorrogação e vence o primeiro a 16 (pode terminar 16-12 .. 16-15).
@@ -806,10 +831,10 @@ function simularMapa(A,B,fA,fB,mapaForcado){
     // força do round por time = média de skill × economia × lado × momentum − tilt + forma do dia
     const momA=clamp(sA*C.MOM_STEP,0,C.MOM_MAX),momB=clamp(sB*C.MOM_STEP,0,C.MOM_MAX);
     const tiltA=clamp((lsA-2)*C.TILT_STEP,0,C.TILT_MAX),tiltB=clamp((lsB-2)*C.TILT_STEP,0,C.TILT_MAX);
-    // vantagem de lado = base de CT + composição do time (CT puxado por anchor/lurker; T por entry)
+    // vantagem de lado = base de CT + composição do time (precomputada: só muda na troca de lado)
     const ladoA=ladoDe(A,r),ladoB=ladoDe(B,r);
-    const ladoBonusA=ladoA==="CT"?(C.LADO_CT+C.LADO_COMP*a.ctEdge):(C.LADO_COMP*a.tEdge);
-    const ladoBonusB=ladoB==="CT"?(C.LADO_CT+C.LADO_COMP*b.ctEdge):(C.LADO_COMP*b.tEdge);
+    const ladoBonusA=ladoA==="CT"?bonusCtA:bonusTA;
+    const ladoBonusB=ladoB==="CT"?bonusCtB:bonusTB;
     const fRA=(baseA+ladoBonusA+formaDiaA)*(0.42+0.58*BUY[buyA])*(1+momA-tiltA);
     const fRB=(baseB+ladoBonusB+formaDiaB)*(0.42+0.58*BUY[buyB])*(1+momB-tiltB);
     // pEdge = prob de A vencer UM duelo (raso); o VENCEDOR DO ROUND emerge da sequência de duelos
@@ -823,13 +848,14 @@ function simularMapa(A,B,fA,fB,mapaForcado){
     if(res.plantado){const tÉA=ladoA!=="CT"; if(tÉA){if(!venceA)mA+=C.PLANT_BONUS;}else{if(venceA)mB+=C.PLANT_BONUS;}}
     // recompensa por kill: cada abate dá dinheiro (independe de ganhar/perder) — fragar mantém a economia viva, sustenta force-buy e anti-eco
     mA+=res.killsA*C.KILL_REWARD;mB+=res.killsB*C.KILL_REWARD;
-    mA=Math.min(16000,mA);mB=Math.min(16000,mB);
+    mA=Math.min(TETO_GRANA,mA);mB=Math.min(TETO_GRANA,mB);
     // sobreviventes carregam equipamento pro próximo round (só quem comprou arma de verdade: force/full)
     const deadA=res.killsB,deadB=res.killsA;
     survA=(buyA==="force"||buyA==="full")?Math.max(0,5-deadA):0;
     survB=(buyB==="force"||buyB==="full")?Math.max(0,5-deadB):0;
-    // snapshot do K-D acumulado dos 10 jogadores até este round (pro scoreboard ao vivo animar)
-    const snapA=a.stats.map(s=>({k:s.k,d:s.d})),snapB=b.stats.map(s=>({k:s.k,d:s.d}));
+    // snapshot do K-D acumulado dos 10 jogadores até este round (pro scoreboard ao vivo animar).
+    // leve: ninguém assiste → sem snapshot (era ~440 objetos por mapa jogados fora)
+    const snapA=leve?null:a.stats.map(s=>({k:s.k,d:s.d})),snapB=leve?null:b.stats.map(s=>({k:s.k,d:s.d}));
     rounds.push({r,pa,pb,venceA,ladoA,ladoB,troca:(r===13),plantado:res.plantado,buyA,buyB,
       clutchX:res.clutchX,clutchWon:res.clutchWon,destaque:res.destaque,snapA,snapB});
   }
@@ -841,15 +867,15 @@ function simularMapa(A,B,fA,fB,mapaForcado){
   return {placar:[pa,pb],vencedorNome:pa>pb?A.nome:B.nome,vencedor:pa>pb?A:B,rounds,
     half1,mapa,
     nomeA:A.nome,nomeB:B.nome,meuA:!!A.meu,meuB:!!B.meu,corA:A.cor,corB:B.cor,
-    statsA:rate(a.stats),statsB:rate(b.stats),totalRounds:totalR};
+    statsA:leve?[]:rate(a.stats),statsB:leve?[]:rate(b.stats),totalRounds:totalR}; // leve: rating não é visto → não calcula
 }
 
 /* ┌─ PÓLVORA ─ série best-of (MD1 na suíça, MD3 nos playoffs) ─────────┐ */
 // série best-of; usa força do dia a cada mapa
-function simularSerie(A,B,fdA,fdB,md){
+function simularSerie(A,B,fdA,fdB,md,leve){
   const need=Math.ceil(md/2);let wa=0,wb=0;const mapas=[];
   while(wa<need&&wb<need){
-    const g=simularMapa(A,B,fdA(),fdB());
+    const g=simularMapa(A,B,fdA(),fdB(),null,leve);
     mapas.push(g);g.vencedor===A?wa++:wb++; // por referência: robusto a times homônimos
   }
   return {vencedor:wa>wb?A:B,vencedorNome:wa>wb?A.nome:B.nome,placarSerie:[wa,wb],mapas};
@@ -1037,7 +1063,8 @@ const STAT_LABEL={fp:"Firepower",op:"Abertura",cl:"Clutch",ut:"Utilitário",en:"
 const STAT_VERSO_DEF=["fp","op","cl","ut"]; // fallback (sem sub)
 const statBar=(lab,v)=>`<div class="statbar"><span class="sb-lab">${esc(lab)}</span><span class="sb-val">${Math.round(v||0)}</span></div>`;
 // verso do jogador: nome + estilo no topo e as 4 stats do sub-arquétipo embaixo
-const backPlayer=p=>{const e=p._eng||{};const keys=(e.sub&&e.sub.stats)||STAT_VERSO_DEF;
+const backPlayer=p=>{const e=p._eng||{};const base=(e.sub&&e.sub.stats)||STAT_VERSO_DEF;
+  const keys=["fp",...base.filter(k=>k!=="fp")].slice(0,4); // Firepower sempre 1º; os outros 3 na ordem de relevância do sub
   return `<div class="cb-head">${esc(e.sub?e.sub.nome:(p.prim||""))}</div>`+
   `<div class="cb-stats">${keys.map(k=>statBar(STAT_LABEL[k],e[k])).join("")}</div>`;};
 // o que cada característica de treinador FAZ — objetivo, com os números reais do efeito no SINAPSE
@@ -1619,7 +1646,7 @@ function avancarPlayoff(){
   const P=TG.playoffs;if(!P||P.campeao)return;
   const fd=t=>()=>forcaDoDia(t.ef,t.quim);
   // resolve a série e guarda o SEED vencedor por referência (robusto a times homônimos)
-  const jogar=(a,b)=>{const r=simularSerie(a.time,b.time,fd(a),fd(b),3);r.vencedorSeed=r.vencedor===a.time?a:b;return r;};
+  const jogar=(a,b)=>{const r=simularSerie(a.time,b.time,fd(a),fd(b),3,true);r.vencedorSeed=r.vencedor===a.time?a:b;return r;}; // leve: série NPC, ninguém assiste
   // pares da fase atual
   let pares,aplicar;
   if(P.fase===0){

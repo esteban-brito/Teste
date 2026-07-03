@@ -1,6 +1,6 @@
 # draft9-0 · Simulador de Counter-Strike
 
-> **▶ Jogue agora:** <https://estebanbrito04-arch.github.io/Teste/>
+> **▶ Jogue agora:** <https://esteban-brito.github.io/Teste/>
 
 Jogo de navegador (HTML/CSS/JavaScript, sem dependências nem build) onde você
 monta um elenco de Counter-Strike sorteando times históricos, escolhe jogadores
@@ -11,7 +11,7 @@ playoffs.
 
 ## Como jogar
 
-Abra <https://estebanbrito04-arch.github.io/Teste/> — ou baixe e abra o
+Abra <https://esteban-brito.github.io/Teste/> — ou baixe e abra o
 `index.html` em qualquer navegador moderno. Não precisa instalar nada: o jogo é
 só HTML, CSS e JavaScript estáticos. Mantenha os três arquivos (`index.html`,
 `style.css`, `game.js`) na mesma pasta.
