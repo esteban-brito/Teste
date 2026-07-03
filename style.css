@@ -136,10 +136,10 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .card:hover,.coachcard:hover{box-shadow:0 0 0 1px var(--tcol,var(--cc-main,#fff)),0 0 18px -2px var(--tcol,var(--cc-main,#fff))}
 /* textura + profundidade por tier */
 .card::before,.coachcard::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1}
-.card.tier-3::before{background:radial-gradient(circle at 50% -25%,rgba(170,182,196,.08),transparent 58%)}
-.card.tier-2::before{background:radial-gradient(circle at 50% -25%,rgba(62,192,126,.12),transparent 58%)}
-.card.tier-1::before{background:radial-gradient(circle at 50% -25%,rgba(255,190,0,.14),transparent 58%),repeating-linear-gradient(135deg,rgba(255,190,0,.04) 0 3px,transparent 3px 7px)}
-.card.tier-s::before{background:radial-gradient(circle at 50% -25%,rgba(255,45,72,.18),transparent 58%)}
+.card.tier-3::before{background:linear-gradient(180deg,rgba(198,208,219,.09),transparent 14%),radial-gradient(circle at 50% -25%,rgba(170,182,196,.08),transparent 58%),repeating-linear-gradient(100deg,rgba(198,208,219,.025) 0 1px,transparent 1px 4px)} /* prata escovada */
+.card.tier-2::before{background:linear-gradient(180deg,rgba(111,217,159,.1),transparent 14%),radial-gradient(circle at 50% -25%,rgba(62,192,126,.12),transparent 58%)}
+.card.tier-1::before{background:linear-gradient(180deg,rgba(255,224,51,.12),transparent 14%),radial-gradient(circle at 50% -25%,rgba(255,190,0,.14),transparent 58%),repeating-linear-gradient(135deg,rgba(255,190,0,.045) 0 3px,transparent 3px 7px)} /* ouro polido */
+.card.tier-s::before{background:linear-gradient(180deg,rgba(255,92,110,.14),transparent 14%),radial-gradient(circle at 50% -25%,rgba(255,45,72,.18),transparent 58%),repeating-linear-gradient(135deg,rgba(255,45,72,.05) 0 3px,transparent 3px 8px)} /* rubi lapidado */
 .coachcard::before{background:radial-gradient(circle at 50% -25%,color-mix(in srgb,var(--cc-main) 16%,transparent),transparent 58%),repeating-linear-gradient(135deg,color-mix(in srgb,var(--cc-main) 4%,transparent) 0 3px,transparent 3px 7px)}
 /* FRENTE PADRONIZADA (tamanhos em cqw = % da largura da carta): meta · OVR+nick · base.
    Coach e player compartilham o mesmo esqueleto; tudo escala do celular-mini à TV sem colidir. */
@@ -234,14 +234,17 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    A moldura/tier fica em .card (intacta); só o CONTEÚDO gira em 3D dentro dela.
    Virar é por MODO GLOBAL (botão no cabeçalho): a classe .flipped na carta gira as faces. */
 .card,.coachcard{perspective:800px;-webkit-perspective:800px}
-.cfaces{position:absolute;inset:0;z-index:2;transform-style:preserve-3d;-webkit-transform-style:preserve-3d}
+.cfaces{position:absolute;inset:0;z-index:2;transform-style:preserve-3d;-webkit-transform-style:preserve-3d;
+  border-radius:inherit;box-shadow:inset 0 1px 0 rgba(255,255,255,.09),inset 0 -1px 0 rgba(0,0,0,.55)} /* bisel metálico: relevo de colecionável em toda carta */
 /* cada face gira independente; o que define o que aparece é a OPACIDADE (0/1).
    assim nunca há sobreposição nem texto espelhado, mesmo se o Safari achatar o 3D. */
 .cface{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;border-radius:inherit;overflow:hidden;
   backface-visibility:hidden;-webkit-backface-visibility:hidden;transition:transform .45s var(--ease),opacity .3s var(--ease)}
 .cfront{transform:rotateY(0deg);opacity:1}
 .cback{transform:rotateY(180deg);opacity:0;justify-content:flex-start;gap:5px;padding:9px 8px 10px;
-  background:linear-gradient(165deg,color-mix(in srgb,var(--tcol,#39d3ff) 24%,#0b0e15) 0%,#0a0c12 62%,#070910 100%);
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.014) 0 1px,transparent 1px 7px),
+    repeating-linear-gradient(-45deg,rgba(255,255,255,.012) 0 1px,transparent 1px 7px),
+    linear-gradient(165deg,color-mix(in srgb,var(--tcol,#39d3ff) 24%,#0b0e15) 0%,#0a0c12 62%,#070910 100%); /* guilhochê fino de colecionável */
   box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tcol,#fff) 16%,transparent)}
 .coachcard .cback{justify-content:center} /* verso do treinador: descrição centralizada vertical (sobra simétrica) */
 .card.flipped .cfront,.coachcard.flipped .cfront{transform:rotateY(-180deg);opacity:0}
@@ -296,8 +299,14 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .swp{outline:2px dashed rgba(57,211,255,.5);outline-offset:2px;cursor:pointer}
 
 @keyframes pop{from{opacity:0;transform:translate3d(0,6px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
-@keyframes deal{0%{opacity:0;transform:translate3d(0,28px,0) rotateY(30deg) scale(.9)}100%{opacity:1;transform:none}}
-.deal{animation:deal .42s var(--ease) both}
+@keyframes deal{0%{opacity:0;transform:translate3d(0,34px,0) rotateY(52deg) scale(.84)}
+  62%{opacity:1;transform:translate3d(0,-3px,0) rotateY(-6deg) scale(1.02)}100%{opacity:1;transform:none}}
+.deal{animation:deal .52s var(--ease) both}
+/* abertura de pacote: cada carta revelada ganha UMA varredura de brilho (foil) ao entrar */
+.picks .deal .cfront::before{content:"";position:absolute;inset:0;z-index:6;pointer-events:none;
+  background:linear-gradient(115deg,transparent 32%,rgba(255,255,255,.2) 50%,transparent 68%);
+  transform:translateX(-140%);animation:cardSheen .8s .3s var(--ease) both}
+@keyframes cardSheen{to{transform:translateX(140%)}}
 @keyframes land{0%{transform:scale(1.16);box-shadow:0 0 0 3px var(--tcol,var(--accent)),0 0 24px -2px var(--tcol,var(--accent))}
   55%{transform:scale(.96)}100%{transform:scale(1);box-shadow:none}}
 .land{animation:land .44s var(--ease)}
@@ -674,6 +683,16 @@ body{background:
     radial-gradient(820px 480px at 100% -5%,rgba(255,90,31,.06),transparent 55%),
     radial-gradient(820px 520px at 0% 18%,rgba(57,211,255,.05),transparent 55%),
     var(--bg)}
+/* — ARENA VIVA: dois feixes de refletor que varrem o palco lentíssimo (GPU: só transform).
+   html::before está livre (body::before/::after = grade + vinheta). Estático no mobile/reduced-motion. — */
+html::before{content:"";position:fixed;left:50%;top:-46vmax;width:220vmax;height:220vmax;z-index:-3;pointer-events:none;
+  transform-origin:50% 0;transform:translateX(-50%) rotate(-7deg);
+  background:
+    conic-gradient(from 176deg at 50% 0%,transparent 0 40.5%,rgba(255,110,47,.055) 45.5%,transparent 50.5%),
+    conic-gradient(from 156deg at 50% 0%,transparent 0 43.5%,rgba(57,211,255,.05) 47.5%,transparent 51.5%);
+  animation:arenaSweep 46s ease-in-out infinite alternate}
+@keyframes arenaSweep{to{transform:translateX(-50%) rotate(7deg)}}
+@media(max-width:640px){html::before{animation:none}} /* iPhone: feixes fixos (zero custo contínuo) */
 body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
   background-image:linear-gradient(rgba(124,156,196,.045) 1px,transparent 1px),
     linear-gradient(90deg,rgba(124,156,196,.045) 1px,transparent 1px);
@@ -685,9 +704,15 @@ body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 .wrap{position:relative;animation:wrapIn .55s var(--ease) both}
 @keyframes wrapIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
-/* — Cabeçalho + logo — */
-.logo b{text-shadow:0 0 20px rgba(255,90,31,.5)}
+/* — Cabeçalho + logo: presença de marca de transmissão — */
+.logo{font-size:clamp(1.55rem,4.5vw,2.05rem);letter-spacing:.1em}
+.logo b{text-shadow:0 0 22px rgba(255,90,31,.55),0 0 4px rgba(255,90,31,.4)}
+.logo span{letter-spacing:.34em}
 header{box-shadow:0 1px 0 rgba(255,90,31,.14)}
+
+/* — Painéis de vidro: fio de luz no topo + sombra ambiente (só onde a sombra não é estado) — */
+.stat,.majorbtn,.qualified-slot,.match:not(.mine),.series:not(.mine):not(.ativa){
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.055),0 14px 30px -20px rgba(0,0,0,.75)}
 
 /* — HUD: leituras de transmissão (chips com barra de acento) — */
 .hud .s{position:relative;padding:8px 14px 8px 17px;border-radius:12px;text-align:right;
@@ -700,9 +725,10 @@ header{box-shadow:0 1px 0 rgba(255,90,31,.14)}
 .hud .v.bump{animation:hudBump .42s var(--ease)}
 @keyframes hudBump{0%{transform:scale(1)}42%{transform:scale(1.2)}100%{transform:scale(1)}}
 
-/* — Etiquetas de seção: marcador tático no início — */
-.section-tag::before{content:"";width:3px;height:.95em;border-radius:2px;flex:0 0 auto;
-  background:var(--accent);box-shadow:0 0 8px rgba(255,90,31,.6)}
+/* — Etiquetas de seção: losango tático (broadcast) no início — */
+.section-tag::before{content:"";width:7px;height:7px;border-radius:1.5px;flex:0 0 auto;
+  transform:rotate(45deg);background:linear-gradient(135deg,#ff8a4a,var(--accent));
+  box-shadow:0 0 9px rgba(255,90,31,.65)}
 
 /* — Botões: varredura de brilho + relevo — */
 button.roll{position:relative;overflow:hidden;box-shadow:0 8px 22px -8px rgba(255,90,31,.65)}
@@ -715,10 +741,18 @@ button.ghost{transition:transform .12s var(--ease),border-color .14s,background 
 button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,90,31,.4);
   box-shadow:0 8px 20px -10px rgba(0,0,0,.7)}
 
-/* — Cartas: leve elevação no hover (picks sobem mais) — */
-.card,.coachcard{transition:box-shadow .16s var(--ease),border-color .14s,outline-color .14s,transform .18s var(--ease)}
+/* — Cartas COLECIONÁVEIS: tilt 3D segue o dedo/ponteiro + foil especular (picks) — */
+.card,.coachcard{transition:box-shadow .16s var(--ease),border-color .14s,outline-color .14s,transform .22s var(--ease)}
 .lineup .card:hover,.lineup .coachcard:hover{transform:translateY(-4px)}
-.picks .card:not(.taken):hover,.picks .coachcard:not(.taken):hover{transform:translateY(-6px) scale(1.02)}
+.picks .card:not(.taken):not(.dup):hover,.picks .coachcard:not(.taken):hover{
+  transform:perspective(760px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateY(-6px) scale(1.03);
+  z-index:5}
+/* foil: reflexo especular que acompanha a posição do ponteiro sobre a carta */
+.picks .card:not(.taken):not(.dup) .cfront::after,.picks .coachcard:not(.taken) .cfront::after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:5;opacity:0;transition:opacity .25s;
+  background:radial-gradient(230px circle at var(--mx,50%) var(--my,42%),rgba(255,255,255,.17),rgba(255,255,255,.05) 34%,transparent 62%);
+  mix-blend-mode:screen}
+.picks .card:not(.taken):not(.dup):hover .cfront::after,.picks .coachcard:not(.taken):hover .cfront::after{opacity:1}
 .winner-pill{box-shadow:0 0 16px -4px currentColor}
 
 /* — Slots vazios: respiração que convida ao preenchimento — */
@@ -731,9 +765,13 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,90,31,.4);
 .slot .ph{transition:transform .25s var(--ease)}
 .slot:hover .ph{transform:scale(1.12)}
 
-/* — Roleta: marcador e profundidade — */
-.roulette{box-shadow:inset 0 0 70px rgba(0,0,0,.45)}
-.marker{box-shadow:0 0 12px var(--accent)}
+/* — Roleta LED: profundidade de palco, chão quente refletivo e agulha laser — */
+.roulette{box-shadow:inset 0 0 70px rgba(0,0,0,.5),inset 0 -30px 44px -34px rgba(255,90,31,.3);
+  background:linear-gradient(0deg,rgba(255,90,31,.07),transparent 30%),
+    radial-gradient(120% 180% at 50% -60%,#1b2436 0%,#0c1119 60%)}
+.marker{background:linear-gradient(180deg,#ffd9c4,var(--accent) 30%,var(--accent) 70%,#ffd9c4);
+  box-shadow:0 0 14px var(--accent),0 0 3px #fff}
+.tcard{box-shadow:0 10px 22px -14px rgba(0,0,0,.8)} /* cards da fita descolam do chão */
 
 /* — Análise: força efetiva com pulso premium — */
 .stat{transition:border-color .2s,box-shadow .2s,transform .2s var(--ease)}
@@ -749,10 +787,31 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,90,31,.4);
 .overlay-title::before{box-shadow:0 0 14px var(--accent)}
 .match:hover{border-color:rgba(124,156,196,.4)}
 
+/* — PARTIDA BROADCAST: placar com textura de transmissão + rounds mais presentes — */
+.scorebar{background:repeating-linear-gradient(115deg,rgba(255,255,255,.02) 0 2px,transparent 2px 15px),
+  linear-gradient(180deg,rgba(20,27,43,.75),transparent)}
+.sb-score{letter-spacing:.01em;text-shadow:0 2px 18px rgba(0,0,0,.6)}
+.rs-cell{width:16px;height:16px;border-radius:4px}
+.rs-cell.ct{box-shadow:0 0 7px rgba(74,130,255,.55),inset 0 1px 0 rgba(255,255,255,.25)}
+.rs-cell.tr{box-shadow:0 0 7px rgba(255,170,40,.55),inset 0 1px 0 rgba(255,255,255,.25)}
+.pm-versus{font-size:1.8rem;color:var(--accent);text-shadow:0 0 24px rgba(255,90,31,.5)}
+
+/* — CAMPEÃO: chuva de brilho dourada (CSS puro, só na tela de título) — */
+.final-overlay.is-champ .final-glow::after{content:"";position:absolute;inset:-20% 0 0;pointer-events:none;
+  background-image:radial-gradient(2px 2px at 22% 18%,rgba(255,214,120,.85),transparent 60%),
+    radial-gradient(1.6px 1.6px at 66% 6%,rgba(255,236,170,.7),transparent 60%),
+    radial-gradient(2.4px 2.4px at 84% 30%,rgba(255,200,80,.75),transparent 60%),
+    radial-gradient(1.4px 1.4px at 40% 44%,rgba(255,224,140,.6),transparent 60%),
+    radial-gradient(2px 2px at 10% 58%,rgba(255,214,120,.6),transparent 60%);
+  background-size:340px 340px;animation:sparkleFall 13s linear infinite}
+@keyframes sparkleFall{to{transform:translateY(340px)}}
+
 /* Movimento reduzido: silencia as animações contínuas desta camada */
 @media(prefers-reduced-motion:reduce){
   .wrap,.hud .v.bump,.slot.avail,.slot.coach.avail,.stat--eff .stat-v,
   button.roll:hover::after{animation:none!important}
+  html::before,.picks .deal .cfront::before,.final-overlay.is-champ .final-glow::after{animation:none!important}
+  .picks .card .cfront::after,.picks .coachcard .cfront::after{display:none}
   .card:hover,.coachcard:hover,.picks .card:hover,.picks .coachcard:hover,
   .stat:hover,button.ghost:hover{transform:none!important}
 }

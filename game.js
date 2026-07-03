@@ -1438,6 +1438,23 @@ $("resetbtn").onclick=resetar;
 $("flipModeBtn").onclick=()=>{setModoVirar(!modoVirar);
   hint(modoVirar?"Modo virar ativo: clique numa carta para ver o verso.":(S.drawn?`Time sorteado: ${S.drawn.nome}. Escolha 1 carta.`:""));};
 
+// TILT COLECIONÁVEL: a carta das picks inclina em 3D seguindo o ponteiro; o foil (CSS) acompanha
+// via --mx/--my. Só visual — não interfere no clique/seleção. Desligado em reduced-motion.
+const _semTilt=matchMedia("(prefers-reduced-motion:reduce)");
+picksEl.addEventListener("pointermove",e=>{
+  if(_semTilt.matches)return;
+  const c=e.target.closest(".card,.coachcard");if(!c)return;
+  const r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
+  c.style.setProperty("--ry",((x-.5)*11).toFixed(2)+"deg");
+  c.style.setProperty("--rx",((.5-y)*11).toFixed(2)+"deg");
+  c.style.setProperty("--mx",(x*100).toFixed(1)+"%");
+  c.style.setProperty("--my",(y*100).toFixed(1)+"%");
+});
+picksEl.addEventListener("pointerout",e=>{
+  const c=e.target.closest(".card,.coachcard");
+  if(c&&!(e.relatedTarget&&c.contains(e.relatedTarget)))["--rx","--ry","--mx","--my"].forEach(v=>c.style.removeProperty(v));
+});
+
 document.addEventListener("click",e=>{
   if(e.target.closest("#mutebtn,#rollbtn,#respinbtn,#resetbtn,#flipModeBtn"))return; // botões têm handler próprio
   // MODO VIRAR ativo: qualquer carta clicada VIRA (frente/verso), sem selecionar/posicionar
