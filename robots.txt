@@ -1,3 +1,3 @@
 User-agent: *
 Allow: /
-# draft9-0 · simulador de Counter-Strike · https://esteban-brito.github.io/Teste/
+# draft9-0 — simulador de Counter-Strike · https://esteban-brito.github.io/Teste/
