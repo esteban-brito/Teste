@@ -52,8 +52,8 @@
 - [x] ✓ Tiers, pisos, zero-média da campanha, consistência craque vs streaky role: auditados.
 
 ### PÓLVORA — combate
-- [ ] 12. 🟠 OT: primeiro-a-16 único, máx 16-15 (game.js:713). Real CS2: MR3 repetível (19-16, 22-19…).
-- [ ] 13. 🟠 Lados não alternam no OT (`ladoDe` fixa após r13) (game.js:704).
+- [x] 12. ✅ CORRIGIDO (v=48): OT MR3 repetível (alvo 16→19→22; 19-17/22-20 medidos), máx 16-15 (game.js:713). Real CS2: MR3 repetível (19-16, 22-19…).
+- [x] 13. ✅ CORRIGIDO (v=48): lados alternam a cada 3 rounds no OT (`ladoDe` fixa após r13) (game.js:704).
 - [ ] 14. 🟠 Sem viés CT/T por mapa (Nuke ~56% CT real). Propor `ct` extra em MAPA_PERFIL somado ao LADO_CT.
 - [ ] 15. 🟡 Trade: 1 tentativa pós-kill com chance fixa .62 — sem janela por proximidade/execute (modelo agregado; documentar).
 - [ ] 16. 🟡 Clutch 1v3 8.1% / 1v4 3.0% (piso das faixas 10-12/4-5). Ajustar expoente CLUTCH_X (1.35→~1.5) com re-check macro.
@@ -63,10 +63,10 @@
 - [x] ✓ Fases plant/pós-plant/defuse/relógio/save/close calibradas: CT 50.7%, plant 53-58%, T pós-plant 60-63%, OT 8.2%, pistol CT 51%, rounds/mapa 20.4, KPR 0.71 — todas nas faixas reais (benches realismo/fidelidade).
 
 ### COFRE — economia
-- [ ] 20. 🟠 Loss bonus RESETA ao vencer (`lsA=0`, game.js:734). CS2 moderno decrementa 1 passo. Impacto direto na respiração econômica.
-- [ ] 21. 🟠 Prêmio de vitória único 3250 — real: 3500 se bomba/defuse. A PÓLVORA já retorna o método (fim por objetivo).
+- [x] 20. ✅ CORRIGIDO (v=48): escada CS2 (1ª derrota 1400; decrementa 1 ao vencer) (`lsA=0`, game.js:734). CS2 moderno decrementa 1 passo. Impacto direto na respiração econômica.
+- [x] 21. ✅ CORRIGIDO (v=48): prêmio por método (bomba/defuse 3500) — real: 3500 se bomba/defuse. A PÓLVORA já retorna o método (fim por objetivo).
 - [ ] 22. 🟡 Kill reward plano (90 escala-time) — real varia por arma (rifle 300/SMG 600/AWP 100). Variar por buy como proxy.
-- [ ] 23. 🟠 Sem economia de OT (real: $10k fixos por half de OT) — junto de #12.
+- [x] 23. ✅ CORRIGIDO (v=48): $10k por half de OT (real: $10k fixos por half de OT) — junto de #12.
 - [x] 24. ✓ Invariantes: 0 violações em 400 mapas; vencedor do pistol full no r2 = 94.5%; perdedor eco/force = 100% (bench cofre_trace seed 31337).
 
 ### FALLEnANGELs — rating

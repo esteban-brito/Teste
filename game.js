@@ -681,7 +681,7 @@ function combateRound(a,b,ctx){
   const aCT=ctx.aIsCT;                          // time a está no CT neste round? (b é o T, e vice-versa)
   const ctVence=()=>aCT?"A":"B", tVence=()=>aCT?"B":"A"; // quem leva o round se o objetivo decide
   let primeira=true,fim=null,g=0;               // fim: "A"/"B" se o round fecha por objetivo/save antes da eliminação
-  let plantado=false,tempo=0,pp=0;              // tempo = relógio pré-plant; pp = relógio da bomba (pós-plant)
+  let plantado=false,tempo=0,pp=0,metodo=null;  // metodo: tempo|defuse|detona|close|elim → define o prêmio (CS2: objetivo=3500)
   let clutch=null;                              // 1ª vez que um lado fica em 1vX (pra medir/registrar o clutch)
   while(vivA.length>0&&vivB.length>0&&fim===null&&g++<30){
     let p=ctx.pEdgeA;
@@ -711,27 +711,27 @@ function combateRound(a,b,ctx){
     // CLOSE por vantagem de homem: o lado dominante FECHA o round (executa o plant+detona / segura / retoma)
     // sem precisar duelar até o último homem — como no CS real. 1vX NUNCA encerra aqui (o clutch é sempre jogado).
     const adv=Math.abs(vivA.length-vivB.length);
-    if(adv>=2&&Math.min(vivA.length,vivB.length)>=2&&rndF()<C.CLOSE_MEN*adv){fim=vivA.length>vivB.length?"A":"B";break;}
+    if(adv>=2&&Math.min(vivA.length,vivB.length)>=2&&rndF()<C.CLOSE_MEN*adv){fim=vivA.length>vivB.length?"A":"B";metodo="close";break;}
     // estado por LADO (não por time): o objetivo é assimétrico
     const vivT=aCT?vivB:vivA,vivCT=aCT?vivA:vivB,buyT=aCT?buyB:buyA,buyCT=aCT?buyA:buyB;
     tempo++;
     if(!plantado){
       // SAVE do T: muito atrás (>=2) e sem dinheiro → desiste do plant, guarda armas → CT vence no tempo (sobreviventes vivem)
       if(vivCT.length-vivT.length>=2){const eco=buyT==="eco"||buyT==="force";
-        if(rndF()<(eco?C.SAVE_BASE:C.SAVE_BASE*.35)+(vivCT.length-vivT.length)*C.SAVE_MEN){fim=ctVence();break;}}
+        if(rndF()<(eco?C.SAVE_BASE:C.SAVE_BASE*.35)+(vivCT.length-vivT.length)*C.SAVE_MEN){fim=ctVence();metodo="tempo";break;}}
       // PLANT: chance cresce com o tempo e com a vantagem de homem do T (tomou o site)
       const pPlant=clamp(C.PLANT_BASE+tempo*C.PLANT_TEMPO+(vivT.length-vivCT.length)*C.PLANT_MEN,0,.92);
       if(rndF()<pPlant){plantado=true;pp=0;}
-      else if(tempo>=C.RND_TEMPO){fim=ctVence();break;} // relógio estourou sem plant → CT segura (default/hold)
+      else if(tempo>=C.RND_TEMPO){fim=ctVence();metodo="tempo";break;} // relógio estourou sem plant → CT segura (default/hold)
     }else{
       pp++;
       // SAVE do CT: pós-plant muito atrás (>=2) e sem grana → não retoma → T detona (sobreviventes CT vivem)
       if(vivT.length-vivCT.length>=2){const eco=buyCT==="eco"||buyCT==="force";
-        if(rndF()<(eco?C.SAVE_BASE:C.SAVE_BASE*.35)+(vivT.length-vivCT.length)*C.SAVE_MEN){fim=tVence();break;}}
+        if(rndF()<(eco?C.SAVE_BASE:C.SAVE_BASE*.35)+(vivT.length-vivCT.length)*C.SAVE_MEN){fim=tVence();metodo="detona";break;}}
       // DEFUSE: CT com pelo menos paridade limpa o site e defusa (cresce com a vantagem de homem)
-      if(vivCT.length>=vivT.length&&rndF()<C.DEFUSE_BASE+Math.max(0,vivCT.length-vivT.length)*C.DEFUSE_MEN){fim=ctVence();break;}
+      if(vivCT.length>=vivT.length&&rndF()<C.DEFUSE_BASE+Math.max(0,vivCT.length-vivT.length)*C.DEFUSE_MEN){fim=ctVence();metodo="defuse";break;}
       // DETONAÇÃO: relógio da bomba estourou → T vence o post-plant
-      if(pp>=C.PP_TEMPO){fim=tVence();break;}
+      if(pp>=C.PP_TEMPO){fim=tVence();metodo="detona";break;}
     }
   }
   const venceA=fim!==null?fim==="A":vivA.length>0;
@@ -751,7 +751,10 @@ function combateRound(a,b,ctx){
     s._kRound=0;s._contribRound=false;});});
   let kA=0,kB=0;roundKills.forEach(rk=>{rk.team===a?kA++:kB++;}); // kills por time no round → recompensa econômica
   const clutchWon=clutch?(clutch.aLone?venceA:!venceA):null; // o solitário venceu o round?
-  return {venceA,sobreviventes:vivVfinal.length,destaque,plantado,killsA:kA,killsB:kB,clutchX:clutch&&clutch.x,clutchWon};
+  // método por ELIMINAÇÃO: com bomba no chão, o vencedor ainda resolve o objetivo (CT defusa / T detona)
+  if(!metodo)metodo=plantado?(venceA===aCT?"defuse":"detona"):"elim";
+  const premioV=(metodo==="defuse"||metodo==="detona")?PREMIO_OBJETIVO:PREMIO_VITORIA; // CS2: objetivo paga 3500
+  return {venceA,sobreviventes:vivVfinal.length,destaque,plantado,metodo,premioV,killsA:kA,killsB:kB,clutchX:clutch&&clutch.x,clutchWon};
 }
 
 // força do dia: oscila inverso à química (coeso=consistente, caótico=imprevisível)
@@ -778,8 +781,7 @@ const decidirBuy=(m,pist,ls,surv)=>{
   if(m>=custoReal("force",surv)+1500)return"force";
   if((ls||0)<=1&&m>=custoReal("force",surv)&&rndF()<.45)return"force";
   return"eco";};
-const PREMIO_VITORIA=3250,LOSS_BONUS=[1400,1900,2400,2900,3400],TETO_GRANA=16000; // recompensa CS2 (kills/plant somam à parte)
-const premio=(v,ls)=>v?PREMIO_VITORIA:LOSS_BONUS[Math.min(ls,4)];
+const PREMIO_VITORIA=3250,PREMIO_OBJETIVO=3500,LOSS_BONUS=[1400,1900,2400,2900,3400],TETO_GRANA=16000; // CS2: bomba/defuse pagam 3500; escada de derrota 1400→3400
 // ——— identidade de mapa: cada mapa recompensa atributos diferentes (modula, não determina) ———
 // peso por atributo (soma ~1). a afinidade é medida CONTRA a média do próprio jogador em todos os
 // mapas, então lenda equilibrada varia quase nada (boa em tudo); só o especialista sente o mapa.
@@ -808,7 +810,10 @@ function simularMapa(A,B,fA,fB,mapaForcado,leve){
   let sA=0,sB=0; // sequências de vitória (momentum)
   let survA=5,survB=5; // sobreviventes do round anterior (carregam equipamento → barateia a próxima compra)
   const rounds=[];
-  const ladoDe=(time,round)=>{const aCT=round<13;const ehA=time===A;return (ehA===aCT)?"CT":"TR";};
+  // lados: 1º tempo A=CT · 2º tempo A=TR · OT (r≥25): alterna a cada 3 rounds (MR3 real)
+  const ladoDe=(time,round)=>{const ehA=time===A;
+    const aCT=round<13?true:round<25?false:(Math.floor((round-25)/3)%2===0);
+    return (ehA===aCT)?"CT":"TR";};
   const mediaSkill=t=>t.skills.reduce((s,v)=>s+v,0)/5;
   // base do round e edge de abertura são CONSTANTES no mapa → calcula uma vez (fora do loop)
   const baseA=mediaSkill(a)*(1-C.PESO_EF)+(fA||mediaSkill(a))*C.PESO_EF;
@@ -818,19 +823,22 @@ function simularMapa(A,B,fA,fB,mapaForcado,leve){
   const bonusCtA=C.LADO_CT+C.LADO_COMP*a.ctEdge,bonusTA=C.LADO_COMP*a.tEdge;
   const bonusCtB=C.LADO_CT+C.LADO_COMP*b.ctEdge,bonusTB=C.LADO_COMP*b.tEdge;
   let half1=null;
-  // CS2 (MR12): vence quem chega a 13 na regulação. Se empatar 12-12, vai pra
-  // prorrogação e vence o primeiro a 16 (pode terminar 16-12 .. 16-15).
-  const fim=()=>{const ot=pa>=12&&pb>=12; return ot?(pa>=16||pb>=16):(pa>=13||pb>=13);};
-  while(!fim()){
+  // CS2 (MR12): vence quem chega a 13 na regulação. 12-12 → OT MR3 REPETÍVEL (real):
+  // alvo 16; empate 15-15 → alvo 19; 18-18 → 22... (19-17, 22-20 são placares possíveis)
+  let alvo=13;
+  while(pa<alvo&&pb<alvo){
     r++;
     if(r===13){half1=[pa,pb];lsA=0;lsB=0;sA=0;sB=0;mA=800;mB=800;survA=5;survB=5;} // reset economia/momentum no 2º tempo
     const pistol=(r===1||r===13);
     if(pistol){mA=800;mB=800;survA=5;survB=5;}
+    // OT (MR3): cada half de prorrogação começa com $10k fixos (real CS2) → full buy garantido
+    if(r>=25&&(r-25)%3===0){mA=10000;mB=10000;survA=0;survB=0;lsA=0;lsB=0;}
     const buyA=decidirBuy(mA,pistol,lsA,survA),buyB=decidirBuy(mB,pistol,lsB,survB);
     mA=Math.max(0,mA-custoReal(buyA,survA));mB=Math.max(0,mB-custoReal(buyB,survB)); // GASTA na compra (repõe só quem morreu)
     // força do round por time = média de skill × economia × lado × momentum − tilt + forma do dia
     const momA=clamp(sA*C.MOM_STEP,0,C.MOM_MAX),momB=clamp(sB*C.MOM_STEP,0,C.MOM_MAX);
-    const tiltA=clamp((lsA-2)*C.TILT_STEP,0,C.TILT_MAX),tiltB=clamp((lsB-2)*C.TILT_STEP,0,C.TILT_MAX);
+    // tilt = derrotas SEGUIDAS (= sequência de vitórias do rival); lsA/lsB agora é o nível da escada de grana
+    const tiltA=clamp((sB-2)*C.TILT_STEP,0,C.TILT_MAX),tiltB=clamp((sA-2)*C.TILT_STEP,0,C.TILT_MAX);
     // vantagem de lado = base de CT + composição do time (precomputada: só muda na troca de lado)
     const ladoA=ladoDe(A,r),ladoB=ladoDe(B,r);
     const ladoBonusA=ladoA==="CT"?bonusCtA:bonusTA;
@@ -842,8 +850,11 @@ function simularMapa(A,B,fA,fB,mapaForcado,leve){
     const pEdgeA=logistica(fRA,fRB,pistol?C.D_DUELO_PIST:C.D_DUELO);
     const res=combateRound(a,b,{pEdgeA,openEdgeA,buyA,buyB,aIsCT:ladoA==="CT"});
     const venceA=res.venceA;
-    if(venceA){pa++;lsA=0;lsB++;sA++;sB=0;mA+=premio(true,0);mB+=premio(false,lsB);}
-    else{pb++;lsB=0;lsA++;sB++;sA=0;mB+=premio(true,0);mA+=premio(false,lsA);}
+    // COFRE CS2: perdedor recebe o NÍVEL atual da escada (1ª derrota=1400) e sobe 1; vencedor
+    // ganha o prêmio PELO MÉTODO (bomba/defuse=3500, resto=3250) e o nível do rival DESCE 1 (não zera).
+    if(venceA){pa++;sA++;sB=0;mA+=res.premioV;mB+=LOSS_BONUS[Math.min(lsB,4)];lsB=Math.min(lsB+1,4);lsA=Math.max(0,lsA-1);}
+    else{pb++;sB++;sA=0;mB+=res.premioV;mA+=LOSS_BONUS[Math.min(lsA,4)];lsA=Math.min(lsA+1,4);lsB=Math.max(0,lsB-1);}
+    if(pa===alvo-1&&pb===alvo-1)alvo+=3; // 12-12 → alvo 16 · 15-15 → 19 · 18-18 → 22 (OT repetível)
     // bônus de plant (CS2): o T que plantou ganha $800 mesmo perdendo o round — mantém o lado perdedor vivo na economia
     if(res.plantado){const tÉA=ladoA!=="CT"; if(tÉA){if(!venceA)mA+=C.PLANT_BONUS;}else{if(venceA)mB+=C.PLANT_BONUS;}}
     // recompensa por kill: cada abate dá dinheiro (independe de ganhar/perder) — fragar mantém a economia viva, sustenta force-buy e anti-eco
