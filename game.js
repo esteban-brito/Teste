@@ -468,7 +468,7 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓL
   // ROUND VIVO: o round é uma SEQUÊNCIA DE DUELOS; o vencedor EMERGE (não é um dado só).
   // D_DUELO = decisão de UM duelo (bem mais raso que o round; o round é a soma de ~5-9 duelos).
   // pistol é quase cara-ou-coroa (D alto) → o azarão ganha pistol/anti-eco e o 13-0 fica raro.
-  D_DUELO:112,D_DUELO_PIST:360,OPEN_SCALE:520,CLUTCH_DUEL:.22,CLUTCH_X:.092,
+  D_DUELO:112,D_DUELO_PIST:360,OPEN_SCALE:520,CLUTCH_DUEL:.22,CLUTCH_X:.115,CLUTCH_EXP:1.55,LADO_MAPA_P:.013,
   SAVE_BASE:.30,SAVE_MEN:.10,CLOSE_MEN:.18, // salvar (eco em desvantagem) e fechar bomb/tempo (vantagem de homem)
   // ——— BOMBA / RELÓGIO (assimetria real T×CT): o round tem fases, não é só eliminar ———
   // pré-plant: o T tenta plantar (cresce com tempo e vantagem de homem); se o relógio estoura sem plant, o CT vence (default/hold).
@@ -693,8 +693,8 @@ function combateRound(a,b,ctx){
     if(plantado)p=clamp(p+(aCT?-C.POST_EDGE:C.POST_EDGE),.03,.97); // pós-plant: o T segura ângulos do bombsite (edge defensivo)
     // clutch: o último vivo segura ângulos e isola os inimigos que empurram → edge por duelo que CRESCE com X
     // (mantém a força de time no duelo, só soma o bônus de clutch + habilidade cl). Calibrado p/ ~real.
-    if(vivA.length===1&&vivB.length>1)p=clamp(p+Math.pow(vivB.length-1,1.35)*C.CLUTCH_X+((a.cls[vivA[0]]||45)-50)/100*C.CLUTCH_DUEL,.03,.97);
-    if(vivB.length===1&&vivA.length>1)p=clamp(p-Math.pow(vivA.length-1,1.35)*C.CLUTCH_X-((b.cls[vivB[0]]||45)-50)/100*C.CLUTCH_DUEL,.03,.97);
+    if(vivA.length===1&&vivB.length>1)p=clamp(p+Math.pow(vivB.length-1,C.CLUTCH_EXP)*C.CLUTCH_X+((a.cls[vivA[0]]||45)-50)/100*C.CLUTCH_DUEL,.03,.97);
+    if(vivB.length===1&&vivA.length>1)p=clamp(p-Math.pow(vivA.length-1,C.CLUTCH_EXP)*C.CLUTCH_X-((b.cls[vivB[0]]||45)-50)/100*C.CLUTCH_DUEL,.03,.97);
     const aWins=rndF()<p;
     const venc=aWins?a:b,perd=aWins?b:a,vivV=aWins?vivA:vivB,vivP=aWins?vivB:vivA,buyV=aWins?buyA:buyB,buyP=aWins?buyB:buyA;
     const vi=duelo(venc,vivV,buyV,perd,vivP,buyP,primeira,false);
@@ -800,6 +800,9 @@ function mapMult(j,mapa){const a=j._eng||j;const perfil=MAPA_PERFIL[mapa];if(!pe
   if(a._mapBase===undefined){let s=0,n=0;for(const m in MAPA_PERFIL){s+=dot(MAPA_PERFIL[m],a);n++;}a._mapBase=s/n;}
   const fit=dot(perfil,a)-a._mapBase; // >0 mapa favorece o perfil dele, <0 desfavorece
   return clamp(1+fit/CFG_SIM.MAPA_SCALE,1-CFG_SIM.MAPA_CAP,1+CFG_SIM.MAPA_CAP);}
+// viés de LADO por mapa (pontos de força somados ao lado CT; negativo = mapa T-sided).
+// Calibrado p/ reproduzir os spreads reais: Nuke/Train CT-sided (~54-56% CT), Anubis T-sided (~48%).
+const MAPA_LADO={Nuke:1.9,Train:1.3,Overpass:.7,Ancient:.8,Mirage:.2,Inferno:0,Dust2:0,Anubis:-.7};
 const MAPAS_POOL=["Mirage","Inferno","Nuke","Ancient","Anubis","Dust2","Train","Overpass"];
 
 // simula um mapa completo round a round; retorna placar, vencedor, timeline e stats por jogador.
@@ -823,7 +826,9 @@ function simularMapa(A,B,fA,fB,mapaForcado,leve){
   const baseA=mediaSkill(a)*(1-C.PESO_EF)+(fA||mediaSkill(a))*C.PESO_EF;
   const baseB=mediaSkill(b)*(1-C.PESO_EF)+(fB||mediaSkill(b))*C.PESO_EF;
   const openEdgeA=clamp((a.open-b.open)/C.OPEN_SCALE,-.12,.12); // melhor abertura leva o 1º duelo
-  // bônus de lado por time: 2 valores possíveis cada (CT/T) — precomputados fora do loop de rounds
+  // bônus de lado por time: 2 valores possíveis cada (CT/T) — precomputados fora do loop de rounds.
+  // o viés do MAPA age direto no pEdge do duelo (LADO_MAPA_P) — pontos de força são amortecidos pelas fases.
+  const pLadoMapa=(MAPA_LADO[mapa]||0)*C.LADO_MAPA_P;
   const bonusCtA=C.LADO_CT+C.LADO_COMP*a.ctEdge,bonusTA=C.LADO_COMP*a.tEdge;
   const bonusCtB=C.LADO_CT+C.LADO_COMP*b.ctEdge,bonusTB=C.LADO_COMP*b.tEdge;
   let half1=null;
@@ -851,7 +856,8 @@ function simularMapa(A,B,fA,fB,mapaForcado,leve){
     const fRB=(baseB+ladoBonusB+formaDiaB)*(0.42+0.58*BUY[buyB])*(1+momB-tiltB);
     // pEdge = prob de A vencer UM duelo (raso); o VENCEDOR DO ROUND emerge da sequência de duelos
     // (vantagem de homem, clutch, save, trade nascem daí). pistol ≈ cara-ou-coroa → azarão tem chance.
-    const pEdgeA=logistica(fRA,fRB,pistol?C.D_DUELO_PIST:C.D_DUELO);
+    // viés do mapa: quem está de CT num mapa CT-sided ganha o edge por duelo (Nuke pesa p/ os dois lados)
+    const pEdgeA=clamp(logistica(fRA,fRB,pistol?C.D_DUELO_PIST:C.D_DUELO)+(ladoA==="CT"?pLadoMapa:-pLadoMapa),.03,.97);
     const res=combateRound(a,b,{pEdgeA,openEdgeA,buyA,buyB,aIsCT:ladoA==="CT"});
     const venceA=res.venceA;
     // COFRE CS2: perdedor recebe o NÍVEL atual da escada (1ª derrota=1400) e sobe 1; vencedor
