@@ -506,11 +506,12 @@ const CFG_FA={BASE:.520,W_EK:.385,W_SURV:.160,W_KAST:.240,W_MULTI:.042,W_SWING:.
   // ADR (dano por round) entra como sinal independente das kills: parte do peso saiu de W_EK pra cá,
   // então quem dá muito dano sem converter (ou vice-versa) varia → mais sobreposição entre OVRs (vida).
   W_ADR:.0019,ADR_REF:76,W_TRADE:.075,OPEN_D_W:.6, // fidelidade: dano + trade (refrag); morte-de-abertura pesa menos (tentar a entrada é a função) — HLTV
+  IMP_OVR:.012,IGL_SIS:.015, // impacto escala com a SKILL dentro da função (±~5%, centrado em 16); IGL: crédito de sistema moderado (o slope já premia o caller de elite)
 
   // bônus de firepower: poder de fogo bruto puxa o rating pra cima (ajuda entries de fp alto). Cosmético — não muda resultado.
   FP:{ref:62,per:.0030,min:-.04,max:.09}};
 // impacto por função no kill: entry/rifler que fragga gera mais valor que support/igl (centrado ~1.0)
-const FA_IMPACTO={AWPer:1.045,Entry:1.065,Lurker:1.045,Rifler:1.03,Support:.97,IGL:.955}; // calibrado por validação real×sim: kill de abertura do entry é de alto valor; AWP recentrado; Support/IGL creditam o "intangível"
+const FA_IMPACTO={AWPer:1.035,Entry:1.065,Lurker:1.04,Rifler:1.03,Support:.97,IGL:.955}; // calibrado por validação real×sim (com IMP_OVR o impacto escala por skill; bases recentradas)
 // rating FALLEnANGELs de um jogador a partir do seu log de eventos no mapa
 function fallenAngels(ev){const C=CFG_FA,R=ev.totalRounds||1;
   const ekpr=ev.kills.reduce((s,k)=>s+faEco(k.buyMatador,k.buyVitima),0)/R; // kills eco-ajustadas
@@ -525,7 +526,10 @@ function fallenAngels(ev){const C=CFG_FA,R=ev.totalRounds||1;
   const adrTerm=(adr-C.ADR_REF)*C.W_ADR;                     // centrado: quem dá muito dano sobe, pouco dano desce (suave)
   const tradePR=(ev.tradeK||0)/R*C.W_TRADE;                  // eficiência de trade: refrag pelo time vale rating
   const fpBonus=Math.max(C.FP.min,Math.min(C.FP.max,((ev.fp??60)-C.FP.ref)*C.FP.per)); // poder de fogo bruto soma ao rating
-  const rating=C.BASE+ekpr*C.W_EK*(ev.impacto??1)+survPR*C.W_SURV+kast*C.W_KAST+multiScore*C.W_MULTI+(swing/R)*C.W_SWING+openPR+adrTerm+tradePR+fpBonus;
+  // impacto EFETIVO = base da função × skill dentro dela (AWPer de elite ≠ AWPer modesto); IGL soma o crédito de sistema
+  const impEf=(ev.impacto??1)*(1+C.IMP_OVR*((ev.ovr??16)-16));
+  const sistema=ev.prim==="IGL"?C.IGL_SIS:0;
+  const rating=C.BASE+ekpr*C.W_EK*impEf+survPR*C.W_SURV+kast*C.W_KAST+multiScore*C.W_MULTI+(swing/R)*C.W_SWING+openPR+adrTerm+tradePR+fpBonus+sistema;
   return Math.max(.30,Math.min(3.0,rating));}
 
 /* ╔═══════════════════════════════════════════════════════════════════╗
@@ -639,7 +643,7 @@ function prepTime(t,mapa){
     ops:js.map(j=>j.op??50),ens:js.map(j=>j.en??45),trs:js.map(j=>j.tr??50), // categorias HLTV por jogador (tipo de kill)
     // força de abertura do time (op/entry/sniper/util — flashes ajudam a abrir): inclina o PRIMEIRO duelo
     open:js.reduce((s,j)=>s+((j.op??50)*.35+(j.en??45)*.30+(j.sn??0)*.20+(j.ut??50)*.15),0)/js.length,
-    stats:js.map(j=>({nick:j.nick||t.nome,impacto:FA_IMPACTO[j.primario]??1,fp:j.fp??60,ut:j.ut??50,k:0,d:0,a:0,dmg:0,tradeK:0,
+    stats:js.map(j=>({nick:j.nick||t.nome,impacto:FA_IMPACTO[j.primario]??1,prim:j.primario,ovr:j.ovr??16,fp:j.fp??60,ut:j.ut??50,k:0,d:0,a:0,dmg:0,tradeK:0,
       fa:{kills:[],mortes:[],assists:0,roundsKAST:0,multi:{},opK:0,opD:0},_kRound:0,_contribRound:false}))};
 }
 // ROUND VIVO — o round é uma SEQUÊNCIA DE DUELOS e o vencedor EMERGE deles.
@@ -873,7 +877,7 @@ function simularMapa(A,B,fA,fB,mapaForcado,leve){
   // rating FALLEnANGELs por jogador (contextual: swing, eco, KAST, multi-kills)
   const totalR=pa+pb;
   const rate=stats=>stats.map(s=>{
-    const rating=fallenAngels({...s.fa,totalRounds:totalR,impacto:s.impacto,fp:s.fp,dmg:s.dmg,tradeK:s.tradeK});
+    const rating=fallenAngels({...s.fa,totalRounds:totalR,impacto:s.impacto,prim:s.prim,ovr:s.ovr,fp:s.fp,dmg:s.dmg,tradeK:s.tradeK});
     return {nick:s.nick,k:s.k,d:s.d,a:s.a,rating:+rating.toFixed(2)};});
   return {placar:[pa,pb],vencedorNome:pa>pb?A.nome:B.nome,vencedor:pa>pb?A:B,rounds,
     half1,mapa,
@@ -1603,7 +1607,8 @@ function avancarSuica(){
   const buckets={};ativos.forEach(t=>{const k=t.v+"-"+t.d;(buckets[k]=buckets[k]||[]).push(t);});
   // monta os pares da rodada; separa o do jogador
   const pares=[];let parDoJogador=null;
-  Object.values(buckets).forEach(g=>{const a=[...g].sort(()=>rndF()-.5);
+  Object.values(buckets).forEach(g=>{const a=[...g];
+    for(let i=a.length-1;i>0;i--){const j=Math.floor(rndF()*(i+1));[a[i],a[j]]=[a[j],a[i]];} // Fisher-Yates (sort(rnd-.5) é enviesado)
     for(let i=0;i<a.length-1;i+=2){const par=[a[i],a[i+1]];
       if(a[i].meu||a[i+1].meu)parDoJogador=par;else pares.push(par);}
     if(a.length%2)a[a.length-1]._bye=true;

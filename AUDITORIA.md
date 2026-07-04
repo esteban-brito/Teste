@@ -70,10 +70,10 @@
 - [x] 24. ✓ Invariantes: 0 violações em 400 mapas; vencedor do pistol full no r2 = 94.5%; perdedor eco/force = 100% (bench cofre_trace seed 31337).
 
 ### FALLEnANGELs — rating
-- [ ] 25. 🟠 Impacto plano por função infla AWPers modestos: molodoy +0.29, sh1ro +0.27, 910 +0.22 (bench dados seed 555). Propor impacto interpolado pela skill dentro da função.
+- [x] 25. ✅ CORRIGIDO (v=49): impacto escala com a skill na função (IMP_OVR; bases recentradas). Restam outliers de DADOS (#30): molodoy +0.29, sh1ro +0.27, 910 +0.22 (bench dados seed 555). Propor impacto interpolado pela skill dentro da função.
 - [ ] 26. 🟡 Elite comprimida (donk −0.23, NiKo −0.23, rain −0.19) — em parte estrutural (pool só-elite); avaliar compensação suave por OVR sem quebrar hierarquia.
 - [ ] 27. 🟡 ADR sintético por constantes (média fiel ~76; sem variância de dano utilitário real — documentar).
-- [ ] 28. 🟡 IGLs de sistema sub-representados (karrigan −0.31, chopper −0.16): crédito extra de KAST/assist em rounds vencidos.
+- [x] 28. ✅ CORRIGIDO (v=49): crédito de sistema p/ IGL + slope — classe Δ 0.00; karrigan/chopper/gla1ve/arT normalizados (karrigan −0.31, chopper −0.16): crédito extra de KAST/assist em rounds vencidos.
 - [x] 29. ✓ KAST c/ traded, eco-ajuste, multi-kill, swing por win-probability: sem dupla contagem; r=0.81, MAE 0.087 vs real.
 
 ### DADOS — ATRIBUTOS (80 entradas)
@@ -81,7 +81,7 @@
 - [x] 31. ✓ Faixas 0-100, ratings 0.5-2.0, países e IDs: limpos. 8 nicks multi-época intencionais.
 
 ### TORNEIO & contrato UI↔motor
-- [ ] 32. 🟡 Shuffle enviesado `sort(()=>rndF()-.5)` no pareamento suíço (game.js:1595) — trocar por Fisher-Yates (iniciarTorneio já usa).
+- [x] 32. ✅ CORRIGIDO (v=49): Fisher-Yates no pareamento suíço `sort(()=>rndF()-.5)` no pareamento suíço (game.js:1595) — trocar por Fisher-Yates (iniciarTorneio já usa).
 - [ ] 33. 🟡 Suíça sem anti-rematch/Buchholz; real: BO3 nos rounds decisivos. Propor MD3 em jogos de classificação/eliminação.
 - [ ] 34. 🟡 NPC×NPC da suíça = moeda logística (sem placar/OT) — coerente com a UI (só V/D); documentado.
 - [ ] 35. 💡 NPCs podem conter jogadores escalados no SEU time (donk vs donk). Propor filtrar times com jogadores seus do sorteio de 15.
