@@ -54,9 +54,9 @@
 ### PÓLVORA — combate
 - [x] 12. ✅ CORRIGIDO (v=48): OT MR3 repetível (alvo 16→19→22; 19-17/22-20 medidos), máx 16-15 (game.js:713). Real CS2: MR3 repetível (19-16, 22-19…).
 - [x] 13. ✅ CORRIGIDO (v=48): lados alternam a cada 3 rounds no OT (`ladoDe` fixa após r13) (game.js:704).
-- [ ] 14. 🟠 Sem viés CT/T por mapa (Nuke ~56% CT real). Propor `ct` extra em MAPA_PERFIL somado ao LADO_CT.
+- [x] 14. ✅ CORRIGIDO (v=50): MAPA_LADO no pEdge do duelo — Nuke 54.1%, Train 52.6%, Anubis 48.6% (pareado, seed 2024).
 - [ ] 15. 🟡 Trade: 1 tentativa pós-kill com chance fixa .62 — sem janela por proximidade/execute (modelo agregado; documentar).
-- [ ] 16. 🟡 Clutch 1v3 8.1% / 1v4 3.0% (piso das faixas 10-12/4-5). Ajustar expoente CLUTCH_X (1.35→~1.5) com re-check macro.
+- [x] 16. ✅ CORRIGIDO (v=50): CLUTCH_X .115 · exp 1.55 — 1v3 9.5%, 1v4 4.5% (faixas reais), 1v2 24.8, macro intacta.
 - [ ] 17. 🟡 Save pós-plant do CT não diferencia equip salvo por lado (modelo agregado de carry — documentar).
 - [ ] 18. 💡 Ausentes: timeout tático, sites A/B, rotações, drop de AWP ao morrer, double-AWP, stand-in, ninja defuse.
 - [ ] 19. 🔵 `pick()` aloca array de pesos por duelo (~8/round). Buffer reutilizável ≈ −5-8% no hot path.
