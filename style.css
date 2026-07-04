@@ -848,6 +848,39 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,90,31,.4);
   background-size:340px 340px;animation:sparkleFall 13s linear infinite}
 @keyframes sparkleFall{to{transform:translateY(340px)}}
 
+/* ════ LINGUAGEM v46 NOS OVERLAYS: herói/brasa no topo, pills, brasões e trilhos LED ════ */
+/* cabeçalho dos overlays = mesma faixa de brasa do herói */
+.overlay-head{position:relative;border-bottom:1px solid rgba(124,156,196,.14)}
+.overlay-head::after{content:"";position:absolute;left:8%;right:8%;bottom:-1px;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,transparent,var(--accent) 22%,#ffb37a 50%,var(--accent) 78%,transparent);
+  box-shadow:0 0 16px rgba(255,90,31,.5)}
+.overlay-title{font-size:clamp(1.3rem,3.4vw,1.7rem);letter-spacing:.08em}
+/* colunas da suíça viram pills */
+.swiss-colhead{border-radius:999px}
+/* brasão no topo dos painéis-chave (mesma assinatura das cartas) */
+.series{overflow:hidden}
+.series::before{content:"";position:absolute;top:0;left:18%;right:18%;height:3px;border-radius:0 0 4px 4px;
+  background:linear-gradient(90deg,transparent,rgba(124,156,196,.55),transparent)}
+.series.done::before{background:linear-gradient(90deg,transparent,var(--t2-green),transparent)}
+.series.mine::before{background:linear-gradient(90deg,transparent,var(--cyan),transparent);box-shadow:0 0 10px -1px var(--cyan)}
+.series.ativa::before{background:linear-gradient(90deg,transparent,var(--accent),transparent);box-shadow:0 0 10px -1px var(--accent)}
+.pm-team{position:relative;overflow:hidden}
+.pm-team::before{content:"";position:absolute;top:0;left:18%;right:18%;height:3px;border-radius:0 0 4px 4px;
+  background:linear-gradient(90deg,transparent,rgba(124,156,196,.5),transparent)}
+.pm-team.mine::before{background:linear-gradient(90deg,transparent,var(--cyan),transparent);box-shadow:0 0 10px -1px var(--cyan)}
+.ls-side{position:relative}
+.ls-side::before{content:"";position:absolute;top:0;left:18%;right:18%;height:3px;z-index:2;border-radius:0 0 4px 4px;
+  background:linear-gradient(90deg,transparent,var(--ls-accent),transparent);opacity:.8}
+.final-mvp-card::after{content:"";position:absolute;top:0;left:18%;right:18%;height:3px;border-radius:0 0 4px 4px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);box-shadow:0 0 10px -1px var(--gold)}
+/* título da tela final flanqueado por trilhos LED (eco da marquise) */
+.final-titulo{display:flex;align-items:center;gap:12px;width:100%;justify-content:center}
+.final-titulo::before,.final-titulo::after{content:"";flex:1 0 18px;max-width:120px;height:3px;border-radius:2px;
+  background:repeating-linear-gradient(90deg,currentColor 0 5px,transparent 5px 14px);opacity:.4}
+/* títulos de fase do bracket e rótulos da final: editoriais */
+.bracket-round-title{color:var(--txt);font-size:.72rem;letter-spacing:.26em}
+.sec-lbl{color:var(--txt);letter-spacing:.22em}
+
 /* ════ MAJOR PROFISSIONAL: um só sistema de painel em todas as telas de torneio ════
    Padrão: raio 13px · borda rgba(124,156,196,.16) · vidro (gradiente + fio de luz no topo)
    · sombra ambiente. Suíça, bracket, antessala, scoreboard e tela final falam a mesma língua. */
