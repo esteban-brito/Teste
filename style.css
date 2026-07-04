@@ -57,7 +57,8 @@ header{display:flex;align-items:center;justify-content:space-between;flex-wrap:w
 .section-note{font-size:.62rem;letter-spacing:.06em;color:var(--dim);margin:-4px 0 8px}
 .section-note strong{color:var(--txt);font-weight:600}
 .winner-pill{display:inline-block;font-family:var(--ff);font-size:.62rem;font-weight:700;
-  letter-spacing:.14em;padding:3px 10px;border-radius:20px;margin-left:6px;vertical-align:middle}
+  letter-spacing:.14em;padding:3px 10px;border-radius:20px;margin-left:6px;vertical-align:middle;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:38vw;min-width:0} /* 1 linha sempre; trunca no celular */
 
 /* ╔══════════════ ROLETA · draft de times ══════════════╗ */
 .roulette{position:relative;border-radius:16px;overflow:hidden;min-height:96px;border:1px solid #2b3346;
@@ -236,6 +237,15 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .card,.coachcard{perspective:800px;-webkit-perspective:800px}
 .cfaces{position:absolute;inset:0;z-index:2;transform-style:preserve-3d;-webkit-transform-style:preserve-3d;
   border-radius:inherit;box-shadow:inset 0 1px 0 rgba(255,255,255,.09),inset 0 -1px 0 rgba(0,0,0,.55)} /* bisel metálico: relevo de colecionável em toda carta */
+/* brasão do tier: filete de luz no topo de toda carta (assinatura do design, frente e verso) */
+.cfaces::after{content:"";position:absolute;top:0;left:16%;right:16%;height:3px;z-index:6;pointer-events:none;
+  border-radius:0 0 4px 4px;background:linear-gradient(90deg,transparent,var(--tcol,var(--cc-main,#9fb2c8)),transparent);
+  box-shadow:0 0 10px -1px var(--tcol,var(--cc-main,#9fb2c8));opacity:.9}
+.coachcard .cfaces::after{display:none} /* o selo TREINADOR já é o brasão do coach */
+/* halo atrás do OVR: o número ganha palco */
+.ccore::before{content:"";position:absolute;left:50%;top:46%;width:78cqw;height:78cqw;z-index:-1;pointer-events:none;
+  transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(circle,color-mix(in srgb,var(--tcol,var(--cc-main,#9fb2c8)) 16%,transparent),transparent 65%)}
 /* cada face gira independente; o que define o que aparece é a OPACIDADE (0/1).
    assim nunca há sobreposição nem texto espelhado, mesmo se o Safari achatar o 3D. */
 .cface{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;border-radius:inherit;overflow:hidden;
@@ -682,8 +692,9 @@ body{background:
     radial-gradient(1200px 620px at 50% -10%,#1c2940 0%,transparent 62%),
     radial-gradient(900px 520px at 100% -5%,rgba(255,90,31,.13),transparent 58%),
     radial-gradient(900px 560px at 0% 14%,rgba(57,211,255,.11),transparent 58%),
-    radial-gradient(140% 46% at 50% 108%,rgba(255,90,31,.1),transparent 70%),
+    radial-gradient(140% 46% at 50% 108%,rgba(255,90,31,.16),transparent 70%),
     var(--bg)}
+footer{margin-top:30px;padding:14px 0 4px;border-top:1px solid var(--line);letter-spacing:.32em;color:#3d4f6b}
 /* — ARENA VIVA: dois feixes de refletor que varrem o palco lentíssimo (GPU: só transform).
    html::before está livre (body::before/::after = grade + vinheta). Estático no mobile/reduced-motion. — */
 html::before{content:"";position:fixed;left:50%;top:-46vmax;width:220vmax;height:220vmax;z-index:-3;pointer-events:none;
@@ -705,17 +716,28 @@ body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 .wrap{position:relative;animation:wrapIn .55s var(--ease) both}
 @keyframes wrapIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
-/* — Cabeçalho: faixa de transmissão (vidro + sublinhado de brasa) — */
-.logo{font-size:clamp(1.55rem,4.5vw,2.05rem);letter-spacing:.1em}
-.logo b{text-shadow:0 0 22px rgba(255,90,31,.55),0 0 4px rgba(255,90,31,.4)}
-.logo span{letter-spacing:.34em}
-header{position:relative;border-bottom:none;border-radius:14px;padding:12px 16px 13px;margin-bottom:18px;
-  border:1px solid rgba(124,156,196,.16);background:linear-gradient(180deg,rgba(22,30,48,.6),rgba(11,14,21,.45));
+/* — CABEÇALHO-HERÓI: marca centrada, estilo abertura de transmissão de Major — */
+header{position:relative;border-bottom:none;border-radius:18px;margin-bottom:20px;
+  flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;
+  padding:clamp(20px,5vw,30px) 16px clamp(16px,4vw,22px);
+  border:1px solid rgba(124,156,196,.18);
+  background:radial-gradient(140% 130% at 50% -30%,rgba(255,90,31,.14),transparent 55%),
+    linear-gradient(180deg,rgba(22,30,48,.65),rgba(11,14,21,.5));
   -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 14px 30px -22px rgba(0,0,0,.8)}
-header::after{content:"";position:absolute;left:10px;right:10px;bottom:-1px;height:2px;border-radius:2px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 18px 40px -26px rgba(0,0,0,.9)}
+header::after{content:"";position:absolute;left:8%;right:8%;bottom:-1px;height:2px;border-radius:2px;
   background:linear-gradient(90deg,transparent,var(--accent) 22%,#ffb37a 50%,var(--accent) 78%,transparent);
-  box-shadow:0 0 14px rgba(255,90,31,.5)}
+  box-shadow:0 0 16px rgba(255,90,31,.55)}
+.logo{font-size:clamp(2.1rem,8vw,3rem);letter-spacing:.12em;line-height:1}
+.logo b{text-shadow:0 0 26px rgba(255,90,31,.6),0 0 5px rgba(255,90,31,.45)}
+.logo span{letter-spacing:.34em;margin-top:7px;font-size:.6rem}
+.hud{gap:12px}
+.hud .s{text-align:center;padding:9px 20px 9px 23px}
+.hud .v{font-size:clamp(1.4rem,4vw,1.7rem)}
+
+/* — Botões PILL: identidade nova de ação — */
+button.roll{border-radius:999px;padding:15px 36px;font-size:.92rem;letter-spacing:.14em}
+button.ghost,.flipmode{border-radius:999px}
 
 /* — Painéis de vidro: fio de luz no topo + sombra ambiente (só onde a sombra não é estado) — */
 .stat,.majorbtn,.qualified-slot,.match:not(.mine),.series:not(.mine):not(.ativa){
@@ -772,13 +794,26 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,90,31,.4);
 .slot .ph{transition:transform .25s var(--ease)}
 .slot:hover .ph{transform:scale(1.12)}
 
-/* — Roleta LED: profundidade de palco, chão quente refletivo e agulha laser — */
-.roulette{box-shadow:inset 0 0 70px rgba(0,0,0,.5),inset 0 -30px 44px -34px rgba(255,90,31,.3);
-  background:linear-gradient(0deg,rgba(255,90,31,.07),transparent 30%),
+/* — Roleta MARQUISE LED: moldura de letreiro, trilhos de luz e agulha laser — */
+.roulette{min-height:118px;border-radius:18px;border-color:rgba(255,138,74,.3);
+  box-shadow:inset 0 0 70px rgba(0,0,0,.5),inset 0 -30px 44px -34px rgba(255,90,31,.34),
+    0 0 0 1px rgba(0,0,0,.55),0 20px 46px -26px rgba(255,90,31,.28);
+  background:linear-gradient(0deg,rgba(255,90,31,.08),transparent 30%),
     radial-gradient(120% 180% at 50% -60%,#1b2436 0%,#0c1119 60%)}
+.viewport{padding:22px 0}
+/* trilhos de LED nas bordas do letreiro */
+.viewport::before,.viewport::after{content:"";position:absolute;left:16px;right:16px;height:3px;z-index:3;
+  border-radius:2px;pointer-events:none;
+  background:repeating-linear-gradient(90deg,rgba(255,150,70,.5) 0 5px,rgba(255,150,70,.06) 5px 16px)}
+.viewport::before{top:7px}.viewport::after{bottom:7px}
+.track{min-height:86px}
+.tcard{height:86px;box-shadow:0 10px 22px -14px rgba(0,0,0,.8)} /* cards da fita maiores, descolados do chão */
 .marker{background:linear-gradient(180deg,#ffd9c4,var(--accent) 30%,var(--accent) 70%,#ffd9c4);
   box-shadow:0 0 14px var(--accent),0 0 3px #fff}
-.tcard{box-shadow:0 10px 22px -14px rgba(0,0,0,.8)} /* cards da fita descolam do chão */
+
+/* — Seções EDITORIAIS: títulos com presença (não mais etiquetas apagadas) — */
+.section-tag{font-size:clamp(.78rem,2.6vw,.94rem);color:var(--txt);letter-spacing:.28em;margin:24px 0 10px}
+.section-tag::after{height:2px;background:linear-gradient(90deg,rgba(255,90,31,.45),var(--line) 45%,transparent)}
 
 /* — Análise: força efetiva com pulso premium — */
 .stat{transition:border-color .2s,box-shadow .2s,transform .2s var(--ease)}
