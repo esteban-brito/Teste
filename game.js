@@ -402,7 +402,8 @@ const ATRIBUTOS=[
   {nome:"nex",pais:"GER",fp:88,en:34,tr:69,op:31,cl:32,sn:0,ut:87,rating:1.10,colocacao:"Final",isIGL:false},
   {nome:"tiziaN",pais:"GER",fp:30,en:56,tr:22,op:27,cl:87,sn:0,ut:77,rating:1.01,colocacao:"Final",isIGL:false},
   {nome:"smooya",pais:"GBR",fp:39,en:3,tr:11,op:84,cl:66,sn:94,ut:56,rating:1.00,colocacao:"Final",isIGL:false},
-  {nome:"gob b",pais:"GER",fp:12,en:39,tr:34,op:28,cl:39,sn:8,ut:90,rating:0.91,colocacao:"Final",isIGL:true}
+  {nome:"gob b",pais:"GER",fp:12,en:39,tr:34,op:28,cl:39,sn:8,ut:90,rating:0.91,colocacao:"Final",isIGL:true},
+  //@jogadores — o gerador (tools/add-team.js) insere novos jogadores ACIMA desta linha
 ];
 // Cada jogador recebe um ID único automático. O "nome" é só display (pode repetir:
 // o mesmo jogador em times/épocas diferentes são entradas distintas com stats próprios).
@@ -428,7 +429,8 @@ const TIMES_DEF=[
   {nome:"Spirit",cor:"#7d8aa0",coach:"hally",camp:"IEM Katowice 2024",colocacao:"Campeao",jogadores:["donk_kato24","sh1ro_kato24","zont1x","magixx","chopper_kato24"]},
   {nome:"FURIA",cor:"#1faa59",coach:"sidde",camp:"IEM Chengdu 2025",colocacao:"Campeao",jogadores:["FalleN_furia25","YEKINDAR","yuurih_furia25","KSCERATO_furia25","molodoy"]},
   {nome:"Virtus.pro",cor:"#f0a020",coach:null,camp:"EMS One Katowice 2014",colocacao:"Campeao",jogadores:["pashaBiceps","NEO","Snax","byali","TaZ"]},
-  {nome:"BIG",cor:"#e9edf3",coach:"kakafu",camp:"ESL One Cologne 2018",colocacao:"Final",jogadores:["tabseN","nex","tiziaN","smooya","gob b"]}
+  {nome:"BIG",cor:"#e9edf3",coach:"kakafu",coachPais:"AUT",camp:"ESL One Cologne 2018",colocacao:"Final",jogadores:["tabseN","nex","tiziaN","smooya","gob b"]},
+  //@times — o gerador (tools/add-team.js) insere novos times ACIMA desta linha
 ];
 
 const CARAC_SLUG={Gestor:"gestor",Estrategista:"estrategista",Desenvolvedor:"desenvolvedor",Motivador:"motivador"};
@@ -448,7 +450,7 @@ const TEAMS=TIMES_DEF.map((t,i)=>{
       ovr:j.ovr,prim:j.primario,sec:j.secundario,esteira:j.esteira,estrela:j.estrela,
       _eng:j /* objeto do motor (avaliação A/B/C) usado no cálculo de química */
     };}),
-    treinador:t.coach?{id:"c"+i,nick:t.coach,pais:PAISES_MAP[t.coach]||"—",time:t.nome,tipo:"coach",
+    treinador:t.coach?{id:"c"+i,nick:t.coach,pais:t.coachPais||PAISES_MAP[t.coach]||"—",time:t.nome,tipo:"coach", // coachPais inline: times novos não precisam mexer no PAISES_MAP
       ovr:ovrTreinador(somaOVR,t.colocacao),carac,caracCor:CARAC_COR[carac],caracSlug:CARAC_SLUG[carac]}:null
   };
 });

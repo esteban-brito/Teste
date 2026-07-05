@@ -6,7 +6,7 @@ const js=fs.readFileSync(path.join(__dirname,"..","game.js"),"utf8").split("\n")
 const cut=js.findIndex(l=>l.includes("document.getElementById"));
 const sb={Math,Object,Array,JSON,console};vm.createContext(sb);
 vm.runInContext(js.slice(0,cut).join("\n")+
-  ";globalThis.X={TEAMS,POOL,forcaTime,simularMapa,simularSerie,forcaDoDia,sortearFormaCampanha,avaliarJogador,distribuirRoles,quimicaComposicao,fallenAngels,srand:typeof srand!=='undefined'?srand:null};",sb);
+  ";globalThis.X={TEAMS,POOL,ATRIBUTOS,TIMES_DEF,forcaTime,simularMapa,simularSerie,forcaDoDia,sortearFormaCampanha,avaliarJogador,distribuirRoles,quimicaComposicao,fallenAngels,srand:typeof srand!=='undefined'?srand:null};",sb);
 const X=sb.X;
 // times prontos pro combate (mesma preparação da UI)
 const T=X.TEAMS.map(t=>{const r=X.forcaTime(t.jogadores.map(j=>j._eng),t.treinador&&t.treinador.carac,t.treinador&&t.treinador.ovr);

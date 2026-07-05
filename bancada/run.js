@@ -3,7 +3,7 @@
         N=1500 node bancada/run.js (profundo)
    Sai com código ≠0 se qualquer bancada falhar (dá pra usar em CI). */
 const {execFileSync}=require("child_process"),path=require("path");
-const suites=["realismo.js","rating.js"];
+const suites=["times.js","realismo.js","rating.js"];
 let falhas=0;
 console.log("════════════════════════════════════════════");
 console.log(" BANCADA draft9-0 — validação dos motores");
