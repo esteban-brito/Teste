@@ -233,7 +233,7 @@ function quimicaComposicao(jogadores,caracTreinador=null){const C=CFG_QUIMICA;
   // pilar com 3 estados: primário=0% | 2+ jogadores com a função 2=dupla cobertura | 1 secundário=penalidade parcial | nenhum=cheia
   const pilar=(nome,pen,temP,secs,secsRaw)=>{
     if(temP){alertas.push(`${nome}`);return;}
-    if(secsRaw>=2){const p=pen*.25*corte;mult*=(1-p);alertas.push(`${nome} (dupla cobertura) −${Math.round(p*100)}%`);return;} // 2 funções 2 cobrem, mas não valem 1 primário: pena residual de 25%
+    if(secsRaw>=2){alertas.push(`${nome} (dupla cobertura)`);return;} // 2 jogadores com a função 2 = 1 primário (decisão de design)
     if(secs>0){const p=pen*Math.pow(0.5,secs)*corte;mult*=(1-p);alertas.push(`${nome} secundária −${Math.round(p*100)}%`);return;}
     mult*=(1-pen*corte);alertas.push(`${nome} falta −${Math.round(pen*corte*100)}%`);
   };
@@ -246,10 +246,10 @@ function quimicaComposicao(jogadores,caracTreinador=null){const C=CFG_QUIMICA;
   pilar("Âncora",C.PEN.semAncora,temPrim("Lurker")||temPrim("Support"),nSec("Lurker")+nSec("Support"),nSecRaw("Lurker")+nSecRaw("Support"));
   // Iniciativa: Entry abre o round (preenche completo); Rifler é fogo sem abertura (cobre parcial)
   if(temPrim("Entry")){alertas.push("Iniciativa");}
-  else if(nSecRaw("Entry")>=2){const p=C.PEN.semIniciativa*.25*corte;mult*=(1-p);alertas.push(`Iniciativa (dupla cobertura) −${Math.round(p*100)}%`);} // 2 Entry secundários cobrem c/ pena residual de 25%
+  else if(nSecRaw("Entry")>=2){alertas.push("Iniciativa (dupla cobertura)");} // 2 jogadores com Entry 2 = 1 primário
   else if(temPrim("Rifler")){const eSec=nSec("Entry");const fator=eSec>0?C.RIFLER_INICIATIVA*Math.pow(0.5,eSec):C.RIFLER_INICIATIVA;const p=C.PEN.semIniciativa*fator*corte;mult*=(1-p);alertas.push(`Iniciativa ${eSec>0?"parcial":"limitada"} −${Math.round(p*100)}%`);}
   else{const secs=nSec("Entry")+nSec("Rifler"),secsRaw=nSecRaw("Entry")+nSecRaw("Rifler");
-    if(secsRaw>=2){const p=C.PEN.semIniciativa*.25*corte;mult*=(1-p);alertas.push(`Iniciativa (dupla cobertura) −${Math.round(p*100)}%`);}
+    if(secsRaw>=2){alertas.push("Iniciativa (dupla cobertura)");}
     else if(secs>0){const p=C.PEN.semIniciativa*Math.pow(0.5,secs)*corte;mult*=(1-p);alertas.push(`Iniciativa secundária −${Math.round(p*100)}%`);}
     else{mult*=(1-C.PEN.semIniciativa*corte);alertas.push(`Iniciativa falta −${Math.round(C.PEN.semIniciativa*corte*100)}%`);}}
   // saturação: excesso de uma função primária além do ideal (a role 2 de cada IGL conta como +1 naquela função)
@@ -654,14 +654,15 @@ function prepTime(t,mapa){
 //  • clutch 1vX tem vida própria (o solitário luta pelo cl); trade/refrag revida na hora;
 //  • lado em desvantagem + eco pode SALVAR (não morre, guarda economia); lado em vantagem FECHA (bomb/tempo).
 // ctx={pEdgeA,openEdgeA,buyA,buyB}. Retorna quem venceu (venceA), sobreviventes e o destaque.
+const _psDuelo=[0,0,0,0,0]; // buffer de pesos do pick (≤5 vivos), compartilhado: zero alocação por duelo no hot path
 function combateRound(a,b,ctx){
   const C=CFG_SIM;
   const vivA=[0,1,2,3,4],vivB=[0,1,2,3,4];
   const mata=(arr,i)=>arr.splice(arr.indexOf(i),1); // remoção in-place (mesma ordem dos vivos; zero alocação por kill)
   const buyA=ctx.buyA,buyB=ctx.buyB;
   const roundKills=[]; // {team,rec} → roundGanho marcado no fim (só kills do vencedor contam swing)
-  const pick=(arr,fn)=>{const ps=arr.map(fn),tot=ps.reduce((x,y)=>x+y,0)||1;let r=rndF()*tot;
-    for(let i=0;i<arr.length;i++)if((r-=ps[i])<0)return arr[i];return arr[arr.length-1];};
+  const pick=(arr,fn)=>{let tot=0;for(let i=0;i<arr.length;i++){_psDuelo[i]=fn(arr[i]);tot+=_psDuelo[i];}tot=tot||1;
+    let r=rndF()*tot;for(let i=0;i<arr.length;i++)if((r-=_psDuelo[i])<0)return arr[i];return arr[arr.length-1];};
   // um duelo: o lado VENCEDOR mata um do PERDEDOR. opening = 1º duelo; trade = refrag imediato.
   function duelo(venc,vivV,buyV,perd,vivP,buyP,opening,trade){
     const expK=opening?C.EXP_OPEN:C.EXP_KILL;
@@ -868,8 +869,10 @@ function simularMapa(A,B,fA,fB,mapaForcado,leve){
     if(pa===alvo-1&&pb===alvo-1)alvo+=3; // 12-12 → alvo 16 · 15-15 → 19 · 18-18 → 22 (OT repetível)
     // bônus de plant (CS2): o T que plantou ganha $800 mesmo perdendo o round — mantém o lado perdedor vivo na economia
     if(res.plantado){const tÉA=ladoA!=="CT"; if(tÉA){if(!venceA)mA+=C.PLANT_BONUS;}else{if(venceA)mB+=C.PLANT_BONUS;}}
-    // recompensa por kill: cada abate dá dinheiro (independe de ganhar/perder) — fragar mantém a economia viva, sustenta force-buy e anti-eco
-    mA+=res.killsA*C.KILL_REWARD;mB+=res.killsB*C.KILL_REWARD;
+    // recompensa por kill: cada abate dá dinheiro (independe de ganhar/perder) — fragar mantém a economia viva.
+    // proxy do CS2 real por arma: force-buy joga de SMG ($600/kill) → paga mais; rifle/pistol $300 → base
+    const krA=buyA==="force"?C.KILL_REWARD*1.8:C.KILL_REWARD,krB=buyB==="force"?C.KILL_REWARD*1.8:C.KILL_REWARD;
+    mA+=res.killsA*krA;mB+=res.killsB*krB;
     mA=Math.min(TETO_GRANA,mA);mB=Math.min(TETO_GRANA,mB);
     // sobreviventes carregam equipamento pro próximo round (só quem comprou arma de verdade: force/full)
     const deadA=res.killsB,deadB=res.killsA;
@@ -1621,16 +1624,27 @@ function avancarSuica(){
   const buckets={};ativos.forEach(t=>{const k=t.v+"-"+t.d;(buckets[k]=buckets[k]||[]).push(t);});
   // monta os pares da rodada; separa o do jogador
   const pares=[];let parDoJogador=null;
+  const jaJogaram=(x,y)=>(x.opps||[]).includes(y);
   Object.values(buckets).forEach(g=>{const a=[...g];
     for(let i=a.length-1;i>0;i--){const j=Math.floor(rndF()*(i+1));[a[i],a[j]]=[a[j],a[i]];} // Fisher-Yates (sort(rnd-.5) é enviesado)
+    // anti-rematch (real: suíça evita reencontros): se o par já se enfrentou, troca com alguém à frente
+    for(let i=0;i<a.length-1;i+=2){
+      if(jaJogaram(a[i],a[i+1]))for(let j=i+2;j<a.length;j++){if(!jaJogaram(a[i],a[j])){[a[i+1],a[j]]=[a[j],a[i+1]];break;}}
+    }
     for(let i=0;i<a.length-1;i+=2){const par=[a[i],a[i+1]];
+      a[i].opps=a[i].opps||[];a[i+1].opps=a[i+1].opps||[];a[i].opps.push(a[i+1]);a[i+1].opps.push(a[i]);
       if(a[i].meu||a[i+1].meu)parDoJogador=par;else pares.push(par);}
     if(a.length%2)a[a.length-1]._bye=true;
   });
-  // resolve os outros jogos (rápido, no fundo)
+  // jogo DECISIVO (real: classificação/eliminação é MD3): alguém do par está a 1 mapa de sair ou passar
+  const decisivo=(x,y)=>x.v===2||x.d===2||y.v===2||y.d===2;
+  // resolve os outros jogos (rápido, no fundo); decisivos = melhor-de-3 moedas (favorece o mais forte)
   const resolverPar=([x,y])=>{
-    const xV=rndF()<logistica(forcaDoDia(x.ef,x.quim),forcaDoDia(y.ef,y.quim),CFG_SIM.D_MAPA);
-    const vc=xV?x:y,pd=xV?y:x;vc.v++;pd.d++;vc.hist.push("V");pd.hist.push("D");
+    let wx=0,wy=0;const need=decisivo(x,y)?2:1;
+    while(wx<need&&wy<need){
+      const pX=logistica(forcaDoDia(x.ef,x.quim),forcaDoDia(y.ef,y.quim),CFG_SIM.D_MAPA);
+      rndF()<pX?wx++:wy++;}
+    const vc=wx>wy?x:y,pd=wx>wy?y:x;vc.v++;pd.d++;vc.hist.push("V");pd.hist.push("D");
   };
   const finalizarRodada=()=>{
     ativos.forEach(t=>{if(t._bye){t.v++;delete t._bye;}});
@@ -1641,9 +1655,10 @@ function avancarSuica(){
   // se o jogador joga nesta rodada, abre a partida; os outros resolvem ao fim dela
   if(parDoJogador){
     const [a,b]=parDoJogador;const meu=a.meu?a:b,adv=a.meu?b:a;
-    const ctx=`Rodada ${TG.rodada} · Fase Suíça · você está ${meu.v}-${meu.d}`;
+    const md=decisivo(meu,adv)?3:1; // real: jogos de classificação/eliminação são MD3
+    const ctx=`Rodada ${TG.rodada} · Fase Suíça · você está ${meu.v}-${meu.d}${md===3?" · DECISIVO (MD3)":""}`;
     fechar("suicaOverlay");
-    abrirPartida(meu,adv,1,ctx,(venc)=>{
+    abrirPartida(meu,adv,md,ctx,(venc)=>{
       // aplica o resultado da SUA partida
       const meuVenceu=venc===meu; // identidade por referência (robusto a nomes iguais: 2 Spirit/FURIA)
       (meuVenceu?meu:adv).v++;(meuVenceu?adv:meu).d++;
