@@ -21,7 +21,7 @@
 /* ---------- tokens: paleta ARENA idêntica ao jogo (dark único, como o game) ---------- */
 :root{
   --ground:#07090e; --panel:#0e1420; --panel2:#141b2b; --line:#1f293d; --line2:#161d2c;
-  --ink:#eaf1f8; --ink2:#c4cfdd; --muted:#8b9bb0; --faint:#5f6d80;
+  --ink:#eaf1f8; --ink2:#c4cfdd; --muted:#8b9bb0; --faint:#7d8ba0; --dim:#7d8ba0;
   --accent:#ff5a1f; --accent-ink:#07090e; --cyan:#39d3ff;
   --shadow:0 1px 0 rgba(255,255,255,.03),0 12px 34px rgba(0,0,0,.5);
   --barbg:rgba(255,255,255,.08);
@@ -119,7 +119,8 @@ main{max-width:1180px; margin:0 auto; padding:20px 20px 80px}
 .tbadge{
   font-family:var(--ff); font-weight:700; font-size:.86rem; letter-spacing:.03em; min-width:44px; height:44px; padding:0 10px;
   display:flex; align-items:center; justify-content:center; border-radius:10px;
-  background:color-mix(in srgb,var(--tc) 20%,var(--panel)); color:var(--tc); border:1px solid color-mix(in srgb,var(--tc) 40%,transparent);
+  /* texto = cor do time clareada · fundo = cor do time bem escurecida → contraste AA garantido, identidade mantida */
+  background:color-mix(in srgb,var(--tc) 13%,#0a0e16); color:color-mix(in srgb,var(--tc) 64%,#eaf1f8); border:1px solid color-mix(in srgb,var(--tc) 40%,transparent);
 }
 .tmeta{display:flex; flex-direction:column; gap:2px; min-width:0}
 .tname{font-family:var(--ff); font-weight:700; font-size:1.02rem; letter-spacing:.02em; display:flex; align-items:center; gap:8px}
@@ -212,9 +213,12 @@ footer .foot-sig{font-family:var(--ff); color:var(--dim,var(--faint)); font-size
   .counts{width:100%; margin-left:0; justify-content:flex-start}
   .hwrap{padding:12px 14px}
   main{padding:16px 14px 60px}
-  .tright{gap:10px}
-  .coach{display:none}
-  .team-head.hascoach .coach.mini{display:flex}
+  /* cabeçalho do time: treinador + média descem pra 2ª linha → nome e selo "campeão" nunca cortam */
+  .team-head{flex-wrap:wrap; gap:10px 12px}
+  .tmeta{flex:1 1 auto}
+  .tright{order:3; width:100%; margin-left:0; justify-content:space-between; gap:12px;
+    border-top:1px solid var(--line2); padding-top:11px}
+  .tcrown{flex:none}
 }
 @media (prefers-reduced-motion:no-preference){
   .team{animation:rise .4s ease both}
@@ -228,7 +232,7 @@ footer .foot-sig{font-family:var(--ff); color:var(--dim,var(--faint)); font-size
   <div class="hwrap">
     <div class="brandrow">
       <a class="backlink" href="index.html" title="Voltar ao jogo"><span class="ar">‹</span> Jogo</a>
-      <div class="logo">draft<b>9</b>-<b>0</b><span>Base de elencos</span></div>
+      <h1 class="logo">draft<b>9</b>-<b>0</b><span>Base de elencos</span></h1>
       <div class="counts">
         <div class="c"><span class="cv mono" id="cTeams">–</span><span class="cl">times</span></div>
         <div class="c"><span class="cv mono" id="cPlayers">–</span><span class="cl">jogadores</span></div>
