@@ -90,9 +90,18 @@ select,input[type=text]{font-family:var(--fb);font-size:.85rem;background:var(--
   font-weight:700;font-size:.75rem;letter-spacing:.04em;padding:8px 13px;border-radius:9px}
 .btn:hover{border-color:var(--muted)}
 .btn.accent{border-color:color-mix(in srgb,var(--accent) 50%,var(--line));color:var(--accent)}
-.impact{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 13px;margin:12px 0;font-size:.8rem;color:var(--ink2)}
+.impact{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 13px;margin:12px 0 8px;font-size:.8rem;color:var(--ink2)}
 .impact b{color:var(--warn)}
 .impact.zero b{color:var(--muted)}
+.changed{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 12px}
+.changed .chh{width:100%;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:3px}
+.chip2{font-size:.73rem;background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:4px 10px;color:var(--ink2);white-space:nowrap}
+.chip2 b{color:var(--warn);font-weight:700}
+.chip2.more{color:var(--muted)}
+.advbtn{margin-top:12px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--accent);color:#07090e;
+  font-weight:700;font-size:.82rem;padding:10px 18px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:50;opacity:0;transition:opacity .2s}
+.toast.show{opacity:1}
 .engwrap{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:780px){.engwrap{grid-template-columns:1fr}}
 .grp{background:var(--panel2);border:1px solid var(--line2);border-radius:11px;padding:13px}
@@ -206,11 +215,26 @@ function renderPlayer(){
 /* ————— impacto global ————— */
 function renderImpact(){
   const agora=avaliarTodos();
-  let df=0,dovr=0;
-  for(let i=0;i<agora.length;i++){if(agora[i].prim!==baseSnap[i].prim)df++;if(agora[i].ovr!==baseSnap[i].ovr)dovr++;}
+  let df=0,dovr=0; const lista=[];
+  for(let i=0;i<agora.length;i++){
+    const a=agora[i],b=baseSnap[i];
+    const fFlip=a.prim!==b.prim, fOvr=a.ovr!==b.ovr;
+    if(fFlip)df++; if(fOvr)dovr++;
+    if(fFlip||fOvr){
+      const partes=[];
+      if(fFlip)partes.push(`${b.prim}→${a.prim}`);
+      if(fOvr)partes.push(`${b.ovr}→${a.ovr}`);
+      lista.push(`${POOLRAW[i].nome} <b>${partes.join(" · ")}</b>`);
+    }
+  }
   const el=document.getElementById("impact"); if(!el)return;
   el.className="impact"+(df===0&&dovr===0?" zero":"");
   el.innerHTML=`Impacto no elenco (vs. padrão): <b>${df}</b> mudaram de <b>função</b> · <b>${dovr}</b> mudaram de <b>OVR</b> (de ${agora.length} jogadores)`;
+  const ch=document.getElementById("changed"); if(!ch)return;
+  if(!lista.length){ch.hidden=true; ch.innerHTML="";}
+  else{ch.hidden=false; const N=20;
+    ch.innerHTML=`<div class="chh">Quem mudou</div>`+lista.slice(0,N).map(t=>`<span class="chip2">${t}</span>`).join("")+
+      (lista.length>N?`<span class="chip2 more">+${lista.length-N}</span>`:"");}
 }
 
 /* ————— editores dos motores ————— */
@@ -278,6 +302,28 @@ function restaurar(){
   buildTuning(); renderPlayer(); renderImpact();
 }
 
+// diff dos pesos vs. padrão → texto pra colar no chat
+const NOMEPESO={CFG_AVALIACAO:"CFG_AVALIACAO",ROLE_PERFIL:"ROLE_PERFIL",SUBARQ:"SUBARQ"};
+function diffPesos(){
+  const out=[];
+  const walk=(def,cur,path)=>{for(const k in cur){const dp=path+"."+k;
+    if(cur[k]&&typeof cur[k]==="object")walk(def?def[k]:undefined,cur[k],dp);
+    else if(!def||def[k]!==cur[k])out.push(`${dp}: ${def?def[k]:"—"} → ${cur[k]}`);}};
+  walk(DEF.CFG,E.CFG_AVALIACAO,"CFG_AVALIACAO");
+  walk(DEF.ROLE,E.ROLE_PERFIL,"ROLE_PERFIL");
+  walk(DEF.SUB,E.SUBARQ,"SUBARQ");
+  return out;
+}
+function toast(msg){let t=document.querySelector(".toast");if(!t){t=document.createElement("div");t.className="toast";document.body.appendChild(t);}
+  t.textContent=msg;requestAnimationFrame(()=>t.classList.add("show"));clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),2600);}
+function copiarMudancas(){
+  const d=diffPesos();
+  const txt=d.length?("Mudanças nos pesos dos motores (do laboratório):\n"+d.join("\n")):"(nenhum peso de motor foi alterado)";
+  if(navigator.clipboard&&navigator.clipboard.writeText)
+    navigator.clipboard.writeText(txt).then(()=>toast(d.length?`Copiado (${d.length} mudança${d.length>1?"s":""})! Cole no chat.`:"Nada mudado ainda"),()=>prompt("Copie:",txt));
+  else prompt("Copie:",txt);
+}
+
 function buildTuning(){
   const C=E.CFG_AVALIACAO, D=DEF.CFG;
   const box=document.getElementById("engbox");
@@ -317,13 +363,17 @@ function buildTuning(){
     {label:"Vers. teto",get:()=>C.VERS_CAP,set:v=>C.VERS_CAP=v,def:D.VERS_CAP,step:.5},
   ]));
   box.appendChild(wrap);
+  // AVANÇADO (recolhido): matriz de pesos por função + assinaturas de sub
+  const advBtn=document.createElement("button"); advBtn.className="btn advbtn"; advBtn.type="button";
+  const adv=document.createElement("div"); adv.hidden=true; adv.style.marginTop="12px";
+  const rot=()=>advBtn.textContent=(adv.hidden?"⌄":"⌃")+" Avançado · pesos por função & sub-arquétipos";
+  advBtn.onclick=()=>{adv.hidden=!adv.hidden; rot();}; rot();
   const w2=document.createElement("div"); w2.className="engwrap";
   w2.appendChild(grpPesos("Afinidade — define a FUNÇÃO","afin"));
   w2.appendChild(grpPesos("Pesos de OVR — nível na função","ovr"));
-  box.appendChild(w2);
-  const w3=document.createElement("div");
-  w3.appendChild(grpSub());
-  box.appendChild(w3);
+  adv.appendChild(w2);
+  const w3=document.createElement("div"); w3.appendChild(grpSub()); adv.appendChild(w3);
+  box.appendChild(advBtn); box.appendChild(adv);
 }
 
 /* ————— UI base ————— */
@@ -351,10 +401,15 @@ function montarUI(){
     <div class="card">
       <div class="eng-head">
         <span class="title">⚙ Motores · pesos & fórmulas</span>
-        <div class="toggle"><button class="btn" id="engToggle">Mostrar</button><button class="btn accent" id="engReset" hidden>Restaurar padrões</button></div>
+        <div class="toggle">
+          <button class="btn" id="engToggle">Mostrar</button>
+          <button class="btn" id="copyBtn" hidden>Copiar mudanças</button>
+          <button class="btn accent" id="engReset" hidden>Restaurar padrões</button>
+        </div>
       </div>
-      <div class="hint">Edite o que os motores usam pra decidir função, sub e OVR. Vale pra TODOS os jogadores — veja o impacto abaixo. Só neste laboratório; o jogo não muda.</div>
+      <div class="hint">Edite o que os motores usam pra decidir função, sub e OVR. Vale pra TODOS os jogadores — a lista abaixo mostra quem mudou. Só neste laboratório; o jogo não muda. Quando gostar, use <b>Copiar mudanças</b> e cole no chat pra eu aplicar.</div>
       <div class="impact zero" id="impact" hidden></div>
+      <div class="changed" id="changed" hidden></div>
       <div id="engbox" hidden></div>
     </div>`;
 
@@ -368,11 +423,13 @@ function montarUI(){
   document.getElementById("c_igl").onchange=e=>{state.isIGL=e.target.checked;renderPlayer();renderImpact();};
   document.getElementById("s_coloc").onchange=e=>{state.colocacao=e.target.value;renderPlayer();renderImpact();};
 
-  const box=document.getElementById("engbox"),imp=document.getElementById("impact"),tgl=document.getElementById("engToggle"),rst=document.getElementById("engReset");
+  const box=document.getElementById("engbox"),imp=document.getElementById("impact"),ch=document.getElementById("changed"),
+    tgl=document.getElementById("engToggle"),rst=document.getElementById("engReset"),cpy=document.getElementById("copyBtn");
   let aberto=false;
-  tgl.onclick=()=>{aberto=!aberto;box.hidden=!aberto;imp.hidden=!aberto;rst.hidden=!aberto;tgl.textContent=aberto?"Esconder":"Mostrar";
-    if(aberto){buildTuning();renderImpact();}};
+  tgl.onclick=()=>{aberto=!aberto;box.hidden=!aberto;imp.hidden=!aberto;rst.hidden=!aberto;cpy.hidden=!aberto;tgl.textContent=aberto?"Esconder":"Mostrar";
+    if(aberto){buildTuning();renderImpact();} else ch.hidden=true;};
   rst.onclick=restaurar;
+  cpy.onclick=copiarMudancas;
 }
 
 (async()=>{
