@@ -196,7 +196,8 @@ function distribuirRoles(engs){
     e.primario=p;e.secundario=ord.find(r=>r!==p);e.secForte=(s[e.secundario]/Math.max(1,s[p]))>=.82;});
   // AWP: ninguém AWPer (primário, nem IGL com AWP no role 2)? → maior sn assume (role 1; role 2 se IGL)
   if(!engs.some(j=>j.primario==="AWPer"||(j.primario==="IGL"&&j.secundario==="AWPer"))){
-    const c=engs.reduce((b,j)=>((j.sn??0)>(b.sn??0)?j:b),engs[0]);
+    const notaAWP=j=>(j.sn??0)*1000+(j.op??0)+(j.fp??0)*.5; // desempate: sn manda; empate (ex.: todos 0) → melhor abertura/fogo pega a AWP
+    const c=engs.reduce((b,j)=>(notaAWP(j)>notaAWP(b)?j:b),engs[0]);
     if(c.primario==="IGL")c.secundario="AWPer";else{c.secundario=c.primario;c.primario="AWPer";}}
   return engs;}
 /* ╔═══════════════════════════════════════════════════════════════════╗
@@ -232,7 +233,7 @@ function quimicaComposicao(jogadores,caracTreinador=null){const C=CFG_QUIMICA;
   // pilar com 3 estados: primário=0% | 2+ jogadores com a função 2=dupla cobertura | 1 secundário=penalidade parcial | nenhum=cheia
   const pilar=(nome,pen,temP,secs,secsRaw)=>{
     if(temP){alertas.push(`${nome}`);return;}
-    if(secsRaw>=2){alertas.push(`${nome} (dupla cobertura)`);return;} // 2 jogadores com a função 2 = 1 primário
+    if(secsRaw>=2){const p=pen*.25*corte;mult*=(1-p);alertas.push(`${nome} (dupla cobertura) −${Math.round(p*100)}%`);return;} // 2 funções 2 cobrem, mas não valem 1 primário: pena residual de 25%
     if(secs>0){const p=pen*Math.pow(0.5,secs)*corte;mult*=(1-p);alertas.push(`${nome} secundária −${Math.round(p*100)}%`);return;}
     mult*=(1-pen*corte);alertas.push(`${nome} falta −${Math.round(pen*corte*100)}%`);
   };
@@ -245,10 +246,10 @@ function quimicaComposicao(jogadores,caracTreinador=null){const C=CFG_QUIMICA;
   pilar("Âncora",C.PEN.semAncora,temPrim("Lurker")||temPrim("Support"),nSec("Lurker")+nSec("Support"),nSecRaw("Lurker")+nSecRaw("Support"));
   // Iniciativa: Entry abre o round (preenche completo); Rifler é fogo sem abertura (cobre parcial)
   if(temPrim("Entry")){alertas.push("Iniciativa");}
-  else if(nSecRaw("Entry")>=2){alertas.push("Iniciativa (dupla cobertura)");} // 2 jogadores com Entry 2 = 1 primário
+  else if(nSecRaw("Entry")>=2){const p=C.PEN.semIniciativa*.25*corte;mult*=(1-p);alertas.push(`Iniciativa (dupla cobertura) −${Math.round(p*100)}%`);} // 2 Entry secundários cobrem c/ pena residual de 25%
   else if(temPrim("Rifler")){const eSec=nSec("Entry");const fator=eSec>0?C.RIFLER_INICIATIVA*Math.pow(0.5,eSec):C.RIFLER_INICIATIVA;const p=C.PEN.semIniciativa*fator*corte;mult*=(1-p);alertas.push(`Iniciativa ${eSec>0?"parcial":"limitada"} −${Math.round(p*100)}%`);}
   else{const secs=nSec("Entry")+nSec("Rifler"),secsRaw=nSecRaw("Entry")+nSecRaw("Rifler");
-    if(secsRaw>=2){alertas.push("Iniciativa (dupla cobertura)");}
+    if(secsRaw>=2){const p=C.PEN.semIniciativa*.25*corte;mult*=(1-p);alertas.push(`Iniciativa (dupla cobertura) −${Math.round(p*100)}%`);}
     else if(secs>0){const p=C.PEN.semIniciativa*Math.pow(0.5,secs)*corte;mult*=(1-p);alertas.push(`Iniciativa secundária −${Math.round(p*100)}%`);}
     else{mult*=(1-C.PEN.semIniciativa*corte);alertas.push(`Iniciativa falta −${Math.round(C.PEN.semIniciativa*corte*100)}%`);}}
   // saturação: excesso de uma função primária além do ideal (a role 2 de cada IGL conta como +1 naquela função)
@@ -567,7 +568,7 @@ function formaDoDia(j){const a=j._eng||j;const t=tierDe(j),p=PERFIL_TIER[t];
   else desvio=g*p.vol*(1-p.piso*1.1);                  // queda amortecida por tier
   let r=centro+desvio;
   if(r<piso)r=piso-(piso-r)*0.35;                       // piso resistente, não parede
-  return clamp(r,0.30,teto);}
+  return clamp(r,0.30,Math.min(teto,2.2));}                // teto absoluto: nem heater vira 2.5+ (rating de mapa real raramente passa de ~2.2)
 
 // forma de CAMPANHA: sorteada uma vez no início do Major, vale os 9 mapas da run.
 // um componente coletivo (o time "clica" ou não no evento) + um individual por tier
@@ -1539,7 +1540,14 @@ function iniciarTorneio(){
   // sorteia 15 dos times (Fisher-Yates) → Major de 16 com o seu time; campo varia a cada run
   const npc=TEAMS.slice();
   for(let i=npc.length-1;i>0;i--){const j=Math.floor(rndF()*(i+1));[npc[i],npc[j]]=[npc[j],npc[i]];}
-  const base=npc.slice(0,15).map(t=>{const r=efT(t);
+  // o time NPC que mais compartilha jogadores com o SEU elenco sai do Major (só dá pra excluir 1:
+  // melhor esforço contra "donk vs donk"; empate resolve pelo embaralhamento acima)
+  const meusNicks=new Set(S.jogadores.filter(Boolean).map(p=>p.nick));
+  const overlap=t=>t.jogadores.reduce((n,j)=>n+(meusNicks.has(j.nick)?1:0),0);
+  let fora=15,melhor=0;
+  npc.forEach((t,i)=>{const o=overlap(t);if(o>melhor){melhor=o;fora=i;}});
+  npc.splice(fora,1);
+  const base=npc.map(t=>{const r=efT(t);
     return {time:t,nome:t.nome,cor:t.cor,camp:t.camp,ef:r.efetiva,quim:r.quimica,v:0,d:0,vivo:true,hist:[]};});
   base.push(montarMeuTime());
   TG.times=base;TG.rodada=0;TG.classificados=[];TG.eliminados=[];TG.playoffs=null;

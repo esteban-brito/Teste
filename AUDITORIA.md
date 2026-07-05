@@ -30,7 +30,7 @@
 ## O CHECKLIST (por motor)
 
 ### PRISMA — classificação
-- [ ] 1. 🟡 AWP forçado com todos sn=0 elege `engs[0]` arbitrário (game.js:198-200). Propor desempate por op/fp.
+- [x] 1. ✅ CORRIGIDO (v=51): desempate do AWP forçado por sn → op/fp (nota sn·1000+op+fp·0.5); todos-sn=0 elege o melhor abridor, não `engs[0]` (bench bordas re-passa).
 - [ ] 2. 🟡 Cap-2 de função não cobre IGL (2 IGLs convivem; a saturação pune depois — comportamento ok, documentar).
 - [x] 3. ✓ Afinidades/paradoxos/sub-arquétipos coerentes; `distribuirRoles` idempotente (bench vazamento).
 
@@ -41,13 +41,13 @@
 - [x] ✓ Monotonia da curva, clip 5..22, Coringa com fade: auditados.
 
 ### SINAPSE — química
-- [ ] 7. 🟡 `pilar`: secsRaw≥2 anula 100% da penalidade (game.js:235). Propor manter ~25% (2 nominais < 1 titular).
+- [x] 7. ✅ CORRIGIDO (v=51): dupla cobertura mantém pena residual de 25% (pilares E os dois ramos de Iniciativa) — 2 secundários cobrem, mas não valem 1 titular.
 - [ ] 8. 💡 Atrito de ego só p/ FUNC_EGO; estrela Support/IGL nunca atrita (hoje não há caso; documentar).
 - [ ] 9. 💡 Sem custo de elenco internacional (idioma/nacionalidade) — ideia futura.
 - [x] ✓ Pilares/saturação/talento-resiste/treinador derivado: coerentes; bordas (5 IGLs, tudo-zero) sobrevivem com números sãos.
 
 ### MARÉ — forma
-- [ ] 10. 🟠 Teto de forma permite heaters 2.9+ raros (real: pico de mapa ~2.5). Propor clamp da forma (~2.2) e re-checar variância.
+- [x] 10. ✅ CORRIGIDO (v=51): teto absoluto da forma = min(teto,2.2) — máx observado 2.200 em 400 campanhas × 72 jogadores (antes: 2.5+); macro e rating re-validados (r=0.811, MAE 0.089).
 - [ ] 11. 💡 Mapas são iid dentro da campanha (sem hot/cold streak intra-Major) — momentum de campanha como ideia.
 - [x] ✓ Tiers, pisos, zero-média da campanha, consistência craque vs streaky role: auditados.
 
@@ -84,7 +84,7 @@
 - [x] 32. ✅ CORRIGIDO (v=49): Fisher-Yates no pareamento suíço `sort(()=>rndF()-.5)` no pareamento suíço (game.js:1595) — trocar por Fisher-Yates (iniciarTorneio já usa).
 - [ ] 33. 🟡 Suíça sem anti-rematch/Buchholz; real: BO3 nos rounds decisivos. Propor MD3 em jogos de classificação/eliminação.
 - [ ] 34. 🟡 NPC×NPC da suíça = moeda logística (sem placar/OT) — coerente com a UI (só V/D); documentado.
-- [ ] 35. 💡 NPCs podem conter jogadores escalados no SEU time (donk vs donk). Propor filtrar times com jogadores seus do sorteio de 15.
+- [x] 35. ✅ CORRIGIDO (v=51, melhor esforço): o time NPC com MAIOR overlap de nicks com o seu elenco sai do sorteio (só 1 excluível num pool de 16; empate resolve no embaralhamento).
 - [x] 36. ✓ Bordas: 5 IGLs / tudo-zero / tudo-100 / sem-AWP / rating negativo — zero NaN/exceção (bench bordas).
 - [x] 37. ✓ Estado: `_eng` imutável fora dos caches (_lado/_mapBase/_formaCamp); determinismo por semente (fingerprint 3ca5d04f).
 
