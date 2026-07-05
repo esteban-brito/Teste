@@ -694,6 +694,20 @@ body{background:
     radial-gradient(900px 560px at 0% 14%,rgba(57,211,255,.11),transparent 58%),
     radial-gradient(140% 46% at 50% 108%,rgba(255,90,31,.16),transparent 70%),
     var(--bg)}
+/* — link para a página-irmã "Base de elencos" (elencos.html): usa a linguagem do jogo — */
+.rosterbar{margin:2px 0 4px}
+a.rosterlink{display:flex;align-items:center;gap:14px;width:100%;text-decoration:none;
+  font-family:var(--ff);border:1px solid var(--line);background:var(--panel2);border-radius:12px;
+  padding:14px 18px;color:var(--txt);transition:border-color .15s,transform .12s var(--ease),background .15s}
+a.rosterlink:hover{border-color:rgba(255,90,31,.45);transform:translateY(-2px);
+  background:color-mix(in srgb,var(--accent) 7%,var(--panel2))}
+a.rosterlink .rl-ic{font-size:1.15rem;color:var(--accent);line-height:1;flex:none}
+a.rosterlink .rl-tx{display:flex;flex-direction:column;gap:3px;min-width:0}
+a.rosterlink .rl-t{font-weight:700;font-size:.84rem;letter-spacing:.08em;text-transform:uppercase}
+a.rosterlink .rl-s{font-family:'Barlow Semi Condensed';font-weight:600;font-size:.66rem;letter-spacing:.04em;
+  color:var(--dim);text-transform:none}
+a.rosterlink .rl-ar{margin-left:auto;color:var(--dim);font-size:1.4rem;line-height:1;flex:none;transition:color .15s,transform .15s}
+a.rosterlink:hover .rl-ar{color:var(--accent);transform:translateX(3px)}
 footer{margin-top:30px;padding:14px 0 4px;border-top:1px solid var(--line);letter-spacing:.32em;color:#3d4f6b}
 /* — ARENA VIVA: dois feixes de refletor que varrem o palco lentíssimo (GPU: só transform).
    html::before está livre (body::before/::after = grade + vinheta). Estático no mobile/reduced-motion. — */
