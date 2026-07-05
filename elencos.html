@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<!--
+  draft9-0 · Base de Elencos — página-irmã do jogo (index.html).
+  Separada e autossuficiente: mesma identidade visual (paleta arena, fontes,
+  favicon), mas nenhuma dependência do game.js/style.css. Só leitura de dados.
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="draft9-0 — base de elencos: OVR, funções, atributos e rating de todos os times, jogadores e treinadores.">
+<meta name="theme-color" content="#07090e">
+<meta name="color-scheme" content="dark">
+<link rel="canonical" href="https://esteban-brito.github.io/Teste/elencos.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2307090e'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='16' font-weight='700' text-anchor='middle' fill='%23ff5a1f'%3E9%3C/text%3E%3C/svg%3E">
+<title>draft9-0 · Base de Elencos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ---------- tokens: paleta ARENA idêntica ao jogo (dark único, como o game) ---------- */
+:root{
+  --ground:#07090e; --panel:#0e1420; --panel2:#141b2b; --line:#1f293d; --line2:#161d2c;
+  --ink:#eaf1f8; --ink2:#c4cfdd; --muted:#8b9bb0; --faint:#5f6d80;
+  --accent:#ff5a1f; --accent-ink:#07090e; --cyan:#39d3ff;
+  --shadow:0 1px 0 rgba(255,255,255,.03),0 12px 34px rgba(0,0,0,.5);
+  --barbg:rgba(255,255,255,.08);
+  --ff:'Chakra Petch'; --fb:'Barlow Semi Condensed';
+  /* faixas de OVR: dourado · âmbar · laranja(accent) · ciano · prata — do próprio jogo */
+  --t22:#ffce4a; --t22i:#07090e; --t21:#f0a93a; --t21i:#07090e; --t18:#ff5a1f; --t18i:#07090e;
+  --t15:#39d3ff; --t15i:#07090e; --t14:#aab6c4; --t14i:#0b1119;
+}
+*{box-sizing:border-box; margin:0; padding:0}
+body{
+  background:radial-gradient(1200px 600px at 50% -10%,#121a26 0%,transparent 65%),var(--ground);
+  color:var(--ink); font-family:var(--fb),'Segoe UI',sans-serif;
+  font-size:15px; line-height:1.4; -webkit-font-smoothing:antialiased;
+  min-height:100vh; min-height:100dvh; overflow-x:hidden;
+}
+.mono{font-family:var(--ff),ui-monospace,monospace; font-variant-numeric:tabular-nums; letter-spacing:.01em}
+
+/* ---------- top bar ---------- */
+header{
+  position:sticky; top:0; z-index:20; background:color-mix(in srgb,var(--ground) 88%,transparent);
+  backdrop-filter:blur(12px); border-bottom:1px solid var(--line);
+}
+.hwrap{max-width:1180px; margin:0 auto; padding:14px 20px 12px; display:flex; flex-direction:column; gap:12px}
+.brandrow{display:flex; align-items:center; gap:14px; flex-wrap:wrap}
+.backlink{font-family:var(--fb);font-weight:700;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);text-decoration:none;border:1px solid var(--line);padding:8px 13px;border-radius:9px;
+  transition:color .15s,border-color .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.backlink:hover{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 55%,var(--line))}
+.backlink .ar{font-size:1.05em;line-height:0}
+.logo{font-family:var(--ff);font-weight:700;font-size:clamp(1.12rem,3.3vw,1.5rem);letter-spacing:.06em;line-height:1}
+.logo b{color:var(--accent)}
+.logo span{display:block;font-family:var(--fb);color:var(--muted);font-size:.56rem;letter-spacing:.26em;
+  text-transform:uppercase;font-weight:600;margin-top:5px}
+.counts{display:flex; gap:16px; margin-left:auto; align-items:center}
+.counts .c{display:flex; align-items:baseline; gap:5px}
+.counts .cv{font-size:1.1rem}
+.counts .cl{font-size:.62rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); font-weight:600}
+
+.controls{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+.search{position:relative; flex:1; min-width:180px; max-width:320px}
+.search input{
+  width:100%; padding:8px 12px 8px 32px; border-radius:9px; border:1px solid var(--line);
+  background:var(--panel); color:var(--ink); font-size:.9rem; font-family:inherit;
+}
+.search input::placeholder{color:var(--faint)}
+.search svg{position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--faint)}
+.seg{display:flex; background:var(--panel2); border:1px solid var(--line); border-radius:9px; padding:2px; gap:2px}
+.seg button{
+  border:0; background:transparent; color:var(--muted); font-family:inherit; font-weight:700;
+  font-size:.8rem; padding:6px 12px; border-radius:7px; cursor:pointer; letter-spacing:.01em;
+}
+.seg button[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink)}
+.btn{
+  border:1px solid var(--line); background:var(--panel); color:var(--ink2); cursor:pointer;
+  font-family:inherit; font-weight:700; font-size:.8rem; padding:7px 12px; border-radius:9px;
+}
+.btn:hover{border-color:var(--muted)}
+.chips{display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+.chip{
+  border:1px solid var(--line); background:var(--panel); color:var(--muted); cursor:pointer;
+  font-family:inherit; font-weight:700; font-size:.74rem; padding:5px 10px; border-radius:20px;
+  letter-spacing:.02em; display:inline-flex; gap:6px; align-items:center;
+}
+.chip .dot{width:8px; height:8px; border-radius:50%}
+.chip[aria-pressed="true"]{color:var(--ink); border-color:currentColor}
+.chip[aria-pressed="true"].role-all{border-color:var(--accent); color:var(--accent)}
+
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px}
+.btn[aria-pressed="true"]{border-color:var(--accent); color:var(--accent)}
+.tag.dupe{color:var(--cyan); border:1px solid color-mix(in srgb,var(--cyan) 45%,transparent)}
+.tag.dev-up{color:var(--t21); border:1px solid color-mix(in srgb,var(--t21) 50%,transparent)}
+.tag.dev-dn{color:var(--t15); border:1px solid color-mix(in srgb,var(--t15) 50%,transparent)}
+.rowh [data-key]{cursor:pointer; user-select:none; transition:color .12s}
+.rowh [data-key]:hover{color:var(--ink)}
+.rowh [data-key].on{color:var(--accent)}
+.rowh [data-key].on::after{content:" ▾"}
+
+/* ---------- main ---------- */
+main{max-width:1180px; margin:0 auto; padding:20px 20px 80px}
+.hint{color:var(--muted); font-size:.8rem; margin:0 2px 16px; display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+.hint b{color:var(--ink2)}
+
+.scroller{overflow-x:auto; overscroll-behavior-x:contain}
+
+/* team panel */
+.team{
+  background:var(--panel); border:1px solid var(--line); border-radius:14px; margin-bottom:16px;
+  box-shadow:var(--shadow); overflow:hidden;
+}
+.team-head{
+  display:flex; align-items:center; gap:14px; padding:13px 16px; border-bottom:1px solid var(--line2);
+  position:relative;
+}
+.team-head::before{content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--tc)}
+.tbadge{
+  font-family:var(--ff); font-weight:700; font-size:.86rem; letter-spacing:.03em; min-width:44px; height:44px; padding:0 10px;
+  display:flex; align-items:center; justify-content:center; border-radius:10px;
+  background:color-mix(in srgb,var(--tc) 20%,var(--panel)); color:var(--tc); border:1px solid color-mix(in srgb,var(--tc) 40%,transparent);
+}
+.tmeta{display:flex; flex-direction:column; gap:2px; min-width:0}
+.tname{font-family:var(--ff); font-weight:700; font-size:1.02rem; letter-spacing:.02em; display:flex; align-items:center; gap:8px}
+.tcamp{font-size:.74rem; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.tcrown{font-size:.62rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--t22);
+  border:1px solid color-mix(in srgb,var(--t22) 45%,transparent); padding:1px 6px; border-radius:5px}
+.tright{margin-left:auto; display:flex; align-items:center; gap:16px}
+.tavg{text-align:right}
+.tavg .v{font-weight:800; font-size:1.3rem; line-height:1}
+.tavg .l{font-size:.62rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted)}
+.coach{
+  display:flex; align-items:center; gap:9px; padding:6px 11px 6px 8px; border-radius:10px;
+  background:var(--panel2); border:1px solid var(--line);
+}
+.coach .cova{
+  width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:.82rem; background:var(--barbg);
+}
+.coach .cinfo{display:flex; flex-direction:column; line-height:1.15}
+.coach .cn{font-weight:700; font-size:.84rem}
+.coach .cc{font-size:.68rem; color:var(--caraccol,var(--muted)); font-weight:700; letter-spacing:.01em}
+.coach.none{color:var(--faint)}
+.coach.none .cn{color:var(--faint); font-weight:600; font-style:italic}
+
+/* player table */
+.grid{min-width:760px}
+.row{
+  display:grid;
+  grid-template-columns:48px minmax(148px,1.5fr) 158px repeat(7,minmax(34px,40px)) 60px;
+  align-items:center; gap:9px; padding:9px 16px; border-bottom:1px solid var(--line2);
+}
+.row:last-child{border-bottom:0}
+.rowh{
+  padding-top:8px; padding-bottom:8px; border-bottom:1px solid var(--line);
+  font-size:.62rem; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); font-weight:700;
+  background:var(--panel2); position:sticky; top:0;
+}
+.rowh .sh{text-align:center}
+.rowh .rt{text-align:right}
+.body .row:hover{background:var(--panel2)}
+
+.ovr{
+  font-weight:800; font-size:1.14rem; height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+  background:var(--tbg); color:var(--tink); letter-spacing:-.02em;
+}
+.pl{display:flex; flex-direction:column; gap:2px; min-width:0}
+.pl .nm{font-weight:700; font-size:.96rem; display:flex; align-items:center; gap:6px; letter-spacing:-.01em}
+.pl .nm .txt{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.star{color:var(--t22)}
+.tag{font-size:.58rem; font-weight:800; letter-spacing:.04em; padding:1px 5px; border-radius:5px; text-transform:uppercase}
+.tag.igl{color:var(--t22); border:1px solid color-mix(in srgb,var(--t22) 45%,transparent)}
+.tag.team{color:var(--muted); border:1px solid var(--line); font-weight:700}
+.pl .meta{font-size:.68rem; color:var(--faint); display:flex; gap:7px}
+
+.roles{display:flex; flex-direction:column; gap:3px; min-width:0}
+.rline{display:flex; align-items:center; gap:6px}
+.rpill{font-size:.66rem; font-weight:800; letter-spacing:.02em; padding:2px 7px; border-radius:6px;
+  color:var(--rc); background:color-mix(in srgb,var(--rc) 16%,transparent); white-space:nowrap}
+.rsec{font-size:.68rem; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.rsec b{color:var(--ink2); font-weight:700}
+.sub{font-size:.66rem; color:var(--faint); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+
+.st{display:flex; flex-direction:column; align-items:center; gap:3px}
+.st .sv{font-size:.82rem; font-weight:600}
+.st .bar{width:100%; height:3px; border-radius:2px; background:var(--barbg); overflow:hidden}
+.st .bar i{display:block; height:100%; background:var(--ink2); opacity:.55; border-radius:2px}
+.st.hi .sv{color:var(--ink)}
+.st.hi .bar i{background:var(--accent); opacity:.9}
+.st.lo .sv{color:var(--faint)}
+
+.rat{text-align:right; display:flex; flex-direction:column; align-items:flex-end; gap:3px}
+.rat .rv{font-size:.98rem; font-weight:700}
+.rat .rbar{width:44px; height:3px; border-radius:2px; background:var(--barbg); overflow:hidden}
+.rat .rbar i{display:block; height:100%; background:var(--cyan); border-radius:2px}
+
+/* ranking view */
+.rankwrap .team{margin-bottom:0}
+.rank .row{grid-template-columns:38px 48px minmax(148px,1.5fr) 158px repeat(7,minmax(34px,40px)) 60px}
+.rnk{font-weight:800; font-size:.9rem; color:var(--faint); text-align:center}
+
+.empty{padding:60px 20px; text-align:center; color:var(--muted)}
+.empty b{color:var(--ink); display:block; font-size:1.1rem; margin-bottom:6px}
+
+footer{max-width:1180px; margin:0 auto; padding:8px 20px 46px; text-align:center; display:flex; flex-direction:column; gap:10px}
+footer .foot-line{color:var(--faint); font-size:.74rem}
+footer .foot-line b{color:var(--muted); font-weight:700; letter-spacing:.02em}
+footer .foot-sig{font-family:var(--ff); color:var(--dim,var(--faint)); font-size:.6rem; letter-spacing:.24em; text-transform:uppercase}
+
+@media (max-width:640px){
+  .counts{width:100%; margin-left:0; justify-content:flex-start}
+  .hwrap{padding:12px 14px}
+  main{padding:16px 14px 60px}
+  .tright{gap:10px}
+  .coach{display:none}
+  .team-head.hascoach .coach.mini{display:flex}
+}
+@media (prefers-reduced-motion:no-preference){
+  .team{animation:rise .4s ease both}
+  @keyframes rise{from{opacity:0; transform:translateY(8px)}to{opacity:1; transform:none}}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hwrap">
+    <div class="brandrow">
+      <a class="backlink" href="index.html" title="Voltar ao jogo"><span class="ar">‹</span> Jogo</a>
+      <div class="logo">draft<b>9</b>-<b>0</b><span>Base de elencos</span></div>
+      <div class="counts">
+        <div class="c"><span class="cv mono" id="cTeams">–</span><span class="cl">times</span></div>
+        <div class="c"><span class="cv mono" id="cPlayers">–</span><span class="cl">jogadores</span></div>
+        <div class="c"><span class="cv mono" id="cCoach">–</span><span class="cl">treinadores</span></div>
+      </div>
+    </div>
+    <div class="controls">
+      <label class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+        <input id="q" type="search" placeholder="Buscar jogador ou time…" autocomplete="off">
+      </label>
+      <div class="seg" role="group" aria-label="Modo de visualização">
+        <button id="vTeams" aria-pressed="true">Por time</button>
+        <button id="vRank" aria-pressed="false">Ranking geral</button>
+      </div>
+      <button class="btn" id="devBtn" aria-pressed="false" title="Só jogadores cujo OVR destoa do rating real — candidatos a correção">⚠ Desvios <span class="mono" id="devN"></span></button>
+    </div>
+    <div class="chips" id="roleChips"></div>
+  </div>
+</header>
+
+<main>
+  <div class="hint" id="hint"></div>
+  <div id="board"></div>
+</main>
+<footer>
+  <div class="foot-line">OVR e funções calculados pelos motores <b>PRISMA·ZÊNITE</b> a partir dos atributos crus · OVR 5–22 · rating = HLTV real da base</div>
+  <div class="foot-sig">draft9-0 · simulador de counter-strike</div>
+</footer>
+
+<script>
+const DATA=[{"n":"FaZe","cor":"#e43d30","camp":"ESL One New York 2017","coloc":"Campeao","p":[{"n":"NiKo","o":22,"r1":"Lurker","r2":"Rifler","sf":true,"sub":"Playmaker","st":true,"igl":false,"pa":"BIH","rt":1.7,"s":{"fp":100,"op":90,"cl":86,"ut":64,"en":29,"tr":59,"sn":4}},{"n":"rain","o":22,"r1":"Entry","r2":"Rifler","sf":true,"sub":"Spacetaker","st":true,"igl":false,"pa":"NOR","rt":1.61,"s":{"fp":100,"op":96,"cl":62,"ut":51,"en":84,"tr":37,"sn":0}},{"n":"karrigan","o":20,"r1":"IGL","r2":"Entry","sf":true,"sub":"Ponta-de-lança","st":false,"igl":true,"pa":"DEN","rt":1.2,"s":{"fp":33,"op":46,"cl":19,"ut":66,"en":93,"tr":5,"sn":4}},{"n":"GuardiaN","o":19,"r1":"AWPer","r2":"Rifler","sf":false,"sub":"AWP Agressiva","st":false,"igl":false,"pa":"SVK","rt":1.32,"s":{"fp":87,"op":84,"cl":28,"ut":47,"en":40,"tr":31,"sn":95}},{"n":"olofmeister","o":16,"r1":"Rifler","r2":"Entry","sf":true,"sub":"Fragger","st":true,"igl":false,"pa":"SWE","rt":1.27,"s":{"fp":79,"op":36,"cl":6,"ut":23,"en":39,"tr":6,"sn":7}}],"c":{"n":"RobbaN","o":18,"ca":"Gestor","pa":"SWE"}},{"n":"Astralis","cor":"#e2231a","camp":"IEM Katowice 2019","coloc":"Campeao","p":[{"n":"device","o":19,"r1":"AWPer","r2":"Rifler","sf":true,"sub":"AWP Reativa","st":true,"igl":false,"pa":"DEN","rt":1.32,"s":{"fp":93,"op":88,"cl":39,"ut":65,"en":11,"tr":41,"sn":90}},{"n":"gla1ve","o":19,"r1":"IGL","r2":"Support","sf":true,"sub":"Pop-flasher","st":false,"igl":true,"pa":"DEN","rt":1.05,"s":{"fp":32,"op":53,"cl":34,"ut":95,"en":62,"tr":17,"sn":0}},{"n":"Xyp9x","o":18,"r1":"Lurker","r2":"Support","sf":true,"sub":"Âncora","st":false,"igl":false,"pa":"DEN","rt":1.29,"s":{"fp":91,"op":19,"cl":87,"ut":91,"en":44,"tr":34,"sn":1}},{"n":"Magisk","o":18,"r1":"Entry","r2":"Rifler","sf":true,"sub":"Spacetaker","st":false,"igl":false,"pa":"DEN","rt":1.28,"s":{"fp":88,"op":66,"cl":36,"ut":53,"en":84,"tr":30,"sn":10}},{"n":"dupreeh","o":18,"r1":"Entry","r2":"Rifler","sf":true,"sub":"Spacetaker","st":false,"igl":false,"pa":"DEN","rt":1.25,"s":{"fp":92,"op":92,"cl":49,"ut":41,"en":70,"tr":31,"sn":7}}],"c":{"n":"zonic","o":17,"ca":"Estrategista","pa":"DEN"}},{"n":"NAVI","cor":"#ffd400","camp":"Stockholm Major 2021","coloc":"Campeao","p":[{"n":"s1mple","o":21,"r1":"AWPer","r2":"Rifler","sf":true,"sub":"AWP Agressiva","st":true,"igl":false,"pa":"UKR","rt":1.47,"s":{"fp":100,"op":93,"cl":24,"ut":50,"en":25,"tr":30,"sn":87}},{"n":"electroNic","o":18,"r1":"Entry","r2":"Rifler","sf":true,"sub":"Spacetaker","st":false,"igl":false,"pa":"RUS","rt":1.28,"s":{"fp":96,"op":96,"cl":62,"ut":75,"en":58,"tr":24,"sn":0}},{"n":"b1t","o":18,"r1":"Lurker","r2":"Rifler","sf":true,"sub":"Playmaker","st":false,"igl":false,"pa":"UKR","rt":1.27,"s":{"fp":84,"op":72,"cl":55,"ut":66,"en":9,"tr":10,"sn":4}},{"n":"Boombl4","o":18,"r1":"IGL","r2":"Support","sf":true,"sub":"Pop-flasher","st":false,"igl":true,"pa":"RUS","rt":1.06,"s":{"fp":26,"op":20,"cl":58,"ut":58,"en":73,"tr":42,"sn":0}},{"n":"Perfecto","o":14,"r1":"Support","r2":"Lurker","sf":false,"sub":"Refrag","st":false,"igl":false,"pa":"RUS","rt":1.08,"s":{"fp":25,"op":21,"cl":54,"ut":57,"en":58,"tr":61,"sn":0}}],"c":{"n":"B1ad3","o":17,"ca":"Desenvolvedor","pa":"UKR"}},{"n":"SK","cor":"#ff5a1f","camp":"Cologne Major 2016","coloc":"Campeao","p":[{"n":"FalleN","o":20,"r1":"IGL","r2":"AWPer","sf":true,"sub":"AWP Reativa","st":false,"igl":true,"pa":"BRA","rt":1.19,"s":{"fp":68,"op":78,"cl":51,"ut":55,"en":46,"tr":17,"sn":95}},{"n":"coldzera","o":19,"r1":"Lurker","r2":"AWPer","sf":true,"sub":"Infiltrador","st":true,"igl":false,"pa":"BRA","rt":1.38,"s":{"fp":99,"op":22,"cl":80,"ut":45,"en":14,"tr":35,"sn":75}},{"n":"TACO","o":18,"r1":"Entry","r2":"Rifler","sf":true,"sub":"Spacetaker","st":false,"igl":false,"pa":"BRA","rt":1.25,"s":{"fp":96,"op":73,"cl":39,"ut":24,"en":78,"tr":8,"sn":2}},{"n":"fnx","o":16,"r1":"Lurker","r2":"Support","sf":true,"sub":"Playmaker","st":false,"igl":false,"pa":"BRA","rt":1.19,"s":{"fp":79,"op":52,"cl":33,"ut":82,"en":48,"tr":24,"sn":0}},{"n":"fer","o":15,"r1":"Rifler","r2":"Entry","sf":true,"sub":"Fragger","st":false,"igl":false,"pa":"BRA","rt":1.12,"s":{"fp":72,"op":89,"cl":32,"ut":17,"en":25,"tr":10,"sn":0}}],"c":{"n":"dead","o":16,"ca":"Estrategista","pa":"BRA"}},{"n":"Vitality","cor":"#f5d020","camp":"Budapest Major 2025","coloc":"Campeao","p":[{"n":"ZywOo","o":20,"r1":"AWPer","r2":"Rifler","sf":true,"sub":"AWP Reativa","st":true,"igl":false,"pa":"FRA","rt":1.38,"s":{"fp":99,"op":80,"cl":49,"ut":63,"en":25,"tr":56,"sn":95}},{"n":"ropz","o":20,"r1":"Lurker","r2":"Rifler","sf":true,"sub":"Infiltrador","st":true,"igl":false,"pa":"EST","rt":1.37,"s":{"fp":95,"op":78,"cl":87,"ut":16,"en":26,"tr":58,"sn":4}},{"n":"apEX","o":18,"r1":"IGL","r2":"Support","sf":true,"sub":"Pop-flasher","st":false,"igl":true,"pa":"FRA","rt":0.85,"s":{"fp":2,"op":69,"cl":52,"ut":95,"en":62,"tr":31,"sn":0}},{"n":"mezii","o":17,"r1":"Lurker","r2":"Rifler","sf":true,"sub":"Âncora","st":false,"igl":false,"pa":"GBR","rt":1.23,"s":{"fp":82,"op":27,"cl":94,"ut":58,"en":80,"tr":78,"sn":0}},{"n":"flameZ","o":13,"r1":"Entry","r2":"Support","sf":false,"sub":"Ponta-de-lança","st":false,"igl":false,"pa":"ISR","rt":1.02,"s":{"fp":39,"op":63,"cl":37,"ut":62,"en":76,"tr":10,"sn":0}}],"c":{"n":"XTQZZZ","o":16,"ca":"Gestor","pa":"FRA"}},{"n":"Envy","cor":"#00b4a0","camp":"DreamHack Cluj-Napoca 2015","coloc":"Campeao","p":[{"n":"Happy","o":20,"r1":"IGL","r2":"Lurker","sf":true,"sub":"Infiltrador","st":false,"igl":true,"pa":"FRA","rt":1.14,"s":{"fp":58,"op":58,"cl":58,"ut":52,"en":28,"tr":44,"sn":10}},{"n":"kennyS","o":19,"r1":"AWPer","r2":"Rifler","sf":false,"sub":"AWP Reativa","st":true,"igl":false,"pa":"FRA","rt":1.31,"s":{"fp":88,"op":75,"cl":55,"ut":20,"en":15,"tr":35,"sn":96}},{"n":"NBK-","o":17,"r1":"Support","r2":"Rifler","sf":true,"sub":"Coringa","st":false,"igl":false,"pa":"FRA","rt":1.14,"s":{"fp":62,"op":55,"cl":58,"ut":72,"en":50,"tr":60,"sn":20}},{"n":"apEX","o":16,"r1":"Entry","r2":"Rifler","sf":false,"sub":"Ponta-de-lança","st":false,"igl":false,"pa":"FRA","rt":1.11,"s":{"fp":72,"op":80,"cl":35,"ut":45,"en":85,"tr":50,"sn":0}},{"n":"kioShiMa","o":16,"r1":"Support","r2":"Rifler","sf":true,"sub":"Refrag","st":false,"igl":false,"pa":"FRA","rt":1.07,"s":{"fp":60,"op":50,"cl":45,"ut":70,"en":45,"tr":58,"sn":15}}],"c":null},{"n":"Virtus.pro","cor":"#f0a020","camp":"EMS One Katowice 2014","coloc":"Campeao","p":[{"n":"pashaBiceps","o":20,"r1":"AWPer","r2":"Rifler","sf":true,"sub":"AWP Reativa","st":false,"igl":false,"pa":"POL","rt":1.38,"s":{"fp":88,"op":85,"cl":65,"ut":35,"en":40,"tr":50,"sn":90}},{"n":"byali","o":18,"r1":"Support","r2":"Rifler","sf":true,"sub":"Coringa","st":false,"igl":false,"pa":"POL","rt":1.31,"s":{"fp":68,"op":58,"cl":55,"ut":70,"en":55,"tr":62,"sn":12}},{"n":"Snax","o":17,"r1":"Lurker","r2":"Rifler","sf":true,"sub":"Infiltrador","st":false,"igl":false,"pa":"POL","rt":1.2,"s":{"fp":78,"op":72,"cl":78,"ut":75,"en":35,"tr":50,"sn":22}},{"n":"NEO","o":16,"r1":"Rifler","r2":"Lurker","sf":true,"sub":"Fragger","st":false,"igl":false,"pa":"POL","rt":1.16,"s":{"fp":86,"op":82,"cl":62,"ut":50,"en":45,"tr":58,"sn":20}},{"n":"TaZ","o":16,"r1":"IGL","r2":"Support","sf":true,"sub":"Pop-flasher","st":false,"igl":true,"pa":"POL","rt":0.85,"s":{"fp":30,"op":36,"cl":46,"ut":45,"en":40,"tr":44,"sn":8}}],"c":null},{"n":"Spirit","cor":"#7d8aa0","camp":"IEM Katowice 2024","coloc":"Campeao","p":[{"n":"donk","o":22,"r1":"Rifler","r2":"Lurker","sf":true,"sub":"Fragger","st":true,"igl":false,"pa":"RUS","rt":1.75,"s":{"fp":100,"op":97,"cl":63,"ut":35,"en":53,"tr":69,"sn":0}},{"n":"chopper","o":18,"r1":"IGL","r2":"Entry","sf":true,"sub":"Ponta-de-lança","st":false,"igl":true,"pa":"RUS","rt":1.02,"s":{"fp":13,"op":52,"cl":35,"ut":65,"en":93,"tr":6,"sn":0}},{"n":"sh1ro","o":17,"r1":"AWPer","r2":"Lurker","sf":true,"sub":"AWP Reativa","st":false,"igl":false,"pa":"RUS","rt":1.2,"s":{"fp":68,"op":36,"cl":94,"ut":47,"en":40,"tr":94,"sn":86}},{"n":"zont1x","o":15,"r1":"Entry","r2":"Lurker","sf":true,"sub":"Ponta-de-lança","st":false,"igl":false,"pa":"UKR","rt":1.12,"s":{"fp":49,"op":75,"cl":57,"ut":53,"en":57,"tr":22,"sn":0}},{"n":"magixx","o":14,"r1":"Entry","r2":"Lurker","sf":true,"sub":"Ponta-de-lança","st":false,"igl":false,"pa":"RUS","rt":1.07,"s":{"fp":21,"op":28,"cl":79,"ut":66,"en":93,"tr":54,"sn":0}}],"c":{"n":"hally","o":16,"ca":"Desenvolvedor","pa":"RUS"}},{"n":"Cloud9","cor":"#00aeef","camp":"ELEAGUE Major Boston 2018","coloc":"Campeao","p":[{"n":"tarik","o":20,"r1":"IGL","r2":"Rifler","sf":true,"sub":"Fragger","st":false,"igl":true,"pa":"USA","rt":1.22,"s":{"fp":93,"op":53,"cl":25,"ut":49,"en":42,"tr":59,"sn":24}},{"n":"autimatic","o":16,"r1":"Rifler","r2":"Entry","sf":true,"sub":"Fragger","st":false,"igl":false,"pa":"USA","rt":1.2,"s":{"fp":89,"op":53,"cl":28,"ut":42,"en":58,"tr":37,"sn":14}},{"n":"RUSH","o":16,"r1":"Entry","r2":"Rifler","sf":true,"sub":"Ponta-de-lança","st":false,"igl":false,"pa":"USA","rt":1.16,"s":{"fp":68,"op":27,"cl":47,"ut":43,"en":84,"tr":88,"sn":0}},{"n":"Skadoodle","o":16,"r1":"AWPer","r2":"Entry","sf":true,"sub":"AWP Agressiva","st":false,"igl":false,"pa":"USA","rt":1.15,"s":{"fp":57,"op":77,"cl":60,"ut":68,"en":77,"tr":25,"sn":94}},{"n":"Stewie2K","o":16,"r1":"Entry","r2":"Rifler","sf":false,"sub":"Spacetaker","st":false,"igl":false,"pa":"USA","rt":1.14,"s":{"fp":85,"op":80,"cl":33,"ut":64,"en":77,"tr":25,"sn":16}}],"c":{"n":"valens","o":16,"ca":"Motivador","pa":"CAN"}},{"n":"FURIA","cor":"#1faa59","camp":"IEM Chengdu 2025","coloc":"Campeao","p":[{"n":"molodoy","o":19,"r1":"AWPer","r2":"Lurker","sf":true,"sub":"AWP Reativa","st":false,"igl":false,"pa":"KAZ","rt":1.27,"s":{"fp":93,"op":70,"cl":89,"ut":55,"en":5,"tr":61,"sn":96}},{"n":"KSCERATO","o":17,"r1":"Lurker","r2":"Support","sf":true,"sub":"Playmaker","st":true,"igl":false,"pa":"BRA","rt":1.23,"s":{"fp":85,"op":77,"cl":53,"ut":91,"en":25,"tr":36,"sn":0}},{"n":"yuurih","o":16,"r1":"Support","r2":"Rifler","sf":true,"sub":"Refrag","st":false,"igl":false,"pa":"BRA","rt":1.13,"s":{"fp":67,"op":18,"cl":50,"ut":72,"en":49,"tr":39,"sn":0}},{"n":"FalleN","o":16,"r1":"IGL","r2":"Support","sf":true,"sub":"Pop-flasher","st":false,"igl":true,"pa":"BRA","rt":0.86,"s":{"fp":5,"op":10,"cl":40,"ut":76,"en":63,"tr":37,"sn":2}},{"n":"YEKINDAR","o":15,"r1":"Entry","r2":"Rifler","sf":false,"sub":"Spacetaker","st":false,"igl":false,"pa":"LVA","rt":1.11,"s":{"fp":73,"op":91,"cl":21,"ut":47,"en":62,"tr":3,"sn":0}}],"c":{"n":"sidde","o":16,"ca":"Estrategista","pa":"BRA"}},{"n":"Outsiders","cor":"#39d3ff","camp":"Rio Major 2022","coloc":"Campeao","p":[{"n":"Jame","o":20,"r1":"IGL","r2":"AWPer","sf":true,"sub":"AWP Reativa","st":false,"igl":true,"pa":"RUS","rt":1.31,"s":{"fp":80,"op":74,"cl":94,"ut":79,"en":9,"tr":21,"sn":96}},{"n":"FL1T","o":18,"r1":"Rifler","r2":"Lurker","sf":true,"sub":"Fragger","st":false,"igl":false,"pa":"RUS","rt":1.25,"s":{"fp":91,"op":82,"cl":68,"ut":57,"en":18,"tr":37,"sn":0}},{"n":"fame","o":17,"r1":"Entry","r2":"Rifler","sf":true,"sub":"Spacetaker","st":false,"igl":false,"pa":"RUS","rt":1.24,"s":{"fp":86,"op":92,"cl":51,"ut":67,"en":58,"tr":41,"sn":0}},{"n":"n0rb3r7","o":13,"r1":"Support","r2":"Lurker","sf":true,"sub":"Pop-flasher","st":false,"igl":false,"pa":"RUS","rt":1.03,"s":{"fp":27,"op":12,"cl":52,"ut":58,"en":34,"tr":40,"sn":0}},{"n":"Qikert","o":12,"r1":"Entry","r2":"Support","sf":false,"sub":"Ponta-de-lança","st":false,"igl":false,"pa":"KAZ","rt":0.94,"s":{"fp":4,"op":59,"cl":28,"ut":84,"en":91,"tr":1,"sn":0}}],"c":{"n":"dastan","o":16,"ca":"Desenvolvedor","pa":"KAZ"}},{"n":"FURIA","cor":"#00e676","camp":"Rio Major 2022","coloc":"Top4","p":[{"n":"KSCERATO","o":20,"r1":"Lurker","r2":"Rifler","sf":true,"sub":"Infiltrador","st":true,"igl":false,"pa":"BRA","rt":1.34,"s":{"fp":98,"op":79,"cl":92,"ut":76,"en":10,"tr":38,"sn":1}},{"n":"arT","o":16,"r1":"IGL","r2":"Entry","sf":true,"sub":"Ponta-de-lança","st":false,"igl":true,"pa":"BRA","rt":1.02,"s":{"fp":41,"op":77,"cl":24,"ut":54,"en":58,"tr":3,"sn":16}},{"n":"yuurih","o":15,"r1":"Lurker","r2":"Support","sf":true,"sub":"Âncora","st":false,"igl":false,"pa":"BRA","rt":1.13,"s":{"fp":69,"op":24,"cl":82,"ut":68,"en":21,"tr":34,"sn":0}},{"n":"saffee","o":14,"r1":"AWPer","r2":"Support","sf":false,"sub":"AWP Reativa","st":false,"igl":false,"pa":"BRA","rt":1.07,"s":{"fp":48,"op":44,"cl":37,"ut":58,"en":42,"tr":51,"sn":91}},{"n":"drop","o":14,"r1":"Support","r2":"Entry","sf":true,"sub":"Pop-flasher","st":false,"igl":false,"pa":"BRA","rt":1.06,"s":{"fp":52,"op":23,"cl":23,"ut":52,"en":55,"tr":34,"sn":0}}],"c":{"n":"guerri","o":14,"ca":"Estrategista","pa":"BRA"}},{"n":"G2","cor":"#e4002b","camp":"IEM Sydney 2023","coloc":"Top4","p":[{"n":"m0NESY","o":21,"r1":"AWPer","r2":"Entry","sf":false,"sub":"AWP Agressiva","st":true,"igl":false,"pa":"RUS","rt":1.44,"s":{"fp":99,"op":89,"cl":38,"ut":49,"en":48,"tr":8,"sn":91}},{"n":"NiKo","o":15,"r1":"Entry","r2":"Support","sf":true,"sub":"Coringa","st":true,"igl":false,"pa":"BIH","rt":1.05,"s":{"fp":45,"op":50,"cl":51,"ut":53,"en":51,"tr":57,"sn":3}},{"n":"HooXi","o":15,"r1":"IGL","r2":"Support","sf":true,"sub":"Pop-flasher","st":false,"igl":true,"pa":"DEN","rt":0.79,"s":{"fp":5,"op":46,"cl":31,"ut":81,"en":70,"tr":56,"sn":0}},{"n":"jks","o":14,"r1":"Support","r2":"Rifler","sf":false,"sub":"Refrag","st":false,"igl":false,"pa":"AUS","rt":1.06,"s":{"fp":34,"op":27,"cl":51,"ut":54,"en":50,"tr":78,"sn":0}},{"n":"huNter-","o":14,"r1":"Support","r2":"Entry","sf":false,"sub":"Pop-flasher","st":false,"igl":false,"pa":"BIH","rt":0.97,"s":{"fp":28,"op":23,"cl":44,"ut":74,"en":51,"tr":66,"sn":1}}],"c":{"n":"Swani","o":14,"ca":"Motivador","pa":"GER"}},{"n":"Immortals","cor":"#00c2a8","camp":"PGL Major Krakow 2017","coloc":"Final","p":[{"n":"steel","o":17,"r1":"IGL","r2":"Rifler","sf":true,"sub":"Fragger","st":false,"igl":true,"pa":"BRA","rt":1.08,"s":{"fp":69,"op":32,"cl":34,"ut":24,"en":52,"tr":38,"sn":0}},{"n":"HEN1","o":16,"r1":"AWPer","r2":"Lurker","sf":true,"sub":"AWP Reativa","st":false,"igl":false,"pa":"BRA","rt":1.12,"s":{"fp":55,"op":64,"cl":86,"ut":68,"en":13,"tr":7,"sn":94}},{"n":"kNgV-","o":15,"r1":"AWPer","r2":"Rifler","sf":true,"sub":"AWP Agressiva","st":false,"igl":false,"pa":"BRA","rt":1.12,"s":{"fp":81,"op":86,"cl":39,"ut":40,"en":36,"tr":44,"sn":74}},{"n":"LUCAS1","o":15,"r1":"Entry","r2":"Rifler","sf":true,"sub":"Ponta-de-lança","st":false,"igl":false,"pa":"BRA","rt":1.11,"s":{"fp":75,"op":27,"cl":45,"ut":48,"en":89,"tr":65,"sn":0}},{"n":"boltz","o":15,"r1":"Support","r2":"Rifler","sf":false,"sub":"Pop-flasher","st":false,"igl":false,"pa":"BRA","rt":1.08,"s":{"fp":64,"op":59,"cl":25,"ut":81,"en":5,"tr":23,"sn":0}}],"c":{"n":"zakk","o":14,"ca":"Estrategista","pa":"BRA"}},{"n":"Spirit","cor":"#b06cff","camp":"Budapest Major 2025","coloc":"Top4","p":[{"n":"donk","o":21,"r1":"Rifler","r2":"Entry","sf":true,"sub":"Fragger","st":true,"igl":false,"pa":"RUS","rt":1.57,"s":{"fp":100,"op":96,"cl":13,"ut":34,"en":42,"tr":74,"sn":10}},{"n":"sh1ro","o":16,"r1":"AWPer","r2":"Lurker","sf":false,"sub":"AWP Reativa","st":false,"igl":false,"pa":"RUS","rt":1.16,"s":{"fp":69,"op":24,"cl":75,"ut":73,"en":17,"tr":31,"sn":94}},{"n":"chopper","o":15,"r1":"IGL","r2":"Support","sf":true,"sub":"Pop-flasher","st":false,"igl":true,"pa":"RUS","rt":0.85,"s":{"fp":2,"op":31,"cl":70,"ut":86,"en":21,"tr":10,"sn":0}},{"n":"tN1R","o":13,"r1":"Entry","r2":"Lurker","sf":true,"sub":"Ponta-de-lança","st":false,"igl":false,"pa":"BLR","rt":1.05,"s":{"fp":48,"op":26,"cl":63,"ut":56,"en":87,"tr":18,"sn":0}},{"n":"zweih","o":12,"r1":"Entry","r2":"Support","sf":false,"sub":"Ponta-de-lança","st":false,"igl":false,"pa":"RUS","rt":0.97,"s":{"fp":24,"op":68,"cl":22,"ut":42,"en":36,"tr":8,"sn":2}}],"c":{"n":"hally","o":13,"ca":"Desenvolvedor","pa":"RUS"}},{"n":"MongolZ","cor":"#ff3b54","camp":"Budapest Major 2025","coloc":"Top8","p":[{"n":"bLitz","o":18,"r1":"IGL","r2":"Support","sf":true,"sub":"Pop-flasher","st":false,"igl":true,"pa":"MNG","rt":1.08,"s":{"fp":66,"op":54,"cl":87,"ut":98,"en":56,"tr":47,"sn":1}},{"n":"mzinho","o":17,"r1":"Rifler","r2":"Lurker","sf":true,"sub":"Fragger","st":false,"igl":false,"pa":"MNG","rt":1.22,"s":{"fp":89,"op":76,"cl":24,"ut":65,"en":21,"tr":5,"sn":3}},{"n":"910","o":14,"r1":"AWPer","r2":"Lurker","sf":true,"sub":"AWP Reativa","st":false,"igl":false,"pa":"MNG","rt":1.02,"s":{"fp":56,"op":47,"cl":94,"ut":62,"en":21,"tr":38,"sn":92}},{"n":"controlez","o":13,"r1":"Lurker","r2":"Rifler","sf":false,"sub":"Infiltrador","st":false,"igl":false,"pa":"MNG","rt":1,"s":{"fp":55,"op":74,"cl":80,"ut":46,"en":2,"tr":28,"sn":1}},{"n":"Techno","o":11,"r1":"Entry","r2":"Lurker","sf":false,"sub":"Ponta-de-lança","st":false,"igl":false,"pa":"MNG","rt":0.87,"s":{"fp":9,"op":59,"cl":34,"ut":40,"en":37,"tr":13,"sn":0}}],"c":{"n":"maaRaa","o":13,"ca":"Estrategista","pa":"MNG"}}];
+
+const STAT=[["fp","FP"],["en","EN"],["tr","TR"],["op","OP"],["cl","CL"],["sn","SN"],["ut","UT"]];
+const STATFULL={fp:"Firepower",en:"Entrada",tr:"Trade",op:"Abertura",cl:"Clutch",sn:"AWP",ut:"Utilitário"};
+/* cores idênticas às do jogo (style.css: roles dessaturados + características de treinador) */
+const ROLE={
+  AWPer:{c:"#9a86c4",ab:"AWP"}, Rifler:{c:"#bf9f63",ab:"RIFLE"}, Entry:{c:"#c47a6a",ab:"ENTRY"},
+  Lurker:{c:"#7fa882",ab:"LURK"}, Support:{c:"#5fa6a6",ab:"SUP"}, IGL:{c:"#7a93b8",ab:"IGL"}
+};
+const CARAC={Estrategista:"#2fd6d6",Gestor:"#c9a36a",Desenvolvedor:"#4a82ff",Motivador:"#c79bff"};
+const CAMPEAO=t=>/campe/i.test(t.coloc||"");
+
+function tierVars(o){
+  const t=o>=22?"22":o>=21?"21":o>=18?"18":o>=15?"15":"14";
+  return `--tbg:var(--t${t});--tink:var(--t${t}i)`;
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+const state={view:"teams", role:"all", q:"", sort:"o", dev:false};
+const $=id=>document.getElementById(id);
+
+/* auditoria: percentil de OVR × percentil de rating no pool inteiro.
+   desvio grande = OVR fora do que o rating real sugere → candidato a correção. */
+const ALL=[];DATA.forEach(t=>t.p.forEach(p=>ALL.push(p)));
+const pctOf=key=>{const sorted=[...ALL].sort((a,b)=>key(a)-key(b));const m=new Map();
+  sorted.forEach((p,i)=>m.set(p,i/(sorted.length-1)));return m;};
+const pO=pctOf(p=>p.o), pR=pctOf(p=>p.rt);
+ALL.forEach(p=>{p._dev=pO.get(p)-pR.get(p); p._flag=Math.abs(p._dev)>=0.30;});
+const nickCount={};ALL.forEach(p=>nickCount[p.n]=(nickCount[p.n]||0)+1);
+ALL.forEach(p=>{p._dupe=nickCount[p.n]>1;});
+const LABEL={o:"OVR",rt:"Rating",fp:"Firepower",en:"Entrada",tr:"Trade",op:"Abertura",cl:"Clutch",sn:"AWP",ut:"Utilitário"};
+
+// header counts
+$("cTeams").textContent=DATA.length;
+$("cPlayers").textContent=DATA.reduce((s,t)=>s+t.p.length,0);
+$("cCoach").textContent=DATA.filter(t=>t.c).length;
+
+// role chips
+const roles=["all",...Object.keys(ROLE)];
+$("roleChips").innerHTML=roles.map(r=>{
+  const on=state.role===r;
+  if(r==="all")return `<button class="chip role-all" data-role="all" aria-pressed="${on}">Todas as funções</button>`;
+  return `<button class="chip" data-role="${r}" aria-pressed="${on}" style="--rc:${ROLE[r].c}"><span class="dot" style="background:${ROLE[r].c}"></span>${r}</button>`;
+}).join("");
+$("roleChips").addEventListener("click",e=>{
+  const b=e.target.closest("[data-role]"); if(!b)return;
+  state.role=b.dataset.role; syncChips(); render();
+});
+function syncChips(){[...$("roleChips").children].forEach(c=>c.setAttribute("aria-pressed",c.dataset.role===state.role))}
+
+// search
+$("q").addEventListener("input",e=>{state.q=e.target.value.trim().toLowerCase(); render()});
+
+// view toggle
+$("vTeams").onclick=()=>{state.view="teams"; $("vTeams").setAttribute("aria-pressed","true"); $("vRank").setAttribute("aria-pressed","false"); render()};
+$("vRank").onclick=()=>{state.view="rank"; $("vRank").setAttribute("aria-pressed","true"); $("vTeams").setAttribute("aria-pressed","false"); render()};
+// filtro de desvios OVR×rating
+$("devN").textContent="("+ALL.filter(p=>p._flag).length+")";
+$("devBtn").onclick=()=>{state.dev=!state.dev; $("devBtn").setAttribute("aria-pressed",String(state.dev)); render()};
+// ordenar clicando no cabeçalho da coluna (só no ranking)
+$("board").addEventListener("click",e=>{
+  const h=e.target.closest("[data-key]"); if(!h||state.view!=="rank")return;
+  state.sort=h.dataset.key; render();
+});
+$("board").addEventListener("keydown",e=>{
+  if(e.key!=="Enter"&&e.key!==" ")return;
+  const h=e.target.closest("[data-key]"); if(!h||state.view!=="rank")return;
+  e.preventDefault(); state.sort=h.dataset.key; render();
+});
+
+
+function matchP(p,teamName){
+  if(state.dev&&!p._flag)return false;
+  if(state.role!=="all"&&p.r1!==state.role)return false;
+  if(state.q){const h=(p.n+" "+teamName+" "+(p.sub||"")+" "+p.r1+" "+p.r2).toLowerCase(); if(!h.includes(state.q))return false;}
+  return true;
+}
+function statCell(v){
+  const cls=v>=70?"hi":v<40?"lo":"";
+  return `<div class="st ${cls}"><span class="sv mono">${v}</span><span class="bar"><i style="width:${v}%"></i></span></div>`;
+}
+function ratCell(rt){
+  const w=Math.max(4,Math.min(100,(rt-0.75)/(1.75-0.75)*100));
+  return `<div class="rat"><span class="rv mono">${rt.toFixed(2)}</span><span class="rbar"><i style="width:${w}%"></i></span></div>`;
+}
+function playerRow(p,teamName,rank){
+  const rc=ROLE[p.r1]||{c:"var(--muted)",ab:p.r1};
+  const secTxt=p.r2&&p.r2!==p.r1?`<span class="rsec">${p.sf?"":"<span style='opacity:.6'>·</span> "}<b>${esc(ROLE[p.r2]?.ab||p.r2)}</b> 2ª</span>`:"";
+  const meta=[p.pa].filter(Boolean).map(x=>`<span>${esc(x)}</span>`).join("");
+  const tags=[
+    p.igl?'<span class="tag igl">IGL</span>':"",
+    p._dupe?'<span class="tag dupe" title="Mesmo nick em 2 elencos (multi-época)">2×</span>':"",
+    p._flag?(p._dev>0
+      ?'<span class="tag dev-up" title="OVR alto para o rating real — candidato a descer">OVR↑</span>'
+      :'<span class="tag dev-dn" title="OVR baixo para o rating real — candidato a subir">OVR↓</span>'):"",
+    (state.view==="rank")?`<span class="tag team">${esc(teamName)}</span>`:""
+  ].join("");
+  return `<div class="row" style="${tierVars(p.o)}">
+    ${rank!=null?`<div class="rnk mono">${rank}</div>`:""}
+    <div class="ovr mono">${p.o}</div>
+    <div class="pl">
+      <div class="nm">${p.st?'<span class="star">★</span>':""}<span class="txt">${esc(p.n)}</span>${tags}</div>
+      <div class="meta">${meta}</div>
+    </div>
+    <div class="roles">
+      <div class="rline"><span class="rpill" style="--rc:${rc.c}">${rc.ab}</span>${secTxt}</div>
+      <div class="sub">${esc(p.sub||"—")}</div>
+    </div>
+    ${STAT.map(([k])=>statCell(p.s[k])).join("")}
+    ${ratCell(p.rt)}
+  </div>`;
+}
+function headerRow(withRank){
+  const sortable=withRank; // ranking: clique no cabeçalho ordena
+  const dk=(k,cls,txt,title)=>sortable
+    ?`<div class="${cls} ${state.sort===k?"on":""}" data-key="${k}" title="${title||"Ordenar por "+LABEL[k]}" role="button" tabindex="0">${txt}</div>`
+    :`<div class="${cls}" title="${title||""}">${txt}</div>`;
+  return `<div class="row rowh">
+    ${withRank?'<div class="sh">#</div>':""}
+    ${dk("o","","OVR")}<div>Jogador</div><div>Função</div>
+    ${STAT.map(([k,l])=>dk(k,"sh",l,STATFULL[k]+(sortable?" — clique p/ ordenar":""))).join("")}
+    ${dk("rt","rt","Rating")}
+  </div>`;
+}
+function coachChip(c,mini){
+  if(!c)return `<div class="coach none ${mini?"mini":""}"><div class="cinfo"><span class="cn">sem treinador</span></div></div>`;
+  const col=CARAC[c.ca]||"var(--muted)";
+  return `<div class="coach ${mini?"mini":""}" style="--caraccol:${col}">
+    <div class="cova mono">${c.o}</div>
+    <div class="cinfo"><span class="cn">${esc(c.n)}</span><span class="cc">${esc(c.ca||"treinador")}</span></div>
+  </div>`;
+}
+
+function render(){
+  const board=$("board"); const hint=$("hint");
+  if(state.view==="teams"){
+    let html=""; let shown=0, teamsShown=0;
+    DATA.forEach(t=>{
+      const ps=t.p.filter(p=>matchP(p,t.n));
+      if(!ps.length)return;
+      teamsShown++; shown+=ps.length;
+      const avg=(t.p.reduce((s,p)=>s+p.o,0)/t.p.length);
+      html+=`<div class="team" style="--tc:${t.cor}">
+        <div class="team-head ${t.c?"hascoach":""}">
+          <div class="tbadge">${esc(t.n).slice(0,4).toUpperCase()}</div>
+          <div class="tmeta">
+            <div class="tname">${esc(t.n)} ${CAMPEAO(t)?'<span class="tcrown">campeão</span>':""}</div>
+            <div class="tcamp">${esc(t.camp||"")}</div>
+          </div>
+          <div class="tright">
+            ${coachChip(t.c,true)}
+            <div class="tavg"><div class="v mono">${avg.toFixed(1)}</div><div class="l">OVR médio</div></div>
+          </div>
+        </div>
+        <div class="scroller"><div class="grid">
+          ${headerRow(false)}
+          <div class="body">${ps.map(p=>playerRow(p,t.n,null)).join("")}</div>
+        </div></div>
+      </div>`;
+    });
+    board.innerHTML=html||emptyState();
+    hint.innerHTML=`<b>${teamsShown}</b> times · <b>${shown}</b> jogadores · ordenados por OVR médio (do mais forte ao mais fraco); dentro do time, por OVR.${state.dev?" · <b>só desvios OVR×rating</b>":""}`;
+  }else{
+    const all=[];
+    DATA.forEach(t=>t.p.forEach(p=>{if(matchP(p,t.n))all.push({p,tn:t.n,tc:t.cor})}));
+    const val=x=> state.sort==="o"?x.p.o : state.sort==="rt"?x.p.rt : x.p.s[state.sort];
+    all.sort((a,b)=> (val(b)-val(a)) || (b.p.o-a.p.o) || (b.p.rt-a.p.rt));
+    const rows=all.map((x,i)=>playerRow(x.p,x.tn,i+1)).join("");
+    board.innerHTML=all.length?`<div class="rank team" style="--tc:var(--accent)">
+      <div class="scroller"><div class="grid" style="min-width:820px">
+        ${headerRow(true)}
+        <div class="body">${rows}</div>
+      </div></div></div>`:emptyState();
+    hint.innerHTML=`<b>${all.length}</b> jogadores no ranking geral · ordenado por <b>${LABEL[state.sort]}</b> (clique num cabeçalho pra reordenar)${state.role!=="all"?` · função <b>${state.role}</b>`:""}${state.dev?` · <b>só desvios OVR×rating</b>`:""}.`;
+  }
+}
+function emptyState(){return `<div class="empty"><b>Nada encontrado</b>Ajuste a busca ou o filtro de função.</div>`}
+
+render();
+</script>
+</body>
+</html>
