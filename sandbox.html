@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <!--
-  draft9-0 · Laboratório de Stats — ferramenta de tuning.
-  Carrega os MOTORES do próprio game.js em tempo real (fatia antes do DOM) e
-  recalcula OVR/função/sub ao vivo enquanto você mexe nos atributos. Fonte única:
-  usa exatamente o mesmo cálculo do jogo, então nunca diverge.
+  draft9-0 · Laboratório de Stats & Motores — bancada de tuning.
+  Carrega os MOTORES do próprio game.js ao vivo (fatia antes do DOM) e recalcula
+  OVR/função/sub em tempo real. Também deixa editar os PESOS/FÓRMULAS dos motores
+  (afinidade, OVR por função, curva, IGL, sub-arquétipos) e ver o efeito no jogador
+  e no elenco inteiro. TUDO isolado: nada aqui toca o game.js nem o jogo.
 -->
 <html lang="pt-BR">
 <head>
@@ -11,7 +12,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#07090e">
 <meta name="color-scheme" content="dark">
-<title>draft9-0 · Laboratório de Stats</title>
+<title>draft9-0 · Laboratório de Motores</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2307090e'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='16' font-weight='700' text-anchor='middle' fill='%23ff5a1f'%3E9%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,7 +21,7 @@
 :root{
   --ground:#07090e; --panel:#0e1420; --panel2:#141b2b; --line:#1f293d; --line2:#161d2c;
   --ink:#eaf1f8; --ink2:#c4cfdd; --muted:#8b9bb0; --faint:#7d8ba0;
-  --accent:#ff5a1f; --accent-ink:#07090e; --cyan:#39d3ff;
+  --accent:#ff5a1f; --accent-ink:#07090e; --cyan:#39d3ff; --warn:#f0a93a;
   --ff:'Chakra Petch'; --fb:'Barlow Semi Condensed';
   --t22:#ffce4a; --t21:#f0a93a; --t18:#ff5a1f; --t15:#39d3ff; --t14:#aab6c4;
   --AWPer:#9a86c4; --Rifler:#bf9f63; --Entry:#c47a6a; --Lurker:#7fa882; --Support:#5fa6a6; --IGL:#7a93b8;
@@ -29,7 +30,7 @@
 body{background:radial-gradient(1200px 600px at 50% -10%,#121a26 0%,transparent 65%),var(--ground);
   color:var(--ink); font-family:var(--fb),'Segoe UI',sans-serif; min-height:100dvh; overflow-x:hidden; padding:16px}
 .mono{font-family:var(--ff),ui-monospace,monospace; font-variant-numeric:tabular-nums}
-.wrap{max-width:940px; margin:0 auto}
+.wrap{max-width:1080px; margin:0 auto}
 header{display:flex; align-items:center; gap:14px; flex-wrap:wrap; border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:18px}
 .backlink{font-family:var(--fb);font-weight:700;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;
   color:var(--muted);text-decoration:none;border:1px solid var(--line);padding:8px 13px;border-radius:9px}
@@ -41,62 +42,90 @@ header{display:flex; align-items:center; gap:14px; flex-wrap:wrap; border-bottom
 select,input[type=text]{font-family:var(--fb);font-size:.85rem;background:var(--panel);color:var(--ink);
   border:1px solid var(--line);border-radius:8px;padding:8px 10px}
 .grid{display:grid; grid-template-columns:1fr 340px; gap:18px; align-items:start}
-@media(max-width:760px){.grid{grid-template-columns:1fr}}
+@media(max-width:780px){.grid{grid-template-columns:1fr}}
 
-.card{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px}
-.card h2{font-family:var(--ff);font-size:.66rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:14px}
+.card{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:16px}
+.card h2{font-family:var(--ff);font-size:.66rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
 .field{display:flex; align-items:center; gap:12px; margin-bottom:11px}
 .field label{width:96px; font-size:.8rem; font-weight:600; color:var(--ink2); flex:none}
 .field input[type=range]{flex:1; accent-color:var(--accent); height:4px}
 .field .num{width:52px; text-align:center; font-family:var(--ff); font-variant-numeric:tabular-nums;
   background:var(--panel2); border:1px solid var(--line); border-radius:7px; color:var(--ink); padding:5px 4px; font-size:.85rem}
-.field .num::-webkit-inner-spin-button{opacity:.4}
 .row2{display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin:4px 0 14px}
 .chk{display:flex; align-items:center; gap:7px; font-size:.85rem; font-weight:600; cursor:pointer}
 .chk input{accent-color:var(--accent); width:16px; height:16px}
 .hint{font-size:.72rem; color:var(--faint); margin-top:6px; line-height:1.4}
 
-/* saída */
 .out{position:sticky; top:12px}
-.ovrbox{display:flex; align-items:center; gap:16px; margin-bottom:16px}
-.ovr{width:88px; height:88px; border-radius:16px; display:flex; align-items:center; justify-content:center;
-  font-family:var(--ff); font-weight:700; font-size:2.6rem; background:var(--tc); color:#07090e; flex:none;
+.ovrbox{display:flex; align-items:center; gap:16px; margin-bottom:14px}
+.ovr{width:84px; height:84px; border-radius:16px; display:flex; align-items:center; justify-content:center;
+  font-family:var(--ff); font-weight:700; font-size:2.5rem; background:var(--tc); color:#07090e; flex:none;
   box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.18)}
 .ovrlab{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:700}
-.roles{display:flex; flex-direction:column; gap:7px; margin-top:6px}
+.roles{display:flex; flex-direction:column; gap:6px; margin-top:6px}
 .rpill{display:inline-flex;align-items:center;gap:8px;font-family:var(--ff);font-size:.9rem;font-weight:700}
 .rpill .tag{font-size:.6rem;padding:3px 8px;border-radius:6px;letter-spacing:.04em}
 .rp2{opacity:.85;font-size:.78rem}
 .sub{font-size:.85rem;color:var(--ink2);margin-top:2px}
 .sub b{color:var(--cyan)}
 .star{color:var(--t22)}
-.affs{margin-top:18px;border-top:1px solid var(--line2);padding-top:14px}
-.affs .h{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:10px}
-.aff{display:grid;grid-template-columns:58px 1fr 34px;align-items:center;gap:8px;margin-bottom:6px;font-size:.76rem}
+.affs{margin-top:16px;border-top:1px solid var(--line2);padding-top:12px}
+.affs .h,.brk .h{font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:9px}
+.aff{display:grid;grid-template-columns:58px 1fr 34px;align-items:center;gap:8px;margin-bottom:5px;font-size:.76rem}
 .aff .an{font-weight:700}
 .aff .abar{height:7px;border-radius:4px;background:var(--panel2);overflow:hidden}
 .aff .abar i{display:block;height:100%;border-radius:4px}
 .aff .av{text-align:right;font-family:var(--ff);color:var(--muted)}
+.brk{margin-top:14px;border-top:1px solid var(--line2);padding-top:12px}
+.brk table{width:100%;font-size:.76rem;border-collapse:collapse}
+.brk td{padding:2px 0}
+.brk td:last-child{text-align:right;font-family:var(--ff);color:var(--ink2)}
+.brk .tot td{border-top:1px solid var(--line2);padding-top:5px;font-weight:700;color:var(--ink)}
+
+/* motores */
+.eng-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:2px}
+.eng-head .title{font-family:var(--ff);font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.toggle{margin-left:auto;display:flex;gap:8px}
+.btn{border:1px solid var(--line);background:var(--panel2);color:var(--ink2);cursor:pointer;font-family:var(--fb);
+  font-weight:700;font-size:.75rem;letter-spacing:.04em;padding:8px 13px;border-radius:9px}
+.btn:hover{border-color:var(--muted)}
+.btn.accent{border-color:color-mix(in srgb,var(--accent) 50%,var(--line));color:var(--accent)}
+.impact{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 13px;margin:12px 0;font-size:.8rem;color:var(--ink2)}
+.impact b{color:var(--warn)}
+.impact.zero b{color:var(--muted)}
+.engwrap{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:780px){.engwrap{grid-template-columns:1fr}}
+.grp{background:var(--panel2);border:1px solid var(--line2);border-radius:11px;padding:13px}
+.grp h3{font-family:var(--ff);font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:10px}
+.pgrid{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center}
+.pgrid label{font-size:.76rem;color:var(--ink2)}
+.pgrid input{width:64px;text-align:center;font-family:var(--ff);font-variant-numeric:tabular-nums;
+  background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--ink);padding:4px;font-size:.8rem}
+.pgrid input.dirty{border-color:var(--warn);color:var(--warn)}
+.roleblk{margin-bottom:12px}
+.roleblk .rl{font-family:var(--ff);font-size:.74rem;font-weight:700;margin-bottom:6px}
+.wrow{display:flex;flex-wrap:wrap;gap:5px 8px;align-items:center;margin-bottom:5px}
+.wrow .wlab{font-size:.64rem;color:var(--muted);width:34px}
+.wchip{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;color:var(--ink2)}
+.wchip input{width:48px;text-align:center;font-family:var(--ff);background:var(--panel);border:1px solid var(--line);border-radius:5px;color:var(--ink);padding:3px;font-size:.74rem}
+.wchip input.dirty{border-color:var(--warn);color:var(--warn)}
 .loading{padding:40px;text-align:center;color:var(--muted)}
 .err{color:#ff6a5a}
-footer{max-width:940px;margin:16px auto 0;color:var(--faint);font-size:.72rem;text-align:center;line-height:1.5}
+footer{max-width:1080px;margin:16px auto 0;color:var(--faint);font-size:.72rem;text-align:center;line-height:1.5}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <a class="backlink" href="elencos.html">‹ Elencos</a>
-    <div class="logo">draft<b>9</b>-<b>0</b><span>Laboratório de stats</span></div>
-    <div class="loader">
-      <select id="loadSel"><option value="">— carregar jogador —</option></select>
-    </div>
+    <div class="logo">draft<b>9</b>-<b>0</b><span>Laboratório de motores</span></div>
+    <div class="loader"><select id="loadSel"><option value="">— carregar jogador —</option></select></div>
   </header>
-
   <div id="app" class="loading">Carregando os motores do jogo…</div>
 </div>
 <footer>
-  Cálculo idêntico ao do jogo (motores PRISMA·ZÊNITE, lidos do game.js ao vivo). Mostra a função <b>natural</b> do jogador —
-  o teto de "1 AWPer por time" é aplicado só no contexto do time. Mude os atributos e veja OVR/função na hora.
+  Cálculo idêntico ao do jogo (motores lidos do game.js ao vivo). <b>Isolado:</b> nada aqui é salvo nem aplicado ao jogo —
+  é uma bancada. Mexa nos atributos e nos pesos dos motores e veja função/sub/OVR mudarem, com o impacto no elenco inteiro.
 </footer>
 
 <script>
@@ -105,101 +134,258 @@ const STATS=[["fp","Firepower"],["en","Entrada"],["tr","Trade"],["op","Abertura"
 const COLOC=["Campeao","Final","Top4","Top8","Grupos"];
 const tierVar=o=>o>=22?"--t22":o>=21?"--t21":o>=18?"--t18":o>=15?"--t15":"--t14";
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const clone=o=>JSON.parse(JSON.stringify(o));
 
-let E=null; // motores
+let E=null, DEF=null, POOLRAW=[], baseSnap=null;
+const state={nome:"", fp:70,en:50,tr:50,op:50,cl:50,sn:20,ut:55, rating:1.10, isIGL:false, colocacao:"Campeao"};
 
 async function carregarMotores(){
   const src=await (await fetch("game.js?nc="+Date.now())).text();
   const linhas=src.split("\n");
   const cut=linhas.findIndex(l=>l.includes("document.getElementById"));
   const slice=linhas.slice(0,cut).join("\n");
-  // eval do trecho SEM DOM → devolve as funções dos motores
-  E=new Function(slice+"\nreturn {avaliarJogador,afinidades,TEAMS};")();
+  E=new Function(slice+"\nreturn {avaliarJogador,afinidades,classificar,ovrUnificado,curvaOVR,dot,ratingScore,clipOVR,CFG_AVALIACAO,ROLE_PERFIL,SUBARQ,TEAMS};")();
+  DEF={CFG:clone(E.CFG_AVALIACAO),ROLE:clone(E.ROLE_PERFIL),SUB:clone(E.SUBARQ)};   // padrões p/ reset e comparação
+  E.TEAMS.forEach(t=>t.jogadores.forEach(j=>{const e=j._eng;
+    POOLRAW.push({nome:e.nome,time:t.nome,fp:e.fp,en:e.en,tr:e.tr,op:e.op,cl:e.cl,sn:e.sn,ut:e.ut,rating:e.rating,isIGL:!!e.isIGL,colocacao:e.colocacao||"Campeao"});}));
+  baseSnap=avaliarTodos(); // snapshot com os pesos padrão
 }
+function avaliarTodos(){return POOLRAW.map(p=>{const a=E.avaliarJogador(p);return {prim:a.primario,ovr:a.ovr};});}
 
-const state={nome:"", fp:70,en:50,tr:50,op:50,cl:50,sn:20,ut:55, rating:1.10, isIGL:false, colocacao:"Campeao"};
+/* ————— saída do jogador ————— */
+function jogadorAtual(){return {nome:state.nome||"Jogador",fp:state.fp,en:state.en,tr:state.tr,op:state.op,cl:state.cl,sn:state.sn,ut:state.ut,rating:state.rating,isIGL:state.isIGL,colocacao:state.colocacao};}
 
-function montarUI(){
-  const app=document.getElementById("app");
-  app.className="grid";
-  app.innerHTML=`
-    <div class="card">
-      <h2>Atributos</h2>
-      <div class="field"><label for="f_nome">Nome</label>
-        <input type="text" id="f_nome" style="flex:1" placeholder="(opcional)" value="${esc(state.nome)}"></div>
-      ${STATS.map(([k,l])=>`
-        <div class="field"><label for="r_${k}">${l}</label>
-          <input type="range" id="r_${k}" min="0" max="100" value="${state[k]}">
-          <input type="number" id="n_${k}" class="num mono" min="0" max="100" value="${state[k]}"></div>`).join("")}
-      <div class="field"><label for="r_rating">Rating</label>
-        <input type="range" id="r_rating" min="0.50" max="2.00" step="0.01" value="${state.rating}">
-        <input type="number" id="n_rating" class="num mono" min="0.50" max="2.00" step="0.01" value="${state.rating}"></div>
-      <div class="row2">
-        <label class="chk"><input type="checkbox" id="c_igl" ${state.isIGL?"checked":""}> É IGL (líder)</label>
-        <label class="chk">Conquista:
-          <select id="s_coloc">${COLOC.map(c=>`<option value="${c}" ${c===state.colocacao?"selected":""}>${c}</option>`).join("")}</select></label>
-      </div>
-      <div class="hint">Só os stats da <b>função 2</b> mexem no OVR de IGL. Se o rating for muito baixo ele "bate no piso" e para de influenciar; se o OVR encostar em 20/22 ele "bate no teto".</div>
-    </div>
-    <div class="card out" id="out"></div>`;
-
-  STATS.forEach(([k])=>{
-    const r=document.getElementById("r_"+k),n=document.getElementById("n_"+k);
-    const sync=v=>{v=Math.max(0,Math.min(100,+v||0));state[k]=v;r.value=v;n.value=v;render();};
-    r.oninput=()=>sync(r.value); n.oninput=()=>sync(n.value);
-  });
-  const rr=document.getElementById("r_rating"),nr=document.getElementById("n_rating");
-  const syncR=v=>{v=Math.max(0.5,Math.min(2,+v||0.5));state.rating=+v.toFixed(2);rr.value=state.rating;nr.value=state.rating;render();};
-  rr.oninput=()=>syncR(rr.value); nr.oninput=()=>syncR(nr.value);
-  document.getElementById("f_nome").oninput=e=>{state.nome=e.target.value;render();};
-  document.getElementById("c_igl").onchange=e=>{state.isIGL=e.target.checked;render();};
-  document.getElementById("s_coloc").onchange=e=>{state.colocacao=e.target.value;render();};
+function breakdown(p,av){
+  const C=E.CFG_AVALIACAO;
+  const role=state.isIGL?av.secundario:av.primario;
+  const prof=E.ROLE_PERFIL[role]; if(!prof)return "";
+  const wR=(state.isIGL?prof.wR*C.IGL_RAT_K:prof.wR);
+  const ratS=E.ratingScore(p.rating), statS=E.dot(prof.ovr,p);
+  const credito=(state.isIGL?C.IGL_CREDITO:(prof.credito||0));
+  const core0=wR*ratS+(1-wR)*statS+credito;
+  const curva=E.curvaOVR(core0);
+  const titulo=state.isIGL?(C.IGL_TITULO[p.colocacao]||0):0;
+  const r=n=>Math.round(n*10)/10;
+  return `<div class="brk"><div class="h">Detalhe do OVR (${state.isIGL?"via função 2 = "+role:role})</div>
+    <table>
+      <tr><td>rating → escala (×${wR.toFixed(2)})</td><td>${r(ratS)}</td></tr>
+      <tr><td>stats da função (×${(1-wR).toFixed(2)})</td><td>${r(statS)}</td></tr>
+      ${credito?`<tr><td>crédito ${state.isIGL?"de IGL":"de função"}</td><td>+${credito}</td></tr>`:""}
+      <tr><td>core → curva de OVR</td><td>${r(core0)} → ${curva}</td></tr>
+      ${titulo?`<tr><td>bônus de título (${p.colocacao})</td><td>+${titulo}</td></tr>`:""}
+      ${state.isIGL?`<tr><td>teto de IGL</td><td>${C.IGL_TETO}</td></tr>`:""}
+      <tr class="tot"><td>OVR final</td><td>${av.ovr}</td></tr>
+    </table></div>`;
 }
-
-function render(){
-  const p={nome:state.nome||"Jogador", fp:state.fp,en:state.en,tr:state.tr,op:state.op,cl:state.cl,sn:state.sn,ut:state.ut,
-    rating:state.rating, isIGL:state.isIGL, colocacao:state.colocacao};
+function renderPlayer(){
+  const p=jogadorAtual();
   let av; try{av=E.avaliarJogador(p);}catch(e){document.getElementById("out").innerHTML=`<div class="err">Erro: ${esc(e.message)}</div>`;return;}
-  const af=E.afinidades(p);
-  const maxAf=Math.max(...ROLES.map(r=>af[r]),1);
-  const rc=r=>`var(--${r})`;
+  const af=E.afinidades(p), maxAf=Math.max(...ROLES.map(r=>af[r]),1), rc=r=>`var(--${r})`;
   const secForte=av.secForte!==false;
   document.getElementById("out").innerHTML=`
     <h2>Resultado</h2>
     <div class="ovrbox">
       <div class="ovr" style="--tc:var(${tierVar(av.ovr)})">${av.ovr}</div>
-      <div>
-        <div class="ovrlab">Overall</div>
+      <div><div class="ovrlab">Overall</div>
         <div class="roles">
           <div class="rpill" style="color:${rc(av.primario)}"><span class="tag" style="background:color-mix(in srgb,${rc(av.primario)} 20%,transparent)">1</span>${av.primario}${av.estrela?' <span class="star">★</span>':""}</div>
           <div class="rpill rp2" style="color:${rc(av.secundario)}"><span class="tag" style="background:color-mix(in srgb,${rc(av.secundario)} 16%,transparent)">2</span>${av.secundario}${secForte?"":" <span style='color:var(--faint)'>(fraca)</span>"}</div>
         </div>
-        <div class="sub">Sub-arquétipo: <b>${esc(av.sub&&av.sub.nome||"—")}</b></div>
+        <div class="sub">Sub: <b>${esc(av.sub&&av.sub.nome||"—")}</b></div>
       </div>
     </div>
-    <div class="affs">
-      <div class="h">Afinidade por função (define as roles)</div>
+    <div class="affs"><div class="h">Afinidade por função (define a role)</div>
       ${ROLES.map(r=>`<div class="aff"><span class="an" style="color:${rc(r)}">${r}</span>
         <span class="abar"><i style="width:${Math.max(3,af[r]/maxAf*100)}%;background:${rc(r)}"></i></span>
         <span class="av mono">${Math.round(af[r])}</span></div>`).join("")}
-      ${state.isIGL?'<div class="hint" style="margin-top:8px">Como É IGL, a função 1 é IGL; as afinidades acima decidem a <b>função 2</b>.</div>':""}
+      ${state.isIGL?'<div class="hint">Como É IGL, a função 1 é IGL; as afinidades decidem a <b>função 2</b>.</div>':""}
+    </div>
+    ${breakdown(p,av)}`;
+}
+
+/* ————— impacto global ————— */
+function renderImpact(){
+  const agora=avaliarTodos();
+  let df=0,dovr=0;
+  for(let i=0;i<agora.length;i++){if(agora[i].prim!==baseSnap[i].prim)df++;if(agora[i].ovr!==baseSnap[i].ovr)dovr++;}
+  const el=document.getElementById("impact"); if(!el)return;
+  el.className="impact"+(df===0&&dovr===0?" zero":"");
+  el.innerHTML=`Impacto no elenco (vs. padrão): <b>${df}</b> mudaram de <b>função</b> · <b>${dovr}</b> mudaram de <b>OVR</b> (de ${agora.length} jogadores)`;
+}
+
+/* ————— editores dos motores ————— */
+function setDirty(inp,def,val){inp.classList.toggle("dirty",Math.abs(val-def)>1e-9);}
+function numInput(get,set,def,step){
+  const inp=document.createElement("input"); inp.type="number"; inp.step=step; inp.value=get();
+  setDirty(inp,def,+get());
+  inp.oninput=()=>{const v=parseFloat(inp.value); if(!isNaN(v)){set(v); setDirty(inp,def,v); renderPlayer(); renderImpact();}};
+  return inp;
+}
+function grpParams(titulo,campos){ // campos: [{label,get,set,def,step}]
+  const g=document.createElement("div"); g.className="grp";
+  g.innerHTML=`<h3>${titulo}</h3>`; const pg=document.createElement("div"); pg.className="pgrid";
+  campos.forEach(c=>{const l=document.createElement("label"); l.textContent=c.label; pg.appendChild(l);
+    pg.appendChild(numInput(c.get,c.set,c.def,c.step));});
+  g.appendChild(pg); return g;
+}
+function grpPesos(titulo,which){ // which: 'afin' | 'ovr' — pesos por função de cada role
+  const g=document.createElement("div"); g.className="grp"; g.innerHTML=`<h3>${titulo}</h3>`;
+  ROLES.forEach(role=>{
+    const blk=document.createElement("div"); blk.className="roleblk";
+    blk.innerHTML=`<div class="rl" style="color:var(--${role})">${role}${which==="ovr"?` · wR ${E.ROLE_PERFIL[role].wR}`:""}</div>`;
+    const row=document.createElement("div"); row.className="wrow";
+    const obj=E.ROLE_PERFIL[role][which], defObj=DEF.ROLE[role][which];
+    Object.keys(obj).forEach(k=>{
+      const chip=document.createElement("span"); chip.className="wchip";
+      chip.innerHTML=`<span class="wlab">${k.toUpperCase()}</span>`;
+      chip.appendChild(numInput(()=>obj[k],v=>obj[k]=v,defObj[k],0.01));
+      row.appendChild(chip);
+    });
+    // wR editável no bloco de OVR
+    if(which==="ovr"){const chip=document.createElement("span");chip.className="wchip";chip.innerHTML=`<span class="wlab" style="width:auto">wR</span>`;
+      chip.appendChild(numInput(()=>E.ROLE_PERFIL[role].wR,v=>E.ROLE_PERFIL[role].wR=v,DEF.ROLE[role].wR,0.01));row.appendChild(chip);}
+    blk.appendChild(row); g.appendChild(blk);
+  });
+  return g;
+}
+function grpSub(){ // sub-arquétipos da função 1 do jogador atual
+  const g=document.createElement("div"); g.className="grp";
+  const p=jogadorAtual(); let av; try{av=E.avaliarJogador(p);}catch(e){}
+  const role=av?av.primario:"Rifler";
+  g.innerHTML=`<h3>Sub-arquétipos · ${role}</h3>`;
+  const subs=E.SUBARQ[role], defSubs=DEF.SUB[role];
+  if(!subs){g.innerHTML+='<div class="hint">(esta função não tem sub-arquétipos editáveis)</div>';return g;}
+  subs.forEach((s,i)=>{
+    const blk=document.createElement("div"); blk.className="roleblk";
+    blk.innerHTML=`<div class="rl">${esc(s.nome)}</div>`;
+    const row=document.createElement("div"); row.className="wrow";
+    Object.keys(s.sig).forEach(k=>{const chip=document.createElement("span");chip.className="wchip";
+      chip.innerHTML=`<span class="wlab">${k.toUpperCase()}</span>`;
+      chip.appendChild(numInput(()=>s.sig[k],v=>s.sig[k]=v,defSubs[i].sig[k],0.01));row.appendChild(chip);});
+    blk.appendChild(row); g.appendChild(blk);
+  });
+  const hint=document.createElement("div"); hint.className="hint";
+  hint.textContent="O sub é o de maior soma (assinatura × atributos) dentro da função.";
+  g.appendChild(hint); // appendChild (não innerHTML+=) pra não apagar os valores dos inputs já criados
+  return g;
+}
+
+function restaurar(){
+  // copia os padrões de volta PARA OS MESMOS objetos (os motores seguram a referência)
+  const cp=(dst,src)=>{Object.keys(dst).forEach(k=>{if(!(k in src))return; if(typeof dst[k]==="object"&&dst[k])cp(dst[k],src[k]); else dst[k]=src[k];});
+    Object.keys(src).forEach(k=>{if(!(k in dst))dst[k]=clone(src[k]);});};
+  cp(E.CFG_AVALIACAO,DEF.CFG); cp(E.ROLE_PERFIL,DEF.ROLE); cp(E.SUBARQ,DEF.SUB);
+  buildTuning(); renderPlayer(); renderImpact();
+}
+
+function buildTuning(){
+  const C=E.CFG_AVALIACAO, D=DEF.CFG;
+  const box=document.getElementById("engbox");
+  box.innerHTML="";
+  const wrap=document.createElement("div"); wrap.className="engwrap";
+  // curva de OVR
+  wrap.appendChild(grpParams("Curva de OVR (ZÊNITE)",[
+    {label:"Piso (FLOOR)",get:()=>C.FLOOR,set:v=>C.FLOOR=v,def:D.FLOOR,step:.5},
+    {label:"Amplitude (SPAN)",get:()=>C.SPAN,set:v=>C.SPAN=v,def:D.SPAN,step:.5},
+    {label:"Inclinação (K)",get:()=>C.K,set:v=>C.K=v,def:D.K,step:.005},
+    {label:"Centro (MID)",get:()=>C.MID,set:v=>C.MID=v,def:D.MID,step:1},
+    {label:"OVR mín",get:()=>C.OVR_MIN,set:v=>C.OVR_MIN=v,def:D.OVR_MIN,step:1},
+    {label:"OVR máx",get:()=>C.OVR_MAX,set:v=>C.OVR_MAX=v,def:D.OVR_MAX,step:1},
+  ]));
+  // rating -> escala
+  wrap.appendChild(grpParams("Rating → escala",[
+    {label:"rating piso (RAT_LO)",get:()=>C.RAT_LO,set:v=>C.RAT_LO=v,def:D.RAT_LO,step:.01},
+    {label:"rating topo (RAT_HI)",get:()=>C.RAT_HI,set:v=>C.RAT_HI=v,def:D.RAT_HI,step:.01},
+    {label:"teto (RAT_CAP)",get:()=>C.RAT_CAP,set:v=>C.RAT_CAP=v,def:D.RAT_CAP,step:.01},
+  ]));
+  // IGL
+  wrap.appendChild(grpParams("IGL (líder)",[
+    {label:"crédito de liderança",get:()=>C.IGL_CREDITO,set:v=>C.IGL_CREDITO=v,def:D.IGL_CREDITO,step:.5},
+    {label:"peso do rating (RAT_K)",get:()=>C.IGL_RAT_K,set:v=>C.IGL_RAT_K=v,def:D.IGL_RAT_K,step:.05},
+    {label:"teto de IGL",get:()=>C.IGL_TETO,set:v=>C.IGL_TETO=v,def:D.IGL_TETO,step:1},
+    {label:"título · Campeão",get:()=>C.IGL_TITULO.Campeao,set:v=>C.IGL_TITULO.Campeao=v,def:D.IGL_TITULO.Campeao,step:1},
+    {label:"título · Vice (Final)",get:()=>C.IGL_TITULO.Final,set:v=>C.IGL_TITULO.Final=v,def:D.IGL_TITULO.Final,step:1},
+    {label:"título · Top4",get:()=>C.IGL_TITULO.Top4,set:v=>C.IGL_TITULO.Top4=v,def:D.IGL_TITULO.Top4,step:1},
+  ]));
+  // coringa / limiares
+  wrap.appendChild(grpParams("Coringa & limiares",[
+    {label:"Coringa piso",get:()=>C.CORINGA_PISO,set:v=>C.CORINGA_PISO=v,def:D.CORINGA_PISO,step:1},
+    {label:"Coringa spread",get:()=>C.CORINGA_SPREAD,set:v=>C.CORINGA_SPREAD=v,def:D.CORINGA_SPREAD,step:1},
+    {label:"Support→Lurker (fp)",get:()=>C.SUP_FRAG,set:v=>C.SUP_FRAG=v,def:D.SUP_FRAG,step:1},
+    {label:"Vers. ref",get:()=>C.VERS_REF,set:v=>C.VERS_REF=v,def:D.VERS_REF,step:1},
+    {label:"Vers. peso",get:()=>C.VERS_W,set:v=>C.VERS_W=v,def:D.VERS_W,step:.05},
+    {label:"Vers. teto",get:()=>C.VERS_CAP,set:v=>C.VERS_CAP=v,def:D.VERS_CAP,step:.5},
+  ]));
+  box.appendChild(wrap);
+  const w2=document.createElement("div"); w2.className="engwrap";
+  w2.appendChild(grpPesos("Afinidade — define a FUNÇÃO","afin"));
+  w2.appendChild(grpPesos("Pesos de OVR — nível na função","ovr"));
+  box.appendChild(w2);
+  const w3=document.createElement("div");
+  w3.appendChild(grpSub());
+  box.appendChild(w3);
+}
+
+/* ————— UI base ————— */
+function montarUI(){
+  const app=document.getElementById("app");
+  app.className="";
+  app.innerHTML=`
+    <div class="grid">
+      <div class="card">
+        <h2>Atributos do jogador</h2>
+        <div class="field"><label for="f_nome">Nome</label><input type="text" id="f_nome" style="flex:1" placeholder="(opcional)" value="${esc(state.nome)}"></div>
+        ${STATS.map(([k,l])=>`<div class="field"><label for="r_${k}">${l}</label>
+          <input type="range" id="r_${k}" min="0" max="100" value="${state[k]}">
+          <input type="number" id="n_${k}" class="num mono" min="0" max="100" value="${state[k]}"></div>`).join("")}
+        <div class="field"><label for="r_rating">Rating</label>
+          <input type="range" id="r_rating" min="0.50" max="2.00" step="0.01" value="${state.rating}">
+          <input type="number" id="n_rating" class="num mono" min="0.50" max="2.00" step="0.01" value="${state.rating}"></div>
+        <div class="row2">
+          <label class="chk"><input type="checkbox" id="c_igl" ${state.isIGL?"checked":""}> É IGL</label>
+          <label class="chk">Conquista: <select id="s_coloc">${COLOC.map(c=>`<option value="${c}" ${c===state.colocacao?"selected":""}>${c}</option>`).join("")}</select></label>
+        </div>
+      </div>
+      <div class="card out" id="out"></div>
+    </div>
+    <div class="card">
+      <div class="eng-head">
+        <span class="title">⚙ Motores · pesos & fórmulas</span>
+        <div class="toggle"><button class="btn" id="engToggle">Mostrar</button><button class="btn accent" id="engReset" hidden>Restaurar padrões</button></div>
+      </div>
+      <div class="hint">Edite o que os motores usam pra decidir função, sub e OVR. Vale pra TODOS os jogadores — veja o impacto abaixo. Só neste laboratório; o jogo não muda.</div>
+      <div class="impact zero" id="impact" hidden></div>
+      <div id="engbox" hidden></div>
     </div>`;
+
+  STATS.forEach(([k])=>{const r=document.getElementById("r_"+k),n=document.getElementById("n_"+k);
+    const sync=v=>{v=Math.max(0,Math.min(100,+v||0));state[k]=v;r.value=v;n.value=v;renderPlayer();renderImpact();};
+    r.oninput=()=>sync(r.value); n.oninput=()=>sync(n.value);});
+  const rr=document.getElementById("r_rating"),nr=document.getElementById("n_rating");
+  const syncR=v=>{v=Math.max(0.5,Math.min(2,+v||0.5));state.rating=+v.toFixed(2);rr.value=state.rating;nr.value=state.rating;renderPlayer();renderImpact();};
+  rr.oninput=()=>syncR(rr.value); nr.oninput=()=>syncR(nr.value);
+  document.getElementById("f_nome").oninput=e=>{state.nome=e.target.value;renderPlayer();};
+  document.getElementById("c_igl").onchange=e=>{state.isIGL=e.target.checked;renderPlayer();renderImpact();};
+  document.getElementById("s_coloc").onchange=e=>{state.colocacao=e.target.value;renderPlayer();renderImpact();};
+
+  const box=document.getElementById("engbox"),imp=document.getElementById("impact"),tgl=document.getElementById("engToggle"),rst=document.getElementById("engReset");
+  let aberto=false;
+  tgl.onclick=()=>{aberto=!aberto;box.hidden=!aberto;imp.hidden=!aberto;rst.hidden=!aberto;tgl.textContent=aberto?"Esconder":"Mostrar";
+    if(aberto){buildTuning();renderImpact();}};
+  rst.onclick=restaurar;
 }
 
 (async()=>{
   try{
     await carregarMotores();
-    // popula o loader com todos os jogadores dos times
     const sel=document.getElementById("loadSel");
-    E.TEAMS.forEach((t,ti)=>t.jogadores.forEach((j,pi)=>{
-      const o=document.createElement("option");o.value=ti+"."+pi;o.textContent=j._eng.nome+" — "+t.nome;sel.appendChild(o);
-    }));
-    sel.onchange=()=>{if(!sel.value)return;const [ti,pi]=sel.value.split(".").map(Number);const e=E.TEAMS[ti].jogadores[pi]._eng;
-      Object.assign(state,{nome:e.nome,fp:e.fp,en:e.en,tr:e.tr,op:e.op,cl:e.cl,sn:e.sn,ut:e.ut,rating:e.rating,isIGL:!!e.isIGL,colocacao:e.colocacao||"Campeao"});
-      montarUI();render();};
-    montarUI();render();
+    POOLRAW.forEach((p,i)=>{const o=document.createElement("option");o.value=i;o.textContent=p.nome+" — "+p.time;sel.appendChild(o);});
+    sel.onchange=()=>{if(sel.value==="")return;const p=POOLRAW[+sel.value];
+      Object.assign(state,{nome:p.nome,fp:p.fp,en:p.en,tr:p.tr,op:p.op,cl:p.cl,sn:p.sn,ut:p.ut,rating:p.rating,isIGL:p.isIGL,colocacao:p.colocacao});
+      montarUI();renderPlayer();};
+    montarUI();renderPlayer();
   }catch(err){
-    document.getElementById("app").innerHTML='<div class="loading err">Não deu pra carregar os motores: '+esc(err.message)+'<br><br>Abra pela URL do site (github.io), não pelo arquivo local — o laboratório lê o game.js do próprio site.</div>';
+    document.getElementById("app").innerHTML='<div class="loading err">Não deu pra carregar os motores: '+esc(err.message)+'<br><br>Abra pela URL do site (github.io), não pelo arquivo local.</div>';
   }
 })();
 </script>
