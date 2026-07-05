@@ -133,8 +133,8 @@ footer{max-width:1080px;margin:16px auto 0;color:var(--faint);font-size:.72rem;t
   <div id="app" class="loading">Carregando os motores do jogo…</div>
 </div>
 <footer>
-  Cálculo idêntico ao do jogo (motores lidos do game.js ao vivo). <b>Isolado:</b> nada aqui é salvo nem aplicado ao jogo —
-  é uma bancada. Mexa nos atributos e nos pesos dos motores e veja função/sub/OVR mudarem, com o impacto no elenco inteiro.
+  Cálculo idêntico ao do jogo (motores lidos do game.js ao vivo). Ao carregar um jogador de um time, o papel mostrado é o
+  <b>real do time</b> (com o teto de 1 AWPer e o cap-2). <b>Isolado:</b> nada aqui é salvo nem aplicado ao jogo — é uma bancada.
 </footer>
 
 <script>
@@ -153,13 +153,31 @@ async function carregarMotores(){
   const linhas=src.split("\n");
   const cut=linhas.findIndex(l=>l.includes("document.getElementById"));
   const slice=linhas.slice(0,cut).join("\n");
-  E=new Function(slice+"\nreturn {avaliarJogador,afinidades,classificar,ovrUnificado,curvaOVR,dot,ratingScore,clipOVR,CFG_AVALIACAO,ROLE_PERFIL,SUBARQ,TEAMS};")();
+  E=new Function(slice+"\nreturn {avaliarJogador,afinidades,classificar,ovrUnificado,curvaOVR,dot,ratingScore,clipOVR,distribuirRoles,CFG_AVALIACAO,ROLE_PERFIL,SUBARQ,TEAMS};")();
   DEF={CFG:clone(E.CFG_AVALIACAO),ROLE:clone(E.ROLE_PERFIL),SUB:clone(E.SUBARQ)};   // padrões p/ reset e comparação
-  E.TEAMS.forEach(t=>t.jogadores.forEach(j=>{const e=j._eng;
-    POOLRAW.push({nome:e.nome,time:t.nome,fp:e.fp,en:e.en,tr:e.tr,op:e.op,cl:e.cl,sn:e.sn,ut:e.ut,rating:e.rating,isIGL:!!e.isIGL,colocacao:e.colocacao||"Campeao"});}));
+  E.TEAMS.forEach((t,ti)=>t.jogadores.forEach((j,pi)=>{const e=j._eng;
+    POOLRAW.push({nome:e.nome,time:t.nome,ti,pi,fp:e.fp,en:e.en,tr:e.tr,op:e.op,cl:e.cl,sn:e.sn,ut:e.ut,rating:e.rating,isIGL:!!e.isIGL,colocacao:e.colocacao||"Campeao"});}));
   baseSnap=avaliarTodos(); // snapshot com os pesos padrão
 }
 function avaliarTodos(){return POOLRAW.map(p=>{const a=E.avaliarJogador(p);return {prim:a.primario,ovr:a.ovr};});}
+
+// contexto de time do jogador carregado (pra mostrar o papel REAL, com teto de AWP + cap-2)
+let ctx=null; // {idx, team:[5 raw stats]}
+function setCtx(p){ // p = item do POOLRAW (ou null p/ jogador manual)
+  if(!p){ctx=null;return;}
+  const t=E.TEAMS[p.ti];
+  ctx={idx:p.pi, team:t.jogadores.map(j=>{const e=j._eng;
+    return {fp:e.fp,en:e.en,tr:e.tr,op:e.op,cl:e.cl,sn:e.sn,ut:e.ut,isIGL:!!e.isIGL,colocacao:e.colocacao,nome:e.nome};})};
+}
+// roda distribuirRoles no time (com o jogador atual editado no lugar dele) → papel no contexto do time
+function teamRole(){
+  if(!ctx)return null;
+  const cur={fp:state.fp,en:state.en,tr:state.tr,op:state.op,cl:state.cl,sn:state.sn,ut:state.ut,isIGL:state.isIGL,colocacao:state.colocacao,nome:state.nome||"?"};
+  const engs=ctx.team.map((raw,i)=>{const base=i===ctx.idx?cur:raw; return Object.assign({},base,E.avaliarJogador(base));});
+  E.distribuirRoles(engs); // muta as CÓPIAS (não o pool real)
+  const me=engs[ctx.idx];
+  return {prim:me.primario, sec:me.secundario};
+}
 
 /* ————— saída do jogador ————— */
 function jogadorAtual(){return {nome:state.nome||"Jogador",fp:state.fp,en:state.en,tr:state.tr,op:state.op,cl:state.cl,sn:state.sn,ut:state.ut,rating:state.rating,isIGL:state.isIGL,colocacao:state.colocacao};}
@@ -191,16 +209,21 @@ function renderPlayer(){
   let av; try{av=E.avaliarJogador(p);}catch(e){document.getElementById("out").innerHTML=`<div class="err">Erro: ${esc(e.message)}</div>`;return;}
   const af=E.afinidades(p), maxAf=Math.max(...ROLES.map(r=>af[r]),1), rc=r=>`var(--${r})`;
   const secForte=av.secForte!==false;
+  const tr=teamRole();                                   // papel no contexto do time (teto de AWP + cap-2)
+  const p1=tr?tr.prim:av.primario, p2=tr?tr.sec:av.secundario;   // exibe o papel REAL do jogo quando há time
+  const difere=tr&&(tr.prim!==av.primario||tr.sec!==av.secundario);
   document.getElementById("out").innerHTML=`
     <h2>Resultado</h2>
     <div class="ovrbox">
       <div class="ovr" style="--tc:var(${tierVar(av.ovr)})">${av.ovr}</div>
       <div><div class="ovrlab">Overall</div>
         <div class="roles">
-          <div class="rpill" style="color:${rc(av.primario)}"><span class="tag" style="background:color-mix(in srgb,${rc(av.primario)} 20%,transparent)">1</span>${av.primario}${av.estrela?' <span class="star">★</span>':""}</div>
-          <div class="rpill rp2" style="color:${rc(av.secundario)}"><span class="tag" style="background:color-mix(in srgb,${rc(av.secundario)} 16%,transparent)">2</span>${av.secundario}${secForte?"":" <span style='color:var(--faint)'>(fraca)</span>"}</div>
+          <div class="rpill" style="color:${rc(p1)}"><span class="tag" style="background:color-mix(in srgb,${rc(p1)} 20%,transparent)">1</span>${p1}${av.estrela?' <span class="star">★</span>':""}</div>
+          <div class="rpill rp2" style="color:${rc(p2)}"><span class="tag" style="background:color-mix(in srgb,${rc(p2)} 16%,transparent)">2</span>${p2}${secForte?"":" <span style='color:var(--faint)'>(fraca)</span>"}</div>
         </div>
         <div class="sub">Sub: <b>${esc(av.sub&&av.sub.nome||"—")}</b></div>
+        ${difere?`<div class="hint" style="color:var(--warn)">↳ no time: teto de AWP/cap-2 muda o papel · natural (só stats): ${av.primario}/${av.secundario}</div>`:""}
+        ${!tr?`<div class="hint">Papel natural (jogador isolado). Carregue um jogador de um time pra ver o papel no <b>contexto do time</b> (teto de AWP).</div>`:""}
       </div>
     </div>
     <div class="affs"><div class="h">Afinidade por função (define a role)</div>
@@ -439,7 +462,7 @@ function montarUI(){
     POOLRAW.forEach((p,i)=>{const o=document.createElement("option");o.value=i;o.textContent=p.nome+" — "+p.time;sel.appendChild(o);});
     sel.onchange=()=>{if(sel.value==="")return;const p=POOLRAW[+sel.value];
       Object.assign(state,{nome:p.nome,fp:p.fp,en:p.en,tr:p.tr,op:p.op,cl:p.cl,sn:p.sn,ut:p.ut,rating:p.rating,isIGL:p.isIGL,colocacao:p.colocacao});
-      montarUI();renderPlayer();};
+      setCtx(p); montarUI();renderPlayer();};
     montarUI();renderPlayer();
   }catch(err){
     document.getElementById("app").innerHTML='<div class="loading err">Não deu pra carregar os motores: '+esc(err.message)+'<br><br>Abra pela URL do site (github.io), não pelo arquivo local.</div>';
