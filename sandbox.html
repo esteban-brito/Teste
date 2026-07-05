@@ -82,6 +82,31 @@ select,input[type=text]{font-family:var(--fb);font-size:.85rem;background:var(--
 .brk td:last-child{text-align:right;font-family:var(--ff);color:var(--ink2)}
 .brk .tot td{border-top:1px solid var(--line2);padding-top:5px;font-weight:700;color:var(--ink)}
 
+/* modo (jogador/time) */
+.modeseg{display:inline-flex;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:2px;gap:2px}
+.modeseg button{border:0;background:transparent;color:var(--muted);font-family:var(--fb);font-weight:700;font-size:.78rem;padding:7px 14px;border-radius:7px;cursor:pointer}
+.modeseg button.on{background:var(--accent);color:var(--accent-ink)}
+/* time */
+.teamsel{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.tstats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.tstat{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:12px;text-align:center}
+.tstat .v{font-family:var(--ff);font-weight:700;font-size:1.7rem;line-height:1}
+.tstat.efe .v{color:var(--accent)} .tstat.qui .v{color:var(--cyan)}
+.tstat .l{font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:4px}
+.plist{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
+.prow{display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:8px 11px}
+.prow .po{font-family:var(--ff);font-weight:700;font-size:1.05rem;width:38px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:var(--tc);color:#07090e}
+.prow .pn{font-weight:700;font-size:.92rem;display:flex;align-items:center;gap:6px}
+.prow .pr{font-size:.72rem;color:var(--muted);font-family:var(--ff)}
+.prow .ptag{font-size:.58rem;font-weight:800;padding:1px 5px;border-radius:5px;letter-spacing:.04em}
+.coachrow{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px dashed var(--line);border-radius:10px;padding:8px 11px;margin-bottom:14px}
+.coachrow .cova{width:34px;height:34px;border-radius:8px;background:var(--barbg);display:flex;align-items:center;justify-content:center;font-family:var(--ff);font-weight:700}
+.alerts{display:flex;flex-wrap:wrap;gap:6px}
+.al{font-size:.72rem;padding:4px 10px;border-radius:20px;border:1px solid var(--line);background:var(--panel2);color:var(--ink2)}
+.al.ok{color:var(--Lurker);border-color:color-mix(in srgb,var(--Lurker) 40%,var(--line))}
+.al.pen{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
+.alh{width:100%;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:2px}
+
 /* motores */
 .eng-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:2px}
 .eng-head .title{font-family:var(--ff);font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700}
@@ -145,7 +170,8 @@ const tierVar=o=>o>=22?"--t22":o>=21?"--t21":o>=18?"--t18":o>=15?"--t15":"--t14"
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const clone=o=>JSON.parse(JSON.stringify(o));
 
-let E=null, DEF=null, POOLRAW=[], baseSnap=null;
+let E=null, DEF=null, POOLRAW=[], baseSnap=null, baseTeams=null;
+let mode="jogador", teamIdx=0;   // modo do laboratório: jogador | time
 const state={nome:"", fp:70,en:50,tr:50,op:50,cl:50,sn:20,ut:55, rating:1.10, isIGL:false, colocacao:"Campeao"};
 
 async function carregarMotores(){
@@ -153,13 +179,15 @@ async function carregarMotores(){
   const linhas=src.split("\n");
   const cut=linhas.findIndex(l=>l.includes("document.getElementById"));
   const slice=linhas.slice(0,cut).join("\n");
-  E=new Function(slice+"\nreturn {avaliarJogador,afinidades,classificar,ovrUnificado,curvaOVR,dot,ratingScore,clipOVR,distribuirRoles,CFG_AVALIACAO,ROLE_PERFIL,SUBARQ,TEAMS};")();
-  DEF={CFG:clone(E.CFG_AVALIACAO),ROLE:clone(E.ROLE_PERFIL),SUB:clone(E.SUBARQ)};   // padrões p/ reset e comparação
+  E=new Function(slice+"\nreturn {avaliarJogador,afinidades,classificar,ovrUnificado,curvaOVR,dot,ratingScore,clipOVR,distribuirRoles,forcaTime,quimicaComposicao,CFG_AVALIACAO,ROLE_PERFIL,SUBARQ,CFG_QUIMICA,TEAMS};")();
+  DEF={CFG:clone(E.CFG_AVALIACAO),ROLE:clone(E.ROLE_PERFIL),SUB:clone(E.SUBARQ),QUI:clone(E.CFG_QUIMICA)};   // padrões p/ reset e comparação
   E.TEAMS.forEach((t,ti)=>t.jogadores.forEach((j,pi)=>{const e=j._eng;
     POOLRAW.push({nome:e.nome,time:t.nome,ti,pi,fp:e.fp,en:e.en,tr:e.tr,op:e.op,cl:e.cl,sn:e.sn,ut:e.ut,rating:e.rating,isIGL:!!e.isIGL,colocacao:e.colocacao||"Campeao"});}));
-  baseSnap=avaliarTodos(); // snapshot com os pesos padrão
+  baseSnap=avaliarTodos(); baseTeams=forcaTodos(); // snapshots com os pesos padrão
 }
 function avaliarTodos(){return POOLRAW.map(p=>{const a=E.avaliarJogador(p);return {prim:a.primario,ovr:a.ovr};});}
+function teamForca(t){const js=t.jogadores.map(j=>j._eng);const tr=t.treinador;return E.forcaTime(js,tr&&tr.carac,tr&&tr.ovr);}
+function forcaTodos(){return E.TEAMS.map(t=>{const f=teamForca(t);return {quim:f.quimica,efet:f.efetiva};});}
 
 // contexto de time do jogador carregado (pra mostrar o papel REAL, com teto de AWP + cap-2)
 let ctx=null; // {idx, team:[5 raw stats]}
@@ -250,9 +278,13 @@ function renderImpact(){
       lista.push(`${POOLRAW[i].nome} <b>${partes.join(" · ")}</b>`);
     }
   }
+  // impacto de time (química/força efetiva)
+  let dq=0,de=0; if(baseTeams){const nt=forcaTodos();
+    for(let i=0;i<nt.length;i++){if(nt[i].quim!==baseTeams[i].quim)dq++;if(nt[i].efet!==baseTeams[i].efet)de++;}}
   const el=document.getElementById("impact"); if(!el)return;
-  el.className="impact"+(df===0&&dovr===0?" zero":"");
-  el.innerHTML=`Impacto no elenco (vs. padrão): <b>${df}</b> mudaram de <b>função</b> · <b>${dovr}</b> mudaram de <b>OVR</b> (de ${agora.length} jogadores)`;
+  const tudoZero=df===0&&dovr===0&&de===0;
+  el.className="impact"+(tudoZero?" zero":"");
+  el.innerHTML=`Impacto (vs. padrão): <b>${df}</b> func · <b>${dovr}</b> OVR (de ${agora.length} jogadores) · <b>${de}</b> times com força efetiva diferente`;
   const ch=document.getElementById("changed"); if(!ch)return;
   if(!lista.length){ch.hidden=true; ch.innerHTML="";}
   else{ch.hidden=false; const N=20;
@@ -265,7 +297,7 @@ function setDirty(inp,def,val){inp.classList.toggle("dirty",Math.abs(val-def)>1e
 function numInput(get,set,def,step){
   const inp=document.createElement("input"); inp.type="number"; inp.step=step; inp.value=get();
   setDirty(inp,def,+get());
-  inp.oninput=()=>{const v=parseFloat(inp.value); if(!isNaN(v)){set(v); setDirty(inp,def,v); renderPlayer(); renderImpact();}};
+  inp.oninput=()=>{const v=parseFloat(inp.value); if(!isNaN(v)){set(v); setDirty(inp,def,v); refresh();}};
   return inp;
 }
 function grpParams(titulo,campos){ // campos: [{label,get,set,def,step}]
@@ -321,8 +353,8 @@ function restaurar(){
   // copia os padrões de volta PARA OS MESMOS objetos (os motores seguram a referência)
   const cp=(dst,src)=>{Object.keys(dst).forEach(k=>{if(!(k in src))return; if(typeof dst[k]==="object"&&dst[k])cp(dst[k],src[k]); else dst[k]=src[k];});
     Object.keys(src).forEach(k=>{if(!(k in dst))dst[k]=clone(src[k]);});};
-  cp(E.CFG_AVALIACAO,DEF.CFG); cp(E.ROLE_PERFIL,DEF.ROLE); cp(E.SUBARQ,DEF.SUB);
-  buildTuning(); renderPlayer(); renderImpact();
+  cp(E.CFG_AVALIACAO,DEF.CFG); cp(E.ROLE_PERFIL,DEF.ROLE); cp(E.SUBARQ,DEF.SUB); cp(E.CFG_QUIMICA,DEF.QUI);
+  buildTuning(); refresh();
 }
 
 // diff dos pesos vs. padrão → texto pra colar no chat
@@ -335,6 +367,7 @@ function diffPesos(){
   walk(DEF.CFG,E.CFG_AVALIACAO,"CFG_AVALIACAO");
   walk(DEF.ROLE,E.ROLE_PERFIL,"ROLE_PERFIL");
   walk(DEF.SUB,E.SUBARQ,"SUBARQ");
+  walk(DEF.QUI,E.CFG_QUIMICA,"CFG_QUIMICA");
   return out;
 }
 function toast(msg){let t=document.querySelector(".toast");if(!t){t=document.createElement("div");t.className="toast";document.body.appendChild(t);}
@@ -385,6 +418,17 @@ function buildTuning(){
     {label:"Vers. peso",get:()=>C.VERS_W,set:v=>C.VERS_W=v,def:D.VERS_W,step:.05},
     {label:"Vers. teto",get:()=>C.VERS_CAP,set:v=>C.VERS_CAP=v,def:D.VERS_CAP,step:.5},
   ]));
+  // química (SINAPSE)
+  const Q=E.CFG_QUIMICA, DQ=DEF.QUI;
+  wrap.appendChild(grpParams("Química · SINAPSE",[
+    {label:"pen. sem IGL",get:()=>Q.PEN.semIGL,set:v=>Q.PEN.semIGL=v,def:DQ.PEN.semIGL,step:.01},
+    {label:"pen. sem AWP",get:()=>Q.PEN.semAWP,set:v=>Q.PEN.semAWP=v,def:DQ.PEN.semAWP,step:.01},
+    {label:"pen. sem Âncora",get:()=>Q.PEN.semAncora,set:v=>Q.PEN.semAncora=v,def:DQ.PEN.semAncora,step:.01},
+    {label:"pen. sem Iniciativa",get:()=>Q.PEN.semIniciativa,set:v=>Q.PEN.semIniciativa=v,def:DQ.PEN.semIniciativa,step:.01},
+    {label:"talento recupera (máx)",get:()=>Q.TALENTO.recMax,set:v=>Q.TALENTO.recMax=v,def:DQ.TALENTO.recMax,step:.05},
+    {label:"química mínima",get:()=>Q.QUIMICA_MIN,set:v=>Q.QUIMICA_MIN=v,def:DQ.QUIMICA_MIN,step:.05},
+    {label:"treinador · por ponto",get:()=>Q.TREINADOR_FORCA.porPonto,set:v=>Q.TREINADOR_FORCA.porPonto=v,def:DQ.TREINADOR_FORCA.porPonto,step:.005},
+  ]));
   box.appendChild(wrap);
   // AVANÇADO (recolhido): matriz de pesos por função + assinaturas de sub
   const advBtn=document.createElement("button"); advBtn.className="btn advbtn"; advBtn.type="button";
@@ -399,28 +443,22 @@ function buildTuning(){
   box.appendChild(advBtn); box.appendChild(adv);
 }
 
+/* ————— refresh do modo ativo ————— */
+function refresh(){ if(mode==="time")renderTeam(); else renderPlayer(); renderImpact(); }
+
 /* ————— UI base ————— */
 function montarUI(){
   const app=document.getElementById("app");
   app.className="";
   app.innerHTML=`
-    <div class="grid">
-      <div class="card">
-        <h2>Atributos do jogador</h2>
-        <div class="field"><label for="f_nome">Nome</label><input type="text" id="f_nome" style="flex:1" placeholder="(opcional)" value="${esc(state.nome)}"></div>
-        ${STATS.map(([k,l])=>`<div class="field"><label for="r_${k}">${l}</label>
-          <input type="range" id="r_${k}" min="0" max="100" value="${state[k]}">
-          <input type="number" id="n_${k}" class="num mono" min="0" max="100" value="${state[k]}"></div>`).join("")}
-        <div class="field"><label for="r_rating">Rating</label>
-          <input type="range" id="r_rating" min="0.50" max="2.00" step="0.01" value="${state.rating}">
-          <input type="number" id="n_rating" class="num mono" min="0.50" max="2.00" step="0.01" value="${state.rating}"></div>
-        <div class="row2">
-          <label class="chk"><input type="checkbox" id="c_igl" ${state.isIGL?"checked":""}> É IGL</label>
-          <label class="chk">Conquista: <select id="s_coloc">${COLOC.map(c=>`<option value="${c}" ${c===state.colocacao?"selected":""}>${c}</option>`).join("")}</select></label>
-        </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap">
+      <div class="modeseg" role="group" aria-label="Modo">
+        <button id="mJog" class="${mode==='jogador'?'on':''}">Jogador</button>
+        <button id="mTime" class="${mode==='time'?'on':''}">Time</button>
       </div>
-      <div class="card out" id="out"></div>
+      <span class="hint" style="margin:0">Jogador = 1 atleta (função/sub/OVR). Time = química, força efetiva e alertas (SINAPSE).</span>
     </div>
+    <div id="modebox"></div>
     <div class="card">
       <div class="eng-head">
         <span class="title">⚙ Motores · pesos & fórmulas</span>
@@ -430,21 +468,14 @@ function montarUI(){
           <button class="btn accent" id="engReset" hidden>Restaurar padrões</button>
         </div>
       </div>
-      <div class="hint">Edite o que os motores usam pra decidir função, sub e OVR. Vale pra TODOS os jogadores — a lista abaixo mostra quem mudou. Só neste laboratório; o jogo não muda. Quando gostar, use <b>Copiar mudanças</b> e cole no chat pra eu aplicar.</div>
+      <div class="hint">Edite o que os motores usam pra decidir função, sub, OVR e química. Vale pra TODO o elenco — a lista abaixo mostra quem mudou. Só neste laboratório; o jogo não muda. Quando gostar, use <b>Copiar mudanças</b> e cole no chat.</div>
       <div class="impact zero" id="impact" hidden></div>
       <div class="changed" id="changed" hidden></div>
       <div id="engbox" hidden></div>
     </div>`;
 
-  STATS.forEach(([k])=>{const r=document.getElementById("r_"+k),n=document.getElementById("n_"+k);
-    const sync=v=>{v=Math.max(0,Math.min(100,+v||0));state[k]=v;r.value=v;n.value=v;renderPlayer();renderImpact();};
-    r.oninput=()=>sync(r.value); n.oninput=()=>sync(n.value);});
-  const rr=document.getElementById("r_rating"),nr=document.getElementById("n_rating");
-  const syncR=v=>{v=Math.max(0.5,Math.min(2,+v||0.5));state.rating=+v.toFixed(2);rr.value=state.rating;nr.value=state.rating;renderPlayer();renderImpact();};
-  rr.oninput=()=>syncR(rr.value); nr.oninput=()=>syncR(nr.value);
-  document.getElementById("f_nome").oninput=e=>{state.nome=e.target.value;renderPlayer();};
-  document.getElementById("c_igl").onchange=e=>{state.isIGL=e.target.checked;renderPlayer();renderImpact();};
-  document.getElementById("s_coloc").onchange=e=>{state.colocacao=e.target.value;renderPlayer();renderImpact();};
+  document.getElementById("mJog").onclick=()=>{if(mode!=="jogador"){mode="jogador";montarUI();}};
+  document.getElementById("mTime").onclick=()=>{if(mode!=="time"){mode="time";montarUI();}};
 
   const box=document.getElementById("engbox"),imp=document.getElementById("impact"),ch=document.getElementById("changed"),
     tgl=document.getElementById("engToggle"),rst=document.getElementById("engReset"),cpy=document.getElementById("copyBtn");
@@ -453,6 +484,75 @@ function montarUI(){
     if(aberto){buildTuning();renderImpact();} else ch.hidden=true;};
   rst.onclick=restaurar;
   cpy.onclick=copiarMudancas;
+
+  renderMode();
+}
+
+function renderMode(){
+  const mb=document.getElementById("modebox");
+  if(mode==="jogador"){
+    mb.innerHTML=`
+      <div class="grid">
+        <div class="card">
+          <h2>Atributos do jogador</h2>
+          <div class="field"><label for="f_nome">Nome</label><input type="text" id="f_nome" style="flex:1" placeholder="(opcional)" value="${esc(state.nome)}"></div>
+          ${STATS.map(([k,l])=>`<div class="field"><label for="r_${k}">${l}</label>
+            <input type="range" id="r_${k}" min="0" max="100" value="${state[k]}">
+            <input type="number" id="n_${k}" class="num mono" min="0" max="100" value="${state[k]}"></div>`).join("")}
+          <div class="field"><label for="r_rating">Rating</label>
+            <input type="range" id="r_rating" min="0.50" max="2.00" step="0.01" value="${state.rating}">
+            <input type="number" id="n_rating" class="num mono" min="0.50" max="2.00" step="0.01" value="${state.rating}"></div>
+          <div class="row2">
+            <label class="chk"><input type="checkbox" id="c_igl" ${state.isIGL?"checked":""}> É IGL</label>
+            <label class="chk">Conquista: <select id="s_coloc">${COLOC.map(c=>`<option value="${c}" ${c===state.colocacao?"selected":""}>${c}</option>`).join("")}</select></label>
+          </div>
+        </div>
+        <div class="card out" id="out"></div>
+      </div>`;
+    STATS.forEach(([k])=>{const r=document.getElementById("r_"+k),n=document.getElementById("n_"+k);
+      const sync=v=>{v=Math.max(0,Math.min(100,+v||0));state[k]=v;r.value=v;n.value=v;renderPlayer();renderImpact();};
+      r.oninput=()=>sync(r.value); n.oninput=()=>sync(n.value);});
+    const rr=document.getElementById("r_rating"),nr=document.getElementById("n_rating");
+    const syncR=v=>{v=Math.max(0.5,Math.min(2,+v||0.5));state.rating=+v.toFixed(2);rr.value=state.rating;nr.value=state.rating;renderPlayer();renderImpact();};
+    rr.oninput=()=>syncR(rr.value); nr.oninput=()=>syncR(nr.value);
+    document.getElementById("f_nome").oninput=e=>{state.nome=e.target.value;renderPlayer();};
+    document.getElementById("c_igl").onchange=e=>{state.isIGL=e.target.checked;renderPlayer();renderImpact();};
+    document.getElementById("s_coloc").onchange=e=>{state.colocacao=e.target.value;renderPlayer();renderImpact();};
+    renderPlayer();
+  }else{
+    mb.innerHTML=`<div class="card">
+      <h2>Química de time · SINAPSE</h2>
+      <div class="teamsel"><span class="hint" style="margin:0;font-weight:700">Time:</span><select id="teamSel"></select></div>
+      <div id="teamout"></div></div>`;
+    const sel=document.getElementById("teamSel");
+    E.TEAMS.forEach((t,i)=>{const o=document.createElement("option");o.value=i;o.textContent=t.nome+" · "+t.camp;if(i===teamIdx)o.selected=true;sel.appendChild(o);});
+    sel.onchange=()=>{teamIdx=+sel.value;renderTeam();};
+    renderTeam();
+  }
+  renderImpact();
+}
+
+function renderTeam(){
+  const t=E.TEAMS[teamIdx], f=teamForca(t), tr=t.treinador, rc=r=>`var(--${r})`;
+  const players=t.jogadores.map(j=>j._eng).slice().sort((a,b)=>b.ovr-a.ovr);
+  const prows=players.map(e=>`<div class="prow" style="--tc:var(${tierVar(e.ovr)})">
+      <div class="po">${e.ovr}</div>
+      <div><div class="pn">${e.estrela?'<span class="star">★</span>':''}${esc(e.nome)}${e.isIGL?' <span class="ptag" style="color:var(--IGL);border:1px solid color-mix(in srgb,var(--IGL) 45%,transparent)">IGL</span>':''}</div>
+        <div class="pr" style="color:${rc(e.primario)}">${e.primario} <span style="color:var(--muted)">/ ${e.secundario}</span> · ${esc(e.sub&&e.sub.nome||'—')}</div></div>
+      <div class="pr mono">r ${e.rating}</div></div>`).join("");
+  const coach = tr
+    ? `<div class="coachrow"><div class="cova mono">${tr.ovr}</div><div><div class="pn">${esc(tr.nick)} <span class="ptag" style="color:var(--muted);border:1px solid var(--line)">treinador</span></div><div class="pr">${esc(tr.carac||'—')}</div></div></div>`
+    : `<div class="coachrow"><div class="pr" style="color:var(--faint)">sem treinador</div></div>`;
+  const alHTML=f.alertas.map(a=>`<span class="al ${a.includes("−")?"pen":"ok"}">${esc(a)}</span>`).join("");
+  document.getElementById("teamout").innerHTML=`
+    <div class="tstats">
+      <div class="tstat"><div class="v mono">${f.bruta}</div><div class="l">Força bruta · Σ OVR</div></div>
+      <div class="tstat qui"><div class="v mono">${Math.round(f.quimica*100)}%</div><div class="l">Química</div></div>
+      <div class="tstat efe"><div class="v mono">${f.efetiva}</div><div class="l">Força efetiva</div></div>
+    </div>
+    ${coach}
+    <div class="plist">${prows}</div>
+    <div class="alerts"><div class="alh">Composição · pilares, saturação, egos</div>${alHTML}</div>`;
 }
 
 (async()=>{
@@ -462,8 +562,8 @@ function montarUI(){
     POOLRAW.forEach((p,i)=>{const o=document.createElement("option");o.value=i;o.textContent=p.nome+" — "+p.time;sel.appendChild(o);});
     sel.onchange=()=>{if(sel.value==="")return;const p=POOLRAW[+sel.value];
       Object.assign(state,{nome:p.nome,fp:p.fp,en:p.en,tr:p.tr,op:p.op,cl:p.cl,sn:p.sn,ut:p.ut,rating:p.rating,isIGL:p.isIGL,colocacao:p.colocacao});
-      setCtx(p); montarUI();renderPlayer();};
-    montarUI();renderPlayer();
+      setCtx(p); mode="jogador"; montarUI();};
+    montarUI();
   }catch(err){
     document.getElementById("app").innerHTML='<div class="loading err">Não deu pra carregar os motores: '+esc(err.message)+'<br><br>Abra pela URL do site (github.io), não pelo arquivo local.</div>';
   }
