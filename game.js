@@ -190,10 +190,15 @@ function distribuirRoles(engs){
   const sc=new Map(naoIgl.map(e=>[e,afinidades(e)])); // mesma afinidade do PRISMA (fonte única)
   const cand=[];naoIgl.forEach(e=>ROLES_COMBATE.forEach(r=>cand.push({e,r,s:sc.get(e)[r]})));
   cand.sort((a,b)=>b.s-a.s);
+  const capRole=r=>r==="AWPer"?1:2;              // TETO: só 1 AWPer primário por time; demais funções cap 2
   const count={};ROLES_COMBATE.forEach(r=>count[r]=0);const prim=new Map();
-  cand.forEach(c=>{if(prim.has(c.e)||count[c.r]>=2)return;prim.set(c.e,c.r);count[c.r]++;}); // cap 2 só no primário
+  cand.forEach(c=>{if(prim.has(c.e)||count[c.r]>=capRole(c.r))return;prim.set(c.e,c.r);count[c.r]++;});
+  const melhorRole=e=>{const s=sc.get(e);return ROLES_COMBATE.reduce((b,r)=>s[r]>s[b]?r:b,ROLES_COMBATE[0]);};
   naoIgl.forEach(e=>{const p=prim.get(e),s=sc.get(e);const ord=ROLES_COMBATE.slice().sort((a,b)=>s[b]-s[a]);
-    e.primario=p;e.secundario=ord.find(r=>r!==p);e.secForte=(s[e.secundario]/Math.max(1,s[p]))>=.82;});
+    e.primario=p;e.secundario=ord.find(r=>r!==p);
+    // regra do teto de AWP: quem PEGARIA AWPer primário mas foi barrado → AWPer é forçado como função 2 (sempre)
+    if(p!=="AWPer"&&melhorRole(e)==="AWPer")e.secundario="AWPer";
+    e.secForte=(s[e.secundario]/Math.max(1,s[p]))>=.82;});
   // AWP: ninguém AWPer (primário, nem IGL com AWP no role 2)? → maior sn assume (role 1; role 2 se IGL)
   if(!engs.some(j=>j.primario==="AWPer"||(j.primario==="IGL"&&j.secundario==="AWPer"))){
     const notaAWP=j=>(j.sn??0)*1000+(j.op??0)+(j.fp??0)*.5; // desempate: sn manda; empate (ex.: todos 0) → melhor abertura/fogo pega a AWP
@@ -347,17 +352,17 @@ const ATRIBUTOS=[
   {nome:"FalleN",fp:68,en:46,tr:17,op:78,cl:51,sn:95,ut:55,rating:1.19,colocacao:"Campeao",isIGL:true},
   {nome:"fnx",fp:79,en:48,tr:24,op:52,cl:33,sn:0,ut:82,rating:1.19,colocacao:"Campeao",isIGL:false},
   {nome:"fer",fp:72,en:25,tr:10,op:89,cl:32,sn:0,ut:17,rating:1.12,colocacao:"Campeao",isIGL:false},
-  {nome:"kennyS",fp:88,en:15,tr:35,op:75,cl:55,sn:96,ut:20,rating:1.31,colocacao:"Campeao",isIGL:false}, // curadoria 2026: era Rating 1.0 → escala atual
-  {nome:"NBK-",fp:62,en:50,tr:60,op:55,cl:58,sn:20,ut:72,rating:1.14,colocacao:"Campeao",isIGL:false},
-  {nome:"Happy",fp:58,en:28,tr:44,op:58,cl:58,sn:10,ut:52,rating:1.14,colocacao:"Campeao",isIGL:true},
-  {id:"apEX_envy",nome:"apEX",fp:72,en:85,tr:50,op:80,cl:35,sn:0,ut:45,rating:1.11,colocacao:"Campeao",isIGL:false},
-  {nome:"kioShiMa",fp:60,en:45,tr:58,op:50,cl:45,sn:15,ut:70,rating:1.07,colocacao:"Campeao",isIGL:false},
+  {nome:"kennyS",fp:94,en:46,tr:52,op:96,cl:63,sn:98,ut:28,rating:1.23,colocacao:"Campeao",isIGL:false},
+  {nome:"NBK-",fp:79,en:44,tr:81,op:36,cl:68,sn:5,ut:72,rating:1.14,colocacao:"Campeao",isIGL:false},
+  {nome:"Happy",fp:65,en:11,tr:39,op:40,cl:43,sn:12,ut:54,rating:1.10,colocacao:"Campeao",isIGL:true},
+  {id:"apEX_envy",nome:"apEX",fp:77,en:97,tr:41,op:89,cl:24,sn:1,ut:42,rating:1.11,colocacao:"Campeao",isIGL:false},
+  {nome:"kioShiMa",fp:61,en:52,tr:61,op:32,cl:49,sn:0,ut:64,rating:1.07,colocacao:"Campeao",isIGL:false},
   // Virtus.pro · EMS One Katowice 2014 (curadoria: era Rating 1.0 traduzida pra escala atual, por papel real)
-  {nome:"pashaBiceps",pais:"POL",fp:88,en:40,tr:50,op:85,cl:65,sn:90,ut:35,rating:1.38,colocacao:"Campeao",isIGL:false}, // A AWP do time, MVP do major
-  {nome:"NEO",pais:"POL",fp:86,en:45,tr:58,op:82,cl:62,sn:20,ut:50,rating:1.16,colocacao:"Campeao",isIGL:false},
-  {nome:"Snax",pais:"POL",fp:78,en:35,tr:50,op:72,cl:78,sn:22,ut:75,rating:1.20,colocacao:"Campeao",isIGL:false},
-  {nome:"byali",pais:"POL",fp:68,en:55,tr:62,op:58,cl:55,sn:12,ut:70,rating:1.31,colocacao:"Campeao",isIGL:false},
-  {nome:"TaZ",pais:"POL",fp:30,en:40,tr:44,op:36,cl:46,sn:8,ut:45,rating:0.85,colocacao:"Campeao",isIGL:true},
+  {nome:"pashaBiceps",pais:"POL",fp:88,en:41,tr:48,op:92,cl:68,sn:81,ut:36,rating:1.38,colocacao:"Campeao",isIGL:false}, // A AWP do time, MVP do major
+  {nome:"NEO",pais:"POL",fp:66,en:34,tr:77,op:42,cl:78,sn:6,ut:71,rating:1.16,colocacao:"Campeao",isIGL:false},
+  {nome:"Snax",pais:"POL",fp:72,en:44,tr:82,op:78,cl:94,sn:18,ut:54,rating:1.20,colocacao:"Campeao",isIGL:false},
+  {nome:"byali",pais:"POL",fp:75,en:81,tr:55,op:68,cl:48,sn:1,ut:32,rating:1.31,colocacao:"Campeao",isIGL:false},
+  {nome:"TaZ",pais:"POL",fp:23,en:36,tr:32,op:25,cl:42,sn:0,ut:66,rating:0.85,colocacao:"Campeao",isIGL:true},
   {nome:"tarik",fp:93,en:42,tr:59,op:53,cl:25,sn:24,ut:49,rating:1.22,colocacao:"Campeao",isIGL:true},
   {nome:"autimatic",fp:89,en:58,tr:37,op:53,cl:28,sn:14,ut:42,rating:1.20,colocacao:"Campeao",isIGL:false},
   {nome:"RUSH",fp:68,en:84,tr:88,op:27,cl:47,sn:0,ut:43,rating:1.16,colocacao:"Campeao",isIGL:false},
@@ -420,7 +425,7 @@ const TIMES_DEF=[
   {nome:"Vitality",cor:"#f5d020",coach:"XTQZZZ",camp:"Budapest Major 2025",colocacao:"Campeao",jogadores:["ZywOo","ropz","mezii","flameZ","apEX"]},
   {nome:"Spirit",cor:"#b06cff",coach:"hally",camp:"Budapest Major 2025",colocacao:"Top4",jogadores:["donk","sh1ro","tN1R","zweih","chopper"]},
   {nome:"MongolZ",cor:"#ff3b54",coach:"maaRaa",camp:"Budapest Major 2025",colocacao:"Top8",jogadores:["mzinho","bLitz","910","controlez","Techno"]},
-  {nome:"Envy",cor:"#00b4a0",coach:null,camp:"DreamHack Cluj-Napoca 2015",colocacao:"Campeao",jogadores:["kennyS","NBK-","Happy","apEX_envy","kioShiMa"]},
+  {nome:"EnVyUs",cor:"#00b4a0",coach:null,camp:"DreamHack Cluj-Napoca 2015",colocacao:"Campeao",jogadores:["kennyS","NBK-","Happy","apEX_envy","kioShiMa"]},
   {nome:"Cloud9",cor:"#00aeef",coach:"valens",camp:"ELEAGUE Major Boston 2018",colocacao:"Campeao",jogadores:["tarik","autimatic","RUSH","Skadoodle","Stewie2K"]},
   {nome:"FaZe",cor:"#e43d30",coach:"RobbaN",camp:"ESL One New York 2017",colocacao:"Campeao",jogadores:["NiKo","rain","GuardiaN","olofmeister","karrigan"]},
   {nome:"Astralis",cor:"#e2231a",coach:"zonic",camp:"IEM Katowice 2019",colocacao:"Campeao",jogadores:["device","Xyp9x","Magisk","dupreeh","gla1ve"]},
