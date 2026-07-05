@@ -309,7 +309,7 @@ const PAISES_MAP={s1mple:"UKR",electroNic:"RUS",b1t:"UKR",Perfecto:"RUS",Boombl4
   B1ad3:"UKR",Outsiders:"RUS",guerri:"BRA",dead:"BRA",XTQZZZ:"FRA",hally:"RUS",maaRaa:"MNG",dastan:"KAZ",valens:"CAN",zakk:"BRA",Swani:"GER",sidde:"BRA",
   kennyS:"FRA","NBK-":"FRA",Happy:"FRA",apEX_envy:"FRA",kioShiMa:"FRA",
   tarik:"USA",autimatic:"USA",RUSH:"USA",Skadoodle:"USA",Stewie2K:"USA",
-  RobbaN:"SWE",zonic:"DEN"};
+  RobbaN:"SWE",zonic:"DEN",kakafu:"AUT"};
 
 const ATRIBUTOS=[
   {nome:"s1mple",fp:100,en:25,tr:30,op:93,cl:24,sn:87,ut:50,rating:1.47,colocacao:"Campeao",isIGL:false},
@@ -396,7 +396,13 @@ const ATRIBUTOS=[
   {nome:"YEKINDAR",pais:"LVA",fp:73,en:62,tr:3,op:91,cl:21,sn:0,ut:47,rating:1.11,colocacao:"Campeao",isIGL:false},
   {id:"yuurih_furia25",nome:"yuurih",pais:"BRA",fp:67,en:49,tr:39,op:18,cl:50,sn:0,ut:72,rating:1.13,colocacao:"Campeao",isIGL:false},
   {id:"KSCERATO_furia25",nome:"KSCERATO",pais:"BRA",fp:85,en:25,tr:36,op:77,cl:53,sn:0,ut:91,rating:1.23,colocacao:"Campeao",isIGL:false},
-  {nome:"molodoy",pais:"KAZ",fp:93,en:5,tr:61,op:70,cl:89,sn:96,ut:55,rating:1.27,colocacao:"Campeao",isIGL:false}
+  {nome:"molodoy",pais:"KAZ",fp:93,en:5,tr:61,op:70,cl:89,sn:96,ut:55,rating:1.27,colocacao:"Campeao",isIGL:false},
+  // ——— BIG · ESL One Cologne 2018 (Vice-campeão) ———
+  {nome:"tabseN",pais:"GER",fp:90,en:33,tr:13,op:82,cl:46,sn:84,ut:89,rating:1.18,colocacao:"Final",isIGL:false},
+  {nome:"nex",pais:"GER",fp:88,en:34,tr:69,op:31,cl:32,sn:0,ut:87,rating:1.10,colocacao:"Final",isIGL:false},
+  {nome:"tiziaN",pais:"GER",fp:30,en:56,tr:22,op:27,cl:87,sn:0,ut:77,rating:1.01,colocacao:"Final",isIGL:false},
+  {nome:"smooya",pais:"GBR",fp:39,en:3,tr:11,op:84,cl:66,sn:94,ut:56,rating:1.00,colocacao:"Final",isIGL:false},
+  {nome:"gob b",pais:"GER",fp:12,en:39,tr:34,op:28,cl:39,sn:8,ut:90,rating:0.91,colocacao:"Final",isIGL:true}
 ];
 // Cada jogador recebe um ID único automático. O "nome" é só display (pode repetir:
 // o mesmo jogador em times/épocas diferentes são entradas distintas com stats próprios).
@@ -421,7 +427,8 @@ const TIMES_DEF=[
   {nome:"G2",cor:"#e4002b",coach:"Swani",camp:"IEM Sydney 2023",colocacao:"Top4",jogadores:["m0NESY","jks","NiKo_g2","huNter-","HooXi"]},
   {nome:"Spirit",cor:"#7d8aa0",coach:"hally",camp:"IEM Katowice 2024",colocacao:"Campeao",jogadores:["donk_kato24","sh1ro_kato24","zont1x","magixx","chopper_kato24"]},
   {nome:"FURIA",cor:"#1faa59",coach:"sidde",camp:"IEM Chengdu 2025",colocacao:"Campeao",jogadores:["FalleN_furia25","YEKINDAR","yuurih_furia25","KSCERATO_furia25","molodoy"]},
-  {nome:"Virtus.pro",cor:"#f0a020",coach:null,camp:"EMS One Katowice 2014",colocacao:"Campeao",jogadores:["pashaBiceps","NEO","Snax","byali","TaZ"]}
+  {nome:"Virtus.pro",cor:"#f0a020",coach:null,camp:"EMS One Katowice 2014",colocacao:"Campeao",jogadores:["pashaBiceps","NEO","Snax","byali","TaZ"]},
+  {nome:"BIG",cor:"#e9edf3",coach:"kakafu",camp:"ESL One Cologne 2018",colocacao:"Final",jogadores:["tabseN","nex","tiziaN","smooya","gob b"]}
 ];
 
 const CARAC_SLUG={Gestor:"gestor",Estrategista:"estrategista",Desenvolvedor:"desenvolvedor",Motivador:"motivador"};
@@ -1550,7 +1557,7 @@ function iniciarTorneio(){
   let fora=15,melhor=0;
   npc.forEach((t,i)=>{const o=overlap(t);if(o>melhor){melhor=o;fora=i;}});
   npc.splice(fora,1);
-  const base=npc.map(t=>{const r=efT(t);
+  const base=npc.slice(0,15).map(t=>{const r=efT(t);         // teto de 15 NPC (independe de quantos times existam) → Major sempre 16
     return {time:t,nome:t.nome,cor:t.cor,camp:t.camp,ef:r.efetiva,quim:r.quimica,v:0,d:0,vivo:true,hist:[]};});
   base.push(montarMeuTime());
   TG.times=base;TG.rodada=0;TG.classificados=[];TG.eliminados=[];TG.playoffs=null;
