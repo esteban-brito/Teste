@@ -481,19 +481,40 @@ function nmOVR(p,role,forced){const s6=nmStats6(p,role),style=forced||nmDetect(s
   const core=wR*E.ratingScore(p.rating)+(1-wR)*statScore;
   return {style,ovr:E.curvaOVR(core),wR,statScore,core,s6};}
 function nmTodos(){return POOLRAW.map((_,i)=>{const p=playerAt(i);const o=nmOVR(p,nmRealRole(p));return{style:o.style,ovr:o.ovr};});}
-function calcularQuimicaNova(estilos){
+function calcularQuimicaNova(estilos, qtdEstrelas, coach){
   let quimica=1.0, alertas=[];
   const qtd={}; estilos.forEach(e=>qtd[e]=(qtd[e]||0)+1);
-  const temCoringa=qtd["Coringa"]>0; let pen=0;
-  if((qtd["Agressivo"]||qtd["Spacetaker"])&&qtd["Suporte"]){quimica+=0.05;alertas.push("Ponta de Lança (+5%)");}
-  if(qtd["Agressivo"]&&qtd["Trader"]){quimica+=0.05;alertas.push("Dupla Dinâmica (+5%)");}
-  if(qtd["Infiltrador"]&&qtd["Cerebral"]){quimica+=0.05;alertas.push("Rede de Informação (+5%)");}
-  if(qtd["Âncora"]&&qtd["Clutcher"]){quimica+=0.05;alertas.push("Retake Perfeito (+5%)");}
-  if((qtd["Playmaker"]||0)+(qtd["Baiter"]||0)>=3){pen+=0.15;alertas.push("Choque de Egos (−15%)");}
-  if(!qtd["Agressivo"]&&!qtd["Spacetaker"]){pen+=0.10;alertas.push("Covardia Tática (−10%)");}
+  const temCoringa=qtd["Coringa"]>0; let pen=0, sinergias=0;
+
+  // 1. Sinergias Base
+  if((qtd["Agressivo"]||qtd["Spacetaker"])&&qtd["Suporte"]){quimica+=0.05;sinergias++;alertas.push("Ponta de Lança (+5%)");}
+  if(qtd["Agressivo"]&&qtd["Trader"]){quimica+=0.05;sinergias++;alertas.push("Dupla Dinâmica (+5%)");}
+  if(qtd["Infiltrador"]&&qtd["Cerebral"]){quimica+=0.05;sinergias++;alertas.push("Rede de Informação (+5%)");}
+  if(qtd["Âncora"]&&qtd["Clutcher"]){quimica+=0.05;sinergias++;alertas.push("Retake Perfeito (+5%)");}
+
+  // 2. Conflitos Base (Tática vs Ego)
+  let satPlaymakers=(qtd["Playmaker"]||0)+(qtd["Baiter"]||0)>=3;
+  let covardia=!qtd["Agressivo"]&&!qtd["Spacetaker"];
+  let guerraEstrelas=qtdEstrelas>=3; // O problema de vestiário
+
+  if(satPlaymakers){pen+=0.15;alertas.push("Saturação de Playmakers (−15%)");}
+  if(covardia){pen+=0.10;alertas.push("Covardia Tática (−10%)");}
   if((qtd["Infiltrador"]||0)>=2){pen+=0.10;alertas.push("Invasão de Espaço (−10%)");}
   if(!qtd["Âncora"]){pen+=0.10;alertas.push("Defesa de Papel (−10%)");}
-  if(temCoringa&&pen>0){pen/=2;alertas.push("Coringa mitigou conflitos!");}
+  if(guerraEstrelas){pen+=0.15;alertas.push("Guerra de Estrelas (−15%)");} // Punição de Ego
+
+  // 3. O Fator Treinador (O Gestor foca nas Estrelas)
+  if(coach&&coach.ovr){
+    const f=Math.min(coach.ovr/20, 1.2), c=coach.carac;
+    if(c==="Estrategista"&&sinergias>0){const b=0.04*f*sinergias; quimica+=b; alertas.push(`Prancheta do Estrategista (+${Math.round(b*100)}%)`);}
+    else if(c==="Gestor"&&guerraEstrelas){const m=0.10*f; pen=Math.max(0,pen-m); alertas.push(`Gestor domou os Egos (+${Math.round(m*100)}%)`);}
+    else if(c==="Motivador"&&covardia){const m=0.06*f; pen=Math.max(0,pen-m); alertas.push(`Grito do Motivador (+${Math.round(m*100)}%)`);}
+    else if(c==="Desenvolvedor"&&temCoringa){const b=0.05*f; quimica+=b; alertas.push(`Coringa lapidado (+${Math.round(b*100)}%)`);}
+  }
+
+  // 4. Passiva do Coringa
+  if(temCoringa&&pen>0){pen/=2;alertas.push("Coringa mitigou os conflitos restantes!");}
+  
   return {quimica:Math.max(0.5,quimica-pen), alertas};
 }
 /* controles de atributos reutilizados (jogador + estilos) */
@@ -559,11 +580,13 @@ function renderEstilos(){
     
     // NOVO: Renderiza a química do time se o jogador pertencer a um
     if(ctx){
+      let qtdEstrelas = 0;
       const teamStyles = ctx.team.map((raw, i) => {
         const tempP = i === ctx.idx ? jogadorAtual() : raw;
+        if(E.avaliarJogador(tempP).estrela) qtdEstrelas++; // Conta os Starplayers reais
         return nmOVR(tempP, nmRealRole(tempP), i === ctx.idx ? nmLock||undefined : undefined).style;
       });
-      const q = calcularQuimicaNova(teamStyles);
+      const q = calcularQuimicaNova(teamStyles, qtdEstrelas, ctx.coach); // Passa as estrelas para o cálculo
       out.innerHTML += `<div class="brk" style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
         <div class="h">Química do Time (Motor Novo)</div>
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
