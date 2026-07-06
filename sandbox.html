@@ -481,7 +481,21 @@ function nmOVR(p,role,forced){const s6=nmStats6(p,role),style=forced||nmDetect(s
   const core=wR*E.ratingScore(p.rating)+(1-wR)*statScore;
   return {style,ovr:E.curvaOVR(core),wR,statScore,core,s6};}
 function nmTodos(){return POOLRAW.map((_,i)=>{const p=playerAt(i);const o=nmOVR(p,nmRealRole(p));return{style:o.style,ovr:o.ovr};});}
-
+function calcularQuimicaNova(estilos){
+  let quimica=1.0, alertas=[];
+  const qtd={}; estilos.forEach(e=>qtd[e]=(qtd[e]||0)+1);
+  const temCoringa=qtd["Coringa"]>0; let pen=0;
+  if((qtd["Agressivo"]||qtd["Spacetaker"])&&qtd["Suporte"]){quimica+=0.05;alertas.push("Ponta de Lança (+5%)");}
+  if(qtd["Agressivo"]&&qtd["Trader"]){quimica+=0.05;alertas.push("Dupla Dinâmica (+5%)");}
+  if(qtd["Infiltrador"]&&qtd["Cerebral"]){quimica+=0.05;alertas.push("Rede de Informação (+5%)");}
+  if(qtd["Âncora"]&&qtd["Clutcher"]){quimica+=0.05;alertas.push("Retake Perfeito (+5%)");}
+  if((qtd["Playmaker"]||0)+(qtd["Baiter"]||0)>=3){pen+=0.15;alertas.push("Choque de Egos (−15%)");}
+  if(!qtd["Agressivo"]&&!qtd["Spacetaker"]){pen+=0.10;alertas.push("Covardia Tática (−10%)");}
+  if((qtd["Infiltrador"]||0)>=2){pen+=0.10;alertas.push("Invasão de Espaço (−10%)");}
+  if(!qtd["Âncora"]){pen+=0.10;alertas.push("Defesa de Papel (−10%)");}
+  if(temCoringa&&pen>0){pen/=2;alertas.push("Coringa mitigou conflitos!");}
+  return {quimica:Math.max(0.5,quimica-pen), alertas};
+}
 /* controles de atributos reutilizados (jogador + estilos) */
 function atributosCardHTML(){return `<div class="card"><h2>Atributos do jogador</h2>
   <div class="field"><label for="f_nome">Nome</label><input type="text" id="f_nome" style="flex:1" placeholder="(opcional)" value="${esc(state.nome)}"></div>
