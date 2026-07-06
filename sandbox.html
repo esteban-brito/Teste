@@ -183,7 +183,7 @@ async function carregarMotores(){
   DEF={CFG:clone(E.CFG_AVALIACAO),ROLE:clone(E.ROLE_PERFIL),SUB:clone(E.SUBARQ),QUI:clone(E.CFG_QUIMICA)};   // padrões p/ reset e comparação
   E.TEAMS.forEach((t,ti)=>t.jogadores.forEach((j,pi)=>{const e=j._eng;
     POOLRAW.push({nome:e.nome,time:t.nome,ti,pi,fp:e.fp,en:e.en,tr:e.tr,op:e.op,cl:e.cl,sn:e.sn,ut:e.ut,rating:e.rating,isIGL:!!e.isIGL,colocacao:e.colocacao||"Campeao"});}));
-  baseSnap=avaliarTodos(); baseTeams=forcaTodos(); // snapshots com os pesos padrão
+  baseSnap=avaliarTodos(); baseTeams=forcaTodos(); baseNM=nmTodos(); // snapshots com os pesos/receitas padrão
 }
 function avaliarTodos(){return POOLRAW.map(p=>{const a=E.avaliarJogador(p);return {prim:a.primario,ovr:a.ovr};});}
 function teamForca(t){const js=t.jogadores.map(j=>j._eng);const tr=t.treinador;return E.forcaTime(js,tr&&tr.carac,tr&&tr.ovr);}
@@ -443,8 +443,116 @@ function buildTuning(){
   box.appendChild(advBtn); box.appendChild(adv);
 }
 
+/* ===================== NOVO MODELO — protótipo (só laboratório, não toca no jogo) =====================
+   12 estilos UNIVERSAIS (servem pra qualquer função). O OVR sai da RECEITA do estilo.
+   "Fogo" = a arma da função: AWP (sn) pro AWPer (o maior entre sn/fp), fp pro resto. */
+const NM_AXES=[["fogo","Fogo"],["ent","Entrada"],["ab","Abertura"],["tr","Trade"],["cl","Clutch"],["ut","Utilitário"]];
+const NM_DEF={
+  "Agressivo": {w:{ent:.45,ab:.30,fogo:.15,tr:.10}, wR:.40}, // entry que se sacrifica: entrada manda
+  "Spacetaker":{w:{ab:.35,fogo:.35,ent:.30},        wR:.52},
+  "Fragger":   {w:{fogo:.50,ab:.30,tr:.10,cl:.10},  wR:.60},
+  "Reativo":   {w:{cl:.40,ut:.30,fogo:.30},         wR:.48},
+  "Baiter":    {w:{tr:.40,cl:.30,fogo:.30},         wR:.32}, // rating pesa menos (baiter infla rating)
+  "Infiltrador":{w:{cl:.40,ab:.30,fogo:.30},        wR:.52},
+  "Clutcher":  {w:{cl:.55,fogo:.45},                wR:.52},
+  "Refragger": {w:{tr:.45,fogo:.30,ut:.25},         wR:.48},
+  "Suporte":   {w:{ut:.45,tr:.30,ab:.25},           wR:.40},
+  "Cerebral":  {w:{ab:.40,ut:.30,cl:.30},           wR:.52},
+  "Âncora":    {w:{cl:.40,ut:.35,tr:.25},           wR:.45}};
+const NM_COR_DEF={pisoMin:45,spreadMax:32,wR:.50}; // Coringa: piso médio em tudo, sem buraco
+let NM=clone(NM_DEF), NM_COR=clone(NM_COR_DEF), baseNM=null;
+
+function nmRealRole(p){const c=E.classificar(p);return c[0]==="IGL"?(c[1]||"Rifler"):c[0];} // IGL = flag: vale a função de combate
+function nmStats6(p,role){const fogo=role==="AWPer"?Math.max(p.sn||0,p.fp||0):(p.fp||0);
+  return {fogo,ent:p.en||0,ab:p.op||0,tr:p.tr||0,cl:p.cl||0,ut:p.ut||0};}
+function nmDetect(s6){const vals=NM_AXES.map(([k])=>s6[k]),mn=Math.min(...vals),mx=Math.max(...vals);
+  if(mn>=NM_COR.pisoMin&&(mx-mn)<=NM_COR.spreadMax)return "Coringa";          // sem ponto fraco → Coringa
+  let best="Fragger",bs=-1;                                                    // resto: por semelhança de forma (cosseno)
+  for(const nome in NM){const w=NM[nome].w;let dot=0,nw=0,ns=0;
+    for(const [k] of NM_AXES){const wi=w[k]||0,si=s6[k];dot+=wi*si;nw+=wi*wi;ns+=si*si;}
+    const cos=dot/(Math.sqrt(nw*ns)+1e-9);if(cos>bs){bs=cos;best=nome;}}
+  return best;}
+let nmLock=null; // null = auto-detecta o estilo; senão trava no estilo escolhido
+function nmOVR(p,role,forced){const s6=nmStats6(p,role),style=forced||nmDetect(s6);let wR,statScore;
+  if(style==="Coringa"){wR=NM_COR.wR;const vals=NM_AXES.map(([k])=>s6[k]),mean=vals.reduce((a,b)=>a+b,0)/6,mn=Math.min(...vals);statScore=.5*mean+.5*mn;}
+  else{wR=NM[style].wR;statScore=E.dot(NM[style].w,s6);}
+  const core=wR*E.ratingScore(p.rating)+(1-wR)*statScore;
+  return {style,ovr:E.curvaOVR(core),wR,statScore,core,s6};}
+function nmTodos(){return POOLRAW.map(p=>{const o=nmOVR(p,nmRealRole(p));return{style:o.style,ovr:o.ovr};});}
+
+/* controles de atributos reutilizados (jogador + estilos) */
+function atributosCardHTML(){return `<div class="card"><h2>Atributos do jogador</h2>
+  <div class="field"><label for="f_nome">Nome</label><input type="text" id="f_nome" style="flex:1" placeholder="(opcional)" value="${esc(state.nome)}"></div>
+  ${STATS.map(([k,l])=>`<div class="field"><label for="r_${k}">${l}</label><input type="range" id="r_${k}" min="0" max="100" value="${state[k]}"><input type="number" id="n_${k}" class="num mono" min="0" max="100" value="${state[k]}"></div>`).join("")}
+  <div class="field"><label for="r_rating">Rating</label><input type="range" id="r_rating" min="0.50" max="2.00" step="0.01" value="${state.rating}"><input type="number" id="n_rating" class="num mono" min="0.50" max="2.00" step="0.01" value="${state.rating}"></div>
+  <div class="row2"><label class="chk"><input type="checkbox" id="c_igl" ${state.isIGL?"checked":""}> É IGL</label><label class="chk">Conquista: <select id="s_coloc">${COLOC.map(c=>`<option value="${c}" ${c===state.colocacao?"selected":""}>${c}</option>`).join("")}</select></label></div></div>`;}
+function wireAtributos(onChange){
+  STATS.forEach(([k])=>{const r=document.getElementById("r_"+k),n=document.getElementById("n_"+k);
+    const sync=v=>{v=Math.max(0,Math.min(100,+v||0));state[k]=v;r.value=v;n.value=v;onChange();};r.oninput=()=>sync(r.value);n.oninput=()=>sync(n.value);});
+  const rr=document.getElementById("r_rating"),nr=document.getElementById("n_rating");
+  const syncR=v=>{v=Math.max(0.5,Math.min(2,+v||0.5));state.rating=+v.toFixed(2);rr.value=state.rating;nr.value=state.rating;onChange();};
+  rr.oninput=()=>syncR(rr.value);nr.oninput=()=>syncR(nr.value);
+  document.getElementById("f_nome").oninput=e=>{state.nome=e.target.value;onChange();};
+  document.getElementById("c_igl").onchange=e=>{state.isIGL=e.target.checked;onChange();};
+  document.getElementById("s_coloc").onchange=e=>{state.colocacao=e.target.value;onChange();};
+}
+
+function nmInp(get,set,def,step){const inp=document.createElement("input");inp.type="number";inp.step=step;inp.value=get();
+  inp.className=Math.abs(get()-def)>1e-9?"dirty":"";
+  inp.oninput=()=>{const v=parseFloat(inp.value);if(!isNaN(v)){set(v);inp.className=Math.abs(v-def)>1e-9?"dirty":"";renderEstilos();}};return inp;}
+function buildNMStyles(){const box=document.getElementById("nmStyles");if(!box)return;box.innerHTML="";
+  for(const nome in NM){const g=document.createElement("div");g.className="grp";g.innerHTML=`<h3>${esc(nome)}</h3>`;
+    const row=document.createElement("div");row.className="wrow";
+    NM_AXES.forEach(([k,lab])=>{const chip=document.createElement("span");chip.className="wchip";chip.innerHTML=`<span class="wlab">${lab.slice(0,4)}</span>`;
+      chip.appendChild(nmInp(()=>NM[nome].w[k]||0,v=>NM[nome].w[k]=v,(NM_DEF[nome].w[k]||0),.05));row.appendChild(chip);});
+    const cR=document.createElement("span");cR.className="wchip";cR.innerHTML=`<span class="wlab" style="width:auto">rating</span>`;
+    cR.appendChild(nmInp(()=>NM[nome].wR,v=>NM[nome].wR=v,NM_DEF[nome].wR,.05));row.appendChild(cR);
+    g.appendChild(row);box.appendChild(g);}
+  const gc=document.createElement("div");gc.className="grp";gc.innerHTML=`<h3>Coringa · piso</h3>`;const pg=document.createElement("div");pg.className="pgrid";
+  [["piso mínimo",()=>NM_COR.pisoMin,v=>NM_COR.pisoMin=v,NM_COR_DEF.pisoMin,1],["spread máximo",()=>NM_COR.spreadMax,v=>NM_COR.spreadMax=v,NM_COR_DEF.spreadMax,1],["rating",()=>NM_COR.wR,v=>NM_COR.wR=v,NM_COR_DEF.wR,.05]]
+    .forEach(([l,get,set,def,step])=>{const lab=document.createElement("label");lab.textContent=l;pg.appendChild(lab);pg.appendChild(nmInp(get,set,def,step));});
+  gc.appendChild(pg);box.appendChild(gc);}
+function nmCopiar(){const out=[];
+  for(const nome in NM){for(const [k] of NM_AXES){const a=NM_DEF[nome].w[k]||0,b=NM[nome].w[k]||0;if(Math.abs(a-b)>1e-9)out.push(`${nome}.${k}: ${a} → ${b}`);}
+    if(Math.abs(NM_DEF[nome].wR-NM[nome].wR)>1e-9)out.push(`${nome}.rating(wR): ${NM_DEF[nome].wR} → ${NM[nome].wR}`);}
+  ["pisoMin","spreadMax","wR"].forEach(k=>{if(Math.abs(NM_COR_DEF[k]-NM_COR[k])>1e-9)out.push(`Coringa.${k}: ${NM_COR_DEF[k]} → ${NM_COR[k]}`);});
+  const txt=out.length?("Receitas de estilo (protótipo do laboratório):\n"+out.join("\n")):"(nenhuma receita alterada)";
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(()=>toast(out.length?`Copiado (${out.length})!`:"Nada mudado"),()=>prompt("Copie:",txt));else prompt("Copie:",txt);}
+
+function renderEstilos(){
+  const p=jogadorAtual(), role=nmRealRole(p), auto=nmDetect(nmStats6(p,role)), nm=nmOVR(p,role,nmLock||undefined), gameOvr=E.avaliarJogador(p).ovr;
+  const out=document.getElementById("nmout");
+  const opts=`<option value="">Auto (detecta: ${esc(auto)})</option>`+Object.keys(NM).concat("Coringa").map(s=>`<option value="${s}" ${nmLock===s?"selected":""}>${s}</option>`).join("");
+  if(out){ out.innerHTML=`<h2>Resultado · modelo novo</h2>
+    <div class="ovrbox">
+      <div class="ovr" style="--tc:var(${tierVar(nm.ovr)})">${nm.ovr}</div>
+      <div><div class="ovrlab">Overall (novo)</div>
+        <div style="margin-top:5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="al ok" style="font-size:.9rem;padding:5px 12px">${esc(nm.style)}</span>
+          <select id="nmLockSel" style="font-size:.78rem;padding:5px 8px">${opts}</select></div>
+        <div class="pr" style="margin-top:7px;color:var(--muted)">Função: <b style="color:var(--ink2)">${role}</b> · Fogo = ${role==="AWPer"?"AWP":"fp"} (${Math.round(nm.s6.fogo)})</div>
+        <div class="pr" style="color:var(--faint)">OVR no jogo hoje: ${gameOvr} → novo: ${nm.ovr}</div>
+      </div>
+    </div>
+    <div class="brk"><div class="h">Receita do estilo · ${esc(nm.style)}</div>
+      <table>
+        <tr><td>rating → escala (×${nm.wR.toFixed(2)})</td><td>${Math.round(E.ratingScore(p.rating))}</td></tr>
+        <tr><td>stats do estilo (×${(1-nm.wR).toFixed(2)})</td><td>${Math.round(nm.statScore)}</td></tr>
+        <tr class="tot"><td>OVR novo</td><td>${nm.ovr}</td></tr>
+      </table>
+      <div class="hint">Trave um estilo no seletor pra afinar a receita dele: aí só os stats que <b>esse estilo valoriza</b> movem o OVR. No "Auto", o estilo se adapta aos stats.</div></div>`;
+    const ls=document.getElementById("nmLockSel"); if(ls)ls.onchange=()=>{nmLock=ls.value||null;renderEstilos();};
+  }
+  const imp=document.getElementById("nmImpact");
+  if(imp&&baseNM){const now=nmTodos();let ds=0,dov=0;const lista=[];
+    for(let i=0;i<now.length;i++){const fs=now[i].style!==baseNM[i].style,fo=now[i].ovr!==baseNM[i].ovr;if(fs)ds++;if(fo)dov++;
+      if(fs||fo){const pa=[];if(fs)pa.push(`${baseNM[i].style}→${now[i].style}`);if(fo)pa.push(`${baseNM[i].ovr}→${now[i].ovr}`);lista.push(`${POOLRAW[i].nome} <b>${pa.join(" · ")}</b>`);}}
+    imp.className="impact"+(ds===0&&dov===0?" zero":"");
+    imp.innerHTML=`Vs. receitas padrão: <b>${ds}</b> mudaram de estilo · <b>${dov}</b> de OVR (de ${now.length})`;
+    const ch=document.getElementById("nmChanged");if(ch){if(!lista.length){ch.hidden=true;ch.innerHTML="";}else{ch.hidden=false;ch.innerHTML=`<div class="chh">Quem mudou</div>`+lista.slice(0,20).map(t=>`<span class="chip2">${t}</span>`).join("")+(lista.length>20?`<span class="chip2 more">+${lista.length-20}</span>`:"");}}}
+}
+
 /* ————— refresh do modo ativo ————— */
-function refresh(){ if(mode==="time")renderTeam(); else renderPlayer(); renderImpact(); }
+function refresh(){ if(mode==="time"){renderTeam();renderImpact();} else if(mode==="estilos"){renderEstilos();} else {renderPlayer();renderImpact();} }
 
 /* ————— UI base ————— */
 function montarUI(){
@@ -455,11 +563,12 @@ function montarUI(){
       <div class="modeseg" role="group" aria-label="Modo">
         <button id="mJog" class="${mode==='jogador'?'on':''}">Jogador</button>
         <button id="mTime" class="${mode==='time'?'on':''}">Time</button>
+        <button id="mEst" class="${mode==='estilos'?'on':''}">Estilos ✨</button>
       </div>
-      <span class="hint" style="margin:0">Jogador = 1 atleta (função/sub/OVR). Time = química, força efetiva e alertas (SINAPSE).</span>
+      <span class="hint" style="margin:0">Jogador/Time = modelo ATUAL do jogo. <b style="color:var(--accent)">Estilos</b> = protótipo NOVO (12 estilos), só no laboratório.</span>
     </div>
     <div id="modebox"></div>
-    <div class="card">
+    <div class="card" id="engCard">
       <div class="eng-head">
         <span class="title">⚙ Motores · pesos & fórmulas</span>
         <div class="toggle">
@@ -476,6 +585,8 @@ function montarUI(){
 
   document.getElementById("mJog").onclick=()=>{if(mode!=="jogador"){mode="jogador";montarUI();}};
   document.getElementById("mTime").onclick=()=>{if(mode!=="time"){mode="time";montarUI();}};
+  document.getElementById("mEst").onclick=()=>{if(mode!=="estilos"){mode="estilos";montarUI();}};
+  if(mode==="estilos")document.getElementById("engCard").hidden=true; // painel do modelo antigo some no protótipo
 
   const box=document.getElementById("engbox"),imp=document.getElementById("impact"),ch=document.getElementById("changed"),
     tgl=document.getElementById("engToggle"),rst=document.getElementById("engReset"),cpy=document.getElementById("copyBtn");
@@ -491,34 +602,23 @@ function montarUI(){
 function renderMode(){
   const mb=document.getElementById("modebox");
   if(mode==="jogador"){
-    mb.innerHTML=`
-      <div class="grid">
-        <div class="card">
-          <h2>Atributos do jogador</h2>
-          <div class="field"><label for="f_nome">Nome</label><input type="text" id="f_nome" style="flex:1" placeholder="(opcional)" value="${esc(state.nome)}"></div>
-          ${STATS.map(([k,l])=>`<div class="field"><label for="r_${k}">${l}</label>
-            <input type="range" id="r_${k}" min="0" max="100" value="${state[k]}">
-            <input type="number" id="n_${k}" class="num mono" min="0" max="100" value="${state[k]}"></div>`).join("")}
-          <div class="field"><label for="r_rating">Rating</label>
-            <input type="range" id="r_rating" min="0.50" max="2.00" step="0.01" value="${state.rating}">
-            <input type="number" id="n_rating" class="num mono" min="0.50" max="2.00" step="0.01" value="${state.rating}"></div>
-          <div class="row2">
-            <label class="chk"><input type="checkbox" id="c_igl" ${state.isIGL?"checked":""}> É IGL</label>
-            <label class="chk">Conquista: <select id="s_coloc">${COLOC.map(c=>`<option value="${c}" ${c===state.colocacao?"selected":""}>${c}</option>`).join("")}</select></label>
-          </div>
-        </div>
-        <div class="card out" id="out"></div>
+    mb.innerHTML=`<div class="grid">${atributosCardHTML()}<div class="card out" id="out"></div></div>`;
+    wireAtributos(()=>{renderPlayer();renderImpact();});
+    renderPlayer(); renderImpact();
+  }else if(mode==="estilos"){
+    mb.innerHTML=`<div class="grid">${atributosCardHTML()}<div class="card out" id="nmout"></div></div>
+      <div class="card">
+        <div class="eng-head"><span class="title" style="color:var(--accent)">🎭 Estilos · receitas de OVR (protótipo NOVO)</span>
+          <div class="toggle"><button class="btn" id="nmCopy">Copiar receitas</button><button class="btn accent" id="nmReset">Restaurar receitas</button></div></div>
+        <div class="hint">Modelo NOVO, só no laboratório — <b>não toca no jogo</b>. 12 estilos universais; o OVR sai da receita do estilo. "Fogo" = a arma da função (AWP p/ AWPer). Edite as receitas e veja o elenco reagir.</div>
+        <div class="impact zero" id="nmImpact"></div>
+        <div class="changed" id="nmChanged" hidden></div>
+        <div class="engwrap" id="nmStyles" style="margin-top:6px"></div>
       </div>`;
-    STATS.forEach(([k])=>{const r=document.getElementById("r_"+k),n=document.getElementById("n_"+k);
-      const sync=v=>{v=Math.max(0,Math.min(100,+v||0));state[k]=v;r.value=v;n.value=v;renderPlayer();renderImpact();};
-      r.oninput=()=>sync(r.value); n.oninput=()=>sync(n.value);});
-    const rr=document.getElementById("r_rating"),nr=document.getElementById("n_rating");
-    const syncR=v=>{v=Math.max(0.5,Math.min(2,+v||0.5));state.rating=+v.toFixed(2);rr.value=state.rating;nr.value=state.rating;renderPlayer();renderImpact();};
-    rr.oninput=()=>syncR(rr.value); nr.oninput=()=>syncR(nr.value);
-    document.getElementById("f_nome").oninput=e=>{state.nome=e.target.value;renderPlayer();};
-    document.getElementById("c_igl").onchange=e=>{state.isIGL=e.target.checked;renderPlayer();renderImpact();};
-    document.getElementById("s_coloc").onchange=e=>{state.colocacao=e.target.value;renderPlayer();renderImpact();};
-    renderPlayer();
+    wireAtributos(renderEstilos);
+    document.getElementById("nmCopy").onclick=nmCopiar;
+    document.getElementById("nmReset").onclick=()=>{NM=clone(NM_DEF);NM_COR=clone(NM_COR_DEF);buildNMStyles();renderEstilos();};
+    buildNMStyles(); renderEstilos();
   }else{
     mb.innerHTML=`<div class="card">
       <h2>Química de time · SINAPSE</h2>
@@ -527,9 +627,8 @@ function renderMode(){
     const sel=document.getElementById("teamSel");
     E.TEAMS.forEach((t,i)=>{const o=document.createElement("option");o.value=i;o.textContent=t.nome+" · "+t.camp;if(i===teamIdx)o.selected=true;sel.appendChild(o);});
     sel.onchange=()=>{teamIdx=+sel.value;renderTeam();};
-    renderTeam();
+    renderTeam(); renderImpact();
   }
-  renderImpact();
 }
 
 function renderTeam(){
@@ -562,7 +661,7 @@ function renderTeam(){
     POOLRAW.forEach((p,i)=>{const o=document.createElement("option");o.value=i;o.textContent=p.nome+" — "+p.time;sel.appendChild(o);});
     sel.onchange=()=>{if(sel.value==="")return;const p=POOLRAW[+sel.value];
       Object.assign(state,{nome:p.nome,fp:p.fp,en:p.en,tr:p.tr,op:p.op,cl:p.cl,sn:p.sn,ut:p.ut,rating:p.rating,isIGL:p.isIGL,colocacao:p.colocacao});
-      setCtx(p); mode="jogador"; montarUI();};
+      setCtx(p); if(mode==="time")mode="jogador"; montarUI();};
     montarUI();
   }catch(err){
     document.getElementById("app").innerHTML='<div class="loading err">Não deu pra carregar os motores: '+esc(err.message)+'<br><br>Abra pela URL do site (github.io), não pelo arquivo local.</div>';
