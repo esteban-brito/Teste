@@ -197,7 +197,7 @@ function setCtx(p){ // p = item do POOLRAW (ou null p/ jogador manual)
   if(!p){ctx=null;return;}
   const t=E.TEAMS[p.ti];
   ctx={idx:p.pi, team:t.jogadores.map(j=>{const e=j._eng;
-    return {fp:e.fp,en:e.en,tr:e.tr,op:e.op,cl:e.cl,sn:e.sn,ut:e.ut,isIGL:!!e.isIGL,colocacao:e.colocacao,nome:e.nome};})};
+  return {fp:e.fp,en:e.en,tr:e.tr,op:e.op,cl:e.cl,sn:e.sn,ut:e.ut,rating:e.rating,isIGL:!!e.isIGL,colocacao:e.colocacao,nome:e.nome};
 }
 // roda distribuirRoles no time (com o jogador atual editado no lugar dele) → papel no contexto do time
 function teamRole(){
@@ -460,7 +460,7 @@ const NM_DEF={
   "Suporte":      {w:{ut:.45,tr:.30,ab:.25},           wR:.40},
   "Cerebral":     {w:{ab:.35,ut:.35,cl:.30},           wR:.52},
   "Âncora":       {w:{cl:.40,ut:.35,tr:.25},           wR:.45}};
-const NM_COR_DEF={pisoMin:45,spreadMax:28,wR:.50}; // Coringa: piso médio em tudo, sem buraco
+const NM_COR_DEF={pisoMin:48,spreadMax:20,wR:.45}; // Coringa: piso médio em tudo, sem buraco
 let NM=clone(NM_DEF), NM_COR=clone(NM_COR_DEF), baseNM=null;
 
 function nmRealRole(p){const c=E.classificar(p);return c[0]==="IGL"?(c[1]||"Rifler"):c[0];} // IGL = flag: vale a função de combate
@@ -481,19 +481,40 @@ function nmOVR(p,role,forced){const s6=nmStats6(p,role),style=forced||nmDetect(s
   const core=wR*E.ratingScore(p.rating)+(1-wR)*statScore;
   return {style,ovr:E.curvaOVR(core),wR,statScore,core,s6};}
 function nmTodos(){return POOLRAW.map((_,i)=>{const p=playerAt(i);const o=nmOVR(p,nmRealRole(p));return{style:o.style,ovr:o.ovr};});}
-function calcularQuimicaNova(estilos){
+function calcularQuimicaNova(estilos, qtdEstrelas, coach){
   let quimica=1.0, alertas=[];
   const qtd={}; estilos.forEach(e=>qtd[e]=(qtd[e]||0)+1);
-  const temCoringa=qtd["Coringa"]>0; let pen=0;
-  if((qtd["Agressivo"]||qtd["Spacetaker"])&&qtd["Suporte"]){quimica+=0.05;alertas.push("Ponta de Lança (+5%)");}
-  if(qtd["Agressivo"]&&qtd["Trader"]){quimica+=0.05;alertas.push("Dupla Dinâmica (+5%)");}
-  if(qtd["Infiltrador"]&&qtd["Cerebral"]){quimica+=0.05;alertas.push("Rede de Informação (+5%)");}
-  if(qtd["Âncora"]&&qtd["Clutcher"]){quimica+=0.05;alertas.push("Retake Perfeito (+5%)");}
-  if((qtd["Playmaker"]||0)+(qtd["Baiter"]||0)>=3){pen+=0.15;alertas.push("Choque de Egos (−15%)");}
-  if(!qtd["Agressivo"]&&!qtd["Spacetaker"]){pen+=0.10;alertas.push("Covardia Tática (−10%)");}
+  const temCoringa=qtd["Coringa"]>0; let pen=0, sinergias=0;
+
+  // 1. Sinergias Base
+  if((qtd["Agressivo"]||qtd["Spacetaker"])&&qtd["Suporte"]){quimica+=0.05;sinergias++;alertas.push("Ponta de Lança (+5%)");}
+  if(qtd["Agressivo"]&&qtd["Trader"]){quimica+=0.05;sinergias++;alertas.push("Dupla Dinâmica (+5%)");}
+  if(qtd["Infiltrador"]&&qtd["Cerebral"]){quimica+=0.05;sinergias++;alertas.push("Rede de Informação (+5%)");}
+  if(qtd["Âncora"]&&qtd["Clutcher"]){quimica+=0.05;sinergias++;alertas.push("Retake Perfeito (+5%)");}
+
+  // 2. Conflitos Base (Tática vs Ego)
+  let satPlaymakers=(qtd["Playmaker"]||0)+(qtd["Baiter"]||0)>=3;
+  let covardia=!qtd["Agressivo"]&&!qtd["Spacetaker"];
+  let guerraEstrelas=qtdEstrelas>=3; // O problema de vestiário
+
+  if(satPlaymakers){pen+=0.15;alertas.push("Saturação de Playmakers (−15%)");}
+  if(covardia){pen+=0.10;alertas.push("Covardia Tática (−10%)");}
   if((qtd["Infiltrador"]||0)>=2){pen+=0.10;alertas.push("Invasão de Espaço (−10%)");}
   if(!qtd["Âncora"]){pen+=0.10;alertas.push("Defesa de Papel (−10%)");}
-  if(temCoringa&&pen>0){pen/=2;alertas.push("Coringa mitigou conflitos!");}
+  if(guerraEstrelas){pen+=0.15;alertas.push("Guerra de Estrelas (−15%)");} // Punição de Ego
+
+  // 3. O Fator Treinador (O Gestor foca nas Estrelas)
+  if(coach&&coach.ovr){
+    const f=Math.min(coach.ovr/20, 1.2), c=coach.carac;
+    if(c==="Estrategista"&&sinergias>0){const b=0.04*f*sinergias; quimica+=b; alertas.push(`Prancheta do Estrategista (+${Math.round(b*100)}%)`);}
+    else if(c==="Gestor"&&guerraEstrelas){const m=0.10*f; pen=Math.max(0,pen-m); alertas.push(`Gestor domou os Egos (+${Math.round(m*100)}%)`);}
+    else if(c==="Motivador"&&covardia){const m=0.06*f; pen=Math.max(0,pen-m); alertas.push(`Grito do Motivador (+${Math.round(m*100)}%)`);}
+    else if(c==="Desenvolvedor"&&temCoringa){const b=0.05*f; quimica+=b; alertas.push(`Coringa lapidado (+${Math.round(b*100)}%)`);}
+  }
+
+  // 4. Passiva do Coringa
+  if(temCoringa&&pen>0){pen/=2;alertas.push("Coringa mitigou os conflitos restantes!");}
+  
   return {quimica:Math.max(0.5,quimica-pen), alertas};
 }
 /* controles de atributos reutilizados (jogador + estilos) */
@@ -559,11 +580,13 @@ function renderEstilos(){
     
     // NOVO: Renderiza a química do time se o jogador pertencer a um
     if(ctx){
+      let qtdEstrelas = 0;
       const teamStyles = ctx.team.map((raw, i) => {
         const tempP = i === ctx.idx ? jogadorAtual() : raw;
+        if(E.avaliarJogador(tempP).estrela) qtdEstrelas++; // Conta os Starplayers reais
         return nmOVR(tempP, nmRealRole(tempP), i === ctx.idx ? nmLock||undefined : undefined).style;
       });
-      const q = calcularQuimicaNova(teamStyles);
+      const q = calcularQuimicaNova(teamStyles, qtdEstrelas, ctx.coach); // Passa as estrelas para o cálculo
       out.innerHTML += `<div class="brk" style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
         <div class="h">Química do Time (Motor Novo)</div>
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
@@ -644,7 +667,7 @@ function renderMode(){
       <div class="card">
         <div class="eng-head"><span class="title" style="color:var(--accent)">🎭 Estilos · receitas de OVR (protótipo NOVO)</span>
           <div class="toggle"><button class="btn" id="nmCopy">Copiar receitas</button><button class="btn accent" id="nmReset">Restaurar receitas</button></div></div>
-        <div class="hint">Modelo NOVO, só no laboratório — <b>não toca no jogo</b>. 12 estilos universais; o OVR sai da receita do estilo. "Fogo" = a arma da função (AWP p/ AWPer). Edite as receitas e veja o elenco reagir.</div>
+        <div class="hint">Modelo NOVO, só no laboratório — <b>não toca no jogo</b>. 11 estilos universais; o OVR sai da receita do estilo. "Fogo" = a arma da função (AWP p/ AWPer). Edite as receitas e veja o elenco reagir.</div>
         <div class="impact zero" id="nmImpact"></div>
         <div class="changed" id="nmChanged" hidden></div>
         <div class="engwrap" id="nmStyles" style="margin-top:6px"></div>
