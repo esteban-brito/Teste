@@ -170,7 +170,7 @@ const tierVar=o=>o>=22?"--t22":o>=21?"--t21":o>=18?"--t18":o>=15?"--t15":"--t14"
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const clone=o=>JSON.parse(JSON.stringify(o));
 
-let E=null, DEF=null, POOLRAW=[], baseSnap=null, baseTeams=null, loadedIdx=null;
+let E=null, DEF=null, POOLRAW=[], baseSnap=null, baseTeams=null, loadedIdx=null, baseNM=null;
 let mode="jogador", teamIdx=0;   // modo do laboratório: jogador | time
 const state={nome:"", fp:70,en:50,tr:50,op:50,cl:50,sn:20,ut:55, rating:1.10, isIGL:false, colocacao:"Campeao"};
 
@@ -469,7 +469,7 @@ function nmStats6(p,role){const fogo=role==="AWPer"?Math.max(p.sn||0,p.fp||0):(p
   return {fogo,ent:p.en||0,ab:p.op||0,tr:p.tr||0,cl:p.cl||0,ut:p.ut||0};}
 function nmDetect(s6){const vals=NM_AXES.map(([k])=>s6[k]).sort((a,b)=>b-a),mx=vals[0],mnTop=vals[3];
   if(mnTop>=NM_COR.pisoMin&&(mx-mnTop)<=NM_COR.spreadMax)return "Coringa"; // avalia só o núcleo forte (top 4)
-  let best="Fragger",bs=-1;
+  let best="Playmaker",bs=-1;
   // resto: por semelhança de forma (cosseno)
   for(const nome in NM){const w=NM[nome].w;let dot=0,nw=0,ns=0;
     for(const [k] of NM_AXES){const wi=w[k]||0,si=s6[k];dot+=wi*si;nw+=wi*wi;ns+=si*si;}
@@ -506,7 +506,8 @@ function calcularQuimicaNova(estilos, qtdEstrelas, coach){
 
   // 3. Treinadores
   if(coach&&coach.ovr){
-    const f=Math.min(coach.ovr/20, 1.2), c=coach.carac;
+    // Treinador OVR 80 = força 1.0 | Treinador OVR 100 = força 1.25 (Teto) | Treinador OVR 60 = força 0.75
+    const f=Math.max(0.75, Math.min(coach.ovr/20, 1.25)), c=coach.carac;
     if(c==="Estrategista"&&sinergias>0){const b=0.04*f*sinergias; quimica+=b; alertas.push(`Prancheta (+${Math.round(b*100)}%)`);}
     else if(c==="Gestor"&&guerraEstrelas){const m=0.10*f; pen=Math.max(0,pen-m); alertas.push(`Gestor domou os Egos (+${Math.round(m*100)}%)`);} // Cura apenas a Guerra de Estrelas
     else if(c==="Motivador"&&covardia){const m=0.06*f; pen=Math.max(0,pen-m); alertas.push(`Grito do Motivador (+${Math.round(m*100)}%)`);}
