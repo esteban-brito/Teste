@@ -556,6 +556,24 @@ function renderEstilos(){
         <tr class="tot"><td>OVR novo</td><td>${nm.ovr}</td></tr>
       </table>
       <div class="hint">Trave um estilo no seletor pra afinar a receita dele: aí só os stats que <b>esse estilo valoriza</b> movem o OVR. No "Auto", o estilo se adapta aos stats.</div></div>`;
+    
+    // NOVO: Renderiza a química do time se o jogador pertencer a um
+    if(ctx){
+      const teamStyles = ctx.team.map((raw, i) => {
+        const tempP = i === ctx.idx ? jogadorAtual() : raw;
+        return nmOVR(tempP, nmRealRole(tempP), i === ctx.idx ? nmLock||undefined : undefined).style;
+      });
+      const q = calcularQuimicaNova(teamStyles);
+      out.innerHTML += `<div class="brk" style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
+        <div class="h">Química do Time (Motor Novo)</div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+          <div class="mono" style="font-size:1.6rem;font-weight:700;color:var(--cyan)">${Math.round(q.quimica*100)}%</div>
+          <div class="alerts">${q.alertas.map(a=>`<span class="al ${a.includes("−")?"pen":"ok"}">${esc(a)}</span>`).join("")}</div>
+        </div>
+        <div class="hint">Composição: ${teamStyles.map(s => `<b style="color:var(--ink2)">${s}</b>`).join(" · ")}</div>
+      </div>`;
+    }
+
     const ls=document.getElementById("nmLockSel"); if(ls)ls.onchange=()=>{nmLock=ls.value||null;renderEstilos();};
   }
   const imp=document.getElementById("nmImpact");
