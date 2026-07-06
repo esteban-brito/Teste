@@ -450,38 +450,52 @@ function buildTuning(){
    "Fogo" = a arma da função: AWP (sn) pro AWPer (o maior entre sn/fp), fp pro resto. */
 const NM_AXES=[["fogo","Fogo"],["ent","Entrada"],["ab","Abertura"],["tr","Trade"],["cl","Clutch"],["ut","Utilitário"]];
 const NM_DEF={
-  "Agressivo": {w:{ent:.45,ab:.30,fogo:.15,tr:.10}, wR:.40}, // entry que se sacrifica: entrada manda
-  "Spacetaker":{w:{ab:.35,fogo:.35,ent:.30},        wR:.52},
-  "Fragger":   {w:{fogo:.50,ab:.30,tr:.10,cl:.10},  wR:.60},
-  "Reativo":   {w:{cl:.40,ut:.30,fogo:.30},         wR:.48},
-  "Baiter":    {w:{tr:.40,cl:.30,fogo:.30},         wR:.32}, // rating pesa menos (baiter infla rating)
-  "Infiltrador":{w:{cl:.40,ab:.30,fogo:.30},        wR:.52},
-  "Clutcher":  {w:{cl:.55,fogo:.45},                wR:.52},
-  "Refragger": {w:{tr:.45,fogo:.30,ut:.25},         wR:.48},
-  "Suporte":   {w:{ut:.45,tr:.30,ab:.25},           wR:.40},
-  "Cerebral":  {w:{ab:.40,ut:.30,cl:.30},           wR:.52},
-  "Âncora":    {w:{cl:.40,ut:.35,tr:.25},           wR:.45}};
-const NM_COR_DEF={pisoMin:45,spreadMax:32,wR:.50}; // Coringa: piso médio em tudo, sem buraco
+  "Agressivo":    {w:{ent:.45,ab:.30,fogo:.15,tr:.10}, wR:.40},
+  "Spacetaker":   {w:{ab:.35,fogo:.35,ent:.30},        wR:.52},
+  "Trader":       {w:{tr:.45,fogo:.30,ut:.25},         wR:.48},
+  "Playmaker":    {w:{fogo:.50,ab:.30,cl:.10,tr:.10},  wR:.60},
+  "Infiltrador":  {w:{cl:.40,ab:.30,fogo:.30},         wR:.52},
+  "Baiter":       {w:{tr:.40,cl:.30,fogo:.30},         wR:.32},
+  "Clutcher":     {w:{cl:.55,fogo:.45},                wR:.52},
+  "Suporte":      {w:{ut:.45,tr:.30,ab:.25},           wR:.40},
+  "Cerebral":     {w:{ab:.35,ut:.35,cl:.30},           wR:.52},
+  "Âncora":       {w:{cl:.40,ut:.35,tr:.25},           wR:.45}};
+const NM_COR_DEF={pisoMin:45,spreadMax:28,wR:.50}; // Coringa: piso médio em tudo, sem buraco
 let NM=clone(NM_DEF), NM_COR=clone(NM_COR_DEF), baseNM=null;
 
 function nmRealRole(p){const c=E.classificar(p);return c[0]==="IGL"?(c[1]||"Rifler"):c[0];} // IGL = flag: vale a função de combate
 function nmStats6(p,role){const fogo=role==="AWPer"?Math.max(p.sn||0,p.fp||0):(p.fp||0);
   return {fogo,ent:p.en||0,ab:p.op||0,tr:p.tr||0,cl:p.cl||0,ut:p.ut||0};}
-function nmDetect(s6){const vals=NM_AXES.map(([k])=>s6[k]),mn=Math.min(...vals),mx=Math.max(...vals);
-  if(mn>=NM_COR.pisoMin&&(mx-mn)<=NM_COR.spreadMax)return "Coringa";          // sem ponto fraco → Coringa
-  let best="Fragger",bs=-1;                                                    // resto: por semelhança de forma (cosseno)
+function nmDetect(s6){const vals=NM_AXES.map(([k])=>s6[k]).sort((a,b)=>b-a),mx=vals[0],mnTop=vals[3];
+  if(mnTop>=NM_COR.pisoMin&&(mx-mnTop)<=NM_COR.spreadMax)return "Coringa"; // avalia só o núcleo forte (top 4)
+  let best="Fragger",bs=-1;
+  // resto: por semelhança de forma (cosseno)
   for(const nome in NM){const w=NM[nome].w;let dot=0,nw=0,ns=0;
     for(const [k] of NM_AXES){const wi=w[k]||0,si=s6[k];dot+=wi*si;nw+=wi*wi;ns+=si*si;}
     const cos=dot/(Math.sqrt(nw*ns)+1e-9);if(cos>bs){bs=cos;best=nome;}}
   return best;}
 let nmLock=null; // null = auto-detecta o estilo; senão trava no estilo escolhido
 function nmOVR(p,role,forced){const s6=nmStats6(p,role),style=forced||nmDetect(s6);let wR,statScore;
-  if(style==="Coringa"){wR=NM_COR.wR;const vals=NM_AXES.map(([k])=>s6[k]),mean=vals.reduce((a,b)=>a+b,0)/6,mn=Math.min(...vals);statScore=.5*mean+.5*mn;}
+  if(style==="Coringa"){wR=NM_COR.wR;const vals=NM_AXES.map(([k])=>s6[k]).sort((a,b)=>b-a),t4=vals.slice(0,4),mean=t4.reduce((a,b)=>a+b,0)/4;statScore=.5*mean+.5*t4[3];}
   else{wR=NM[style].wR;statScore=E.dot(NM[style].w,s6);}
   const core=wR*E.ratingScore(p.rating)+(1-wR)*statScore;
   return {style,ovr:E.curvaOVR(core),wR,statScore,core,s6};}
 function nmTodos(){return POOLRAW.map((_,i)=>{const p=playerAt(i);const o=nmOVR(p,nmRealRole(p));return{style:o.style,ovr:o.ovr};});}
-
+function calcularQuimicaNova(estilos){
+  let quimica=1.0, alertas=[];
+  const qtd={}; estilos.forEach(e=>qtd[e]=(qtd[e]||0)+1);
+  const temCoringa=qtd["Coringa"]>0; let pen=0;
+  if((qtd["Agressivo"]||qtd["Spacetaker"])&&qtd["Suporte"]){quimica+=0.05;alertas.push("Ponta de Lança (+5%)");}
+  if(qtd["Agressivo"]&&qtd["Trader"]){quimica+=0.05;alertas.push("Dupla Dinâmica (+5%)");}
+  if(qtd["Infiltrador"]&&qtd["Cerebral"]){quimica+=0.05;alertas.push("Rede de Informação (+5%)");}
+  if(qtd["Âncora"]&&qtd["Clutcher"]){quimica+=0.05;alertas.push("Retake Perfeito (+5%)");}
+  if((qtd["Playmaker"]||0)+(qtd["Baiter"]||0)>=3){pen+=0.15;alertas.push("Choque de Egos (−15%)");}
+  if(!qtd["Agressivo"]&&!qtd["Spacetaker"]){pen+=0.10;alertas.push("Covardia Tática (−10%)");}
+  if((qtd["Infiltrador"]||0)>=2){pen+=0.10;alertas.push("Invasão de Espaço (−10%)");}
+  if(!qtd["Âncora"]){pen+=0.10;alertas.push("Defesa de Papel (−10%)");}
+  if(temCoringa&&pen>0){pen/=2;alertas.push("Coringa mitigou conflitos!");}
+  return {quimica:Math.max(0.5,quimica-pen), alertas};
+}
 /* controles de atributos reutilizados (jogador + estilos) */
 function atributosCardHTML(){return `<div class="card"><h2>Atributos do jogador</h2>
   <div class="field"><label for="f_nome">Nome</label><input type="text" id="f_nome" style="flex:1" placeholder="(opcional)" value="${esc(state.nome)}"></div>
@@ -542,6 +556,24 @@ function renderEstilos(){
         <tr class="tot"><td>OVR novo</td><td>${nm.ovr}</td></tr>
       </table>
       <div class="hint">Trave um estilo no seletor pra afinar a receita dele: aí só os stats que <b>esse estilo valoriza</b> movem o OVR. No "Auto", o estilo se adapta aos stats.</div></div>`;
+    
+    // NOVO: Renderiza a química do time se o jogador pertencer a um
+    if(ctx){
+      const teamStyles = ctx.team.map((raw, i) => {
+        const tempP = i === ctx.idx ? jogadorAtual() : raw;
+        return nmOVR(tempP, nmRealRole(tempP), i === ctx.idx ? nmLock||undefined : undefined).style;
+      });
+      const q = calcularQuimicaNova(teamStyles);
+      out.innerHTML += `<div class="brk" style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
+        <div class="h">Química do Time (Motor Novo)</div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+          <div class="mono" style="font-size:1.6rem;font-weight:700;color:var(--cyan)">${Math.round(q.quimica*100)}%</div>
+          <div class="alerts">${q.alertas.map(a=>`<span class="al ${a.includes("−")?"pen":"ok"}">${esc(a)}</span>`).join("")}</div>
+        </div>
+        <div class="hint">Composição: ${teamStyles.map(s => `<b style="color:var(--ink2)">${s}</b>`).join(" · ")}</div>
+      </div>`;
+    }
+
     const ls=document.getElementById("nmLockSel"); if(ls)ls.onchange=()=>{nmLock=ls.value||null;renderEstilos();};
   }
   const imp=document.getElementById("nmImpact");
