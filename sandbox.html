@@ -1553,11 +1553,28 @@ function renderTeamDetail(){
 }
 
 /* === load player into editor === */
+function syncEditorControls(){
+  const name=document.getElementById("f_nome");if(name)name.value=state.nome;
+  STATS.forEach(([k])=>{
+    const r=document.getElementById("r_"+k), n=document.getElementById("n_"+k);
+    if(r)r.value=state[k];
+    if(n)n.value=state[k];
+  });
+  const rr=document.getElementById("r_rating"), nr=document.getElementById("n_rating");
+  if(rr)rr.value=state.rating;
+  if(nr)nr.value=state.rating;
+  const igl=document.getElementById("c_igl");if(igl)igl.checked=!!state.isIGL;
+  const coloc=document.getElementById("s_coloc");if(coloc)coloc.value=state.colocacao;
+  const sel=document.getElementById("loadSel");if(sel&&loadedIdx!=null)sel.value=loadedIdx;
+}
 function loadPlayer(poolIdx,ti){
-  if(poolIdx==null||poolIdx<0)return;
+  poolIdx=Number(poolIdx);
+  if(!Number.isFinite(poolIdx)||poolIdx<0)return;
   const p=POOLRAW[poolIdx];
+  if(!p)return;
   Object.assign(state,{nome:p.nome,fp:p.fp,en:p.en,tr:p.tr,op:p.op,cl:p.cl,sn:p.sn,ut:p.ut,rating:p.rating,isIGL:p.isIGL,colocacao:p.colocacao});
-  setCtx(p); loadedIdx=poolIdx; teamIdx=ti;
+  setCtx(p); loadedIdx=poolIdx; teamIdx=Number.isFinite(+ti)?+ti:p.ti;
+  syncEditorControls();
   refresh("all");
 }
 
@@ -1591,7 +1608,7 @@ function renderEditorResult(){
   const st=ev.style;
   box.innerHTML=`
     <div class="rc-row"><span class="rc-label">Playstyle</span><span class="rc-val">${esc(STYLE_LABEL(ev.playstyle))}</span></div>
-    <div class="rc-row"><span class="rc-label">Função</span><span class="rc-val">${ev.isIGL?"IGL / "+ev.combatRole:ev.role1+"/"+ev.role2}</span></div>
+    <div class="rc-row"><span class="rc-label">Função</span><span class="rc-val">${esc(rolePairText(ev))}</span></div>
     <div class="rc-row"><span class="rc-label">wR</span><span class="rc-val mono">${st.wR.toFixed(2)}</span></div>
     <div class="rc-row"><span class="rc-label">statScore</span><span class="rc-val mono">${Math.round(st.statScore)}</span></div>
     <div class="rc-row"><span class="rc-label">clareza</span><span class="rc-val mono">${Math.round(st.matchScore*100)}%</span></div>`;
