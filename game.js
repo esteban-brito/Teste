@@ -240,7 +240,7 @@ function nmOVR(p,role,forcedStyle=null){
   const s6=nmStats6(p,role),s7=stats7(p),match=forcedStyle?{id:STYLE_ID(forcedStyle),score:1,second:.75,margin:.25,clarity:.9}:styleMatch(s6,s7,role,p);
   const style=match.id,rating=ratingScore(p.rating);let wR,statScore;
   const roleRec=ROLE_PERFIL[role]||ROLE_PERFIL.Rifler,roleScore=dot(roleRec.ovr||{},p);
-  if(style==="joker"){wR=clamp(.65*(roleRec.wR??coringaWR())+.35*coringaWR(),.35,.72);const jp=jokerProfile(s7),top5=jp.sorted.slice(0,5),meanTop5=top5.reduce((a,b)=>a+b,0)/5;const styleScore=.55*meanTop5+.35*jp.min5+.10*(s7.reduce((a,b)=>a+b,0)/7-meanTop5/5);statScore=.58*roleScore+.42*styleScore;}
+  if(style==="joker"){wR=clamp(.65*(roleRec.wR??coringaWR())+.35*coringaWR(),.35,.72);const jp=jokerProfile(s7),top5=jp.sorted.slice(0,5),meanTop5=top5.reduce((a,b)=>a+b,0)/5,meanAll=s7.reduce((a,b)=>a+b,0)/7;const styleScore=.55*meanTop5+.35*jp.min5+.10*(meanAll-meanTop5);statScore=.58*roleScore+.42*styleScore;}
   else{const rec=STYLE_RECIPE(style);wR=clamp(.65*(roleRec.wR??rec.wR)+.35*rec.wR,.35,.72);const styleScore=dot(rec.w,s6);statScore=.58*roleScore+.42*styleScore;}
   const clarityAdj=style==="joker"?1.2:(match.clarity-.45)*2.2,roleDutyAdj=clamp((statScore-55)/18,-2.5,1.5);
   const core=wR*rating+(1-wR)*statScore+clarityAdj+roleDutyAdj;

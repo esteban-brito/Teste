@@ -620,22 +620,6 @@ header{
 .scoreboards td{
   color:#d8e2ee;
 }
-.tuning-card>.hint{
-  display:none;
-  line-height:1.45!important;
-  margin:0 0 12px!important;
-  padding:9px 10px;
-  border:1px solid rgba(157,178,208,.16);
-  border-radius:var(--radius-sm);
-  background:var(--panel-soft);
-  color:var(--dim);
-}
-#stylebox,#engbox{
-  min-width:0;
-}
-#nmStyles{
-  margin:0 0 10px!important;
-}
 .grp h3{
   color:var(--neutral);
   letter-spacing:.14em;
@@ -1031,142 +1015,10 @@ function copyInto(dst,src){
     }else dst[k]=clone(src[k]);
   });
 }
-/* ————— editores dos motores ————— */
-function setDirty(inp,def,val){inp.classList.toggle("dirty",Math.abs(val-def)>1e-9);}
-function numInput(get,set,def,step){
-  const inp=document.createElement("input"); inp.type="number"; inp.step=step; inp.value=get();
-  setDirty(inp,def,+get());
-  inp.oninput=()=>{const v=parseFloat(inp.value); if(!isNaN(v)){set(v); setDirty(inp,def,v); refresh("all");}};
-  return inp;
-}
-function grpParams(titulo,campos){ // campos: [{label,get,set,def,step}]
-  const g=document.createElement("div"); g.className="grp";
-  g.innerHTML=`<h3>${titulo}</h3>`; const pg=document.createElement("div"); pg.className="pgrid";
-  campos.forEach(c=>{const l=document.createElement("label"); l.textContent=c.label; pg.appendChild(l);
-    pg.appendChild(numInput(c.get,c.set,c.def,c.step));});
-  g.appendChild(pg); return g;
-}
-function grpPesos(titulo,which){ // which: 'afin' | 'ovr' — pesos por função de cada role
-  const g=document.createElement("div"); g.className="grp"; g.innerHTML=`<h3>${titulo}</h3>`;
-  ROLES.forEach(role=>{
-    const blk=document.createElement("div"); blk.className="roleblk";
-    blk.innerHTML=`<div class="rl" style="color:${ROLE_COLORS[role]}">${role}${which==="ovr"?` · wR ${E.ROLE_PERFIL[role].wR}`:""}</div>`;
-    const row=document.createElement("div"); row.className="wrow";
-    const obj=E.ROLE_PERFIL[role][which], defObj=DEF.ROLE[role][which];
-    Object.keys(obj).forEach(k=>{
-      const chip=document.createElement("span"); chip.className="wchip";
-      chip.innerHTML=`<span class="wlab">${k.toUpperCase()}</span>`;
-      chip.appendChild(numInput(()=>obj[k],v=>obj[k]=v,defObj[k],0.01));
-      row.appendChild(chip);
-    });
-    // wR editável no bloco de OVR
-    if(which==="ovr"){const chip=document.createElement("span");chip.className="wchip";chip.innerHTML=`<span class="wlab" style="width:auto">wR</span>`;
-      chip.appendChild(numInput(()=>E.ROLE_PERFIL[role].wR,v=>E.ROLE_PERFIL[role].wR=v,DEF.ROLE[role].wR,0.01));row.appendChild(chip);}
-    blk.appendChild(row); g.appendChild(blk);
-  });
-  return g;
-}
-function restaurar(){
-  // copia os padrões de volta PARA OS MESMOS objetos (os motores seguram a referência)
-  const cp=(dst,src)=>{Object.keys(dst).forEach(k=>{if(!(k in src))return; if(typeof dst[k]==="object"&&dst[k])cp(dst[k],src[k]); else dst[k]=src[k];});
-    Object.keys(src).forEach(k=>{if(!(k in dst))dst[k]=clone(src[k]);});};
-  cp(E.CFG_AVALIACAO,DEF.CFG); cp(E.ROLE_PERFIL,DEF.ROLE); cp(E.CFG_QUIMICA,DEF.QUI);
-  cp(E.CFG_SIM,DEF.SIM); cp(E.CFG_FA,DEF.FA);
-  NM=clone(NM_DEF); NM_COR=clone(NM_COR_DEF);
-  buildNMStyles(); buildTuning(); refresh("all");
-}
-
 function toast(msg){let t=document.querySelector(".toast");if(!t){t=document.createElement("div");t.className="toast";document.body.appendChild(t);}
   t.textContent=msg;requestAnimationFrame(()=>t.classList.add("show"));clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),2600);}
-function buildTuning(){
-  const C=E.CFG_AVALIACAO, D=DEF.CFG;
-  const box=document.getElementById("engbox");
-  box.innerHTML="";
-  const wrap=document.createElement("div"); wrap.className="engwrap";
-  // curva de OVR
-  wrap.appendChild(grpParams("Curva de OVR (ZÊNITE)",[
-    {label:"Piso (FLOOR)",get:()=>C.FLOOR,set:v=>C.FLOOR=v,def:D.FLOOR,step:.5},
-    {label:"Amplitude (SPAN)",get:()=>C.SPAN,set:v=>C.SPAN=v,def:D.SPAN,step:.5},
-    {label:"Inclinação (K)",get:()=>C.K,set:v=>C.K=v,def:D.K,step:.005},
-    {label:"Centro (MID)",get:()=>C.MID,set:v=>C.MID=v,def:D.MID,step:1},
-    {label:"OVR mín",get:()=>C.OVR_MIN,set:v=>C.OVR_MIN=v,def:D.OVR_MIN,step:1},
-    {label:"OVR máx",get:()=>C.OVR_MAX,set:v=>C.OVR_MAX=v,def:D.OVR_MAX,step:1},
-  ]));
-  // rating -> escala
-  wrap.appendChild(grpParams("Rating → escala",[
-    {label:"rating piso (RAT_LO)",get:()=>C.RAT_LO,set:v=>C.RAT_LO=v,def:D.RAT_LO,step:.01},
-    {label:"rating topo (RAT_HI)",get:()=>C.RAT_HI,set:v=>C.RAT_HI=v,def:D.RAT_HI,step:.01},
-    {label:"teto (RAT_CAP)",get:()=>C.RAT_CAP,set:v=>C.RAT_CAP=v,def:D.RAT_CAP,step:.01},
-  ]));
-  // IGL
-  wrap.appendChild(grpParams("IGL (líder)",[
-    {label:"crédito de liderança",get:()=>C.IGL_CREDITO,set:v=>C.IGL_CREDITO=v,def:D.IGL_CREDITO,step:.5},
-    {label:"peso do rating (RAT_K)",get:()=>C.IGL_RAT_K,set:v=>C.IGL_RAT_K=v,def:D.IGL_RAT_K,step:.05},
-    {label:"teto de IGL",get:()=>C.IGL_TETO,set:v=>C.IGL_TETO=v,def:D.IGL_TETO,step:1},
-    {label:"título · Campeão",get:()=>C.IGL_TITULO.Campeao,set:v=>C.IGL_TITULO.Campeao=v,def:D.IGL_TITULO.Campeao,step:1},
-    {label:"título · Vice (Final)",get:()=>C.IGL_TITULO.Final,set:v=>C.IGL_TITULO.Final=v,def:D.IGL_TITULO.Final,step:1},
-    {label:"título · Top4",get:()=>C.IGL_TITULO.Top4,set:v=>C.IGL_TITULO.Top4=v,def:D.IGL_TITULO.Top4,step:1},
-  ]));
-  // coringa / limiares
-  wrap.appendChild(grpParams("Coringa & limiares",[
-    {label:"Coringa piso",get:()=>C.CORINGA_PISO,set:v=>C.CORINGA_PISO=v,def:D.CORINGA_PISO,step:1},
-    {label:"Coringa spread",get:()=>C.CORINGA_SPREAD,set:v=>C.CORINGA_SPREAD=v,def:D.CORINGA_SPREAD,step:1},
-    {label:"Support→Lurker (fp)",get:()=>C.SUP_FRAG,set:v=>C.SUP_FRAG=v,def:D.SUP_FRAG,step:1},
-    {label:"Vers. ref",get:()=>C.VERS_REF,set:v=>C.VERS_REF=v,def:D.VERS_REF,step:1},
-    {label:"Vers. peso",get:()=>C.VERS_W,set:v=>C.VERS_W=v,def:D.VERS_W,step:.05},
-    {label:"Vers. teto",get:()=>C.VERS_CAP,set:v=>C.VERS_CAP=v,def:D.VERS_CAP,step:.5},
-  ]));
-  // química (SINAPSE)
-  const Q=E.CFG_QUIMICA, DQ=DEF.QUI;
-  wrap.appendChild(grpParams("Química · SINAPSE",[
-    {label:"pen. sem IGL",get:()=>Q.PEN.semIGL,set:v=>Q.PEN.semIGL=v,def:DQ.PEN.semIGL,step:.01},
-    {label:"pen. sem AWP",get:()=>Q.PEN.semAWP,set:v=>Q.PEN.semAWP=v,def:DQ.PEN.semAWP,step:.01},
-    {label:"pen. sem Ancora",get:()=>Q.PEN.semAncora,set:v=>Q.PEN.semAncora=v,def:DQ.PEN.semAncora,step:.01},
-    {label:"pen. sem Iniciativa",get:()=>Q.PEN.semIniciativa,set:v=>Q.PEN.semIniciativa=v,def:DQ.PEN.semIniciativa,step:.01},
-    {label:"talento recupera (máx)",get:()=>Q.TALENTO.recMax,set:v=>Q.TALENTO.recMax=v,def:DQ.TALENTO.recMax,step:.05},
-    {label:"química mínima",get:()=>Q.QUIMICA_MIN,set:v=>Q.QUIMICA_MIN=v,def:DQ.QUIMICA_MIN,step:.05},
-    {label:"treinador · por ponto",get:()=>Q.TREINADOR_FORCA.porPonto,set:v=>Q.TREINADOR_FORCA.porPonto=v,def:DQ.TREINADOR_FORCA.porPonto,step:.005},
-  ]));
-  const S=E.CFG_SIM, DS=DEF.SIM;
-  wrap.appendChild(grpParams("Partida · PÓLVORA/COFRE",[
-    {label:"peso força time",get:()=>S.PESO_EF,set:v=>S.PESO_EF=v,def:DS.PESO_EF,step:.05},
-    {label:"duelo decisão",get:()=>S.D_DUELO,set:v=>S.D_DUELO=v,def:DS.D_DUELO,step:5},
-    {label:"duelo pistol",get:()=>S.D_DUELO_PIST,set:v=>S.D_DUELO_PIST=v,def:DS.D_DUELO_PIST,step:10},
-    {label:"vantagem CT",get:()=>S.LADO_CT,set:v=>S.LADO_CT=v,def:DS.LADO_CT,step:.1},
-    {label:"lado comp.",get:()=>S.LADO_COMP,set:v=>S.LADO_COMP=v,def:DS.LADO_COMP,step:.05},
-    {label:"forma do dia",get:()=>S.FORMA_DIA,set:v=>S.FORMA_DIA=v,def:DS.FORMA_DIA,step:.5},
-    {label:"plant base",get:()=>S.PLANT_BASE,set:v=>S.PLANT_BASE=v,def:DS.PLANT_BASE,step:.01},
-    {label:"defuse base",get:()=>S.DEFUSE_BASE,set:v=>S.DEFUSE_BASE=v,def:DS.DEFUSE_BASE,step:.01},
-    {label:"clutch 1vX",get:()=>S.CLUTCH_X,set:v=>S.CLUTCH_X=v,def:DS.CLUTCH_X,step:.005},
-    {label:"trade chance",get:()=>S.TRADE_CHANCE,set:v=>S.TRADE_CHANCE=v,def:DS.TRADE_CHANCE,step:.01},
-  ]));
-  const F=E.CFG_FA, DF=DEF.FA;
-  wrap.appendChild(grpParams("Rating · FALLEnANGELs",[
-    {label:"base",get:()=>F.BASE,set:v=>F.BASE=v,def:DF.BASE,step:.005},
-    {label:"kill eco",get:()=>F.W_EK,set:v=>F.W_EK=v,def:DF.W_EK,step:.005},
-    {label:"sobrevivência",get:()=>F.W_SURV,set:v=>F.W_SURV=v,def:DF.W_SURV,step:.005},
-    {label:"KAST",get:()=>F.W_KAST,set:v=>F.W_KAST=v,def:DF.W_KAST,step:.005},
-    {label:"multi-kill",get:()=>F.W_MULTI,set:v=>F.W_MULTI=v,def:DF.W_MULTI,step:.005},
-    {label:"swing",get:()=>F.W_SWING,set:v=>F.W_SWING=v,def:DF.W_SWING,step:.01},
-    {label:"ADR peso",get:()=>F.W_ADR,set:v=>F.W_ADR=v,def:DF.W_ADR,step:.0001},
-    {label:"trade rating",get:()=>F.W_TRADE,set:v=>F.W_TRADE=v,def:DF.W_TRADE,step:.005},
-  ]));
-  box.appendChild(wrap);
-  // AVANÇADO (recolhido): pesos de afinidade por função (afeta classificação do PRISMA)
-  const advBtn=document.createElement("button"); advBtn.className="btn advbtn"; advBtn.type="button";
-  const adv=document.createElement("div"); adv.hidden=true; adv.style.marginTop="12px";
-  const rot=()=>advBtn.textContent=(adv.hidden?"⌄":"⌃")+" Avançado · pesos de afinidade";
-  advBtn.onclick=()=>{adv.hidden=!adv.hidden; rot();}; rot();
-  const w2=document.createElement("div"); w2.className="engwrap";
-  w2.appendChild(grpPesos("Afinidade — define a FUNÇÃO","afin"));
-  adv.appendChild(w2);
-  box.appendChild(advBtn); box.appendChild(adv);
-}
-
-/* ===================== MODELO UNIVERSAL DE PLAYSTYLES — bancada editável =====================
-   10 estilos UNIVERSAIS + Coringa. O OVR mistura dever da função, receita do estilo e rating.
-   "Fogo" = a arma da função: AWP (sn) pro AWPer, fp pro resto. */
-const NM_AXES=[["fogo","Fogo"],["ent","Entrada"],["ab","Abertura"],["tr","Trade"],["cl","Clutch"],["ut","Utilitário"]];
+/* Modelo local de playstyles do sandbox. Mantem a leitura sincronizada com game.js. */
+const NM_AXES=[["fogo","Fogo"],["ent","Entrada"],["ab","Abertura"],["tr","Trade"],["cl","Clutch"],["ut","Utilitario"]];
 const NM_DEF={
   "Agressivo":    {w:{ent:.45,ab:.30,fogo:.15,tr:.10}, wR:.40},
   "Spacetaker":   {w:{ab:.35,fogo:.35,ent:.30},        wR:.52},
@@ -1263,7 +1115,7 @@ function nmOVR(p,role,forced){
   const style=match.id, rating=E.ratingScore(p.rating);
   let wR, statScore;
   const roleRec=E.ROLE_PERFIL[role]||E.ROLE_PERFIL.Rifler, roleScore=E.dot(roleRec.ovr||{},p);
-  if(style==="joker"){wR=Math.max(.35,Math.min(.72,.65*(roleRec.wR??coringaWR())+.35*coringaWR()));const jp=jokerProfile(s7);const top5=jp.sorted.slice(0,5);const meanTop5=top5.reduce((a,b)=>a+b,0)/5;const styleScore=.55*meanTop5+.35*jp.min5+.10*(s7.reduce((a,b)=>a+b,0)/7-meanTop5/5);statScore=.58*roleScore+.42*styleScore;}
+  if(style==="joker"){wR=Math.max(.35,Math.min(.72,.65*(roleRec.wR??coringaWR())+.35*coringaWR()));const jp=jokerProfile(s7);const top5=jp.sorted.slice(0,5);const meanTop5=top5.reduce((a,b)=>a+b,0)/5;const meanAll=s7.reduce((a,b)=>a+b,0)/7;const styleScore=.55*meanTop5+.35*jp.min5+.10*(meanAll-meanTop5);statScore=.58*roleScore+.42*styleScore;}
   else{const rec=STYLE_RECIPE(style);wR=Math.max(.35,Math.min(.72,.65*(roleRec.wR??rec.wR)+.35*rec.wR));const styleScore=E.dot(rec.w,s6);statScore=.58*roleScore+.42*styleScore;}
   const clarityAdj=(style==="joker"?1.2:(match.clarity-.45)*2.2);
   const roleDutyAdj=Math.max(-2.5,Math.min(1.5,(statScore-55)/18));
@@ -1601,7 +1453,6 @@ function renderCalibResult(result){
 function buildCalibrator(){
   const box=document.getElementById("calibbox");if(!box)return;
   const player=loadedIdx==null?evaluatePlayer(jogadorAtual()):mainPlayer();
-  const current=effectiveRole(player);
   const roleOptions=ROLES.map(role=>`<option value="${role}" ${role===calibTargetRole?"selected":""}>${role}</option>`).join("");
   box.innerHTML=`<div class="calib-panel">
     <div class="calib-summary">
@@ -1773,24 +1624,6 @@ function wireAtributos(onChange){
   document.getElementById("s_coloc").onchange=e=>{state.colocacao=e.target.value;calibLast=null;onChange();};
 }
 
-function nmInp(get,set,def,step){const inp=document.createElement("input");inp.type="number";inp.step=step;inp.value=get();
-  inp.className=Math.abs(get()-def)>1e-9?"dirty":"";
-  inp.oninput=()=>{const v=parseFloat(inp.value);if(!isNaN(v)){set(v);inp.className=Math.abs(v-def)>1e-9?"dirty":"";renderMain();}};return inp;}
-function buildNMStyles(){const box=document.getElementById("nmStyles");if(!box)return;box.innerHTML="";
-  for(const nome in NM){const g=document.createElement("div");g.className="grp";
-    const w=NM[nome].w;const top2=NM_AXES.filter(([k])=>w[k]>0).sort((a,b)=>(w[b[0]]||0)-(w[a[0]]||0)).slice(0,2).map(([k,lab])=>lab).join("+");
-    g.innerHTML=`<h3>${esc(nome)} <span style="font-weight:400;color:var(--dim);font-size:.56rem;letter-spacing:.08em">· ${esc(top2)}</span></h3>`;
-    const row=document.createElement("div");row.className="wrow";
-    NM_AXES.forEach(([k,lab])=>{const chip=document.createElement("span");chip.className="wchip";chip.innerHTML=`<span class="wlab">${lab.slice(0,4)}</span>`;
-      chip.appendChild(nmInp(()=>NM[nome].w[k]||0,v=>NM[nome].w[k]=v,(NM_DEF[nome].w[k]||0),.05));row.appendChild(chip);});
-    const cR=document.createElement("span");cR.className="wchip";cR.innerHTML=`<span class="wlab" style="width:auto">rating</span>`;
-    cR.appendChild(nmInp(()=>NM[nome].wR,v=>NM[nome].wR=v,NM_DEF[nome].wR,.05));row.appendChild(cR);
-    g.appendChild(row);box.appendChild(g);}
-  const gc=document.createElement("div");gc.className="grp";gc.innerHTML=`<h3>Coringa - 5 de 7</h3>`;const pg=document.createElement("div");pg.className="pgrid";
-  [["piso minimo",()=>NM_COR.pisoMin,v=>NM_COR.pisoMin=v,NM_COR_DEF.pisoMin,1],["spread maximo",()=>NM_COR.spreadMax,v=>NM_COR.spreadMax=v,NM_COR_DEF.spreadMax,1]]
-    .forEach(([l,get,set,def,step])=>{const lab=document.createElement("label");lab.textContent=l;pg.appendChild(lab);pg.appendChild(nmInp(get,set,def,step));});
-  const hintWR=document.createElement("div");hintWR.className="hint";hintWR.textContent=`wR calculado: média dos wR dos 10 estilos (atualmente ${coringaWR().toFixed(2)})`;
-  gc.appendChild(pg);gc.appendChild(hintWR);box.appendChild(gc);}
 /* ===== UI unificada: roles + playstyle + OVR + time ===== */
 function refresh(target){
   if(!target||target==="all"){renderPlayerPanel();renderTeamPanel();renderMatchPanel();if(tuningOpen)buildCalibrator();return;}
@@ -1958,7 +1791,7 @@ function montarUI(){
         </div>
         <div class="card tuning-card">
           <div class="eng-head" style="margin-bottom:6px"><span class="title">Calibrador Inteligente</span><div class="toggle"><button class="btn" id="engToggle">${tuningOpen?"Ocultar":"Mostrar"}</button></div></div>
-          <div class="calib-note">O calibrador nÃ£o altera stats. Ele testa pesos, mostra a sugestÃ£o e sÃ³ aplica se vocÃª confirmar.</div>
+          <div class="calib-note">O calibrador nao altera stats. Ele testa pesos, mostra a sugestao e so aplica se voce confirmar.</div>
           <div id="calibbox" ${tuningOpen?"":"hidden"}></div>
         </div>
       </div>
