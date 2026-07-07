@@ -913,9 +913,9 @@ function renderImpactPanel(){
     if(parts.length)list.push(`${esc(p.nome)} <b>${parts.join(" · ")}</b>`);});
   teams.forEach((t,i)=>{if(Math.abs(t.quim-baseTeams[i].quim)>0.005||Math.abs(t.efet-baseTeams[i].efet)>0.5)dT++;});
   const box=document.getElementById("impact"), ch=document.getElementById("changed");
-  box.className="impact"+(dO+dR1+dR2+dS+dT===0?" zero":"");
-  box.innerHTML=`Vs. baseline: <b>${dO}</b> OVR · <b>${dR1}</b> role 1 · <b>${dR2}</b> role 2/combat · <b>${dS}</b> playstyle · <b>${dT}</b> times`;
-  if(!list.length){ch.hidden=true;ch.innerHTML="";}else{ch.hidden=false;ch.innerHTML=`<div class="chh">Quem mudou</div>`+list.slice(0,24).map(x=>`<span class="chip2">${x}</span>`).join("")+(list.length>24?`<span class="chip2 more">+${list.length-24}</span>`:"");}
+  if(box){box.className="impact"+(dO+dR1+dR2+dS+dT===0?" zero":"");
+  box.innerHTML=`Vs. baseline: <b>${dO}</b> OVR · <b>${dR1}</b> role 1 · <b>${dR2}</b> role 2/combat · <b>${dS}</b> playstyle · <b>${dT}</b> times`;}
+  if(ch){if(!list.length){ch.hidden=true;ch.innerHTML="";}else{ch.hidden=false;ch.innerHTML=`<div class="chh">Quem mudou</div>`+list.slice(0,24).map(x=>`<span class="chip2">${x}</span>`).join("")+(list.length>24?`<span class="chip2 more">+${list.length-24}</span>`:"");}}
 }
 function renderMain(){refresh("all");}
 function resetExperiment(){restaurar();NM=clone(NM_DEF);NM_COR=clone(NM_COR_DEF);lastMap=null;lastBatch=null;if(tuningOpen){buildNMStyles();buildTuning();}refresh("all");}
