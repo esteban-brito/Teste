@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<!--
+  draft9-0 · simulador de Counter-Strike (montagem de elenco + Major)
+  Estrutura: index.html (marcação) · style.css (estilos) · game.js (lógica).
+  Mantenha os três arquivos na mesma pasta. Sem dependências nem build.
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="draft9-0 — monte o elenco perfeito de Counter-Strike e busque o título invicto: 9 mapas, 9 a 0.">
+<meta name="theme-color" content="#07090e">
+<meta name="color-scheme" content="dark">
+<meta name="author" content="draft9-0">
+<link rel="canonical" href="https://esteban-brito.github.io/Teste/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2307090e'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='16' font-weight='700' text-anchor='middle' fill='%23ff5a1f'%3E9%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2307090e'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='16' font-weight='700' text-anchor='middle' fill='%23ff5a1f'%3E9%3C/text%3E%3C/svg%3E">
+<!-- PWA / mobile -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="draft9-0">
+<!-- Open Graph / redes sociais -->
+<meta property="og:title" content="draft9-0 · Simulador de Counter-Strike">
+<meta property="og:description" content="Monte o elenco perfeito de Counter-Strike, domine a química do time e busque o título invicto: 9 mapas, 9 a 0.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:site_name" content="draft9-0">
+<meta property="og:url" content="https://esteban-brito.github.io/Teste/">
+<meta property="og:image" content="https://esteban-brito.github.io/Teste/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="draft9-0 — simulador de Counter-Strike">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="draft9-0 · Simulador de Counter-Strike">
+<meta name="twitter:description" content="Monte o elenco perfeito de CS e busque o título invicto. 9 mapas, 9 a 0.">
+<meta name="twitter:image" content="https://esteban-brito.github.io/Teste/og-image.png">
+<title>draft9-0 · Simulador de Counter-Strike</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=55">
+</head>
+<body>
+<noscript>
+  <div style="max-width:560px;margin:18vh auto;padding:28px;text-align:center;font-family:system-ui,sans-serif;color:#eaf1f8">
+    <h1 style="color:#ff5a1f;font-size:2rem;margin:0 0 12px">draft9-0</h1>
+    <p style="color:#9fb0c4;line-height:1.5">Este jogo precisa de <strong>JavaScript</strong> habilitado para rodar.
+    Ative o JavaScript no seu navegador e recarregue a página.</p>
+  </div>
+</noscript>
+<div class="wrap">
+  <header>
+    <div class="logo">draft<b>9</b>-<b>0</b><span>Montagem de elenco · rumo ao título invicto</span></div>
+    <div class="hud">
+      <div class="s"><div class="v" id="cnt">0/6</div><div class="l">Escalados</div></div>
+      <div class="s"><div class="v pwr" id="pwr">—</div><div class="l">Força total</div></div>
+    </div>
+  </header>
+
+  <div class="section-tag roulettebar">Draft · roleta de times
+    <button class="mutebtn" id="mutebtn" aria-label="Som" title="Ligar/desligar som">🔊</button></div>
+  <div class="roulette" id="roulette">
+    <div class="viewport">
+      <div class="marker" aria-hidden="true"></div>
+      <div class="track" id="track"></div>
+    </div>
+    <div class="spinwrap" id="spinwrap"><button class="roll" id="rollbtn">⚄ Sortear time</button></div>
+  </div>
+
+  <div class="section-tag" id="picksTag" hidden>Elenco revelado <span class="winner-pill" id="winnerPill"></span><button class="ghost flipmode" id="flipModeBtn" type="button" aria-pressed="false" title="Vira a carta clicada em vez de selecioná-la">⟲ Virar cartas</button></div>
+  <p class="section-note" id="picksNote" hidden>Escolha <strong>1 carta</strong> do time sorteado.</p>
+  <div class="picks" id="picks"></div>
+
+  <div class="section-tag">Seu time</div>
+  <div class="squad">
+    <div class="lineup" id="lineup"></div>
+    <div class="lineup lineup--coach" id="lineupCoach"></div>
+  </div>
+
+  <section class="result" id="result" hidden>
+    <div class="section-tag">Análise do elenco</div>
+    <div class="result-grid">
+      <div class="stat"><div class="stat-v" id="rBruta">—</div><div class="stat-l">Força bruta</div></div>
+      <div class="stat stat--chem"><div class="stat-v" id="rQuim">—</div><div class="stat-l">Química</div></div>
+      <div class="stat stat--eff"><div class="stat-v" id="rEfet">—</div><div class="stat-l">Força efetiva</div></div>
+    </div>
+    <div class="alertbox" id="rAlertas"></div>
+  </section>
+
+  <div class="hint" id="hint" aria-live="polite">Sorteie um time e escolha 1 jogador por rodada.</div>
+
+  <div class="bar">
+    <button class="ghost accent" id="respinbtn" hidden>Sortear de novo</button>
+    <button class="ghost" id="resetbtn">Resetar elenco</button>
+  </div>
+
+  <div class="section-tag" id="majorTag" hidden>Major · simulação</div>
+  <div class="majorbar" id="majorSection" hidden>
+    <button class="majorbtn" id="suicabtn"><span class="mbtxt"><span class="mbt">Entrar no Major</span><span class="mbs">fase suíça · rumo ao 9-0 invicto</span></span></button>
+  </div>
+  <div class="section-tag">Base de elencos</div>
+  <div class="rosterbar">
+    <a class="ghost rosterlink" href="elencos.html">
+      <span class="rl-ic" aria-hidden="true">▤</span>
+      <span class="rl-tx"><span class="rl-t">Ver todos os elencos</span><span class="rl-s">OVR · funções · atributos · rating — 17 times, 85 jogadores</span></span>
+      <span class="rl-ar" aria-hidden="true">›</span>
+    </a>
+  </div>
+  <footer>draft9-0 · simulador de counter-strike</footer>
+</div>
+
+<!-- Overlay: Fase Suíça (estilo Major) -->
+<div class="overlay" id="suicaOverlay" role="dialog" aria-modal="true" aria-labelledby="suicaTitle" hidden>
+  <div class="overlay-head">
+    <div class="overlay-title" id="suicaTitle">Fase Suíça <span id="suicaSub"></span></div>
+    <div class="overlay-actions">
+      <button class="ghost accent" id="suicaAvancar">Avançar rodada</button>
+      <button class="ghost accent" id="suicaPlayoffs" hidden>Ir aos Playoffs</button>
+      <button class="ghost" id="suicaFechar">Fechar</button>
+    </div>
+  </div>
+  <div class="swiss" id="swissBoard"></div>
+  <div class="overlay-foot">
+    <span class="leg"><span class="leg-dot qual"></span> 3 vitórias classifica</span>
+    <span class="leg"><span class="leg-dot elim"></span> 3 derrotas elimina</span>
+    <span class="leg"><span class="leg-dot mine"></span> seu time</span>
+    <span class="leg-note">MD1 · jogos de classificação/eliminação em MD3</span>
+  </div>
+</div>
+
+<!-- Overlay: Playoffs (bracket) -->
+<div class="overlay" id="playoffOverlay" role="dialog" aria-modal="true" aria-labelledby="playoffTitle" hidden>
+  <div class="overlay-head">
+    <div class="overlay-title" id="playoffTitle">Playoffs <span id="playoffSub"></span></div>
+    <div class="overlay-actions">
+      <button class="ghost accent" id="playoffAvancar">Próxima fase</button>
+      <button class="ghost" id="playoffFechar">Fechar</button>
+    </div>
+  </div>
+  <div class="bracket" id="bracketBoard"></div>
+</div>
+
+<!-- Overlay: Partida (antessala + mapa ao vivo) -->
+<div class="overlay match-overlay" id="matchOverlay" role="dialog" aria-modal="true" aria-label="Partida" hidden>
+  <button class="match-close" id="matchClose" aria-label="Fechar"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 2L12 12M12 2L2 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+  <!-- Antessala -->
+  <div class="prematch" id="prematch">
+    <div class="prematch-ctx" id="prematchCtx"></div>
+    <div class="prematch-vs">
+      <div class="pm-team" id="pmTeamA"></div>
+      <div class="pm-mid"><div class="pm-versus">VS</div></div>
+      <div class="pm-team" id="pmTeamB"></div>
+    </div>
+    <button class="roll" id="prematchStart">Iniciar partida</button>
+  </div>
+  <!-- Tela do mapa -->
+  <div class="livemap is-hidden" id="livemap">
+    <div class="scorebar">
+      <div class="sb-team sb-a" id="sbTeamA"></div>
+      <div class="sb-center">
+        <div class="sb-score"><span id="sbScoreA">0</span><span class="sb-dash">—</span><span id="sbScoreB">0</span></div>
+        <div class="sb-map" id="sbMap"></div>
+      </div>
+      <div class="sb-team sb-b" id="sbTeamB"></div>
+    </div>
+    <div class="sb-progress"><div class="sb-progress-fill" id="sbProgress"></div></div>
+    <div class="roundstrip" id="roundStrip"></div>
+    <div class="livescore" id="liveScore">
+      <div class="ls-side" id="lsSideA"></div>
+      <div class="ls-side" id="lsSideB"></div>
+    </div>
+    <div class="livemap-foot" id="livemapFoot">
+      <button class="roll ghost" id="matchSkip">Pular para o resultado</button>
+      <button class="roll" id="matchContinue" hidden>Continuar</button>
+    </div>
+  </div>
+</div>
+<div class="overlay final-overlay" id="finalOverlay" role="dialog" aria-modal="true" aria-labelledby="finalTitulo" hidden>
+  <div class="final-glow" id="finalGlow"></div>
+  <div class="final-wrap">
+    <div class="final-trophy" id="finalTrophy"><svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M19 7h26v11c0 8.5-5.8 14-13 14S19 26.5 19 18V7z" fill="currentColor"/>
+      <path d="M19 11h-8v4c0 5.2 4.2 8.5 9.5 8.5" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>
+      <path d="M45 11h8v4c0 5.2-4.2 8.5-9.5 8.5" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>
+      <rect x="29" y="32" width="6" height="9" fill="currentColor"/>
+      <path d="M22 41h20l-2.4 7.5H24.4z" fill="currentColor"/>
+      <rect x="19.5" y="49" width="25" height="5.2" rx="1.6" fill="currentColor"/></svg></div>
+    <div class="final-titulo" id="finalTitulo">FIM DA CAMPANHA</div>
+    <div class="final-placar" id="finalPlacar"></div>
+    <div class="final-selos" id="finalSelos"></div>
+    <div class="final-mvp-card" id="finalMvpCard"></div>
+    <div class="final-jornada" id="finalJornada"></div>
+    <div class="final-ratings" id="finalRatings"></div>
+    <div class="final-rec" id="finalRec"></div>
+    <button class="roll final-btn" id="finalVoltar">Jogar novamente</button>
+  </div>
+</div>
+
+<script src="game.js?v=55" defer></script>
+</body>
+</html>

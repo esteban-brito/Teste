@@ -1,0 +1,18 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Node (caso ferramentas de build/teste sejam usadas)
+node_modules/
+npm-debug.log*
+
+# Temporários / scratch
+*.tmp
+/tmp/
+scratchpad/
+
+# Backups
+*.bak*

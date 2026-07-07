@@ -1,0 +1,951 @@
+/* ════════════════════════════════════════════════════════════════════
+   draft9-0 · estilos
+   ════════════════════════════════════════════════════════════════════
+   A APRESENTAÇÃO. Se game.js são os seis motores (PRISMA·ZÊNITE·SINAPSE·
+   MARÉ·PÓLVORA·FALLEnANGELs), este arquivo é a VITRINE: dá rosto às cartas,
+   à roleta, à química e ao veredito do mapa que aqueles motores produzem.
+   ────────────────────────────────────────────────────────────────────
+   Ordem das seções (a ORDEM importa — é cascata):
+     :root (tokens de cor/tipografia) · roleta · grids · cartas · resultado
+     · overlays de torneio (suíça/playoffs) · partida ao vivo · tela final
+     · responsivo · movimento reduzido · CAMADA DE REFINAMENTO (no fim).
+   A camada de refinamento, ao final, sobrescreve o tema base por cascata —
+   é o lugar para ajustes visuais sem mexer nas regras estruturais acima.
+   ════════════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#07090e; --panel2:#141b2b; --line:#1f293d;
+  --txt:#eaf1f8; --dim:#6c7d93; --accent:#ff5a1f; --cyan:#39d3ff;
+  --s-red:#ff2d48; --s-red-lit:#ff5c6e; --s-red-dim:#c43b50; --s-red-bg:#18060c;
+  --t1-gold:#ffbe00; --t1-gold-lit:#ffe033; --t1-gold-dim:#c8960a;
+  --t2-green:#3ec07e; --t2-green-lit:#6fd99f; --t2-green-dim:#2e8a5c;
+  --t3-silver:#aab6c4; --t3-silver-lit:#c6d0db; --t3-silver-dim:#6c7888;
+  /* características de treinador */
+  --c-gestor:#c9a36a; --c-gestor-dim:#8f6f3e;
+  --c-estrategista:#2fd6d6; --c-estrategista-dim:#1d8f8f;
+  --c-desenvolvedor:#4a82ff; --c-desenvolvedor-dim:#2f55b5;
+  --c-motivador:#c79bff; --c-motivador-dim:#8a63cf;
+  /* roles (dessaturados) */
+  --r-igl:#7a93b8; --r-awper:#9a86c4; --r-entry:#c47a6a; --r-rifler:#bf9f63; --r-lurker:#7fa882; --r-support:#5fa6a6;
+  /* resultado/pódio */
+  --gold:#ffce4a; --gold-lit:#ffd968; --gold-dim:#f0a93a; --win:#7fe6a8; --loss:#e07a6a; --neutral:#cdd6e4; --bronze:#d8985a;
+  --tw:230px; --gap:10px; --ease:cubic-bezier(.2,.8,.2,1); --ff:'Chakra Petch';
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:radial-gradient(1200px 600px at 50% -10%,#121a26 0%,transparent 65%),var(--bg);
+  color:var(--txt);font-family:'Barlow Semi Condensed',sans-serif;min-height:100vh;min-height:100dvh;overflow-x:hidden;
+  padding:max(14px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))}
+.wrap{max-width:1120px;margin:0 auto}
+.logo{font-family:var(--ff);font-weight:700;font-size:clamp(1.4rem,4vw,1.75rem);letter-spacing:.08em}
+.logo b{color:var(--accent)}
+.logo span{color:var(--dim);font-size:.62rem;display:block;letter-spacing:.28em;font-weight:600;text-transform:uppercase;margin-top:2px}
+header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;
+  border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:16px}
+.hud{display:flex;gap:clamp(14px,3vw,24px)}
+.hud .s{text-align:right}
+.hud .v{font-family:var(--ff);font-size:clamp(1.3rem,3.5vw,1.6rem);font-weight:700;line-height:1}
+.hud .v.pwr{color:var(--cyan)}
+.hud .l{font-size:.6rem;color:var(--dim);letter-spacing:.18em;text-transform:uppercase;font-weight:600}
+.section-tag{font-family:var(--ff);font-size:.66rem;letter-spacing:.24em;color:var(--dim);
+  text-transform:uppercase;font-weight:700;margin:18px 0 8px;display:flex;align-items:center;gap:10px}
+.section-tag::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+/* botão "Virar cartas" no cabeçalho do elenco revelado: alterna o modo global de virar carta */
+#picksTag::after{display:none} /* sem a linha: o botão ocupa a direita */
+.flipmode{margin-left:auto;font-size:.6rem;letter-spacing:.1em;padding:6px 11px;border-radius:8px;
+  display:inline-flex;align-items:center;gap:5px;line-height:1;flex:none}
+.flipmode.ativo{border-color:var(--accent);color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 16%,var(--panel2));box-shadow:0 0 12px -3px var(--accent)}
+.section-note{font-size:.62rem;letter-spacing:.06em;color:var(--dim);margin:-4px 0 8px}
+.section-note strong{color:var(--txt);font-weight:600}
+.winner-pill{display:inline-block;font-family:var(--ff);font-size:.62rem;font-weight:700;
+  letter-spacing:.14em;padding:3px 10px;border-radius:20px;margin-left:6px;vertical-align:middle;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:38vw;min-width:0} /* 1 linha sempre; trunca no celular */
+
+/* ╔══════════════ ROLETA · draft de times ══════════════╗ */
+.roulette{position:relative;border-radius:16px;overflow:hidden;min-height:96px;border:1px solid #2b3346;
+  background:radial-gradient(120% 180% at 50% -60%,#1b2436 0%,#0c1119 60%)}
+.roulette::before,.roulette::after{content:'';position:absolute;top:0;bottom:0;width:64px;z-index:3;pointer-events:none}
+.roulette::before{left:0;background:linear-gradient(90deg,#0c1119 20%,transparent)}
+.roulette::after{right:0;background:linear-gradient(270deg,#0c1119 20%,transparent)}
+.marker{position:absolute;top:0;bottom:0;left:50%;width:2px;transform:translateX(-50%);z-index:4;pointer-events:none;
+  background:var(--accent)}
+.marker::before,.marker::after{content:'';position:absolute;left:50%;transform:translateX(-50%);
+  border-left:7px solid transparent;border-right:7px solid transparent}
+.marker::before{top:0;border-top:9px solid var(--accent)}
+.marker::after{bottom:0;border-bottom:9px solid var(--accent)}
+.viewport{overflow:hidden;padding:14px 0}
+.track{display:flex;gap:var(--gap);padding:0 calc(50% - var(--tw)/2);align-items:stretch;min-height:76px}
+.track>*{flex:0 0 var(--tw)}
+.tcard{position:relative;border-radius:10px;padding:10px 12px;height:76px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;border:1px solid color-mix(in srgb,var(--col) 65%,#333);
+  background:linear-gradient(160deg,color-mix(in srgb,var(--col) 38%,#0e1119) 0%,color-mix(in srgb,var(--col) 14%,#0c1018) 60%,#0b0e15 100%)} /* fita da roleta na COR do time */
+.tcard .tname{font-family:var(--ff);font-weight:700;font-size:1.18rem;letter-spacing:.06em;color:#fff}
+.tcard .tcamp{font-size:.72rem;color:var(--dim);margin-top:3px;letter-spacing:.02em}
+.tcard .tcoloc{position:absolute;top:5px;right:7px;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;
+  font-weight:700;color:var(--col);padding:2px 6px;border-radius:5px;line-height:1;
+  background:color-mix(in srgb,var(--col) 16%,transparent);border:1px solid color-mix(in srgb,var(--col) 40%,transparent)}
+.tcard.hot{border-color:var(--col);background:linear-gradient(180deg,color-mix(in srgb,var(--col) 22%,#10141d),#0c1018)}
+.tcard.dim{opacity:.35;filter:grayscale(.4)}
+/* tick: card pisca ao cruzar o marcador central */
+.tcard.tick{animation:tcardTick .12s cubic-bezier(.2,.7,.2,1)}
+@keyframes tcardTick{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--col) 60%,transparent)}100%{box-shadow:0 0 14px 2px transparent}}
+/* explosão: card vencedor pulsa e ganha glow triunfal */
+.tcard.win{animation:tcardWin .7s cubic-bezier(.2,1.3,.3,1) both;z-index:5}
+@keyframes tcardWin{
+  0%{transform:scale(1)}
+  35%{transform:scale(1.14);box-shadow:0 0 32px 6px var(--col),0 0 0 2px var(--col) inset}
+  100%{transform:scale(1.06);box-shadow:0 0 22px 1px color-mix(in srgb,var(--col) 70%,transparent),0 0 0 2px var(--col) inset}}
+/* flash da roleta ao revelar — via animação própria (não usa ::after, que já é o fade lateral) */
+.roulette.flash{animation:rouFlash .5s ease-out}
+@keyframes rouFlash{0%{box-shadow:inset 0 0 60px 10px rgba(255,255,255,.45)}100%{box-shadow:inset 0 0 0 0 transparent}}
+
+.roulettebar{display:flex;align-items:center;justify-content:space-between}
+.mutebtn{background:none;border:none;cursor:pointer;font-size:.95rem;padding:2px 6px;border-radius:6px;
+  opacity:.7;transition:opacity .15s,transform .12s;-webkit-tap-highlight-color:transparent}
+.mutebtn:hover{opacity:1;transform:scale(1.1)}
+.mutebtn.muted{opacity:.4;filter:grayscale(1)}
+.spinwrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:6;
+  background:rgba(7,9,14,.45);-webkit-backdrop-filter:blur(1px);backdrop-filter:blur(1px)}
+.spinwrap.gone{opacity:0;pointer-events:none;transition:opacity .2s}
+button.roll,button.ghost{font-family:var(--ff);font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  cursor:pointer;border-radius:10px;-webkit-tap-highlight-color:transparent;transition:transform .12s var(--ease)}
+button.roll{font-size:.88rem;padding:13px 30px;border:1px solid var(--accent);color:#170700;
+  background:linear-gradient(180deg,#ff6a2f,#ff5a1f)}
+button.roll:hover{transform:translateY(-2px)}
+button.roll:active{transform:translateY(1px) scale(.97)}
+button.ghost{font-size:.76rem;padding:11px 20px;border:1px solid var(--line);background:var(--panel2);color:var(--txt)}
+button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
+
+/* ╔══════════════ GRIDS · elenco e bancada ══════════════╗ */
+.picks,.lineup{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.picks{perspective:900px}
+/* caixa de carbono — mesma métrica do elenco revelado, 3 colunas */
+.squad{position:relative;display:grid;grid-template-columns:repeat(6,1fr);gap:8px;border-radius:16px;
+  border:1px solid #20283a;padding:10px;background:linear-gradient(180deg,#0b0e15,#090c12);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.squad::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:0;
+  padding:6px;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.04) 0 2px,transparent 2px 5px),repeating-linear-gradient(-45deg,rgba(0,0,0,.35) 0 2px,transparent 2px 5px)}
+.squad>*{position:relative;z-index:1}
+.squad .lineup{display:contents}
+.lineup--coach{max-width:none}
+
+/* ╔══════════════ CARTAS · jogador e treinador ══════════════╗ */
+.card,.coachcard{position:relative;border-radius:13px;cursor:pointer;text-align:center;overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;min-height:148px;aspect-ratio:5/7;
+  background:transparent;container-type:inline-size; /* o texto do verso escala com a LARGURA da carta (cqw): do celular mini à TV */
+  transition:box-shadow .16s var(--ease),border-color .14s,outline-color .14s}
+.card:hover,.coachcard:hover{box-shadow:0 0 0 1px var(--tcol,var(--cc-main,#fff)),0 0 18px -2px var(--tcol,var(--cc-main,#fff))}
+/* textura + profundidade por tier */
+.card::before,.coachcard::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1}
+.card.tier-3::before{background:linear-gradient(180deg,rgba(198,208,219,.09),transparent 14%),radial-gradient(circle at 50% -25%,rgba(170,182,196,.08),transparent 58%),repeating-linear-gradient(100deg,rgba(198,208,219,.025) 0 1px,transparent 1px 4px)} /* prata escovada */
+.card.tier-2::before{background:linear-gradient(180deg,rgba(111,217,159,.1),transparent 14%),radial-gradient(circle at 50% -25%,rgba(62,192,126,.12),transparent 58%)}
+.card.tier-1::before{background:linear-gradient(180deg,rgba(255,224,51,.12),transparent 14%),radial-gradient(circle at 50% -25%,rgba(255,190,0,.14),transparent 58%),repeating-linear-gradient(135deg,rgba(255,190,0,.045) 0 3px,transparent 3px 7px)} /* ouro polido */
+.card.tier-s::before{background:linear-gradient(180deg,rgba(255,92,110,.14),transparent 14%),radial-gradient(circle at 50% -25%,rgba(255,45,72,.18),transparent 58%),repeating-linear-gradient(135deg,rgba(255,45,72,.05) 0 3px,transparent 3px 8px)} /* rubi lapidado */
+.coachcard::before{background:radial-gradient(circle at 50% -25%,color-mix(in srgb,var(--cc-main) 16%,transparent),transparent 58%),repeating-linear-gradient(135deg,color-mix(in srgb,var(--cc-main) 4%,transparent) 0 3px,transparent 3px 7px)}
+/* FRENTE PADRONIZADA (tamanhos em cqw = % da largura da carta): meta · OVR+nick · base.
+   Coach e player compartilham o mesmo esqueleto; tudo escala do celular-mini à TV sem colidir. */
+.card .cmeta,.coachcard .cmeta{position:absolute;top:clamp(5px,6cqw,8px);left:clamp(7px,8cqw,10px);right:clamp(7px,8cqw,10px);
+  display:flex;justify-content:space-between;gap:6px;font-family:var(--ff);font-size:clamp(6px,6.4cqw,9px);
+  font-weight:700;letter-spacing:.06em;z-index:4;color:var(--dim,#8593a6)}
+.cmeta span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.cmeta span:first-child{flex:none} /* país (3 letras) nunca encolhe; o time é que trunca se precisar */
+.starsig{height:.8em;line-height:.8em;text-align:center;
+  font-family:var(--ff);font-weight:700;font-size:clamp(7px,6.4cqw,11px);letter-spacing:.18em;text-transform:uppercase;
+  color:var(--tcol,#fff);opacity:.62;text-shadow:0 0 6px var(--tcol,#fff);white-space:nowrap;pointer-events:none;
+  margin-top:6px}
+.card .ccore,.coachcard .ccore{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  width:100%;padding:clamp(10px,12cqw,18px) 8px 4px;z-index:4;position:relative}
+.card .ovr,.coachcard .ovr{font-family:var(--ff);font-weight:700;font-size:clamp(30px,34cqw,58px);line-height:.82}
+.card .nick,.coachcard .nick{font-family:var(--ff);font-weight:700;font-size:clamp(12px,12cqw,21px);
+  margin-top:2px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.roles{display:flex;gap:clamp(3px,4cqw,5px);width:100%;z-index:4;position:relative;
+  padding:0 clamp(7px,8cqw,10px) clamp(8px,9cqw,12px)} /* simétrico (sem botão de virar na carta) */
+.role{flex:1;font-family:var(--ff);font-size:clamp(6px,6.2cqw,9px);letter-spacing:.03em;text-transform:uppercase;
+  font-weight:700;padding:clamp(3px,4cqw,5px) 2px;border-radius:clamp(4px,5cqw,6px);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.role.prim{color:var(--rc,#aab6c4);border:1px solid color-mix(in srgb,var(--rc,#aab6c4) 50%,transparent);
+  background:color-mix(in srgb,var(--rc,#aab6c4) 13%,transparent)}
+.role.sec{color:#7a8696;border:1px solid rgba(120,135,155,.22);background:transparent}
+
+/* cor de OVR+nome (--lit) e metadados (--dim) — cada tier só seta as vars */
+.card .ovr,.card .nick{color:var(--lit,#fff)}
+
+/* Tier 3 — prata discreta, fundo escuro (detalhes legíveis) */
+.card.tier-3{border:1px solid rgba(170,182,196,.45);--tcol:var(--t3-silver);--lit:var(--t3-silver-lit);--dim:var(--t3-silver-dim)}
+.card.tier-3:hover{border-color:rgba(170,182,196,.6)}
+
+/* Tier 2 — verde imponente, fundo escuro */
+.card.tier-2{border:2px solid var(--t2-green);--tcol:var(--t2-green);--lit:var(--t2-green-lit);--dim:var(--t2-green-dim)}
+.card.tier-2:hover{border-color:var(--t2-green-lit)}
+
+/* Tier 1 — dourado imponente, fundo escuro */
+.card.tier-1{border:2px solid var(--t1-gold);--tcol:var(--t1-gold);--lit:var(--t1-gold-lit);--dim:var(--t1-gold-dim)}
+.card.tier-1:hover{border-color:var(--t1-gold-lit)}
+
+/* Tier S — única com fundo sólido */
+.card.tier-s{isolation:isolate;contain:paint;
+  background:linear-gradient(165deg,rgba(255,45,72,.28) 0%,var(--s-red-bg) 55%,rgba(120,16,32,.9) 100%);
+  border:2px solid var(--s-red);--tcol:var(--s-red);--lit:var(--s-red-lit);--dim:var(--s-red-dim)}
+.card.tier-s:hover{border-color:var(--s-red-lit)}
+
+/* Tier H — OVR 22, holográfico. RGB cicla via hue-rotate (matiz é circular: nunca tem salto) */
+.card.tier-h{isolation:isolate;contain:paint;
+  background:linear-gradient(165deg,rgba(255,255,255,.10) 0%,#0c0710 55%,rgba(40,20,60,.9) 100%);
+  border:2px solid transparent;--holo:linear-gradient(125deg,#ff0040,#ff8a00,#ffe600,#39e639,#00c8ff,#7a3cff,#ff0040);--tcol:#fff}
+.card.tier-h::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:5;padding:2px;
+  background:var(--holo);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
+  animation:holoHue 6s linear infinite}
+.card.tier-h::before{background:radial-gradient(circle at 50% -25%,rgba(255,255,255,.16),transparent 60%)}
+.card.tier-h .ovr,.card.tier-h .nick,.card.tier-h .starsig{
+  background:var(--holo);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+  animation:holoHue 6s linear infinite}
+.card.tier-h .starsig{text-shadow:none;opacity:.9}
+.card.tier-h .cmeta{color:#c9b8e0}
+@keyframes holoHue{to{filter:hue-rotate(360deg)}}
+
+/* Treinador — MESMO esqueleto do jogador, mas MOLDURA bem distinta: fundo colorido na cor da
+   característica, selo "TREINADOR" no topo, borda dupla e padrão diagonal reforçado. */
+.coachcard{border:2px solid var(--cc-main,var(--t1-gold));isolation:isolate;contain:paint;
+  background:linear-gradient(165deg,color-mix(in srgb,var(--cc-main) 30%,#0b0e15) 0%,#0a0c12 58%,color-mix(in srgb,var(--cc-main) 16%,#0a0c12) 100%);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cc-main) 38%,transparent),inset 0 0 26px -8px color-mix(in srgb,var(--cc-main) 55%,transparent)}
+.coachcard::before{background:radial-gradient(circle at 50% -20%,color-mix(in srgb,var(--cc-main) 26%,transparent),transparent 60%),repeating-linear-gradient(135deg,color-mix(in srgb,var(--cc-main) 9%,transparent) 0 3px,transparent 3px 8px)}
+/* selo de topo: identifica a carta como treinador na hora */
+.coach-seal{position:absolute;top:0;left:0;right:0;z-index:5;text-align:center;font-family:var(--ff);font-weight:700;
+  text-transform:uppercase;letter-spacing:.22em;font-size:clamp(6px,6.2cqw,9px);padding:clamp(3px,3.6cqw,5px) 0;color:#0a0c12;
+  background:linear-gradient(90deg,var(--cc-dim),var(--cc-lit,var(--cc-main)),var(--cc-dim));
+  box-shadow:0 1px 0 color-mix(in srgb,var(--cc-main) 45%,transparent)}
+.coachcard .cmeta{top:clamp(19px,22cqw,28px);color:var(--cc-dim)} /* meta abaixo do selo */
+.coachcard .ccore{padding-top:clamp(26px,30cqw,40px)}              /* core abaixo de selo+meta */
+.coachcard .ovr{color:var(--cc-lit,var(--cc-main))}
+.coachcard .nick{color:var(--cc-lit,var(--cc-main))}
+.coachcard .carac{width:100%;padding:clamp(4px,5cqw,7px) clamp(6px,7cqw,9px);
+  margin-top:auto;font-family:var(--ff);font-size:clamp(6px,6.2cqw,9px);letter-spacing:.05em;text-transform:uppercase;
+  font-weight:700;border-radius:0;z-index:2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;
+  color:var(--cc-lit,var(--cc-main));border-top:1px solid color-mix(in srgb,var(--cc-main) 40%,transparent);
+  background:color-mix(in srgb,var(--cc-main) 14%,transparent)}
+.coachcard:hover{border-color:var(--cc-lit,var(--cc-main))}
+/* variantes por característica */
+.coach-gestor{--cc-main:var(--c-gestor);--cc-dim:var(--c-gestor-dim);--cc-lit:#e0c294}
+.coach-estrategista{--cc-main:var(--c-estrategista);--cc-dim:var(--c-estrategista-dim);--cc-lit:#7df0f0}
+.coach-desenvolvedor{--cc-main:var(--c-desenvolvedor);--cc-dim:var(--c-desenvolvedor-dim);--cc-lit:#85a9ff}
+.coach-motivador{--cc-main:var(--c-motivador);--cc-dim:var(--c-motivador-dim);--cc-lit:#ddc4ff}
+
+/* ——— CARTAS · flip frente/verso ——————————————————————
+   A moldura/tier fica em .card (intacta); só o CONTEÚDO gira em 3D dentro dela.
+   Virar é por MODO GLOBAL (botão no cabeçalho): a classe .flipped na carta gira as faces. */
+.card,.coachcard{perspective:800px;-webkit-perspective:800px}
+.cfaces{position:absolute;inset:0;z-index:2;transform-style:preserve-3d;-webkit-transform-style:preserve-3d;
+  border-radius:inherit;box-shadow:inset 0 1px 0 rgba(255,255,255,.09),inset 0 -1px 0 rgba(0,0,0,.55)} /* bisel metálico: relevo de colecionável em toda carta */
+/* brasão do tier: filete de luz no topo de toda carta (assinatura do design, frente e verso) */
+.cfaces::after{content:"";position:absolute;top:0;left:16%;right:16%;height:3px;z-index:6;pointer-events:none;
+  border-radius:0 0 4px 4px;background:linear-gradient(90deg,transparent,var(--tcol,var(--cc-main,#9fb2c8)),transparent);
+  box-shadow:0 0 10px -1px var(--tcol,var(--cc-main,#9fb2c8));opacity:.9}
+.coachcard .cfaces::after{display:none} /* o selo TREINADOR já é o brasão do coach */
+/* halo atrás do OVR: o número ganha palco */
+.ccore::before{content:"";position:absolute;left:50%;top:46%;width:78cqw;height:78cqw;z-index:-1;pointer-events:none;
+  transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(circle,color-mix(in srgb,var(--tcol,var(--cc-main,#9fb2c8)) 16%,transparent),transparent 65%)}
+/* cada face gira independente; o que define o que aparece é a OPACIDADE (0/1).
+   assim nunca há sobreposição nem texto espelhado, mesmo se o Safari achatar o 3D. */
+.cface{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;border-radius:inherit;overflow:hidden;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;transition:transform .45s var(--ease),opacity .3s var(--ease)}
+.cfront{transform:rotateY(0deg);opacity:1}
+.cback{transform:rotateY(180deg);opacity:0;justify-content:flex-start;gap:5px;padding:9px 8px 10px;
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.014) 0 1px,transparent 1px 7px),
+    repeating-linear-gradient(-45deg,rgba(255,255,255,.012) 0 1px,transparent 1px 7px),
+    linear-gradient(165deg,color-mix(in srgb,var(--tcol,#39d3ff) 24%,#0b0e15) 0%,#0a0c12 62%,#070910 100%); /* guilhochê fino de colecionável */
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tcol,#fff) 16%,transparent)}
+.coachcard .cback{justify-content:center} /* verso do treinador: descrição centralizada vertical (sobra simétrica) */
+.card.flipped .cfront,.coachcard.flipped .cfront{transform:rotateY(-180deg);opacity:0}
+.card.flipped .cback,.coachcard.flipped .cback{transform:rotateY(0deg);opacity:1}
+/* o verso do treinador usa a cor da característica dele (mapeia --cc-* p/ os tokens do verso) */
+.coachcard{--tcol:var(--cc-main);--lit:var(--cc-lit,var(--cc-main));--dim:var(--cc-dim,var(--cc-main))}
+/* VERSO PADRONIZADO (tamanhos em cqw = % da largura da carta → idêntico em qualquer tela).
+   Jogador: estilo (sub-arquétipo) no topo + 4 stats. Treinador: só a descrição do efeito.
+   Sem botão na carta (virar é por modo global) → o verso usa a carta toda. */
+.cb-head{font-family:var(--ff);font-weight:700;font-size:clamp(9px,11cqw,16px);line-height:1.12;
+  letter-spacing:.01em;color:var(--lit,#fff);width:100%;text-align:left;padding:0 3px 5px 3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis; /* nome do estilo SEMPRE em 1 linha (a fonte encolhe via JS se precisar) */
+  border-bottom:1px solid color-mix(in srgb,var(--tcol,#fff) 26%,transparent)}
+.cb-stats{display:flex;flex-direction:column;width:100%;flex:1;justify-content:space-evenly;margin-top:2px}
+.statbar{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:6cqw;padding:4cqw 1px;
+  border-bottom:1px solid color-mix(in srgb,var(--tcol,#888) 12%,transparent)}
+.statbar:last-child{border-bottom:none}
+/* verso do treinador: descrição objetiva do efeito, ocupando o corpo da carta */
+.cb-desc{font-family:'Barlow Semi Condensed',sans-serif;font-size:clamp(12px,13cqw,20px);line-height:1.32;font-weight:500;
+  color:var(--txt,#eaf1f8);text-align:left;width:100%;display:block;
+  padding:clamp(6px,6.5cqw,10px) clamp(7px,7.5cqw,11px)} /* largura cheia; altura = conteúdo; a fonte é ajustada via JS (fitText) p/ preencher o verso sem cortar */
+.sb-lab{font-family:var(--ff);font-weight:600;font-size:clamp(6px,6.4cqw,9px);letter-spacing:.06em;text-transform:uppercase;
+  color:var(--dim,#8593a6);text-align:left;line-height:1.05;overflow-wrap:break-word}
+.sb-val{font-family:var(--ff);font-weight:800;font-size:clamp(13px,15cqw,20px);font-variant-numeric:tabular-nums;
+  color:var(--lit,#fff);text-align:right;line-height:1}
+@media(prefers-reduced-motion:reduce){.cface{transition:none}}
+
+.slot{border:1px dashed rgba(52,65,85,.5);border-radius:13px;min-height:148px;aspect-ratio:5/7;
+  display:flex;align-items:center;justify-content:center}
+.slot .ph{color:#243145;font-size:1.6rem}
+.slot.coach{border-color:rgba(255,200,50,.25)} .slot.coach .ph{color:rgba(255,200,50,.28)}
+.slot.avail{border-style:solid;border-color:rgba(255,90,31,.5);cursor:pointer}
+.slot.coach.avail{border-color:rgba(255,200,50,.5)}
+.slot.avail .ph{color:var(--accent)} .slot.coach.avail .ph{color:var(--t1-gold)}
+.card.dim,.coachcard.dim{pointer-events:none}
+/* carta travada: já escolhida (mesma carta) OU jogador já presente na line (.dup) */
+.picks .card.taken,.picks .coachcard.taken,.picks .card.dup{
+  border-color:rgba(90,100,115,.4)!important;background:#0c0f16!important;opacity:.55;pointer-events:none;position:relative}
+.picks .card.taken *,.picks .coachcard.taken *,.picks .card.dup *{color:#5c6878!important;border-color:rgba(90,100,115,.25)!important;background:transparent!important}
+/* neutraliza texto holográfico (tier-h), senão o nome/OVR fica transparente e a carta parece sumir */
+.picks .card.taken .ovr,.picks .card.taken .nick,.picks .card.taken .starsig,
+.picks .card.dup .ovr,.picks .card.dup .nick,.picks .card.dup .starsig{
+  -webkit-text-fill-color:#5c6878!important;color:#5c6878!important;background:none!important;animation:none!important}
+/* etiqueta sobreposta — anula a máscara/padding herdados do tier-h, senão o rótulo some */
+.picks .card.taken::after,.picks .coachcard.taken::after,.picks .card.dup::after{
+  position:absolute;inset:0;z-index:7;display:flex;align-items:center;justify-content:center;
+  font-family:var(--ff);font-size:.6rem;font-weight:700;letter-spacing:.18em;color:#9aa6b6;
+  background:rgba(8,10,16,.72);-webkit-mask:none;mask:none;padding:0;animation:none}
+.picks .card.taken::after,.picks .coachcard.taken::after{content:"NO ELENCO"}
+.picks .card.dup::after{content:"JÁ NA LINE"}
+.sel{outline:2px solid var(--sel,var(--accent));outline-offset:3px;z-index:6;filter:brightness(1.08)}
+.swp{outline:2px dashed rgba(57,211,255,.5);outline-offset:2px;cursor:pointer}
+
+@keyframes pop{from{opacity:0;transform:translate3d(0,6px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+@keyframes deal{0%{opacity:0;transform:translate3d(0,34px,0) rotateY(52deg) scale(.84)}
+  62%{opacity:1;transform:translate3d(0,-3px,0) rotateY(-6deg) scale(1.02)}100%{opacity:1;transform:none}}
+.deal{animation:deal .52s var(--ease) both}
+/* abertura de pacote: cada carta revelada ganha UMA varredura de brilho (foil) ao entrar */
+.picks .deal .cfront::before{content:"";position:absolute;inset:0;z-index:6;pointer-events:none;
+  background:linear-gradient(115deg,transparent 32%,rgba(255,255,255,.2) 50%,transparent 68%);
+  transform:translateX(-140%);animation:cardSheen .8s .3s var(--ease) both}
+@keyframes cardSheen{to{transform:translateX(140%)}}
+@keyframes land{0%{transform:scale(1.16);box-shadow:0 0 0 3px var(--tcol,var(--accent)),0 0 24px -2px var(--tcol,var(--accent))}
+  55%{transform:scale(.96)}100%{transform:scale(1);box-shadow:none}}
+.land{animation:land .44s var(--ease)}
+
+.bar{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+.result{margin-top:8px;animation:pop .4s var(--ease) both}
+.result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{border:1px solid var(--line);border-radius:12px;padding:14px 8px;text-align:center;background:linear-gradient(180deg,#10141d,#0b0e15)}
+.stat-v{font-family:var(--ff);font-weight:700;font-size:clamp(1.6rem,6vw,2.4rem);line-height:1;color:var(--txt)}
+.stat-l{font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:600;margin-top:5px}
+.stat--chem .stat-v{color:var(--cyan)}
+.stat--eff{border-color:rgba(255,90,31,.4)}
+.stat--eff .stat-v{color:var(--accent);text-shadow:0 0 20px rgba(255,90,31,.35)}
+.alertbox{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.selo{display:inline-flex;align-items:center;gap:6px;font-family:var(--ff);font-size:.62rem;font-weight:600;letter-spacing:.03em;padding:5px 9px 5px 7px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);color:var(--dim)}
+.selo i{font-style:normal;font-size:.72rem;opacity:.85;line-height:1}
+.selo b{font-weight:800;font-variant-numeric:tabular-nums;margin-left:1px}
+.selo.forte{border-color:rgba(62,192,126,.35);color:var(--t2-green-lit);background:rgba(62,192,126,.07)}
+.selo.bonus{border-color:rgba(70,140,235,.42);color:#7db4ff;background:rgba(70,140,235,.09)}
+.selo.leve{border-color:rgba(240,185,60,.42);color:#f2c24e;background:rgba(240,185,60,.08)}
+.selo.grave{border-color:rgba(255,45,72,.55);color:#ff6478;background:rgba(255,45,72,.13);box-shadow:inset 0 0 0 1px rgba(255,45,72,.14)}
+.hint{text-align:center;color:var(--dim);font-size:.74rem;margin-top:8px;min-height:1.2em}
+footer{text-align:center;color:#283344;font-size:.6rem;letter-spacing:.2em;margin-top:22px;text-transform:uppercase}
+
+/* mobile: 3 colunas × 2 linhas (desktop usa 6 colunas × 1 linha) */
+@media(max-width:640px){
+  .picks,.lineup,.squad{grid-template-columns:repeat(3,1fr)}
+}
+/* celular muito estreito (≤360px, ex. iPhone SE): 2 colunas → cartas largas o bastante p/ nada truncar */
+@media(max-width:360px){
+  .picks,.lineup,.squad{grid-template-columns:repeat(2,1fr)}
+}
+
+/* proporção de card (5/7) padroniza a altura em todas as telas; min-height é só o piso no mobile estreito */
+
+/* ╔══════════════ OVERLAYS DE TORNEIO · suíça e playoffs ══════════════╗ */
+.overlay[hidden]{display:none}
+.is-hidden{display:none!important}
+.overlay{position:fixed;inset:0;z-index:50;
+  background:radial-gradient(1200px 600px at 50% -10%,#121a26 0%,transparent 65%),rgba(7,9,14,.985);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;flex-direction:column;animation:overlayIn .28s var(--ease)}
+@keyframes overlayIn{from{opacity:0;transform:scale(.99)}to{opacity:1;transform:scale(1)}}
+.overlay.fechando{animation:overlayOut .2s var(--ease) forwards;pointer-events:none}
+@keyframes overlayOut{to{opacity:0;transform:scale(.992)}}
+.tela-in{animation:telaIn .26s var(--ease)}
+@keyframes telaIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.overlay-head{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:max(18px,env(safe-area-inset-top)) max(clamp(16px,4vw,34px),env(safe-area-inset-right)) 18px max(clamp(16px,4vw,34px),env(safe-area-inset-left));
+  border-bottom:1px solid var(--line);flex-wrap:wrap;background:linear-gradient(180deg,rgba(20,27,43,.6),transparent)}
+.overlay-title{font-family:var(--ff);font-weight:700;font-size:clamp(1.1rem,3vw,1.5rem);
+  letter-spacing:.06em;color:var(--txt);display:flex;align-items:baseline;gap:10px}
+.overlay-title::before{content:"";width:4px;height:1.1em;border-radius:2px;background:var(--accent);
+  box-shadow:0 0 10px var(--accent);align-self:center}
+.overlay-title span{color:var(--dim);font-size:.72rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase}
+.overlay-actions{display:flex;gap:9px;flex-wrap:wrap}
+.overlay-actions .ghost{font-size:.72rem;padding:10px 16px}
+.overlay-actions .ghost.accent{background:linear-gradient(180deg,rgba(255,90,31,.16),rgba(255,90,31,.06));
+  border-color:rgba(255,90,31,.5);color:var(--accent)}
+.overlay-actions .ghost.accent:hover{background:linear-gradient(180deg,rgba(255,90,31,.24),rgba(255,90,31,.1));transform:translateY(-1px)}
+.overlay-actions .ghost:hover{transform:translateY(-1px)}
+.swiss,.bracket{flex:1;overflow:auto;padding:clamp(16px,3vw,28px)}
+.swiss::-webkit-scrollbar,.bracket::-webkit-scrollbar{height:9px;width:9px}
+.swiss::-webkit-scrollbar-thumb,.bracket::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px}
+.swiss{display:flex;gap:16px;align-items:flex-start}
+.swiss-col{flex:0 0 auto;min-width:158px;display:flex;flex-direction:column;gap:9px}
+.swiss-colhead{font-family:var(--ff);font-weight:700;font-size:.7rem;letter-spacing:.16em;text-align:center;
+  padding:7px 0;border-radius:9px;text-transform:uppercase}
+.swiss-colhead.qual{background:linear-gradient(180deg,rgba(62,192,126,.18),rgba(62,192,126,.06));
+  color:var(--t2-green-lit);border:1px solid var(--t2-green-dim)}
+.swiss-colhead.elim{background:linear-gradient(180deg,rgba(255,45,72,.16),rgba(255,45,72,.05));
+  color:var(--s-red-lit);border:1px solid var(--s-red-dim)}
+.swiss-colhead.neutral{background:var(--panel2);color:var(--dim);border:1px solid var(--line)}
+.match{display:flex;align-items:center;gap:8px;background:linear-gradient(180deg,#161d2d,#10131c);
+  border:1px solid var(--line);border-radius:11px;padding:9px 11px;transition:border-color .15s,box-shadow .15s}
+.match.mine{border-color:var(--cyan);box-shadow:0 0 0 1px rgba(57,211,255,.4),0 0 16px rgba(57,211,255,.18)}
+.team-chip{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.team-mono{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:var(--ff);font-weight:700;font-size:.6rem;color:#0a0d13;flex:0 0 auto;
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.18),0 2px 6px rgba(0,0,0,.4)}
+.team-chip .tn{font-family:var(--ff);font-size:.78rem;font-weight:600;color:var(--neutral);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.02em}
+.team-chip.loser{opacity:.38;filter:grayscale(.5)}
+.qualified-slot{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:11px;min-height:46px;
+  background:linear-gradient(180deg,rgba(62,192,126,.12),rgba(62,192,126,.03));border:1px solid var(--t2-green-dim)}
+.qualified-slot.elim-slot{background:linear-gradient(180deg,rgba(255,45,72,.1),rgba(255,45,72,.03));border-color:var(--s-red-dim)}
+.qualified-slot.empty{opacity:.28;border-style:dashed}
+.qualified-slot.mine{box-shadow:0 0 0 1px rgba(57,211,255,.5),0 0 16px rgba(57,211,255,.2)}
+.bracket{display:flex;gap:clamp(20px,4vw,46px);align-items:center;justify-content:flex-start;min-height:100%;padding:clamp(20px,4vw,40px)}
+.bracket-round{display:flex;flex-direction:column;gap:clamp(16px,3vw,30px);justify-content:center;flex:0 0 auto}
+.bracket-round-title{font-family:var(--ff);font-weight:700;font-size:.66rem;letter-spacing:.22em;
+  color:var(--dim);text-align:center;margin-bottom:4px;text-transform:uppercase}
+.series{background:linear-gradient(180deg,#172033,#0e1119);border:1px solid var(--line);border-radius:13px;
+  padding:11px 13px;min-width:196px;display:flex;flex-direction:column;gap:0;position:relative;
+  transition:border-color .18s,box-shadow .18s}
+.series-sep{height:1px;background:var(--line);margin:7px 0;position:relative}
+.series-sep::after{content:"VS";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  background:#141a28;padding:0 6px;font-family:var(--ff);font-size:.52rem;font-weight:700;
+  letter-spacing:.1em;color:var(--dim)}
+.series.mine{border-color:var(--cyan);box-shadow:0 0 0 1px rgba(57,211,255,.4),0 0 18px rgba(57,211,255,.16)}
+.series.done{border-color:var(--t2-green-dim);background:linear-gradient(180deg,#16241c,#0e1119)}
+.series.ativa{border-color:var(--accent);box-shadow:0 0 0 1px rgba(255,90,31,.5),0 0 20px rgba(255,90,31,.25);
+  animation:seriesPulse 1.6s ease-in-out infinite}
+@keyframes seriesPulse{0%,100%{box-shadow:0 0 0 1px rgba(255,90,31,.5),0 0 12px rgba(255,90,31,.18)}
+  50%{box-shadow:0 0 0 1px rgba(255,90,31,.7),0 0 24px rgba(255,90,31,.4)}}
+.series-row{display:flex;align-items:center;gap:9px;min-height:30px}
+.series-row .sc{margin-left:auto;font-family:var(--ff);font-weight:700;font-size:1.05rem;
+  color:var(--txt);min-width:16px;text-align:center}
+.series-row.win .tn{color:var(--t2-green-lit)}
+.series-row.win .sc{color:var(--t2-green-lit)}
+.series-row.lose{opacity:.4;filter:grayscale(.55)}
+/* coluna do campeão */
+.champ-col{justify-content:center}
+.champion{display:flex;flex-direction:column;align-items:center;gap:11px;justify-content:center;min-width:178px;
+  padding:22px 16px;border-radius:16px;border:1px dashed var(--line);transition:.3s}
+.champion.crowned{border:1px solid var(--t1-gold-dim);
+  background:radial-gradient(120% 100% at 50% 0%,rgba(255,190,0,.14),transparent 70%)}
+.champion .cup-tag{font-family:var(--ff);font-weight:700;font-size:.66rem;letter-spacing:.22em;
+  padding:6px 14px;border-radius:7px;color:var(--t1-gold-lit);border:1px solid var(--t1-gold-dim);
+  background:rgba(255,190,0,.08);text-shadow:0 0 12px rgba(255,190,0,.4);animation:cupGlow 2.4s ease-in-out infinite}
+.champion .cup-tag.dim{color:var(--dim);border-color:var(--line);background:none;text-shadow:none;animation:none;letter-spacing:.1em}
+@keyframes cupGlow{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 18px rgba(255,190,0,.3)}}
+.champion .team-chip{flex:0 0 auto;justify-content:center}
+.champion.crowned .team-chip .tn{font-size:1.05rem;color:var(--t1-gold-lit)}
+.champ-tag{font-family:var(--ff);font-weight:700;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--t1-gold-lit);text-shadow:0 0 12px rgba(255,190,0,.4)}
+.champ-wait{font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:600}
+.empty-tn{color:var(--dim);opacity:.6}
+.overlay-foot{display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  padding:12px max(clamp(16px,4vw,34px),env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(clamp(16px,4vw,34px),env(safe-area-inset-left));
+  border-top:1px solid var(--line);background:linear-gradient(0deg,rgba(20,27,43,.5),transparent)}
+.leg{display:flex;align-items:center;gap:7px;font-size:.7rem;color:var(--dim);font-weight:600;letter-spacing:.04em}
+.leg-dot{width:10px;height:10px;border-radius:3px;flex:0 0 auto}
+.leg-dot.qual{background:var(--t2-green);box-shadow:0 0 6px rgba(62,192,126,.5)}
+.leg-dot.elim{background:var(--s-red);box-shadow:0 0 6px rgba(255,45,72,.5)}
+.leg-dot.mine{background:var(--cyan);box-shadow:0 0 6px rgba(57,211,255,.5)}
+.leg-note{margin-left:auto;font-size:.66rem;color:var(--dim);opacity:.7;letter-spacing:.08em;text-transform:uppercase}
+
+/* ── PARTIDA: antessala + mapa ao vivo ── */
+.match-overlay{align-items:stretch}
+.match-close{position:absolute;top:max(14px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right));z-index:7;width:38px;height:38px;border-radius:10px;
+  border:1px solid var(--line);background:var(--panel2);color:var(--dim);font-size:1rem;cursor:pointer;
+  transition:.14s;-webkit-tap-highlight-color:transparent}
+.match-close:hover{color:var(--txt);border-color:var(--accent);transform:scale(1.05)}
+.prematch{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;padding:30px}
+.prematch-ctx{font-family:var(--ff);font-weight:700;font-size:.74rem;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--accent);text-align:center}
+.prematch-vs{display:flex;align-items:center;gap:clamp(20px,6vw,70px)}
+.pm-team{display:flex;flex-direction:column;align-items:center;gap:12px;min-width:130px}
+.pm-team .team-mono{width:74px;height:74px;font-size:1.5rem;border-radius:18px}
+.pm-team .pm-name{font-family:var(--ff);font-weight:700;font-size:1.3rem;letter-spacing:.04em;color:var(--txt);text-align:center}
+.pm-team .pm-camp{font-family:var(--ff);font-size:.74rem;color:var(--dim);letter-spacing:.06em;text-align:center;margin-top:-4px}
+.pm-team .pm-ef{font-family:var(--ff);font-size:.8rem;color:var(--dim);letter-spacing:.1em}
+.pm-team .pm-ef b{color:var(--cyan);font-size:1.1rem}
+.pm-team.mine .pm-name{color:var(--cyan)}
+.pm-mid{display:flex;flex-direction:column;align-items:center}
+.pm-versus{font-family:var(--ff);font-weight:700;font-size:1.4rem;color:var(--dim);letter-spacing:.1em}
+.livemap{flex:1;display:flex;flex-direction:column;min-height:0}
+.scorebar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
+  border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(20,27,43,.75),transparent);
+  padding:max(clamp(14px,2.5vw,22px),env(safe-area-inset-top)) clamp(14px,3vw,30px) clamp(14px,2.5vw,22px);gap:clamp(10px,3vw,28px)}
+.sb-team{display:flex;align-items:center;gap:13px;min-width:0}
+.sb-team.sb-b{flex-direction:row-reverse;text-align:right}
+.sb-team .team-mono{width:clamp(40px,8vw,52px);height:clamp(40px,8vw,52px);font-size:clamp(.85rem,2vw,1.1rem);border-radius:13px}
+.sb-team .sb-info{display:flex;flex-direction:column;gap:5px;min-width:0}
+.sb-team.sb-b .sb-info{align-items:flex-end}
+.sb-team .sb-name{font-family:var(--ff);font-weight:700;font-size:clamp(.92rem,2.2vw,1.2rem);
+  letter-spacing:.02em;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.sb-team.mine .sb-name{color:var(--cyan)}
+.sb-team .sb-camp{font-family:var(--ff);font-size:.6rem;color:var(--dim);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.sb-side{font-family:var(--ff);font-weight:700;font-size:.58rem;letter-spacing:.14em;padding:3px 9px;border-radius:5px;width:fit-content}
+.sb-side.ct{background:rgba(74,130,255,.16);color:#7aa0ff;border:1px solid rgba(74,130,255,.4)}
+.sb-side.tr{background:rgba(255,170,40,.16);color:#ffb84a;border:1px solid rgba(255,170,40,.4)}
+.sb-center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.sb-score{font-family:var(--ff);font-weight:700;font-size:clamp(2.6rem,8vw,3.8rem);line-height:.9;
+  display:flex;align-items:center;gap:clamp(12px,3vw,22px);color:var(--txt);font-variant-numeric:tabular-nums}
+.sb-score>span:not(.sb-dash){min-width:1.1em;text-align:center;display:inline-block}
+.sb-score .sb-dash{color:var(--dim);font-size:.5em;font-weight:400}
+.sb-score .bump{animation:scoreBump .3s var(--ease)}
+@keyframes scoreBump{0%{transform:scale(1)}40%{transform:scale(1.3)}100%{transform:scale(1)}}
+.sb-map{font-family:var(--ff);font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);white-space:nowrap}
+.sb-progress{height:3px;background:var(--line)}
+.sb-progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),#ff8a4a);
+  box-shadow:0 0 8px var(--accent);transition:width .3s var(--ease)}
+/* tira de rounds estilo HLTV */
+.roundstrip{display:flex;gap:3px;padding:12px clamp(16px,3vw,28px);flex-wrap:wrap;
+  border-bottom:1px solid var(--line);background:rgba(10,13,20,.4);min-height:38px;align-content:flex-start;
+  width:100%;max-width:720px;margin:0 auto;box-sizing:border-box;justify-content:center}
+.rs-cell{width:14px;height:14px;border-radius:3px;flex:0 0 auto;position:relative;
+  background:#1a2233;transition:transform .2s var(--ease)}
+.rs-cell.ct{background:var(--c-desenvolvedor);box-shadow:0 0 5px rgba(74,130,255,.5)}
+.rs-cell.tr{background:#ffaa28;box-shadow:0 0 5px rgba(255,170,40,.5)}
+.rs-cell.pop{animation:rsPop .3s var(--ease)}
+@keyframes rsPop{0%{transform:scale(0)}60%{transform:scale(1.4)}100%{transform:scale(1)}}
+.rs-cell.key::after{content:"";position:absolute;inset:0;border-radius:inherit;
+  box-shadow:0 0 0 1.5px #fff,0 0 8px rgba(255,255,255,.7);animation:rsKeyGlow 1.8s ease-in-out infinite}
+@keyframes rsKeyGlow{0%,100%{box-shadow:0 0 0 1.5px rgba(255,255,255,.85),0 0 6px rgba(255,255,255,.5)}
+  50%{box-shadow:0 0 0 1.5px #fff,0 0 11px rgba(255,255,255,.85)}}
+/* placar com flash de quem pontuou */
+.sb-score .flash-ct{animation:flashCT .5s var(--ease)}
+.sb-score .flash-tr{animation:flashTR .5s var(--ease)}
+@keyframes flashCT{0%,100%{color:var(--txt)}40%{color:#7aa0ff;text-shadow:0 0 16px rgba(74,130,255,.6)}}
+@keyframes flashTR{0%,100%{color:var(--txt)}40%{color:#ffb84a;text-shadow:0 0 16px rgba(255,170,40,.6)}}
+/* tela final de campanha (campeão / eliminado) */
+.final-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:14px;
+  padding:max(28px,env(safe-area-inset-top)) 24px max(36px,env(safe-area-inset-bottom));width:100%;max-width:448px;margin:0 auto;text-align:center}
+.final-titulo{font-family:var(--ff);font-weight:700;font-size:clamp(1.1rem,5vw,1.5rem);letter-spacing:.14em;
+  color:var(--dim);text-transform:uppercase}
+.final-placar{font-family:var(--ff);font-weight:700;font-size:clamp(3rem,12vw,5rem);line-height:1;
+  display:flex;align-items:center;gap:18px;color:var(--txt);font-variant-numeric:tabular-nums}
+.final-placar span{color:var(--dim);font-size:.5em}
+.final-ratings{width:100%;display:flex;flex-direction:column;gap:5px;margin:8px 0}
+.fr-pos{font-family:var(--ff);font-weight:700;font-size:.74rem;color:var(--dim);min-width:16px}
+.fr-nick{font-family:var(--ff);font-weight:600;font-size:.92rem;color:var(--txt);text-align:left}
+.fr-rate{font-family:var(--ff);font-weight:700;font-size:1rem;font-variant-numeric:tabular-nums}
+.r-top{color:var(--win)}.r-mid{color:var(--neutral)}.r-low{color:var(--loss)}
+/* ╔══════════════ TELA FINAL · pódio e relatório da campanha ══════════════╗ */
+.final-trophy{width:62px;height:62px;color:#3a4458;margin-bottom:2px;display:flex}
+.final-trophy svg{width:100%;height:100%;filter:drop-shadow(0 4px 14px rgba(0,0,0,.5))}
+.final-overlay.is-champ .final-trophy{color:var(--gold);animation:trophyRise .7s var(--ease) both,champGlow 2.4s ease-in-out infinite .7s}
+.final-overlay.is-champ .final-trophy svg{filter:drop-shadow(0 0 18px rgba(255,200,74,.55))}
+.final-overlay.is-elim .final-trophy{display:none}
+@keyframes trophyRise{0%{opacity:0;transform:translateY(18px) scale(.6) rotate(-8deg)}60%{transform:translateY(0) scale(1.12) rotate(3deg)}100%{opacity:1;transform:none}}
+.final-selos{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:2px 0 4px}
+.selo-final{font-family:var(--ff);font-weight:700;font-size:.66rem;letter-spacing:.12em;padding:5px 11px;border-radius:20px;border:1px solid var(--line);color:var(--dim);background:rgba(255,255,255,.02)}
+.selo-gold{color:#1a1206;background:linear-gradient(180deg,var(--gold-lit),var(--gold-dim));border-color:transparent;box-shadow:0 2px 12px rgba(255,180,60,.35)}
+.final-mvp-card{width:100%;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;background:linear-gradient(135deg,rgba(255,206,74,.10),rgba(255,206,74,.02));border:1px solid rgba(255,206,74,.35);position:relative;overflow:hidden}
+.final-mvp-card::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 12% 30%,rgba(255,206,74,.16),transparent 60%);pointer-events:none}
+.mvp-badge{font-family:var(--ff);font-weight:800;font-size:.62rem;letter-spacing:.1em;color:#1a1206;background:linear-gradient(180deg,var(--gold-lit),var(--gold-dim));padding:5px 8px;border-radius:8px;align-self:start}
+.mvp-id{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mvp-flag{font-family:var(--ff);font-weight:700;font-size:.6rem;letter-spacing:.05em;color:var(--dim);border:1px solid var(--line);border-radius:5px;padding:2px 5px}
+.mvp-nick{font-family:var(--ff);font-weight:700;font-size:1.18rem;color:var(--txt)}
+.mvp-role{font-family:var(--ff);font-weight:700;font-size:.6rem;letter-spacing:.06em;color:var(--rc);border:1px solid color-mix(in srgb,var(--rc) 50%,transparent);border-radius:5px;padding:2px 6px}
+.mvp-ovr{font-family:var(--ff);font-weight:700;font-size:.62rem;color:var(--dim)}
+.mvp-stats{grid-column:2;font-family:var(--ff);font-weight:600;font-size:.74rem;color:var(--dim);font-variant-numeric:tabular-nums}
+.mvp-stats span{opacity:.6;font-size:.66rem;margin-left:3px}
+.mvp-rate{font-family:var(--ff);font-weight:800;font-size:1.9rem;font-variant-numeric:tabular-nums;line-height:1}
+.sec-lbl{font-family:var(--ff);font-weight:700;font-size:.6rem;letter-spacing:.16em;color:var(--dim);text-align:left;margin:2px 0 6px;width:100%}
+.final-jornada{width:100%}
+.jor-tiles{display:flex;gap:5px;flex-wrap:wrap}
+.jt{flex:1;min-width:42px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 3px;border-radius:8px;border:1px solid var(--line);background:rgba(255,255,255,.02)}
+.jt-adv{font-family:var(--ff);font-weight:600;font-size:.56rem;letter-spacing:.03em;color:var(--dim);text-transform:uppercase;white-space:nowrap;overflow:hidden;max-width:100%}
+.jt-sc{font-family:var(--ff);font-weight:700;font-size:.78rem;font-variant-numeric:tabular-nums}
+.jt-w{border-color:rgba(127,230,168,.3);background:rgba(127,230,168,.06)}.jt-w .jt-sc{color:var(--win)}
+.jt-l{border-color:rgba(224,122,106,.3);background:rgba(224,122,106,.06)}.jt-l .jt-sc{color:var(--loss)}
+.fr-row{display:grid;grid-template-columns:20px 34px 1fr auto 54px auto;align-items:center;gap:10px;padding:9px 13px;border-radius:10px;background:rgba(255,255,255,.02);border:1px solid var(--line)}
+.fr-role{font-family:var(--ff);font-weight:700;font-size:.56rem;letter-spacing:.04em;color:var(--rc,var(--dim));text-align:center;border:1px solid color-mix(in srgb,var(--rc,#6c7d93) 40%,transparent);border-radius:5px;padding:2px 0}
+.fr-ovr{font-family:var(--ff);font-weight:700;font-size:.72rem;color:var(--dim);font-variant-numeric:tabular-nums;text-align:right}
+.fr-bar{height:5px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden}
+.fr-bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--cyan),var(--win))}
+.fr-pos.md-g{color:var(--gold)}.fr-pos.md-s{color:var(--neutral)}.fr-pos.md-b{color:var(--bronze)}
+.fr-row.mvp{border-color:rgba(255,206,74,.4);background:rgba(255,206,74,.05)}
+.final-rec{display:flex;gap:8px;width:100%;justify-content:center}
+.rec{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:9px 6px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.02)}
+.rec-v{font-family:var(--ff);font-weight:800;font-size:1.05rem;color:var(--txt);font-variant-numeric:tabular-nums}
+.rec-l{font-family:var(--ff);font-weight:600;font-size:.58rem;letter-spacing:.05em;color:var(--dim);text-transform:uppercase}
+.final-wrap .final-selos{animation-delay:.34s}.final-wrap .final-mvp-card{animation-delay:.44s}
+.final-wrap .final-jornada{animation-delay:.56s}.final-wrap .final-rec{animation-delay:.72s}
+.final-overlay{z-index:90;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.final-glow{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .8s ease}
+.final-overlay.is-champ .final-glow{opacity:1;background:radial-gradient(circle at 50% 36%,rgba(255,184,60,.22),transparent 62%);animation:glowPulse 3.4s ease-in-out infinite}
+@keyframes glowPulse{0%,100%{opacity:.7}50%{opacity:1}}
+.final-wrap>*{animation:finRise .5s var(--ease) both}
+.final-wrap .final-placar{animation:finPop .55s var(--ease) both;animation-delay:.16s}
+
+.final-wrap .final-ratings{animation-delay:.5s}.final-wrap .final-btn{animation-delay:.68s;min-width:200px;margin-top:6px}
+@keyframes finRise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes finPop{0%{opacity:0;transform:scale(.7)}70%{transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}
+.final-overlay.is-champ .final-titulo{color:var(--gold);animation:champGlow 2.2s ease-in-out infinite}
+@keyframes champGlow{0%,100%{text-shadow:0 0 22px rgba(255,200,74,.4)}50%{text-shadow:0 0 42px rgba(255,200,74,.72)}}
+.final-overlay.is-champ .final-placar{color:var(--gold)}
+.final-overlay.is-elim .final-titulo{color:var(--dim)}
+.final-overlay.is-elim .final-placar{filter:saturate(.6)}
+.final-ratings .fr-row{animation:finRise .4s var(--ease) both}
+.final-ratings .fr-row:nth-child(1){animation-delay:.55s}.final-ratings .fr-row:nth-child(2){animation-delay:.62s}
+.final-ratings .fr-row:nth-child(3){animation-delay:.69s}.final-ratings .fr-row:nth-child(4){animation-delay:.76s}
+.final-ratings .fr-row:nth-child(5){animation-delay:.83s}
+/* scoreboard ao vivo: um painel por time, colunas alinhadas (jogador · K-D · rating) */
+.livescore{flex:1;overflow-y:auto;padding:clamp(12px,2.5vw,20px);display:flex;flex-direction:column;gap:14px;
+  width:100%;max-width:580px;margin:0 auto;box-sizing:border-box;-webkit-overflow-scrolling:touch}
+.ls-side{display:flex;flex-direction:column;flex:0 0 auto;border-radius:14px;overflow:hidden;--ls-accent:#7aa0ff;
+  border:1px solid var(--line);background:linear-gradient(180deg,rgba(20,27,43,.5),rgba(11,14,21,.55))}
+.ls-side.mine{--ls-accent:var(--cyan);border-color:rgba(57,211,255,.32);
+  box-shadow:0 0 0 1px rgba(57,211,255,.16),0 10px 28px -18px rgba(57,211,255,.6)}
+.ls-head{display:grid;grid-template-columns:1fr 58px 54px;align-items:center;gap:10px;position:relative;
+  padding:10px 14px;background:rgba(255,255,255,.03);border-bottom:1px solid var(--line)}
+.ls-head::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ls-accent)}
+.ls-team-id{display:flex;align-items:center;gap:8px;min-width:0}
+.ls-mono{width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--ff);font-weight:700;font-size:.62rem;color:#0a0d14;flex:0 0 auto;
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.18)}
+.ls-team{font-family:var(--ff);font-weight:700;font-size:.84rem;letter-spacing:.03em;color:var(--txt);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.ls-side.mine .ls-team{color:var(--cyan)}
+.ls-side-tag{font-family:var(--ff);font-weight:700;font-size:.52rem;letter-spacing:.12em;padding:2px 6px;border-radius:4px;flex:0 0 auto}
+.ls-side-tag.ct{background:rgba(74,130,255,.16);color:#7aa0ff;border:1px solid rgba(74,130,255,.4)}
+.ls-side-tag.tr{background:rgba(255,170,40,.16);color:#ffb84a;border:1px solid rgba(255,170,40,.4)}
+.ls-col{font-family:var(--ff);font-weight:700;font-size:.54rem;letter-spacing:.13em;color:var(--dim);text-transform:uppercase;text-align:right}
+.ls-row{display:grid;grid-template-columns:1fr 58px 54px;align-items:center;gap:10px;
+  padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.045);
+  border-left:3px solid transparent;transition:background .25s,border-color .25s}
+.ls-row:last-child{border-bottom:none}
+.ls-row.mine{background:rgba(57,211,255,.04)}
+.ls-row.frag{animation:lsFrag .6s var(--ease)}
+@keyframes lsFrag{0%{background:rgba(255,210,74,.22);border-left-color:rgba(255,210,74,.85)}
+  100%{background:transparent;border-left-color:transparent}}
+.ls-row.mine.frag{animation:lsFragMine .6s var(--ease)}
+@keyframes lsFragMine{0%{background:rgba(57,211,255,.28);border-left-color:rgba(57,211,255,.9)}
+  100%{background:rgba(57,211,255,.04);border-left-color:transparent}}
+.ls-nick{font-family:var(--ff);font-weight:600;font-size:.86rem;color:var(--neutral);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:7px;min-width:0}
+.ls-row.mine .ls-nick{color:#e8f6ff}
+.ls-kd-val{font-family:var(--ff);font-weight:700;font-size:.84rem;color:var(--txt);font-variant-numeric:tabular-nums;
+  text-align:right;letter-spacing:.02em}
+.ls-kd-val b{color:var(--win)}.ls-kd-val s{color:var(--dim);text-decoration:none;margin:0 1px}
+.ls-rate{font-family:var(--ff);font-weight:800;font-size:.92rem;font-variant-numeric:tabular-nums;text-align:right;color:var(--dim)}
+.ls-rate.r-top{color:var(--win)}.ls-rate.r-mid{color:var(--neutral)}.ls-rate.r-low{color:var(--loss)}
+.livemap-foot{padding:16px max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
+  display:flex;justify-content:center;gap:12px;border-top:1px solid var(--line);
+  background:linear-gradient(0deg,rgba(20,27,43,.5),transparent)}
+@media(max-width:640px){.sb-team .sb-name{font-size:.86rem}.pm-team{min-width:96px}.ls-nick{font-size:.8rem}}
+
+/* botões de acesso ao Major */
+.majorbar[hidden],#majorTag[hidden]{display:none}
+.majorbar{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:22px;max-width:460px}
+.majorbtn{display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left;
+  padding:16px 18px;border-radius:14px;border:1px solid rgba(255,90,31,.3);
+  background:linear-gradient(120deg,rgba(255,90,31,.1),var(--panel2) 45%,#10131c);
+  transition:transform .14s var(--ease),border-color .14s,box-shadow .14s;
+  -webkit-tap-highlight-color:transparent;position:relative;overflow:hidden}
+.majorbtn::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);
+  box-shadow:0 0 12px var(--accent)}
+.majorbtn::after{content:"";position:absolute;right:20px;top:50%;width:9px;height:9px;
+  border-right:2px solid var(--accent);border-top:2px solid var(--accent);
+  transform:translateY(-50%) rotate(45deg);opacity:.5;transition:.14s}
+.majorbtn:hover{transform:translateY(-2px);border-color:rgba(255,90,31,.6);
+  box-shadow:0 10px 28px rgba(0,0,0,.4),0 0 24px rgba(255,90,31,.12)}
+.majorbtn:hover::after{opacity:1;right:16px}
+.majorbtn:active{transform:translateY(0) scale(.99)}
+.majorbtn .mbtxt{display:flex;flex-direction:column;gap:3px}
+.majorbtn .mbt{font-family:var(--ff);font-weight:700;font-size:1.05rem;letter-spacing:.04em;color:var(--txt)}
+.majorbtn .mbs{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-weight:600}
+@media(max-width:640px){.swiss-col{min-width:138px}.series{min-width:158px}}
+
+@media(prefers-reduced-motion:reduce){
+  .result,.deal,.land,.track{animation:none!important;transition:none!important}
+  .card.tier-h::after,.card.tier-h .ovr,.card.tier-h .nick,.card.tier-h .starsig{animation:none!important}
+  .overlay{animation:none!important}
+  .series.ativa,.champion .cup-tag{animation:none!important}
+  .rs-cell.pop,.sb-score .bump,.sb-score .flash-ct,.sb-score .flash-tr,.rs-cell.key::after{animation:none!important}
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   CAMADA DE REFINAMENTO DE DESIGN · "Tactical Broadcast"
+   Adições não-destrutivas sobre o tema base. Cada bloco sobrescreve por
+   ordem de cascata. Toda animação contínua é desligada no fim do arquivo
+   para quem prefere movimento reduzido.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* — Sistema: seleção de texto, rolagem e foco por teclado — */
+::selection{background:rgba(255,90,31,.32);color:#fff}
+html{scroll-behavior:smooth}
+*{scrollbar-width:thin;scrollbar-color:#26324a transparent}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#243049,#1a2336);border-radius:6px;
+  border:2px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:#36456180;background-clip:padding-box}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:3px;border-radius:8px}
+button:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+
+/* — Fundo em camadas: brilho de palco + grade tática + vinheta — */
+body{background:
+    radial-gradient(1200px 620px at 50% -10%,#1c2940 0%,transparent 62%),
+    radial-gradient(900px 520px at 100% -5%,rgba(255,90,31,.13),transparent 58%),
+    radial-gradient(900px 560px at 0% 14%,rgba(57,211,255,.11),transparent 58%),
+    radial-gradient(140% 46% at 50% 108%,rgba(255,90,31,.16),transparent 70%),
+    var(--bg)}
+/* — link para a página-irmã "Base de elencos" (elencos.html): usa a linguagem do jogo — */
+.rosterbar{margin:2px 0 4px}
+a.rosterlink{display:flex;align-items:center;gap:14px;width:100%;text-decoration:none;
+  font-family:var(--ff);border:1px solid var(--line);background:var(--panel2);border-radius:12px;
+  padding:14px 18px;color:var(--txt);transition:border-color .15s,transform .12s var(--ease),background .15s}
+a.rosterlink:hover{border-color:rgba(255,90,31,.45);transform:translateY(-2px);
+  background:color-mix(in srgb,var(--accent) 7%,var(--panel2))}
+a.rosterlink .rl-ic{font-size:1.15rem;color:var(--accent);line-height:1;flex:none}
+a.rosterlink .rl-tx{display:flex;flex-direction:column;gap:3px;min-width:0}
+a.rosterlink .rl-t{font-weight:700;font-size:.84rem;letter-spacing:.08em;text-transform:uppercase}
+a.rosterlink .rl-s{font-family:'Barlow Semi Condensed';font-weight:600;font-size:.66rem;letter-spacing:.04em;
+  color:var(--dim);text-transform:none}
+a.rosterlink .rl-ar{margin-left:auto;color:var(--dim);font-size:1.4rem;line-height:1;flex:none;transition:color .15s,transform .15s}
+a.rosterlink:hover .rl-ar{color:var(--accent);transform:translateX(3px)}
+footer{margin-top:30px;padding:14px 0 4px;border-top:1px solid var(--line);letter-spacing:.32em;color:#3d4f6b}
+/* — ARENA VIVA: dois feixes de refletor que varrem o palco lentíssimo (GPU: só transform).
+   html::before está livre (body::before/::after = grade + vinheta). Estático no mobile/reduced-motion. — */
+html::before{content:"";position:fixed;left:50%;top:-46vmax;width:220vmax;height:220vmax;z-index:-3;pointer-events:none;
+  transform-origin:50% 0;transform:translateX(-50%) rotate(-7deg);
+  background:
+    conic-gradient(from 176deg at 50% 0%,transparent 0 40.5%,rgba(255,110,47,.11) 45.5%,transparent 50.5%),
+    conic-gradient(from 156deg at 50% 0%,transparent 0 43.5%,rgba(57,211,255,.1) 47.5%,transparent 51.5%);
+  animation:arenaSweep 46s ease-in-out infinite alternate}
+@keyframes arenaSweep{to{transform:translateX(-50%) rotate(7deg)}}
+@media(max-width:640px){html::before{animation:none}} /* iPhone: feixes fixos (zero custo contínuo) */
+body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background-image:linear-gradient(rgba(124,156,196,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(124,156,196,.045) 1px,transparent 1px);
+  background-size:48px 48px;
+  -webkit-mask:radial-gradient(120% 92% at 50% 0%,#000 26%,transparent 76%);
+          mask:radial-gradient(120% 92% at 50% 0%,#000 26%,transparent 76%)}
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(145% 125% at 50% 38%,transparent 56%,rgba(0,0,0,.55) 100%)}
+.wrap{position:relative;animation:wrapIn .55s var(--ease) both}
+@keyframes wrapIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* — CABEÇALHO-HERÓI: marca centrada, estilo abertura de transmissão de Major — */
+header{position:relative;border-bottom:none;border-radius:18px;margin-bottom:20px;
+  flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;
+  padding:clamp(20px,5vw,30px) 16px clamp(16px,4vw,22px);
+  border:1px solid rgba(124,156,196,.18);
+  background:radial-gradient(140% 130% at 50% -30%,rgba(255,90,31,.14),transparent 55%),
+    linear-gradient(180deg,rgba(22,30,48,.65),rgba(11,14,21,.5));
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 18px 40px -26px rgba(0,0,0,.9)}
+header::after{content:"";position:absolute;left:8%;right:8%;bottom:-1px;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,transparent,var(--accent) 22%,#ffb37a 50%,var(--accent) 78%,transparent);
+  box-shadow:0 0 16px rgba(255,90,31,.55)}
+.logo{font-size:clamp(2.1rem,8vw,3rem);letter-spacing:.12em;line-height:1}
+.logo b{text-shadow:0 0 26px rgba(255,90,31,.6),0 0 5px rgba(255,90,31,.45)}
+.logo span{letter-spacing:.34em;margin-top:7px;font-size:.6rem}
+.hud{gap:12px}
+.hud .s{text-align:center;padding:9px 20px 9px 23px}
+.hud .v{font-size:clamp(1.4rem,4vw,1.7rem)}
+
+/* — Botões PILL: identidade nova de ação — */
+button.roll{border-radius:999px;padding:15px 36px;font-size:.92rem;letter-spacing:.14em}
+button.ghost,.flipmode{border-radius:999px}
+
+/* — Painéis de vidro: fio de luz no topo + sombra ambiente (só onde a sombra não é estado) — */
+.stat,.majorbtn,.qualified-slot,.match:not(.mine),.series:not(.mine):not(.ativa){
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.055),0 14px 30px -20px rgba(0,0,0,.75)}
+
+/* — HUD: leituras de transmissão (chips com barra de acento) — */
+.hud .s{position:relative;padding:8px 14px 8px 17px;border-radius:12px;text-align:right;
+  border:1px solid var(--line);background:linear-gradient(180deg,rgba(20,27,43,.55),rgba(11,14,21,.55));
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.hud .s::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;
+  background:var(--accent);box-shadow:0 0 10px var(--accent)}
+.hud .s:last-child::before{background:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+.hud .v.pwr{text-shadow:0 0 20px rgba(57,211,255,.5)}
+.hud .v.bump{animation:hudBump .42s var(--ease)}
+@keyframes hudBump{0%{transform:scale(1)}42%{transform:scale(1.2)}100%{transform:scale(1)}}
+
+/* — Etiquetas de seção: losango tático (broadcast) no início — */
+.section-tag::before{content:"";width:7px;height:7px;border-radius:1.5px;flex:0 0 auto;
+  transform:rotate(45deg);background:linear-gradient(135deg,#ff8a4a,var(--accent));
+  box-shadow:0 0 9px rgba(255,90,31,.65)}
+
+/* — Botões: varredura de brilho + relevo — */
+button.roll{position:relative;overflow:hidden;box-shadow:0 8px 22px -8px rgba(255,90,31,.65)}
+button.roll::after{content:"";position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;
+  background:linear-gradient(110deg,transparent 36%,rgba(255,255,255,.42) 50%,transparent 64%);
+  transform:translateX(-130%)}
+button.roll:hover::after{animation:btnSheen .7s var(--ease)}
+@keyframes btnSheen{to{transform:translateX(130%)}}
+button.ghost{transition:transform .12s var(--ease),border-color .14s,background .14s,box-shadow .14s}
+button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,90,31,.4);
+  box-shadow:0 8px 20px -10px rgba(0,0,0,.7)}
+
+/* — Cartas COLECIONÁVEIS: tilt 3D segue o dedo/ponteiro + foil especular (picks) — */
+.card,.coachcard{transition:box-shadow .16s var(--ease),border-color .14s,outline-color .14s,transform .22s var(--ease)}
+.lineup .card:hover,.lineup .coachcard:hover{transform:translateY(-4px)}
+.picks .card:not(.taken):not(.dup):hover,.picks .coachcard:not(.taken):hover{
+  transform:perspective(760px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateY(-6px) scale(1.03);
+  z-index:5}
+/* foil: reflexo especular que acompanha a posição do ponteiro sobre a carta */
+.picks .card:not(.taken):not(.dup) .cfront::after,.picks .coachcard:not(.taken) .cfront::after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:5;opacity:0;transition:opacity .25s;
+  background:radial-gradient(230px circle at var(--mx,50%) var(--my,42%),rgba(255,255,255,.17),rgba(255,255,255,.05) 34%,transparent 62%);
+  mix-blend-mode:screen}
+.picks .card:not(.taken):not(.dup):hover .cfront::after,.picks .coachcard:not(.taken):hover .cfront::after{opacity:1}
+.winner-pill{box-shadow:0 0 16px -4px currentColor}
+
+/* — Slots vazios: respiração que convida ao preenchimento — */
+.slot.avail{animation:slotInvite 1.7s ease-in-out infinite}
+@keyframes slotInvite{0%,100%{box-shadow:0 0 0 0 transparent}
+  50%{box-shadow:0 0 0 3px rgba(255,90,31,.12),0 0 20px rgba(255,90,31,.16)}}
+.slot.coach.avail{animation:slotInviteCoach 1.7s ease-in-out infinite}
+@keyframes slotInviteCoach{0%,100%{box-shadow:0 0 0 0 transparent}
+  50%{box-shadow:0 0 0 3px rgba(255,200,50,.14),0 0 20px rgba(255,200,50,.18)}}
+.slot .ph{transition:transform .25s var(--ease)}
+.slot:hover .ph{transform:scale(1.12)}
+
+/* — Roleta MARQUISE LED: moldura de letreiro, trilhos de luz e agulha laser — */
+.roulette{min-height:118px;border-radius:18px;border-color:rgba(255,138,74,.3);
+  box-shadow:inset 0 0 70px rgba(0,0,0,.5),inset 0 -30px 44px -34px rgba(255,90,31,.34),
+    0 0 0 1px rgba(0,0,0,.55),0 20px 46px -26px rgba(255,90,31,.28);
+  background:linear-gradient(0deg,rgba(255,90,31,.08),transparent 30%),
+    radial-gradient(120% 180% at 50% -60%,#1b2436 0%,#0c1119 60%)}
+.viewport{padding:22px 0}
+/* trilhos de LED nas bordas do letreiro */
+.viewport::before,.viewport::after{content:"";position:absolute;left:16px;right:16px;height:3px;z-index:3;
+  border-radius:2px;pointer-events:none;
+  background:repeating-linear-gradient(90deg,rgba(255,150,70,.5) 0 5px,rgba(255,150,70,.06) 5px 16px)}
+.viewport::before{top:7px}.viewport::after{bottom:7px}
+.track{min-height:86px}
+.tcard{height:86px;box-shadow:0 10px 22px -14px rgba(0,0,0,.8)} /* cards da fita maiores, descolados do chão */
+.marker{background:linear-gradient(180deg,#ffd9c4,var(--accent) 30%,var(--accent) 70%,#ffd9c4);
+  box-shadow:0 0 14px var(--accent),0 0 3px #fff}
+
+/* — Seções EDITORIAIS: títulos com presença (não mais etiquetas apagadas) — */
+.section-tag{font-size:clamp(.78rem,2.6vw,.94rem);color:var(--txt);letter-spacing:.28em;margin:24px 0 10px}
+.section-tag::after{height:2px;background:linear-gradient(90deg,rgba(255,90,31,.45),var(--line) 45%,transparent)}
+
+/* — Análise: força efetiva com pulso premium — */
+.stat{transition:border-color .2s,box-shadow .2s,transform .2s var(--ease)}
+.stat:hover{transform:translateY(-2px);box-shadow:0 12px 26px -16px rgba(0,0,0,.8)}
+.stat--eff{position:relative;overflow:hidden}
+.stat--eff::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(circle at 50% 125%,rgba(255,90,31,.16),transparent 62%)}
+.stat--eff .stat-v{position:relative;animation:effPulse 3s ease-in-out infinite}
+@keyframes effPulse{0%,100%{text-shadow:0 0 20px rgba(255,90,31,.35)}
+  50%{text-shadow:0 0 30px rgba(255,90,31,.62)}}
+
+/* — Overlays de torneio: título com brilho de acento — */
+.overlay-title::before{box-shadow:0 0 14px var(--accent)}
+.match:hover{border-color:rgba(124,156,196,.4)}
+
+/* — PARTIDA BROADCAST: placar com textura de transmissão + rounds mais presentes — */
+.scorebar{background:repeating-linear-gradient(115deg,rgba(255,255,255,.02) 0 2px,transparent 2px 15px),
+  linear-gradient(180deg,rgba(20,27,43,.75),transparent)}
+.sb-score{letter-spacing:.01em;text-shadow:0 2px 18px rgba(0,0,0,.6)}
+.rs-cell{width:16px;height:16px;border-radius:4px}
+.rs-cell.ct{box-shadow:0 0 7px rgba(74,130,255,.55),inset 0 1px 0 rgba(255,255,255,.25)}
+.rs-cell.tr{box-shadow:0 0 7px rgba(255,170,40,.55),inset 0 1px 0 rgba(255,255,255,.25)}
+.pm-versus{font-size:1.8rem;color:var(--accent);text-shadow:0 0 24px rgba(255,90,31,.5)}
+
+/* — CAMPEÃO: chuva de brilho dourada (CSS puro, só na tela de título) — */
+.final-overlay.is-champ .final-glow::after{content:"";position:absolute;inset:-20% 0 0;pointer-events:none;
+  background-image:radial-gradient(2px 2px at 22% 18%,rgba(255,214,120,.85),transparent 60%),
+    radial-gradient(1.6px 1.6px at 66% 6%,rgba(255,236,170,.7),transparent 60%),
+    radial-gradient(2.4px 2.4px at 84% 30%,rgba(255,200,80,.75),transparent 60%),
+    radial-gradient(1.4px 1.4px at 40% 44%,rgba(255,224,140,.6),transparent 60%),
+    radial-gradient(2px 2px at 10% 58%,rgba(255,214,120,.6),transparent 60%);
+  background-size:340px 340px;animation:sparkleFall 13s linear infinite}
+@keyframes sparkleFall{to{transform:translateY(340px)}}
+
+/* ════ LINGUAGEM v46 NOS OVERLAYS: herói/brasa no topo, pills, brasões e trilhos LED ════ */
+/* cabeçalho dos overlays = mesma faixa de brasa do herói */
+.overlay-head{position:relative;border-bottom:1px solid rgba(124,156,196,.14)}
+.overlay-head::after{content:"";position:absolute;left:8%;right:8%;bottom:-1px;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,transparent,var(--accent) 22%,#ffb37a 50%,var(--accent) 78%,transparent);
+  box-shadow:0 0 16px rgba(255,90,31,.5)}
+.overlay-title{font-size:clamp(1.3rem,3.4vw,1.7rem);letter-spacing:.08em}
+/* colunas da suíça viram pills */
+.swiss-colhead{border-radius:999px}
+/* brasão no topo dos painéis-chave (mesma assinatura das cartas) */
+.series{overflow:hidden}
+.series::before{content:"";position:absolute;top:0;left:18%;right:18%;height:3px;border-radius:0 0 4px 4px;
+  background:linear-gradient(90deg,transparent,rgba(124,156,196,.55),transparent)}
+.series.done::before{background:linear-gradient(90deg,transparent,var(--t2-green),transparent)}
+.series.mine::before{background:linear-gradient(90deg,transparent,var(--cyan),transparent);box-shadow:0 0 10px -1px var(--cyan)}
+.series.ativa::before{background:linear-gradient(90deg,transparent,var(--accent),transparent);box-shadow:0 0 10px -1px var(--accent)}
+.pm-team{position:relative;overflow:hidden}
+.pm-team::before{content:"";position:absolute;top:0;left:18%;right:18%;height:3px;border-radius:0 0 4px 4px;
+  background:linear-gradient(90deg,transparent,rgba(124,156,196,.5),transparent)}
+.pm-team.mine::before{background:linear-gradient(90deg,transparent,var(--cyan),transparent);box-shadow:0 0 10px -1px var(--cyan)}
+.ls-side{position:relative}
+.ls-side::before{content:"";position:absolute;top:0;left:18%;right:18%;height:3px;z-index:2;border-radius:0 0 4px 4px;
+  background:linear-gradient(90deg,transparent,var(--ls-accent),transparent);opacity:.8}
+.final-mvp-card::after{content:"";position:absolute;top:0;left:18%;right:18%;height:3px;border-radius:0 0 4px 4px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);box-shadow:0 0 10px -1px var(--gold)}
+/* título da tela final flanqueado por trilhos LED (eco da marquise) */
+.final-titulo{display:flex;align-items:center;gap:12px;width:100%;justify-content:center}
+.final-titulo::before,.final-titulo::after{content:"";flex:1 0 18px;max-width:120px;height:3px;border-radius:2px;
+  background:repeating-linear-gradient(90deg,currentColor 0 5px,transparent 5px 14px);opacity:.4}
+/* títulos de fase do bracket e rótulos da final: editoriais */
+.bracket-round-title{color:var(--txt);font-size:.72rem;letter-spacing:.26em}
+.sec-lbl{color:var(--txt);letter-spacing:.22em}
+
+/* ════ MAJOR PROFISSIONAL: um só sistema de painel em todas as telas de torneio ════
+   Padrão: raio 13px · borda rgba(124,156,196,.16) · vidro (gradiente + fio de luz no topo)
+   · sombra ambiente. Suíça, bracket, antessala, scoreboard e tela final falam a mesma língua. */
+/* — Fase suíça — */
+.swiss{gap:clamp(14px,2.4vw,22px)}
+.swiss-col{min-width:172px;gap:10px}
+.swiss-colhead{letter-spacing:.2em;padding:9px 0;border-radius:11px;font-size:.66rem}
+.match{border-radius:13px;padding:10px 12px;min-height:50px;
+  border-color:rgba(124,156,196,.16);background:linear-gradient(180deg,rgba(22,30,48,.55),rgba(13,17,26,.6));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 12px 26px -20px rgba(0,0,0,.8)}
+.qualified-slot{border-radius:13px;min-height:50px}
+.team-mono{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.22),inset 0 -8px 12px -6px rgba(0,0,0,.35),0 3px 8px rgba(0,0,0,.45)}
+/* — Bracket — */
+.bracket-round-title{display:flex;align-items:center;justify-content:center;gap:8px}
+.bracket-round-title::before,.bracket-round-title::after{content:"";width:6px;height:6px;border-radius:1.5px;
+  transform:rotate(45deg);background:linear-gradient(135deg,#ff8a4a,var(--accent));box-shadow:0 0 7px rgba(255,90,31,.55)}
+.series{border-radius:13px;padding:12px 14px;min-width:200px;
+  background:linear-gradient(180deg,rgba(24,32,51,.6),rgba(13,17,26,.65));border-color:rgba(124,156,196,.16)}
+.series-row .sc{font-size:1.15rem;min-width:20px}
+.series-sep::after{background:#151b29;border-radius:4px;padding:1px 7px}
+.champion{border-radius:16px}
+/* — Antessala: blocos de time em vidro — */
+.pm-team{padding:20px 22px;border-radius:16px;border:1px solid rgba(124,156,196,.16);
+  background:linear-gradient(180deg,rgba(22,30,48,.55),rgba(13,17,26,.55));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 18px 40px -26px rgba(0,0,0,.9)}
+.pm-team.mine{border-color:rgba(57,211,255,.4);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 0 0 1px rgba(57,211,255,.22),0 18px 40px -24px rgba(57,211,255,.35)}
+.prematch-ctx{padding:8px 18px;border-radius:20px;border:1px solid rgba(255,90,31,.35);
+  background:rgba(255,90,31,.08);box-shadow:0 0 18px -6px rgba(255,90,31,.5)}
+/* — Mapa ao vivo: tira de rounds com divisor de troca de lado (round 13) — */
+.rs-cell:nth-child(13){margin-left:16px;position:relative}
+.rs-cell:nth-child(13)::before{content:"";position:absolute;left:-10px;top:-2px;bottom:-2px;width:2px;
+  border-radius:2px;background:linear-gradient(180deg,transparent,rgba(124,156,196,.5),transparent)}
+.ls-side{border-radius:13px;border-color:rgba(124,156,196,.16)}
+.ls-head{padding:11px 14px}
+.ls-row{padding:10px 14px}
+/* — Tela final: cartões padronizados — */
+.final-mvp-card{border-radius:13px}
+.fr-row,.jt,.rec{border-radius:13px;border-color:rgba(124,156,196,.14);
+  background:linear-gradient(180deg,rgba(22,30,48,.4),rgba(13,17,26,.4));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.sec-lbl{display:flex;align-items:center;gap:7px}
+.sec-lbl::before{content:"";width:6px;height:6px;border-radius:1.5px;transform:rotate(45deg);
+  background:linear-gradient(135deg,#ff8a4a,var(--accent));box-shadow:0 0 7px rgba(255,90,31,.5)}
+
+/* Movimento reduzido: silencia as animações contínuas desta camada */
+@media(prefers-reduced-motion:reduce){
+  .wrap,.hud .v.bump,.slot.avail,.slot.coach.avail,.stat--eff .stat-v,
+  button.roll:hover::after{animation:none!important}
+  html::before,.picks .deal .cfront::before,.final-overlay.is-champ .final-glow::after{animation:none!important}
+  .picks .card .cfront::after,.picks .coachcard .cfront::after{display:none}
+  .card:hover,.coachcard:hover,.picks .card:hover,.picks .coachcard:hover,
+  .stat:hover,button.ghost:hover{transform:none!important}
+}
