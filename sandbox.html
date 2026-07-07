@@ -270,6 +270,130 @@ footer{display:none}
   *,*::before,*::after{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important}
   .lcard:hover,.tdrow:hover,.btn:hover{transform:none}
 }
+
+/* === visual refresh v2: live tuning cockpit === */
+:root{
+  --bg2:#0b1018; --panel2:#101724; --panel3:#141d2c; --line-soft:rgba(134,158,190,.14);
+  --muted:#5f6f86; --green:#7fe6a8; --danger:#e07a6a;
+  --radius:8px; --radius-sm:6px; --shadow:0 18px 34px -28px rgba(0,0,0,.92);
+}
+body{
+  min-height:100dvh;
+  background:
+    linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.014) 1px,transparent 1px),
+    radial-gradient(900px 480px at 50% -180px,rgba(255,90,31,.18),transparent 70%),
+    linear-gradient(180deg,#080b11 0%,#06080d 100%);
+  background-size:32px 32px,32px 32px,auto,auto;
+}
+.wrap{
+  padding:12px max(14px,env(safe-area-inset-right)) 14px max(14px,env(safe-area-inset-left));
+}
+header{
+  display:grid;grid-template-columns:auto minmax(260px,1fr) minmax(240px,420px);align-items:center;gap:12px;
+  min-height:58px;padding:9px 11px;margin-bottom:12px;border:1px solid var(--line-soft);border-radius:var(--radius);
+  background:linear-gradient(180deg,rgba(18,26,40,.92),rgba(10,14,22,.92));
+  box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.06);
+}
+.backlink{
+  border-radius:var(--radius-sm);padding:8px 12px;background:rgba(7,9,14,.36);
+}
+.logo{font-size:clamp(1.12rem,2.4vw,1.42rem);letter-spacing:.08em;line-height:1}
+.logo span{font-size:.64rem;letter-spacing:.24em;font-weight:700;margin-top:5px}
+.loader{justify-content:flex-end;min-width:0}
+select,input[type=text],input[type=number]{
+  background:#0b1018;color:var(--txt);border:1px solid var(--line);border-radius:var(--radius-sm);
+  transition:border-color .14s,box-shadow .14s,background .14s;
+}
+select{max-width:100%}
+select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(57,211,255,.20)}
+.card,.panel{
+  background:linear-gradient(180deg,rgba(18,26,40,.82),rgba(11,16,25,.9));
+  border:1px solid var(--line-soft);border-radius:var(--radius);box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.045);
+}
+.dash{
+  grid-template-columns:minmax(240px,300px) minmax(480px,1fr) minmax(300px,360px);
+  gap:12px;
+}
+.mcol{gap:12px;border-right:0;padding-right:2px}
+.mcol>.card{border-left:1px solid var(--line-soft);border-right:1px solid var(--line-soft);border-radius:var(--radius)}
+.mcol>.card.mcol-grow{flex:none}
+.mcol-result{margin-top:0;padding-top:6px}
+.lcol{
+  max-height:calc(100dvh - 96px);gap:6px;padding:8px;border-right:0;
+}
+.lcard{
+  background:rgba(10,15,24,.78);border:1px solid transparent;border-radius:var(--radius);padding:8px;box-shadow:none;
+}
+.lcard.on{border-color:rgba(255,90,31,.55);background:linear-gradient(180deg,rgba(255,90,31,.12),rgba(12,17,26,.82));box-shadow:none}
+.lcard-badge{width:30px;height:22px;border-radius:var(--radius-sm);font-size:.6rem}
+.lcard-players{gap:3px}
+.lcard-row{
+  display:grid;grid-template-columns:26px minmax(0,1fr) 30px;gap:6px;padding:3px 4px;border-radius:var(--radius-sm);
+}
+.lcard-row.on{background:rgba(255,90,31,.16)}
+.lcard-ovr-sm{width:26px;font-size:.74rem;border-radius:4px}
+.tdetail{
+  max-height:calc(100dvh - 96px);overflow-y:auto;gap:10px;border-left:0;
+}
+.tdetail-badge{width:38px;height:30px;border-radius:var(--radius-sm)}
+.tdetail-stat,.tdetail-coach,.metric,.grp{
+  background:rgba(9,14,23,.76);border:1px solid var(--line-soft);border-radius:var(--radius-sm);box-shadow:none;
+}
+.tdetail-coach{padding:8px;gap:8px}
+.tdrow{
+  grid-template-columns:32px 14px minmax(0,1fr) 58px 38px;gap:6px;padding:7px 8px;
+  background:rgba(9,14,23,.76);border:1px solid transparent;border-radius:var(--radius-sm);box-shadow:none;
+}
+.tdrow.on{border-color:rgba(255,90,31,.55);background:rgba(255,90,31,.10)}
+.btn{border-radius:var(--radius-sm);background:#0d1420;font-size:.74rem;padding:8px 12px}
+.simfield select,.simfield input{width:100%}
+.scoreboards table{background:rgba(9,14,23,.76);border:1px solid var(--line-soft);border-radius:var(--radius)}
+.pgrid input,.wchip input,.field-c .num{background:#090e17;border-radius:var(--radius-sm)}
+.field-c{display:grid;grid-template-columns:30px minmax(0,1fr) 48px;align-items:center;gap:9px;margin-bottom:8px}
+.field-c label{width:auto;font-size:.76rem;font-family:var(--ff);text-align:right;letter-spacing:.08em}
+.field-c input[type=range]{width:100%;height:5px}
+.ovr-badge{width:58px;height:58px;border-radius:var(--radius)}
+.result-compact{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:2px}
+.result-compact .rc-row{
+  display:flex;flex-direction:column;gap:2px;font-size:.78rem;padding:8px;border:1px solid var(--line-soft);
+  border-radius:var(--radius-sm);background:rgba(9,14,23,.72);min-width:0;
+}
+.result-compact .rc-row:last-child{border-bottom:1px solid var(--line-soft)}
+.result-compact .rc-val{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.editor-card{padding:0!important;overflow:hidden}
+.editor-head{padding:12px 14px;border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.018)}
+.editor-fields{padding:12px 14px 10px}
+.editor-card .result-compact{padding:0 14px 12px}
+.editor-meta{flex:1;min-width:0}
+.editor-name{width:100%;font-size:.95rem;font-family:var(--ff);font-weight:700}
+.editor-options{display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap}
+.editor-options select{font-size:.78rem;padding:5px 7px}
+.simcard,.tuning-card{padding:14px!important}
+.section-kicker{font-family:var(--ff);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.recipe-note{line-height:1.5;margin-bottom:10px;padding:8px 10px;border:1px solid var(--line-soft);border-radius:var(--radius-sm);background:rgba(9,14,23,.5)}
+@media(max-width:1180px){
+  .dash{grid-template-columns:minmax(220px,280px) minmax(420px,1fr) minmax(270px,320px)}
+}
+@media(max-width:980px){
+  body{height:auto;overflow:visible}
+  .wrap{height:auto;overflow:visible}
+  header{grid-template-columns:1fr;gap:10px}
+  .loader{justify-content:stretch}.loader select{width:100%}
+  .dash{grid-template-columns:1fr 1fr;overflow:visible}
+  .mcol{grid-column:1/-1;order:1;overflow:visible}
+  .tdetail{order:2;position:static;max-height:none}
+  .lcol{order:3;position:static;max-height:none}
+}
+@media(max-width:640px){
+  .wrap{padding:10px}
+  .dash{grid-template-columns:1fr}
+  .simgrid{grid-template-columns:1fr 1fr}
+  .metricgrid{grid-template-columns:1fr 1fr}
+  .scoreboards{grid-template-columns:1fr}
+  .result-compact{grid-template-columns:1fr 1fr}
+  .field-c{grid-template-columns:28px minmax(0,1fr) 46px}
+}
 </style>
 </head>
 <body>
@@ -916,22 +1040,22 @@ function loadPlayer(poolIdx,ti){
 
 /* === compact player editor HTML === */
 function atributosCardHTML_Compact(){
-  return `<div class="card mcol-grow" style="padding:0">
-    <div style="padding:10px 14px 8px;border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:10px">
+  return `<div class="card mcol-grow editor-card">
+    <div class="editor-head">
       <div class="ovr-badge" style="--tc:var(${state.fp>=70?"--t22":"--t15"})" id="editorOvrBadge">—</div>
-      <div style="flex:1;min-width:0">
-        <input type="text" id="f_nome" style="width:100%;font-size:.82rem;padding:5px 8px;background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:6px" placeholder="Nome" value="${esc(state.nome)}">
-        <div style="display:flex;gap:6px;margin-top:5px">
-          <label class="chk" style="font-size:.76rem"><input type="checkbox" id="c_igl" ${state.isIGL?"checked":""}> IGL</label>
-          <select id="s_coloc" style="font-size:.72rem;padding:3px 6px;border-radius:5px">${COLOC.map(c=>`<option value="${c}" ${c===state.colocacao?"selected":""}>${c}</option>`).join("")}</select>
+      <div class="editor-meta">
+        <input type="text" id="f_nome" class="editor-name" placeholder="Nome" value="${esc(state.nome)}">
+        <div class="editor-options">
+          <label class="chk"><input type="checkbox" id="c_igl" ${state.isIGL?"checked":""}> IGL</label>
+          <select id="s_coloc">${COLOC.map(c=>`<option value="${c}" ${c===state.colocacao?"selected":""}>${c}</option>`).join("")}</select>
         </div>
       </div>
     </div>
-    <div style="padding:10px 14px">
+    <div class="editor-fields">
       ${STATS.map(([k,l])=>`<div class="field-c"><label>${l}</label><input type="range" id="r_${k}" min="0" max="100" value="${state[k]}"><input type="number" id="n_${k}" class="num" min="0" max="100" value="${state[k]}"></div>`).join("")}
-      <div class="field-c"><label style="width:24px">RT</label><input type="range" id="r_rating" min="0.50" max="2.00" step="0.01" value="${state.rating}"><input type="number" id="n_rating" class="num" min="0.50" max="2.00" step="0.01" value="${state.rating}"></div>
+      <div class="field-c"><label>RT</label><input type="range" id="r_rating" min="0.50" max="2.00" step="0.01" value="${state.rating}"><input type="number" id="n_rating" class="num" min="0.50" max="2.00" step="0.01" value="${state.rating}"></div>
     </div>
-    <div id="editorResult" class="result-compact mcol-result" style="padding:0 14px 10px"></div>
+    <div id="editorResult" class="result-compact mcol-result"></div>
   </div>`;
 }
 
@@ -957,22 +1081,22 @@ function montarUI(){
   const app=document.getElementById("app"); app.className="";
   app.innerHTML=[
     `<div class="dash">
-      <div class="lcol card" id="league" style="padding:8px"></div>
+      <div class="lcol card" id="league"></div>
       <div class="mcol" id="mcol">
         ${atributosCardHTML_Compact()}
-        <div class="card simcard" style="padding:12px 14px">
+        <div class="card simcard">
           <div class="eng-head" style="margin-bottom:8px"><span class="title">Simulação · PÓLVORA</span><div class="toggle"><button class="btn" id="runBatchBtn">Lote</button><button class="btn accent" id="runMapBtn">Mapa</button></div></div>
-          <div class="simgrid" style="margin:0"><div class="simfield"><label>Time A</label><select id="simA"></select></div><div class="simfield"><label>Time B</label><select id="simB"></select></div><div class="simfield"><label>Mapa</label><select id="simMap"><option value="auto">Auto veto</option></select></div><div class="simfield"><label>Seed</label><input type="number" id="simSeed" value="${simSeed}" step="1"></div><div class="simfield"><label>Qtd</label><input type="number" id="simRuns" value="${simRuns}" min="1" max="500" step="10"></div></div>
-          <div id="matchout" style="margin-top:8px"></div>
+          <div class="simgrid"><div class="simfield"><label>Time A</label><select id="simA"></select></div><div class="simfield"><label>Time B</label><select id="simB"></select></div><div class="simfield"><label>Mapa</label><select id="simMap"><option value="auto">Auto veto</option></select></div><div class="simfield"><label>Seed</label><input type="number" id="simSeed" value="${simSeed}" step="1"></div><div class="simfield"><label>Qtd</label><input type="number" id="simRuns" value="${simRuns}" min="1" max="500" step="10"></div></div>
+          <div id="matchout"></div>
         </div>
-        <div class="card" style="padding:12px 14px">
+        <div class="card tuning-card">
           <div class="eng-head" style="margin-bottom:6px"><span class="title">Receitas & pesos</span><div class="toggle"><button class="btn" id="engToggle">${tuningOpen?"Ocultar":"Mostrar"}</button></div></div>
           <div class="hint" style="line-height:1.5;margin-bottom:8px"><b>OVR</b> = curva(wR×rating + (1−wR)×statScore + ajustes). <b>statScore</b> = dot(receita, stats).</div>
-          <div id="stylebox" ${tuningOpen?"":"hidden"}><div class="engwrap" id="nmStyles" style="margin:0 0 10px"></div></div>
+          <div id="stylebox" ${tuningOpen?"":"hidden"}><div class="engwrap" id="nmStyles"></div></div>
           <div id="engbox" ${tuningOpen?"":"hidden"}></div>
         </div>
       </div>
-      <div class="tdetail card" id="teamdet" style="padding:12px"></div>
+      <div class="tdetail card" id="teamdet"></div>
     </div>`
   ].join("");
   // wire editor
