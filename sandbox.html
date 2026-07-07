@@ -1144,7 +1144,7 @@ const NM_DEF={
   "Infiltrador":  {w:{cl:.40,ab:.30,fogo:.30},         wR:.52},
   "Baiter":       {w:{tr:.40,cl:.30,fogo:.30},         wR:.32},
   "Clutcher":     {w:{cl:.55,fogo:.45},                wR:.52},
-  "Suporte":      {w:{ut:.45,tr:.30,ab:.25},           wR:.40},
+  "Facilitador":  {w:{ut:.45,tr:.30,ab:.25},           wR:.40},
   "Cerebral":     {w:{ab:.35,ut:.35,cl:.30},           wR:.52},
   "Ancora":       {w:{cl:.40,ut:.35,tr:.25},           wR:.45}};
 const STYLE_CONTRA={
@@ -1153,18 +1153,18 @@ const STYLE_CONTRA={
   trader:{ent:.10,ab:.08,sn:.06},
   playmaker:{ut:.06,tr:.04,sn:.06},
   infiltrator:{ent:.18,tr:.08,sn:.06},
-  baiter:{ent:.34,ab:.22,ut:.08,sn:.06},
+  baiter:{ent:.28,ab:.16,ut:.08,sn:.06},
   clutcher:{ent:.14,ab:.08,tr:.06,sn:.06},
   support:{fogo:.10,ent:.12,sn:.08},
   cerebral:{ent:.16,fogo:.06,sn:.06},
-  anchor:{ent:.34,ab:.18,fogo:.10,sn:.06}
+  anchor:{ent:.24,ab:.12,fogo:.06,sn:.06}
 };
 const STYLE_ROLE_FIT={
-  AWPer:{spacetaker:.08,clutcher:.07,playmaker:.04,infiltrator:.04,baiter:.02,anchor:.02,aggressive:.02},
-  Rifler:{spacetaker:.07,aggressive:.06,trader:.04,infiltrator:.03,playmaker:.02},
-  Entry:{aggressive:.22,spacetaker:.20,trader:.06,playmaker:.04,infiltrator:-.08,clutcher:-.10,cerebral:-.16,baiter:-.28,anchor:-.30,support:-.12},
-  Lurker:{infiltrator:.18,playmaker:.14,clutcher:.08,cerebral:.05,baiter:.03,spacetaker:-.08,aggressive:-.16,anchor:-.04},
-  Support:{support:.20,trader:.14,cerebral:.12,anchor:.06,aggressive:-.10,spacetaker:-.12,playmaker:-.04},
+  AWPer:{spacetaker:.06,clutcher:.07,playmaker:.055,infiltrator:.04,baiter:.02,anchor:.02,aggressive:.02},
+  Rifler:{spacetaker:.055,aggressive:.055,trader:.045,infiltrator:.03,playmaker:.03},
+  Entry:{aggressive:.215,spacetaker:.18,trader:.07,playmaker:.045,infiltrator:-.08,clutcher:-.10,cerebral:-.16,baiter:-.28,anchor:-.30,support:-.12},
+  Lurker:{infiltrator:.11,playmaker:.08,clutcher:.12,cerebral:.09,baiter:.06,anchor:.06,spacetaker:-.08,aggressive:-.16},
+  Support:{support:.20,trader:.13,cerebral:.13,anchor:.12,clutcher:.04,aggressive:-.10,spacetaker:-.12,playmaker:-.04},
   IGL:{cerebral:.12,support:.10,trader:.06,playmaker:.04}
 };
 const NM_COR_DEF={pisoMin:45,spreadMax:35}; // Coringa: 5 de 7 stats acima do piso, tolera 1 fraco
@@ -1172,7 +1172,7 @@ let NM=clone(NM_DEF), NM_COR=clone(NM_COR_DEF);
 function coringaWR(){const ids=PLAYSTYLE_IDS;let s=0,n=0;ids.forEach(id=>{const r=STYLE_RECIPE(id);if(r){s+=r.wR;n++;}});return n?s/n:.45;}
 const STYLE_KEYS={
   aggressive:"Agressivo",spacetaker:"Spacetaker",trader:"Trader",playmaker:"Playmaker",infiltrator:"Infiltrador",
-  baiter:"Baiter",clutcher:"Clutcher",support:"Suporte",cerebral:"Cerebral",anchor:Object.keys(NM_DEF).find(k=>k.includes("ncora"))||"Ancora"
+  baiter:"Baiter",clutcher:"Clutcher",support:"Facilitador",cerebral:"Cerebral",anchor:Object.keys(NM_DEF).find(k=>k.includes("ncora"))||"Ancora"
 };
 const PLAYSTYLES={
   aggressive:{label:"Agressivo",traits:{pace:1,space:.7,trade:.2,structure:-.1,ct:-.2,t:.8}},
@@ -1182,7 +1182,7 @@ const PLAYSTYLES={
   infiltrator:{label:"Infiltrador",traits:{pace:-.2,space:.8,trade:-.2,structure:.1,ct:.3,t:.3}},
   baiter:{label:"Baiter",traits:{pace:-.5,space:-.4,trade:.4,structure:-.2,ct:.2,t:-.3}},
   clutcher:{label:"Clutcher",traits:{pace:-.1,space:.1,trade:0,structure:.2,ct:.5,t:.1}},
-  support:{label:"Suporte",traits:{pace:.1,space:.2,trade:.6,structure:1,ct:.5,t:.5}},
+  support:{label:"Facilitador",traits:{pace:.1,space:.2,trade:.6,structure:1,ct:.5,t:.5}},
   cerebral:{label:"Cerebral",traits:{pace:-.1,space:.4,trade:.2,structure:.9,ct:.4,t:.3}},
   anchor:{label:"Ancora",traits:{pace:-.6,space:-.2,trade:.2,structure:.8,ct:1,t:-.3}}
 };
@@ -1194,6 +1194,12 @@ const STYLE_RECIPE=id=>NM[STYLE_KEYS[id]];
 function nmStats6(p,role){const fogo=role==="AWPer"?(p.sn||0):(p.fp||0);
   return {fogo,ent:p.en||0,ab:p.op||0,tr:p.tr||0,cl:p.cl||0,ut:p.ut||0};}
 function stats7(p){return [p.fp||0,p.en||0,p.tr||0,p.op||0,p.cl||0,p.sn||0,p.ut||0];}
+function badBaiterProfile(p){
+  if(p.isIGL)return false;
+  const above=["fp","en","tr","op","cl","sn","ut"].filter(k=>(p[k]||0)>50).length;
+  return above<=1&&(p.rating||0)<=1.00&&(p.fp||0)<=35&&(p.en||0)<=45&&
+    (p.tr||0)<=25&&(p.cl||0)<=55&&(p.sn||0)<=30&&(p.ut||0)<=60;
+}
 function jokerProfile(s7){
   const sorted=[...s7].sort((a,b)=>b-a);
   const below=s7.filter(v=>v<NM_COR.pisoMin).length;
@@ -1204,11 +1210,12 @@ function jokerProfile(s7){
   const score=Math.max(0,Math.min(1,1-variance/800));
   return {ok,sorted,below,min5,spread,mean,score};
 }
-function styleMatch(s6,s7,role="Rifler"){
+function styleMatch(s6,s7,role="Rifler",p=null){
+  if(p&&badBaiterProfile(p))return {id:"baiter",score:.9,second:.7,margin:.2,clarity:.85};
   const jp=jokerProfile(s7);
   if(jp.ok)return {id:"joker",score:.88+.12*jp.score,second:.72,margin:.16+.12*jp.score,clarity:.75+.25*jp.score};
   const scores=[];
-  for(const id of PLAYSTYLE_IDS){const rec=STYLE_RECIPE(id);if(!rec)continue;const w=rec.w;let dot=0,nw=0,ns=0;
+  for(const id of PLAYSTYLE_IDS){if(id==="baiter")continue;const rec=STYLE_RECIPE(id);if(!rec)continue;const w=rec.w;let dot=0,nw=0,ns=0;
     for(const [k] of NM_AXES){const wi=w[k]||0,si=s6[k];dot+=wi*si;nw+=wi*wi;ns+=si*si;}
     let score=dot/(Math.sqrt(nw*ns)+1e-9);
     const contra=STYLE_CONTRA[id]||{};let cd=0,cw=0;
@@ -1221,7 +1228,7 @@ function styleMatch(s6,s7,role="Rifler"){
   return {...best,second,margin:best.score-second,clarity:Math.max(0,Math.min(1,(best.score-second)*5))};
 }
 function nmOVR(p,role,forced){
-  const s6=nmStats6(p,role), s7=stats7(p), match=forced?{id:STYLE_ID(forced),score:1,second:.75,margin:.25,clarity:.9}:styleMatch(s6,s7,role);
+  const s6=nmStats6(p,role), s7=stats7(p), match=forced?{id:STYLE_ID(forced),score:1,second:.75,margin:.25,clarity:.9}:styleMatch(s6,s7,role,p);
   const style=match.id, rating=E.ratingScore(p.rating);
   let wR, statScore;
   const roleRec=E.ROLE_PERFIL[role]||E.ROLE_PERFIL.Rifler, roleScore=E.dot(roleRec.ovr||{},p);
