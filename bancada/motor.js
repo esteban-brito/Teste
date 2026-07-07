@@ -3,7 +3,7 @@
    Uso: const {X,T}=require("./motor"); // X = motores · T = times prontos p/ simular */
 const fs=require("fs"),vm=require("vm"),path=require("path");
 const js=fs.readFileSync(path.join(__dirname,"..","game.js"),"utf8").split("\n");
-const cut=js.findIndex(l=>l.includes("=document.getElementById")||l.includes(" document.getElementById"));
+const cut=js.findIndex(l=>l.includes("document.getElementById"));
 const sb={Math,Object,Array,JSON,console};vm.createContext(sb);
 vm.runInContext(js.slice(0,cut).join("\n")+
   ";globalThis.X={TEAMS,POOL,ATRIBUTOS,TIMES_DEF,forcaTime,simularMapa,simularSerie,forcaDoDia,sortearFormaCampanha,avaliarJogador,distribuirRoles,quimicaComposicao,fallenAngels,srand:typeof srand!=='undefined'?srand:null};",sb);

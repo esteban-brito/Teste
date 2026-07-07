@@ -205,7 +205,7 @@ async function carregarMotores(){
   if(!res.ok)throw new Error(`game.js não carregou (${res.status})`);
   const src=await res.text();
   const linhas=src.split("\n");
-  const cut=linhas.findIndex(l=>l.includes("=document.getElementById")||l.includes(" document.getElementById"));
+  const cut=linhas.findIndex(l=>l.includes("document.getElementById"));
   if(cut<0)throw new Error("não encontrei o início da camada de UI em game.js");
   const slice=linhas.slice(0,cut).join("\n");
   E=new Function(slice+"\nreturn {avaliarJogador,afinidades,classificar,ovrUnificado,curvaOVR,dot,ratingScore,clipOVR,distribuirRoles,forcaTime,quimicaComposicao,CFG_AVALIACAO,ROLE_PERFIL,SUBARQ,CFG_QUIMICA,CFG_SIM,CFG_FA,MAPAS_POOL,MAPA_PERFIL,MAPA_LADO,srand,simularMapa,simularSerie,forcaDoDia,TEAMS};")();
