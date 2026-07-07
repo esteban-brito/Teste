@@ -60,6 +60,10 @@ function parseKeyValues(parts){
   return out;
 }
 
+function splitFields(text){
+  return String(text||"").split("|").map(part=>part.trim());
+}
+
 function pick(map,...needles){
   for(const needle of needles){
     for(const key of Object.keys(map)){
@@ -85,7 +89,7 @@ function splitPlayerLine(line){
 }
 
 function parseTeamLine(line){
-  const parts=line.split("|").map(part=>part.trim());
+  const parts=splitFields(line);
   const meta=parseKeyValues(parts.slice(2));
   return {
     nome:parts[0],
@@ -102,7 +106,7 @@ function parseTeamLine(line){
 
 function parsePlayerLine(line){
   const [nick,rest]=splitPlayerLine(line);
-  const meta=parseKeyValues(rest.split("|").map(part=>part.trim()));
+  const meta=parseKeyValues(splitFields(rest));
   return {
     nick,
     pais:normalizeCountry(meta["país"]||meta.pais),
@@ -198,6 +202,16 @@ function runPostChecks(){
   }
 }
 
+function readInput(inputPath){
+  return inputPath==="-"?fs.readFileSync(0,"utf8"):fs.readFileSync(inputPath,"utf8");
+}
+
+function printWarnings(warnings){
+  if(!warnings.length)return;
+  console.log("\n⚠ avisos:");
+  warnings.forEach(warning=>console.log("  · "+warning));
+}
+
 function parseArgs(argv){
   const args=[...argv];
   const dryRun=args.includes("--dry-run");
@@ -212,7 +226,7 @@ function main(){
     process.exit(2);
   }
 
-  const input=inputPath==="-"?fs.readFileSync(0,"utf8"):fs.readFileSync(inputPath,"utf8");
+  const input=readInput(inputPath);
   const {time,jogadores}=parse(input);
   const warnings=[];
   validateInput(time,jogadores,warnings);
@@ -224,10 +238,7 @@ function main(){
 
   if(dryRun){
     console.log(`✓ dry-run: ${time.nome} parseado com ${jogadores.length} jogadores; nenhum arquivo alterado.`);
-    if(warnings.length){
-      console.log("\n⚠ avisos:");
-      warnings.forEach(warning=>console.log("  · "+warning));
-    }
+    printWarnings(warnings);
     return;
   }
 
@@ -235,10 +246,7 @@ function main(){
 
   runPostChecks();
 
-  if(warnings.length){
-    console.log("\n⚠ avisos:");
-    warnings.forEach(warning=>console.log("  · "+warning));
-  }
+  printWarnings(warnings);
   console.log(`\n✓ ${time.nome} adicionado. Revise o resumo acima; depois: bancadas + smoke + deploy.`);
 }
 
