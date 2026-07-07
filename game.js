@@ -58,10 +58,10 @@
    rating HLTV no OVR daquela função) + crédito intrínseco (cérebro/cola, não por título). */
 const ROLE_PERFIL={
   AWPer:  {afin:{sn:.80,op:.12,fp:.05},        ovr:{sn:.45,fp:.25,op:.20,cl:.10},       wR:.66},
-  Rifler: {afin:{fp:.42,op:.24,tr:.16,cl:.18}, ovr:{fp:.45,op:.25,tr:.15,cl:.15},       wR:.66},
-  Entry:  {afin:{en:.68,op:.22,fp:.10},        ovr:{en:.40,op:.30,fp:.20,tr:.10},       wR:.64},
+  Rifler: {afin:{fp:.44,op:.25,tr:.17,cl:.14,ut:.03}, ovr:{fp:.45,op:.25,tr:.15,cl:.15},wR:.66},
+  Entry:  {afin:{en:.56,op:.25,fp:.12,tr:.07}, ovr:{en:.40,op:.30,fp:.20,tr:.10},       wR:.64},
   Lurker: {afin:{cl:.50,op:.30,fp:.20},        ovr:{cl:.40,op:.24,fp:.26,ut:.10},       wR:.66},
-  Support:{afin:{ut:.55,tr:.25,fp:.10,op:.10}, ovr:{ut:.45,tr:.22,fp:.15,op:.10,cl:.08},wR:.45,credito:3}};
+  Support:{afin:{ut:.50,tr:.25,en:.12,fp:.08,op:.05}, ovr:{ut:.45,tr:.22,fp:.15,op:.10,cl:.08},wR:.45,credito:3}};
 const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22, // ⚙ balanceamento do PRISMA (afinidade/sub) + ZÊNITE (curva de OVR)
   RAT_LO:.85,RAT_HI:1.50,RAT_CAP:1.25,       // mapa do rating HLTV -> 0..125 (sem cliffs)
   FLOOR:9,SPAN:13.7,K:.0495,MID:55,          // core -> OVR (logística). teto um pouco mais seletivo: o 22 exige elite clara (rating ~1.6+), não satura cedo; MID recentrado mantém o miolo do elenco intacto
@@ -102,14 +102,15 @@ const ROLE_CONTRA={
   Rifler:{sn:.18,ut:.04,cl:.05},
   Entry:{sn:.08,ut:.02},
   Lurker:{en:.15,tr:.04,sn:.06},
-  Support:{en:.12,sn:.10,fp:.08}
+  Support:{en:.06,sn:.10,fp:.06}
 };
 function roleAfinidade(role,p){
   let score=dot(ROLE_PERFIL[role].afin,p)-dot(ROLE_CONTRA[role]||{},p);
   if(role==="Entry"){
     const en=p.en||0,op=p.op||0,fp=p.fp||0,apoio=Math.max(op,fp);
-    score+=.035*Math.min(en,op)+.02*Math.min(en,fp);
-    score-=.19*Math.max(0,en-apoio);
+    score+=.025*Math.min(en,op)+.015*Math.min(en,fp);
+    score-=.25*Math.max(0,en-apoio);
+    score-=.22*Math.max(0,55-Math.max(fp,p.tr||0));
   }
   if(role==="Lurker"){
     const cl=p.cl||0,op=p.op||0,fp=p.fp||0;
@@ -119,7 +120,7 @@ function roleAfinidade(role,p){
     score+=.05*Math.min(p.ut||0,p.tr||0);
   }
   if(role==="Rifler"){
-    score+=.055*Math.min(p.fp||0,p.op||0)+.015*Math.min(p.fp||0,p.tr||0);
+    score+=.065*Math.min(p.fp||0,p.op||0)+.02*Math.min(p.fp||0,p.tr||0);
   }
   return score;
 }
@@ -179,9 +180,9 @@ const STYLE_CONTRA={
   anchor:{ent:.24,ab:.12,fogo:.06,sn:.06}
 };
 const STYLE_ROLE_FIT={
-  AWPer:{spacetaker:.08,clutcher:.07,playmaker:.04,infiltrator:.04,baiter:.02,anchor:.02,aggressive:.02},
-  Rifler:{spacetaker:.07,aggressive:.06,trader:.04,infiltrator:.03,playmaker:.02},
-  Entry:{aggressive:.22,spacetaker:.20,trader:.06,playmaker:.04,infiltrator:-.08,clutcher:-.10,cerebral:-.16,baiter:-.28,anchor:-.30,support:-.12},
+  AWPer:{spacetaker:.06,clutcher:.07,playmaker:.055,infiltrator:.04,baiter:.02,anchor:.02,aggressive:.02},
+  Rifler:{spacetaker:.055,aggressive:.055,trader:.045,infiltrator:.03,playmaker:.03},
+  Entry:{aggressive:.215,spacetaker:.18,trader:.07,playmaker:.045,infiltrator:-.08,clutcher:-.10,cerebral:-.16,baiter:-.28,anchor:-.30,support:-.12},
   Lurker:{infiltrator:.11,playmaker:.08,clutcher:.12,cerebral:.09,baiter:.06,anchor:.06,spacetaker:-.08,aggressive:-.16},
   Support:{support:.20,trader:.13,cerebral:.13,anchor:.12,clutcher:.04,aggressive:-.10,spacetaker:-.12,playmaker:-.04},
   IGL:{cerebral:.12,support:.10,trader:.06,playmaker:.04}
