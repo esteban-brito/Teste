@@ -949,3 +949,303 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,90,31,.4);
   .card:hover,.coachcard:hover,.picks .card:hover,.picks .coachcard:hover,
   .stat:hover,button.ghost:hover{transform:none!important}
 }
+
+/* ==========================================================================
+   Clean Matchday refinement
+   Final cascade layer for the main game: quieter, denser, easier to scan.
+   ========================================================================== */
+:root{
+  --bg:#080b10;
+  --panel2:#111826;
+  --panel3:#151f2f;
+  --line:#2c394e;
+  --txt:#f2f6fb;
+  --dim:#94a3b8;
+  --accent:#ff6b2a;
+  --cyan:#4bd7ff;
+  --radius:10px;
+}
+body{
+  padding:16px max(16px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
+  background:linear-gradient(180deg,#090d14 0%,#070a0f 100%);
+}
+html::before,body::before,body::after{
+  opacity:.55;
+}
+.wrap{
+  max-width:1180px;
+  animation:none;
+}
+header{
+  flex-direction:row;
+  align-items:center;
+  justify-content:space-between;
+  text-align:left;
+  gap:16px;
+  margin-bottom:16px;
+  padding:14px 16px;
+  border-radius:var(--radius);
+  background:var(--panel2);
+  border:1px solid rgba(148,163,184,.18);
+  box-shadow:none;
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+}
+header::after{
+  display:none;
+}
+.logo{
+  font-size:clamp(1.55rem,4vw,2.18rem);
+  letter-spacing:.08em;
+}
+.logo b{
+  text-shadow:none;
+}
+.logo span{
+  margin-top:5px;
+  font-size:.62rem;
+  letter-spacing:.22em;
+  color:var(--dim);
+}
+.hud{
+  gap:8px;
+}
+.hud .s{
+  min-width:112px;
+  padding:9px 12px;
+  text-align:left;
+  border-radius:8px;
+  background:#0c121b;
+  border:1px solid rgba(148,163,184,.18);
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+}
+.hud .s::before{
+  top:8px;
+  bottom:8px;
+  box-shadow:none;
+}
+.hud .v{
+  font-size:1.45rem;
+}
+.hud .v.pwr{
+  text-shadow:none;
+}
+.hud .l{
+  color:var(--dim);
+  letter-spacing:.14em;
+}
+.section-tag{
+  margin:18px 0 9px;
+  font-size:.82rem;
+  letter-spacing:.18em;
+  color:var(--txt);
+}
+.section-tag::before{
+  width:6px;
+  height:6px;
+  box-shadow:none;
+}
+.section-tag::after{
+  height:1px;
+  background:linear-gradient(90deg,rgba(255,107,42,.45),rgba(148,163,184,.18) 46%,transparent);
+}
+.section-note{
+  color:var(--dim);
+  font-size:.72rem;
+}
+.roulette{
+  min-height:104px;
+  border-radius:var(--radius);
+  border-color:rgba(148,163,184,.22);
+  background:#0c121b;
+  box-shadow:none;
+}
+.viewport{
+  padding:16px 0;
+}
+.viewport::before,.viewport::after{
+  display:none;
+}
+.track{
+  min-height:78px;
+}
+.tcard{
+  height:78px;
+  border-radius:8px;
+  box-shadow:none;
+}
+.marker{
+  box-shadow:none;
+}
+.spinwrap{
+  background:rgba(7,10,15,.68);
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+}
+button.roll{
+  border-radius:8px;
+  padding:13px 28px;
+  box-shadow:none;
+  letter-spacing:.1em;
+}
+button.roll::after{
+  display:none;
+}
+button.ghost,.flipmode{
+  border-radius:8px;
+  background:#0c121b;
+  border-color:rgba(148,163,184,.22);
+}
+button.ghost:hover{
+  box-shadow:none;
+  border-color:rgba(255,107,42,.45);
+}
+.picks,.lineup,.squad{
+  gap:10px;
+}
+.squad{
+  padding:12px;
+  border-radius:var(--radius);
+  background:#0b1018;
+  border-color:rgba(148,163,184,.18);
+  box-shadow:none;
+}
+.squad::before{
+  display:none;
+}
+.card,.coachcard{
+  border-radius:10px;
+  box-shadow:none;
+}
+.card:hover,.coachcard:hover{
+  box-shadow:0 0 0 1px var(--tcol,var(--cc-main,#fff));
+}
+.picks .card:not(.taken):not(.dup):hover,.picks .coachcard:not(.taken):hover{
+  transform:translateY(-3px);
+}
+.picks .card:not(.taken):not(.dup) .cfront::after,.picks .coachcard:not(.taken) .cfront::after{
+  display:none;
+}
+.slot{
+  border-radius:10px;
+  background:#0b1018;
+}
+.slot.avail,.slot.coach.avail{
+  animation:none;
+  background:#0f1723;
+}
+.slot:hover .ph{
+  transform:none;
+}
+.result{
+  margin-top:14px;
+}
+.result-grid{
+  gap:10px;
+}
+.stat{
+  border-radius:var(--radius);
+  background:#0d131d;
+  border:1px solid rgba(148,163,184,.18);
+  box-shadow:none;
+}
+.stat:hover{
+  transform:none;
+  box-shadow:none;
+}
+.stat--eff .stat-v{
+  animation:none;
+  text-shadow:none;
+}
+.alertbox{
+  gap:7px;
+}
+.majorbar{
+  max-width:none;
+  margin-bottom:18px;
+}
+.majorbtn{
+  border-radius:var(--radius);
+  background:#111826;
+  border-color:rgba(255,107,42,.36);
+  box-shadow:none;
+}
+.majorbtn::before{
+  box-shadow:none;
+}
+.majorbtn:hover{
+  box-shadow:none;
+  transform:translateY(-1px);
+}
+a.rosterlink{
+  border-radius:var(--radius);
+  background:#0d131d;
+  border-color:rgba(148,163,184,.18);
+}
+a.rosterlink:hover{
+  transform:translateY(-1px);
+  background:#111826;
+}
+footer{
+  margin-top:22px;
+  letter-spacing:.22em;
+}
+.overlay{
+  background:#080b10;
+}
+.overlay-head{
+  background:#111826;
+}
+.overlay-head::after{
+  display:none;
+}
+.overlay-title::before{
+  box-shadow:none;
+}
+.swiss,.bracket{
+  padding:20px;
+}
+.match,.series,.pm-team,.ls-side,.fr-row,.jt,.rec,.final-mvp-card{
+  border-radius:var(--radius);
+  background:#111826;
+  box-shadow:none;
+}
+.series::before,.pm-team::before,.ls-side::before,.final-mvp-card::after{
+  opacity:.55;
+  box-shadow:none;
+}
+.scorebar{
+  background:#111826;
+}
+.rs-cell{
+  width:14px;
+  height:14px;
+  box-shadow:none!important;
+}
+.final-overlay.is-champ .final-glow::after{
+  display:none;
+}
+@media(max-width:760px){
+  body{
+    padding:10px max(10px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
+  }
+  header{
+    flex-direction:column;
+    align-items:stretch;
+    text-align:left;
+  }
+  .hud{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+  .hud .s{
+    min-width:0;
+  }
+  .section-tag{
+    letter-spacing:.14em;
+  }
+  .picks,.lineup,.squad{
+    gap:8px;
+  }
+}
