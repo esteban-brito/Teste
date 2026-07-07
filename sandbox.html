@@ -519,8 +519,8 @@ function evaluatePlayer(p,eng=null,forcedStyle=null){
   let ovr=capOvr(style.ovr,isIGL);
   if(isIGL){
     const C=E.CFG_AVALIACAO, titulo=C.IGL_TITULO[p.colocacao]||0;
-    style.iglCore=style.core+C.IGL_CREDITO*IGL_CREDITO_SHARE+titulo*2;
-    ovr=Math.min(C.IGL_TETO,E.curvaOVR(style.iglCore));
+    style.iglCore=style.core+C.IGL_CREDITO*IGL_CREDITO_SHARE;
+    ovr=Math.min(C.IGL_TETO,Math.max(1,E.curvaOVR(style.iglCore)+titulo));
   }
   return {...legacy,...p,isIGL,role1,role2,combatRole,playstyle:style.style,style,ovr};
 }
