@@ -244,6 +244,27 @@ select:focus-visible,input[type=text]:focus-visible{border-color:var(--cyan);box
 .tdrow-fn{font-size:.62rem;font-weight:800;padding:2px 5px;border-radius:4px;white-space:nowrap}
 .tdrow-pl{font-size:.62rem;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tdrow-rt{text-align:right;font-family:var(--ff);font-weight:600;font-size:.78rem}
+.liveimpact{margin-top:8px;padding:10px;border:1px solid rgba(124,156,196,.16);border-radius:10px;
+  background:linear-gradient(180deg,rgba(22,30,48,.55),rgba(13,17,26,.62));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 10px 22px -18px rgba(0,0,0,.8)}
+.liveimpact-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.liveimpact-title{font-family:var(--ff);font-size:.78rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--txt)}
+.liveimpact-count{font-family:var(--ff);font-size:.7rem;color:var(--cyan);white-space:nowrap}
+.liveimpact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px}
+.liveimpact-stat{border:1px solid rgba(124,156,196,.14);border-radius:8px;padding:6px;text-align:center;background:rgba(5,8,14,.24)}
+.liveimpact-stat .v{font-family:var(--ff);font-weight:800;font-size:.95rem}
+.liveimpact-stat .l{font-size:.56rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-top:1px}
+.impact-section{margin-top:8px}
+.impact-section h4{margin:0 0 5px;font-family:var(--ff);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.impact-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:5px 0;border-top:1px solid rgba(124,156,196,.1)}
+.impact-row:first-of-type{border-top:0}
+.impact-main{min-width:0}
+.impact-name{font-weight:800;font-size:.76rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.impact-meta{font-size:.62rem;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.impact-delta{font-family:var(--ff);font-weight:800;font-size:.78rem;white-space:nowrap}
+.impact-delta.up{color:var(--win)}
+.impact-delta.down{color:var(--loss)}
+.impact-empty{font-size:.72rem;color:var(--dim);line-height:1.45}
 
 /* editor compacto */
 .field-c{display:flex;align-items:center;gap:8px;margin-bottom:7px}
@@ -932,7 +953,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 const clone=o=>JSON.parse(JSON.stringify(o));
 
 let E=null, DEF=null, POOLRAW=[], loadedIdx=null, poolBySlot=new Map();
-let teamIdx=0, simA=0, simB=1, simSeed=2026, simRuns=80, simMap="auto", lastMap=null, lastBatch=null, tuningOpen=false;
+let teamIdx=0, simA=0, simB=1, simSeed=2026, simRuns=80, simMap="auto", lastMap=null, lastBatch=null, tuningOpen=false, baseline=null;
 const state={nome:"", fp:70,en:50,tr:50,op:50,cl:50,sn:20,ut:55, rating:1.10, isIGL:false, colocacao:"Campeao"};
 
 async function carregarMotores(){
@@ -1315,6 +1336,99 @@ function renderTeamDiagnosis(f){
   return `<div class="diag"><div class="metric"><div class="v mono">${Math.round(d.aggro)}</div><div class="l">agressao</div></div><div class="metric"><div class="v mono">${Math.round(d.structure)}</div><div class="l">estrutura</div></div><div class="metric"><div class="v mono">${side}</div><div class="l">lado natural</div></div><div class="metric"><div class="v mono">${Math.round(d.ct)} / ${Math.round(d.t)}</div><div class="l">CT / TR</div></div></div><div class="stylechips">${styleTxt}</div><div class="risklist">${riskTxt}</div>`;
 }
 function evaluateAllTeams(){return E.TEAMS.map((t,ti)=>{const r=evaluateTeam(t,ti);return {quim:r.quimica,efet:r.efetiva,bruta:r.bruta};});}
+function rolePairText(p){
+  const r1=p.isIGL?"IGL":(p.role1||p.combatRole||"");
+  const r2=p.isIGL?(p.combatRole||p.role2||""):(p.role2||p.combatRole||"");
+  return [r1,r2].filter(Boolean).join(" / ");
+}
+function impactSnapshot(){
+  const players=[], teams=[];
+  E.TEAMS.forEach((team,ti)=>{
+    const evaluated=evaluateTeam(team,ti);
+    teams.push({key:String(ti),nome:team.nome,bruta:evaluated.bruta,quim:evaluated.quimica,efet:evaluated.efetiva});
+    evaluated.players.forEach((player,pi)=>{
+      players.push({
+        key:`${ti}:${pi}`,
+        team:team.nome,
+        nome:player.nome,
+        ovr:player.ovr,
+        role:rolePairText(player),
+        style:STYLE_LABEL(player.playstyle)
+      });
+    });
+  });
+  return {players,teams};
+}
+function ensureBaseline(){
+  if(!baseline)baseline=impactSnapshot();
+  return baseline;
+}
+function mapByKey(items){
+  const map=new Map();
+  items.forEach(item=>map.set(item.key,item));
+  return map;
+}
+function signedDelta(value,digits=0){
+  const sign=value>0?"+":"";
+  return sign+value.toFixed(digits);
+}
+function impactReport(){
+  const base=ensureBaseline(), now=impactSnapshot();
+  const basePlayers=mapByKey(base.players), baseTeams=mapByKey(base.teams);
+  const players=now.players.map(current=>{
+    const old=basePlayers.get(current.key);
+    if(!old)return null;
+    const dOvr=current.ovr-old.ovr;
+    const roleChanged=current.role!==old.role;
+    const styleChanged=current.style!==old.style;
+    const weight=Math.abs(dOvr)+(roleChanged?2:0)+(styleChanged?1:0);
+    return {...current,old,dOvr,roleChanged,styleChanged,weight};
+  }).filter(change=>change&&change.weight>0)
+    .sort((a,b)=>b.weight-a.weight||Math.abs(b.dOvr)-Math.abs(a.dOvr)||a.nome.localeCompare(b.nome));
+  const teams=now.teams.map(current=>{
+    const old=baseTeams.get(current.key);
+    if(!old)return null;
+    const dBruta=current.bruta-old.bruta;
+    const dQuim=current.quim-old.quim;
+    const dEfet=current.efet-old.efet;
+    const weight=Math.abs(dEfet)+Math.abs(dBruta)*.5+Math.abs(dQuim)*100*.3;
+    return {...current,old,dBruta,dQuim,dEfet,weight};
+  }).filter(change=>change&&change.weight>0)
+    .sort((a,b)=>b.weight-a.weight||a.nome.localeCompare(b.nome));
+  return {players,teams};
+}
+function renderImpactPanel(){
+  const report=impactReport();
+  const changedPlayers=report.players.length;
+  const changedTeams=report.teams.length;
+  const roleChanges=report.players.filter(player=>player.roleChanged).length;
+  const styleChanges=report.players.filter(player=>player.styleChanged).length;
+  const playerRows=report.players.slice(0,7).map(player=>{
+    const meta=[
+      player.roleChanged?`${player.old.role} → ${player.role}`:player.role,
+      player.styleChanged?`${player.old.style} → ${player.style}`:player.style
+    ].join(" · ");
+    const cls=player.dOvr>0?"up":player.dOvr<0?"down":"";
+    return `<div class="impact-row"><div class="impact-main"><div class="impact-name">${esc(player.nome)} <span style="color:var(--dim);font-weight:600">${esc(player.team)}</span></div><div class="impact-meta">${esc(meta)}</div></div><div class="impact-delta ${cls}">${signedDelta(player.dOvr)}</div></div>`;
+  }).join("");
+  const teamRows=report.teams.slice(0,5).map(team=>{
+    const cls=team.dEfet>0?"up":team.dEfet<0?"down":"";
+    const meta=`Bruta ${signedDelta(team.dBruta)} · Quim ${signedDelta(team.dQuim*100,0)}pp`;
+    return `<div class="impact-row"><div class="impact-main"><div class="impact-name">${esc(team.nome)}</div><div class="impact-meta">${esc(meta)}</div></div><div class="impact-delta ${cls}">${signedDelta(team.dEfet)}</div></div>`;
+  }).join("");
+  const empty=!changedPlayers&&!changedTeams;
+  return `<div class="liveimpact">
+    <div class="liveimpact-head"><div class="liveimpact-title">Impacto ao vivo</div><div class="liveimpact-count">${changedPlayers+changedTeams} mudanças</div></div>
+    <div class="liveimpact-grid">
+      <div class="liveimpact-stat"><div class="v mono">${changedPlayers}</div><div class="l">jogadores</div></div>
+      <div class="liveimpact-stat"><div class="v mono">${roleChanges}/${styleChanges}</div><div class="l">função/estilo</div></div>
+      <div class="liveimpact-stat"><div class="v mono">${changedTeams}</div><div class="l">times</div></div>
+    </div>
+    ${empty?'<div class="impact-empty">Sem diferença contra o baseline carregado. Ao mexer em receitas, pesos ou atributos, as mudanças aparecem aqui imediatamente.</div>':`
+      <div class="impact-section"><h4>Jogadores</h4>${playerRows||'<div class="impact-empty">Sem jogador alterado.</div>'}</div>
+      <div class="impact-section"><h4>Times</h4>${teamRows||'<div class="impact-empty">Sem time alterado.</div>'}</div>`}
+  </div>`;
+}
 function officialTeam(t,ti){
   const coach=t.treinador;
   const js=teamEngines(t,ti).map(eng=>{if(coach&&coach.ovr)eng._coach={ovr:coach.ovr,carac:coach.carac};return eng;});
@@ -1495,12 +1609,6 @@ function mainPlayer(){
 function deltaText(base,cur,key,fmt=v=>v){return !base||base[key]===cur[key]?"":` <span class="hint" style="margin-left:6px;color:var(--warn)">${fmt(base[key])} → ${fmt(cur[key])}</span>`;}
 function renderPlayerPanel(){renderEditorResult();}
 function renderMain(){refresh("all");}
-function rolePairText(p){
-  const r1=p.isIGL?"IGL":(p.role1||p.combatRole||"");
-  const r2=p.isIGL?(p.combatRole||p.role2||""):(p.role2||p.combatRole||"");
-  return [r1,r2].filter(Boolean).join(" / ");
-}
-
 /* === league sidebar === */
 function renderLeague(){
   const box=document.getElementById("league");if(!box)return;
@@ -1566,7 +1674,8 @@ function renderTeamDetail(){
     </div>
     ${coach}
     <div class="tdetail-alerts">${alerts}</div>
-    <div class="tdetail-players">${rows}</div>`;
+    <div class="tdetail-players">${rows}</div>
+    ${renderImpactPanel()}`;
   // click handlers
   box.querySelectorAll(".tdrow").forEach(r=>{r.onclick=()=>{const pi=r.dataset.pi;if(pi!=="undefined")loadPlayer(+pi,teamIdx);};});
 }
