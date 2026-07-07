@@ -99,8 +99,8 @@ const dot=(w,p)=>{let s=0;for(const k in w)s+=w[k]*(p[k]||0);return s;}; // prod
 const ROLES_COMBATE=["AWPer","Rifler","Entry","Lurker","Support"];
 const ROLE_CONTRA={
   AWPer:{en:.08,tr:.04,ut:.04},
-  Rifler:{sn:.18,ut:.04,cl:.08},
-  Entry:{sn:.08},
+  Rifler:{sn:.18,ut:.04,cl:.05},
+  Entry:{sn:.08,ut:.02},
   Lurker:{en:.15,tr:.04,sn:.06},
   Support:{en:.12,sn:.10,fp:.08}
 };
@@ -108,8 +108,8 @@ function roleAfinidade(role,p){
   let score=dot(ROLE_PERFIL[role].afin,p)-dot(ROLE_CONTRA[role]||{},p);
   if(role==="Entry"){
     const en=p.en||0,op=p.op||0,fp=p.fp||0,apoio=Math.max(op,fp);
-    score+=.05*Math.min(en,op)+.03*Math.min(en,fp);
-    score-=.16*Math.max(0,en-apoio);
+    score+=.035*Math.min(en,op)+.02*Math.min(en,fp);
+    score-=.19*Math.max(0,en-apoio);
   }
   if(role==="Lurker"){
     const cl=p.cl||0,op=p.op||0,fp=p.fp||0;
@@ -119,7 +119,7 @@ function roleAfinidade(role,p){
     score+=.05*Math.min(p.ut||0,p.tr||0);
   }
   if(role==="Rifler"){
-    score+=.03*Math.min(p.fp||0,p.op||0);
+    score+=.055*Math.min(p.fp||0,p.op||0)+.015*Math.min(p.fp||0,p.tr||0);
   }
   return score;
 }
@@ -172,18 +172,18 @@ const STYLE_CONTRA={
   trader:{ent:.10,ab:.08,sn:.06},
   playmaker:{ut:.06,tr:.04,sn:.06},
   infiltrator:{ent:.18,tr:.08,sn:.06},
-  baiter:{ent:.34,ab:.22,ut:.08,sn:.06},
+  baiter:{ent:.28,ab:.16,ut:.08,sn:.06},
   clutcher:{ent:.14,ab:.08,tr:.06,sn:.06},
   support:{fogo:.10,ent:.12,sn:.08},
   cerebral:{ent:.16,fogo:.06,sn:.06},
-  anchor:{ent:.34,ab:.18,fogo:.10,sn:.06}
+  anchor:{ent:.24,ab:.12,fogo:.06,sn:.06}
 };
 const STYLE_ROLE_FIT={
   AWPer:{spacetaker:.08,clutcher:.07,playmaker:.04,infiltrator:.04,baiter:.02,anchor:.02,aggressive:.02},
   Rifler:{spacetaker:.07,aggressive:.06,trader:.04,infiltrator:.03,playmaker:.02},
   Entry:{aggressive:.22,spacetaker:.20,trader:.06,playmaker:.04,infiltrator:-.08,clutcher:-.10,cerebral:-.16,baiter:-.28,anchor:-.30,support:-.12},
-  Lurker:{infiltrator:.18,playmaker:.14,clutcher:.08,cerebral:.05,baiter:.03,spacetaker:-.08,aggressive:-.16,anchor:-.04},
-  Support:{support:.20,trader:.14,cerebral:.12,anchor:.06,aggressive:-.10,spacetaker:-.12,playmaker:-.04},
+  Lurker:{infiltrator:.11,playmaker:.08,clutcher:.12,cerebral:.09,baiter:.06,anchor:.06,spacetaker:-.08,aggressive:-.16},
+  Support:{support:.20,trader:.13,cerebral:.13,anchor:.12,clutcher:.04,aggressive:-.10,spacetaker:-.12,playmaker:-.04},
   IGL:{cerebral:.12,support:.10,trader:.06,playmaker:.04}
 };
 const NM_COR={pisoMin:45,spreadMax:35};
@@ -242,10 +242,10 @@ const IGL_CREDITO_SHARE=.55;
 function ovrUnificado(role,p,sec){const C=CFG_AVALIACAO,combatRole=role==="IGL"?(sec||"Rifler"):role,style=nmOVR(p,combatRole);
   if(role==="IGL")return Math.min(C.IGL_TETO,Math.max(1,curvaOVR(style.core+C.IGL_CREDITO*IGL_CREDITO_SHARE)+(C.IGL_TITULO[p.colocacao]||0)));
   return Math.min(C.OVR_MAX,Math.max(C.OVR_MIN,style.ovr));}
-/* ┌─ PRISMA ─ sub-arquétipos (o estilo dentro da função) ──────────────┐ */
-// ——— Sub-arquétipos: arquétipos FIÉIS do CS, detectados por ASSINATURA de atributos (= categorias HLTV) ———
-// cada sub: sig (assinatura p/ detecção) · agr (agressão no round, −1..+1) · lado [CT,T] · stats (4 do verso).
-// o jogador recebe o sub de MAIOR match dentro da função; eixo = quão definido (margem pro 2º) → intensidade no sim.
+/* ┌─ PRISMA ─ arquétipo unificado ────────────────────────────────────┐ */
+// Playstyle é a identidade principal; sub-arquétipo é a tradução dessa identidade
+// dentro da função. Assim química/sim/verso leem a mesma decisão, não dois
+// classificadores independentes.
 const SUBARQ={
   AWPer:[
     {nome:"AWP Agressiva",sig:{en:.48,op:.27,fp:.25},agr:.9, lado:[-1,3],stats:["sn","op","fp","en"]}, // entra/abre com pick (en = agressão)
@@ -272,14 +272,23 @@ const SUB_CONTRA={
   Lurker:[{en:.20,tr:.06,sn:.06},{tr:.06,ut:.04,sn:.06},{en:.38,op:.16,fp:.08,sn:.06}],
   Support:[{fp:.08,sn:.08},{en:.08,sn:.08}]
 };
+const SUB_BY_STYLE={
+  AWPer:{aggressive:0,spacetaker:0,playmaker:0,trader:1,infiltrator:1,baiter:1,clutcher:1,support:1,cerebral:1,anchor:1},
+  Rifler:{aggressive:0,spacetaker:0,playmaker:0,trader:1,baiter:1,support:1,cerebral:2,infiltrator:2,clutcher:2,anchor:1},
+  Entry:{aggressive:0,spacetaker:1,playmaker:1,trader:1,infiltrator:1,clutcher:1,baiter:1,cerebral:1,support:1,anchor:1},
+  Lurker:{infiltrator:0,baiter:0,playmaker:1,spacetaker:1,aggressive:1,trader:1,clutcher:2,cerebral:2,support:2,anchor:2},
+  Support:{support:0,cerebral:0,anchor:0,trader:1,aggressive:1,spacetaker:1,playmaker:1,infiltrator:1,baiter:1,clutcher:1}
+};
 // Coringa: jogador POLIVALENTE — piso alto em tudo E sem especialidade dominante (joga de tudo, sem estilo fixo)
 const ehCoringa=p=>{const v=[p.fp||0,p.en||0,p.tr||0,p.op||0,p.cl||0,p.ut||0],mn=Math.min(...v),mx=Math.max(...v);
   return mn>=CFG_AVALIACAO.CORINGA_PISO&&(mx-mn)<=CFG_AVALIACAO.CORINGA_SPREAD;};
 const SUB_CORINGA={nome:"Coringa",eixo:0,agr:0,lado:[0,0],stats:["fp","op","cl","ut"]};
-function subArquetipo(role,p){const subs=SUBARQ[role];if(!subs)return null;
+function subArquetipo(role,p,styleId=null){const subs=SUBARQ[role];if(!subs)return null;
   if(ehCoringa(p))return{...SUB_CORINGA}; // polivalente: sobrepõe o estilo da função
+  const forcedIndex=SUB_BY_STYLE[role]?.[STYLE_ID(styleId)];
   let best=subs[0],bs=-1,second=-1;
-  subs.forEach((s,i)=>{const sc=dot(s.sig,p)-dot((SUB_CONTRA[role]||[])[i]||{},p);if(sc>bs){second=bs;bs=sc;best=s;}else if(sc>second)second=sc;});
+  subs.forEach((s,i)=>{const sc=dot(s.sig,p)-dot((SUB_CONTRA[role]||[])[i]||{},p);if(sc>bs){second=bs;bs=sc;if(forcedIndex==null)best=s;}else if(sc>second)second=sc;});
+  if(forcedIndex!=null)best=subs[forcedIndex]||best;
   return{nome:best.nome,eixo:+(bs-Math.max(0,second)).toFixed(1),agr:best.agr,lado:best.lado,stats:best.stats};}
 // STAR PLAYERS — definidos por curadoria (não se calcula: NiKo é star com OVR 15 ou 22).
 const TIER_LENDA=["s1mple","ZywOo","device","dev1ce","NiKo","coldzera","donk","GeT_RiGhT","olofmeister"];
@@ -291,7 +300,7 @@ function aplicarAvaliacaoContextual(p){
   const combatRole=role==="IGL"?(sec||"Rifler"):role,style=nmOVR(p,combatRole);
   let ovr=Math.min(role==="IGL"?CFG_AVALIACAO.IGL_TETO:CFG_AVALIACAO.OVR_MAX,Math.max(CFG_AVALIACAO.OVR_MIN,style.ovr));
   if(role==="IGL")ovr=Math.min(CFG_AVALIACAO.IGL_TETO,Math.max(1,curvaOVR(style.core+CFG_AVALIACAO.IGL_CREDITO*IGL_CREDITO_SHARE)+(CFG_AVALIACAO.IGL_TITULO[p.colocacao]||0)));
-  const sub=subArquetipo(combatRole,p);
+  const sub=subArquetipo(combatRole,p,style.style);
   return Object.assign(p,{ovr,combatRole,role1:role==="IGL"?"IGL":role,role2:role==="IGL"?null:sec,playstyle:style.style,style,sub,esteira:ESTEIRA[role]});
 }
 function avaliarJogador(p){const classe=classificar(p);const role=classe[0];
