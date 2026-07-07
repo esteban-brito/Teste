@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <!--
   draft9-0 · Laboratório de Stats & Motores — bancada de tuning.
-  Carrega os MOTORES do próprio game.js ao vivo (fatia antes do DOM) e recalcula
-  OVR/função/sub em tempo real. Também deixa editar os PESOS/FÓRMULAS dos motores
-  (afinidade, OVR por função, curva, IGL, sub-arquétipos) e ver o efeito no jogador
-  e no elenco inteiro. TUDO isolado: nada aqui toca o game.js nem o jogo.
+   Carrega os MOTORES do próprio game.js ao vivo (fatia antes do DOM) e recalcula
+   OVR/função em tempo real. Também deixa editar os PESOS/FÓRMULAS dos motores
+   (afinidade, OVR por função, curva, IGL) e ver o efeito no jogador
+   e no elenco inteiro. TUDO isolado: nada aqui toca o game.js nem o jogo.
 -->
 <html lang="pt-BR">
 <head>
@@ -210,7 +210,7 @@ async function carregarMotores(){
   const slice=linhas.slice(0,cut).join("\n");
   E=new Function(slice+"\nreturn {avaliarJogador,afinidades,classificar,ovrUnificado,curvaOVR,dot,ratingScore,clipOVR,distribuirRoles,forcaTime,quimicaComposicao,CFG_AVALIACAO,ROLE_PERFIL,SUBARQ,CFG_QUIMICA,CFG_SIM,CFG_FA,MAPAS_POOL,MAPA_PERFIL,MAPA_LADO,srand,simularMapa,simularSerie,forcaDoDia,TEAMS};")();
   ["avaliarJogador","afinidades","classificar","distribuirRoles","forcaTime","simularMapa","forcaDoDia","srand","TEAMS"].forEach(k=>{if(!E[k])throw new Error(`motor ausente: ${k}`);});
-  DEF={CFG:clone(E.CFG_AVALIACAO),ROLE:clone(E.ROLE_PERFIL),SUB:clone(E.SUBARQ),QUI:clone(E.CFG_QUIMICA)};   // padrões p/ reset e comparação
+  DEF={CFG:clone(E.CFG_AVALIACAO),ROLE:clone(E.ROLE_PERFIL),QUI:clone(E.CFG_QUIMICA)};   // padrões p/ reset e comparação
   DEF.SIM=clone(E.CFG_SIM); DEF.FA=clone(E.CFG_FA);
   POOLRAW=[]; poolBySlot=new Map();
   E.TEAMS.forEach((t,ti)=>t.jogadores.forEach((j,pi)=>{const e=j._eng;
@@ -280,33 +280,11 @@ function grpPesos(titulo,which){ // which: 'afin' | 'ovr' — pesos por função
   });
   return g;
 }
-function grpSub(){ // sub-arquétipos da função 1 do jogador atual
-  const g=document.createElement("div"); g.className="grp";
-  const p=jogadorAtual(); let av; try{av=E.avaliarJogador(p);}catch(e){}
-  const role=av?av.primario:"Rifler";
-  g.innerHTML=`<h3>Sub-arquétipos · ${role}</h3>`;
-  const subs=E.SUBARQ[role], defSubs=DEF.SUB[role];
-  if(!subs){g.innerHTML+='<div class="hint">(esta função não tem sub-arquétipos editáveis)</div>';return g;}
-  subs.forEach((s,i)=>{
-    const blk=document.createElement("div"); blk.className="roleblk";
-    blk.innerHTML=`<div class="rl">${esc(s.nome)}</div>`;
-    const row=document.createElement("div"); row.className="wrow";
-    Object.keys(s.sig).forEach(k=>{const chip=document.createElement("span");chip.className="wchip";
-      chip.innerHTML=`<span class="wlab">${k.toUpperCase()}</span>`;
-      chip.appendChild(numInput(()=>s.sig[k],v=>s.sig[k]=v,defSubs[i].sig[k],0.01));row.appendChild(chip);});
-    blk.appendChild(row); g.appendChild(blk);
-  });
-  const hint=document.createElement("div"); hint.className="hint";
-  hint.textContent="O sub é o de maior soma (assinatura × atributos) dentro da função.";
-  g.appendChild(hint); // appendChild (não innerHTML+=) pra não apagar os valores dos inputs já criados
-  return g;
-}
-
 function restaurar(){
   // copia os padrões de volta PARA OS MESMOS objetos (os motores seguram a referência)
   const cp=(dst,src)=>{Object.keys(dst).forEach(k=>{if(!(k in src))return; if(typeof dst[k]==="object"&&dst[k])cp(dst[k],src[k]); else dst[k]=src[k];});
     Object.keys(src).forEach(k=>{if(!(k in dst))dst[k]=clone(src[k]);});};
-  cp(E.CFG_AVALIACAO,DEF.CFG); cp(E.ROLE_PERFIL,DEF.ROLE); cp(E.SUBARQ,DEF.SUB); cp(E.CFG_QUIMICA,DEF.QUI);
+  cp(E.CFG_AVALIACAO,DEF.CFG); cp(E.ROLE_PERFIL,DEF.ROLE); cp(E.CFG_QUIMICA,DEF.QUI);
   cp(E.CFG_SIM,DEF.SIM); cp(E.CFG_FA,DEF.FA);
   buildTuning(); refresh("all");
 }
@@ -319,7 +297,6 @@ function diffPesos(){
     else if(!def||def[k]!==cur[k])out.push(`${dp}: ${def?def[k]:"—"} → ${cur[k]}`);}};
   walk(DEF.CFG,E.CFG_AVALIACAO,"CFG_AVALIACAO");
   walk(DEF.ROLE,E.ROLE_PERFIL,"ROLE_PERFIL");
-  walk(DEF.SUB,E.SUBARQ,"SUBARQ");
   walk(DEF.QUI,E.CFG_QUIMICA,"CFG_QUIMICA");
   walk(DEF.SIM,E.CFG_SIM,"CFG_SIM");
   walk(DEF.FA,E.CFG_FA,"CFG_FA");
@@ -401,16 +378,14 @@ function buildTuning(){
     {label:"trade rating",get:()=>F.W_TRADE,set:v=>F.W_TRADE=v,def:DF.W_TRADE,step:.005},
   ]));
   box.appendChild(wrap);
-  // AVANÇADO (recolhido): matriz de pesos por função + assinaturas de sub
+  // AVANÇADO (recolhido): pesos de afinidade por função (afeta classificação do PRISMA)
   const advBtn=document.createElement("button"); advBtn.className="btn advbtn"; advBtn.type="button";
   const adv=document.createElement("div"); adv.hidden=true; adv.style.marginTop="12px";
-  const rot=()=>advBtn.textContent=(adv.hidden?"⌄":"⌃")+" Avançado · pesos por função & sub-arquétipos";
+  const rot=()=>advBtn.textContent=(adv.hidden?"⌄":"⌃")+" Avançado · pesos de afinidade";
   advBtn.onclick=()=>{adv.hidden=!adv.hidden; rot();}; rot();
   const w2=document.createElement("div"); w2.className="engwrap";
   w2.appendChild(grpPesos("Afinidade — define a FUNÇÃO","afin"));
-  w2.appendChild(grpPesos("Pesos de OVR — nível na função","ovr"));
   adv.appendChild(w2);
-  const w3=document.createElement("div"); w3.appendChild(grpSub()); adv.appendChild(w3);
   box.appendChild(advBtn); box.appendChild(adv);
 }
 
@@ -429,8 +404,9 @@ const NM_DEF={
   "Suporte":      {w:{ut:.45,tr:.30,ab:.25},           wR:.40},
   "Cerebral":     {w:{ab:.35,ut:.35,cl:.30},           wR:.52},
   "Ancora":       {w:{cl:.40,ut:.35,tr:.25},           wR:.45}};
-const NM_COR_DEF={pisoMin:45,spreadMax:35,wR:.45}; // Coringa: 5 de 7 stats acima do piso, tolera 1 fraco
+const NM_COR_DEF={pisoMin:45,spreadMax:35}; // Coringa: 5 de 7 stats acima do piso, tolera 1 fraco
 let NM=clone(NM_DEF), NM_COR=clone(NM_COR_DEF);
+function coringaWR(){const ids=PLAYSTYLE_IDS;let s=0,n=0;ids.forEach(id=>{const r=STYLE_RECIPE(id);if(r){s+=r.wR;n++;}});return n?s/n:.45;}
 const STYLE_KEYS={
   aggressive:"Agressivo",spacetaker:"Spacetaker",trader:"Trader",playmaker:"Playmaker",infiltrator:"Infiltrador",
   baiter:"Baiter",clutcher:"Clutcher",support:"Suporte",cerebral:"Cerebral",anchor:Object.keys(NM_DEF).find(k=>k.includes("ncora"))||"Ancora"
@@ -474,13 +450,6 @@ function nmDetect(s6,s7){const jp=jokerProfile(s7);
     for(const [k] of NM_AXES){const wi=w[k]||0,si=s6[k];dot+=wi*si;nw+=wi*wi;ns+=si*si;}
     const cos=dot/(Math.sqrt(nw*ns)+1e-9);if(cos>bs){bs=cos;best=id;}}
   return best;}
-const STAT_TO_AXIS={fp:"fogo",sn:"fogo",op:"ab",en:"ent",tr:"tr",cl:"cl",ut:"ut"};
-function normWeights(w){const out={};let sum=0;for(const k in w){out[k]=(out[k]||0)+w[k];sum+=w[k];}for(const k in out)out[k]/=sum||1;return out;}
-function roleWeights6(role){
-  const src=E.ROLE_PERFIL[role]?.ovr||E.ROLE_PERFIL.Rifler.ovr, out={};
-  for(const k in src){const ax=STAT_TO_AXIS[k];if(ax)out[ax]=(out[ax]||0)+src[k];}
-  return normWeights(out);
-}
 function styleMatch(s6,s7){
   const jp=jokerProfile(s7);
   if(jp.ok)return {id:"joker",score:.88+.12*jp.score,second:.72,margin:.16+.12*jp.score,clarity:.75+.25*jp.score};
@@ -494,17 +463,14 @@ function styleMatch(s6,s7){
 }
 function nmOVR(p,role,forced){
   const s6=nmStats6(p,role), s7=stats7(p), match=forced?{id:STYLE_ID(forced),score:1,second:.75,margin:.25,clarity:.9}:styleMatch(s6,s7);
-  const style=match.id, rating=E.ratingScore(p.rating), rw=roleWeights6(role), roleWR=(E.ROLE_PERFIL[role]?.wR??.62);
-  const roleStat=E.dot(rw,s6), roleCore=roleWR*rating+(1-roleWR)*roleStat;
-  let styleWR, styleStat;
-  if(style==="joker"){styleWR=NM_COR.wR;const jp=jokerProfile(s7);const top5=jp.sorted.slice(0,5);const meanTop5=top5.reduce((a,b)=>a+b,0)/5;styleStat=.55*meanTop5+.35*jp.min5+.10*(s7.reduce((a,b)=>a+b,0)/7-meanTop5/5);}
-  else{const rec=STYLE_RECIPE(style);styleWR=rec.wR;styleStat=E.dot(rec.w,s6);}
-  const styleCore=styleWR*rating+(1-styleWR)*styleStat;
-  const styleShare=style==="joker"?.42:Math.max(.24,Math.min(.54,.28+.22*match.clarity+.08*Math.max(0,match.score-.86)/.14));
+  const style=match.id, rating=E.ratingScore(p.rating);
+  let wR, statScore;
+  if(style==="joker"){wR=coringaWR();const jp=jokerProfile(s7);const top5=jp.sorted.slice(0,5);const meanTop5=top5.reduce((a,b)=>a+b,0)/5;statScore=.55*meanTop5+.35*jp.min5+.10*(s7.reduce((a,b)=>a+b,0)/7-meanTop5/5);}
+  else{const rec=STYLE_RECIPE(style);wR=rec.wR;statScore=E.dot(rec.w,s6);}
   const clarityAdj=(style==="joker"?1.2:(match.clarity-.45)*2.2);
-  const roleDutyAdj=Math.max(-2.5,Math.min(1.5,(roleStat-55)/18));
-  const core=(1-styleShare)*roleCore+styleShare*styleCore+clarityAdj+roleDutyAdj;
-  return {style,ovr:E.curvaOVR(core),wR:styleWR,statScore:styleStat,core,s6,roleStat,roleCore,styleCore,styleShare,matchScore:match.score,matchMargin:match.margin,roleWeights:rw};
+  const roleDutyAdj=Math.max(-2.5,Math.min(1.5,(statScore-55)/18));
+  const core=wR*rating+(1-wR)*statScore+clarityAdj+roleDutyAdj;
+  return {style,ovr:E.curvaOVR(core),wR,statScore,core,s6,matchScore:match.score,matchMargin:match.margin};
 }
 function capOvr(ovr,isIGL=false){return Math.min(isIGL?20:22,Math.max(1,ovr));}
 const IGL_CREDITO_SHARE=0.55; // fração do crédito de IGL que entra no core
@@ -764,7 +730,9 @@ function nmInp(get,set,def,step){const inp=document.createElement("input");inp.t
   inp.className=Math.abs(get()-def)>1e-9?"dirty":"";
   inp.oninput=()=>{const v=parseFloat(inp.value);if(!isNaN(v)){set(v);inp.className=Math.abs(v-def)>1e-9?"dirty":"";renderMain();}};return inp;}
 function buildNMStyles(){const box=document.getElementById("nmStyles");if(!box)return;box.innerHTML="";
-  for(const nome in NM){const g=document.createElement("div");g.className="grp";g.innerHTML=`<h3>${esc(nome)}</h3>`;
+  for(const nome in NM){const g=document.createElement("div");g.className="grp";
+    const w=NM[nome].w;const top2=NM_AXES.filter(([k])=>w[k]>0).sort((a,b)=>(w[b[0]]||0)-(w[a[0]]||0)).slice(0,2).map(([k,lab])=>lab).join("+");
+    g.innerHTML=`<h3>${esc(nome)} <span style="font-weight:400;color:var(--muted);font-size:.56rem;letter-spacing:.08em">· ${esc(top2)}</span></h3>`;
     const row=document.createElement("div");row.className="wrow";
     NM_AXES.forEach(([k,lab])=>{const chip=document.createElement("span");chip.className="wchip";chip.innerHTML=`<span class="wlab">${lab.slice(0,4)}</span>`;
       chip.appendChild(nmInp(()=>NM[nome].w[k]||0,v=>NM[nome].w[k]=v,(NM_DEF[nome].w[k]||0),.05));row.appendChild(chip);});
@@ -772,9 +740,10 @@ function buildNMStyles(){const box=document.getElementById("nmStyles");if(!box)r
     cR.appendChild(nmInp(()=>NM[nome].wR,v=>NM[nome].wR=v,NM_DEF[nome].wR,.05));row.appendChild(cR);
     g.appendChild(row);box.appendChild(g);}
   const gc=document.createElement("div");gc.className="grp";gc.innerHTML=`<h3>Coringa - 5 de 7</h3>`;const pg=document.createElement("div");pg.className="pgrid";
-  [["piso minimo",()=>NM_COR.pisoMin,v=>NM_COR.pisoMin=v,NM_COR_DEF.pisoMin,1],["spread maximo",()=>NM_COR.spreadMax,v=>NM_COR.spreadMax=v,NM_COR_DEF.spreadMax,1],["rating",()=>NM_COR.wR,v=>NM_COR.wR=v,NM_COR_DEF.wR,.05]]
+  [["piso minimo",()=>NM_COR.pisoMin,v=>NM_COR.pisoMin=v,NM_COR_DEF.pisoMin,1],["spread maximo",()=>NM_COR.spreadMax,v=>NM_COR.spreadMax=v,NM_COR_DEF.spreadMax,1]]
     .forEach(([l,get,set,def,step])=>{const lab=document.createElement("label");lab.textContent=l;pg.appendChild(lab);pg.appendChild(nmInp(get,set,def,step));});
-  gc.appendChild(pg);box.appendChild(gc);}
+  const hintWR=document.createElement("div");hintWR.className="hint";hintWR.textContent=`wR calculado: média dos wR dos 10 estilos (atualmente ${coringaWR().toFixed(2)})`;
+  gc.appendChild(pg);gc.appendChild(hintWR);box.appendChild(gc);}
 /* ===== UI unificada: roles + playstyle + OVR + time ===== */
 function refresh(target){
   if(!target||target==="all"){renderPlayerPanel();renderTeamPanel();renderImpactPanel();renderMatchPanel();return;}
@@ -809,11 +778,10 @@ function renderPlayerPanel(){
       <div class="sub">Playstyle: <b>${esc(STYLE_LABEL(ev.playstyle))}</b>${base&&base.playstyle!==ev.playstyle?` <span class="hint" style="margin-left:6px;color:var(--warn)">${esc(baseStyle)} -> ${esc(STYLE_LABEL(ev.playstyle))}</span>`:""}</div>
       ${base?`<div class="hint">Baseline: ${base.role1}${base.role2?"/"+base.role2:"/"+base.combatRole} · ${esc(baseStyle)} · OVR ${base.ovr}</div>`:""}</div></div>
     <div class="affs"><div class="h">Afinidade por role</div>${ROLES.map(r=>`<div class="aff"><span class="an" style="color:${rc(r)}">${r}</span><span class="abar"><i style="width:${Math.max(3,af[r]/maxAf*100)}%;background:${rc(r)}"></i></span><span class="av mono">${Math.round(af[r])}</span></div>`).join("")}</div>
-    <div class="brk"><div class="h">OVR: role + playstyle · ${esc(STYLE_LABEL(ev.playstyle))}</div><table>
+    <div class="brk"><div class="h">OVR · ${esc(STYLE_LABEL(ev.playstyle))}</div><table>
       <tr><td>rating em escala</td><td>${Math.round(E.ratingScore(p.rating))}</td></tr>
-      <tr><td>dever da role (${ev.combatRole})</td><td>${Math.round(st.roleStat)} · core ${Math.round(st.roleCore)}</td></tr>
-      <tr><td>expressao do playstyle</td><td>${Math.round(st.statScore)} · core ${Math.round(st.styleCore)}</td></tr>
-      <tr><td>peso do playstyle</td><td>${Math.round(st.styleShare*100)}%</td></tr>
+      <tr><td>pesos da receita (${esc(STYLE_LABEL(ev.playstyle))})</td><td>${Math.round(st.statScore)}</td></tr>
+      <tr><td>wR (peso do rating)</td><td>${st.wR.toFixed(2)}</td></tr>
       <tr><td>clareza estatistica</td><td>${Math.round(st.matchScore*100)}%</td></tr>
       ${ev.isIGL?`<tr><td>core com lideranca</td><td>${Math.round(st.iglCore)}</td></tr>`:""}
       <tr class="tot"><td>OVR final${ev.isIGL?" (teto IGL 20)":""}</td><td>${ev.ovr}</td></tr>
@@ -842,7 +810,7 @@ function copiarMudancas(){
   const weightDiffs=diffPesos(), recipeDiffs=[];
   for(const nome in NM){for(const [k] of NM_AXES){const a=NM_DEF[nome].w[k]||0,b=NM[nome].w[k]||0;if(Math.abs(a-b)>1e-9)recipeDiffs.push(`${nome}.${k}: ${a} -> ${b}`);}
     if(Math.abs(NM_DEF[nome].wR-NM[nome].wR)>1e-9)recipeDiffs.push(`${nome}.rating(wR): ${NM_DEF[nome].wR} -> ${NM[nome].wR}`);}
-  ["pisoMin","spreadMax","wR"].forEach(k=>{if(Math.abs(NM_COR_DEF[k]-NM_COR[k])>1e-9)recipeDiffs.push(`Coringa.${k}: ${NM_COR_DEF[k]} -> ${NM_COR[k]}`);});
+  ["pisoMin","spreadMax"].forEach(k=>{if(Math.abs(NM_COR_DEF[k]-NM_COR[k])>1e-9)recipeDiffs.push(`Coringa.${k}: ${NM_COR_DEF[k]} -> ${NM_COR[k]}`);});
   const changed=[];
   now.forEach((p,i)=>{const b=baseSnap[i], parts=[];
     if(p.ovr!==b.ovr)parts.push(`OVR ${b.ovr}->${p.ovr}`);
@@ -866,7 +834,7 @@ function montarUI(){
     `<div class="card"><div class="eng-head"><span class="title">Time · química fundida</span><div class="teamsel" style="margin:0"><span class="hint" style="margin:0;font-weight:700">Time:</span><select id="teamSel"></select></div></div><div id="teamout"></div></div>`,
     `<div class="card"><div class="eng-head"><span class="title">Mapa · PÓLVORA / COFRE / FA</span><div class="toggle"><button class="btn accent" id="runMapBtn">Rodar mapa</button></div></div><div class="simgrid"><div class="simfield"><label>Time A</label><select id="simA"></select></div><div class="simfield"><label>Time B</label><select id="simB"></select></div><div class="simfield"><label>Mapa</label><select id="simMap"><option value="auto">Auto veto</option></select></div><div class="simfield"><label>Seed</label><input type="number" id="simSeed" value="${simSeed}" step="1"></div></div><div id="matchout"></div></div>`,
     `<div class="card"><div class="eng-head"><span class="title">Impacto do experimento</span><div class="toggle"><button class="btn" id="copyBtn">Copiar relatório</button><button class="btn accent" id="resetBtn">Restaurar baseline</button></div></div><div class="impact zero" id="impact"></div><div class="changed" id="changed" hidden></div></div>`,
-    `<div class="card"><div class="eng-head"><span class="title">Receitas & pesos</span><div class="toggle"><button class="btn" id="engToggle">${tuningOpen?"Esconder":"Mostrar"}</button></div></div><div class="hint">Edite playstyles, Coringa, roles e química. Tudo recalcula contra o baseline inicial do sandbox.</div><div id="stylebox" ${tuningOpen?"":"hidden"}><div class="engwrap" id="nmStyles" style="margin:10px 0 14px"></div></div><div id="engbox" ${tuningOpen?"":"hidden"}></div></div>`
+    `<div class="card"><div class="eng-head"><span class="title">Receitas & pesos</span><div class="toggle"><button class="btn" id="engToggle">${tuningOpen?"Esconder":"Mostrar"}</button></div></div><div class="hint" style="line-height:1.6"><b>Equação:</b> OVR = curva(wR × rating + (1−wR) × statScore + ajustes). <b>statScore</b> = dot(pesos_da_receita, stats). <b>wR</b> = quanto o rating HLTV pesa (0=só stats, 1=só rating). Para subir OVR de um playstyle: aumente os pesos nos stats onde o estilo é forte. O wR controla se o rating compensa stats fracos.</div><div id="stylebox" ${tuningOpen?"":"hidden"}><div class="engwrap" id="nmStyles" style="margin:10px 0 14px"></div></div><div id="engbox" ${tuningOpen?"":"hidden"}></div></div>`
   ].join("");
   wireAtributos(()=>refresh("all"));
   document.getElementById("runMapBtn").insertAdjacentHTML("beforebegin",'<button class="btn" id="runBatchBtn">Rodar lote</button>');
