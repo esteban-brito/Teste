@@ -838,6 +838,73 @@ header{
     grid-template-columns:38px 16px minmax(0,1fr) 70px 44px;
   }
 }
+
+/* === live league roster details === */
+.lcard-row{
+  grid-template-columns:34px minmax(0,1fr);
+  min-height:48px;
+  align-items:center;
+  gap:9px;
+  padding:7px 8px;
+}
+.lcard-info{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  min-width:0;
+}
+.lcard-top{
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+  min-width:0;
+}
+.lcard-nm{
+  font-size:.92rem;
+  font-weight:800;
+  color:var(--txt);
+}
+.lcard-rate{
+  margin-left:auto;
+  color:var(--dim);
+  font-size:.74rem;
+  flex:none;
+}
+.lcard-meta{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+  font-size:.7rem;
+  line-height:1.1;
+}
+.lcard-role{
+  flex:none;
+  font-family:var(--ff),ui-monospace,monospace;
+  font-weight:800;
+  letter-spacing:.02em;
+  white-space:nowrap;
+}
+.lcard-style{
+  min-width:0;
+  color:var(--neutral);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+@media(max-width:1120px){
+  .lcard-row{
+    grid-template-columns:32px minmax(0,1fr);
+  }
+  .lcard-meta{
+    font-size:.66rem;
+  }
+}
+@media(max-width:640px){
+  .lcard-row{
+    grid-template-columns:34px minmax(0,1fr);
+  }
+}
 </style>
 </head>
 <body>
@@ -1412,20 +1479,23 @@ function renderLeague(){
     const src=E.TEAMS[i];
     const avg=t.bruta/5;
     const isOn=i===teamIdx;
-    const players=src.jogadores.map(j=>{
-      const eng=j._eng;
-      const ev=evaluatePlayer(eng);
-      const pIdx=poolBySlot.get(`${i}:${src.jogadores.indexOf(j)}`);
-      return{...ev,pIdx,tIdx:i,pIdx2:src.jogadores.indexOf(j)};
+    const players=teamPlayers(src,i).map((ev,pi)=>{
+      const pIdx=poolBySlot.get(`${i}:${pi}`);
+      return{...ev,pIdx,tIdx:i,pIdx2:pi};
     }).sort((a,b)=>b.ovr-a.ovr);
     html+=`<div class="lcard${isOn?" on":""}" data-ti="${i}">
       <div class="lcard-head"><div class="lcard-badge" style="background:${src.cor}">${esc(src.nome).slice(0,3).toUpperCase()}</div><div class="lcard-name">${esc(src.nome)}</div><div class="lcard-ovr mono">${avg.toFixed(1)}</div></div>
       <div class="lcard-players">${players.map(p=>{
         const rc=ROLE_COLORS[p.combatRole]||"var(--dim)";
+        const r1=p.isIGL?"IGL":(p.role1||p.combatRole||"");
+        const r2=p.isIGL?(p.combatRole||p.role2||""):(p.role2||p.combatRole||"");
+        const rolePair=[r1,r2].filter(Boolean).join(" / ");
         return`<div class="lcard-row${p.pIdx===loadedIdx?" on":""}" data-pi="${p.pIdx}" data-ti="${i}">
           <span class="lcard-ovr-sm" style="background:var(${tierVar(p.ovr)});color:#07090e">${p.ovr}</span>
-          <span class="lcard-nm">${esc(p.nome)}</span>
-          <span class="lcard-r" style="color:${rc}">${(p.combatRole||"").slice(0,3)}</span>
+          <span class="lcard-info">
+            <span class="lcard-top"><span class="lcard-nm">${esc(p.nome)}</span><span class="lcard-rate mono">${p.rating}</span></span>
+            <span class="lcard-meta"><span class="lcard-role" style="color:${rc}">${esc(rolePair)}</span><span class="lcard-style">${esc(STYLE_LABEL(p.playstyle))}</span></span>
+          </span>
         </div>`;
       }).join("")}</div>
     </div>`;
