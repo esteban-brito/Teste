@@ -387,19 +387,6 @@ function restaurar(){
   buildNMStyles(); buildTuning(); refresh("all");
 }
 
-// diff dos pesos vs. padrão → texto pra colar no chat
-function diffPesos(){
-  const out=[];
-  const walk=(def,cur,path)=>{for(const k in cur){const dp=path+"."+k;
-    if(cur[k]&&typeof cur[k]==="object")walk(def?def[k]:undefined,cur[k],dp);
-    else if(!def||def[k]!==cur[k])out.push(`${dp}: ${def?def[k]:"—"} → ${cur[k]}`);}};
-  walk(DEF.CFG,E.CFG_AVALIACAO,"CFG_AVALIACAO");
-  walk(DEF.ROLE,E.ROLE_PERFIL,"ROLE_PERFIL");
-  walk(DEF.QUI,E.CFG_QUIMICA,"CFG_QUIMICA");
-  walk(DEF.SIM,E.CFG_SIM,"CFG_SIM");
-  walk(DEF.FA,E.CFG_FA,"CFG_FA");
-  return out;
-}
 function toast(msg){let t=document.querySelector(".toast");if(!t){t=document.createElement("div");t.className="toast";document.body.appendChild(t);}
   t.textContent=msg;requestAnimationFrame(()=>t.classList.add("show"));clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),2600);}
 function buildTuning(){
@@ -568,6 +555,8 @@ function nmOVR(p,role,forced){
   const core=wR*rating+(1-wR)*statScore+clarityAdj+roleDutyAdj;
   return {style,ovr:E.curvaOVR(core),wR,statScore,core,s6,matchScore:match.score,matchMargin:match.margin};
 }
+function capOvr(ovr,isIGL=false){return Math.min(isIGL?20:22,Math.max(1,ovr));}
+const IGL_CREDITO_SHARE=0.55;
 function isStarPlayer(p,avgOvr){return p.ovr>=avgOvr+3||p.ovr>=20;}
 function evaluatePlayer(p,eng=null,forcedStyle=null){
   const legacy=eng||Object.assign({},p,E.avaliarJogador(p));
@@ -845,28 +834,6 @@ function mainPlayer(){return loadedIdx==null?evaluatePlayer(jogadorAtual()):eval
 function deltaText(base,cur,key,fmt=v=>v){return !base||base[key]===cur[key]?"":` <span class="hint" style="margin-left:6px;color:var(--warn)">${fmt(base[key])} → ${fmt(cur[key])}</span>`;}
 function renderPlayerPanel(){renderEditorResult();}
 function renderMain(){refresh("all");}
-function resetExperiment(){restaurar();NM=clone(NM_DEF);NM_COR=clone(NM_COR_DEF);lastMap=null;lastBatch=null;if(tuningOpen){buildNMStyles();buildTuning();}refresh("all");}
-function copiarMudancas(){
-  const now=evaluateAllPlayers(), teams=evaluateAllTeams(), lines=["Experimento sandbox fundido"];
-  const weightDiffs=diffPesos(), recipeDiffs=[];
-  for(const nome in NM){for(const [k] of NM_AXES){const a=NM_DEF[nome].w[k]||0,b=NM[nome].w[k]||0;if(Math.abs(a-b)>1e-9)recipeDiffs.push(`${nome}.${k}: ${a} -> ${b}`);}
-    if(Math.abs(NM_DEF[nome].wR-NM[nome].wR)>1e-9)recipeDiffs.push(`${nome}.rating(wR): ${NM_DEF[nome].wR} -> ${NM[nome].wR}`);}
-  ["pisoMin","spreadMax"].forEach(k=>{if(Math.abs(NM_COR_DEF[k]-NM_COR[k])>1e-9)recipeDiffs.push(`Coringa.${k}: ${NM_COR_DEF[k]} -> ${NM_COR[k]}`);});
-  const changed=[];
-  now.forEach((p,i)=>{const b=baseSnap[i], parts=[];
-    if(p.ovr!==b.ovr)parts.push(`OVR ${b.ovr}->${p.ovr}`);
-    if(p.role1!==b.role1)parts.push(`R1 ${b.role1}->${p.role1}`);
-    if((p.role2||p.combatRole)!==(b.role2||b.combatRole))parts.push(`R2 ${b.role2||b.combatRole}->${p.role2||p.combatRole}`);
-    if(p.playstyle!==b.playstyle)parts.push(`${STYLE_LABEL(b.playstyle)}->${STYLE_LABEL(p.playstyle)}`);
-    if(parts.length)changed.push(`${p.nome}: ${parts.join(", ")}`);});
-  const teamChanged=[];teams.forEach((t,i)=>{const b=baseTeams[i];if(Math.abs(t.quim-b.quim)>0.005||Math.abs(t.efet-b.efet)>0.5)teamChanged.push(`${E.TEAMS[i].nome}: quim ${Math.round(b.quim*100)}%->${Math.round(t.quim*100)}%, efet ${b.efet}->${t.efet}`);});
-  lines.push("", "Receitas alteradas:", ...(recipeDiffs.length?recipeDiffs:["(nenhuma)"]));
-  lines.push("", "Pesos/configs alterados:", ...(weightDiffs.length?weightDiffs:["(nenhum)"]));
-  lines.push("", `Jogadores impactados (${changed.length}):`, ...(changed.slice(0,30)), ...(changed.length>30?[`+${changed.length-30} outros`]:[]));
-  lines.push("", `Times impactados (${teamChanged.length}):`, ...(teamChanged.slice(0,20)), ...(teamChanged.length>20?[`+${teamChanged.length-20} outros`]:[]));
-  const txt=lines.join("\n");
-  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(()=>toast("Relatorio copiado"),()=>prompt("Copie:",txt));else prompt("Copie:",txt);
-}
 
 /* === league sidebar === */
 function renderLeague(){
