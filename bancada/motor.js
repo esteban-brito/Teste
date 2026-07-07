@@ -10,7 +10,8 @@ const UI_MARKER="document.getElementById";
 const EXPORTS=[
   "TEAMS","POOL","ATRIBUTOS","TIMES_DEF",
   "forcaTime","simularMapa","simularSerie","forcaDoDia","sortearFormaCampanha",
-  "avaliarJogador","distribuirRoles","quimicaComposicao","fallenAngels"
+  "avaliarJogador","distribuirRoles","quimicaComposicao","fallenAngels",
+  "afinidades","STYLE_LABEL"
 ];
 
 function loadEngines(){
