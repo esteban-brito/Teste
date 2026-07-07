@@ -11,7 +11,7 @@ const EXPORTS=[
   "TEAMS","POOL","ATRIBUTOS","TIMES_DEF",
   "forcaTime","simularMapa","simularSerie","forcaDoDia","sortearFormaCampanha",
   "avaliarJogador","distribuirRoles","quimicaComposicao","fallenAngels",
-  "afinidades","STYLE_LABEL"
+  "afinidades","rolePairReality","roleStyleReality","STYLE_LABEL"
 ];
 
 function loadEngines(){

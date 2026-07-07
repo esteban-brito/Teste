@@ -44,12 +44,61 @@ function printStylePlayers(players,style){
   });
 }
 
+function pairText(player){
+  return `${player.primario}/${player.secundario||player.combatRole||"-"}`;
+}
+
+function pairReality(player){
+  return X.rolePairReality?X.rolePairReality(player.primario,player.secundario||player.combatRole,player):{cost:0,label:"natural",reasons:[]};
+}
+
+function styleReality(player){
+  const role=player.primario==="IGL"?(player.combatRole||player.secundario):player.primario;
+  return X.roleStyleReality?X.roleStyleReality(role,player.playstyle,player):{cost:0,label:"natural",reasons:[]};
+}
+
+function printRolePairs(players){
+  console.log("\n-- Pares de roles --");
+  sortedCountEntries(countBy(players,pairText))
+    .forEach(([pair,total])=>console.log(`  ${String(total).padStart(2)} ${pair}`));
+}
+
+function printRarePairs(players){
+  console.log("\n-- Pares raros por contexto --");
+  players
+    .map(player=>({player,real:pairReality(player)}))
+    .filter(row=>row.real.cost>=.35)
+    .sort((a,b)=>b.real.cost-a.real.cost||a.player.nick.localeCompare(b.player.nick))
+    .slice(0,18)
+    .forEach(({player,real})=>{
+      const why=real.reasons.length?` · ${real.reasons.join("; ")}`:"";
+      console.log(`  ${player.nick.padEnd(12)} ${teamNameFor(X.TEAMS,player).padEnd(11)} ${pairText(player).padEnd(16)} ${real.label.padEnd(10)} cost ${real.cost.toFixed(2)} ${compactStats(player)}${why}`);
+    });
+}
+
+function printRareStyles(players){
+  console.log("\n-- Role/playstyle raros por contexto --");
+  players
+    .map(player=>({player,real:styleReality(player)}))
+    .filter(row=>row.real.cost>=.28)
+    .sort((a,b)=>b.real.cost-a.real.cost||a.player.nick.localeCompare(b.player.nick))
+    .slice(0,18)
+    .forEach(({player,real})=>{
+      const role=player.primario==="IGL"?(player.combatRole||player.secundario):player.primario;
+      const why=real.reasons.length?` · ${real.reasons.join("; ")}`:"";
+      console.log(`  ${player.nick.padEnd(12)} ${teamNameFor(X.TEAMS,player).padEnd(11)} ${(role+"/"+label(player.playstyle)).padEnd(22)} ${real.label.padEnd(10)} cost ${real.cost.toFixed(2)} ${compactStats(player)}${why}`);
+    });
+}
+
 const players=Object.values(X.POOL);
 
 console.log("AUDITORIA PRISMA");
 console.log(`${players.length} jogadores`);
 printCount("Roles",countBy(players,player=>player.primario));
 printCount("Playstyles",countBy(players,player=>player.playstyle),PLAYSTYLE_ORDER);
+printRolePairs(players);
+printRarePairs(players);
+printRareStyles(players);
 printLowMargins(players);
 printStylePlayers(players,"baiter");
 printStylePlayers(players,"support");

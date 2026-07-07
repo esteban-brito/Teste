@@ -104,6 +104,46 @@ const ROLE_CONTRA={
   Lurker:{en:.15,tr:.04,sn:.06},
   Support:{en:.06,sn:.10,fp:.06}
 };
+const ROLE_PAIR_BASE={
+  "Entry/Support":.55,"Support/Entry":.42,
+  "Entry/Lurker":.34,"Lurker/Entry":.30,
+  "Entry/AWPer":.28,"AWPer/Entry":.22,
+  "AWPer/Support":.30,"Support/AWPer":.26,
+  "AWPer/Lurker":.18,"Lurker/AWPer":.16,
+  "Rifler/Support":.12,"Support/Rifler":.10,
+  "Rifler/Entry":.08,"Entry/Rifler":.08,
+  "Rifler/Lurker":.08,"Lurker/Rifler":.08
+};
+function rolePairReality(primary,secondary,p){
+  if(!primary||!secondary||primary===secondary)return {cost:0,label:"natural",reasons:[]};
+  const reasons=[],key=`${primary}/${secondary}`;
+  let cost=ROLE_PAIR_BASE[key]??.14;
+  const en=p.en||0,fp=p.fp||0,tr=p.tr||0,op=p.op||0,cl=p.cl||0,ut=p.ut||0,sn=p.sn||0;
+  if(primary==="Entry"||secondary==="Entry"){
+    const entryCore=.45*en+.25*op+.20*fp+.10*tr;
+    if(entryCore>=62)cost-=.12; else {cost+=.10;reasons.push("entry sem base completa");}
+    if(Math.max(fp,tr)<55){cost+=.12;reasons.push("entry sem impacto/trade");}
+    if(primary==="Support"||secondary==="Support"){
+      if(tr>=48&&ut>=52)cost-=.18; else {cost+=.14;reasons.push("entry/support sem trade+utility");}
+    }
+    if(primary==="Lurker"||secondary==="Lurker"){
+      if(cl>=55&&op>=55)cost-=.10; else cost+=.08;
+    }
+  }
+  if(primary==="AWPer"||secondary==="AWPer"){
+    if(sn>=65)cost-=.12; else {cost+=.16;reasons.push("AWP sem sniper");}
+    if((primary==="Entry"||secondary==="Entry")&&en>=55&&op>=65)cost-=.10;
+  }
+  if(primary==="Support"||secondary==="Support"){
+    if(ut>=55||tr>=52)cost-=.10; else {cost+=.10;reasons.push("support sem util/trade");}
+    if(en>=65&&ut<55&&tr<50)cost+=.14;
+  }
+  const finalCost=clamp(cost,0,.85);
+  return {cost:finalCost,label:finalCost>=.55?"muito raro":finalCost>=.35?"raro":finalCost>=.18?"situacional":"natural",reasons};
+}
+function secondaryScore(primary,secondary,p,scores){
+  return (scores[secondary]??0)-rolePairReality(primary,secondary,p).cost*18;
+}
 function roleAfinidade(role,p){
   let score=dot(ROLE_PERFIL[role].afin,p)-dot(ROLE_CONTRA[role]||{},p);
   if(role==="Entry"){
@@ -139,10 +179,10 @@ function classificar(p){
   if(p.isIGL){const c=["IGL",ordem[0]];c.secForte=true;return c;}
   const prim=ordem[0],par=CFG_AVALIACAO.PARADOXO;
   const ehPar=(a,b)=>par.some(([x,y])=>(a===x&&b===y)||(a===y&&b===x));
-  let sec=ordem[1];
+  let sec=ordem.slice(1).sort((a,b)=>secondaryScore(prim,b,p,sc)-secondaryScore(prim,a,p,sc))[0];
   if(ehPar(prim,sec)&&ordem[2]&&sc[ordem[2]]>=sc[sec]*CFG_AVALIACAO.PARADOXO_PEN)sec=ordem[2];
   const c=[prim,sec];
-  c.secForte=(sc[sec]/Math.max(1,sc[prim]))>=.82; // bi-funcional de verdade (grau contínuo -> bool p/ química)
+  c.secForte=(secondaryScore(prim,sec,p,sc)/Math.max(1,sc[prim]))>=.82; // bi-funcional de verdade (grau contínuo -> bool p/ química)
   return c;}
 const ESTEIRA={AWPer:"Artilharia",Rifler:"Assalto",Entry:"Vanguarda",Lurker:"Ancora",Support:"Sistema",IGL:"Comando"};
 /* ┌─ ZÊNITE ─ OVR unificado ───────────────────────────────────────────┐ */
@@ -205,6 +245,33 @@ const STYLE_LABEL=id=>id==="joker"?"Coringa":(PLAYSTYLES[id]?.label||id);
 const STYLE_ID=x=>x==="Coringa"||x==="joker"?"joker":(PLAYSTYLE_IDS.find(id=>id===x||STYLE_KEYS[id]===x||PLAYSTYLES[id].label===x)||x);
 const STYLE_RECIPE=id=>NM_DEF[STYLE_KEYS[id]];
 const coringaWR=()=>PLAYSTYLE_IDS.reduce((s,id)=>s+(STYLE_RECIPE(id)?.wR||0),0)/PLAYSTYLE_IDS.length;
+const ROLE_STYLE_BASE={
+  Entry:{anchor:.46,support:.30,cerebral:.26,clutcher:.22,infiltrator:.18,trader:.12},
+  Support:{aggressive:.28,spacetaker:.24,playmaker:.14,infiltrator:.12,baiter:.10},
+  Lurker:{aggressive:.18,spacetaker:.14,trader:.12,support:.10},
+  AWPer:{support:.16,anchor:.14,trader:.10},
+  Rifler:{baiter:.18,anchor:.10},
+  IGL:{aggressive:.16,spacetaker:.12,baiter:.12}
+};
+function roleStyleReality(role,style,p){
+  const id=STYLE_ID(style),reasons=[];
+  let cost=(ROLE_STYLE_BASE[role]&&ROLE_STYLE_BASE[role][id])||0;
+  const en=p.en||0,fp=p.fp||0,tr=p.tr||0,op=p.op||0,cl=p.cl||0,ut=p.ut||0,sn=p.sn||0;
+  if(role==="Entry"){
+    if(["aggressive","spacetaker","playmaker","trader"].includes(id)&&en>=55)cost-=.08;
+    if(id==="anchor"){if(cl>=60&&ut>=55&&en<55)cost-=.12;else reasons.push("entry com leitura passiva");}
+    if(id==="support"){if(tr>=50&&ut>=55)cost-=.12;else reasons.push("entry sem suporte real");}
+    if(Math.max(fp,op)<55)cost+=.08;
+  }
+  if(role==="Support"){
+    if(ut>=55||tr>=52)cost-=.08; else cost+=.08;
+    if(["aggressive","spacetaker"].includes(id)&&en>=60&&ut<55)reasons.push("support agressivo sem utility");
+  }
+  if(role==="AWPer"&&sn<60)cost+=.08;
+  if(role==="Lurker"&&id==="aggressive"&&cl<50)cost+=.06;
+  const finalCost=clamp(cost,0,.70);
+  return {cost:finalCost,label:finalCost>=.45?"muito raro":finalCost>=.28?"raro":finalCost>=.14?"situacional":"natural",reasons};
+}
 function nmStats6(p,role){const fogo=role==="AWPer"?(p.sn||0):(p.fp||0);return {fogo,ent:p.en||0,ab:p.op||0,tr:p.tr||0,cl:p.cl||0,ut:p.ut||0};}
 function stats7(p){return [p.fp||0,p.en||0,p.tr||0,p.op||0,p.cl||0,p.sn||0,p.ut||0];}
 function badBaiterProfile(p){
@@ -328,11 +395,11 @@ function distribuirRoles(engs){
   const count={};ROLES_COMBATE.forEach(r=>count[r]=0);const prim=new Map();
   cand.forEach(c=>{if(prim.has(c.e)||count[c.r]>=capRole(c.r))return;prim.set(c.e,c.r);count[c.r]++;});
   const melhorRole=e=>{const s=sc.get(e);return ROLES_COMBATE.reduce((b,r)=>s[r]>s[b]?r:b,ROLES_COMBATE[0]);};
-  naoIgl.forEach(e=>{const p=prim.get(e),s=sc.get(e);const ord=ROLES_COMBATE.slice().sort((a,b)=>s[b]-s[a]);
+  naoIgl.forEach(e=>{const p=prim.get(e),s=sc.get(e);const ord=ROLES_COMBATE.slice().sort((a,b)=>secondaryScore(p,b,e,s)-secondaryScore(p,a,e,s));
     e.primario=p;e.secundario=ord.find(r=>r!==p);
     // regra do teto de AWP: quem PEGARIA AWPer primário mas foi barrado → AWPer é forçado como função 2 (sempre)
     if(p!=="AWPer"&&melhorRole(e)==="AWPer")e.secundario="AWPer";
-    e.secForte=(s[e.secundario]/Math.max(1,s[p]))>=.82;});
+    e.secForte=(secondaryScore(p,e.secundario,e,s)/Math.max(1,s[p]))>=.82;});
   // AWP: ninguém AWPer (primário, nem IGL com AWP no role 2)? → maior sn assume (role 1; role 2 se IGL)
   if(!engs.some(j=>j.primario==="AWPer"||(j.primario==="IGL"&&j.secundario==="AWPer"))){
     const notaAWP=j=>(j.sn??0)*1000+(j.op??0)+(j.fp??0)*.5; // desempate: sn manda; empate (ex.: todos 0) → melhor abertura/fogo pega a AWP
