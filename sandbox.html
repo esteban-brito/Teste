@@ -621,6 +621,223 @@ header{
     padding-right:0;
   }
 }
+
+/* === visual refresh v4: wider side workspaces, compact center === */
+.dash{
+  grid-template-columns:minmax(320px,380px) minmax(360px,1fr) minmax(380px,440px);
+  gap:14px;
+}
+.lcol,.tdetail,.mcol{
+  min-width:0;
+}
+.mcol{
+  padding-right:2px;
+}
+.lcol{
+  padding:10px;
+  gap:8px;
+}
+.lcard{
+  padding:10px;
+  border-radius:9px;
+}
+.lcard-head{
+  gap:8px;
+  margin-bottom:7px;
+}
+.lcard-badge{
+  width:36px;
+  height:25px;
+  font-size:.66rem;
+}
+.lcard-name{
+  font-size:.92rem;
+  letter-spacing:.02em;
+}
+.lcard-ovr{
+  font-size:.9rem;
+}
+.lcard-players{
+  gap:4px;
+}
+.lcard-row{
+  grid-template-columns:32px minmax(0,1fr) 38px;
+  min-height:31px;
+  padding:4px 6px;
+  font-size:.82rem;
+}
+.lcard-ovr-sm{
+  width:32px;
+  min-height:22px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:.82rem;
+}
+.lcard-r{
+  font-size:.72rem;
+  text-align:right;
+}
+.tdetail{
+  padding:14px;
+  gap:12px;
+}
+.tdetail-head{
+  gap:10px;
+}
+.tdetail-badge{
+  width:44px;
+  height:34px;
+  font-size:.8rem;
+}
+.tdetail-name{
+  font-size:1.08rem;
+}
+.tdetail-camp{
+  font-size:.78rem;
+}
+.tdetail-stats{
+  gap:8px;
+}
+.tdetail-stat{
+  padding:10px 8px;
+}
+.tdetail-stat .v{
+  font-size:1.28rem;
+}
+.tdetail-stat .l{
+  font-size:.62rem;
+}
+.tdetail-coach{
+  padding:10px;
+}
+.tdetail-coach .cv{
+  width:30px;
+  height:30px;
+  font-size:.82rem;
+}
+.tdetail-coach .cn{
+  font-size:.92rem;
+}
+.tdetail-coach .cc{
+  font-size:.74rem;
+}
+.tdetail-al{
+  font-size:.74rem;
+  padding:4px 8px;
+}
+.tdetail-players{
+  gap:6px;
+}
+.tdrow{
+  grid-template-columns:38px 16px minmax(0,1fr) 70px 44px;
+  min-height:50px;
+  padding:8px 9px;
+}
+.tdrow-ovr{
+  height:30px;
+  font-size:.98rem;
+}
+.tdrow-star{
+  font-size:.82rem;
+}
+.tdrow-nm{
+  font-size:.95rem;
+}
+.tdrow-fn{
+  font-size:.72rem;
+  text-align:center;
+}
+.tdrow-pl{
+  font-size:.7rem;
+  text-align:center;
+}
+.tdrow-rt{
+  font-size:.88rem;
+}
+.editor-head{
+  padding:10px 12px;
+}
+.editor-fields{
+  padding:10px 12px 8px;
+}
+.ovr-badge{
+  width:52px;
+  height:52px;
+  font-size:1.48rem;
+}
+.field-c{
+  gap:8px;
+  margin-bottom:7px;
+}
+.result-compact{
+  grid-template-columns:repeat(auto-fit,minmax(96px,1fr));
+}
+.editor-card .result-compact{
+  padding:0 12px 10px;
+}
+.simgrid{
+  grid-template-columns:repeat(auto-fit,minmax(108px,1fr));
+}
+.metricgrid{
+  grid-template-columns:repeat(auto-fit,minmax(96px,1fr));
+}
+.scoreboards{
+  grid-template-columns:1fr;
+}
+.engwrap{
+  grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+}
+.grp{
+  padding:11px;
+}
+.pgrid{
+  grid-template-columns:minmax(0,1fr) 58px;
+}
+.pgrid input{
+  width:58px;
+}
+.wchip input{
+  width:44px;
+}
+@media(max-width:1320px){
+  .dash{
+    grid-template-columns:minmax(300px,340px) minmax(340px,1fr) minmax(340px,390px);
+  }
+  .tdrow{
+    grid-template-columns:36px 14px minmax(0,1fr) 64px 42px;
+  }
+}
+@media(max-width:1120px){
+  .dash{
+    grid-template-columns:minmax(280px,320px) minmax(330px,1fr) minmax(310px,360px);
+  }
+  .lcard-row{
+    grid-template-columns:30px minmax(0,1fr) 34px;
+  }
+  .tdrow{
+    grid-template-columns:34px 12px minmax(0,1fr) 58px 38px;
+  }
+}
+@media(max-width:980px){
+  .dash{
+    grid-template-columns:1fr 1fr;
+  }
+  .tdetail{
+    padding:14px;
+  }
+}
+@media(max-width:640px){
+  .dash{
+    grid-template-columns:1fr;
+  }
+  .lcard-row{
+    grid-template-columns:32px minmax(0,1fr) 38px;
+  }
+  .tdrow{
+    grid-template-columns:38px 16px minmax(0,1fr) 70px 44px;
+  }
+}
 </style>
 </head>
 <body>
