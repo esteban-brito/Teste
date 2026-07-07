@@ -1,5 +1,5 @@
 # AUDITORIA ABSOLUTA · draft9-0 (motores)
-> Data: 2026-07-04 · Base: `game.js` v=47 · Método: leitura linha a linha + 6 bancadas semeadas (reproduzíveis)
+> Data: 2026-07-04 · Base: `game.js` v=55 · Método: leitura linha a linha + 6 bancadas semeadas (reproduzíveis)
 > Severidade: 🔴 bug · 🟠 infiel ao CS real · 🟡 aprimorável · 🔵 otimização · 💡 ideia · ✓ auditado e saudável
 
 ## Sumário executivo
@@ -15,9 +15,10 @@
 | Dados (ATRIBUTOS) | 8.5 | Faixas limpas; 15 outliers rating×stats quantificados |
 | **Nenhum 🔴 (bug/crash/NaN) encontrado.** Bordas degeneradas sobrevivem; estado imutável; determinismo por semente provado. |
 
-> **STATUS FINAL (2026-07-05 · v=52): checklist ENCERRADO — 40/40 itens em estado terminal.**
+> **STATUS FINAL (2026-07-07 · v=55): checklist ENCERRADO — 40/40 itens em estado terminal.**
 > 16 corrigidos (✅) · 1 revertido por decisão do dono (↩️ #7) · 22 fechados como auditados/documentados/ideias futuras (✓) · 1 aguardando autorização (⏸ #30, curadoria de dados).
 > Gates da versão final: realismo 12/12 nas faixas reais (N=150) · rating r=0.808 / MAE 0.090 (N=250) · COFRE 0 violações · bordas/vazamento limpos · suíça validada em 40 Majors · smoke E2E sem erros.
+> Pós-audit (v=55): simplificação do sandbox — sistema de pesos unificado (wR·rating + (1-wR)·statScore + clarityAdj + roleDutyAdj), Coringa c/ wR calculado, sub-arquétipos removidos do OVR (só impactam simulação), dashboard integral 3 colunas.
 
 ### Top-10 achados (prioridade de correção)
 1. 🟠 **#20 Loss bonus reseta a zero ao vencer** — CS2 moderno decrementa 1 passo. Muda a respiração econômica.
