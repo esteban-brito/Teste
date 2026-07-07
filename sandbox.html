@@ -265,6 +265,26 @@ select:focus-visible,input[type=text]:focus-visible{border-color:var(--cyan);box
 .impact-delta.up{color:var(--win)}
 .impact-delta.down{color:var(--loss)}
 .impact-empty{font-size:.72rem;color:var(--dim);line-height:1.45}
+.calib-panel{display:grid;gap:10px}
+.calib-target{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end}
+.calib-field label{display:block;margin:0 0 4px;font-family:var(--ff);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.calib-field select{width:100%;background:#0c121b;color:var(--txt);border:1px solid #334158;border-radius:8px;padding:8px}
+.calib-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.calib-metric{border:1px solid rgba(157,178,208,.14);border-radius:8px;background:var(--panel-soft);padding:8px}
+.calib-metric .l{font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.calib-metric .v{margin-top:3px;font-family:var(--ff);font-size:.86rem;font-weight:800;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.calib-suggestion{border:1px solid rgba(157,178,208,.16);border-radius:10px;background:rgba(9,14,23,.55);padding:10px}
+.calib-suggestion.good{border-color:rgba(127,230,168,.32)}
+.calib-suggestion.bad{border-color:rgba(255,193,90,.32)}
+.calib-title{font-family:var(--ff);font-size:.76rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.calib-list{display:grid;gap:4px;margin:6px 0}
+.calib-change{display:flex;justify-content:space-between;gap:8px;font-size:.72rem;border-top:1px solid rgba(157,178,208,.1);padding-top:5px}
+.calib-change:first-child{border-top:0;padding-top:0}
+.calib-change b{color:var(--txt)}
+.calib-change span{color:var(--dim);font-family:var(--ff)}
+.calib-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.calib-note{font-size:.72rem;color:var(--dim);line-height:1.45}
+@media(max-width:640px){.calib-target,.calib-summary{grid-template-columns:1fr}}
 
 /* editor compacto */
 .field-c{display:flex;align-items:center;gap:8px;margin-bottom:7px}
@@ -601,6 +621,7 @@ header{
   color:#d8e2ee;
 }
 .tuning-card>.hint{
+  display:none;
   line-height:1.45!important;
   margin:0 0 12px!important;
   padding:9px 10px;
@@ -954,6 +975,7 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 
 let E=null, DEF=null, POOLRAW=[], loadedIdx=null, poolBySlot=new Map();
 let teamIdx=0, simA=0, simB=1, simSeed=2026, simRuns=80, simMap="auto", lastMap=null, lastBatch=null, tuningOpen=false, baseline=null;
+let calibTargetRole="Entry", calibLast=null;
 const state={nome:"", fp:70,en:50,tr:50,op:50,cl:50,sn:20,ut:55, rating:1.10, isIGL:false, colocacao:"Campeao"};
 
 async function carregarMotores(){
@@ -1000,6 +1022,15 @@ function setCtx(p){
 
 /* ————— saída do jogador ————— */
 function jogadorAtual(){return {nome:state.nome||"Jogador",fp:state.fp,en:state.en,tr:state.tr,op:state.op,cl:state.cl,sn:state.sn,ut:state.ut,rating:state.rating,isIGL:state.isIGL,colocacao:state.colocacao};}
+function copyInto(dst,src){
+  Object.keys(dst).forEach(k=>{if(!(k in src))delete dst[k];});
+  Object.keys(src).forEach(k=>{
+    if(src[k]&&typeof src[k]==="object"&&!Array.isArray(src[k])){
+      if(!dst[k]||typeof dst[k]!=="object"||Array.isArray(dst[k]))dst[k]={};
+      copyInto(dst[k],src[k]);
+    }else dst[k]=clone(src[k]);
+  });
+}
 /* ————— editores dos motores ————— */
 function setDirty(inp,def,val){inp.classList.toggle("dirty",Math.abs(val-def)>1e-9);}
 function numInput(get,set,def,step){
@@ -1436,6 +1467,166 @@ function renderImpactPanel(){
       <div class="impact-section"><h4>Times</h4>${teamRows||'<div class="impact-empty">Sem time alterado.</div>'}</div>`}
   </div>`;
 }
+function effectiveRole(player){
+  return player.isIGL?(player.combatRole||player.secundario||"Rifler"):(player.role1||player.primario||player.combatRole||"Rifler");
+}
+function roleGoalMet(player,role){
+  return effectiveRole(player)===role;
+}
+function roleWeight(role,attr){
+  const afin=E.ROLE_PERFIL[role]?.afin;
+  return afin?+(afin[attr]||0):0;
+}
+function setRoleWeight(role,attr,value){
+  const afin=E.ROLE_PERFIL[role]?.afin;
+  if(!afin)return;
+  afin[attr]=Math.max(0,+value.toFixed(3));
+}
+function configSnapshot(){
+  return {role:clone(E.ROLE_PERFIL),nm:clone(NM),cor:clone(NM_COR)};
+}
+function restoreConfig(snapshot){
+  copyInto(E.ROLE_PERFIL,snapshot.role);
+  NM=clone(snapshot.nm);
+  NM_COR=clone(snapshot.cor);
+}
+function applyCalibChanges(changes){
+  changes.forEach(change=>setRoleWeight(change.role,change.attr,change.to));
+}
+function snapshotDiff(base,now){
+  const basePlayers=mapByKey(base.players), baseTeams=mapByKey(base.teams);
+  const players=now.players.map(current=>{
+    const old=basePlayers.get(current.key);
+    if(!old)return null;
+    const dOvr=current.ovr-old.ovr;
+    const roleChanged=current.role!==old.role;
+    const styleChanged=current.style!==old.style;
+    const weight=Math.abs(dOvr)+(roleChanged?2:0)+(styleChanged?1:0);
+    return {...current,old,dOvr,roleChanged,styleChanged,weight};
+  }).filter(Boolean).filter(change=>change.weight>0)
+    .sort((a,b)=>b.weight-a.weight||a.nome.localeCompare(b.nome));
+  const teams=now.teams.map(current=>{
+    const old=baseTeams.get(current.key);
+    if(!old)return null;
+    const dEfet=current.efet-old.efet;
+    const dBruta=current.bruta-old.bruta;
+    const dQuim=current.quim-old.quim;
+    const weight=Math.abs(dEfet)+Math.abs(dBruta)*.5+Math.abs(dQuim)*30;
+    return {...current,old,dEfet,dBruta,dQuim,weight};
+  }).filter(Boolean).filter(change=>change.weight>0)
+    .sort((a,b)=>b.weight-a.weight||a.nome.localeCompare(b.nome));
+  return {players,teams};
+}
+function candidateAttrsFor(role,player){
+  const existing=Object.keys(E.ROLE_PERFIL[role]?.afin||{});
+  const byValue=STATS
+    .map(([attr])=>({attr,value:player[attr]||0,known:existing.includes(attr)}))
+    .filter(item=>item.attr!=="sn"||role==="AWPer")
+    .sort((a,b)=>(b.known-a.known)||b.value-a.value);
+  return byValue.slice(0,4).map(item=>item.attr);
+}
+function makeChange(role,attr,delta){
+  const from=roleWeight(role,attr);
+  return {role,attr,from,to:Math.max(0,+(from+delta).toFixed(3))};
+}
+function makeReduce(role,attr,delta){
+  const from=roleWeight(role,attr);
+  return {role,attr,from,to:Math.max(0,+(from-delta).toFixed(3))};
+}
+function candidateLabel(changes){
+  return changes.map(change=>`${change.role}.${change.attr.toUpperCase()} ${change.from.toFixed(2)}→${change.to.toFixed(2)}`).join(" · ");
+}
+function generateRoleCandidates(target,current,raw){
+  const attrs=candidateAttrsFor(target,raw), currentAttrs=candidateAttrsFor(current,raw);
+  const deltas=[.03,.06,.09,.12,.16,.22];
+  const out=[];
+  deltas.forEach(delta=>{
+    attrs.forEach(attr=>out.push([makeChange(target,attr,delta)]));
+    attrs.slice(0,2).forEach(attr=>{
+      currentAttrs.slice(0,2).forEach(curAttr=>{
+        if(current&&current!==target)out.push([makeChange(target,attr,delta),makeReduce(current,curAttr,delta*.65)]);
+      });
+    });
+    if(attrs.length>=2)out.push([makeChange(target,attrs[0],delta*.7),makeChange(target,attrs[1],delta*.5)]);
+  });
+  const seen=new Set();
+  return out.filter(changes=>{
+    const key=candidateLabel(changes);
+    if(seen.has(key))return false;
+    seen.add(key);
+    return changes.some(change=>Math.abs(change.to-change.from)>1e-9);
+  });
+}
+function findRoleCalibration(targetRole){
+  if(loadedIdx==null)return {ok:false,message:"Carregue um jogador antes de calibrar."};
+  const raw=playerAt(loadedIdx), beforeConfig=configSnapshot(), base=impactSnapshot(), before=mainPlayer();
+  const current=effectiveRole(before);
+  const candidates=generateRoleCandidates(targetRole,current,raw);
+  let best=null, closest=null;
+  candidates.forEach(changes=>{
+    restoreConfig(beforeConfig);
+    applyCalibChanges(changes);
+    const after=mainPlayer(), now=impactSnapshot(), diff=snapshotDiff(base,now);
+    const hit=roleGoalMet(after,targetRole);
+    const changed=diff.players.length+diff.teams.length;
+    const deltaCost=changes.reduce((sum,change)=>sum+Math.abs(change.to-change.from),0);
+    const cost=deltaCost*10+changed*.35+diff.players.filter(p=>p.roleChanged).length*.8;
+    const result={ok:hit,changes,before,after,diff,cost,label:candidateLabel(changes)};
+    if(hit&&(!best||cost<best.cost))best=result;
+    if(!closest||effectiveRole(after)===targetRole||cost<closest.cost)closest=result;
+  });
+  restoreConfig(beforeConfig);
+  if(best)return best;
+  return {ok:false,message:"Nenhuma mudança pequena atingiu o alvo sem mexer em stats.",fallback:closest,before};
+}
+function renderCalibResult(result){
+  if(!result)return '<div class="impact-empty">Escolha um alvo e rode uma sugestão. Nada é aplicado automaticamente.</div>';
+  if(!result.ok){
+    const fallback=result.fallback?`<div class="calib-note">Melhor tentativa: ${esc(result.fallback.label)}. Resultado: ${esc(rolePairText(result.fallback.after))}.</div>`:"";
+    return `<div class="calib-suggestion bad"><div class="calib-title">Sem ajuste baixo</div><div class="calib-note">${esc(result.message||"Não foi possível calibrar.")}</div>${fallback}</div>`;
+  }
+  const playerRows=result.diff.players.slice(0,5).map(player=>{
+    const meta=[player.roleChanged?`${player.old.role} → ${player.role}`:player.role,player.styleChanged?`${player.old.style} → ${player.style}`:player.style].join(" · ");
+    return `<div class="calib-change"><b>${esc(player.nome)}</b><span>${esc(meta)} · OVR ${signedDelta(player.dOvr)}</span></div>`;
+  }).join("");
+  const changes=result.changes.map(change=>`<div class="calib-change"><b>${change.role}.${change.attr.toUpperCase()}</b><span>${change.from.toFixed(2)} → ${change.to.toFixed(2)}</span></div>`).join("");
+  return `<div class="calib-suggestion good">
+    <div class="calib-title">Sugestão mínima encontrada</div>
+    <div class="calib-list">${changes}</div>
+    <div class="calib-note">Alvo: ${esc(rolePairText(result.before))} → ${esc(rolePairText(result.after))}. Impacto previsto: ${result.diff.players.length} jogadores e ${result.diff.teams.length} times.</div>
+    ${playerRows?`<div class="impact-section"><h4>Principais afetados</h4>${playerRows}</div>`:""}
+    <div class="calib-actions"><button class="btn accent" id="calibApply">Aplicar sugestão</button><button class="btn" id="calibDiscard">Descartar</button></div>
+  </div>`;
+}
+function buildCalibrator(){
+  const box=document.getElementById("calibbox");if(!box)return;
+  const player=loadedIdx==null?evaluatePlayer(jogadorAtual()):mainPlayer();
+  const current=effectiveRole(player);
+  const roleOptions=ROLES.map(role=>`<option value="${role}" ${role===calibTargetRole?"selected":""}>${role}</option>`).join("");
+  box.innerHTML=`<div class="calib-panel">
+    <div class="calib-summary">
+      <div class="calib-metric"><div class="l">Jogador</div><div class="v">${esc(player.nome||state.nome||"Jogador")}</div></div>
+      <div class="calib-metric"><div class="l">Atual</div><div class="v">${esc(rolePairText(player))}</div></div>
+      <div class="calib-metric"><div class="l">Estilo</div><div class="v">${esc(STYLE_LABEL(player.playstyle))}</div></div>
+    </div>
+    <div class="calib-target">
+      <div class="calib-field"><label>Alvo de função</label><select id="calibRole">${roleOptions}</select></div>
+      <div class="calib-field"><label>Leitura</label><select disabled><option>${player.isIGL?"IGL: alvo muda o papel de combate":"Role primária"}</option></select></div>
+      <button class="btn accent" id="calibSuggest">Sugerir ajuste</button>
+    </div>
+    <div class="calib-note">O calibrador testa mudanças pequenas em pesos de afinidade, mede o impacto global e mostra quem mudaria antes de aplicar. Stats do jogador nunca são alterados.</div>
+    <div id="calibResult">${renderCalibResult(calibLast)}</div>
+    <div class="calib-actions"><button class="btn" id="calibReset">Resetar pesos</button></div>
+  </div>`;
+  const roleSel=document.getElementById("calibRole");
+  roleSel.onchange=()=>{calibTargetRole=roleSel.value;calibLast=null;buildCalibrator();};
+  document.getElementById("calibSuggest").onclick=()=>{calibLast=findRoleCalibration(calibTargetRole);buildCalibrator();};
+  document.getElementById("calibReset").onclick=()=>{copyInto(E.ROLE_PERFIL,DEF.ROLE);NM=clone(NM_DEF);NM_COR=clone(NM_COR_DEF);calibLast=null;refresh("all");buildCalibrator();};
+  const apply=document.getElementById("calibApply");
+  if(apply)apply.onclick=()=>{if(calibLast&&calibLast.ok){applyCalibChanges(calibLast.changes);calibLast=null;refresh("all");buildCalibrator();toast("Sugestão aplicada aos pesos");}};
+  const discard=document.getElementById("calibDiscard");
+  if(discard)discard.onclick=()=>{calibLast=null;buildCalibrator();};
+}
 function officialTeam(t,ti){
   const coach=t.treinador;
   const js=teamEngines(t,ti).map(eng=>{if(coach&&coach.ovr)eng._coach={ovr:coach.ovr,carac:coach.carac};return eng;});
@@ -1573,13 +1764,13 @@ function calcularQuimicaNova(estilos, qtdEstrelas, coach){
 }
 function wireAtributos(onChange){
   STATS.forEach(([k])=>{const r=document.getElementById("r_"+k),n=document.getElementById("n_"+k);
-    const sync=v=>{v=Math.max(0,Math.min(100,+v||0));state[k]=v;r.value=v;n.value=v;onChange();};r.oninput=()=>sync(r.value);n.oninput=()=>sync(n.value);});
+    const sync=v=>{v=Math.max(0,Math.min(100,+v||0));state[k]=v;r.value=v;n.value=v;calibLast=null;onChange();};r.oninput=()=>sync(r.value);n.oninput=()=>sync(n.value);});
   const rr=document.getElementById("r_rating"),nr=document.getElementById("n_rating");
-  const syncR=v=>{v=Math.max(0.5,Math.min(2,+v||0.5));state.rating=+v.toFixed(2);rr.value=state.rating;nr.value=state.rating;onChange();};
+  const syncR=v=>{v=Math.max(0.5,Math.min(2,+v||0.5));state.rating=+v.toFixed(2);rr.value=state.rating;nr.value=state.rating;calibLast=null;onChange();};
   rr.oninput=()=>syncR(rr.value);nr.oninput=()=>syncR(nr.value);
-  document.getElementById("f_nome").oninput=e=>{state.nome=e.target.value;onChange();};
-  document.getElementById("c_igl").onchange=e=>{state.isIGL=e.target.checked;onChange();};
-  document.getElementById("s_coloc").onchange=e=>{state.colocacao=e.target.value;onChange();};
+  document.getElementById("f_nome").oninput=e=>{state.nome=e.target.value;calibLast=null;onChange();};
+  document.getElementById("c_igl").onchange=e=>{state.isIGL=e.target.checked;calibLast=null;onChange();};
+  document.getElementById("s_coloc").onchange=e=>{state.colocacao=e.target.value;calibLast=null;onChange();};
 }
 
 function nmInp(get,set,def,step){const inp=document.createElement("input");inp.type="number";inp.step=step;inp.value=get();
@@ -1602,7 +1793,7 @@ function buildNMStyles(){const box=document.getElementById("nmStyles");if(!box)r
   gc.appendChild(pg);gc.appendChild(hintWR);box.appendChild(gc);}
 /* ===== UI unificada: roles + playstyle + OVR + time ===== */
 function refresh(target){
-  if(!target||target==="all"){renderPlayerPanel();renderTeamPanel();renderMatchPanel();return;}
+  if(!target||target==="all"){renderPlayerPanel();renderTeamPanel();renderMatchPanel();if(tuningOpen)buildCalibrator();return;}
   if(target==="player"){renderPlayerPanel();return;}
   if(target==="team"){renderTeamPanel();return;}
   if(target==="match"){renderMatchPanel();return;}
@@ -1707,6 +1898,7 @@ function loadPlayer(poolIdx,ti){
   if(!Number.isFinite(poolIdx)||poolIdx<0)return;
   const p=POOLRAW[poolIdx];
   if(!p)return;
+  calibLast=null;
   Object.assign(state,{nome:p.nome,fp:p.fp,en:p.en,tr:p.tr,op:p.op,cl:p.cl,sn:p.sn,ut:p.ut,rating:p.rating,isIGL:p.isIGL,colocacao:p.colocacao});
   setCtx(p); loadedIdx=poolIdx; teamIdx=Number.isFinite(+ti)?+ti:p.ti;
   syncEditorControls();
@@ -1765,10 +1957,9 @@ function montarUI(){
           <div id="matchout"></div>
         </div>
         <div class="card tuning-card">
-          <div class="eng-head" style="margin-bottom:6px"><span class="title">Receitas & pesos</span><div class="toggle"><button class="btn" id="engToggle">${tuningOpen?"Ocultar":"Mostrar"}</button></div></div>
-          <div class="hint" style="line-height:1.5;margin-bottom:8px"><b>OVR</b> = curva(wR×rating + (1−wR)×statScore + ajustes). <b>statScore</b> = dot(receita, stats).</div>
-          <div id="stylebox" ${tuningOpen?"":"hidden"}><div class="engwrap" id="nmStyles"></div></div>
-          <div id="engbox" ${tuningOpen?"":"hidden"}></div>
+          <div class="eng-head" style="margin-bottom:6px"><span class="title">Calibrador Inteligente</span><div class="toggle"><button class="btn" id="engToggle">${tuningOpen?"Ocultar":"Mostrar"}</button></div></div>
+          <div class="calib-note">O calibrador nÃ£o altera stats. Ele testa pesos, mostra a sugestÃ£o e sÃ³ aplica se vocÃª confirmar.</div>
+          <div id="calibbox" ${tuningOpen?"":"hidden"}></div>
         </div>
       </div>
       <div class="tdetail card" id="teamdet"></div>
@@ -1788,7 +1979,7 @@ function montarUI(){
   document.getElementById("runBatchBtn").onclick=runBatchLab;
   document.getElementById("runMapBtn").onclick=runMapLab;
   document.getElementById("engToggle").onclick=()=>{tuningOpen=!tuningOpen;montarUI();};
-  if(tuningOpen){buildNMStyles();buildTuning();}
+  if(tuningOpen)buildCalibrator();
   renderMain();
 }
 
@@ -1798,6 +1989,7 @@ function montarUI(){
     const sel=document.getElementById("loadSel");
     POOLRAW.forEach((p,i)=>{const o=document.createElement("option");o.value=i;o.textContent=p.nome+" — "+p.time;sel.appendChild(o);});
     sel.onchange=()=>{if(sel.value==="")return;const p=POOLRAW[+sel.value];
+      calibLast=null;
       Object.assign(state,{nome:p.nome,fp:p.fp,en:p.en,tr:p.tr,op:p.op,cl:p.cl,sn:p.sn,ut:p.ut,rating:p.rating,isIGL:p.isIGL,colocacao:p.colocacao});
       setCtx(p); loadedIdx=+sel.value; teamIdx=p.ti; montarUI();};
     montarUI();
