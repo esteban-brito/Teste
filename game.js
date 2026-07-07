@@ -59,8 +59,8 @@
 const ROLE_PERFIL={
   AWPer:  {afin:{sn:.80,op:.12,fp:.05},        ovr:{sn:.45,fp:.25,op:.20,cl:.10},       wR:.66},
   Rifler: {afin:{fp:.42,op:.24,tr:.16,cl:.18}, ovr:{fp:.45,op:.25,tr:.15,cl:.15},       wR:.66},
-  Entry:  {afin:{en:.46,op:.42,fp:.12},        ovr:{en:.40,op:.30,fp:.20,tr:.10},       wR:.64},
-  Lurker: {afin:{cl:.58,op:.22,fp:.20},        ovr:{cl:.40,op:.24,fp:.26,ut:.10},       wR:.66},
+  Entry:  {afin:{en:.68,op:.22,fp:.10},        ovr:{en:.40,op:.30,fp:.20,tr:.10},       wR:.64},
+  Lurker: {afin:{cl:.50,op:.30,fp:.20},        ovr:{cl:.40,op:.24,fp:.26,ut:.10},       wR:.66},
   Support:{afin:{ut:.55,tr:.25,fp:.10,op:.10}, ovr:{ut:.45,tr:.22,fp:.15,op:.10,cl:.08},wR:.45,credito:3}};
 const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22, // ⚙ balanceamento do PRISMA (afinidade/sub) + ZÊNITE (curva de OVR)
   RAT_LO:.85,RAT_HI:1.50,RAT_CAP:1.25,       // mapa do rating HLTV -> 0..125 (sem cliffs)
@@ -97,10 +97,37 @@ const clamp=(x,lo,hi)=>Math.max(lo,Math.min(hi,x));
 const clipOVR=x=>clamp(Math.round(x),CFG_AVALIACAO.OVR_MIN,CFG_AVALIACAO.OVR_MAX);
 const dot=(w,p)=>{let s=0;for(const k in w)s+=w[k]*(p[k]||0);return s;}; // produto-escalar pesos·atributos
 const ROLES_COMBATE=["AWPer","Rifler","Entry","Lurker","Support"];
-// afinidade do jogador por cada função (núcleo do PRISMA): produto-escalar atributos·perfil.
+const ROLE_CONTRA={
+  AWPer:{en:.08,tr:.04,ut:.04},
+  Rifler:{sn:.18,ut:.04,cl:.08},
+  Entry:{sn:.08},
+  Lurker:{en:.15,tr:.04,sn:.06},
+  Support:{en:.12,sn:.10,fp:.08}
+};
+function roleAfinidade(role,p){
+  let score=dot(ROLE_PERFIL[role].afin,p)-dot(ROLE_CONTRA[role]||{},p);
+  if(role==="Entry"){
+    const en=p.en||0,op=p.op||0,fp=p.fp||0,apoio=Math.max(op,fp);
+    score+=.05*Math.min(en,op)+.03*Math.min(en,fp);
+    score-=.16*Math.max(0,en-apoio);
+  }
+  if(role==="Lurker"){
+    const cl=p.cl||0,op=p.op||0,fp=p.fp||0;
+    score+=.04*Math.min(cl,Math.max(op,fp));
+  }
+  if(role==="Support"){
+    score+=.05*Math.min(p.ut||0,p.tr||0);
+  }
+  if(role==="Rifler"){
+    score+=.03*Math.min(p.fp||0,p.op||0);
+  }
+  return score;
+}
+// afinidade do jogador por cada função (núcleo do PRISMA): atração por perfil,
+// repulsão por atributos incompatíveis e pequenas sinergias de identidade.
 // regra única: "support" que fragueia (fp alto) é LURKER de utilidade, não support role 1.
 // usada tanto na classificação individual quanto no passe de time (distribuirRoles) — fonte única.
-const afinidades=p=>{const sc={};ROLES_COMBATE.forEach(r=>sc[r]=dot(ROLE_PERFIL[r].afin,p));
+const afinidades=p=>{const sc={};ROLES_COMBATE.forEach(r=>sc[r]=roleAfinidade(r,p));
   if((p.fp||0)>=CFG_AVALIACAO.SUP_FRAG&&sc.Support>sc.Lurker)sc.Lurker=sc.Support+.01;return sc;};
 /* ┌─ PRISMA ─ classificação de função ────────────────────────────────┐
    AFINIDADE contínua (sem gates nem números mágicos): primário = maior
@@ -139,6 +166,26 @@ const NM_DEF={
   Suporte:{w:{ut:.45,tr:.30,ab:.25},wR:.40},
   Cerebral:{w:{ab:.35,ut:.35,cl:.30},wR:.52},
   Ancora:{w:{cl:.40,ut:.35,tr:.25},wR:.45}};
+const STYLE_CONTRA={
+  aggressive:{cl:.14,ut:.08,sn:.06},
+  spacetaker:{cl:.08,ut:.05,sn:.06},
+  trader:{ent:.10,ab:.08,sn:.06},
+  playmaker:{ut:.06,tr:.04,sn:.06},
+  infiltrator:{ent:.18,tr:.08,sn:.06},
+  baiter:{ent:.34,ab:.22,ut:.08,sn:.06},
+  clutcher:{ent:.14,ab:.08,tr:.06,sn:.06},
+  support:{fogo:.10,ent:.12,sn:.08},
+  cerebral:{ent:.16,fogo:.06,sn:.06},
+  anchor:{ent:.34,ab:.18,fogo:.10,sn:.06}
+};
+const STYLE_ROLE_FIT={
+  AWPer:{spacetaker:.08,clutcher:.07,playmaker:.04,infiltrator:.04,baiter:.02,anchor:.02,aggressive:.02},
+  Rifler:{spacetaker:.07,aggressive:.06,trader:.04,infiltrator:.03,playmaker:.02},
+  Entry:{aggressive:.22,spacetaker:.20,trader:.06,playmaker:.04,infiltrator:-.08,clutcher:-.10,cerebral:-.16,baiter:-.28,anchor:-.30,support:-.12},
+  Lurker:{infiltrator:.18,playmaker:.14,clutcher:.08,cerebral:.05,baiter:.03,spacetaker:-.08,aggressive:-.16,anchor:-.04},
+  Support:{support:.20,trader:.14,cerebral:.12,anchor:.06,aggressive:-.10,spacetaker:-.12,playmaker:-.04},
+  IGL:{cerebral:.12,support:.10,trader:.06,playmaker:.04}
+};
 const NM_COR={pisoMin:45,spreadMax:35};
 const STYLE_KEYS={aggressive:"Agressivo",spacetaker:"Spacetaker",trader:"Trader",playmaker:"Playmaker",infiltrator:"Infiltrador",baiter:"Baiter",clutcher:"Clutcher",support:"Suporte",cerebral:"Cerebral",anchor:"Ancora"};
 const PLAYSTYLES={
@@ -165,22 +212,28 @@ function jokerProfile(s7){
   const variance=s7.reduce((s,v)=>s+(v-mean)**2,0)/7;
   return {ok:below<=1&&min5>=NM_COR.pisoMin&&spread<=NM_COR.spreadMax,sorted,below,min5,spread,mean,score:clamp(1-variance/800,0,1)};
 }
-function styleMatch(s6,s7){
+function styleMatch(s6,s7,role="Rifler"){
   const jp=jokerProfile(s7);
   if(jp.ok)return {id:"joker",score:.88+.12*jp.score,second:.72,margin:.16+.12*jp.score,clarity:.75+.25*jp.score};
   const scores=[];
   for(const id of PLAYSTYLE_IDS){const rec=STYLE_RECIPE(id);if(!rec)continue;const w=rec.w;let d=0,nw=0,ns=0;
     for(const [k] of NM_AXES){const wi=w[k]||0,si=s6[k];d+=wi*si;nw+=wi*wi;ns+=si*si;}
-    scores.push({id,score:d/(Math.sqrt(nw*ns)+1e-9)});}
+    let score=d/(Math.sqrt(nw*ns)+1e-9);
+    const contra=STYLE_CONTRA[id]||{};let cd=0,cw=0;
+    for(const k in contra){cd+=contra[k]*(s6[k]||0);cw+=contra[k];}
+    score-=cw?cd/(100*cw)*.42:0;
+    score+=(STYLE_ROLE_FIT[role]?.[id]||0);
+    scores.push({id,score});}
   scores.sort((a,b)=>b.score-a.score);
   const best=scores[0]||{id:"playmaker",score:0},second=scores[1]?.score||0;
   return {...best,second,margin:best.score-second,clarity:clamp((best.score-second)*5,0,1)};
 }
 function nmOVR(p,role,forcedStyle=null){
-  const s6=nmStats6(p,role),s7=stats7(p),match=forcedStyle?{id:STYLE_ID(forcedStyle),score:1,second:.75,margin:.25,clarity:.9}:styleMatch(s6,s7);
+  const s6=nmStats6(p,role),s7=stats7(p),match=forcedStyle?{id:STYLE_ID(forcedStyle),score:1,second:.75,margin:.25,clarity:.9}:styleMatch(s6,s7,role);
   const style=match.id,rating=ratingScore(p.rating);let wR,statScore;
-  if(style==="joker"){wR=coringaWR();const jp=jokerProfile(s7),top5=jp.sorted.slice(0,5),meanTop5=top5.reduce((a,b)=>a+b,0)/5;statScore=.55*meanTop5+.35*jp.min5+.10*(s7.reduce((a,b)=>a+b,0)/7-meanTop5/5);}
-  else{const rec=STYLE_RECIPE(style);wR=rec.wR;statScore=dot(rec.w,s6);}
+  const roleRec=ROLE_PERFIL[role]||ROLE_PERFIL.Rifler,roleScore=dot(roleRec.ovr||{},p);
+  if(style==="joker"){wR=clamp(.65*(roleRec.wR??coringaWR())+.35*coringaWR(),.35,.72);const jp=jokerProfile(s7),top5=jp.sorted.slice(0,5),meanTop5=top5.reduce((a,b)=>a+b,0)/5;const styleScore=.55*meanTop5+.35*jp.min5+.10*(s7.reduce((a,b)=>a+b,0)/7-meanTop5/5);statScore=.58*roleScore+.42*styleScore;}
+  else{const rec=STYLE_RECIPE(style);wR=clamp(.65*(roleRec.wR??rec.wR)+.35*rec.wR,.35,.72);const styleScore=dot(rec.w,s6);statScore=.58*roleScore+.42*styleScore;}
   const clarityAdj=style==="joker"?1.2:(match.clarity-.45)*2.2,roleDutyAdj=clamp((statScore-55)/18,-2.5,1.5);
   const core=wR*rating+(1-wR)*statScore+clarityAdj+roleDutyAdj;
   return {style,ovr:curvaOVR(core),wR,statScore,core,s6,matchScore:match.score,matchMargin:match.margin};
@@ -212,6 +265,13 @@ const SUBARQ={
     {nome:"Pop-flasher",sig:{ut:.55,op:.25,en:.20},agr:.2, lado:[1,1], stats:["ut","op","en","tr"]}, // flashes p/ abrir
     {nome:"Refrag",     sig:{tr:.50,fp:.30,ut:.20},agr:.3, lado:[1,2], stats:["tr","fp","ut","cl"]}] // troca e fecha o round
 };
+const SUB_CONTRA={
+  AWPer:[{ut:.08,tr:.06},{en:.14,fp:.05}],
+  Rifler:[{ut:.10,tr:.06,sn:.08},{en:.10,sn:.08},{en:.08,sn:.08}],
+  Entry:[{cl:.14,ut:.10,tr:.08,sn:.08},{ut:.08,tr:.06,sn:.08}],
+  Lurker:[{en:.20,tr:.06,sn:.06},{tr:.06,ut:.04,sn:.06},{en:.38,op:.16,fp:.08,sn:.06}],
+  Support:[{fp:.08,sn:.08},{en:.08,sn:.08}]
+};
 // Coringa: jogador POLIVALENTE — piso alto em tudo E sem especialidade dominante (joga de tudo, sem estilo fixo)
 const ehCoringa=p=>{const v=[p.fp||0,p.en||0,p.tr||0,p.op||0,p.cl||0,p.ut||0],mn=Math.min(...v),mx=Math.max(...v);
   return mn>=CFG_AVALIACAO.CORINGA_PISO&&(mx-mn)<=CFG_AVALIACAO.CORINGA_SPREAD;};
@@ -219,7 +279,7 @@ const SUB_CORINGA={nome:"Coringa",eixo:0,agr:0,lado:[0,0],stats:["fp","op","cl",
 function subArquetipo(role,p){const subs=SUBARQ[role];if(!subs)return null;
   if(ehCoringa(p))return{...SUB_CORINGA}; // polivalente: sobrepõe o estilo da função
   let best=subs[0],bs=-1,second=-1;
-  subs.forEach(s=>{const sc=dot(s.sig,p);if(sc>bs){second=bs;bs=sc;best=s;}else if(sc>second)second=sc;});
+  subs.forEach((s,i)=>{const sc=dot(s.sig,p)-dot((SUB_CONTRA[role]||[])[i]||{},p);if(sc>bs){second=bs;bs=sc;best=s;}else if(sc>second)second=sc;});
   return{nome:best.nome,eixo:+(bs-Math.max(0,second)).toFixed(1),agr:best.agr,lado:best.lado,stats:best.stats};}
 // STAR PLAYERS — definidos por curadoria (não se calcula: NiKo é star com OVR 15 ou 22).
 const TIER_LENDA=["s1mple","ZywOo","device","dev1ce","NiKo","coldzera","donk","GeT_RiGhT","olofmeister"];

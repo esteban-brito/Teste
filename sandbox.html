@@ -943,8 +943,8 @@ async function carregarMotores(){
   const cut=linhas.findIndex(l=>l.includes("document.getElementById"));
   if(cut<0)throw new Error("não encontrei o início da camada de UI em game.js");
   const slice=linhas.slice(0,cut).join("\n");
-  E=new Function(slice+"\nreturn {avaliarJogador,afinidades,classificar,ovrUnificado,curvaOVR,dot,ratingScore,clipOVR,distribuirRoles,forcaTime,quimicaComposicao,CFG_AVALIACAO,ROLE_PERFIL,SUBARQ,CFG_QUIMICA,CFG_SIM,CFG_FA,MAPAS_POOL,MAPA_PERFIL,MAPA_LADO,srand,simularMapa,simularSerie,forcaDoDia,TEAMS};")();
-  ["avaliarJogador","afinidades","classificar","distribuirRoles","forcaTime","simularMapa","forcaDoDia","srand","TEAMS"].forEach(k=>{if(!E[k])throw new Error(`motor ausente: ${k}`);});
+  E=new Function(slice+"\nreturn {avaliarJogador,curvaOVR,dot,ratingScore,distribuirRoles,forcaTime,CFG_AVALIACAO,ROLE_PERFIL,CFG_QUIMICA,CFG_SIM,CFG_FA,MAPAS_POOL,MAPA_LADO,srand,simularMapa,simularSerie,forcaDoDia,TEAMS};")();
+  ["avaliarJogador","distribuirRoles","forcaTime","simularMapa","forcaDoDia","srand","TEAMS"].forEach(k=>{if(!E[k])throw new Error(`motor ausente: ${k}`);});
   DEF={CFG:clone(E.CFG_AVALIACAO),ROLE:clone(E.ROLE_PERFIL),QUI:clone(E.CFG_QUIMICA)};   // padrões p/ reset e comparação
   DEF.SIM=clone(E.CFG_SIM); DEF.FA=clone(E.CFG_FA);
   POOLRAW=[]; poolBySlot=new Map();
@@ -1112,8 +1112,8 @@ function buildTuning(){
 }
 
 /* ===================== MODELO UNIVERSAL DE PLAYSTYLES — bancada editável =====================
-   10 estilos UNIVERSAIS + Coringa (servem pra qualquer funcao). O OVR sai da RECEITA do estilo.
-   "Fogo" = a arma da função: AWP (sn) pro AWPer (o maior entre sn/fp), fp pro resto. */
+   10 estilos UNIVERSAIS + Coringa. O OVR mistura dever da função, receita do estilo e rating.
+   "Fogo" = a arma da função: AWP (sn) pro AWPer, fp pro resto. */
 const NM_AXES=[["fogo","Fogo"],["ent","Entrada"],["ab","Abertura"],["tr","Trade"],["cl","Clutch"],["ut","Utilitário"]];
 const NM_DEF={
   "Agressivo":    {w:{ent:.45,ab:.30,fogo:.15,tr:.10}, wR:.40},
@@ -1126,6 +1126,26 @@ const NM_DEF={
   "Suporte":      {w:{ut:.45,tr:.30,ab:.25},           wR:.40},
   "Cerebral":     {w:{ab:.35,ut:.35,cl:.30},           wR:.52},
   "Ancora":       {w:{cl:.40,ut:.35,tr:.25},           wR:.45}};
+const STYLE_CONTRA={
+  aggressive:{cl:.14,ut:.08,sn:.06},
+  spacetaker:{cl:.08,ut:.05,sn:.06},
+  trader:{ent:.10,ab:.08,sn:.06},
+  playmaker:{ut:.06,tr:.04,sn:.06},
+  infiltrator:{ent:.18,tr:.08,sn:.06},
+  baiter:{ent:.34,ab:.22,ut:.08,sn:.06},
+  clutcher:{ent:.14,ab:.08,tr:.06,sn:.06},
+  support:{fogo:.10,ent:.12,sn:.08},
+  cerebral:{ent:.16,fogo:.06,sn:.06},
+  anchor:{ent:.34,ab:.18,fogo:.10,sn:.06}
+};
+const STYLE_ROLE_FIT={
+  AWPer:{spacetaker:.08,clutcher:.07,playmaker:.04,infiltrator:.04,baiter:.02,anchor:.02,aggressive:.02},
+  Rifler:{spacetaker:.07,aggressive:.06,trader:.04,infiltrator:.03,playmaker:.02},
+  Entry:{aggressive:.22,spacetaker:.20,trader:.06,playmaker:.04,infiltrator:-.08,clutcher:-.10,cerebral:-.16,baiter:-.28,anchor:-.30,support:-.12},
+  Lurker:{infiltrator:.18,playmaker:.14,clutcher:.08,cerebral:.05,baiter:.03,spacetaker:-.08,aggressive:-.16,anchor:-.04},
+  Support:{support:.20,trader:.14,cerebral:.12,anchor:.06,aggressive:-.10,spacetaker:-.12,playmaker:-.04},
+  IGL:{cerebral:.12,support:.10,trader:.06,playmaker:.04}
+};
 const NM_COR_DEF={pisoMin:45,spreadMax:35}; // Coringa: 5 de 7 stats acima do piso, tolera 1 fraco
 let NM=clone(NM_DEF), NM_COR=clone(NM_COR_DEF);
 function coringaWR(){const ids=PLAYSTYLE_IDS;let s=0,n=0;ids.forEach(id=>{const r=STYLE_RECIPE(id);if(r){s+=r.wR;n++;}});return n?s/n:.45;}
@@ -1163,30 +1183,29 @@ function jokerProfile(s7){
   const score=Math.max(0,Math.min(1,1-variance/800));
   return {ok,sorted,below,min5,spread,mean,score};
 }
-function nmDetect(s6,s7){const jp=jokerProfile(s7);
-  if(jp.ok)return "joker";
-  let best="playmaker",bs=-1;
-  for(const id of PLAYSTYLE_IDS){const rec=STYLE_RECIPE(id);if(!rec)continue;const w=rec.w;let dot=0,nw=0,ns=0;
-    for(const [k] of NM_AXES){const wi=w[k]||0,si=s6[k];dot+=wi*si;nw+=wi*wi;ns+=si*si;}
-    const cos=dot/(Math.sqrt(nw*ns)+1e-9);if(cos>bs){bs=cos;best=id;}}
-  return best;}
-function styleMatch(s6,s7){
+function styleMatch(s6,s7,role="Rifler"){
   const jp=jokerProfile(s7);
   if(jp.ok)return {id:"joker",score:.88+.12*jp.score,second:.72,margin:.16+.12*jp.score,clarity:.75+.25*jp.score};
   const scores=[];
   for(const id of PLAYSTYLE_IDS){const rec=STYLE_RECIPE(id);if(!rec)continue;const w=rec.w;let dot=0,nw=0,ns=0;
     for(const [k] of NM_AXES){const wi=w[k]||0,si=s6[k];dot+=wi*si;nw+=wi*wi;ns+=si*si;}
-    scores.push({id,score:dot/(Math.sqrt(nw*ns)+1e-9)});}
+    let score=dot/(Math.sqrt(nw*ns)+1e-9);
+    const contra=STYLE_CONTRA[id]||{};let cd=0,cw=0;
+    for(const k in contra){cd+=contra[k]*(s6[k]||0);cw+=contra[k];}
+    score-=cw?cd/(100*cw)*.42:0;
+    score+=(STYLE_ROLE_FIT[role]?.[id]||0);
+    scores.push({id,score});}
   scores.sort((a,b)=>b.score-a.score);
   const best=scores[0]||{id:"playmaker",score:0}, second=scores[1]?.score||0;
   return {...best,second,margin:best.score-second,clarity:Math.max(0,Math.min(1,(best.score-second)*5))};
 }
 function nmOVR(p,role,forced){
-  const s6=nmStats6(p,role), s7=stats7(p), match=forced?{id:STYLE_ID(forced),score:1,second:.75,margin:.25,clarity:.9}:styleMatch(s6,s7);
+  const s6=nmStats6(p,role), s7=stats7(p), match=forced?{id:STYLE_ID(forced),score:1,second:.75,margin:.25,clarity:.9}:styleMatch(s6,s7,role);
   const style=match.id, rating=E.ratingScore(p.rating);
   let wR, statScore;
-  if(style==="joker"){wR=coringaWR();const jp=jokerProfile(s7);const top5=jp.sorted.slice(0,5);const meanTop5=top5.reduce((a,b)=>a+b,0)/5;statScore=.55*meanTop5+.35*jp.min5+.10*(s7.reduce((a,b)=>a+b,0)/7-meanTop5/5);}
-  else{const rec=STYLE_RECIPE(style);wR=rec.wR;statScore=E.dot(rec.w,s6);}
+  const roleRec=E.ROLE_PERFIL[role]||E.ROLE_PERFIL.Rifler, roleScore=E.dot(roleRec.ovr||{},p);
+  if(style==="joker"){wR=Math.max(.35,Math.min(.72,.65*(roleRec.wR??coringaWR())+.35*coringaWR()));const jp=jokerProfile(s7);const top5=jp.sorted.slice(0,5);const meanTop5=top5.reduce((a,b)=>a+b,0)/5;const styleScore=.55*meanTop5+.35*jp.min5+.10*(s7.reduce((a,b)=>a+b,0)/7-meanTop5/5);statScore=.58*roleScore+.42*styleScore;}
+  else{const rec=STYLE_RECIPE(style);wR=Math.max(.35,Math.min(.72,.65*(roleRec.wR??rec.wR)+.35*rec.wR));const styleScore=E.dot(rec.w,s6);statScore=.58*roleScore+.42*styleScore;}
   const clarityAdj=(style==="joker"?1.2:(match.clarity-.45)*2.2);
   const roleDutyAdj=Math.max(-2.5,Math.min(1.5,(statScore-55)/18));
   const core=wR*rating+(1-wR)*statScore+clarityAdj+roleDutyAdj;
