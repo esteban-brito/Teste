@@ -210,24 +210,24 @@ select:focus-visible,input[type=text]:focus-visible{border-color:var(--cyan);box
 .wchip input:focus-visible{border-color:var(--cyan)}
 .wchip input.dirty{border-color:var(--warn);color:var(--warn)}
 /* dashboard 3 colunas */
-.dash{display:grid;grid-template-columns:220px 1fr 340px;gap:0;align-items:stretch;flex:1;min-height:0;overflow:hidden}
+.dash{display:grid;grid-template-columns:25% 45% 30%;gap:0;align-items:stretch;flex:1;min-height:0;overflow:hidden}
 .dash>.card,.dash>div>.card{margin-bottom:0}
-@media(max-width:1100px){.dash{grid-template-columns:1fr 300px;min-height:auto}}
+@media(max-width:1100px){.dash{grid-template-columns:28% 44% 28%;min-height:auto}}
 @media(max-width:780px){
   .dash{grid-template-columns:1fr;min-height:auto;overflow:visible}
-  .mcol{border-right:0;overflow-y:visible}
+  .mcol{border-right:0}
+  .mcol>.card.mcol-grow{flex:none}
   .lcol{position:static;max-height:none;border-right:0}
   .tdetail{position:static;border-left:0}
   body{height:auto;overflow:visible}
   .wrap{height:auto;overflow:visible}
 }
 
-/* middle column — scrollable */
-.mcol{overflow-y:auto;scrollbar-width:thin;scrollbar-color:#26324a transparent;display:flex;flex-direction:column;gap:0;border-right:1px solid rgba(124,156,196,.16)}
-.mcol::-webkit-scrollbar{width:10px}.mcol::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#243049,#1a2336);border-radius:6px}
-.mcol::-webkit-scrollbar-thumb:hover{background:#36456180}.mcol::-webkit-scrollbar-track{background:transparent}
-.mcol>.card{margin:0;border-left:0;border-right:0}
-.mcol>.card:first-child{border-top:0;border-radius:0}
+/* middle column — fills height, no scroll */
+.mcol{display:flex;flex-direction:column;gap:0;border-right:1px solid rgba(124,156,196,.16)}
+.mcol>.card{margin:0;border-left:0;border-right:0;border-radius:0;flex-shrink:0}
+.mcol>.card.mcol-grow{flex:1;min-height:0;display:flex;flex-direction:column}
+.mcol-result{margin-top:auto;padding-top:8px}
 
 /* league sidebar */
 .lcol{position:sticky;top:0;max-height:100dvh;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#26324a transparent;display:flex;flex-direction:column;gap:3px;padding:4px 0;border-right:1px solid rgba(124,156,196,.16)}
@@ -1022,7 +1022,7 @@ function loadPlayer(poolIdx,ti){
 
 /* === compact player editor HTML === */
 function atributosCardHTML_Compact(){
-  return `<div class="card" style="padding:0">
+  return `<div class="card mcol-grow" style="padding:0">
     <div style="padding:10px 14px 8px;border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:10px">
       <div class="ovr-badge" style="--tc:var(${state.fp>=70?"--t22":"--t15"})" id="editorOvrBadge">—</div>
       <div style="flex:1;min-width:0">
@@ -1037,7 +1037,7 @@ function atributosCardHTML_Compact(){
       ${STATS.map(([k,l])=>`<div class="field-c"><label>${l}</label><input type="range" id="r_${k}" min="0" max="100" value="${state[k]}"><input type="number" id="n_${k}" class="num" min="0" max="100" value="${state[k]}"></div>`).join("")}
       <div class="field-c"><label style="width:24px">RT</label><input type="range" id="r_rating" min="0.50" max="2.00" step="0.01" value="${state.rating}"><input type="number" id="n_rating" class="num" min="0.50" max="2.00" step="0.01" value="${state.rating}"></div>
     </div>
-    <div id="editorResult" class="result-compact" style="padding:0 14px 10px"></div>
+    <div id="editorResult" class="result-compact mcol-result" style="padding:0 14px 10px"></div>
   </div>`;
 }
 
