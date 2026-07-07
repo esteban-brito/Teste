@@ -32,12 +32,7 @@
 }
 *{box-sizing:border-box; margin:0; padding:0}
 ::selection{background:rgba(255,90,31,.32);color:#fff}
-body{background:
-  radial-gradient(1200px 620px at 50% -10%,#1c2940,transparent 62%),
-  radial-gradient(900px 520px at 100% -5%,rgba(255,90,31,.13),transparent 58%),
-  radial-gradient(900px 560px at 0% 14%,rgba(57,211,255,.11),transparent 58%),
-  radial-gradient(140% 46% at 50% 108%,rgba(255,90,31,.16),transparent 70%),
-  var(--bg);
+body{background:var(--bg);
   color:var(--txt); font-family:var(--fb),'Segoe UI',sans-serif; height:100dvh; overflow:hidden; padding:0}
 html{scroll-behavior:smooth}
 .mono{font-family:var(--ff),ui-monospace,monospace; font-variant-numeric:tabular-nums}
@@ -224,7 +219,7 @@ select:focus-visible,input[type=text]:focus-visible{border-color:var(--cyan);box
 }
 
 /* middle column — fills height, no scroll */
-.mcol{display:flex;flex-direction:column;gap:0;border-right:1px solid rgba(124,156,196,.16)}
+.mcol{display:flex;flex-direction:column;gap:0;border-right:1px solid rgba(124,156,196,.16);overflow-y:auto;scrollbar-width:thin;scrollbar-color:#26324a transparent}
 .mcol>.card{margin:0;border-left:0;border-right:0;border-radius:0;flex-shrink:0}
 .mcol>.card.mcol-grow{flex:1;min-height:0;display:flex;flex-direction:column}
 .mcol-result{margin-top:auto;padding-top:8px}
@@ -660,7 +655,7 @@ function evaluateTeam(t,ti){
   const styles=players.map(p=>p.playstyle);
   const avgOvr=players.reduce((s,p)=>s+p.ovr,0)/players.length;
   const starCount=players.filter(p=>isStarPlayer(p,avgOvr)).length;
-  const styleChem=calcularQuimicaNova(styles,starCount,coach);
+  const styleChem=calcularQuimicaNova(styles,starCount,coach,coverage.AWPer||0);
   const alerts=[...styleChem.alertas];
   let mult=styleChem.quimica;
   const req=(role,label,pen)=>{
@@ -808,11 +803,16 @@ function renderMatchPanel(){
     <div class="scoreboards">${scoreTable(g.nomeA,g.statsA)}${scoreTable(g.nomeB,g.statsB)}</div>
   </div>`;
 }
-function calcularQuimicaNova(estilos, qtdEstrelas, coach){
+function calcularQuimicaNova(estilos, qtdEstrelas, coach, nAWP){
   let quimica=1.0, alertas=[];
   const qtd={}; estilos.map(STYLE_ID).forEach(e=>qtd[e]=(qtd[e]||0)+1);
   const temCoringa=qtd.joker>0; let sinergias=0;
   const nAggro=(qtd.aggressive||0)+(qtd.spacetaker||0);
+
+  // — Regra de AWP (contagem) —
+  if(nAWP===0){const p=.10;quimica-=p;alertas.push(`Sem AWP −${Math.round(p*100)}%`);}
+  else if(nAWP>=3){const p=.25;quimica-=p;alertas.push(`Circo de Snipers −${Math.round(p*100)}%`);}
+  else if(nAWP>=2){const p=.05;quimica-=p;alertas.push(`Double AWP −${Math.round(p*100)}%`);}
 
   // — Sinergias (escalam com quantidade, máx +8%) —
   if(nAggro>0&&qtd.support){const b=Math.min(.08,.03*nAggro);quimica+=b;sinergias++;alertas.push(`Ponta de Lanca (+${Math.round(b*100)}%)`);}
@@ -847,7 +847,7 @@ function calcularQuimicaNova(estilos, qtdEstrelas, coach){
     if(c==="Gestor"&&guerraEstrelas){const m=0.10*f;playstylePen=Math.max(0,playstylePen-m);alertas.push(`Gestor domou os Egos (+${Math.round(m*100)}%)`);}
     if(c==="Gestor"&&satPlaymakers){const m=0.04*f;playstylePen=Math.max(0,playstylePen-m);alertas.push(`Hierarquia definida (+${Math.round(m*100)}%)`);}
     if(c==="Motivador"&&covardia){const m=0.06*f;playstylePen=Math.max(0,playstylePen-m);alertas.push(`Grito do Motivador (+${Math.round(m*100)}%)`);}
-    if(c==="Motivador"&&avgPace<0){const m=0.03*f;quimica+=m;alertas.push(`Motivador acelerou (+${Math.round(m*100)}%)`);}
+    else if(c==="Motivador"&&avgPace<0){const m=0.03*f;quimica+=m;alertas.push(`Motivador acelerou (+${Math.round(m*100)}%)`);}
     if(c==="Desenvolvedor"&&temCoringa){const b=0.05*f;quimica+=b;alertas.push(`Coringa lapidado (+${Math.round(b*100)}%)`);}
     if(c==="Desenvolvedor"&&(qtd.baiter||0)>=2){const b=0.04*f;quimica+=b;alertas.push(`Baiters evoluidos (+${Math.round(b*100)}%)`);}
   }
