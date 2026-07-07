@@ -127,18 +127,68 @@ const ESTEIRA={AWPer:"Artilharia",Rifler:"Assalto",Entry:"Vanguarda",Lurker:"Anc
 // vale OVR. Esse bônus é exclusivo do IGL — fragger nunca depende da colocação do time.
 const ratingScore=r=>clamp((r-CFG_AVALIACAO.RAT_LO)/(CFG_AVALIACAO.RAT_HI-CFG_AVALIACAO.RAT_LO),0,CFG_AVALIACAO.RAT_CAP)*100;
 const curvaOVR=core=>{const C=CFG_AVALIACAO;return clipOVR(C.FLOOR+C.SPAN/(1+Math.exp(-C.K*(core-C.MID))));};
-function ovrUnificado(role,p,sec){const C=CFG_AVALIACAO;
-  // bônus "Coringa" (polivalência): quem não tem ponto fraco (piso alto em todos os atributos) ganha
-  // crédito de versatilidade. Especialista (tem um stat baixo) recebe 0. Não muda a função, só o OVR.
-  // o bônus DESVANECE conforme o core sobe → resgata role player subvalorizado, não empurra quem já é bem avaliado.
-  const versRaw=Math.min(C.VERS_CAP,Math.max(0,Math.min(p.fp||0,p.en||0,p.tr||0,p.op||0,p.cl||0,p.ut||0)-C.VERS_REF)*C.VERS_W);
-  const vers=core=>versRaw*clamp((C.VERS_FADE-core)/C.VERS_SPAN,0,1);
-  if(role==="IGL"){const prof=ROLE_PERFIL[sec],wR=prof.wR*C.IGL_RAT_K;
-    const core0=wR*ratingScore(p.rating)+(1-wR)*dot(prof.ovr,p)+C.IGL_CREDITO;
-    return Math.min(C.IGL_TETO,clipOVR(curvaOVR(core0+vers(core0))+(C.IGL_TITULO[p.colocacao]||0)));} // + bônus de título, teto IGL
-  const prof=ROLE_PERFIL[role];
-  const core0=prof.wR*ratingScore(p.rating)+(1-prof.wR)*dot(prof.ovr,p)+(prof.credito||0);
-  return curvaOVR(core0+vers(core0));}
+const NM_AXES=[["fogo","Fogo"],["ent","Entrada"],["ab","Abertura"],["tr","Trade"],["cl","Clutch"],["ut","Utilitario"]];
+const NM_DEF={
+  Agressivo:{w:{ent:.45,ab:.30,fogo:.15,tr:.10},wR:.40},
+  Spacetaker:{w:{ab:.35,fogo:.35,ent:.30},wR:.52},
+  Trader:{w:{tr:.45,fogo:.30,ut:.25},wR:.48},
+  Playmaker:{w:{fogo:.50,ab:.30,cl:.10,tr:.10},wR:.60},
+  Infiltrador:{w:{cl:.40,ab:.30,fogo:.30},wR:.52},
+  Baiter:{w:{tr:.40,cl:.30,fogo:.30},wR:.32},
+  Clutcher:{w:{cl:.55,fogo:.45},wR:.52},
+  Suporte:{w:{ut:.45,tr:.30,ab:.25},wR:.40},
+  Cerebral:{w:{ab:.35,ut:.35,cl:.30},wR:.52},
+  Ancora:{w:{cl:.40,ut:.35,tr:.25},wR:.45}};
+const NM_COR={pisoMin:45,spreadMax:35};
+const STYLE_KEYS={aggressive:"Agressivo",spacetaker:"Spacetaker",trader:"Trader",playmaker:"Playmaker",infiltrator:"Infiltrador",baiter:"Baiter",clutcher:"Clutcher",support:"Suporte",cerebral:"Cerebral",anchor:"Ancora"};
+const PLAYSTYLES={
+  aggressive:{label:"Agressivo",traits:{pace:1,space:.7,trade:.2,structure:-.1,ct:-.2,t:.8}},
+  spacetaker:{label:"Spacetaker",traits:{pace:.8,space:1,trade:0,structure:-.2,ct:-.2,t:1}},
+  trader:{label:"Trader",traits:{pace:.2,space:.1,trade:1,structure:.4,ct:.2,t:.5}},
+  playmaker:{label:"Playmaker",traits:{pace:.4,space:.8,trade:.1,structure:-.1,ct:.1,t:.6}},
+  infiltrator:{label:"Infiltrador",traits:{pace:-.2,space:.8,trade:-.2,structure:.1,ct:.3,t:.3}},
+  baiter:{label:"Baiter",traits:{pace:-.5,space:-.4,trade:.4,structure:-.2,ct:.2,t:-.3}},
+  clutcher:{label:"Clutcher",traits:{pace:-.1,space:.1,trade:0,structure:.2,ct:.5,t:.1}},
+  support:{label:"Suporte",traits:{pace:.1,space:.2,trade:.6,structure:1,ct:.5,t:.5}},
+  cerebral:{label:"Cerebral",traits:{pace:-.1,space:.4,trade:.2,structure:.9,ct:.4,t:.3}},
+  anchor:{label:"Ancora",traits:{pace:-.6,space:-.2,trade:.2,structure:.8,ct:1,t:-.3}}};
+const PLAYSTYLE_IDS=Object.keys(PLAYSTYLES);
+const STYLE_LABEL=id=>id==="joker"?"Coringa":(PLAYSTYLES[id]?.label||id);
+const STYLE_ID=x=>x==="Coringa"||x==="joker"?"joker":(PLAYSTYLE_IDS.find(id=>id===x||STYLE_KEYS[id]===x||PLAYSTYLES[id].label===x)||x);
+const STYLE_RECIPE=id=>NM_DEF[STYLE_KEYS[id]];
+const coringaWR=()=>PLAYSTYLE_IDS.reduce((s,id)=>s+(STYLE_RECIPE(id)?.wR||0),0)/PLAYSTYLE_IDS.length;
+function nmStats6(p,role){const fogo=role==="AWPer"?(p.sn||0):(p.fp||0);return {fogo,ent:p.en||0,ab:p.op||0,tr:p.tr||0,cl:p.cl||0,ut:p.ut||0};}
+function stats7(p){return [p.fp||0,p.en||0,p.tr||0,p.op||0,p.cl||0,p.sn||0,p.ut||0];}
+function jokerProfile(s7){
+  const sorted=[...s7].sort((a,b)=>b-a),below=s7.filter(v=>v<NM_COR.pisoMin).length;
+  const min5=sorted[4]||0,spread=(sorted[0]||0)-(sorted[4]||0),mean=s7.reduce((a,b)=>a+b,0)/7;
+  const variance=s7.reduce((s,v)=>s+(v-mean)**2,0)/7;
+  return {ok:below<=1&&min5>=NM_COR.pisoMin&&spread<=NM_COR.spreadMax,sorted,below,min5,spread,mean,score:clamp(1-variance/800,0,1)};
+}
+function styleMatch(s6,s7){
+  const jp=jokerProfile(s7);
+  if(jp.ok)return {id:"joker",score:.88+.12*jp.score,second:.72,margin:.16+.12*jp.score,clarity:.75+.25*jp.score};
+  const scores=[];
+  for(const id of PLAYSTYLE_IDS){const rec=STYLE_RECIPE(id);if(!rec)continue;const w=rec.w;let d=0,nw=0,ns=0;
+    for(const [k] of NM_AXES){const wi=w[k]||0,si=s6[k];d+=wi*si;nw+=wi*wi;ns+=si*si;}
+    scores.push({id,score:d/(Math.sqrt(nw*ns)+1e-9)});}
+  scores.sort((a,b)=>b.score-a.score);
+  const best=scores[0]||{id:"playmaker",score:0},second=scores[1]?.score||0;
+  return {...best,second,margin:best.score-second,clarity:clamp((best.score-second)*5,0,1)};
+}
+function nmOVR(p,role,forcedStyle=null){
+  const s6=nmStats6(p,role),s7=stats7(p),match=forcedStyle?{id:STYLE_ID(forcedStyle),score:1,second:.75,margin:.25,clarity:.9}:styleMatch(s6,s7);
+  const style=match.id,rating=ratingScore(p.rating);let wR,statScore;
+  if(style==="joker"){wR=coringaWR();const jp=jokerProfile(s7),top5=jp.sorted.slice(0,5),meanTop5=top5.reduce((a,b)=>a+b,0)/5;statScore=.55*meanTop5+.35*jp.min5+.10*(s7.reduce((a,b)=>a+b,0)/7-meanTop5/5);}
+  else{const rec=STYLE_RECIPE(style);wR=rec.wR;statScore=dot(rec.w,s6);}
+  const clarityAdj=style==="joker"?1.2:(match.clarity-.45)*2.2,roleDutyAdj=clamp((statScore-55)/18,-2.5,1.5);
+  const core=wR*rating+(1-wR)*statScore+clarityAdj+roleDutyAdj;
+  return {style,ovr:curvaOVR(core),wR,statScore,core,s6,matchScore:match.score,matchMargin:match.margin};
+}
+const IGL_CREDITO_SHARE=.55;
+function ovrUnificado(role,p,sec){const C=CFG_AVALIACAO,combatRole=role==="IGL"?(sec||"Rifler"):role,style=nmOVR(p,combatRole);
+  if(role==="IGL")return Math.min(C.IGL_TETO,Math.max(1,curvaOVR(style.core+C.IGL_CREDITO*IGL_CREDITO_SHARE)+(C.IGL_TITULO[p.colocacao]||0)));
+  return Math.min(C.OVR_MAX,Math.max(C.OVR_MIN,style.ovr));}
 /* ┌─ PRISMA ─ sub-arquétipos (o estilo dentro da função) ──────────────┐ */
 // ——— Sub-arquétipos: arquétipos FIÉIS do CS, detectados por ASSINATURA de atributos (= categorias HLTV) ———
 // cada sub: sig (assinatura p/ detecção) · agr (agressão no round, −1..+1) · lado [CT,T] · stats (4 do verso).
@@ -175,11 +225,18 @@ function subArquetipo(role,p){const subs=SUBARQ[role];if(!subs)return null;
 const TIER_LENDA=["s1mple","ZywOo","device","dev1ce","NiKo","coldzera","donk","GeT_RiGhT","olofmeister"];
 const TIER_STAR=["kennyS","m0NESY","KSCERATO","blameF","shox","XANTARES","JW","ropz","rain"];
 // ORQUESTRADOR PRISMA→ZÊNITE: classifica (função+sub) e avalia (OVR) um jogador de uma vez.
+function aplicarAvaliacaoContextual(p){
+  const fallback=(!p.primario||!p.secundario)?classificar(p):null;
+  const role=p.primario||fallback[0],sec=p.secundario||fallback[1];
+  const combatRole=role==="IGL"?(sec||"Rifler"):role,style=nmOVR(p,combatRole);
+  let ovr=Math.min(role==="IGL"?CFG_AVALIACAO.IGL_TETO:CFG_AVALIACAO.OVR_MAX,Math.max(CFG_AVALIACAO.OVR_MIN,style.ovr));
+  if(role==="IGL")ovr=Math.min(CFG_AVALIACAO.IGL_TETO,Math.max(1,curvaOVR(style.core+CFG_AVALIACAO.IGL_CREDITO*IGL_CREDITO_SHARE)+(CFG_AVALIACAO.IGL_TITULO[p.colocacao]||0)));
+  const sub=subArquetipo(combatRole,p);
+  return Object.assign(p,{ovr,combatRole,role1:role==="IGL"?"IGL":role,role2:role==="IGL"?null:sec,playstyle:style.style,style,sub,esteira:ESTEIRA[role]});
+}
 function avaliarJogador(p){const classe=classificar(p);const role=classe[0];
-  const ovr=ovrUnificado(role,p,classe[1]);
   const _nk=p.nick||p.nome;const estrela=TIER_LENDA.includes(_nk)||TIER_STAR.includes(_nk);
-  const _roleSub=role==="IGL"?classe[1]:role;const sub=subArquetipo(_roleSub,p);
-  return{primario:role,secundario:classe[1],secForte:classe.secForte!==false,classe:classe.join("-"),esteira:ESTEIRA[role],ovr,estrela,sub};}
+  return aplicarAvaliacaoContextual({...p,primario:role,secundario:classe[1],secForte:classe.secForte!==false,classe:classe.join("-"),estrela});}
 // PRISMA · passe de TIME: distribui as funções olhando o elenco, não o jogador isolado.
 //  • cap 2 no role 1: no máx 2 jogadores com a mesma função primária; o excedente desce pra 2ª melhor afinidade.
 //  • AWP: todo time tem AWPer — se ninguém é, o de maior sn assume (role 1; role 2 se for o IGL).
@@ -204,6 +261,7 @@ function distribuirRoles(engs){
     const notaAWP=j=>(j.sn??0)*1000+(j.op??0)+(j.fp??0)*.5; // desempate: sn manda; empate (ex.: todos 0) → melhor abertura/fogo pega a AWP
     const c=engs.reduce((b,j)=>(notaAWP(j)>notaAWP(b)?j:b),engs[0]);
     if(c.primario==="IGL")c.secundario="AWPer";else{c.secundario=c.primario;c.primario="AWPer";}}
+  engs.forEach(aplicarAvaliacaoContextual);
   return engs;}
 /* ╔═══════════════════════════════════════════════════════════════════╗
    ║  SINAPSE — química de elenco e força efetiva                        ║
@@ -215,6 +273,39 @@ function ovrTreinador(somaOVR,colocacao){const C=CFG_QUIMICA;
   const tip=C.DERIVA.SOMA_ESPERADA[colocacao]??70;                 // soma de OVR típica p/ essa conquista
   const prestigio=C.TREINADOR_STR*Math.max(0,somaOVR-tip);         // liderar elenco acima do típico agrega (não pune time fraco)
   return clamp(Math.round(base+prestigio),C.TREINADOR_MIN,C.TREINADOR_MAX);}
+function quimicaPlaystyles(jogadores,caracTreinador=null){
+  const qtd={};jogadores.map(j=>STYLE_ID(j.playstyle)).forEach(e=>qtd[e]=(qtd[e]||0)+1);
+  const temCoringa=qtd.joker>0,alertas=[];let quimica=1,sinergias=0;
+  const nAggro=(qtd.aggressive||0)+(qtd.spacetaker||0);
+  if(nAggro>0&&qtd.support){const b=Math.min(.08,.03*nAggro);quimica+=b;sinergias++;alertas.push(`Ponta de Lanca +${Math.round(b*100)}%`);}
+  if(qtd.aggressive&&qtd.trader){const b=Math.min(.06,.03*Math.min(2,qtd.aggressive));quimica+=b;sinergias++;alertas.push(`Dupla Dinamica +${Math.round(b*100)}%`);}
+  if(qtd.spacetaker&&qtd.trader){const b=.04;quimica+=b;sinergias++;alertas.push(`Entry + Trade +${Math.round(b*100)}%`);}
+  if(qtd.playmaker&&qtd.baiter){const b=.03;quimica+=b;sinergias++;alertas.push(`Espaco + Lucro +${Math.round(b*100)}%`);}
+  if(qtd.playmaker&&qtd.support&&!nAggro){const b=.04;quimica+=b;sinergias++;alertas.push(`Estrela Apoiado +${Math.round(b*100)}%`);}
+  if(qtd.cerebral&&qtd.support){const b=.03;quimica+=b;sinergias++;alertas.push(`Utility Combo +${Math.round(b*100)}%`);}
+  if(qtd.infiltrator&&qtd.aggressive){const b=.03;quimica+=b;sinergias++;alertas.push(`Split Setup +${Math.round(b*100)}%`);}
+  if(qtd.infiltrator&&qtd.cerebral){const b=.05;quimica+=b;sinergias++;alertas.push(`Rede de Informacao +${Math.round(b*100)}%`);}
+  if(qtd.anchor&&qtd.clutcher){const b=.05;quimica+=b;sinergias++;alertas.push(`Retake Perfeito +${Math.round(b*100)}%`);}
+  const avgPace=jogadores.reduce((s,j)=>{const id=STYLE_ID(j.playstyle);return s+(PLAYSTYLES[id]?.traits?.pace||0);},0)/Math.max(1,jogadores.length);
+  const satPlaymakers=(qtd.playmaker||0)+(qtd.baiter||0)>=3,invasaoEspaco=(qtd.infiltrator||0)>=2;
+  const guerraEstrelas=jogadores.filter(j=>j.estrela).length>=3,covardia=avgPace<-.15;
+  let pen=0;
+  if(satPlaymakers){pen+=.15;alertas.push("Saturacao de Playmakers -15%");}
+  if(covardia){pen+=.10;alertas.push("Covardia Tatica -10%");}
+  if(invasaoEspaco){pen+=.10;alertas.push("Invasao de Espaco -10%");}
+  if(guerraEstrelas){pen+=.15;alertas.push("Guerra de Estrelas -15%");}
+  if(caracTreinador){
+    if(caracTreinador==="Estrategista"&&sinergias>0){const b=Math.min(.08,.04*sinergias);quimica+=b;alertas.push(`Prancheta +${Math.round(b*100)}%`);}
+    if(caracTreinador==="Estrategista"&&invasaoEspaco){pen=Math.max(0,pen-.04);alertas.push("Plano anti-lurk +4%");}
+    if(caracTreinador==="Gestor"&&guerraEstrelas){pen=Math.max(0,pen-.10);alertas.push("Gestor domou os Egos +10%");}
+    if(caracTreinador==="Gestor"&&satPlaymakers){pen=Math.max(0,pen-.04);alertas.push("Hierarquia definida +4%");}
+    if(caracTreinador==="Motivador"&&covardia){pen=Math.max(0,pen-.06);alertas.push("Grito do Motivador +6%");}
+    if(caracTreinador==="Desenvolvedor"&&temCoringa){quimica+=.05;alertas.push("Coringa lapidado +5%");}
+  }
+  if(temCoringa&&pen>0){pen*=.5;alertas.push("Coringa mitigou conflitos");}
+  const raw=clamp(quimica-pen,.5,1.08);
+  return {mult:clamp(1+(raw-1)*.55,.90,1.05),alertas};
+}
 function quimicaComposicao(jogadores,caracTreinador=null){const C=CFG_QUIMICA;
   const car=caracTreinador?(C.CARAC[caracTreinador]??{}):{};const alertas=[];
   // IGLs acumulam DUAS funções (IGL + sua role 2). a cobertura considera a role 2 de TODOS os IGLs;
@@ -272,6 +363,9 @@ function quimicaComposicao(jogadores,caracTreinador=null){const C=CFG_QUIMICA;
   if(extras>0){const pe=(car.estrelaExtraPen??C.PEN.estrelaExtra)*corte;mult*=Math.pow(1-pe,extras);
     alertas.push(`Estrelas (${nEstrelasEgo}) −${Math.round(pe*extras*100)}%`);}else alertas.push(`Estrelas (${nEstrelasEgo})`);
   // SEM bônus aditivo: um time perfeito já fica em 100% por não ter penalidade nenhuma.
+  const ps=quimicaPlaystyles(jogadores,caracTreinador);
+  mult*=ps.mult;
+  ps.alertas.forEach(a=>alertas.push(a));
   const temPilares=melhorIgl&&melhorIgl.ovr>=C.IGL_FRACO_OVR&&temPrim("AWPer")&&(temPrim("Lurker")||temPrim("Support"))&&(temPrim("Entry")||temPrim("Rifler"));
   alertas.push(temPilares&&nEstrelasEgo<=limiteEstrelas&&satTotal<=C.SAT_LEVE?"Estrutura":"Estrutura falta");
   if(car.cruPorJogador&&crus>0)alertas.push(`Desenvolvimento (${crus} cru${crus>1?"s":""})`); // selo: a mitigação já entrou no corte

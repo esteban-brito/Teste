@@ -128,7 +128,7 @@ de impacto mostra o que mudou. Nada é salvo nem aplicado ao jogo — é isolado
 **Coringa** (joker): 5 de 7 stats acima do piso (`pisoMin`). Tolerância 1
 stat fraco. Spread máximo controlável.
 
-### Química (SINAPSE no sandbox)
+### Química (SINAPSE)
 
 A química começa em 100% e é afetada por:
 

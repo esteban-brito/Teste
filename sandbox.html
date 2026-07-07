@@ -4,7 +4,7 @@
    Carrega os MOTORES do próprio game.js ao vivo (fatia antes do DOM) e recalcula
    OVR/função em tempo real. Também deixa editar os PESOS/FÓRMULAS dos motores
    (afinidade, OVR por função, curva, IGL) e ver o efeito no jogador
-   e no elenco inteiro. TUDO isolado: nada aqui toca o game.js nem o jogo.
+   e no elenco inteiro. Os ajustes feitos aqui continuam isolados: nada é salvo no game.js.
 -->
 <html lang="pt-BR">
 <head>
@@ -920,7 +920,7 @@ header{
 </div>
 <footer>
   Cálculo idêntico ao do jogo (motores lidos do game.js ao vivo). Ao carregar um jogador de um time, o papel mostrado é o
-  <b>real do time</b> (com o teto de 1 AWPer e o cap-2). <b>Isolado:</b> nada aqui é salvo nem aplicado ao jogo — é uma bancada.
+  <b>real do time</b> (com o teto de 1 AWPer e o cap-2). <b>Isolado:</b> mudanças feitas aqui não são salvas — é uma bancada.
 </footer>
 
 <script>
@@ -1111,7 +1111,7 @@ function buildTuning(){
   box.appendChild(advBtn); box.appendChild(adv);
 }
 
-/* ===================== NOVO MODELO — protótipo (só laboratório, não toca no jogo) =====================
+/* ===================== MODELO UNIVERSAL DE PLAYSTYLES — bancada editável =====================
    10 estilos UNIVERSAIS + Coringa (servem pra qualquer funcao). O OVR sai da RECEITA do estilo.
    "Fogo" = a arma da função: AWP (sn) pro AWPer (o maior entre sn/fp), fp pro resto. */
 const NM_AXES=[["fogo","Fogo"],["ent","Entrada"],["ab","Abertura"],["tr","Trade"],["cl","Clutch"],["ut","Utilitário"]];
