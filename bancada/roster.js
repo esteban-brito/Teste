@@ -1,41 +1,79 @@
-/* bancada/roster.js — regenera os dados embutidos na Base de Elencos (elencos.html)
-   a partir do estado atual dos motores (game.js). Fonte única: os motores.
-   Uso:  node bancada/roster.js        (reescreve o const DATA=[...] no elencos.html)
-         require("./roster").build()   (só devolve o array, sem escrever)
-   Chamado automaticamente pelo tools/add-team.js. Roda em ~1s. */
-const fs=require("fs"),path=require("path");
+/* bancada/roster.js - regenera os dados embutidos em elencos.html.
+   Fonte unica: motores carregados de game.js. */
+const fs=require("fs");
+const path=require("path");
 const {X}=require("./motor");
-const g=(o,...k)=>{for(const kk of k)if(o&&o[kk]!==undefined)return o[kk];};
+const {ROOT,mean}=require("./common");
 
-// extrai o snapshot que a página consome (mesma forma/ordem que a UI espera)
-function build(){
-  const out=X.TEAMS.map(t=>{
-    const players=t.jogadores.map(j=>{const e=j._eng||{};
-      return {n:g(e,"nome","nick"),o:e.ovr,r1:e.primario,r2:e.secundario,sf:e.secForte!==false,
-        sub:e.sub&&e.sub.nome,st:!!e.estrela,igl:!!g(e,"isIGL"),pa:g(e,"pais"),rt:g(e,"rating"),
-        s:{fp:e.fp,op:e.op,cl:e.cl,ut:e.ut,en:e.en,tr:e.tr,sn:e.sn}};
-    }).sort((a,b)=>b.o-a.o||b.rt-a.rt);                          // jogadores por OVR desc (empate: rating)
-    const c=t.treinador?{n:g(t.treinador,"nick"),o:t.treinador.ovr,ca:t.treinador.carac,pa:g(t.treinador,"pais")}:null;
-    return {n:t.nome,cor:t.cor,camp:t.camp,coloc:t.coloc,p:players,c};
-  });
-  // times por OVR médio desc (do mais forte ao mais fraco)
-  const avg=t=>t.p.reduce((s,p)=>s+p.o,0)/t.p.length;
-  out.sort((a,b)=>avg(b)-avg(a));
-  return out;
+const ROSTER_PATH=path.join(ROOT,"elencos.html");
+const DATA_RE=/const DATA=\[.*?\];\n/s;
+
+function firstDefined(object,...keys){
+  for(const key of keys){
+    if(object&&object[key]!==undefined)return object[key];
+  }
+  return undefined;
 }
 
-// reescreve o const DATA=[...] dentro do elencos.html
+function playerSnapshot(player){
+  const engine=player._eng||{};
+  return {
+    n:firstDefined(engine,"nome","nick"),
+    o:engine.ovr,
+    r1:engine.primario,
+    r2:engine.secundario,
+    sf:engine.secForte!==false,
+    sub:engine.sub&&engine.sub.nome,
+    st:!!engine.estrela,
+    igl:!!firstDefined(engine,"isIGL"),
+    pa:firstDefined(engine,"pais"),
+    rt:firstDefined(engine,"rating"),
+    s:{fp:engine.fp,op:engine.op,cl:engine.cl,ut:engine.ut,en:engine.en,tr:engine.tr,sn:engine.sn}
+  };
+}
+
+function coachSnapshot(coach){
+  if(!coach)return null;
+  return {
+    n:firstDefined(coach,"nick"),
+    o:coach.ovr,
+    ca:coach.carac,
+    pa:firstDefined(coach,"pais")
+  };
+}
+
+function teamSnapshot(team){
+  const players=team.jogadores
+    .map(playerSnapshot)
+    .sort((a,b)=>b.o-a.o||b.rt-a.rt);
+  return {
+    n:team.nome,
+    cor:team.cor,
+    camp:team.camp,
+    coloc:team.coloc,
+    p:players,
+    c:coachSnapshot(team.treinador)
+  };
+}
+
+function build(){
+  return X.TEAMS
+    .map(teamSnapshot)
+    .sort((a,b)=>mean(b.p.map(player=>player.o))-mean(a.p.map(player=>player.o)));
+}
+
 function inject(){
-  const p=path.join(__dirname,"..","elencos.html");
-  let html=fs.readFileSync(p,"utf8");
-  if(!/const DATA=\[.*?\];\n/s.test(html))throw new Error("elencos.html: marcador `const DATA=[...]` não encontrado");
-  html=html.replace(/const DATA=\[.*?\];\n/s,"const DATA="+JSON.stringify(build())+";\n");
-  fs.writeFileSync(p,html);
-  return build().length;
+  const data=build();
+  let html=fs.readFileSync(ROSTER_PATH,"utf8");
+  if(!DATA_RE.test(html))throw new Error("elencos.html: marcador `const DATA=[...]` não encontrado");
+  html=html.replace(DATA_RE,"const DATA="+JSON.stringify(data)+";\n");
+  fs.writeFileSync(ROSTER_PATH,html);
+  return data.length;
 }
 
 module.exports={build,inject};
+
 if(require.main===module){
-  const n=inject();
-  console.log(`✓ elencos.html regenerado a partir dos motores · ${n} times`);
+  const count=inject();
+  console.log(`✓ elencos.html regenerado a partir dos motores · ${count} times`);
 }

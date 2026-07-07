@@ -1,27 +1,89 @@
-/* bancada/rating.js — valida o rating SIMULADO contra o rating REAL (HLTV) de cada jogador.
-   Agrupa por role e mede correlação global + erro médio. Sai 1 se degradar além do piso. */
+/* bancada/rating.js - valida rating simulado contra rating real (HLTV).
+   Mede correlacao global e erro medio; sai 1 se degradar alem do piso. */
 const {X,T}=require("./motor");
+const {mean,pickOpponent,signed,okMark}=require("./common");
+
+const N=+(process.env.N||400);
+const MAPS=9;
+const MIN_CORRELATION=.75;
+const MAX_MAE=.12;
+
 if(X.srand)X.srand(1337);
-const N=+(process.env.N||400), MAPS=9;
-const PD={};T.forEach(me=>me.jogadores.forEach(j=>{const e=j._eng;PD[e.nick]={sim:[],real:e.rating,prim:e.primario};}));
-for(let c=0;c<N;c++){X.sortearFormaCampanha(T);
- for(const me of T){for(let m=0;m<MAPS;m++){const op=T[Math.floor(Math.random()*T.length)];if(op===me){m--;continue;}
-   const g=X.simularMapa(me,op,X.forcaDoDia(me.ef,me.quim),X.forcaDoDia(op.ef,op.quim));
-   g.statsA.forEach((s,i)=>PD[me.jogadores[i]._eng.nick].sim.push(s.rating));
- }}}
-const m=a=>a.reduce((x,y)=>x+y,0)/a.length;
-const ps=Object.values(PD).map(d=>({real:d.real,sim:m(d.sim),prim:d.prim}));
-const xs=ps.map(p=>p.real),ys=ps.map(p=>p.sim),mx=m(xs),my=m(ys);
-const cov=m(ps.map(p=>(p.real-mx)*(p.sim-my)));
-const sx=Math.sqrt(m(xs.map(x=>(x-mx)**2))),sy=Math.sqrt(m(ys.map(y=>(y-my)**2)));
-const r=cov/(sx*sy), mae=m(ps.map(p=>Math.abs(p.sim-p.real)));
-console.log(`— RATING real×sim (${ps.length} jogadores · N=${N}) —`);
-const roles={};ps.forEach(p=>(roles[p.prim]=roles[p.prim]||[]).push(p));
-Object.entries(roles).sort((a,b)=>m(b[1].map(p=>p.real))-m(a[1].map(p=>p.real)))
- .forEach(([role,a])=>{const d=m(a.map(p=>p.sim))-m(a.map(p=>p.real));
-   console.log(`    ${role.padEnd(8)} real ${m(a.map(p=>p.real)).toFixed(2)} → sim ${m(a.map(p=>p.sim)).toFixed(2)}  (Δ ${(d>=0?"+":"")+d.toFixed(2)})`);});
-const okR=r>=.75, okM=mae<=.12;
-console.log(`  ${okR?"✓":"✗"} correlação r = ${r.toFixed(3)}   [≥0.75]`);
-console.log(`  ${okM?"✓":"✗"} erro médio  = ${mae.toFixed(3)}   [≤0.12]`);
+
+function initPlayers(){
+  const players={};
+  for(const team of T){
+    for(const player of team.jogadores){
+      const engine=player._eng;
+      players[engine.nick]={sim:[],real:engine.rating,prim:engine.primario};
+    }
+  }
+  return players;
+}
+
+function collectRatings(players){
+  for(let campaign=0;campaign<N;campaign++){
+    X.sortearFormaCampanha(T);
+    for(const team of T){
+      for(let map=0;map<MAPS;map++){
+        const opponent=pickOpponent(T,team);
+        const game=X.simularMapa(
+          team,
+          opponent,
+          X.forcaDoDia(team.ef,team.quim),
+          X.forcaDoDia(opponent.ef,opponent.quim)
+        );
+        game.statsA.forEach((stats,index)=>{
+          const nick=team.jogadores[index]._eng.nick;
+          players[nick].sim.push(stats.rating);
+        });
+      }
+    }
+  }
+}
+
+function correlation(points){
+  const real=points.map(point=>point.real);
+  const sim=points.map(point=>point.sim);
+  const realMean=mean(real);
+  const simMean=mean(sim);
+  const cov=mean(points.map(point=>(point.real-realMean)*(point.sim-simMean)));
+  const sx=Math.sqrt(mean(real.map(value=>(value-realMean)**2)));
+  const sy=Math.sqrt(mean(sim.map(value=>(value-simMean)**2)));
+  return cov/(sx*sy);
+}
+
+function byRole(points){
+  const roles={};
+  points.forEach(point=>{
+    (roles[point.prim]=roles[point.prim]||[]).push(point);
+  });
+  return roles;
+}
+
+const players=initPlayers();
+collectRatings(players);
+
+const points=Object.values(players).map(player=>({
+  real:player.real,
+  sim:mean(player.sim),
+  prim:player.prim
+}));
+const r=correlation(points);
+const mae=mean(points.map(point=>Math.abs(point.sim-point.real)));
+
+console.log(`— RATING real×sim (${points.length} jogadores · N=${N}) —`);
+Object.entries(byRole(points))
+  .sort((a,b)=>mean(b[1].map(point=>point.real))-mean(a[1].map(point=>point.real)))
+  .forEach(([role,items])=>{
+    const real=mean(items.map(point=>point.real));
+    const sim=mean(items.map(point=>point.sim));
+    console.log(`    ${role.padEnd(8)} real ${real.toFixed(2)} → sim ${sim.toFixed(2)}  (Δ ${signed(sim-real)})`);
+  });
+
+const okR=r>=MIN_CORRELATION;
+const okM=mae<=MAX_MAE;
+console.log(`  ${okMark(okR)} correlação r = ${r.toFixed(3)}   [≥${MIN_CORRELATION}]`);
+console.log(`  ${okMark(okM)} erro médio  = ${mae.toFixed(3)}   [≤${MAX_MAE}]`);
 console.log(okR&&okM?"✓ rating fiel ao real":"✗ rating degradou");
 process.exitCode=okR&&okM?0:1;

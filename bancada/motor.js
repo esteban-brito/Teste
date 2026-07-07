@@ -1,14 +1,42 @@
-/* bancada/motor.js — carrega os MOTORES do game.js num sandbox Node (sem DOM).
-   Fatia o arquivo até a primeira referência a DOM e expõe os símbolos dos motores.
-   Uso: const {X,T}=require("./motor"); // X = motores · T = times prontos p/ simular */
-const fs=require("fs"),vm=require("vm"),path=require("path");
-const js=fs.readFileSync(path.join(__dirname,"..","game.js"),"utf8").split("\n");
-const cut=js.findIndex(l=>l.includes("document.getElementById"));
-const sb={Math,Object,Array,JSON,console};vm.createContext(sb);
-vm.runInContext(js.slice(0,cut).join("\n")+
-  ";globalThis.X={TEAMS,POOL,ATRIBUTOS,TIMES_DEF,forcaTime,simularMapa,simularSerie,forcaDoDia,sortearFormaCampanha,avaliarJogador,distribuirRoles,quimicaComposicao,fallenAngels,srand:typeof srand!=='undefined'?srand:null};",sb);
-const X=sb.X;
-// times prontos pro combate (mesma preparação da UI)
-const T=X.TEAMS.map(t=>{const r=X.forcaTime(t.jogadores.map(j=>j._eng),t.treinador&&t.treinador.carac,t.treinador&&t.treinador.ovr);
-  return {nome:t.nome,jogadores:t.jogadores,ef:r.efetiva,quim:r.quimica};});
-module.exports={X,T};
+/* bancada/motor.js - carrega os motores de game.js em Node, sem DOM.
+   Uso: const {X,T}=require("./motor"); */
+const fs=require("fs");
+const path=require("path");
+const vm=require("vm");
+const {ROOT}=require("./common");
+
+const GAME_PATH=path.join(ROOT,"game.js");
+const UI_MARKER="document.getElementById";
+const EXPORTS=[
+  "TEAMS","POOL","ATRIBUTOS","TIMES_DEF",
+  "forcaTime","simularMapa","simularSerie","forcaDoDia","sortearFormaCampanha",
+  "avaliarJogador","distribuirRoles","quimicaComposicao","fallenAngels"
+];
+
+function loadEngines(){
+  const source=fs.readFileSync(GAME_PATH,"utf8").split("\n");
+  const cut=source.findIndex(line=>line.includes(UI_MARKER));
+  if(cut<0)throw new Error(`marcador de UI nao encontrado em ${GAME_PATH}`);
+
+  const sandbox={Math,Object,Array,JSON,console};
+  vm.createContext(sandbox);
+  const exportExpr=EXPORTS.map(name=>`${name}:${name}`).join(",");
+  const code=source.slice(0,cut).join("\n")+
+    `;globalThis.X={${exportExpr},srand:typeof srand!=="undefined"?srand:null};`;
+  vm.runInContext(code,sandbox,{filename:GAME_PATH});
+  return sandbox.X;
+}
+
+function buildCombatTeams(X){
+  return X.TEAMS.map(team=>{
+    const players=team.jogadores.map(player=>player._eng);
+    const coach=team.treinador;
+    const strength=X.forcaTime(players,coach&&coach.carac,coach&&coach.ovr);
+    return {nome:team.nome,jogadores:team.jogadores,ef:strength.efetiva,quim:strength.quimica};
+  });
+}
+
+const X=loadEngines();
+const T=buildCombatTeams(X);
+
+module.exports={X,T,loadEngines,buildCombatTeams};

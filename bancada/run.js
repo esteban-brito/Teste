@@ -1,18 +1,32 @@
-/* bancada/run.js — roda a suíte inteira de validação dos motores.
-   Uso: node bancada/run.js        (rápido: N reduzido)
-        N=1500 node bancada/run.js (profundo)
-   Sai com código ≠0 se qualquer bancada falhar (dá pra usar em CI). */
-const {execFileSync}=require("child_process"),path=require("path");
-const suites=["times.js","realismo.js","rating.js"];
-let falhas=0;
+/* bancada/run.js - roda a suite inteira de validacao dos motores.
+   Uso: node bancada/run.js        (rapido)
+        N=1500 node bancada/run.js (profundo) */
+const {execFileSync}=require("child_process");
+const path=require("path");
+const {secondsSince}=require("./common");
+
+const SUITES=["times.js","realismo.js","rating.js"];
+
+function runSuite(file){
+  const started=Date.now();
+  try{
+    execFileSync(process.execPath,[path.join(__dirname,file)],{stdio:"inherit",env:process.env});
+    return {ok:true,seconds:secondsSince(started)};
+  }catch(error){
+    return {ok:false,seconds:secondsSince(started)};
+  }
+}
+
 console.log("════════════════════════════════════════════");
 console.log(" BANCADA draft9-0 — validação dos motores");
 console.log("════════════════════════════════════════════");
-for(const s of suites){
-  const t0=Date.now();
-  try{execFileSync(process.execPath,[path.join(__dirname,s)],{stdio:"inherit",env:process.env});}
-  catch(e){falhas++;}
-  console.log(`  (${s} em ${((Date.now()-t0)/1000).toFixed(1)}s)\n`);
+
+let failures=0;
+for(const suite of SUITES){
+  const result=runSuite(suite);
+  if(!result.ok)failures++;
+  console.log(`  (${suite} em ${result.seconds}s)\n`);
 }
-console.log(falhas?`✗ ${falhas} suíte(s) falharam`:"✓ TODAS as suítes passaram");
-process.exit(falhas?1:0);
+
+console.log(failures?`✗ ${failures} suíte(s) falharam`:"✓ TODAS as suítes passaram");
+process.exit(failures?1:0);
