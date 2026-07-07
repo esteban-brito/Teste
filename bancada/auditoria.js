@@ -1,37 +1,21 @@
 /* bancada/auditoria.js - relatorio curto de roles, playstyles e margens.
    Uso: node bancada/auditoria.js */
 const {X}=require("./motor");
+const {compactStats,countBy,sortedCountEntries,teamNameFor}=require("./common");
 
 const PLAYSTYLE_ORDER=[
   "spacetaker","infiltrator","playmaker","aggressive","support",
   "trader","anchor","clutcher","cerebral","joker","baiter"
 ];
 
-function countBy(items,fn){
-  return items.reduce((out,item)=>{
-    const key=fn(item);
-    out[key]=(out[key]||0)+1;
-    return out;
-  },{});
-}
-
 function printCount(title,count,order=null){
   console.log(`\n-- ${title} --`);
-  const entries=Object.entries(count)
-    .sort((a,b)=>{
-      if(order)return order.indexOf(a[0])-order.indexOf(b[0]);
-      return b[1]-a[1]||String(a[0]).localeCompare(String(b[0]));
-    });
-  entries.forEach(([key,total])=>console.log(`  ${String(total).padStart(2)} ${label(key)}`));
+  sortedCountEntries(count,order)
+    .forEach(([key,total])=>console.log(`  ${String(total).padStart(2)} ${label(key)}`));
 }
 
 function label(style){
   return X.STYLE_LABEL?X.STYLE_LABEL(style):style;
-}
-
-function teamNameFor(player){
-  const team=X.TEAMS.find(item=>item.jogadores.some(card=>card._eng.id===player.id));
-  return team?team.nome:"-";
 }
 
 function roleMargin(player){
@@ -48,7 +32,7 @@ function printLowMargins(players){
     .slice(0,15)
     .forEach(({player,rows,gap})=>{
       const top=rows.slice(0,3).map(([role,score])=>`${role}:${score.toFixed(1)}`).join(" ");
-      console.log(`  ${player.nick.padEnd(12)} ${teamNameFor(player).padEnd(11)} ${(player.primario+"/"+player.secundario).padEnd(16)} gap ${gap.toFixed(1).padStart(4)}  ${top}`);
+      console.log(`  ${player.nick.padEnd(12)} ${teamNameFor(X.TEAMS,player).padEnd(11)} ${(player.primario+"/"+player.secundario).padEnd(16)} gap ${gap.toFixed(1).padStart(4)}  ${top}`);
     });
 }
 
@@ -56,8 +40,7 @@ function printStylePlayers(players,style){
   const selected=players.filter(player=>player.playstyle===style);
   console.log(`\n-- ${label(style)} (${selected.length}) --`);
   selected.forEach(player=>{
-    const stats=[player.fp,player.en,player.tr,player.op,player.cl,player.ut,player.sn].join("/");
-    console.log(`  ${player.nick.padEnd(12)} ${teamNameFor(player).padEnd(11)} ${(player.primario+"/"+player.secundario).padEnd(16)} rt ${String(player.rating).padEnd(4)} ${stats}`);
+    console.log(`  ${player.nick.padEnd(12)} ${teamNameFor(X.TEAMS,player).padEnd(11)} ${(player.primario+"/"+player.secundario).padEnd(16)} rt ${String(player.rating).padEnd(4)} ${compactStats(player)}`);
   });
 }
 

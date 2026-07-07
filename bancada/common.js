@@ -3,6 +3,7 @@ const path=require("path");
 
 const ROOT=path.join(__dirname,"..");
 const ATTRS=["fp","en","tr","op","cl","sn","ut"];
+const DISPLAY_ATTRS=["fp","en","tr","op","cl","ut","sn"];
 const COLOCACOES=["Campeao","Final","Top4","Top8","Grupos"];
 
 const mean=values=>values.reduce((sum,value)=>sum+value,0)/Math.max(1,values.length);
@@ -10,6 +11,22 @@ const pct=(num,den)=>100*num/Math.max(1,den);
 const inRange=(value,min,max)=>value>=min&&value<=max;
 const signed=value=>(value>=0?"+":"")+value.toFixed(2);
 const secondsSince=start=>((Date.now()-start)/1000).toFixed(1);
+const compactStats=player=>DISPLAY_ATTRS.map(attr=>player[attr]).join("/");
+
+function countBy(items,fn){
+  return items.reduce((out,item)=>{
+    const key=fn(item);
+    out[key]=(out[key]||0)+1;
+    return out;
+  },{});
+}
+
+function sortedCountEntries(count,order=null){
+  return Object.entries(count).sort((a,b)=>{
+    if(order)return order.indexOf(a[0])-order.indexOf(b[0]);
+    return b[1]-a[1]||String(a[0]).localeCompare(String(b[0]));
+  });
+}
 
 function okMark(ok){
   return ok?"✓":"✗";
@@ -26,4 +43,14 @@ function pickOpponent(teams,self){
   return opponent;
 }
 
-module.exports={ROOT,ATTRS,COLOCACOES,mean,pct,inRange,signed,secondsSince,okMark,printCheck,pickOpponent};
+function teamNameFor(teams,player){
+  const team=teams.find(item=>item.jogadores.some(card=>card._eng.id===player.id));
+  return team?team.nome:"-";
+}
+
+module.exports={
+  ROOT,ATTRS,DISPLAY_ATTRS,COLOCACOES,
+  mean,pct,inRange,signed,secondsSince,compactStats,
+  countBy,sortedCountEntries,
+  okMark,printCheck,pickOpponent,teamNameFor
+};
