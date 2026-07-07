@@ -169,6 +169,80 @@ select,input[type=text]{font-family:var(--fb);font-size:.85rem;background:var(--
 .wchip{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;color:var(--ink2)}
 .wchip input{width:48px;text-align:center;font-family:var(--ff);background:var(--panel);border:1px solid var(--line);border-radius:5px;color:var(--ink);padding:3px;font-size:.74rem}
 .wchip input.dirty{border-color:var(--warn);color:var(--warn)}
+/* dashboard 3 colunas */
+.dash{display:grid;grid-template-columns:200px 1fr 340px;gap:14px;align-items:start}
+@media(max-width:1100px){.dash{grid-template-columns:1fr 300px}}
+@media(max-width:780px){.dash{grid-template-columns:1fr}}
+
+/* league sidebar */
+.lcol{position:sticky;top:12px;max-height:calc(100dvh - 24px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.lcol::-webkit-scrollbar{width:5px}.lcol::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+.lcard{background:var(--panel);border:1px solid var(--line2);border-radius:10px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:border-color .12s}
+.lcard:hover{border-color:var(--muted)}
+.lcard.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 5%,var(--panel))}
+.lcard-head{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.lcard-badge{width:28px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--ff);font-weight:700;font-size:.6rem;color:#07090e;flex:none}
+.lcard-name{font-family:var(--ff);font-weight:700;font-size:.78rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lcard-ovr{font-family:var(--ff);font-weight:700;font-size:.78rem;color:var(--ink2)}
+.lcard-players{display:flex;flex-direction:column;gap:2px}
+.lcard-row{display:flex;align-items:center;gap:5px;font-size:.68rem;color:var(--ink2);cursor:pointer;padding:2px 4px;border-radius:4px;transition:background .1s}
+.lcard-row:hover{background:var(--panel2)}
+.lcard-row.on{background:color-mix(in srgb,var(--accent) 12%,var(--panel2));color:var(--ink)}
+.lcard-ovr-sm{width:22px;text-align:center;font-family:var(--ff);font-weight:700;font-size:.72rem;border-radius:4px;flex:none}
+.lcard-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lcard-r{font-size:.6rem;color:var(--muted);font-family:var(--ff)}
+
+/* detalhe do time */
+.tdetail{position:sticky;top:12px}
+.tdetail-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.tdetail-badge{width:36px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--ff);font-weight:700;font-size:.72rem;color:#07090e;flex:none}
+.tdetail-info{flex:1;min-width:0}
+.tdetail-name{font-family:var(--ff);font-weight:700;font-size:.92rem}
+.tdetail-camp{font-size:.68rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tdetail-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.tdetail-stat{background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:7px;text-align:center}
+.tdetail-stat .v{font-family:var(--ff);font-weight:700;font-size:1.1rem}
+.tdetail-stat .l{font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:2px}
+.tdetail-stat.efe .v{color:var(--accent)}
+.tdetail-stat.qui .v{color:var(--cyan)}
+.tdetail-coach{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:8px;background:var(--panel2);border:1px solid var(--line2);margin-bottom:8px}
+.tdetail-coach .cv{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--ff);font-weight:700;font-size:.72rem;background:var(--barbg)}
+.tdetail-coach .cn{font-weight:700;font-size:.78rem}
+.tdetail-coach .cc{font-size:.62rem;color:var(--muted)}
+.tdetail-alerts{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.tdetail-al{font-size:.62rem;padding:3px 7px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink2)}
+.tdetail-al.pen{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 35%,var(--line))}
+.tdetail-al.ok{color:#7fa882;border-color:color-mix(in srgb,#7fa882 35%,var(--line))}
+.tdetail-players{display:flex;flex-direction:column;gap:4px}
+.tdrow{display:grid;grid-template-columns:30px 22px 1fr 50px 36px;align-items:center;gap:5px;padding:6px 8px;background:var(--panel2);border:1px solid var(--line2);border-radius:8px;cursor:pointer;transition:border-color .12s,background .1s}
+.tdrow:hover{border-color:var(--muted);background:var(--panel)}
+.tdrow.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--panel2))}
+.tdrow-ovr{font-family:var(--ff);font-weight:700;font-size:.92rem;text-align:center;border-radius:6px;height:26px;display:flex;align-items:center;justify-content:center}
+.tdrow-star{color:var(--t22);font-size:.7rem}
+.tdrow-nm{font-weight:700;font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tdrow-fn{font-size:.6rem;font-weight:800;padding:2px 5px;border-radius:4px;white-space:nowrap}
+.tdrow-pl{font-size:.6rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tdrow-rt{text-align:right;font-family:var(--ff);font-weight:600;font-size:.78rem}
+
+/* editor compacto */
+.field-c{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.field-c label{width:22px;font-size:.72rem;font-weight:600;color:var(--ink2);flex:none;text-align:right}
+.field-c input[type=range]{flex:1;accent-color:var(--accent);height:3px}
+.field-c .num{width:40px;text-align:center;font-family:var(--ff);font-variant-numeric:tabular-nums;
+  background:var(--panel2);border:1px solid var(--line);border-radius:5px;color:var(--ink);padding:3px 2px;font-size:.78rem}
+.ovr-badge{width:56px;height:56px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--ff);font-weight:700;font-size:1.8rem;background:var(--tc);color:#07090e;flex:none;
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.18)}
+.result-compact{margin-top:8px}
+.result-compact .rc-row{display:flex;justify-content:space-between;font-size:.74rem;padding:3px 0;border-bottom:1px solid var(--line2)}
+.result-compact .rc-row:last-child{border-bottom:0}
+.result-compact .rc-label{color:var(--muted)}
+.result-compact .rc-val{font-family:var(--ff);font-weight:600}
+
+/* bottom panels (sim + recipes) */
+.bottom-panels{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+@media(max-width:900px){.bottom-panels{grid-template-columns:1fr}}
+
 .loading{padding:40px;text-align:center;color:var(--muted)}
 .err{color:#ff6a5a}
 footer{max-width:1080px;margin:16px auto 0;color:var(--faint);font-size:.72rem;text-align:center;line-height:1.5}
@@ -753,40 +827,7 @@ function refresh(target){
 }
 function mainPlayer(){return loadedIdx==null?evaluatePlayer(jogadorAtual()):evaluateAllPlayers()[loadedIdx];}
 function deltaText(base,cur,key,fmt=v=>v){return !base||base[key]===cur[key]?"":` <span class="hint" style="margin-left:6px;color:var(--warn)">${fmt(base[key])} → ${fmt(cur[key])}</span>`;}
-function renderTeamPanel(){
-  const sel=document.getElementById("teamSel");
-  if(sel&&!sel.options.length)E.TEAMS.forEach((t,i)=>{const o=document.createElement("option");o.value=i;o.textContent=t.nome+" · "+t.camp;if(i===teamIdx)o.selected=true;sel.appendChild(o);});
-  const t=E.TEAMS[teamIdx], f=evaluateTeam(t,teamIdx), rc=r=>`var(--${r})`;
-  const avgOvrTeam=f.players.reduce((s,p)=>s+p.ovr,0)/f.players.length;
-  const rows=f.players.slice().sort((a,b)=>b.ovr-a.ovr).map(e=>{const isStar=isStarPlayer(e,avgOvrTeam);return`<div class="prow" style="--tc:var(${tierVar(e.ovr)})"><div class="po">${e.ovr}</div>
-    <div><div class="pn">${isStar?'<span class="star">*</span>':''}${esc(e.nome)}${e.isIGL?' <span class="ptag" style="color:var(--IGL);border:1px solid color-mix(in srgb,var(--IGL) 45%,transparent)">IGL</span>':''}</div>
-    <div class="pr" style="color:${rc(e.isIGL?e.combatRole:e.role1)}">${e.isIGL?`IGL / ${e.combatRole}`:`${e.role1} / ${e.role2}`} · ${esc(STYLE_LABEL(e.playstyle))}</div></div><div class="pr mono">r ${e.rating}</div></div>`}).join("");
-  const coach=f.coach?`<div class="coachrow"><div class="cova mono">${Math.min(20,f.coach.ovr)}</div><div><div class="pn">${esc(f.coach.nick)} <span class="ptag" style="color:var(--muted);border:1px solid var(--line)">treinador</span></div><div class="pr">${esc(f.coach.carac||"-")}</div></div></div>`:`<div class="coachrow"><div class="pr" style="color:var(--faint)">sem treinador</div></div>`;
-  document.getElementById("teamout").innerHTML=`<div class="tstats"><div class="tstat"><div class="v mono">${f.bruta}</div><div class="l">Soma OVR</div></div><div class="tstat qui"><div class="v mono">${Math.round(f.quimica*100)}%</div><div class="l">Quimica</div></div><div class="tstat efe"><div class="v mono">${f.efetiva}</div><div class="l">Forca efetiva</div></div></div>${coach}${renderTeamDiagnosis(f)}<div class="hint">Cobertura: ${Object.entries(f.coverage).map(([k,v])=>`${k} ${v}`).join(" · ")}</div><div class="plist" style="margin-top:10px">${rows}</div><div class="alerts"><div class="alh">Alertas</div>${f.alertas.map(a=>`<span class="al ${a.includes("-")||a.includes("−")?"pen":"ok"}">${esc(a)}</span>`).join("")}</div>`;
-}
-function renderPlayerPanel(){
-  const p=jogadorAtual(), ev=mainPlayer(), base=loadedIdx==null?null:baseSnap[loadedIdx];
-  const af=E.afinidades(p), maxAf=Math.max(...ROLES.map(r=>af[r]),1), rc=r=>`var(--${r})`;
-  const roleLine=ev.isIGL
-    ? `<div class="rpill" style="color:var(--IGL)"><span class="tag" style="background:color-mix(in srgb,var(--IGL) 20%,transparent)">IGL</span>Comando</div><div class="rpill rp2" style="color:${rc(ev.combatRole)}"><span class="tag" style="background:color-mix(in srgb,${rc(ev.combatRole)} 16%,transparent)">R1</span>${ev.combatRole}</div>`
-    : `<div class="rpill" style="color:${rc(ev.role1)}"><span class="tag" style="background:color-mix(in srgb,${rc(ev.role1)} 20%,transparent)">R1</span>${ev.role1}</div><div class="rpill rp2" style="color:${rc(ev.role2)}"><span class="tag" style="background:color-mix(in srgb,${rc(ev.role2)} 16%,transparent)">R2</span>${ev.role2}</div>`;
-  const baseStyle=base?STYLE_LABEL(base.playstyle):"", st=ev.style;
-  document.getElementById("playerout").innerHTML=`
-    <h2>Resultado do jogador</h2>
-    <div class="ovrbox"><div class="ovr" style="--tc:var(${tierVar(ev.ovr)})">${ev.ovr}</div>
-      <div><div class="ovrlab">Overall hibrido${deltaText(base,ev,"ovr")}</div><div class="roles">${roleLine}</div>
-      <div class="sub">Playstyle: <b>${esc(STYLE_LABEL(ev.playstyle))}</b>${base&&base.playstyle!==ev.playstyle?` <span class="hint" style="margin-left:6px;color:var(--warn)">${esc(baseStyle)} -> ${esc(STYLE_LABEL(ev.playstyle))}</span>`:""}</div>
-      ${base?`<div class="hint">Baseline: ${base.role1}${base.role2?"/"+base.role2:"/"+base.combatRole} · ${esc(baseStyle)} · OVR ${base.ovr}</div>`:""}</div></div>
-    <div class="affs"><div class="h">Afinidade por role</div>${ROLES.map(r=>`<div class="aff"><span class="an" style="color:${rc(r)}">${r}</span><span class="abar"><i style="width:${Math.max(3,af[r]/maxAf*100)}%;background:${rc(r)}"></i></span><span class="av mono">${Math.round(af[r])}</span></div>`).join("")}</div>
-    <div class="brk"><div class="h">OVR · ${esc(STYLE_LABEL(ev.playstyle))}</div><table>
-      <tr><td>rating em escala</td><td>${Math.round(E.ratingScore(p.rating))}</td></tr>
-      <tr><td>pesos da receita (${esc(STYLE_LABEL(ev.playstyle))})</td><td>${Math.round(st.statScore)}</td></tr>
-      <tr><td>wR (peso do rating)</td><td>${st.wR.toFixed(2)}</td></tr>
-      <tr><td>clareza estatistica</td><td>${Math.round(st.matchScore*100)}%</td></tr>
-      ${ev.isIGL?`<tr><td>core com lideranca</td><td>${Math.round(st.iglCore)}</td></tr>`:""}
-      <tr class="tot"><td>OVR final${ev.isIGL?" (teto IGL 20)":""}</td><td>${ev.ovr}</td></tr>
-    </table></div>`;
-}
+function renderPlayerPanel(){renderEditorResult();}
 function renderImpactPanel(){
   if(!baseSnap)return;
   const now=evaluateAllPlayers(), teams=evaluateAllTeams();
@@ -827,19 +868,140 @@ function copiarMudancas(){
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(()=>toast("Relatorio copiado"),()=>prompt("Copie:",txt));else prompt("Copie:",txt);
 }
 
+/* === league sidebar === */
+function renderLeague(){
+  const box=document.getElementById("league");if(!box)return;
+  const teams=evaluateAllTeams();
+  let html="";
+  teams.forEach((t,i)=>{
+    const src=E.TEAMS[i];
+    const avg=t.bruta/5;
+    const isOn=i===teamIdx;
+    const players=src.jogadores.map(j=>{
+      const eng=j._eng;
+      const ev=evaluatePlayer(eng);
+      const pIdx=poolBySlot.get(`${i}:${src.jogadores.indexOf(j)}`);
+      return{...ev,pIdx,tIdx:i,pIdx2:src.jogadores.indexOf(j)};
+    }).sort((a,b)=>b.ovr-a.ovr);
+    html+=`<div class="lcard${isOn?" on":""}" data-ti="${i}">
+      <div class="lcard-head"><div class="lcard-badge" style="background:${src.cor}">${esc(src.nome).slice(0,3).toUpperCase()}</div><div class="lcard-name">${esc(src.nome)}</div><div class="lcard-ovr mono">${avg.toFixed(1)}</div></div>
+      <div class="lcard-players">${players.map(p=>{
+        const rc=ROLE_COLORS[p.combatRole]||"var(--muted)";
+        return`<div class="lcard-row${p.pIdx===loadedIdx?" on":""}" data-pi="${p.pIdx}" data-ti="${i}">
+          <span class="lcard-ovr-sm" style="background:var(${tierVar(p.ovr)});color:#07090e">${p.ovr}</span>
+          <span class="lcard-nm">${esc(p.nome)}</span>
+          <span class="lcard-r" style="color:${rc}">${(p.combatRole||"").slice(0,3)}</span>
+        </div>`;
+      }).join("")}</div>
+    </div>`;
+  });
+  box.innerHTML=html;
+  // click handlers
+  box.querySelectorAll(".lcard").forEach(c=>{c.onclick=e=>{if(!e.target.closest(".lcard-row")){teamIdx=+c.dataset.ti;refresh("all");}};});
+  box.querySelectorAll(".lcard-row").forEach(r=>{r.onclick=e=>{e.stopPropagation();loadPlayer(+r.dataset.pi,+r.dataset.ti);};});
+}
+const ROLE_COLORS={AWPer:"#9a86c4",Rifler:"#bf9f63",Entry:"#c47a6a",Lurker:"#7fa882",Support:"#5fa6a6",IGL:"#7a93b8"};
+
+/* === team detail === */
+function renderTeamDetail(){
+  const box=document.getElementById("teamdet");if(!box)return;
+  const t=E.TEAMS[teamIdx], f=evaluateTeam(t,teamIdx), src=t;
+  const avg=f.bruta/5;
+  // coach
+  const coach=f.coach?`<div class="tdetail-coach"><div class="cv">${Math.min(20,f.coach.ovr)}</div><div><div class="cn">${esc(f.coach.nick)}</div><div class="cc">${esc(f.coach.carac||"—")}</div></div></div>`:`<div class="tdetail-coach"><div class="cn" style="color:var(--faint);font-style:italic">sem treinador</div></div>`;
+  // alerts
+  const alerts=f.alertas.map(a=>`<span class="tdetail-al ${a.includes("-")||a.includes("−")?"pen":"ok"}">${esc(a)}</span>`).join("");
+  // players
+  const rows=f.players.slice().sort((a,b)=>b.ovr-a.ovr).map(e=>{
+    const rc=ROLE_COLORS[e.combatRole]||"var(--muted)";
+    const pIdx=poolBySlot.get(`${teamIdx}:${src.jogadores.findIndex(j=>j._eng===e||j._eng?.nome===e.nome)}`);
+    return`<div class="tdrow${pIdx===loadedIdx?" on":""}" data-pi="${pIdx}" style="--tc:var(${tierVar(e.ovr)})">
+      <div class="tdrow-ovr" style="background:var(${tierVar(e.ovr)});color:#07090e">${e.ovr}</div>
+      <div class="tdrow-star">${e.star||isStarPlayer(e,avg)?"★":""}</div>
+      <div class="tdrow-nm">${esc(e.nome)}${e.isIGL?' <span style="font-size:.56rem;color:var(--t22);border:1px solid color-mix(in srgb,var(--t22) 40%,transparent);padding:0 3px;border-radius:3px">IGL</span>':''}</div>
+      <div><div class="tdrow-fn" style="color:${rc};background:color-mix(in srgb,${rc} 14%,transparent)">${e.isIGL?"IGL":e.combatRole}</div><div class="tdrow-pl">${esc(STYLE_LABEL(e.playstyle))}</div></div>
+      <div class="tdrow-rt mono">${e.rating}</div>
+    </div>`;
+  }).join("");
+  box.innerHTML=`
+    <div class="tdetail-head"><div class="tdetail-badge" style="background:${src.cor}">${esc(src.nome).slice(0,3).toUpperCase()}</div><div class="tdetail-info"><div class="tdetail-name">${esc(src.nome)}</div><div class="tdetail-camp">${esc(src.camp||"")}</div></div></div>
+    <div class="tdetail-stats">
+      <div class="tdetail-stat"><div class="v mono">${f.bruta}</div><div class="l">Bruta</div></div>
+      <div class="tdetail-stat qui"><div class="v mono">${Math.round(f.quimica*100)}%</div><div class="l">Química</div></div>
+      <div class="tdetail-stat efe"><div class="v mono">${f.efetiva}</div><div class="l">Efetiva</div></div>
+    </div>
+    ${coach}
+    <div class="tdetail-alerts">${alerts}</div>
+    <div class="tdetail-players">${rows}</div>`;
+  // click handlers
+  box.querySelectorAll(".tdrow").forEach(r=>{r.onclick=()=>{const pi=r.dataset.pi;if(pi!=="undefined")loadPlayer(+pi,teamIdx);};});
+}
+
+/* === load player into editor === */
+function loadPlayer(poolIdx,ti){
+  if(poolIdx==null||poolIdx<0)return;
+  const p=POOLRAW[poolIdx];
+  Object.assign(state,{nome:p.nome,fp:p.fp,en:p.en,tr:p.tr,op:p.op,cl:p.cl,sn:p.sn,ut:p.ut,rating:p.rating,isIGL:p.isIGL,colocacao:p.colocacao});
+  setCtx(p); loadedIdx=poolIdx; teamIdx=ti;
+  refresh("all");
+}
+
+/* === compact player editor HTML === */
+function atributosCardHTML_Compact(){
+  return `<div class="card" style="padding:12px">
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
+      <div class="ovr-badge" style="--tc:var(${state.fp>=70?"--t22":"--t15"})" id="editorOvrBadge">—</div>
+      <div style="flex:1;min-width:0">
+        <input type="text" id="f_nome" style="width:100%;font-size:.82rem;padding:5px 8px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px" placeholder="Nome" value="${esc(state.nome)}">
+        <div style="display:flex;gap:6px;margin-top:5px">
+          <label class="chk" style="font-size:.76rem"><input type="checkbox" id="c_igl" ${state.isIGL?"checked":""}> IGL</label>
+          <select id="s_coloc" style="font-size:.72rem;padding:3px 6px;border-radius:5px">${COLOC.map(c=>`<option value="${c}" ${c===state.colocacao?"selected":""}>${c}</option>`).join("")}</select>
+        </div>
+      </div>
+    </div>
+    ${STATS.map(([k,l])=>`<div class="field-c"><label>${l.slice(0,2)}</label><input type="range" id="r_${k}" min="0" max="100" value="${state[k]}"><input type="number" id="n_${k}" class="num" min="0" max="100" value="${state[k]}"></div>`).join("")}
+    <div class="field-c"><label>Rt</label><input type="range" id="r_rating" min="0.50" max="2.00" step="0.01" value="${state.rating}"><input type="number" id="n_rating" class="num" min="0.50" max="2.00" step="0.01" value="${state.rating}"></div>
+    <div id="editorResult" class="result-compact"></div>
+  </div>`;
+}
+
+/* === render compact player result === */
+function renderEditorResult(){
+  const box=document.getElementById("editorResult");if(!box)return;
+  const ev=mainPlayer();
+  const badge=document.getElementById("editorOvrBadge");
+  if(badge){badge.textContent=ev.ovr;badge.style.setProperty("--tc",`var(${tierVar(ev.ovr)})`);}
+  const st=ev.style;
+  box.innerHTML=`
+    <div class="rc-row"><span class="rc-label">Playstyle</span><span class="rc-val">${esc(STYLE_LABEL(ev.playstyle))}</span></div>
+    <div class="rc-row"><span class="rc-label">Função</span><span class="rc-val">${ev.isIGL?"IGL / "+ev.combatRole:ev.role1+"/"+ev.role2}</span></div>
+    <div class="rc-row"><span class="rc-label">wR</span><span class="rc-val mono">${st.wR.toFixed(2)}</span></div>
+    <div class="rc-row"><span class="rc-label">statScore</span><span class="rc-val mono">${Math.round(st.statScore)}</span></div>
+    <div class="rc-row"><span class="rc-label">clareza</span><span class="rc-val mono">${Math.round(st.matchScore*100)}%</span></div>`;
+}
+
+/* === old team panel (kept for compatibility) === */
+function renderTeamPanel(){renderLeague();renderTeamDetail();renderEditorResult();}
+
 function montarUI(){
   const app=document.getElementById("app"); app.className="";
   app.innerHTML=[
-    `<div class="grid">${atributosCardHTML()}<div class="card out" id="playerout"></div></div>`,
-    `<div class="card"><div class="eng-head"><span class="title">Time · química fundida</span><div class="teamsel" style="margin:0"><span class="hint" style="margin:0;font-weight:700">Time:</span><select id="teamSel"></select></div></div><div id="teamout"></div></div>`,
-    `<div class="card"><div class="eng-head"><span class="title">Mapa · PÓLVORA / COFRE / FA</span><div class="toggle"><button class="btn accent" id="runMapBtn">Rodar mapa</button></div></div><div class="simgrid"><div class="simfield"><label>Time A</label><select id="simA"></select></div><div class="simfield"><label>Time B</label><select id="simB"></select></div><div class="simfield"><label>Mapa</label><select id="simMap"><option value="auto">Auto veto</option></select></div><div class="simfield"><label>Seed</label><input type="number" id="simSeed" value="${simSeed}" step="1"></div></div><div id="matchout"></div></div>`,
-    `<div class="card"><div class="eng-head"><span class="title">Impacto do experimento</span><div class="toggle"><button class="btn" id="copyBtn">Copiar relatório</button><button class="btn accent" id="resetBtn">Restaurar baseline</button></div></div><div class="impact zero" id="impact"></div><div class="changed" id="changed" hidden></div></div>`,
-    `<div class="card"><div class="eng-head"><span class="title">Receitas & pesos</span><div class="toggle"><button class="btn" id="engToggle">${tuningOpen?"Esconder":"Mostrar"}</button></div></div><div class="hint" style="line-height:1.6"><b>Equação:</b> OVR = curva(wR × rating + (1−wR) × statScore + ajustes). <b>statScore</b> = dot(pesos_da_receita, stats). <b>wR</b> = quanto o rating HLTV pesa (0=só stats, 1=só rating). Para subir OVR de um playstyle: aumente os pesos nos stats onde o estilo é forte. O wR controla se o rating compensa stats fracos.</div><div id="stylebox" ${tuningOpen?"":"hidden"}><div class="engwrap" id="nmStyles" style="margin:10px 0 14px"></div></div><div id="engbox" ${tuningOpen?"":"hidden"}></div></div>`
+    `<div class="dash">
+      <div class="lcol card" id="league" style="padding:8px;max-height:calc(100dvh - 24px);overflow-y:auto"></div>
+      <div>${atributosCardHTML_Compact()}</div>
+      <div class="tdetail card" id="teamdet" style="padding:12px"></div>
+    </div>`,
+    `<div class="bottom-panels">
+      <div class="card"><div class="eng-head"><span class="title">Mapa · PÓLVORA / COFRE / FA</span><div class="toggle"><button class="btn accent" id="runMapBtn">Rodar mapa</button></div></div><div class="simgrid"><div class="simfield"><label>Time A</label><select id="simA"></select></div><div class="simfield"><label>Time B</label><select id="simB"></select></div><div class="simfield"><label>Mapa</label><select id="simMap"><option value="auto">Auto veto</option></select></div><div class="simfield"><label>Seed</label><input type="number" id="simSeed" value="${simSeed}" step="1"></div></div><div id="matchout"></div></div>
+      <div class="card"><div class="eng-head"><span class="title">Receitas & pesos</span><div class="toggle"><button class="btn" id="engToggle">${tuningOpen?"Esconder":"Mostrar"}</button></div></div><div class="hint" style="line-height:1.6"><b>Equação:</b> OVR = curva(wR × rating + (1−wR) × statScore + ajustes). <b>statScore</b> = dot(pesos_da_receita, stats). <b>wR</b> = quanto o rating HLTV pesa.</div><div id="stylebox" ${tuningOpen?"":"hidden"}><div class="engwrap" id="nmStyles" style="margin:10px 0 14px"></div></div><div id="engbox" ${tuningOpen?"":"hidden"}></div></div>
+    </div>`,
+    `<div class="card"><div class="eng-head"><span class="title">Impacto do experimento</span><div class="toggle"><button class="btn" id="copyBtn">Copiar relatório</button><button class="btn accent" id="resetBtn">Restaurar baseline</button></div></div><div class="impact zero" id="impact"></div><div class="changed" id="changed" hidden></div></div>`
   ].join("");
+  // wire editor
   wireAtributos(()=>refresh("all"));
+  // wire simulation
   document.getElementById("runMapBtn").insertAdjacentHTML("beforebegin",'<button class="btn" id="runBatchBtn">Rodar lote</button>');
   document.getElementById("matchout").previousElementSibling.insertAdjacentHTML("beforeend",`<div class="simfield"><label>Mapas no lote</label><input type="number" id="simRuns" value="${simRuns}" min="1" max="500" step="10"></div>`);
-  const sel=document.getElementById("teamSel"); sel.onchange=()=>{teamIdx=+sel.value;refresh("team");};
   const fillTeamSel=(id,val)=>{const s=document.getElementById(id);E.TEAMS.forEach((t,i)=>{const o=document.createElement("option");o.value=i;o.textContent=t.nome+" · "+t.camp;if(i===val)o.selected=true;s.appendChild(o);});return s;};
   const sa=fillTeamSel("simA",simA), sb=fillTeamSel("simB",simB), sm=document.getElementById("simMap");
   E.MAPAS_POOL.forEach(m=>{const o=document.createElement("option");o.value=m;o.textContent=m+(E.MAPA_LADO[m]?` (${E.MAPA_LADO[m]>0?"CT":"TR"} ${Math.abs(E.MAPA_LADO[m])})`:"");if(m===simMap)o.selected=true;sm.appendChild(o);});
