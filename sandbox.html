@@ -1226,16 +1226,33 @@ function restoreConfig(snapshot){
 function applyCalibChanges(changes){
   changes.forEach(change=>{
     if(change.type==="nm"){const w=E.NM_DEF[change.style]?.w;if(w)w[change.axis]=change.to;}
+    else if(change.type==="nmwr"){const rec=E.NM_DEF[change.style];if(rec)rec.wR=change.to;}
+    else if(change.type==="contra"){
+      if(!E.ROLE_CONTRA[change.role])E.ROLE_CONTRA[change.role]={};
+      E.ROLE_CONTRA[change.role][change.attr]=change.to;
+    }
+    else if(change.type==="ovr"){
+      const w=E.ROLE_PERFIL[change.role]?.ovr;
+      if(w)w[change.attr]=change.to;
+    }
+    else if(change.type==="wr"){
+      const rec=E.ROLE_PERFIL[change.role];
+      if(rec)rec.wR=change.to;
+    }
     else setRoleWeight(change.role,change.attr,change.to);
   });
 }
 const snapshotDiff=diffSnapshots;
-function candidateAttrsFor(role,player){
+function changeKey(change){
+  return `${change.type||"afin"}:${change.role||change.style}:${change.attr||change.axis||"wr"}:${change.to.toFixed(3)}`;
+}
+function attrValue(player,attr){return player[attr]||0;}
+function candidateAttrsFor(role,player,limit=4){
   const existing=Object.keys(E.ROLE_PERFIL[role]?.afin||{});
   const byValue=STATS
-    .map(([attr])=>({attr,value:player[attr]||0,known:existing.includes(attr)}))
-    .sort((a,b)=>(b.known-a.known)||b.value-a.value);
-  return byValue.slice(0,4).map(item=>item.attr);
+    .map(([attr])=>({attr,value:attrValue(player,attr),known:existing.includes(attr),weight:roleWeight(role,attr)}))
+    .sort((a,b)=>(b.known-a.known)||((b.value*b.weight)-(a.value*a.weight))||b.value-a.value);
+  return byValue.slice(0,limit).map(item=>item.attr);
 }
 function makeChange(role,attr,delta){
   const from=roleWeight(role,attr);
@@ -1249,6 +1266,20 @@ function makeNmChange(style,axis,delta){
   const w=E.NM_DEF[style]?.w||{};
   const from=w[axis]||0;
   return {type:"nm",style,axis,from,to:Math.max(.01,+(from+delta).toFixed(3))};
+}
+function roleContraWeight(role,attr){return +(E.ROLE_CONTRA[role]?.[attr]||0);}
+function makeContraChange(role,attr,delta){
+  const from=roleContraWeight(role,attr);
+  return {type:"contra",role,attr,from,to:Math.max(0,+(from+delta).toFixed(3))};
+}
+function roleOvrWeight(role,attr){return +(E.ROLE_PERFIL[role]?.ovr?.[attr]||0);}
+function makeOvrChange(role,attr,delta){
+  const from=roleOvrWeight(role,attr);
+  return {type:"ovr",role,attr,from,to:Math.max(0,+(from+delta).toFixed(3))};
+}
+function makeRoleWrChange(role,delta){
+  const rec=E.ROLE_PERFIL[role]||{}, from=+(rec.wR||0);
+  return {type:"wr",role,from,to:Math.max(.05,Math.min(.9,+(from+delta).toFixed(3)))};
 }
 function normalizedStyleProfile(s6){
   const total=Object.values(s6).reduce((sum,value)=>sum+Math.max(0,value||0),0)||1;
@@ -1269,7 +1300,7 @@ function dedupeCandidates(arr){
   const seen=new Set();
   return arr.filter(changes=>{
     if(!changes||!changes.length)return false;
-    const key=changes.map(c=>`${c.type||"role"}:${c.role||c.style}:${c.attr||c.axis}:${c.to.toFixed(3)}`).join("|");
+    const key=changes.map(changeKey).sort().join("|");
     if(seen.has(key))return false;
     seen.add(key);
     return changes.some(c=>Math.abs(c.to-c.from)>1e-9);
@@ -1283,23 +1314,34 @@ function computeAffinityGap(player,target,current){
 function candidateLabel(changes){
   return changes.map(change=>{
     if(change.type==="nm")return`NM.${change.axis.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
+    if(change.type==="nmwr")return`NM.${change.style}.wR ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
+    if(change.type==="contra")return`${change.role}.CONTRA.${change.attr.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
+    if(change.type==="ovr")return`${change.role}.OVR.${change.attr.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
+    if(change.type==="wr")return`${change.role}.wR ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     return`${change.role}.${change.attr.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
   }).join(" | ");
 }
 function generateRoleCandidates(target,current,raw,opts){
-  const{maxDelta=.22}=opts||{};
-  const attrs=candidateAttrsFor(target,raw);
-  const currentAttrs=current&&current!==target?candidateAttrsFor(current,raw):[];
+  const{maxDelta=.22,attrLimit=4,includeContra=false,comboDepth=2}=opts||{};
+  const attrs=candidateAttrsFor(target,raw,attrLimit);
+  const currentAttrs=current&&current!==target?candidateAttrsFor(current,raw,attrLimit):[];
   const deltas=deltasFor(maxDelta);
   const out=[];
   deltas.forEach(delta=>{
     const d=+delta.toFixed(3);
     attrs.forEach(attr=>out.push([makeChange(target,attr,d)]));          // Type A
+    if(includeContra){
+      attrs.forEach(attr=>out.push([makeContraChange(target,attr,-d*.35)]));
+      if(current&&current!==target)currentAttrs.forEach(attr=>out.push([makeContraChange(current,attr,d*.28)]));
+    }
     if(current&&current!==target&&d>=.09){                               // Type B (combined)
       attrs.slice(0,2).forEach(attr=>currentAttrs.slice(0,2).forEach(cur=>
         out.push([makeChange(target,attr,d),makeReduce(current,cur,d*.65)])));
+      if(includeContra)attrs.slice(0,3).forEach(attr=>currentAttrs.slice(0,3).forEach(cur=>
+        out.push([makeChange(target,attr,d*.75),makeContraChange(current,cur,d*.25)])));
     }
     if(attrs.length>=2&&d>=.09)out.push([makeChange(target,attrs[0],d*.7),makeChange(target,attrs[1],d*.5)]); // Type C
+    if(comboDepth>=3&&attrs.length>=3&&d>=.12)out.push([makeChange(target,attrs[0],d*.55),makeChange(target,attrs[1],d*.45),makeChange(target,attrs[2],d*.35)]);
     if(d>=.06){                                                          // Type D (reduce competitors)
       attrs.slice(0,2).forEach(attr=>{
         const reducers=ROLES.filter(r=>r!==target&&roleWeight(r,attr)>0)
@@ -1312,19 +1354,26 @@ function generateRoleCandidates(target,current,raw,opts){
   return dedupeCandidates(out);
 }
 function generateRole2Candidates(target2,current1,raw,opts){
-  const{maxDelta=.16}=opts||{};
-  const attrs=candidateAttrsFor(target2,raw);
-  const currentAttrs=current1==="IGL"?[]:candidateAttrsFor(current1,raw);
+  const{maxDelta=.16,attrLimit=4,includeContra=false,comboDepth=2}=opts||{};
+  const attrs=candidateAttrsFor(target2,raw,attrLimit);
+  const currentAttrs=current1==="IGL"?[]:candidateAttrsFor(current1,raw,attrLimit);
   const deltas=deltasFor(maxDelta);
   const out=[];
   deltas.forEach(delta=>{
     const d=+delta.toFixed(3);
     attrs.forEach(attr=>out.push([makeChange(target2,attr,d)]));
+    if(includeContra){
+      attrs.forEach(attr=>out.push([makeContraChange(target2,attr,-d*.32)]));
+      if(current1&&current1!==target2)currentAttrs.forEach(attr=>out.push([makeContraChange(current1,attr,d*.22)]));
+    }
     if(current1&&current1!==target2&&d>=.06){
       attrs.slice(0,2).forEach(attr=>currentAttrs.slice(0,2).forEach(cur=>
         out.push([makeChange(target2,attr,d),makeReduce(current1,cur,d*.4)])));
+      if(includeContra)attrs.slice(0,3).forEach(attr=>currentAttrs.slice(0,3).forEach(cur=>
+        out.push([makeChange(target2,attr,d*.7),makeContraChange(current1,cur,d*.2)])));
     }
     if(attrs.length>=2&&d>=.06)out.push([makeChange(target2,attrs[0],d*.6),makeChange(target2,attrs[1],d*.4)]);
+    if(comboDepth>=3&&attrs.length>=3&&d>=.12)out.push([makeChange(target2,attrs[0],d*.5),makeChange(target2,attrs[1],d*.38),makeChange(target2,attrs[2],d*.28)]);
     if(d>=.06){
       attrs.slice(0,2).forEach(attr=>{
         const reducers=ROLES.filter(r=>r!==target2&&r!==current1&&roleWeight(r,attr)>0)
@@ -1384,20 +1433,110 @@ function generateGoalCandidates(goal,current,raw,isIGL,opts){
   if(goal.style&&goal.style!==current.style)all.push(...generateStyleCandidates(goal.style,raw,current.r1||current.r2,goal.r1));
   return all;
 }
+function goalRoleTarget(goal,current,isIGL){
+  if(isIGL&&goal.r2&&goal.r2!==current.r2)return {target:goal.r2,current:current.r2||"Rifler",kind:"combat"};
+  if(!isIGL&&goal.r1&&goal.r1!==current.r1)return {target:goal.r1,current:current.r1,kind:"primary"};
+  if(!isIGL&&goal.r2&&goal.r2!==current.r2)return {target:goal.r2,current:current.r2||current.r1,kind:"secondary"};
+  return null;
+}
+function targetGap(player,target,current){
+  if(!target||!current)return 0;
+  return E.roleAfinidade(target,player)-E.roleAfinidade(current,player);
+}
+function seededRandom(seed){
+  let x=seed>>>0;
+  return ()=>{x=(x*1664525+1013904223)>>>0;return x/4294967296;};
+}
+function pickWeighted(rng,items){
+  const total=items.reduce((sum,item)=>sum+Math.max(.001,item.weight||1),0);
+  let roll=rng()*total;
+  for(const item of items){roll-=Math.max(.001,item.weight||1);if(roll<=0)return item;}
+  return items[items.length-1];
+}
+function roleLeverBank(target,current,raw,opts){
+  const attrLimit=opts?.attrLimit||7;
+  const targetAttrs=candidateAttrsFor(target,raw,attrLimit);
+  const currentAttrs=current&&current!==target?candidateAttrsFor(current,raw,attrLimit):[];
+  const levers=[];
+  targetAttrs.forEach((attr,idx)=>{
+    const v=attrValue(raw,attr), weight=(attrLimit-idx)*Math.max(8,v);
+    levers.push({weight,make:d=>makeChange(target,attr,d),label:`${target}.${attr}+`});
+    if(roleContraWeight(target,attr)>0)levers.push({weight:weight*.7,make:d=>makeContraChange(target,attr,-d*.35),label:`${target}.contra.${attr}-`});
+    levers.push({weight:weight*.35,make:d=>makeOvrChange(target,attr,d*.25),label:`${target}.ovr.${attr}+`});
+  });
+  currentAttrs.forEach((attr,idx)=>{
+    const v=attrValue(raw,attr), weight=(attrLimit-idx)*Math.max(8,v);
+    levers.push({weight:weight*.9,make:d=>makeReduce(current,attr,d*.65),label:`${current}.${attr}-`});
+    levers.push({weight:weight*.8,make:d=>makeContraChange(current,attr,d*.28),label:`${current}.contra.${attr}+`});
+  });
+  ROLES.filter(role=>role!==target&&role!==current).forEach(role=>{
+    targetAttrs.slice(0,4).forEach(attr=>{
+      if(roleWeight(role,attr)>0)levers.push({weight:Math.max(1,attrValue(raw,attr))*.22,make:d=>makeReduce(role,attr,d*.28),label:`${role}.${attr}-`});
+    });
+  });
+  levers.push({weight:16,make:d=>makeRoleWrChange(target,-d*.08),label:`${target}.wR-`});
+  if(current&&current!==target)levers.push({weight:12,make:d=>makeRoleWrChange(current,d*.06),label:`${current}.wR+`});
+  return levers;
+}
+function generateDeepRoleCandidates(goal,current,raw,isIGL,strategy,opts){
+  const info=goalRoleTarget(goal,current,isIGL);
+  if(!info)return[];
+  const maxDelta=opts?.maxDelta||.55;
+  const levers=roleLeverBank(info.target,info.current,raw,{attrLimit:strategy.attrLimit||7})
+    .sort((a,b)=>b.weight-a.weight);
+  const deltas=deltasFor(maxDelta);
+  const out=[];
+  deltas.forEach(delta=>{
+    const d=+delta.toFixed(3);
+    levers.slice(0,strategy.deepLeverLimit||16).forEach(lever=>out.push([lever.make(d)]));
+    const pairLimit=Math.min(strategy.pairLimit||10,levers.length);
+    for(let i=0;i<pairLimit;i++)for(let j=i+1;j<pairLimit;j++)out.push([levers[i].make(d*.85),levers[j].make(d*.65)]);
+    if((strategy.comboDepth||2)>=3&&d>=.09){
+      const triLimit=Math.min(strategy.tripleLimit||7,levers.length);
+      for(let i=0;i<triLimit;i++)for(let j=i+1;j<triLimit;j++)for(let k=j+1;k<triLimit;k++)out.push([levers[i].make(d*.7),levers[j].make(d*.5),levers[k].make(d*.35)]);
+    }
+  });
+  return dedupeCandidates(out);
+}
+function generateRandomRoleCandidates(goal,current,raw,isIGL,strategy,opts){
+  const info=goalRoleTarget(goal,current,isIGL);
+  if(!info)return[];
+  const rng=seededRandom((loadedIdx+1)*2654435761+(opts?.phase||0)*977);
+  const levers=roleLeverBank(info.target,info.current,raw,{attrLimit:strategy.attrLimit||7});
+  const count=strategy.randomCandidates||0;
+  const maxChanges=strategy.maxRandomChanges||5;
+  const maxDelta=opts?.maxDelta||strategy.randomDelta||.65;
+  const out=[];
+  for(let i=0;i<count;i++){
+    const len=1+Math.floor(rng()*maxChanges);
+    const used=new Set(), changes=[];
+    for(let j=0;j<len;j++){
+      const lever=pickWeighted(rng,levers);
+      if(!lever||used.has(lever.label))continue;
+      used.add(lever.label);
+      const scale=.08+rng()*maxDelta;
+      changes.push(lever.make(+scale.toFixed(3)));
+    }
+    if(changes.length)out.push(changes);
+  }
+  return dedupeCandidates(out);
+}
 const CALIB_STRATEGIES={
   ia:{
     label:"IA",
-    phases:[{maxDelta:.12},{maxDelta:.22},{maxDelta:.45},{maxDelta:.85}],
-    weights:{delta:8,changed:.25,role:.8,style:1.0,reality:10,rare:7,collateral:80,team:5,ovr:5},
-    priority:["collateralRoleChanges","teamChanges","styleChanges","ovrImpact","realityPenalty","deltaCost","changed"],
-    explain:"busca cirurgica: menor colateral possivel antes de qualquer economia de peso."
+    phases:[{maxDelta:.12},{maxDelta:.22},{maxDelta:.45},{maxDelta:.85},{maxDelta:1.25}],
+    weights:{delta:7,changed:.18,role:.7,style:.8,reality:9,rare:7,collateral:95,team:5,ovr:5,isolated:1.5},
+    priority:["collateralRoleChanges","teamChanges","rareWorsened","realityPenalty","ovrImpact","styleChanges","deltaCost","changed"],
+    attrLimit:7,comboDepth:3,deepLeverLimit:18,pairLimit:13,tripleLimit:8,randomCandidates:3200,maxRandomChanges:5,randomDelta:.95,maxTests:45000,
+    explain:"busca profunda: testa alavancas globais, contra-pesos e combinacoes antes de escolher o menor dano."
   },
   realista:{
     label:"Realista",
-    phases:[{maxDelta:.16},{maxDelta:.30},{maxDelta:.55}],
-    weights:{delta:10,changed:.45,role:1.8,style:2.8,reality:18,rare:8,collateral:22,team:1.4,ovr:2.5},
-    priority:["rareWorsened","realityPenalty","collateralRoleChanges","teamChanges","ovrImpact","deltaCost","changed"],
-    explain:"busca coerencia sistemica: mantem roles, estilos, realidade e quimica plausiveis."
+    phases:[{maxDelta:.14},{maxDelta:.28},{maxDelta:.50},{maxDelta:.72}],
+    weights:{delta:11,changed:.35,role:1.6,style:2.4,reality:22,rare:12,collateral:28,team:1.8,ovr:2.6,isolated:55},
+    priority:["rareWorsened","realityPenalty","isolatedTarget","collateralRoleChanges","teamChanges","ovrImpact","deltaCost","changed"],
+    attrLimit:6,comboDepth:2,deepLeverLimit:12,pairLimit:9,tripleLimit:0,randomCandidates:850,maxRandomChanges:4,randomDelta:.55,maxTests:14000,stopOnFirst:false,
+    explain:"busca sistemica: prefere mudancas plausiveis e penaliza ajuste que parece servir so ao alvo."
   }
 };
 function scaleChanges(changes,factor){
@@ -1413,8 +1552,10 @@ function calibrationMetrics(changes,diff,goalKey){
   const ovrImpact=diff.players.reduce((sum,p)=>sum+Math.abs(p.dOvr||0),0);
   const targetRoleChanges=goalKey?diff.players.filter(p=>p.key===goalKey&&p.roleChanged).length:0;
   const collateralRoleChanges=roleChanges-targetRoleChanges;
+  const targetChanged=goalKey?diff.players.some(p=>p.key===goalKey):false;
+  const isolatedTarget=targetChanged&&diff.players.length===1&&diff.teams.length===0?1:0;
   const teamChanges=diff.teams.length;
-  return {changed,deltaCost,roleChanges,styleChanges,realityPenalty,rareWorsened,ovrImpact,collateralRoleChanges,teamChanges};
+  return {changed,deltaCost,roleChanges,styleChanges,realityPenalty,rareWorsened,ovrImpact,collateralRoleChanges,teamChanges,isolatedTarget};
 }
 function scoreCalibration(metrics,strategy){
   const w=strategy.weights;
@@ -1427,6 +1568,7 @@ function scoreCalibration(metrics,strategy){
     metrics.rareWorsened*w.rare+
     metrics.ovrImpact*w.ovr+
     metrics.teamChanges*w.team+
+    metrics.isolatedTarget*w.isolated+
     collateralPenalty;
 }
 function calibrationCost(changes,diff,goalKey,strategy){
@@ -1452,11 +1594,16 @@ function findCalibration(goal){
   if(isIGL&&goal.r1&&goal.r1!=="IGL")return {ok:false,message:"IGL nao pode mudar de papel primario via pesos. Altere a role2 (papel de combate).",before,goal};
   const strategy=CALIB_STRATEGIES[calibMode]||CALIB_STRATEGIES.ia;
   const phases=strategy.phases;
+  const roleTarget=goalRoleTarget(goal,current,isIGL);
+  const initialGap=roleTarget?targetGap(raw,roleTarget.target,roleTarget.current):0;
   const hasRoleGoal=!!(goal.r1||goal.r2);
   let best=null, bestRoleBase=null, usedPhase=-1;
   const hits=[];
+  const searchStats={tested:0,valid:0,generated:0,pruned:0,initialGap,roleTarget};
   const evalOne=(changes,label,phaseIndex)=>{
     if(!changes||!changes.length)return;
+    if(searchStats.tested>=(strategy.maxTests||Infinity)){searchStats.pruned++;return;}
+    searchStats.tested++;
     restoreConfig(beforeConfig);
     applyCalibChanges(changes);
     const after=mainPlayer(), now=impactSnapshot(), diff=snapshotDiff(proposalBase,now);
@@ -1469,7 +1616,10 @@ function findCalibration(goal){
     result.cumulativeDiff=cumulativeDiff;
     result.cumulativeInfo=cumulativeInfo;
     result.strategy=strategy;
+    result.searchStats=searchStats;
+    if(roleTarget)result.finalGap=targetGap(raw,roleTarget.target,roleTarget.current);
     if(hit){
+      searchStats.valid++;
       hits.push(result);
       if(compareCalibration(result,best,strategy)<0)best=result;
     }
@@ -1478,23 +1628,33 @@ function findCalibration(goal){
   const tryRefinement=sol=>{
     if(!sol||!sol.changes||!sol.changes.length)return sol;
     let refined=sol;
+    const consider=changes=>{
+      restoreConfig(beforeConfig);
+      applyCalibChanges(changes);
+      const after=mainPlayer(), now=impactSnapshot(), diff=snapshotDiff(proposalBase,now);
+      if(!goalMet(after,goal))return;
+      const cumulativeDiff=snapshotDiff(cumulativeBase,now);
+      const costInfo=calibrationCost(changes,diff,goalKey,strategy);
+      const cumulativeInfo=calibrationCost(changes,cumulativeDiff,goalKey,strategy);
+      const candidate={ok:true,changes,before,after,diff,cost:costInfo.cost,costInfo,label:candidateLabel(changes),phase:refined.phase};
+      candidate.targetKey=goalKey;
+      candidate.cumulativeDiff=cumulativeDiff;
+      candidate.cumulativeInfo=cumulativeInfo;
+      candidate.strategy=strategy;
+      candidate.searchStats=searchStats;
+      if(roleTarget)candidate.finalGap=targetGap(raw,roleTarget.target,roleTarget.current);
+      if(compareCalibration(candidate,refined,strategy)<0)refined=candidate;
+    };
     try{
-      [.5,.25,.125,.0625].forEach(factor=>{
-        const scaled=scaleChanges(refined.changes,factor);
-        restoreConfig(beforeConfig);
-        applyCalibChanges(scaled);
-        const after=mainPlayer(), now=impactSnapshot(), diff=snapshotDiff(proposalBase,now);
-        if(goalMet(after,goal)){
-          const cumulativeDiff=snapshotDiff(cumulativeBase,now);
-          const costInfo=calibrationCost(scaled,diff,goalKey,strategy);
-          const cumulativeInfo=calibrationCost(scaled,cumulativeDiff,goalKey,strategy);
-          const candidate={ok:true,changes:scaled,before,after,diff,cost:costInfo.cost,costInfo,label:candidateLabel(scaled),phase:refined.phase};
-          candidate.targetKey=goalKey;
-          candidate.cumulativeDiff=cumulativeDiff;
-          candidate.cumulativeInfo=cumulativeInfo;
-          candidate.strategy=strategy;
-          if(compareCalibration(candidate,refined,strategy)<0)refined=candidate;
-        }
+      refined.changes.forEach((_,idx)=>{
+        if(refined.changes.length>1)consider(refined.changes.filter((__,j)=>j!==idx));
+      });
+      [.85,.7,.5,.35,.25,.125,.0625].forEach(factor=>consider(scaleChanges(refined.changes,factor)));
+      refined.changes.forEach((change,idx)=>{
+        [.85,.65,.45,.25].forEach(factor=>{
+          const mixed=refined.changes.map((item,j)=>j===idx?scaleChanges([item],factor)[0]:item);
+          consider(mixed);
+        });
       });
     }finally{
       restoreConfig(beforeConfig);
@@ -1503,10 +1663,15 @@ function findCalibration(goal){
   };
   try{
     phases.forEach((phase,pi)=>{
-      if(best&&calibMode==="realista")return;
+      if(best&&strategy.stopOnFirst)return;
       usedPhase=pi;
       const candidates=generateGoalCandidates(goal,current,raw,isIGL,{role:{maxDelta:phase.maxDelta}});
+      const deepCandidates=generateDeepRoleCandidates(goal,current,raw,isIGL,strategy,{maxDelta:phase.maxDelta,phase:pi});
+      const randomCandidates=generateRandomRoleCandidates(goal,current,raw,isIGL,strategy,{maxDelta:phase.maxDelta,phase:pi});
+      searchStats.generated+=candidates.length+deepCandidates.length+randomCandidates.length;
       candidates.forEach(changes=>evalOne(changes,null,pi));
+      deepCandidates.forEach(changes=>evalOne(changes,null,pi));
+      randomCandidates.forEach(changes=>evalOne(changes,null,pi));
       if(pi===0){
         const needStyle=goal.style&&goal.style!==current.style;
         if(needStyle&&(!best||STYLE_LABEL(best.after.playstyle)!==goal.style)){
@@ -1534,19 +1699,20 @@ function findCalibration(goal){
       const refined=tryRefinement(best);
       refined.phase=refined.phase??usedPhase;
       refined.highCollateral=(refined.costInfo?.collateralRoleChanges||0)>2;
+      refined.searchStats=searchStats;
       refined.alternatives=hits.filter(item=>item!==best).sort((x,y)=>compareCalibration(x,y,strategy)).slice(0,4);
       return refined;
     }
     let fbMsg="Nenhuma mudanca atingiu o alvo sem mexer em stats.";
-    if(goal.r1&&goal.r1!==current.r1){
-      const gap=computeAffinityGap(raw,goal.r1,current.r1);
+    if(roleTarget){
+      const gap=targetGap(raw,roleTarget.target,roleTarget.current);
       const diffs=ROLES.map(role=>({role,score:E.roleAfinidade(role,raw)})).sort((x,y)=>y.score-x.score);
       const currentLeader=diffs[0];
-      const topAttrs=candidateAttrsFor(goal.r1,raw).slice(0,3);
+      const topAttrs=candidateAttrsFor(roleTarget.target,raw,7).slice(0,3);
       const suggestions=topAttrs.map(attr=>{const stat=raw[attr]||1;return{attr,delta:Math.ceil(-gap/stat*10)/10};}).filter(item=>item.delta>0&&item.delta<=3);
-      const tip=suggestions.length?` Delta estimado ~${suggestions[0].delta.toFixed(2)} em ${goal.r1}.${suggestions[0].attr.toUpperCase()}.`:"";
+      const tip=suggestions.length?` Delta estimado ~${suggestions[0].delta.toFixed(2)} em ${roleTarget.target}.${suggestions[0].attr.toUpperCase()}.`:"";
       const modeTip=calibMode==="realista"?" Tente modo IA.":"";
-      fbMsg=`${goal.r1} precisa superar ${currentLeader.role} por ${(-gap).toFixed(2)} pts de afinidade.${tip}${modeTip}`;
+      fbMsg=`${roleTarget.target} precisa superar ${currentLeader.role} por ${(-gap).toFixed(2)} pts de afinidade.${tip}${modeTip} Testes: ${searchStats.tested}/${searchStats.generated}.`;
     }
     return {ok:false,message:fbMsg,before,goal};
   }finally{
@@ -1576,14 +1742,23 @@ function renderCalibResult(result,goal){
   }).join("");
   const changes=result.changes.map(change=>{
     if(change.type==="nm")return `<div class="calib-change"><b>NM.${change.axis.toUpperCase()}</b><span>${change.from.toFixed(2)} -> ${change.to.toFixed(2)}</span></div>`;
+    if(change.type==="nmwr")return `<div class="calib-change"><b>NM.${esc(change.style)}.wR</b><span>${change.from.toFixed(2)} -> ${change.to.toFixed(2)}</span></div>`;
+    if(change.type==="contra")return `<div class="calib-change"><b>${change.role}.CONTRA.${change.attr.toUpperCase()}</b><span>${change.from.toFixed(2)} -> ${change.to.toFixed(2)}</span></div>`;
+    if(change.type==="ovr")return `<div class="calib-change"><b>${change.role}.OVR.${change.attr.toUpperCase()}</b><span>${change.from.toFixed(2)} -> ${change.to.toFixed(2)}</span></div>`;
+    if(change.type==="wr")return `<div class="calib-change"><b>${change.role}.wR</b><span>${change.from.toFixed(2)} -> ${change.to.toFixed(2)}</span></div>`;
     return `<div class="calib-change"><b>${change.role}.${change.attr.toUpperCase()}</b><span>${change.from.toFixed(2)} -> ${change.to.toFixed(2)}</span></div>`;
   }).join("");
   const modeLabel=result.strategy?.label||({ia:"IA",realista:"Realista"}[calibMode]||calibMode);
   const phaseNote=result.phase!=null?` | fase ${result.phase+1}`:"";
   const goalInfo=goal?`<div class="calib-goals">${[goal.r1&&`Role1: ${goal.r1} ${goal.r1===rolePairParts(result.after).r1?"OK":"--"}`,goal.r2&&`Role2: ${goal.r2} ${goal.r2===rolePairParts(result.after).r2?"OK":"--"}`,goal.style&&`Estilo: ${goal.style} ${goal.style===STYLE_LABEL(result.after.playstyle)?"OK":"--"}`].filter(Boolean).join(" | ")}</div>`:"";
+  const st=result.searchStats||{};
+  const gapText=st.roleTarget?`<span>Gap ${st.initialGap.toFixed(2)} -> ${(result.finalGap??0).toFixed(2)}</span>`:"";
   const diagnostics=`<div class="calib-diagnostics">
     <span>Custo ${result.cost.toFixed(2)}</span>
     <span>Delta pesos ${incrementalInfo.deltaCost.toFixed(2)}</span>
+    <span>Testes ${st.tested||0}/${st.generated||0}</span>
+    <span>Validas ${st.valid||0}</span>
+    ${gapText}
     <span>Acumulado ${cumulativeSummary.players} jog | ${cumulativeSummary.teams} times</span>
     <span>Realidade +${incrementalInfo.realityPenalty.toFixed(2)} / acum +${cumulativeInfo.realityPenalty.toFixed(2)}</span>
   </div>`;
