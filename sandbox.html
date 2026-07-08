@@ -304,8 +304,22 @@ select:focus-visible,input[type=text]:focus-visible{border-color:var(--cyan);box
 .calib-impact-list{display:grid;gap:7px;margin-top:7px}
 .calib-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .calib-note{font-size:.72rem;color:var(--dim);line-height:1.45}
+.report-panel{margin-top:10px;border:1px solid rgba(124,156,196,.16);border-radius:10px;background:rgba(5,8,14,.26);padding:10px}
+.report-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.report-title{font-family:var(--ff);font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--txt)}
+.report-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:8px}
+.report-stat{border:1px solid rgba(157,178,208,.12);border-radius:8px;padding:7px;background:rgba(9,14,23,.42)}
+.report-stat .v{font-family:var(--ff);font-size:.98rem;font-weight:900;color:var(--txt)}
+.report-stat .l{font-size:.55rem;letter-spacing:.11em;text-transform:uppercase;color:var(--dim);margin-top:2px}
+.report-stat.warn .v{color:var(--warn)}
+.report-list{display:grid;gap:6px;margin-top:8px}
+.report-item{border:1px solid rgba(157,178,208,.12);border-radius:8px;padding:7px;background:rgba(5,8,14,.22);font-size:.76rem}
+.report-item b{color:var(--txt)}
+.report-item span{display:block;color:var(--dim);margin-top:3px;line-height:1.35}
+.report-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.report-textarea{width:100%;min-height:150px;background:#070b11;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px;font-family:var(--ff);font-size:.68rem;margin-top:8px}
 @media(max-width:900px){.calib-target{grid-template-columns:repeat(2,minmax(0,1fr))}.calib-target .btn{grid-column:1/-1}}
-@media(max-width:640px){.calib-target,.calib-summary,.liveimpact-grid{grid-template-columns:1fr}}
+@media(max-width:640px){.calib-target,.calib-summary,.liveimpact-grid,.report-grid,.calib-focus{grid-template-columns:1fr}}
 
 /* editor compacto */
 .field-c{display:flex;align-items:center;gap:8px;margin-bottom:7px}
@@ -982,6 +996,7 @@ let E=null, DEF=null, POOLRAW=[], loadedIdx=null, poolBySlot=new Map();
 let teamIdx=0, simA=0, simB=1, simSeed=2026, simRuns=80, simMap="auto", lastMap=null, lastBatch=null, tuningOpen=false, baseline=null;
 let calibTargetRole="Entry", calibTargetRole2="", calibTargetStyle="", calibMode="ia", calibLast=null, calibRunning=false;
 let nmOVR, STYLE_LABEL, PLAYSTYLE_IDS;
+let calibSession=null, reportFallbackText="";
 const state={nome:"", fp:70,en:50,tr:50,op:50,cl:50,sn:20,ut:55, rating:1.10, isIGL:false, colocacao:"Campeao"};
 
 async function carregarMotores(){
@@ -1172,6 +1187,7 @@ function impactReport(){
 function renderImpactPanel(){
   const report=impactReport();
   const summary=summarizeDiff(report);
+  const regressions=sessionRegressions();
   const changedPlayers=report.players.length;
   const changedTeams=report.teams.length;
   const playerRows=report.players.slice(0,7).map(player=>{
@@ -1189,13 +1205,120 @@ function renderImpactPanel(){
     return `<div class="impact-row"><div class="impact-main"><div class="impact-name">${esc(team.nome)}</div><div class="impact-meta">${esc(meta)}</div></div><div class="impact-delta ${deltaCls}">Efet ${team.old.efet} -> ${team.efet}</div></div>`;
   }).join("");
   const empty=!changedPlayers&&!changedTeams;
+  const regressionRows=regressions.slice(0,5).map(item=>`<div class="impact-row"><div class="impact-main"><div class="impact-name">${esc(item.nome)} <span style="color:var(--warn);font-weight:700">REGREDIU</span></div><div class="impact-meta">esperado ${esc(item.expectedRole)} / ${esc(item.expectedStyle)} | atual ${esc(item.current?.role||"-")} / ${esc(item.current?.style||"-")}</div></div></div>`).join("");
   return `<div class="liveimpact">
     <div class="liveimpact-head"><div class="liveimpact-title">Impacto acumulado</div><div class="liveimpact-count">${changedPlayers+changedTeams} desde o baseline</div></div>
     ${renderAuditMetrics(summary,"jog/times")}
+    ${regressions.length?`<div class="impact-section"><h4>Regressoes de intencao</h4>${regressionRows}</div>`:""}
     ${empty?'<div class="impact-empty">Sem diferenca contra o baseline carregado. Ao mexer em receitas, pesos ou atributos, as mudancas aparecem aqui imediatamente.</div>':`
       <div class="impact-section"><h4>Jogadores</h4>${playerRows||'<div class="impact-empty">Sem jogador alterado.</div>'}</div>
       <div class="impact-section"><h4>Times</h4>${teamRows||'<div class="impact-empty">Sem time alterado.</div>'}</div>`}
   </div>`;
+}
+function changeLine(change){
+  if(change.type==="nm")return`NM_DEF.${change.style}.w.${change.axis}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
+  if(change.type==="nmwr")return`NM_DEF.${change.style}.wR: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
+  if(change.type==="contra")return`ROLE_CONTRA.${change.role}.${change.attr}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
+  if(change.type==="ovr")return`ROLE_PERFIL.${change.role}.ovr.${change.attr}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
+  if(change.type==="wr")return`ROLE_PERFIL.${change.role}.wR: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
+  if(change.type==="rule")return`ROLE_RULES.${change.role}.${change.rule}.w: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
+  if(change.type==="igl")return`IGL_ROLE_AFIN.${change.role}.${change.attr}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
+  return`ROLE_PERFIL.${change.role}.afin.${change.attr}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
+}
+function buildCalibrationReport(){
+  const session=ensureCalibSession(), report=impactReport(), summary=summarizeDiff(report), regressions=sessionRegressions(), finalChanges=flatConfigDiff();
+  const lines=[];
+  lines.push("=== RELATORIO DE CALIBRACAO SANDBOX ===");
+  lines.push(`Sessao iniciada: ${session.startedAt}`);
+  lines.push(`Aplicacoes: ${session.applied.length}`);
+  lines.push(`Impacto acumulado: ${summary.players} jogadores, ${summary.teams} times`);
+  lines.push(`Regressoes de intencao: ${regressions.length}`);
+  lines.push("");
+  lines.push("=== MUDANCAS FINAIS NO MOTOR ===");
+  if(finalChanges.length)finalChanges.forEach(change=>lines.push(`${change.path}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`));
+  else lines.push("Sem mudancas pendentes.");
+  lines.push("");
+  lines.push("=== INTENCOES MONITORADAS ===");
+  const intentions=Array.from(session.intentions.values()).map(intentionState);
+  if(intentions.length)intentions.forEach(item=>{
+    lines.push(`${item.nome} (${item.team})`);
+    lines.push(`  Esperado: ${item.expectedRole} / ${item.expectedStyle}`);
+    lines.push(`  Atual: ${item.current?`${item.current.role} / ${item.current.style}`:"-"}`);
+    lines.push(`  Status: ${item.status}`);
+  });
+  else lines.push("Nenhuma intencao aplicada.");
+  lines.push("");
+  lines.push("=== HISTORICO ===");
+  if(session.applied.length)session.applied.forEach(entry=>{
+    lines.push(`[${entry.id}] ${entry.targetName} - ${entry.mode} - ${entry.at}`);
+    lines.push(`  Antes: ${entry.before}`);
+    lines.push(`  Depois: ${entry.after}`);
+    lines.push(`  Incremental: ${entry.incremental.players} jogadores, ${entry.incremental.teams} times, colateral ${entry.incremental.collateralPlayers}`);
+    lines.push("  Mudancas:");
+    entry.changes.forEach(change=>lines.push(`    - ${changeLine(change)}`));
+  });
+  else lines.push("Nenhuma aplicacao registrada.");
+  lines.push("");
+  lines.push("=== IMPACTO ACUMULADO - JOGADORES ===");
+  if(report.players.length)report.players.forEach(player=>lines.push(`${player.nome} (${player.team}): ${player.old.role} / ${player.old.style} -> ${player.role} / ${player.style}; OVR ${player.old.ovr} -> ${player.ovr}`));
+  else lines.push("Sem jogadores alterados.");
+  lines.push("");
+  lines.push("=== IMPACTO ACUMULADO - TIMES ===");
+  if(report.teams.length)report.teams.forEach(team=>lines.push(`${team.nome}: efet ${team.old.efet} -> ${team.efet}; quim ${(team.old.quim*100).toFixed(0)}% -> ${(team.quim*100).toFixed(0)}%`));
+  else lines.push("Sem times alterados.");
+  return lines.join("\n");
+}
+function renderReportPanel(){
+  const session=ensureCalibSession(), report=impactReport(), summary=summarizeDiff(report), regressions=sessionRegressions(), finalChanges=flatConfigDiff();
+  const last=session.applied.slice(-4).reverse().map(entry=>`<div class="report-item"><b>#${entry.id} ${esc(entry.targetName)}</b><span>${esc(entry.before)} -> ${esc(entry.after)}</span><span>${entry.incremental.players} jog/${entry.incremental.teams} times | colateral ${entry.incremental.collateralPlayers}</span></div>`).join("");
+  const regressionRows=regressions.slice(0,4).map(item=>`<div class="report-item"><b>${esc(item.nome)} - REGREDIU</b><span>Esperado ${esc(item.expectedRole)} / ${esc(item.expectedStyle)}</span><span>Atual ${esc(item.current?.role||"-")} / ${esc(item.current?.style||"-")}</span></div>`).join("");
+  return `<div class="report-panel">
+    <div class="report-head"><div class="report-title">Relatorio da bancada</div><div class="liveimpact-count">${session.applied.length} aplicacoes</div></div>
+    <div class="report-grid">
+      <div class="report-stat"><div class="v mono">${finalChanges.length}</div><div class="l">mudancas</div></div>
+      <div class="report-stat"><div class="v mono">${summary.players}</div><div class="l">jogadores</div></div>
+      <div class="report-stat"><div class="v mono">${summary.teams}</div><div class="l">times</div></div>
+      <div class="report-stat ${regressions.length?"warn":""}"><div class="v mono">${regressions.length}</div><div class="l">regressoes</div></div>
+    </div>
+    ${regressionRows?`<div class="impact-section"><h4>Regressoes</h4><div class="report-list">${regressionRows}</div></div>`:""}
+    ${last?`<div class="impact-section"><h4>Historico recente</h4><div class="report-list">${last}</div></div>`:'<div class="impact-empty">Aplique sugestoes no calibrador para montar o relatorio final.</div>'}
+    <div class="report-actions"><button class="btn accent" id="copyReportBtn">Copiar relatorio</button><button class="btn" id="downloadReportBtn">Baixar .txt</button><button class="btn" id="resetWorkbenchBtn">Resetar tudo</button></div>
+    ${reportFallbackText?`<textarea class="report-textarea" readonly>${esc(reportFallbackText)}</textarea>`:""}
+  </div>`;
+}
+function renderReportBox(){
+  const box=document.getElementById("reportbox");
+  if(box){box.innerHTML=renderReportPanel();wireReportPanel();}
+}
+function wireReportPanel(){
+  const copy=document.getElementById("copyReportBtn");
+  const down=document.getElementById("downloadReportBtn");
+  const reset=document.getElementById("resetWorkbenchBtn");
+  if(copy)copy.onclick=copyCalibrationReport;
+  if(down)down.onclick=downloadCalibrationReport;
+  if(reset)reset.onclick=resetWorkbench;
+}
+async function copyCalibrationReport(){
+  const text=buildCalibrationReport();
+  try{
+    await navigator.clipboard.writeText(text);
+    reportFallbackText="";
+    toast("Relatorio copiado");
+  }catch{
+    reportFallbackText=text;
+    refresh("all");
+    toast("Clipboard bloqueado. Use a caixa de texto.");
+  }
+}
+function downloadCalibrationReport(){
+  const blob=new window.Blob([buildCalibrationReport()],{type:"text/plain;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=window.URL.createObjectURL(blob);
+  a.download="sandbox-calibration-report.txt";
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(a.href);
+  a.remove();
 }
 function rolePair(p){
   const parts=rolePairParts(p);
@@ -1227,6 +1350,81 @@ function restoreConfig(snapshot){
   if(snapshot.contra)copyInto(E.ROLE_CONTRA,snapshot.contra);
   if(snapshot.igl)copyInto(E.IGL_ROLE_AFIN,snapshot.igl);
   if(snapshot.rules)copyInto(E.ROLE_RULES,snapshot.rules);
+}
+function ensureCalibSession(){
+  if(!calibSession){
+    calibSession={startedAt:new Date().toISOString(),applied:[],intentions:new Map()};
+  }
+  return calibSession;
+}
+function flatConfigDiff(){
+  const before=configSnapshot();
+  const base={role:DEF.ROLE,nm:DEF.NM,cor:DEF.NM_COR,contra:DEF.CONTRA,igl:DEF.IGL,rules:DEF.RULES};
+  const out=[];
+  const walk=(label,a,b)=>{
+    const keys=new Set([...Object.keys(a||{}),...Object.keys(b||{})]);
+    keys.forEach(key=>{
+      const av=a?.[key], bv=b?.[key], path=label?`${label}.${key}`:key;
+      if(av&&typeof av==="object"&&!Array.isArray(av)||bv&&typeof bv==="object"&&!Array.isArray(bv))walk(path,av||{},bv||{});
+      else if(Math.abs((+av||0)-(+bv||0))>1e-9)out.push({path,from:+bv||0,to:+av||0});
+    });
+  };
+  walk("ROLE_PERFIL",before.role,base.role);
+  walk("NM_DEF",before.nm,base.nm);
+  walk("NM_COR",before.cor,base.cor);
+  walk("ROLE_CONTRA",before.contra,base.contra);
+  walk("IGL_ROLE_AFIN",before.igl,base.igl);
+  walk("ROLE_RULES",before.rules,base.rules);
+  return out.sort((a,b)=>a.path.localeCompare(b.path));
+}
+function intentionState(intent){
+  const current=impactSnapshot().players.find(player=>player.key===intent.key);
+  if(!current)return {...intent,status:"SUMIU",current:null};
+  const ok=current.role===intent.expectedRole&&current.style===intent.expectedStyle;
+  return {...intent,status:ok?"OK":"REGREDIU",current};
+}
+function sessionRegressions(){
+  const session=ensureCalibSession();
+  return Array.from(session.intentions.values()).map(intentionState).filter(item=>item.status!=="OK");
+}
+function registerCalibrationApplication(result){
+  const session=ensureCalibSession();
+  const target=result.diff?.players?.find(player=>player.key===result.targetKey)||
+    impactSnapshot().players.find(player=>player.key===result.targetKey);
+  const entry={
+    id:session.applied.length+1,
+    at:new Date().toISOString(),
+    mode:result.strategy?.label||calibMode,
+    targetKey:result.targetKey,
+    targetName:target?.nome||result.after?.nome||"Jogador",
+    before:rolePairText(result.before)+" / "+STYLE_LABEL(result.before.playstyle),
+    after:rolePairText(result.after)+" / "+STYLE_LABEL(result.after.playstyle),
+    changes:clone(result.changes||[]),
+    incremental:summarizeDiff(result.diff||{players:[],teams:[]},result.targetKey),
+    cumulative:summarizeDiff(impactReport(),result.targetKey)
+  };
+  session.applied.push(entry);
+  if(target){
+    session.intentions.set(result.targetKey,{
+      key:result.targetKey,
+      nome:target.nome,
+      team:target.team,
+      expectedRole:target.role,
+      expectedStyle:target.style,
+      appliedAt:entry.id
+    });
+  }
+}
+function resetWorkbench(){
+  copyInto(E.ROLE_PERFIL,DEF.ROLE);
+  copyInto(E.NM_DEF,DEF.NM);
+  copyInto(E.NM_COR,DEF.NM_COR);
+  if(DEF.CONTRA)copyInto(E.ROLE_CONTRA,DEF.CONTRA);
+  if(DEF.IGL)copyInto(E.IGL_ROLE_AFIN,DEF.IGL);
+  if(DEF.RULES)copyInto(E.ROLE_RULES,DEF.RULES);
+  calibLast=null;baseline=null;calibSession=null;reportFallbackText="";
+  refresh("all");
+  toast("Bancada resetada");
 }
 function applyCalibChanges(changes){
   changes.forEach(change=>{
@@ -1935,7 +2133,7 @@ function buildCalibrator(){
   };
   document.getElementById("calibReset").onclick=()=>{copyInto(E.ROLE_PERFIL,DEF.ROLE);copyInto(E.NM_DEF,DEF.NM);copyInto(E.NM_COR,DEF.NM_COR);if(DEF.CONTRA)copyInto(E.ROLE_CONTRA,DEF.CONTRA);if(DEF.IGL)copyInto(E.IGL_ROLE_AFIN,DEF.IGL);if(DEF.RULES)copyInto(E.ROLE_RULES,DEF.RULES);calibLast=null;refresh("all");};
   const apply=document.getElementById("calibApply");
-  if(apply)apply.onclick=()=>{if(calibLast&&calibLast.ok){applyCalibChanges(calibLast.changes);calibLast=null;refresh("all");toast("Sugestão aplicada aos pesos");}};
+  if(apply)apply.onclick=()=>{if(calibLast&&calibLast.ok){const applied=calibLast;applyCalibChanges(applied.changes);registerCalibrationApplication(applied);calibLast=null;refresh("all");toast("Sugestão registrada na bancada");}};
   const discard=document.getElementById("calibDiscard");
   if(discard)discard.onclick=()=>{calibLast=null;buildCalibrator();};
 }
@@ -2037,7 +2235,7 @@ function wireAtributos(onChange){
 
 /* ===== UI unificada: roles + playstyle + OVR + time ===== */
 function refresh(target){
-  if(!target||target==="all"){renderPlayerPanel();renderTeamPanel();renderMatchPanel();if(tuningOpen)buildCalibrator();return;}
+  if(!target||target==="all"){renderPlayerPanel();renderTeamPanel();renderMatchPanel();renderReportBox();if(tuningOpen)buildCalibrator();return;}
   if(target==="player"){renderPlayerPanel();return;}
   if(target==="team"){renderTeamPanel();return;}
   if(target==="match"){renderMatchPanel();return;}
@@ -2202,6 +2400,7 @@ function montarUI(){
           <div class="eng-head" style="margin-bottom:6px"><span class="title">Calibrador Inteligente</span><div class="toggle"><button class="btn" id="engToggle">${tuningOpen?"Ocultar":"Mostrar"}</button></div></div>
           <div class="calib-note">O calibrador nao altera stats. Ele testa pesos, mostra a sugestao e so aplica se voce confirmar.</div>
           <div id="calibbox" ${tuningOpen?"":"hidden"}></div>
+          <div id="reportbox">${renderReportPanel()}</div>
         </div>
       </div>
       <div class="tdetail card" id="teamdet"></div>
@@ -2221,6 +2420,7 @@ function montarUI(){
   document.getElementById("runBatchBtn").onclick=runBatchLab;
   document.getElementById("runMapBtn").onclick=runMapLab;
   document.getElementById("engToggle").onclick=()=>{tuningOpen=!tuningOpen;montarUI();};
+  wireReportPanel();
   if(tuningOpen)buildCalibrator();
   renderMain();
 }
