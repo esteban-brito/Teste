@@ -254,6 +254,16 @@ select:focus-visible,input[type=text]:focus-visible{border-color:var(--cyan);box
 .liveimpact-stat{border:1px solid rgba(124,156,196,.14);border-radius:8px;padding:6px;text-align:center;background:rgba(5,8,14,.24)}
 .liveimpact-stat .v{font-family:var(--ff);font-weight:800;font-size:.95rem}
 .liveimpact-stat .l{font-size:.56rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-top:1px}
+.audit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin:8px 0}
+.audit-stat{border:1px solid rgba(124,156,196,.14);border-radius:8px;padding:7px;background:rgba(5,8,14,.24)}
+.audit-stat .v{font-family:var(--ff);font-weight:900;font-size:1rem;color:var(--txt)}
+.audit-stat .l{font-size:.55rem;color:var(--dim);text-transform:uppercase;letter-spacing:.11em;margin-top:2px}
+.audit-stat.primary .v{color:var(--cyan)}
+.audit-stat.warn .v{color:var(--warn)}
+.audit-stat.good .v{color:var(--win)}
+.impact-tag{display:inline-flex;align-items:center;height:15px;padding:0 4px;border-radius:4px;border:1px solid rgba(124,156,196,.18);font-family:var(--ff);font-size:.52rem;font-weight:800;letter-spacing:.06em;color:var(--dim);margin-left:4px}
+.impact-tag.target{color:var(--cyan);border-color:rgba(81,208,255,.34)}
+.impact-tag.col{color:var(--warn);border-color:rgba(255,193,90,.34)}
 .impact-section{margin-top:8px}
 .impact-section h4{margin:0 0 5px;font-family:var(--ff);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
 .impact-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:5px 0;border-top:1px solid rgba(124,156,196,.1)}
@@ -968,7 +978,6 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 let E=null, DEF=null, POOLRAW=[], loadedIdx=null, poolBySlot=new Map();
 let teamIdx=0, simA=0, simB=1, simSeed=2026, simRuns=80, simMap="auto", lastMap=null, lastBatch=null, tuningOpen=false, baseline=null;
 let calibTargetRole="Entry", calibTargetRole2="", calibTargetStyle="", calibMode="ia", calibLast=null;
-let calibOverrides={};
 let nmOVR, STYLE_LABEL, PLAYSTYLE_IDS;
 const state={nome:"", fp:70,en:50,tr:50,op:50,cl:50,sn:20,ut:55, rating:1.10, isIGL:false, colocacao:"Campeao"};
 
@@ -1024,16 +1033,10 @@ function isStarPlayer(p,avgOvr){return p.ovr>=avgOvr+3||p.ovr>=20;}
 function evaluatePlayer(p,eng=null,forcedStyle=null){
   const legacy=eng||Object.assign({},p,E.avaliarJogador(p));
   const isIGL=legacy.primario==="IGL"||!!p.isIGL;
-  const key=p.ti!=null&&p.pi!=null?`${p.ti}:${p.pi}`:null;
-  const override=key?calibOverrides[key]:null;
-  let role1=isIGL?"IGL":legacy.primario;
-  let role2=isIGL?(legacy.secundario||"Rifler"):legacy.secundario;
-  if(override){
-    if(!isIGL&&override.r1)role1=override.r1;
-    if(override.r2)role2=override.r2;
-  }
-  const combatRole=isIGL?(role2||"Rifler"):role1;
-  const style=nmOVR(p,combatRole,override?.style||forcedStyle);
+  const combatRole=isIGL?(legacy.secundario||"Rifler"):legacy.primario;
+  const role1=isIGL?"IGL":legacy.primario;
+  const role2=isIGL?null:legacy.secundario;
+  const style=nmOVR(p,combatRole,forcedStyle);
   let ovr=capOvr(style.ovr,isIGL);
   if(isIGL){
     const C=E.CFG_AVALIACAO, titulo=C.IGL_TITULO[p.colocacao]||0;
@@ -1138,40 +1141,66 @@ function diffSnapshots(base,now){
     .sort((a,b)=>b.weight-a.weight||a.nome.localeCompare(b.nome));
   return {players,teams};
 }
+function summarizeDiff(diff,goalKey=null){
+  const players=diff.players||[], teams=diff.teams||[];
+  const roleChanges=players.filter(player=>player.roleChanged).length;
+  const styleChanges=players.filter(player=>player.styleChanged).length;
+  const realityDamage=players.reduce((sum,player)=>sum+Math.max(0,player.dReality||0),0);
+  const rareWorsened=players.filter(player=>player.rareWorsened).length;
+  const ovrImpact=players.reduce((sum,player)=>sum+Math.abs(player.dOvr||0),0);
+  const targetChanged=goalKey?players.some(player=>player.key===goalKey):false;
+  const collateralPlayers=goalKey?players.filter(player=>player.key!==goalKey).length:players.length;
+  return {
+    players:players.length,
+    teams:teams.length,
+    total:players.length+teams.length,
+    roleChanges,
+    styleChanges,
+    realityDamage,
+    rareWorsened,
+    ovrImpact,
+    targetChanged,
+    collateralPlayers
+  };
+}
+function renderAuditMetrics(summary,scope){
+  const colCls=summary.collateralPlayers>3?"warn":summary.collateralPlayers===0?"good":"";
+  return `<div class="audit-grid">
+    <div class="audit-stat primary"><div class="v mono">${summary.players}/${summary.teams}</div><div class="l">${scope}</div></div>
+    <div class="audit-stat ${colCls}"><div class="v mono">${summary.collateralPlayers}</div><div class="l">colateral</div></div>
+    <div class="audit-stat"><div class="v mono">${summary.roleChanges}/${summary.styleChanges}</div><div class="l">role/estilo</div></div>
+    <div class="audit-stat"><div class="v mono">${summary.ovrImpact.toFixed(0)}</div><div class="l">OVR total</div></div>
+    <div class="audit-stat ${summary.rareWorsened?"warn":""}"><div class="v mono">${summary.rareWorsened}</div><div class="l">raros pioram</div></div>
+    <div class="audit-stat"><div class="v mono">${summary.realityDamage.toFixed(2)}</div><div class="l">realidade</div></div>
+  </div>`;
+}
 function impactReport(){
   return diffSnapshots(ensureBaseline(),impactSnapshot());
 }
 function renderImpactPanel(){
   const report=impactReport();
+  const summary=summarizeDiff(report);
   const changedPlayers=report.players.length;
   const changedTeams=report.teams.length;
-  const roleChanges=report.players.filter(player=>player.roleChanged).length;
-  const styleChanges=report.players.filter(player=>player.styleChanged).length;
-  const realityDamage=report.players.reduce((sum,player)=>sum+Math.max(0,player.dReality||0),0);
-  const rareWorsened=report.players.filter(player=>player.rareWorsened).length;
   const playerRows=report.players.slice(0,7).map(player=>{
-    const risk=player.rareWorsened?` · realidade ${signedDelta(player.dReality,2)}`:"";
+    const risk=player.rareWorsened?` | realidade ${signedDelta(player.dReality,2)}`:"";
     const meta=[
-      player.roleChanged?`${player.old.role} → ${player.role}`:player.role,
-      player.styleChanged?`${player.old.style} → ${player.style}`:player.style
-    ].join(" · ")+risk;
+      player.roleChanged?`${player.old.role} -> ${player.role}`:player.role,
+      player.styleChanged?`${player.old.style} -> ${player.style}`:player.style
+    ].join(" | ")+risk;
     const deltaCls=player.dOvr>0?"up":player.dOvr<0?"down":"";
-    return `<div class="impact-row"><div class="impact-main"><div class="impact-name">${esc(player.nome)} <span style="color:var(--dim);font-weight:600">${esc(player.team)}</span></div><div class="impact-meta">${esc(meta)} · OVR ${player.old.ovr} → ${player.ovr} <span class="${deltaCls}">(${signedDelta(player.dOvr)})</span></div></div></div>`;
+    return `<div class="impact-row"><div class="impact-main"><div class="impact-name">${esc(player.nome)} <span style="color:var(--dim);font-weight:600">${esc(player.team)}</span></div><div class="impact-meta">${esc(meta)} | OVR ${player.old.ovr} -> ${player.ovr} <span class="${deltaCls}">(${signedDelta(player.dOvr)})</span></div></div></div>`;
   }).join("");
   const teamRows=report.teams.slice(0,5).map(team=>{
     const deltaCls=team.dEfet>0?"up":team.dEfet<0?"down":"";
-    const meta=`Bruta ${team.old.bruta} → ${team.bruta} · Quim ${(team.old.quim*100).toFixed(0)}% → ${(team.quim*100).toFixed(0)}%`;
-    return `<div class="impact-row"><div class="impact-main"><div class="impact-name">${esc(team.nome)}</div><div class="impact-meta">${esc(meta)}</div></div><div class="impact-delta ${deltaCls}">Efet ${team.old.efet} → ${team.efet}</div></div>`;
+    const meta=`Bruta ${team.old.bruta} -> ${team.bruta} | Quim ${(team.old.quim*100).toFixed(0)}% -> ${(team.quim*100).toFixed(0)}%`;
+    return `<div class="impact-row"><div class="impact-main"><div class="impact-name">${esc(team.nome)}</div><div class="impact-meta">${esc(meta)}</div></div><div class="impact-delta ${deltaCls}">Efet ${team.old.efet} -> ${team.efet}</div></div>`;
   }).join("");
   const empty=!changedPlayers&&!changedTeams;
   return `<div class="liveimpact">
-    <div class="liveimpact-head"><div class="liveimpact-title">Impacto ao vivo</div><div class="liveimpact-count">${changedPlayers+changedTeams} acumuladas</div></div>
-    <div class="liveimpact-grid">
-      <div class="liveimpact-stat"><div class="v mono">${changedPlayers}</div><div class="l">jogadores acum.</div></div>
-      <div class="liveimpact-stat"><div class="v mono">${roleChanges}/${styleChanges}</div><div class="l">função/estilo</div></div>
-      <div class="liveimpact-stat"><div class="v mono">${rareWorsened}/${realityDamage.toFixed(2)}</div><div class="l">risco/realidade</div></div>
-    </div>
-    ${empty?'<div class="impact-empty">Sem diferença contra o baseline carregado. Ao mexer em receitas, pesos ou atributos, as mudanças aparecem aqui imediatamente.</div>':`
+    <div class="liveimpact-head"><div class="liveimpact-title">Impacto acumulado</div><div class="liveimpact-count">${changedPlayers+changedTeams} desde o baseline</div></div>
+    ${renderAuditMetrics(summary,"jog/times")}
+    ${empty?'<div class="impact-empty">Sem diferenca contra o baseline carregado. Ao mexer em receitas, pesos ou atributos, as mudancas aparecem aqui imediatamente.</div>':`
       <div class="impact-section"><h4>Jogadores</h4>${playerRows||'<div class="impact-empty">Sem jogador alterado.</div>'}</div>
       <div class="impact-section"><h4>Times</h4>${teamRows||'<div class="impact-empty">Sem time alterado.</div>'}</div>`}
   </div>`;
@@ -1197,19 +1226,17 @@ function setRoleWeight(role,attr,value){
   afin[attr]=Math.max(0,+value.toFixed(3));
 }
 function configSnapshot(){
-  return {role:clone(E.ROLE_PERFIL),nm:clone(E.NM_DEF),cor:clone(E.NM_COR),contra:clone(E.ROLE_CONTRA),overrides:clone(calibOverrides)};
+  return {role:clone(E.ROLE_PERFIL),nm:clone(E.NM_DEF),cor:clone(E.NM_COR),contra:clone(E.ROLE_CONTRA)};
 }
 function restoreConfig(snapshot){
   copyInto(E.ROLE_PERFIL,snapshot.role);
   copyInto(E.NM_DEF,snapshot.nm);
   copyInto(E.NM_COR,snapshot.cor);
   if(snapshot.contra)copyInto(E.ROLE_CONTRA,snapshot.contra);
-  calibOverrides=clone(snapshot.overrides||{});
 }
 function applyCalibChanges(changes){
   changes.forEach(change=>{
     if(change.type==="nm"){const w=E.NM_DEF[change.style]?.w;if(w)w[change.axis]=change.to;}
-    else if(change.type==="override")calibOverrides[change.key]={...(calibOverrides[change.key]||{}),...change.override};
     else setRoleWeight(change.role,change.attr,change.to);
   });
 }
@@ -1234,16 +1261,6 @@ function makeNmChange(style,axis,delta){
   const from=w[axis]||0;
   return {type:"nm",style,axis,from,to:Math.max(.01,+(from+delta).toFixed(3))};
 }
-function makeOverrideChange(key,before,goal){
-  const override={};
-  if(goal.r1)override.r1=goal.r1;
-  if(goal.r2)override.r2=goal.r2;
-  if(goal.style)override.style=goal.style;
-  const parts=rolePairParts(before);
-  const from=rolePairText(before)+" / "+STYLE_LABEL(before.playstyle);
-  const to=[goal.r1||parts.r1,goal.r2||parts.r2].filter(Boolean).join(" / ")+" / "+(goal.style||STYLE_LABEL(before.playstyle));
-  return {type:"override",key,player:before.nome,from,to,override,cost:.03};
-}
 function normalizedStyleProfile(s6){
   const total=Object.values(s6).reduce((sum,value)=>sum+Math.max(0,value||0),0)||1;
   const out={};
@@ -1263,10 +1280,10 @@ function dedupeCandidates(arr){
   const seen=new Set();
   return arr.filter(changes=>{
     if(!changes||!changes.length)return false;
-    const key=changes.map(c=>`${c.type||"role"}:${c.key||c.role||c.style}:${c.attr||c.axis||"override"}:${typeof c.to==="number"?c.to.toFixed(3):c.to}`).join("|");
+    const key=changes.map(c=>`${c.type||"role"}:${c.role||c.style}:${c.attr||c.axis}:${c.to.toFixed(3)}`).join("|");
     if(seen.has(key))return false;
     seen.add(key);
-    return changes.some(c=>c.type==="override"||Math.abs(c.to-c.from)>1e-9);
+    return changes.some(c=>Math.abs(c.to-c.from)>1e-9);
   });
 }
 function computeAffinityGap(player,target,current){
@@ -1277,7 +1294,6 @@ function computeAffinityGap(player,target,current){
 function candidateLabel(changes){
   return changes.map(change=>{
     if(change.type==="nm")return`NM.${change.axis.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
-    if(change.type==="override")return`IA.${change.player} ${change.from}->${change.to}`;
     return`${change.role}.${change.attr.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
   }).join(" | ");
 }
@@ -1396,11 +1412,11 @@ const CALIB_STRATEGIES={
   }
 };
 function scaleChanges(changes,factor){
-  return changes.map(c=>c.type==="override"?{...c}:{...c,to:+(c.from+(c.to-c.from)*factor).toFixed(3)});
+  return changes.map(c=>({...c,to:+(c.from+(c.to-c.from)*factor).toFixed(3)}));
 }
 function calibrationMetrics(changes,diff,goalKey){
   const changed=diff.players.length+diff.teams.length;
-  const deltaCost=changes.reduce((sum,change)=>sum+(change.type==="override"?(change.cost||.03):Math.abs(change.to-change.from)),0);
+  const deltaCost=changes.reduce((sum,change)=>sum+Math.abs(change.to-change.from),0);
   const roleChanges=diff.players.filter(p=>p.roleChanged).length;
   const styleChanges=diff.players.filter(p=>p.styleChanged).length;
   const realityPenalty=diff.players.reduce((sum,p)=>sum+Math.max(0,p.dReality||0),0);
@@ -1450,7 +1466,6 @@ function findCalibration(goal){
   const hasRoleGoal=!!(goal.r1||goal.r2);
   let best=null, bestRoleBase=null, usedPhase=-1;
   const hits=[];
-  const localOverride=goalKey&&calibMode==="ia"?[makeOverrideChange(goalKey,before,goal)]:null;
   const evalOne=(changes,label,phaseIndex)=>{
     if(!changes||!changes.length)return;
     restoreConfig(beforeConfig);
@@ -1461,6 +1476,7 @@ function findCalibration(goal){
     const costInfo=calibrationCost(changes,diff,goalKey,strategy);
     const cumulativeInfo=calibrationCost(changes,cumulativeDiff,goalKey,strategy);
     const result={ok:hit,changes,before,after,diff,cost:costInfo.cost,costInfo,label:label||candidateLabel(changes),phase:phaseIndex};
+    result.targetKey=goalKey;
     result.cumulativeDiff=cumulativeDiff;
     result.cumulativeInfo=cumulativeInfo;
     result.strategy=strategy;
@@ -1472,7 +1488,6 @@ function findCalibration(goal){
   };
   const tryRefinement=sol=>{
     if(!sol||!sol.changes||!sol.changes.length)return sol;
-    if(sol.changes.some(change=>change.type==="override"))return sol;
     let refined=sol;
     try{
       [.5,.25,.125,.0625].forEach(factor=>{
@@ -1485,6 +1500,7 @@ function findCalibration(goal){
           const costInfo=calibrationCost(scaled,diff,goalKey,strategy);
           const cumulativeInfo=calibrationCost(scaled,cumulativeDiff,goalKey,strategy);
           const candidate={ok:true,changes:scaled,before,after,diff,cost:costInfo.cost,costInfo,label:candidateLabel(scaled),phase:refined.phase};
+          candidate.targetKey=goalKey;
           candidate.cumulativeDiff=cumulativeDiff;
           candidate.cumulativeInfo=cumulativeInfo;
           candidate.strategy=strategy;
@@ -1501,7 +1517,6 @@ function findCalibration(goal){
       if(best&&calibMode==="realista")return;
       usedPhase=pi;
       const candidates=generateGoalCandidates(goal,current,raw,isIGL,{role:{maxDelta:phase.maxDelta}});
-      if(localOverride&&pi===0)candidates.unshift(localOverride);
       candidates.forEach(changes=>evalOne(changes,null,pi));
       if(pi===0){
         const needStyle=goal.style&&goal.style!==current.style;
@@ -1550,63 +1565,59 @@ function findCalibration(goal){
   }
 }
 function renderCalibResult(result,goal){
-  if(!result)return '<div class="impact-empty">Escolha um alvo e rode uma sugestão. Nada é aplicado automaticamente.</div>';
+  if(!result)return '<div class="impact-empty">Escolha um alvo e rode uma sugestao. Nada e aplicado automaticamente.</div>';
   if(!result.ok){
     const gapLine=result.message&&!result.message.startsWith("IGL")?`<div class="calib-note" style="color:var(--warn)">${esc(result.message)}</div>`:"";
-    return `<div class="calib-suggestion bad"><div class="calib-title">Sem ajuste baixo</div>${gapLine}</div>`;
+    return `<div class="calib-suggestion bad"><div class="calib-title">Sem ajuste global limpo</div>${gapLine}</div>`;
   }
   const incrementalDiff=result.diff||{players:[],teams:[]};
-  const incrementalInfo=result.costInfo||calibrationMetrics(result.changes||[],incrementalDiff,null);
   const cumulativeDiff=result.cumulativeDiff||incrementalDiff;
+  const previewSummary=summarizeDiff(incrementalDiff,result.targetKey);
+  const cumulativeSummary=summarizeDiff(cumulativeDiff,result.targetKey);
+  const incrementalInfo=result.costInfo||calibrationMetrics(result.changes||[],incrementalDiff,null);
   const cumulativeInfo=result.cumulativeInfo||incrementalInfo;
-  const incrementalTotal=incrementalDiff.players.length+incrementalDiff.teams.length;
-  const cumulativeTotal=cumulativeDiff.players.length+cumulativeDiff.teams.length;
   const afterState=rolePairText(result.after)+" / "+STYLE_LABEL(result.after.playstyle);
   const beforeState=rolePairText(result.before)+" / "+STYLE_LABEL(result.before.playstyle);
-  const playerRows=result.diff.players.slice(0,5).map(player=>{
-    const risk=player.rareWorsened?` · risco +${player.dReality.toFixed(2)}`:"";
-    const meta=[player.roleChanged?`${player.old.role} → ${player.role}`:player.role,player.styleChanged?`${player.old.style} → ${player.style}`:player.style].join(" · ")+risk;
+  const playerRows=incrementalDiff.players.slice(0,5).map(player=>{
+    const tag=player.key===result.targetKey?'<span class="impact-tag target">ALVO</span>':'<span class="impact-tag col">COL</span>';
+    const risk=player.rareWorsened?` | realidade ${signedDelta(player.dReality,2)}`:"";
+    const meta=[player.roleChanged?`${player.old.role} -> ${player.role}`:player.role,player.styleChanged?`${player.old.style} -> ${player.style}`:player.style].join(" | ")+risk;
     const deltaCls=player.dOvr>0?"up":player.dOvr<0?"down":"";
-    return `<div class="calib-change"><b>${esc(player.nome)}</b><span>${esc(meta)} · OVR ${player.old.ovr} → ${player.ovr} <span class="${deltaCls}">(${signedDelta(player.dOvr)})</span></span></div>`;
+    return `<div class="calib-change"><b>${esc(player.nome)}${tag}</b><span>${esc(meta)} | OVR ${player.old.ovr} -> ${player.ovr} <span class="${deltaCls}">(${signedDelta(player.dOvr)})</span></span></div>`;
   }).join("");
   const changes=result.changes.map(change=>{
-    if(change.type==="nm")return `<div class="calib-change"><b>NM.${change.axis.toUpperCase()}</b><span>${change.from.toFixed(2)} → ${change.to.toFixed(2)}</span></div>`;
-    if(change.type==="override")return `<div class="calib-change"><b>IA.${esc(change.player)}</b><span>${esc(change.from)} -> ${esc(change.to)}</span></div>`;
-    if(change.type==="contra")return `<div class="calib-change"><b>✗${change.role}.${change.attr.toUpperCase()}</b><span style="color:var(--warn)">${change.from.toFixed(3)} → ${change.to.toFixed(3)}</span></div>`;
-    return `<div class="calib-change"><b>${change.role}.${change.attr.toUpperCase()}</b><span>${change.from.toFixed(2)} → ${change.to.toFixed(2)}</span></div>`;
+    if(change.type==="nm")return `<div class="calib-change"><b>NM.${change.axis.toUpperCase()}</b><span>${change.from.toFixed(2)} -> ${change.to.toFixed(2)}</span></div>`;
+    return `<div class="calib-change"><b>${change.role}.${change.attr.toUpperCase()}</b><span>${change.from.toFixed(2)} -> ${change.to.toFixed(2)}</span></div>`;
   }).join("");
-  const rareWorsened=incrementalDiff.players.filter(p=>p.rareWorsened).length;
-  const cumulativeRare=cumulativeDiff.players.filter(p=>p.rareWorsened).length;
   const modeLabel=result.strategy?.label||({ia:"IA",realista:"Realista"}[calibMode]||calibMode);
-  const phaseNote=result.phase!=null?` (fase ${result.phase+1})`:"";
-  const goalInfo=goal?`<div class="calib-goals">${[goal.r1&&`Role1: ${goal.r1} ${goal.r1===rolePairParts(result.after).r1?"✓":"✗"}`,goal.r2&&`Role2: ${goal.r2} ${goal.r2===rolePairParts(result.after).r2?"✓":"✗"}`,goal.style&&`Estilo: ${goal.style} ${goal.style===STYLE_LABEL(result.after.playstyle)?"✓":"✗"}`].filter(Boolean).join(" · ")}</div>`:"";
+  const phaseNote=result.phase!=null?` | fase ${result.phase+1}`:"";
+  const goalInfo=goal?`<div class="calib-goals">${[goal.r1&&`Role1: ${goal.r1} ${goal.r1===rolePairParts(result.after).r1?"OK":"--"}`,goal.r2&&`Role2: ${goal.r2} ${goal.r2===rolePairParts(result.after).r2?"OK":"--"}`,goal.style&&`Estilo: ${goal.style} ${goal.style===STYLE_LABEL(result.after.playstyle)?"OK":"--"}`].filter(Boolean).join(" | ")}</div>`:"";
   const diagnostics=`<div class="calib-diagnostics">
     <span>Custo ${result.cost.toFixed(2)}</span>
-    <span>Δ pesos ${incrementalInfo.deltaCost.toFixed(2)}</span>
-    <span>Prévia ${incrementalDiff.players.length} jog · ${incrementalDiff.teams.length} times</span>
-    <span>Acumulado ${cumulativeDiff.players.length} jog · ${cumulativeDiff.teams.length} times</span>
-    <span>Colateral ${incrementalInfo.collateralRoleChanges}</span>
+    <span>Delta pesos ${incrementalInfo.deltaCost.toFixed(2)}</span>
+    <span>Acumulado ${cumulativeSummary.players} jog | ${cumulativeSummary.teams} times</span>
     <span>Realidade +${incrementalInfo.realityPenalty.toFixed(2)} / acum +${cumulativeInfo.realityPenalty.toFixed(2)}</span>
   </div>`;
-  const accumulatedNote=cumulativeTotal>incrementalTotal
-    ?`<div class="calib-note">Esta sugestão altera ${incrementalTotal} itens agora; depois de aplicar, o Impacto ao vivo pode mostrar ${cumulativeTotal} porque ele soma tudo que já mudou desde o baseline carregado.</div>`
+  const accumulatedNote=cumulativeSummary.total>previewSummary.total
+    ?`<div class="calib-note">Previa: ${previewSummary.total} mudancas nesta sugestao. Impacto acumulado apos aplicar: ${cumulativeSummary.total} desde o baseline.</div>`
     :"";
   const alternatives=(result.alternatives||[]).slice(0,3).map((alt,idx)=>{
     const altDiff=alt.diff||{players:[],teams:[]};
-    const altCum=alt.cumulativeDiff||altDiff;
-    return `<div class="calib-alt"><b>Opção ${idx+2} · custo ${alt.cost.toFixed(2)}</b><span>Prévia ${altDiff.players.length} jog/${altDiff.teams.length} times · acumulado ${altCum.players.length} jog/${altCum.teams.length} times · ${esc(alt.label||"ajuste alternativo")}</span></div>`;
+    const altSummary=summarizeDiff(altDiff,alt.targetKey||result.targetKey);
+    return `<div class="calib-alt"><b>Opcao ${idx+2} | custo ${alt.cost.toFixed(2)}</b><span>${altSummary.players} jog/${altSummary.teams} times | colateral ${altSummary.collateralPlayers} | ${esc(alt.label||"ajuste alternativo")}</span></div>`;
   }).join("");
   return `<div class="calib-suggestion good">
-    <div class="calib-title">Sugestão mínima encontrada</div>
+    <div class="calib-title">Previa da IA global</div>
     ${goalInfo}
+    ${renderAuditMetrics(previewSummary,"previa")}
     ${diagnostics}
     <div class="calib-list">${changes}</div>
-    ${result.highCollateral?`<div class="calib-note" style="color:var(--warn)">⚠ Solução com alto impacto colateral (${result.costInfo?.collateralRoleChanges||'?'} jogadores com mudança de role). Revise antes de aplicar.</div>`:""}
-    <div class="calib-note">Modo ${esc(modeLabel)}${phaseNote}: ${esc(result.strategy?.explain||"")} ${esc(beforeState)} → ${esc(afterState)}. Realidade piorou em ${rareWorsened} jogadores nesta sugestão e ${cumulativeRare} no acumulado.</div>
+    ${result.highCollateral?`<div class="calib-note" style="color:var(--warn)">Solucao com alto colateral global (${previewSummary.collateralPlayers} jogadores fora do alvo).</div>`:""}
+    <div class="calib-note">Modo ${esc(modeLabel)}${phaseNote}: ${esc(result.strategy?.explain||"")} ${esc(beforeState)} -> ${esc(afterState)}.</div>
     ${accumulatedNote}
-    ${playerRows?`<div class="impact-section"><h4>Principais afetados</h4>${playerRows}</div>`:""}
-    ${alternatives?`<div class="impact-section"><h4>Alternativas próximas</h4><div class="calib-alts">${alternatives}</div></div>`:""}
-    <div class="calib-actions"><button class="btn accent" id="calibApply">Aplicar sugestão</button><button class="btn" id="calibDiscard">Descartar</button></div>
+    ${playerRows?`<div class="impact-section"><h4>Afetados principais</h4>${playerRows}</div>`:""}
+    ${alternatives?`<div class="impact-section"><h4>Alternativas globais</h4><div class="calib-alts">${alternatives}</div></div>`:""}
+    <div class="calib-actions"><button class="btn accent" id="calibApply">Aplicar sugestao</button><button class="btn" id="calibDiscard">Descartar</button></div>
   </div>`;
 }
 function buildCalibrator(){
@@ -1652,7 +1663,7 @@ function buildCalibrator(){
     if(!goal.r1&&!goal.r2&&!goal.style){toast("Selecione ao menos um alvo.");return;}
     calibLast=findCalibration(goal);buildCalibrator();
   };
-  document.getElementById("calibReset").onclick=()=>{copyInto(E.ROLE_PERFIL,DEF.ROLE);copyInto(E.NM_DEF,DEF.NM);copyInto(E.NM_COR,DEF.NM_COR);if(DEF.CONTRA)copyInto(E.ROLE_CONTRA,DEF.CONTRA);calibOverrides={};calibLast=null;refresh("all");};
+  document.getElementById("calibReset").onclick=()=>{copyInto(E.ROLE_PERFIL,DEF.ROLE);copyInto(E.NM_DEF,DEF.NM);copyInto(E.NM_COR,DEF.NM_COR);if(DEF.CONTRA)copyInto(E.ROLE_CONTRA,DEF.CONTRA);calibLast=null;refresh("all");};
   const apply=document.getElementById("calibApply");
   if(apply)apply.onclick=()=>{if(calibLast&&calibLast.ok){applyCalibChanges(calibLast.changes);calibLast=null;refresh("all");toast("Sugestão aplicada aos pesos");}};
   const discard=document.getElementById("calibDiscard");
