@@ -1,7 +1,11 @@
 {
   "name": "sandbox",
   "private": true,
-  "type": "module",
+  "scripts": {
+    "bench": "node bancada/run.js",
+    "check": "node --check game.js",
+    "lint": "eslint game.js sandbox.html bancada/*.js tools/*.js"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "eslint-plugin-html": "^8.1.4"

@@ -878,7 +878,6 @@ function ladoFitRaw(a){const r=LADO_ROLE[a.primario]||[0,0],s=(a.sub&&a.sub.lado
 const LADO_MEAN=(()=>{const ps=Object.values(POOL);let c=0,t=0;ps.forEach(p=>{const f=ladoFitRaw(p);c+=f[0];t+=f[1];});return[c/ps.length,t/ps.length];})();
 function ladoFit(j){const a=j._eng||j;if(a._lado)return a._lado;const f=ladoFitRaw(a);return a._lado=[f[0]-LADO_MEAN[0],f[1]-LADO_MEAN[1]];}
 function prepTime(t,mapa){
-  const C=CFG_SIM;
   // aceita {jogadores:[...]} ou {time:{jogadores:[...]}}; normaliza pra lista de _eng
   let lista=t.jogadores||(t.time&&t.time.jogadores)||[];
   let js=lista.filter(Boolean).map(j=>j._eng||j);
@@ -1176,10 +1175,10 @@ const tierOf=o=>o>=22?"tier-h":o>=21?"tier-s":o>=18?"tier-1":o>=15?"tier-2":"tie
 
 /* ——— ÁUDIO · Web Audio sintetizado ————————————————— */
 const Audio={ctx:null,mudo:false,master:null,VOL:.65, // master gain: volume geral um pouco mais baixo
-  init(){if(!this.ctx){try{this.ctx=new(window.AudioContext||window.webkitAudioContext)();this.master=this.ctx.createGain();this.master.gain.value=this.VOL;this.master.connect(this.ctx["destination"]);}catch(e){}}
+  init(){if(!this.ctx){try{this.ctx=new(window.AudioContext||window.webkitAudioContext)();this.master=this.ctx.createGain();this.master.gain.value=this.VOL;this.master.connect(this.ctx["destination"]);}catch{}}
     if(this.ctx&&this.ctx.state==="suspended")this.ctx.resume();
     // iOS só libera o áudio se um som tocar DENTRO do gesto do usuário — buffer mudo de 1 amostra
-    if(this.ctx&&!this._unlocked){try{const s=this.ctx.createBufferSource();s.buffer=this.ctx.createBuffer(1,1,22050);s.connect(this.master);s.start(0);}catch(e){}this._unlocked=true;}},
+    if(this.ctx&&!this._unlocked){try{const s=this.ctx.createBufferSource();s.buffer=this.ctx.createBuffer(1,1,22050);s.connect(this.master);s.start(0);}catch{}this._unlocked=true;}},
   // tom curto e brilhante (moeda/crédito)
   _blip(f,t,vol=.1,dur=.08,type="square"){const ctx=this.ctx,o=ctx.createOscillator(),g=ctx.createGain();
     o.type=type;o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+.006);g.gain.exponentialRampToValueAtTime(.0001,t+dur);

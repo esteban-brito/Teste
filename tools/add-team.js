@@ -197,7 +197,7 @@ function runPostChecks(){
   console.log("");
   try{
     execFileSync(process.execPath,[path.join(ROOT,"bancada","times.js")],{stdio:"inherit"});
-  }catch(error){
+  }catch{
     // O lint ja imprime o motivo; mantemos a execucao para mostrar avisos do parser.
   }
 }

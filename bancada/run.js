@@ -12,7 +12,7 @@ function runSuite(file){
   try{
     execFileSync(process.execPath,[path.join(__dirname,file)],{stdio:"inherit",env:process.env});
     return {ok:true,seconds:secondsSince(started)};
-  }catch(error){
+  }catch{
     return {ok:false,seconds:secondsSince(started)};
   }
 }
