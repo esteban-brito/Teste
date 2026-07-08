@@ -104,6 +104,28 @@ const ROLE_CONTRA={
   Lurker:{en:.15,tr:.04,sn:.06},
   Support:{en:.06,sn:.10,fp:.06}
 };
+const ROLE_RULES={
+  // Pesos condicionais calibraveis. Comecam em 0 para preservar o motor base;
+  // o sandbox pode ativar regras globais quando uma transicao exigir criterio mais fino.
+  Support:{
+    aggroSemUtil:{w:0,en:56,ut:56,tr:48},
+    aberturaSemUtil:{w:0,op:54,ut:58},
+    fraggerSemSuporte:{w:0,fp:58,ut:55,tr:48}
+  },
+  Entry:{
+    entradaSemImpacto:{w:0,en:58,fp:52,tr:42},
+    entradaSemAbertura:{w:0,en:58,op:50}
+  },
+  Lurker:{
+    pressaoAlta:{w:0,en:62,cl:52}
+  },
+  Rifler:{
+    baixaTroca:{w:0,fp:55,tr:42}
+  },
+  AWPer:{
+    sniperBaixo:{w:0,sn:58}
+  }
+};
 const ROLE_PAIR_BASE={
   "Entry/Support":.55,"Support/Entry":.42,
   "Entry/Lurker":.34,"Lurker/Entry":.30,
@@ -144,8 +166,31 @@ function rolePairReality(primary,secondary,p){
 function secondaryScore(primary,secondary,p,scores){
   return (scores[secondary]??0)-rolePairReality(primary,secondary,p).cost*18;
 }
+function roleRulePenalty(role,p){
+  const rules=ROLE_RULES[role]||{};let pen=0;
+  const en=p.en||0,fp=p.fp||0,tr=p.tr||0,op=p.op||0,cl=p.cl||0,sn=p.sn||0,ut=p.ut||0;
+  if(role==="Support"){
+    const r=rules.aggroSemUtil;if(r)pen+=(r.w||0)*Math.max(0,en-(r.en||0))*Math.max(0,(r.ut||0)-ut,(r.tr||0)-tr)/100;
+    const a=rules.aberturaSemUtil;if(a)pen+=(a.w||0)*Math.max(0,op-(a.op||0))*Math.max(0,(a.ut||0)-ut)/100;
+    const f=rules.fraggerSemSuporte;if(f)pen+=(f.w||0)*Math.max(0,fp-(f.fp||0))*Math.max(0,(f.ut||0)-ut,(f.tr||0)-tr)/100;
+  }
+  if(role==="Entry"){
+    const i=rules.entradaSemImpacto;if(i)pen+=(i.w||0)*Math.max(0,en-(i.en||0))*Math.max(0,(i.fp||0)-fp,(i.tr||0)-tr)/100;
+    const a=rules.entradaSemAbertura;if(a)pen+=(a.w||0)*Math.max(0,en-(a.en||0))*Math.max(0,(a.op||0)-op)/100;
+  }
+  if(role==="Lurker"){
+    const r=rules.pressaoAlta;if(r)pen+=(r.w||0)*Math.max(0,en-(r.en||0))*Math.max(0,(r.cl||0)-cl)/100;
+  }
+  if(role==="Rifler"){
+    const r=rules.baixaTroca;if(r)pen+=(r.w||0)*Math.max(0,fp-(r.fp||0))*Math.max(0,(r.tr||0)-tr)/100;
+  }
+  if(role==="AWPer"){
+    const r=rules.sniperBaixo;if(r)pen+=(r.w||0)*Math.max(0,(r.sn||0)-sn)/10;
+  }
+  return pen;
+}
 function roleAfinidade(role,p){
-  let score=dot(ROLE_PERFIL[role].afin,p)-dot(ROLE_CONTRA[role]||{},p);
+  let score=dot(ROLE_PERFIL[role].afin,p)-dot(ROLE_CONTRA[role]||{},p)-roleRulePenalty(role,p);
   if(role==="Entry"){
     const en=p.en||0,op=p.op||0,fp=p.fp||0,apoio=Math.max(op,fp);
     score+=.025*Math.min(en,op)+.015*Math.min(en,fp);
