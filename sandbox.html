@@ -990,9 +990,9 @@ async function carregarMotores(){
   if(cut<0)cut=linhas.findIndex(l=>l.includes("document.getElementById"));
   if(cut<0)throw new Error("não encontrei o início da camada de UI em game.js");
   const slice=linhas.slice(0,cut).join("\n");
-  E=new Function(slice+"\nreturn {avaliarJogador,aplicarAvaliacaoContextual,curvaOVR,distribuirRoles,forcaTime,ovrUnificado,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,ROLE_CONTRA,ROLE_RULES,MAPAS_POOL,MAPA_LADO,srand,simularMapa,forcaDoDia,TEAMS,nmOVR,roleAfinidade,NM_DEF,NM_COR,STYLE_LABEL,PLAYSTYLE_IDS};")();
+  E=new Function(slice+"\nreturn {avaliarJogador,aplicarAvaliacaoContextual,curvaOVR,distribuirRoles,forcaTime,ovrUnificado,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,MAPAS_POOL,MAPA_LADO,srand,simularMapa,forcaDoDia,TEAMS,nmOVR,roleAfinidade,NM_DEF,NM_COR,STYLE_LABEL,PLAYSTYLE_IDS};")();
   ["avaliarJogador","distribuirRoles","forcaTime","simularMapa","forcaDoDia","srand","TEAMS"].forEach(k=>{if(!E[k])throw new Error(`motor ausente: ${k}`);});
-  DEF={ROLE:clone(E.ROLE_PERFIL),NM:clone(E.NM_DEF),NM_COR:clone(E.NM_COR),CONTRA:clone(E.ROLE_CONTRA),RULES:clone(E.ROLE_RULES)};
+  DEF={ROLE:clone(E.ROLE_PERFIL),NM:clone(E.NM_DEF),NM_COR:clone(E.NM_COR),CONTRA:clone(E.ROLE_CONTRA),IGL:clone(E.IGL_ROLE_AFIN),RULES:clone(E.ROLE_RULES)};
   // aliases locais para as funções/dados importados do motor (evita E.xxx em toda a UI)
   ({nmOVR,STYLE_LABEL,PLAYSTYLE_IDS}=E);
   POOLRAW=[]; poolBySlot=new Map();
@@ -1215,13 +1215,14 @@ function setRoleWeight(role,attr,value){
   afin[attr]=Math.max(0,+value.toFixed(3));
 }
 function configSnapshot(){
-  return {role:clone(E.ROLE_PERFIL),nm:clone(E.NM_DEF),cor:clone(E.NM_COR),contra:clone(E.ROLE_CONTRA),rules:clone(E.ROLE_RULES)};
+  return {role:clone(E.ROLE_PERFIL),nm:clone(E.NM_DEF),cor:clone(E.NM_COR),contra:clone(E.ROLE_CONTRA),igl:clone(E.IGL_ROLE_AFIN),rules:clone(E.ROLE_RULES)};
 }
 function restoreConfig(snapshot){
   copyInto(E.ROLE_PERFIL,snapshot.role);
   copyInto(E.NM_DEF,snapshot.nm);
   copyInto(E.NM_COR,snapshot.cor);
   if(snapshot.contra)copyInto(E.ROLE_CONTRA,snapshot.contra);
+  if(snapshot.igl)copyInto(E.IGL_ROLE_AFIN,snapshot.igl);
   if(snapshot.rules)copyInto(E.ROLE_RULES,snapshot.rules);
 }
 function applyCalibChanges(changes){
@@ -1243,6 +1244,10 @@ function applyCalibChanges(changes){
     else if(change.type==="rule"){
       const rule=E.ROLE_RULES?.[change.role]?.[change.rule];
       if(rule)rule.w=change.to;
+    }
+    else if(change.type==="igl"){
+      if(!E.IGL_ROLE_AFIN[change.role])E.IGL_ROLE_AFIN[change.role]={};
+      E.IGL_ROLE_AFIN[change.role][change.attr]=change.to;
     }
     else setRoleWeight(change.role,change.attr,change.to);
   });
@@ -1291,6 +1296,11 @@ function makeRuleChange(role,rule,delta){
   const from=roleRuleWeight(role,rule);
   return {type:"rule",role,rule,from,to:Math.max(-2,Math.min(2,+(from+delta).toFixed(3)))};
 }
+function iglRoleWeight(role,attr){return +(E.IGL_ROLE_AFIN?.[role]?.[attr]||0);}
+function makeIglChange(role,attr,delta){
+  const from=iglRoleWeight(role,attr);
+  return {type:"igl",role,attr,from,to:Math.max(-1,Math.min(1,+(from+delta).toFixed(3)))};
+}
 function normalizedStyleProfile(s6){
   const total=Object.values(s6).reduce((sum,value)=>sum+Math.max(0,value||0),0)||1;
   const out={};
@@ -1329,6 +1339,7 @@ function candidateLabel(changes){
     if(change.type==="ovr")return`${change.role}.OVR.${change.attr.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     if(change.type==="wr")return`${change.role}.wR ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     if(change.type==="rule")return`${change.role}.REGRA.${change.rule} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
+    if(change.type==="igl")return`IGL.${change.role}.${change.attr.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     return`${change.role}.${change.attr.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
   }).join(" | ");
 }
@@ -1492,6 +1503,16 @@ function roleLeverBank(target,current,raw,opts){
   });
   levers.push({weight:16,make:d=>makeRoleWrChange(target,-d*.08),label:`${target}.wR-`});
   if(current&&current!==target)levers.push({weight:12,make:d=>makeRoleWrChange(current,d*.06),label:`${current}.wR+`});
+  if(raw.isIGL){
+    targetAttrs.forEach((attr,idx)=>{
+      const v=attrValue(raw,attr), weight=(attrLimit-idx)*Math.max(8,v)*1.4;
+      levers.push({weight,make:d=>makeIglChange(target,attr,d*.8),label:`IGL.${target}.${attr}+`});
+    });
+    currentAttrs.forEach((attr,idx)=>{
+      const v=attrValue(raw,attr), weight=(attrLimit-idx)*Math.max(8,v)*1.1;
+      levers.push({weight,make:d=>makeIglChange(current,attr,-d*.5),label:`IGL.${current}.${attr}-`});
+    });
+  }
   Object.keys(E.ROLE_RULES?.[current]||{}).forEach(rule=>{
     levers.push({weight:28,make:d=>makeRuleChange(current,rule,d*.75),label:`${current}.rule.${rule}+`});
   });
@@ -1555,7 +1576,7 @@ const CALIB_STRATEGIES={
   ia:{
     label:"IA",
     phases:[{maxDelta:.12},{maxDelta:.22},{maxDelta:.45},{maxDelta:.85},{maxDelta:1.25}],
-    weights:{delta:7,changed:.18,role:.7,style:.8,reality:9,rare:7,collateral:95,team:5,ovr:5,isolated:1.5},
+    weights:{delta:7,changed:.18,role:.7,style:.8,reality:9,rare:7,collateral:95,team:5,ovr:5,isolated:1.5,broadCut:170,thinRule:-1.8},
     priority:["collateralRoleChanges","teamChanges","rareWorsened","realityPenalty","ovrImpact","styleChanges","deltaCost","changed"],
     attrLimit:7,comboDepth:3,deepLeverLimit:18,pairLimit:13,tripleLimit:8,randomCandidates:2600,maxRandomChanges:5,randomDelta:.95,maxTests:22000,maxMs:9000,sliceMs:28,
     explain:"busca profunda: testa alavancas globais, contra-pesos e combinacoes antes de escolher o menor dano."
@@ -1563,7 +1584,7 @@ const CALIB_STRATEGIES={
   realista:{
     label:"Realista",
     phases:[{maxDelta:.14},{maxDelta:.28},{maxDelta:.50},{maxDelta:.72}],
-    weights:{delta:11,changed:.35,role:1.6,style:2.4,reality:22,rare:12,collateral:28,team:1.8,ovr:2.6,isolated:55},
+    weights:{delta:11,changed:.35,role:1.6,style:2.4,reality:22,rare:12,collateral:28,team:1.8,ovr:2.6,isolated:55,broadCut:95,thinRule:-.8},
     priority:["rareWorsened","realityPenalty","isolatedTarget","collateralRoleChanges","teamChanges","ovrImpact","deltaCost","changed"],
     attrLimit:6,comboDepth:2,deepLeverLimit:12,pairLimit:9,tripleLimit:0,randomCandidates:850,maxRandomChanges:4,randomDelta:.55,maxTests:9000,maxMs:5500,sliceMs:28,stopOnFirst:false,
     explain:"busca sistemica: prefere mudancas plausiveis e penaliza ajuste que parece servir so ao alvo."
@@ -1585,7 +1606,9 @@ function calibrationMetrics(changes,diff,goalKey){
   const targetChanged=goalKey?diff.players.some(p=>p.key===goalKey):false;
   const isolatedTarget=targetChanged&&diff.players.length===1&&diff.teams.length===0?1:0;
   const teamChanges=diff.teams.length;
-  return {changed,deltaCost,roleChanges,styleChanges,realityPenalty,rareWorsened,ovrImpact,collateralRoleChanges,teamChanges,isolatedTarget};
+  const broadCut=changes.reduce((sum,change)=>sum+(!change.type&&change.to<change.from?change.from-change.to:0),0);
+  const thinRule=changes.reduce((sum,change)=>sum+(change.type==="igl"||change.type==="rule"?Math.abs(change.to-change.from):0),0);
+  return {changed,deltaCost,roleChanges,styleChanges,realityPenalty,rareWorsened,ovrImpact,collateralRoleChanges,teamChanges,isolatedTarget,broadCut,thinRule};
 }
 function scoreCalibration(metrics,strategy){
   const w=strategy.weights;
@@ -1599,6 +1622,8 @@ function scoreCalibration(metrics,strategy){
     metrics.ovrImpact*w.ovr+
     metrics.teamChanges*w.team+
     metrics.isolatedTarget*w.isolated+
+    metrics.broadCut*(w.broadCut||0)+
+    metrics.thinRule*(w.thinRule||0)+
     collateralPenalty;
 }
 function calibrationCost(changes,diff,goalKey,strategy){
@@ -1807,6 +1832,7 @@ function renderCalibResult(result,goal){
     if(change.type==="ovr")return `<div class="calib-change"><b>${change.role}.OVR.${change.attr.toUpperCase()}</b><span>${change.from.toFixed(2)} -> ${change.to.toFixed(2)}</span></div>`;
     if(change.type==="wr")return `<div class="calib-change"><b>${change.role}.wR</b><span>${change.from.toFixed(2)} -> ${change.to.toFixed(2)}</span></div>`;
     if(change.type==="rule")return `<div class="calib-change"><b>${change.role}.REGRA.${esc(change.rule)}</b><span>${change.from.toFixed(2)} -> ${change.to.toFixed(2)}</span></div>`;
+    if(change.type==="igl")return `<div class="calib-change"><b>IGL.${change.role}.${change.attr.toUpperCase()}</b><span>${change.from.toFixed(2)} -> ${change.to.toFixed(2)}</span></div>`;
     return `<div class="calib-change"><b>${change.role}.${change.attr.toUpperCase()}</b><span>${change.from.toFixed(2)} -> ${change.to.toFixed(2)}</span></div>`;
   }).join("");
   const modeLabel=result.strategy?.label||({ia:"IA",realista:"Realista"}[calibMode]||calibMode);
@@ -1859,7 +1885,7 @@ function buildCalibrator(){
     ["realista","Realista"]
   ].map(([id,label])=>`<option value="${id}" ${id===calibMode?"selected":""}>${label}</option>`).join("");
   const styleOptions=`<option value="">Qualquer</option>${PLAYSTYLE_IDS.map(id=>`<option value="${STYLE_LABEL(id)}" ${STYLE_LABEL(id)===calibTargetStyle?"selected":""}>${STYLE_LABEL(id)}</option>`).join("")}`;
-  const curGoal={r1:calibTargetRole,r2:calibTargetRole2,style:calibTargetStyle};
+  const curGoal={r1:isIGL?"IGL":calibTargetRole,r2:calibTargetRole2,style:calibTargetStyle};
   const role1Html=isIGL
     ?`<div class="calib-field"><label>Role1</label><select id="calibRole" disabled><option selected>IGL</option></select></div>`
     :`<div class="calib-field"><label>Role1</label><select id="calibRole">${roleOptions(calibTargetRole)}</select></div>`;
@@ -1905,7 +1931,7 @@ function buildCalibrator(){
       buildCalibrator();
     }
   };
-  document.getElementById("calibReset").onclick=()=>{copyInto(E.ROLE_PERFIL,DEF.ROLE);copyInto(E.NM_DEF,DEF.NM);copyInto(E.NM_COR,DEF.NM_COR);if(DEF.CONTRA)copyInto(E.ROLE_CONTRA,DEF.CONTRA);if(DEF.RULES)copyInto(E.ROLE_RULES,DEF.RULES);calibLast=null;refresh("all");};
+  document.getElementById("calibReset").onclick=()=>{copyInto(E.ROLE_PERFIL,DEF.ROLE);copyInto(E.NM_DEF,DEF.NM);copyInto(E.NM_COR,DEF.NM_COR);if(DEF.CONTRA)copyInto(E.ROLE_CONTRA,DEF.CONTRA);if(DEF.IGL)copyInto(E.IGL_ROLE_AFIN,DEF.IGL);if(DEF.RULES)copyInto(E.ROLE_RULES,DEF.RULES);calibLast=null;refresh("all");};
   const apply=document.getElementById("calibApply");
   if(apply)apply.onclick=()=>{if(calibLast&&calibLast.ok){applyCalibChanges(calibLast.changes);calibLast=null;refresh("all");toast("Sugestão aplicada aos pesos");}};
   const discard=document.getElementById("calibDiscard");
