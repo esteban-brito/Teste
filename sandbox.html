@@ -1195,8 +1195,14 @@ function rolePair(p){
   return {r1:parts.r1,r2:parts.r2,style:STYLE_LABEL(p.playstyle||"")};
 }
 function goalMet(player,goal){
-  if(goal.r1&&rolePairParts(player).r1!==goal.r1)return false;
-  if(goal.r2&&rolePairParts(player).r2!==goal.r2)return false;
+  const parts=rolePairParts(player);
+  if(player.isIGL){
+    if(goal.r1&&goal.r1!==parts.r1)return false;
+    if(goal.r2&&parts.r2!==goal.r2)return false;
+  }else{
+    if(goal.r1&&parts.r1!==goal.r1)return false;
+    if(goal.r2&&parts.r2!==goal.r2)return false;
+  }
   if(goal.style&&STYLE_LABEL(player.playstyle)!==goal.style)return false;
   return true;
 }
@@ -1304,7 +1310,7 @@ function generateRoleCandidates(target,current,raw){
   });
 }
 function generateRole2Candidates(target2,current1,raw){
-  const attrs=candidateAttrsFor(target2,raw), currentAttrs=candidateAttrsFor(current1,raw);
+  const attrs=candidateAttrsFor(target2,raw), currentAttrs=current1==="IGL"?[]:candidateAttrsFor(current1,raw);
   const deltas=[.03,.06,.09,.12,.16];
   const out=[];
   deltas.forEach(delta=>{
@@ -1333,7 +1339,9 @@ function generateRole2Candidates(target2,current1,raw){
 }
 function generateStyleCandidates(targetStyle,raw,role,goalRole1){
   const evalRole=goalRole1||role;
-  const s6=nmOVR(raw,evalRole).s6;
+  const nm=nmOVR(raw,evalRole);
+  if(!nm||!nm.s6)return[];
+  const s6=nm.s6;
   const recipe=E.NM_DEF[targetStyle];
   if(!recipe||!s6)return[];
   const keys=Object.keys(recipe.w);
@@ -1359,11 +1367,15 @@ function generateStyleCandidates(targetStyle,raw,role,goalRole1){
     return changes.some(change=>Math.abs(change.to-change.from)>1e-9);
   });
 }
-function generateGoalCandidates(goal,current,raw){
+function generateGoalCandidates(goal,current,raw,isIGL){
   const all=[];
-  if(goal.r1&&goal.r1!==current.r1)all.push(...generateRoleCandidates(goal.r1,current.r1,raw));
-  if(goal.r2&&goal.r2!==current.r2)all.push(...generateRole2Candidates(goal.r2,current.r1,raw));
-  if(goal.style&&goal.style!==current.style)all.push(...generateStyleCandidates(goal.style,raw,current.r1,goal.r1));
+  if(isIGL&&goal.r2&&goal.r2!==current.r2){
+    all.push(...generateRoleCandidates(goal.r2,current.r2,raw));
+  }else if(!isIGL){
+    if(goal.r1&&goal.r1!==current.r1)all.push(...generateRoleCandidates(goal.r1,current.r1,raw));
+    if(goal.r2&&goal.r2!==current.r2)all.push(...generateRole2Candidates(goal.r2,current.r1,raw));
+  }
+  if(goal.style&&goal.style!==current.style)all.push(...generateStyleCandidates(goal.style,raw,current.r1||current.r2,goal.r1));
   return all;
 }
 function calibrationCost(changes,diff){
@@ -1388,9 +1400,12 @@ function findCalibration(goal){
   if(loadedIdx==null)return {ok:false,message:"Carregue um jogador antes de calibrar."};
   const raw=playerAt(loadedIdx), beforeConfig=configSnapshot(), base=impactSnapshot(), before=mainPlayer();
   const current=rolePair(before);
-  const candidates=generateGoalCandidates(goal,current,raw);
+  const isIGL=before.isIGL;
+  if(isIGL&&goal.r1&&goal.r1!=="IGL")return {ok:false,message:"IGL não pode mudar de papel primário via pesos. Altere a role2 (papel de combate).",before,goal};
+  const candidates=generateGoalCandidates(goal,current,raw,isIGL);
   let best=null, closest=null;
   const evalOne=(changes,label)=>{
+    if(!changes||!changes.length)return;
     restoreConfig(beforeConfig);
     applyCalibChanges(changes);
     const after=mainPlayer(), now=impactSnapshot(), diff=snapshotDiff(base,now);
@@ -1401,16 +1416,17 @@ function findCalibration(goal){
     if(!closest||result.cost<closest.cost)closest=result;
   };
   candidates.forEach(changes=>evalOne(changes));
-  // Phase 2: style-only candidates and combined overlays
   const needStyle=goal.style&&goal.style!==current.style;
   if(needStyle&&(!best||goal.style&&STYLE_LABEL(best.after.playstyle)!==goal.style)){
-    const sCands=generateStyleCandidates(goal.style,raw,current.r1,goal.r1);
+    const combatRole=isIGL?current.r2:(goal.r1||current.r1);
+    const sCands=generateStyleCandidates(goal.style,raw,current.r1,combatRole);
     sCands.forEach(changes=>evalOne(changes));
     const top=[best,closest].filter(Boolean).slice(0,2);
     top.forEach(roleSol=>{
+      if(!roleSol.changes||!roleSol.changes.length)return;
       sCands.forEach(sChanges=>{
-        const combined=[...roleSol.changes,...sChanges];
-        evalOne(combined,candidateLabel(combined));
+        if(!sChanges||!sChanges.length)return;
+        evalOne([...roleSol.changes,...sChanges]);
       });
     });
   }
@@ -1452,6 +1468,7 @@ function renderCalibResult(result,goal){
 function buildCalibrator(){
   const box=document.getElementById("calibbox");if(!box)return;
   const player=loadedIdx==null?evaluatePlayer(jogadorAtual()):mainPlayer();
+  const isIGL=player.isIGL;
   const roleOptions=r=>ROLES.map(role=>`<option value="${role}" ${role===r?"selected":""}>${role}</option>`).join("");
   const anyRoleOptions=r=>`<option value="">Qualquer</option>${ROLES.map(role=>`<option value="${role}" ${role===r?"selected":""}>${role}</option>`).join("")}`;
   const modeOptions=[
@@ -1461,6 +1478,11 @@ function buildCalibrator(){
   ].map(([id,label])=>`<option value="${id}" ${id===calibMode?"selected":""}>${label}</option>`).join("");
   const styleOptions=`<option value="">Qualquer</option>${PLAYSTYLE_IDS.map(id=>`<option value="${STYLE_LABEL(id)}" ${STYLE_LABEL(id)===calibTargetStyle?"selected":""}>${STYLE_LABEL(id)}</option>`).join("")}`;
   const curGoal={r1:calibTargetRole,r2:calibTargetRole2,style:calibTargetStyle};
+  const role1Html=isIGL
+    ?`<div class="calib-field"><label>Role1</label><select id="calibRole" disabled><option selected>IGL</option></select></div>`
+    :`<div class="calib-field"><label>Role1</label><select id="calibRole">${roleOptions(calibTargetRole)}</select></div>`;
+  const role2Label=isIGL?"Papel de combate":"Role2";
+  const role2Html=`<div class="calib-field"><label>${role2Label}</label><select id="calibRole2">${anyRoleOptions(calibTargetRole2)}</select></div>`;
   box.innerHTML=`<div class="calib-panel">
     <div class="calib-summary">
       <div class="calib-metric"><div class="l">Jogador</div><div class="v">${esc(player.nome||state.nome||"Jogador")}</div></div>
@@ -1468,22 +1490,22 @@ function buildCalibrator(){
       <div class="calib-metric"><div class="l">Estilo</div><div class="v">${esc(STYLE_LABEL(player.playstyle))}</div></div>
     </div>
     <div class="calib-target">
-      <div class="calib-field"><label>Role1</label><select id="calibRole">${roleOptions(calibTargetRole)}</select></div>
-      <div class="calib-field"><label>Role2</label><select id="calibRole2">${anyRoleOptions(calibTargetRole2)}</select></div>
+      ${role1Html}
+      ${role2Html}
       <div class="calib-field"><label>Estilo</label><select id="calibStyle">${styleOptions}</select></div>
       <div class="calib-field"><label>Modo</label><select id="calibMode">${modeOptions}</select></div>
       <button class="btn accent" id="calibSuggest">Sugerir ajuste</button>
     </div>
-    <div class="calib-note">${player.isIGL?"IGL: role1 fixo, role2 é o papel de combate. ":""}O calibrador ajusta pesos de afinidade e receitas de playstyle, mede impacto global e penaliza pares/estilos raros. Stats do jogador nunca são alterados.</div>
+    <div class="calib-note">${isIGL?"IGL: role1 fixo, role2 é o papel de combate. ":""}O calibrador ajusta pesos de afinidade e receitas de playstyle, mede impacto global e penaliza pares/estilos raros. Stats do jogador nunca são alterados.</div>
     <div id="calibResult">${renderCalibResult(calibLast,curGoal)}</div>
     <div class="calib-actions"><button class="btn" id="calibReset">Resetar pesos</button></div>
   </div>`;
-  document.getElementById("calibRole").onchange=function(){calibTargetRole=this.value;calibLast=null;buildCalibrator();};
+  if(!isIGL)document.getElementById("calibRole").onchange=function(){calibTargetRole=this.value;calibLast=null;buildCalibrator();};
   document.getElementById("calibRole2").onchange=function(){calibTargetRole2=this.value;calibLast=null;buildCalibrator();};
   document.getElementById("calibStyle").onchange=function(){calibTargetStyle=this.value;calibLast=null;buildCalibrator();};
   document.getElementById("calibMode").onchange=function(){calibMode=this.value;calibLast=null;buildCalibrator();};
   document.getElementById("calibSuggest").onclick=()=>{
-    const goal={r1:calibTargetRole,r2:calibTargetRole2,style:calibTargetStyle};
+    const goal={r1:isIGL?"IGL":calibTargetRole,r2:calibTargetRole2,style:calibTargetStyle};
     if(!goal.r1&&!goal.r2&&!goal.style){toast("Selecione ao menos um alvo.");return;}
     calibLast=findCalibration(goal);buildCalibrator();
   };
