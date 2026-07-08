@@ -1169,13 +1169,13 @@ function renderImpactPanel(){
       player.roleChanged?`${player.old.role} → ${player.role}`:player.role,
       player.styleChanged?`${player.old.style} → ${player.style}`:player.style
     ].join(" · ");
-    const cls=player.dOvr>0?"up":player.dOvr<0?"down":"";
-    return `<div class="impact-row"><div class="impact-main"><div class="impact-name">${esc(player.nome)} <span style="color:var(--dim);font-weight:600">${esc(player.team)}</span></div><div class="impact-meta">${esc(meta)}</div></div><div class="impact-delta ${cls}">${signedDelta(player.dOvr)}</div></div>`;
+    const deltaCls=player.dOvr>0?"up":player.dOvr<0?"down":"";
+    return `<div class="impact-row"><div class="impact-main"><div class="impact-name">${esc(player.nome)} <span style="color:var(--dim);font-weight:600">${esc(player.team)}</span></div><div class="impact-meta">${esc(meta)} · OVR ${player.old.ovr} → ${player.ovr} <span class="${deltaCls}">(${signedDelta(player.dOvr)})</span></div></div></div>`;
   }).join("");
   const teamRows=report.teams.slice(0,5).map(team=>{
-    const cls=team.dEfet>0?"up":team.dEfet<0?"down":"";
-    const meta=`Bruta ${signedDelta(team.dBruta)} · Quim ${signedDelta(team.dQuim*100,0)}pp`;
-    return `<div class="impact-row"><div class="impact-main"><div class="impact-name">${esc(team.nome)}</div><div class="impact-meta">${esc(meta)}</div></div><div class="impact-delta ${cls}">${signedDelta(team.dEfet)}</div></div>`;
+    const deltaCls=team.dEfet>0?"up":team.dEfet<0?"down":"";
+    const meta=`Bruta ${team.old.bruta} → ${team.bruta} · Quim ${(team.old.quim*100).toFixed(0)}% → ${(team.quim*100).toFixed(0)}%`;
+    return `<div class="impact-row"><div class="impact-main"><div class="impact-name">${esc(team.nome)}</div><div class="impact-meta">${esc(meta)}</div></div><div class="impact-delta ${deltaCls}">Efet ${team.old.efet} → ${team.efet}</div></div>`;
   }).join("");
   const empty=!changedPlayers&&!changedTeams;
   return `<div class="liveimpact">
@@ -1447,7 +1447,8 @@ function renderCalibResult(result,goal){
   const playerRows=result.diff.players.slice(0,5).map(player=>{
     const risk=player.rareWorsened?` · risco +${player.dReality.toFixed(2)}`:"";
     const meta=[player.roleChanged?`${player.old.role} → ${player.role}`:player.role,player.styleChanged?`${player.old.style} → ${player.style}`:player.style].join(" · ")+risk;
-    return `<div class="calib-change"><b>${esc(player.nome)}</b><span>${esc(meta)} · OVR ${signedDelta(player.dOvr)}</span></div>`;
+    const deltaCls=player.dOvr>0?"up":player.dOvr<0?"down":"";
+    return `<div class="calib-change"><b>${esc(player.nome)}</b><span>${esc(meta)} · OVR ${player.old.ovr} → ${player.ovr} <span class="${deltaCls}">(${signedDelta(player.dOvr)})</span></span></div>`;
   }).join("");
   const changes=result.changes.map(change=>{
     if(change.type==="nm")return `<div class="calib-change"><b>NM.${change.axis.toUpperCase()}</b><span>${change.from.toFixed(2)} → ${change.to.toFixed(2)}</span></div>`;
