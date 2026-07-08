@@ -104,6 +104,7 @@ const ROLE_CONTRA={
   Lurker:{en:.15,tr:.04,sn:.06},
   Support:{en:.06,sn:.10,fp:.06}
 };
+const IGL_ROLE_AFIN={AWPer:{},Rifler:{},Entry:{},Lurker:{},Support:{}};
 const ROLE_RULES={
   // Pesos condicionais calibraveis. Comecam em 0 para preservar o motor base;
   // o sandbox pode ativar regras globais quando uma transicao exigir criterio mais fino.
@@ -191,6 +192,7 @@ function roleRulePenalty(role,p){
 }
 function roleAfinidade(role,p){
   let score=dot(ROLE_PERFIL[role].afin,p)-dot(ROLE_CONTRA[role]||{},p)-roleRulePenalty(role,p);
+  if(p.isIGL)score+=dot(IGL_ROLE_AFIN[role]||{},p);
   if(role==="Entry"){
     const en=p.en||0,op=p.op||0,fp=p.fp||0,apoio=Math.max(op,fp);
     score+=.025*Math.min(en,op)+.015*Math.min(en,fp);
