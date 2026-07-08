@@ -970,10 +970,13 @@ async function carregarMotores(){
   const cut=linhas.findIndex(l=>l.includes("document.getElementById"));
   if(cut<0)throw new Error("não encontrei o início da camada de UI em game.js");
   const slice=linhas.slice(0,cut).join("\n");
-  E=new Function(slice+"\nreturn {avaliarJogador,curvaOVR,dot,ratingScore,distribuirRoles,forcaTime,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,CFG_QUIMICA,CFG_SIM,CFG_FA,MAPAS_POOL,MAPA_LADO,srand,simularMapa,simularSerie,forcaDoDia,TEAMS};")();
+  E=new Function(slice+"\nreturn {avaliarJogador,curvaOVR,dot,ratingScore,distribuirRoles,forcaTime,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,CFG_QUIMICA,CFG_SIM,CFG_FA,MAPAS_POOL,MAPA_LADO,srand,simularMapa,simularSerie,forcaDoDia,TEAMS,styleMatch,nmOVR,jokerProfile,badBaiterProfile,nmStats6,stats7,coringaWR,subArquetipo,roleAfinidade,classificar,ehCoringa,aplicarAvaliacaoContextual,quimicaPlaystyles,quimicaComposicao,ovrTreinador,NM_DEF,NM_COR,STYLE_KEYS,STYLE_LABEL,STYLE_ID,STYLE_RECIPE,PLAYSTYLES,PLAYSTYLE_IDS,NM_AXES,STYLE_CONTRA,STYLE_ROLE_FIT};")();
   ["avaliarJogador","distribuirRoles","forcaTime","simularMapa","forcaDoDia","srand","TEAMS"].forEach(k=>{if(!E[k])throw new Error(`motor ausente: ${k}`);});
   DEF={CFG:clone(E.CFG_AVALIACAO),ROLE:clone(E.ROLE_PERFIL),QUI:clone(E.CFG_QUIMICA)};   // padrões p/ reset e comparação
   DEF.SIM=clone(E.CFG_SIM); DEF.FA=clone(E.CFG_FA);
+  DEF.NM=clone(E.NM_DEF); DEF.NM_COR=clone(E.NM_COR);
+  // aliases locais para as funções/dados importados do motor (evita E.xxx em toda a UI)
+  const {nmOVR,STYLE_LABEL,STYLE_ID,PLAYSTYLES}=E;
   POOLRAW=[]; poolBySlot=new Map();
   E.TEAMS.forEach((t,ti)=>t.jogadores.forEach((j,pi)=>{const e=j._eng;
     const idx=POOLRAW.length;
@@ -1017,111 +1020,7 @@ function copyInto(dst,src){
 }
 function toast(msg){let t=document.querySelector(".toast");if(!t){t=document.createElement("div");t.className="toast";document.body.appendChild(t);}
   t.textContent=msg;requestAnimationFrame(()=>t.classList.add("show"));clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),2600);}
-/* Modelo local de playstyles do sandbox. Mantem a leitura sincronizada com game.js. */
-const NM_AXES=[["fogo","Fogo"],["ent","Entrada"],["ab","Abertura"],["tr","Trade"],["cl","Clutch"],["ut","Utilitario"]];
-const NM_DEF={
-  "Agressivo":    {w:{ent:.45,ab:.30,fogo:.15,tr:.10}, wR:.40},
-  "Spacetaker":   {w:{ab:.35,fogo:.35,ent:.30},        wR:.52},
-  "Trader":       {w:{tr:.45,fogo:.30,ut:.25},         wR:.48},
-  "Playmaker":    {w:{fogo:.50,ab:.30,cl:.10,tr:.10},  wR:.60},
-  "Infiltrador":  {w:{cl:.40,ab:.30,fogo:.30},         wR:.52},
-  "Baiter":       {w:{tr:.40,cl:.30,fogo:.30},         wR:.32},
-  "Clutcher":     {w:{cl:.55,fogo:.45},                wR:.52},
-  "Facilitador":  {w:{ut:.45,tr:.30,ab:.25},           wR:.40},
-  "Cerebral":     {w:{ab:.35,ut:.35,cl:.30},           wR:.52},
-  "Ancora":       {w:{cl:.40,ut:.35,tr:.25},           wR:.45}};
-const STYLE_CONTRA={
-  aggressive:{cl:.14,ut:.08,sn:.06},
-  spacetaker:{cl:.08,ut:.05,sn:.06},
-  trader:{ent:.10,ab:.08,sn:.06},
-  playmaker:{ut:.06,tr:.04,sn:.06},
-  infiltrator:{ent:.18,tr:.08,sn:.06},
-  baiter:{ent:.28,ab:.16,ut:.08,sn:.06},
-  clutcher:{ent:.14,ab:.08,tr:.06,sn:.06},
-  support:{fogo:.10,ent:.12,sn:.08},
-  cerebral:{ent:.16,fogo:.06,sn:.06},
-  anchor:{ent:.24,ab:.12,fogo:.06,sn:.06}
-};
-const STYLE_ROLE_FIT={
-  AWPer:{spacetaker:.06,clutcher:.07,playmaker:.055,infiltrator:.04,baiter:.02,anchor:.02,aggressive:.02},
-  Rifler:{spacetaker:.055,aggressive:.055,trader:.045,infiltrator:.03,playmaker:.03},
-  Entry:{aggressive:.215,spacetaker:.18,trader:.07,playmaker:.045,infiltrator:-.08,clutcher:-.10,cerebral:-.16,baiter:-.28,anchor:-.30,support:-.12},
-  Lurker:{infiltrator:.11,playmaker:.08,clutcher:.12,cerebral:.09,baiter:.06,anchor:.06,spacetaker:-.08,aggressive:-.16},
-  Support:{support:.20,trader:.13,cerebral:.13,anchor:.12,clutcher:.04,aggressive:-.10,spacetaker:-.12,playmaker:-.04},
-  IGL:{cerebral:.12,support:.10,trader:.06,playmaker:.04}
-};
-const NM_COR_DEF={pisoMin:45,spreadMax:35}; // Coringa: 5 de 7 stats acima do piso, tolera 1 fraco
-let NM=clone(NM_DEF), NM_COR=clone(NM_COR_DEF);
-function coringaWR(){const ids=PLAYSTYLE_IDS;let s=0,n=0;ids.forEach(id=>{const r=STYLE_RECIPE(id);if(r){s+=r.wR;n++;}});return n?s/n:.45;}
-const STYLE_KEYS={
-  aggressive:"Agressivo",spacetaker:"Spacetaker",trader:"Trader",playmaker:"Playmaker",infiltrator:"Infiltrador",
-  baiter:"Baiter",clutcher:"Clutcher",support:"Facilitador",cerebral:"Cerebral",anchor:Object.keys(NM_DEF).find(k=>k.includes("ncora"))||"Ancora"
-};
-const PLAYSTYLES={
-  aggressive:{label:"Agressivo",traits:{pace:1,space:.7,trade:.2,structure:-.1,ct:-.2,t:.8}},
-  spacetaker:{label:"Spacetaker",traits:{pace:.8,space:1,trade:0,structure:-.2,ct:-.2,t:1}},
-  trader:{label:"Trader",traits:{pace:.2,space:.1,trade:1,structure:.4,ct:.2,t:.5}},
-  playmaker:{label:"Playmaker",traits:{pace:.4,space:.8,trade:.1,structure:-.1,ct:.1,t:.6}},
-  infiltrator:{label:"Infiltrador",traits:{pace:-.2,space:.8,trade:-.2,structure:.1,ct:.3,t:.3}},
-  baiter:{label:"Baiter",traits:{pace:-.5,space:-.4,trade:.4,structure:-.2,ct:.2,t:-.3}},
-  clutcher:{label:"Clutcher",traits:{pace:-.1,space:.1,trade:0,structure:.2,ct:.5,t:.1}},
-  support:{label:"Facilitador",traits:{pace:.1,space:.2,trade:.6,structure:1,ct:.5,t:.5}},
-  cerebral:{label:"Cerebral",traits:{pace:-.1,space:.4,trade:.2,structure:.9,ct:.4,t:.3}},
-  anchor:{label:"Ancora",traits:{pace:-.6,space:-.2,trade:.2,structure:.8,ct:1,t:-.3}}
-};
-const PLAYSTYLE_IDS=Object.keys(PLAYSTYLES);
-const STYLE_LABEL=id=>id==="joker"?"Coringa":(PLAYSTYLES[id]?.label||id);
-const STYLE_ID=x=>x==="Coringa"||x==="joker"?"joker":(PLAYSTYLE_IDS.find(id=>id===x||STYLE_KEYS[id]===x||PLAYSTYLES[id].label===x)||x);
-const STYLE_RECIPE=id=>NM[STYLE_KEYS[id]];
 
-function nmStats6(p,role){const fogo=role==="AWPer"?(p.sn||0):(p.fp||0);
-  return {fogo,ent:p.en||0,ab:p.op||0,tr:p.tr||0,cl:p.cl||0,ut:p.ut||0};}
-function stats7(p){return [p.fp||0,p.en||0,p.tr||0,p.op||0,p.cl||0,p.sn||0,p.ut||0];}
-function badBaiterProfile(p){
-  if(p.isIGL)return false;
-  const above=["fp","en","tr","op","cl","sn","ut"].filter(k=>(p[k]||0)>50).length;
-  return above<=1&&(p.rating||0)<=1.00&&(p.fp||0)<=35&&(p.en||0)<=45&&
-    (p.tr||0)<=25&&(p.cl||0)<=55&&(p.sn||0)<=30&&(p.ut||0)<=60;
-}
-function jokerProfile(s7){
-  const sorted=[...s7].sort((a,b)=>b-a);
-  const below=s7.filter(v=>v<NM_COR.pisoMin).length;
-  const min5=sorted[4]||0, spread=(sorted[0]||0)-(sorted[4]||0);
-  const ok=below<=1&&min5>=NM_COR.pisoMin&&spread<=NM_COR.spreadMax;
-  const mean=s7.reduce((a,b)=>a+b,0)/7;
-  const variance=s7.reduce((s,v)=>s+(v-mean)**2,0)/7;
-  const score=Math.max(0,Math.min(1,1-variance/800));
-  return {ok,sorted,below,min5,spread,mean,score};
-}
-function styleMatch(s6,s7,role="Rifler",p=null){
-  if(p&&badBaiterProfile(p))return {id:"baiter",score:.9,second:.7,margin:.2,clarity:.85};
-  const jp=jokerProfile(s7);
-  if(jp.ok)return {id:"joker",score:.88+.12*jp.score,second:.72,margin:.16+.12*jp.score,clarity:.75+.25*jp.score};
-  const scores=[];
-  for(const id of PLAYSTYLE_IDS){if(id==="baiter")continue;const rec=STYLE_RECIPE(id);if(!rec)continue;const w=rec.w;let dot=0,nw=0,ns=0;
-    for(const [k] of NM_AXES){const wi=w[k]||0,si=s6[k];dot+=wi*si;nw+=wi*wi;ns+=si*si;}
-    let score=dot/(Math.sqrt(nw*ns)+1e-9);
-    const contra=STYLE_CONTRA[id]||{};let cd=0,cw=0;
-    for(const k in contra){cd+=contra[k]*(s6[k]||0);cw+=contra[k];}
-    score-=cw?cd/(100*cw)*.42:0;
-    score+=(STYLE_ROLE_FIT[role]?.[id]||0);
-    scores.push({id,score});}
-  scores.sort((a,b)=>b.score-a.score);
-  const best=scores[0]||{id:"playmaker",score:0}, second=scores[1]?.score||0;
-  return {...best,second,margin:best.score-second,clarity:Math.max(0,Math.min(1,(best.score-second)*5))};
-}
-function nmOVR(p,role,forced){
-  const s6=nmStats6(p,role), s7=stats7(p), match=forced?{id:STYLE_ID(forced),score:1,second:.75,margin:.25,clarity:.9}:styleMatch(s6,s7,role,p);
-  const style=match.id, rating=E.ratingScore(p.rating);
-  let wR, statScore;
-  const roleRec=E.ROLE_PERFIL[role]||E.ROLE_PERFIL.Rifler, roleScore=E.dot(roleRec.ovr||{},p);
-  if(style==="joker"){wR=Math.max(.35,Math.min(.72,.65*(roleRec.wR??coringaWR())+.35*coringaWR()));const jp=jokerProfile(s7);const top5=jp.sorted.slice(0,5);const meanTop5=top5.reduce((a,b)=>a+b,0)/5;const meanAll=s7.reduce((a,b)=>a+b,0)/7;const styleScore=.55*meanTop5+.35*jp.min5+.10*(meanAll-meanTop5);statScore=.58*roleScore+.42*styleScore;}
-  else{const rec=STYLE_RECIPE(style);wR=Math.max(.35,Math.min(.72,.65*(roleRec.wR??rec.wR)+.35*rec.wR));const styleScore=E.dot(rec.w,s6);statScore=.58*roleScore+.42*styleScore;}
-  const clarityAdj=(style==="joker"?1.2:(match.clarity-.45)*2.2);
-  const roleDutyAdj=Math.max(-2.5,Math.min(1.5,(statScore-55)/18));
-  const core=wR*rating+(1-wR)*statScore+clarityAdj+roleDutyAdj;
-  return {style,ovr:E.curvaOVR(core),wR,statScore,core,s6,matchScore:match.score,matchMargin:match.margin};
-}
 function capOvr(ovr,isIGL=false){return Math.min(isIGL?20:22,Math.max(1,ovr));}
 const IGL_CREDITO_SHARE=0.55;
 function isStarPlayer(p,avgOvr){return p.ovr>=avgOvr+3||p.ovr>=20;}
@@ -1349,12 +1248,12 @@ function setRoleWeight(role,attr,value){
   afin[attr]=Math.max(0,+value.toFixed(3));
 }
 function configSnapshot(){
-  return {role:clone(E.ROLE_PERFIL),nm:clone(NM),cor:clone(NM_COR)};
+  return {role:clone(E.ROLE_PERFIL),nm:clone(E.NM_DEF),cor:clone(E.NM_COR)};
 }
 function restoreConfig(snapshot){
   copyInto(E.ROLE_PERFIL,snapshot.role);
-  NM=clone(snapshot.nm);
-  NM_COR=clone(snapshot.cor);
+  copyInto(E.NM_DEF,snapshot.nm);
+  copyInto(E.NM_COR,snapshot.cor);
 }
 function applyCalibChanges(changes){
   changes.forEach(change=>setRoleWeight(change.role,change.attr,change.to));
@@ -1517,7 +1416,7 @@ function buildCalibrator(){
   const modeSel=document.getElementById("calibMode");
   modeSel.onchange=()=>{calibMode=modeSel.value;calibLast=null;buildCalibrator();};
   document.getElementById("calibSuggest").onclick=()=>{calibLast=findRoleCalibration(calibTargetRole);buildCalibrator();};
-  document.getElementById("calibReset").onclick=()=>{copyInto(E.ROLE_PERFIL,DEF.ROLE);NM=clone(NM_DEF);NM_COR=clone(NM_COR_DEF);calibLast=null;refresh("all");buildCalibrator();};
+  document.getElementById("calibReset").onclick=()=>{copyInto(E.ROLE_PERFIL,DEF.ROLE);copyInto(E.NM_DEF,DEF.NM);copyInto(E.NM_COR,DEF.NM_COR);calibLast=null;refresh("all");buildCalibrator();};
   const apply=document.getElementById("calibApply");
   if(apply)apply.onclick=()=>{if(calibLast&&calibLast.ok){applyCalibChanges(calibLast.changes);calibLast=null;refresh("all");buildCalibrator();toast("Sugestão aplicada aos pesos");}};
   const discard=document.getElementById("calibDiscard");

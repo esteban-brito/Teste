@@ -228,7 +228,7 @@ const STYLE_ROLE_FIT={
   IGL:{cerebral:.12,support:.10,trader:.06,playmaker:.04}
 };
 const NM_COR={pisoMin:45,spreadMax:35};
-const STYLE_KEYS={aggressive:"Agressivo",spacetaker:"Spacetaker",trader:"Trader",playmaker:"Playmaker",infiltrator:"Infiltrador",baiter:"Baiter",clutcher:"Clutcher",support:"Facilitador",cerebral:"Cerebral",anchor:"Ancora"};
+const STYLE_KEYS={aggressive:"Agressivo",spacetaker:"Spacetaker",trader:"Trader",playmaker:"Playmaker",infiltrator:"Infiltrador",baiter:"Baiter",clutcher:"Clutcher",support:"Facilitador",cerebral:"Cerebral",anchor:Object.keys(NM_DEF).find(k=>k.includes("ncora"))||"Ancora"};
 const PLAYSTYLES={
   aggressive:{label:"Agressivo",traits:{pace:1,space:.7,trade:.2,structure:-.1,ct:-.2,t:.8}},
   spacetaker:{label:"Spacetaker",traits:{pace:.8,space:1,trade:0,structure:-.2,ct:-.2,t:1}},
@@ -430,6 +430,8 @@ function quimicaPlaystyles(jogadores,caracTreinador=null){
   if(qtd.infiltrator&&qtd.aggressive){const b=.03;quimica+=b;sinergias++;alertas.push(`Split Setup +${Math.round(b*100)}%`);}
   if(qtd.infiltrator&&qtd.cerebral){const b=.05;quimica+=b;sinergias++;alertas.push(`Rede de Informacao +${Math.round(b*100)}%`);}
   if(qtd.anchor&&qtd.clutcher){const b=.05;quimica+=b;sinergias++;alertas.push(`Retake Perfeito +${Math.round(b*100)}%`);}
+  if(temCoringa&&qtd.aggressive){const b=.02;quimica+=b;sinergias++;alertas.push(`Coringa + Agressivo +${Math.round(b*100)}%`);}
+  if(temCoringa&&qtd.cerebral){const b=.03;quimica+=b;sinergias++;alertas.push(`Coringa + Cerebral +${Math.round(b*100)}%`);}
   const avgPace=jogadores.reduce((s,j)=>{const id=STYLE_ID(j.playstyle);return s+(PLAYSTYLES[id]?.traits?.pace||0);},0)/Math.max(1,jogadores.length);
   const satPlaymakers=(qtd.playmaker||0)+(qtd.baiter||0)>=3,invasaoEspaco=(qtd.infiltrator||0)>=2;
   const guerraEstrelas=jogadores.filter(j=>j.estrela).length>=3,covardia=avgPace<-.15;
@@ -444,7 +446,9 @@ function quimicaPlaystyles(jogadores,caracTreinador=null){
     if(caracTreinador==="Gestor"&&guerraEstrelas){pen=Math.max(0,pen-.10);alertas.push("Gestor domou os Egos +10%");}
     if(caracTreinador==="Gestor"&&satPlaymakers){pen=Math.max(0,pen-.04);alertas.push("Hierarquia definida +4%");}
     if(caracTreinador==="Motivador"&&covardia){pen=Math.max(0,pen-.06);alertas.push("Grito do Motivador +6%");}
+    else if(caracTreinador==="Motivador"&&avgPace<0){quimica+=.03;alertas.push("Motivador acelerou +3%");}
     if(caracTreinador==="Desenvolvedor"&&temCoringa){quimica+=.05;alertas.push("Coringa lapidado +5%");}
+    if(caracTreinador==="Desenvolvedor"&&(qtd.baiter||0)>=2){quimica+=.04;alertas.push("Baiters evoluidos +4%");}
   }
   if(temCoringa&&pen>0){pen*=.5;alertas.push("Coringa mitigou conflitos");}
   const raw=clamp(quimica-pen,.5,1.08);
