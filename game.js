@@ -1276,6 +1276,7 @@ const S={
 
 let spinSession=0;
 
+// === UI START ===
 const $=id=>document.getElementById(id);
 const roulette=$("roulette"),track=$("track"),picksEl=$("picks"),lineupEl=$("lineup"),lineupCoach=$("lineupCoach");
 const hintEl=$("hint"),spinwrap=$("spinwrap"),picksTag=$("picksTag"),picksNote=$("picksNote"),winnerPill=$("winnerPill");
