@@ -1224,17 +1224,9 @@ function restoreConfig(snapshot){
   copyInto(E.NM_COR,snapshot.cor);
   if(snapshot.contra)copyInto(E.ROLE_CONTRA,snapshot.contra);
 }
-function contraWeight(role,attr){
-  const c=E.ROLE_CONTRA[role];return c?+(c[attr]||0):0;
-}
-function setContraWeight(role,attr,value){
-  let c=E.ROLE_CONTRA[role];if(!c){c={};E.ROLE_CONTRA[role]=c;}
-  c[attr]=Math.max(0,+value.toFixed(3));
-}
 function applyCalibChanges(changes){
   changes.forEach(change=>{
     if(change.type==="nm"){const w=E.NM_DEF[change.style]?.w;if(w)w[change.axis]=change.to;}
-    else if(change.type==="contra")setContraWeight(change.role,change.attr,change.to);
     else setRoleWeight(change.role,change.attr,change.to);
   });
 }
@@ -1284,21 +1276,6 @@ function makeNmChange(style,axis,delta){
   const from=w[axis]||0;
   return {type:"nm",style,axis,from,to:Math.max(.01,+(from+delta).toFixed(3))};
 }
-function makeContraReduce(role,attr,delta){
-  const from=contraWeight(role,attr);
-  return {type:"contra",role,attr,from,to:Math.max(0,+(from-delta).toFixed(3))};
-}
-function makeContraIncrease(role,attr,delta){
-  const from=contraWeight(role,attr);
-  return {type:"contra",role,attr,from,to:+((from+delta).toFixed(3))};
-}
-function candidateAttrsForContra(role,player){
-  const contra=E.ROLE_CONTRA[role]||{};
-  return Object.keys(contra)
-    .map(attr=>({attr,value:player[attr]||0,weight:contra[attr]}))
-    .sort((a,b)=>(b.weight*b.value)-(a.weight*a.value))
-    .slice(0,3).map(item=>item.attr);
-}
 function deltasFor(max){
   const BASE=[.03,.06,.09,.12,.16,.22];
   if(max<=.22)return BASE;
@@ -1331,7 +1308,7 @@ function candidateLabel(changes){
   }).join(" · ");
 }
 function generateRoleCandidates(target,current,raw,opts){
-  const{maxDelta=.22,useContraReduce:cr=false,useContraIncrease:ci=false}=opts||{};
+  const{maxDelta=.22}=opts||{};
   const attrs=candidateAttrsFor(target,raw);
   const currentAttrs=current&&current!==target?candidateAttrsFor(current,raw):[];
   const deltas=deltasFor(maxDelta);
@@ -1352,24 +1329,11 @@ function generateRoleCandidates(target,current,raw,opts){
         if(reducers.length)out.push([makeChange(target,attr,d*.75),...reducers]);
       });
     }
-    if(cr){                                                              // Type E (reduce target contra)
-      candidateAttrsForContra(target,raw).forEach(attr=>{
-        out.push([makeContraReduce(target,attr,d)]);
-        attrs.slice(0,2).forEach(tA=>out.push([makeChange(target,tA,d*.7),makeContraReduce(target,attr,d*.5)]));
-      });
-    }
   });
-  if(ci&&current&&current!==target){                                     // Type F (increase current contra)
-    [.06,.10,.15].forEach(d=>{
-      if(d>maxDelta)return;
-      STATS.map(([a])=>({attr:a,val:raw[a]||0})).sort((a,b)=>b.val-a.val).slice(0,3).forEach(({attr})=>
-        out.push([makeContraIncrease(current,attr,d)]));
-    });
-  }
   return dedupeCandidates(out);
 }
 function generateRole2Candidates(target2,current1,raw,opts){
-  const{maxDelta=.16,useContraReduce:cr=false}=opts||{};
+  const{maxDelta=.16}=opts||{};
   const attrs=candidateAttrsFor(target2,raw);
   const currentAttrs=current1==="IGL"?[]:candidateAttrsFor(current1,raw);
   const deltas=deltasFor(maxDelta);
@@ -1389,10 +1353,6 @@ function generateRole2Candidates(target2,current1,raw,opts){
           .map(r=>makeReduce(r,attr,d*.35));
         if(reducers.length)out.push([makeChange(target2,attr,d*.65),...reducers]);
       });
-    }
-    if(cr){
-      candidateAttrsForContra(target2,raw).forEach(attr=>
-        out.push([makeContraReduce(target2,attr,d)]));
     }
   });
   return dedupeCandidates(out);
@@ -1440,18 +1400,9 @@ function generateGoalCandidates(goal,current,raw,isIGL,opts){
   return all;
 }
 const CALIB_PHASES={
-  seguro:[
-    {maxDelta:.22,useContraReduce:false,useContraIncrease:false}
-  ],
-  realista:[
-    {maxDelta:.22,useContraReduce:false,useContraIncrease:false},
-    {maxDelta:.40,useContraReduce:false,useContraIncrease:false}
-  ],
-  direto:[
-    {maxDelta:.22,useContraReduce:false,useContraIncrease:false},
-    {maxDelta:.40,useContraReduce:false,useContraIncrease:false},
-    {maxDelta:.75,useContraReduce:false,useContraIncrease:false}
-  ]
+  seguro:[{maxDelta:.22}],
+  realista:[{maxDelta:.22},{maxDelta:.40}],
+  direto:[{maxDelta:.22},{maxDelta:.40},{maxDelta:.75}]
 };
 function scaleChanges(changes,factor){
   return changes.map(c=>({...c,to:+(c.from+(c.to-c.from)*factor).toFixed(3)}));
@@ -1463,20 +1414,18 @@ function calibrationCost(changes,diff,goalKey){
   const styleChanges=diff.players.filter(p=>p.styleChanged).length;
   const realityPenalty=diff.players.reduce((sum,p)=>sum+Math.max(0,p.dReality||0),0);
   const rareWorsened=diff.players.filter(p=>p.rareWorsened).length;
-  const nmDelta=changes.filter(c=>c.type==="nm").reduce((sum,c)=>sum+Math.abs(c.to-c.from),0);
-  const contraDelta=changes.filter(c=>c.type==="contra").reduce((sum,c)=>sum+Math.abs(c.to-c.from),0);
   // collateral: role changes beyond the target player
   const targetRoleChanges=goalKey?diff.players.filter(p=>p.key===goalKey&&p.roleChanged).length:0;
   const collateralRoleChanges=roleChanges-targetRoleChanges;
-  const collateralPenalty=collateralRoleChanges*collateralRoleChanges*6; // quadratic penalty
+  const collateralPenalty=collateralRoleChanges*collateralRoleChanges*15; // quadratic penalty (heavy)
   const weights={
-    realista:{delta:10,changed:.4,role:1.5,style:2.5,reality:8,rare:2.5,nm:22,contra:30},
-    seguro:{delta:14,changed:.6,role:2.5,style:3.5,reality:10,rare:3.5,nm:30,contra:50},
-    direto:{delta:7,changed:.25,role:1.0,style:1.5,reality:4,rare:1.0,nm:15,contra:20}
-  }[calibMode]||{delta:10,changed:.4,role:1.5,style:2.5,reality:8,rare:2.5,nm:22,contra:30};
+    realista:{delta:10,changed:.4,role:1.5,style:2.5,reality:8,rare:2.5},
+    seguro:{delta:14,changed:.6,role:2.5,style:3.5,reality:10,rare:3.5},
+    direto:{delta:7,changed:.25,role:1.0,style:1.5,reality:4,rare:1.0}
+  }[calibMode]||{delta:10,changed:.4,role:1.5,style:2.5,reality:8,rare:2.5};
   return {
-    cost:deltaCost*weights.delta+changed*weights.changed+roleChanges*weights.role+styleChanges*weights.style+realityPenalty*weights.reality+rareWorsened*weights.rare+nmDelta*weights.nm+contraDelta*weights.contra+collateralPenalty,
-    changed,deltaCost,roleChanges,styleChanges,realityPenalty,rareWorsened,nmDelta,contraDelta,collateralRoleChanges
+    cost:deltaCost*weights.delta+changed*weights.changed+roleChanges*weights.role+styleChanges*weights.style+realityPenalty*weights.reality+rareWorsened*weights.rare+collateralPenalty,
+    changed,deltaCost,roleChanges,styleChanges,realityPenalty,rareWorsened,collateralRoleChanges
   };
 }
 function findCalibration(goal){
@@ -1489,8 +1438,7 @@ function findCalibration(goal){
   const goalKey=src?`${src.ti}:${src.pi}`:null;
   if(isIGL&&goal.r1&&goal.r1!=="IGL")return {ok:false,message:"IGL não pode mudar de papel primário via pesos. Altere a role2 (papel de combate).",before,goal};
   const phases=CALIB_PHASES[calibMode]||CALIB_PHASES.realista;
-  const COLLATERAL_MAX=2; // max non-target role changes accepted
-  let best=null, closest=null, usedPhase=-1;
+  let best=null, bestHit=null, usedPhase=-1;
   const costWith=(changes,diff)=>calibrationCost(changes,diff,goalKey);
   const evalOne=(changes,label)=>{
     if(!changes||!changes.length)return;
@@ -1500,10 +1448,9 @@ function findCalibration(goal){
     const hit=goalMet(after,goal);
     const costInfo=costWith(changes,diff);
     const result={ok:hit,changes,before,after,diff,cost:costInfo.cost,costInfo,label:label||candidateLabel(changes)};
-    if(hit&&(!best||result.cost<best.cost)){
-      if(costInfo.collateralRoleChanges<=COLLATERAL_MAX)best=result;
-    }
-    if(!closest||result.cost<closest.cost)closest=result;
+    if(hit&&(!best||result.cost<best.cost))best=result;
+    if(!bestHit&&hit)bestHit=result;
+    if(hit&&bestHit&&result.cost<bestHit.cost)bestHit=result;
   };
   const tryRefinement=sol=>{
     if(!sol||!sol.changes||!sol.changes.length)return sol;
@@ -1515,8 +1462,7 @@ function findCalibration(goal){
       const after=mainPlayer(), now=impactSnapshot(), diff=snapshotDiff(base,now);
       if(goalMet(after,goal)){
         const costInfo=costWith(scaled,diff);
-        if(costInfo.collateralRoleChanges<=COLLATERAL_MAX)
-          refined={ok:true,changes:scaled,before,after,diff,cost:costInfo.cost,costInfo,label:candidateLabel(scaled),phase:refined.phase};
+        refined={ok:true,changes:scaled,before,after,diff,cost:costInfo.cost,costInfo,label:candidateLabel(scaled),phase:refined.phase};
       }
     });
     return refined;
@@ -1525,7 +1471,7 @@ function findCalibration(goal){
   phases.forEach((phase,pi)=>{
     if(best)return; // stop early
     usedPhase=pi;
-    const roleOpts={maxDelta:phase.maxDelta,useContraReduce:phase.useContraReduce,useContraIncrease:phase.useContraIncrease};
+    const roleOpts={maxDelta:phase.maxDelta};
     const candidates=generateGoalCandidates(goal,current,raw,isIGL,{role:roleOpts});
     candidates.forEach(changes=>evalOne(changes));
     // style-only candidates (generated once, but we skip style if role already failed)
@@ -1535,7 +1481,7 @@ function findCalibration(goal){
         const combatRole=isIGL?current.r2:(goal.r1||current.r1);
         const sCands=generateStyleCandidates(goal.style,raw,current.r1,combatRole);
         sCands.forEach(changes=>evalOne(changes));
-        const top=[best,closest].filter(Boolean).slice(0,2);
+        const top=[best||bestHit,bestHit].filter(Boolean).slice(0,2).map(s=>s||best).filter(Boolean);
         top.forEach(roleSol=>{
           if(!roleSol.changes||!roleSol.changes.length)return;
           sCands.forEach(sChanges=>{
@@ -1565,6 +1511,12 @@ function findCalibration(goal){
     refined.phase=usedPhase;
     return refined;
   }
+  if(bestHit){
+    const refined=tryRefinement(bestHit);
+    refined.phase=usedPhase;
+    refined.highCollateral=true;
+    return refined;
+  }
   // compute helpful failure message
   let fbMsg="Nenhuma mudança atingiu o alvo sem mexer em stats.";
   if(goal.r1&&goal.r1!==current.r1){
@@ -1578,16 +1530,13 @@ function findCalibration(goal){
     const modeTip=calibMode==="seguro"?" Tente modo realista ou direto.":calibMode==="realista"?" Tente modo direto.":"";
     fbMsg=`${goal.r1} precisa superar ${currentLeader.role} por ${(-gap).toFixed(2)} pts de afinidade.${tip}${modeTip}`;
   }
-  return {ok:false,message:fbMsg,fallback:closest,before,goal};
+  return {ok:false,message:fbMsg,before,goal};
 }
 function renderCalibResult(result,goal){
   if(!result)return '<div class="impact-empty">Escolha um alvo e rode uma sugestão. Nada é aplicado automaticamente.</div>';
   if(!result.ok){
     const gapLine=result.message&&!result.message.startsWith("IGL")?`<div class="calib-note" style="color:var(--warn)">${esc(result.message)}</div>`:"";
-    const fb=result.fallback
-      ?`<div class="calib-note">Melhor tentativa: ${esc(result.fallback.label)}. Par: ${esc(rolePairText(result.fallback.after))} / ${esc(STYLE_LABEL(result.fallback.after.playstyle))}.</div>`
-      :"";
-    return `<div class="calib-suggestion bad"><div class="calib-title">Sem ajuste baixo</div>${gapLine}${fb}</div>`;
+    return `<div class="calib-suggestion bad"><div class="calib-title">Sem ajuste baixo</div>${gapLine}</div>`;
   }
   const afterState=rolePairText(result.after)+" / "+esc(STYLE_LABEL(result.after.playstyle));
   const beforeState=rolePairText(result.before)+" / "+esc(STYLE_LABEL(result.before.playstyle));
@@ -1610,6 +1559,7 @@ function renderCalibResult(result,goal){
     <div class="calib-title">Sugestão mínima encontrada</div>
     ${goalInfo}
     <div class="calib-list">${changes}</div>
+    ${result.highCollateral?`<div class="calib-note" style="color:var(--warn)">⚠ Solução com alto impacto colateral (${result.costInfo?.collateralRoleChanges||'?'} jogadores com mudança de role). Revise antes de aplicar.</div>`:""}
     <div class="calib-note">Modo ${esc(modeLabel)}${phaseNote}. ${esc(beforeState)} → ${esc(afterState)}. Impacto: ${result.diff.players.length} jog·${result.diff.teams.length} times. Realidade piorou em ${rareWorsened} jogadores.</div>
     ${playerRows?`<div class="impact-section"><h4>Principais afetados</h4>${playerRows}</div>`:""}
     <div class="calib-actions"><button class="btn accent" id="calibApply">Aplicar sugestão</button><button class="btn" id="calibDiscard">Descartar</button></div>
