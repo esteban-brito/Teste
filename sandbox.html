@@ -1445,18 +1445,18 @@ const CALIB_PHASES={
   ],
   realista:[
     {maxDelta:.22,useContraReduce:false,useContraIncrease:false},
-    {maxDelta:.55,useContraReduce:true,useContraIncrease:false}
+    {maxDelta:.40,useContraReduce:false,useContraIncrease:false}
   ],
   direto:[
     {maxDelta:.22,useContraReduce:false,useContraIncrease:false},
-    {maxDelta:.55,useContraReduce:true,useContraIncrease:false},
-    {maxDelta:1.0,useContraReduce:true,useContraIncrease:true}
+    {maxDelta:.40,useContraReduce:false,useContraIncrease:false},
+    {maxDelta:.75,useContraReduce:false,useContraIncrease:false}
   ]
 };
 function scaleChanges(changes,factor){
   return changes.map(c=>({...c,to:+(c.from+(c.to-c.from)*factor).toFixed(3)}));
 }
-function calibrationCost(changes,diff){
+function calibrationCost(changes,diff,goalKey){
   const changed=diff.players.length+diff.teams.length;
   const deltaCost=changes.reduce((sum,change)=>sum+Math.abs(change.to-change.from),0);
   const roleChanges=diff.players.filter(p=>p.roleChanged).length;
@@ -1464,14 +1464,19 @@ function calibrationCost(changes,diff){
   const realityPenalty=diff.players.reduce((sum,p)=>sum+Math.max(0,p.dReality||0),0);
   const rareWorsened=diff.players.filter(p=>p.rareWorsened).length;
   const nmDelta=changes.filter(c=>c.type==="nm").reduce((sum,c)=>sum+Math.abs(c.to-c.from),0);
+  const contraDelta=changes.filter(c=>c.type==="contra").reduce((sum,c)=>sum+Math.abs(c.to-c.from),0);
+  // collateral: role changes beyond the target player
+  const targetRoleChanges=goalKey?diff.players.filter(p=>p.key===goalKey&&p.roleChanged).length:0;
+  const collateralRoleChanges=roleChanges-targetRoleChanges;
+  const collateralPenalty=collateralRoleChanges*collateralRoleChanges*6; // quadratic penalty
   const weights={
-    realista:{delta:10,changed:.35,role:.8,style:1.2,reality:6,rare:1.4,nm:18},
-    seguro:{delta:12,changed:.55,role:1.1,style:1.8,reality:8,rare:2.1,nm:25},
-    direto:{delta:8,changed:.22,role:.45,style:.6,reality:3,rare:.7,nm:12}
-  }[calibMode]||{delta:10,changed:.35,role:.8,style:1.2,reality:6,rare:1.4,nm:18};
+    realista:{delta:10,changed:.4,role:1.5,style:2.5,reality:8,rare:2.5,nm:22,contra:30},
+    seguro:{delta:14,changed:.6,role:2.5,style:3.5,reality:10,rare:3.5,nm:30,contra:50},
+    direto:{delta:7,changed:.25,role:1.0,style:1.5,reality:4,rare:1.0,nm:15,contra:20}
+  }[calibMode]||{delta:10,changed:.4,role:1.5,style:2.5,reality:8,rare:2.5,nm:22,contra:30};
   return {
-    cost:deltaCost*weights.delta+changed*weights.changed+roleChanges*weights.role+styleChanges*weights.style+realityPenalty*weights.reality+rareWorsened*weights.rare+nmDelta*weights.nm,
-    changed,deltaCost,roleChanges,styleChanges,realityPenalty,rareWorsened,nmDelta
+    cost:deltaCost*weights.delta+changed*weights.changed+roleChanges*weights.role+styleChanges*weights.style+realityPenalty*weights.reality+rareWorsened*weights.rare+nmDelta*weights.nm+contraDelta*weights.contra+collateralPenalty,
+    changed,deltaCost,roleChanges,styleChanges,realityPenalty,rareWorsened,nmDelta,contraDelta,collateralRoleChanges
   };
 }
 function findCalibration(goal){
@@ -1479,18 +1484,25 @@ function findCalibration(goal){
   const raw=playerAt(loadedIdx), beforeConfig=configSnapshot(), base=impactSnapshot(), before=mainPlayer();
   const current=rolePair(before);
   const isIGL=before.isIGL;
+  // compute goal player key for collateral tracking
+  const src=POOLRAW[loadedIdx];
+  const goalKey=src?`${src.ti}:${src.pi}`:null;
   if(isIGL&&goal.r1&&goal.r1!=="IGL")return {ok:false,message:"IGL não pode mudar de papel primário via pesos. Altere a role2 (papel de combate).",before,goal};
   const phases=CALIB_PHASES[calibMode]||CALIB_PHASES.realista;
+  const COLLATERAL_MAX=2; // max non-target role changes accepted
   let best=null, closest=null, usedPhase=-1;
+  const costWith=(changes,diff)=>calibrationCost(changes,diff,goalKey);
   const evalOne=(changes,label)=>{
     if(!changes||!changes.length)return;
     restoreConfig(beforeConfig);
     applyCalibChanges(changes);
     const after=mainPlayer(), now=impactSnapshot(), diff=snapshotDiff(base,now);
     const hit=goalMet(after,goal);
-    const costInfo=calibrationCost(changes,diff);
+    const costInfo=costWith(changes,diff);
     const result={ok:hit,changes,before,after,diff,cost:costInfo.cost,costInfo,label:label||candidateLabel(changes)};
-    if(hit&&(!best||result.cost<best.cost))best=result;
+    if(hit&&(!best||result.cost<best.cost)){
+      if(costInfo.collateralRoleChanges<=COLLATERAL_MAX)best=result;
+    }
     if(!closest||result.cost<closest.cost)closest=result;
   };
   const tryRefinement=sol=>{
@@ -1502,8 +1514,9 @@ function findCalibration(goal){
       applyCalibChanges(scaled);
       const after=mainPlayer(), now=impactSnapshot(), diff=snapshotDiff(base,now);
       if(goalMet(after,goal)){
-        const costInfo=calibrationCost(scaled,diff);
-        refined={ok:true,changes:scaled,before,after,diff,cost:costInfo.cost,costInfo,label:candidateLabel(scaled),phase:refined.phase};
+        const costInfo=costWith(scaled,diff);
+        if(costInfo.collateralRoleChanges<=COLLATERAL_MAX)
+          refined={ok:true,changes:scaled,before,after,diff,cost:costInfo.cost,costInfo,label:candidateLabel(scaled),phase:refined.phase};
       }
     });
     return refined;
