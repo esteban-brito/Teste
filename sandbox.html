@@ -960,6 +960,7 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 let E=null, DEF=null, POOLRAW=[], loadedIdx=null, poolBySlot=new Map();
 let teamIdx=0, simA=0, simB=1, simSeed=2026, simRuns=80, simMap="auto", lastMap=null, lastBatch=null, tuningOpen=false, baseline=null;
 let calibTargetRole="Entry", calibMode="realista", calibLast=null;
+let nmOVR, STYLE_LABEL, STYLE_ID, PLAYSTYLES;
 const state={nome:"", fp:70,en:50,tr:50,op:50,cl:50,sn:20,ut:55, rating:1.10, isIGL:false, colocacao:"Campeao"};
 
 async function carregarMotores(){
@@ -976,7 +977,7 @@ async function carregarMotores(){
   DEF.SIM=clone(E.CFG_SIM); DEF.FA=clone(E.CFG_FA);
   DEF.NM=clone(E.NM_DEF); DEF.NM_COR=clone(E.NM_COR);
   // aliases locais para as funções/dados importados do motor (evita E.xxx em toda a UI)
-  const {nmOVR,STYLE_LABEL,STYLE_ID,PLAYSTYLES}=E;
+  ({nmOVR,STYLE_LABEL,STYLE_ID,PLAYSTYLES}=E);
   POOLRAW=[]; poolBySlot=new Map();
   E.TEAMS.forEach((t,ti)=>t.jogadores.forEach((j,pi)=>{const e=j._eng;
     const idx=POOLRAW.length;
