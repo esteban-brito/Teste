@@ -6,7 +6,7 @@ const vm=require("vm");
 const {ROOT}=require("./common");
 
 const GAME_PATH=path.join(ROOT,"game.js");
-const UI_MARKER="document.getElementById";
+const UI_MARKER="// === UI START ===";
 const EXPORTS=[
   "TEAMS","POOL","ATRIBUTOS","TIMES_DEF",
   "forcaTime","simularMapa","simularSerie","forcaDoDia","sortearFormaCampanha",
@@ -16,7 +16,8 @@ const EXPORTS=[
 
 function loadEngines(){
   const source=fs.readFileSync(GAME_PATH,"utf8").split("\n");
-  const cut=source.findIndex(line=>line.includes(UI_MARKER));
+  let cut=source.findIndex(line=>line.includes(UI_MARKER));
+  if(cut<0)cut=source.findIndex(line=>line.includes("document.getElementById"));
   if(cut<0)throw new Error(`marcador de UI nao encontrado em ${GAME_PATH}`);
 
   const sandbox={Math,Object,Array,JSON,console};
@@ -25,6 +26,7 @@ function loadEngines(){
   const code=source.slice(0,cut).join("\n")+
     `;globalThis.X={${exportExpr},srand:typeof srand!=="undefined"?srand:null};`;
   vm.runInContext(code,sandbox,{filename:GAME_PATH});
+  if(!sandbox.X)throw new Error(`motores nao foram exportados de ${GAME_PATH}`);
   return sandbox.X;
 }
 

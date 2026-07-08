@@ -986,10 +986,11 @@ async function carregarMotores(){
   if(!res.ok)throw new Error(`game.js não carregou (${res.status})`);
   const src=await res.text();
   const linhas=src.split("\n");
-  const cut=linhas.findIndex(l=>l.includes("document.getElementById"));
+  let cut=linhas.findIndex(l=>l.includes("// === UI START ==="));
+  if(cut<0)cut=linhas.findIndex(l=>l.includes("document.getElementById"));
   if(cut<0)throw new Error("não encontrei o início da camada de UI em game.js");
   const slice=linhas.slice(0,cut).join("\n");
-  E=new Function(slice+"\nreturn {avaliarJogador,curvaOVR,distribuirRoles,forcaTime,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,ROLE_CONTRA,MAPAS_POOL,MAPA_LADO,srand,simularMapa,forcaDoDia,TEAMS,nmOVR,roleAfinidade,NM_DEF,NM_COR,STYLE_LABEL,PLAYSTYLE_IDS};")();
+  E=new Function(slice+"\nreturn {avaliarJogador,aplicarAvaliacaoContextual,curvaOVR,distribuirRoles,forcaTime,ovrUnificado,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,ROLE_CONTRA,MAPAS_POOL,MAPA_LADO,srand,simularMapa,forcaDoDia,TEAMS,nmOVR,roleAfinidade,NM_DEF,NM_COR,STYLE_LABEL,PLAYSTYLE_IDS};")();
   ["avaliarJogador","distribuirRoles","forcaTime","simularMapa","forcaDoDia","srand","TEAMS"].forEach(k=>{if(!E[k])throw new Error(`motor ausente: ${k}`);});
   DEF={ROLE:clone(E.ROLE_PERFIL),NM:clone(E.NM_DEF),NM_COR:clone(E.NM_COR),CONTRA:clone(E.ROLE_CONTRA)};
   // aliases locais para as funções/dados importados do motor (evita E.xxx em toda a UI)
@@ -998,7 +999,7 @@ async function carregarMotores(){
   E.TEAMS.forEach((t,ti)=>t.jogadores.forEach((j,pi)=>{const e=j._eng;
     const idx=POOLRAW.length;
     poolBySlot.set(`${ti}:${pi}`,idx);
-    POOLRAW.push({nome:e.nome,time:t.nome,ti,pi,fp:e.fp,en:e.en,tr:e.tr,op:e.op,cl:e.cl,sn:e.sn,ut:e.ut,rating:e.rating,isIGL:!!e.isIGL,colocacao:e.colocacao||"Campeao"});
+    POOLRAW.push({...e,time:t.nome,ti,pi,isIGL:!!e.isIGL,colocacao:e.colocacao||"Campeao"});
   }));
 }
 // o jogador carregado (loadedIdx) entra no varrimento com os stats EDITADOS no laboratório, não os originais
@@ -1027,23 +1028,11 @@ function copyInto(dst,src){
 function toast(msg){let t=document.querySelector(".toast");if(!t){t=document.createElement("div");t.className="toast";document.body.appendChild(t);}
   t.textContent=msg;requestAnimationFrame(()=>t.classList.add("show"));clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),2600);}
 
-function capOvr(ovr,isIGL=false){return Math.min(isIGL?20:22,Math.max(1,ovr));}
-const IGL_CREDITO_SHARE=0.55;
 function isStarPlayer(p,avgOvr){return p.ovr>=avgOvr+3||p.ovr>=20;}
-function evaluatePlayer(p,eng=null,forcedStyle=null){
-  const legacy=eng||Object.assign({},p,E.avaliarJogador(p));
-  const isIGL=legacy.primario==="IGL"||!!p.isIGL;
-  const combatRole=isIGL?(legacy.secundario||"Rifler"):legacy.primario;
-  const role1=isIGL?"IGL":legacy.primario;
-  const role2=isIGL?null:legacy.secundario;
-  const style=nmOVR(p,combatRole,forcedStyle);
-  let ovr=capOvr(style.ovr,isIGL);
-  if(isIGL){
-    const C=E.CFG_AVALIACAO, titulo=C.IGL_TITULO[p.colocacao]||0;
-    style.iglCore=style.core+C.IGL_CREDITO*IGL_CREDITO_SHARE;
-    ovr=Math.min(C.IGL_TETO,Math.max(1,E.curvaOVR(style.iglCore)+titulo));
-  }
-  return {...legacy,...p,isIGL,role1,role2,combatRole,playstyle:style.style,style,ovr};
+function evaluatePlayer(p,eng=null){
+  const source={...p};
+  const evaluated=eng?{...eng}:E.aplicarAvaliacaoContextual(source);
+  return {...source,...evaluated,isIGL:!!evaluated.isIGL};
 }
 function teamPlayers(t,ti){
   const engs=teamEngines(t,ti);
@@ -1063,9 +1052,9 @@ function teamCoverage(players){
   return cov;
 }
 function evaluateTeam(t,ti){
-  const players=teamPlayers(t,ti), coverage=teamCoverage(players), coach=t.treinador;
+  const players=teamPlayers(t,ti), visualCoverage=teamCoverage(players), coach=t.treinador;
   const official=E.forcaTime(players,coach?.carac||null,coach?.ovr||null);
-  return {players,coverage,coach,alertas:official.alertas,bruta:official.bruta,quimica:official.quimica,efetiva:official.efetiva};
+  return {players,coverage:visualCoverage,visualCoverage,coach,alertas:official.alertas,bruta:official.bruta,quimica:official.quimica,efetiva:official.efetiva};
 }
 function rolePairText(p){
   const r1=p.isIGL?"IGL":(p.role1||p.combatRole||"");
