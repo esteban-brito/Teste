@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  draft9-0 · Laboratório de Stats & Motores — bancada de tuning.
+  draft9-0 - Laboratório de Stats & Motores — bancada de tuning.
    Carrega os MOTORES do próprio game.js ao vivo (fatia antes do DOM) e recalcula
    OVR/função em tempo real. Também deixa editar os PESOS/FÓRMULAS dos motores
    (afinidade, OVR por função, curva, IGL) e ver o efeito no jogador
@@ -261,7 +261,7 @@ select:focus-visible,input[type=text]:focus-visible{border-color:var(--cyan);box
 .audit-stat.primary .v{color:var(--cyan)}
 .audit-stat.warn .v{color:var(--warn)}
 .audit-stat.good .v{color:var(--win)}
-.impact-tag{display:inline-flex;align-items:center;height:15px;padding:0 4px;border-radius:4px;border:1px solid rgba(124,156,196,.18);font-family:var(--ff);font-size:.52rem;font-weight:800;letter-spacing:.06em;color:var(--dim);margin-left:4px}
+.impact-tag{display:inline-flex;align-items:center;height:18px;padding:0 6px;border-radius:5px;border:1px solid rgba(124,156,196,.18);font-family:var(--ff);font-size:.56rem;font-weight:900;letter-spacing:.06em;color:var(--dim);margin-left:6px}
 .impact-tag.target{color:var(--cyan);border-color:rgba(81,208,255,.34)}
 .impact-tag.col{color:var(--warn);border-color:rgba(255,193,90,.34)}
 .impact-section{margin-top:8px}
@@ -283,22 +283,25 @@ select:focus-visible,input[type=text]:focus-visible{border-color:var(--cyan);box
 .calib-metric{border:1px solid rgba(157,178,208,.14);border-radius:8px;background:var(--panel-soft);padding:8px}
 .calib-metric .l{font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
 .calib-metric .v{margin-top:3px;font-family:var(--ff);font-size:.86rem;font-weight:800;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.calib-suggestion{border:1px solid rgba(157,178,208,.16);border-radius:10px;background:rgba(9,14,23,.55);padding:10px}
+.calib-suggestion{border:1px solid rgba(157,178,208,.16);border-radius:10px;background:rgba(9,14,23,.55);padding:12px}
 .calib-suggestion.good{border-color:rgba(127,230,168,.32)}
 .calib-suggestion.bad{border-color:rgba(255,193,90,.32)}
-.calib-title{font-family:var(--ff);font-size:.76rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
-.calib-goals{font-size:.72rem;color:var(--cyan);padding:4px 0;font-weight:600}
-.calib-diagnostics{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0;font-family:var(--ff);font-size:.68rem;color:var(--dim)}
-.calib-diagnostics span{border:1px solid rgba(157,178,208,.14);border-radius:7px;padding:4px 6px;background:rgba(5,8,14,.22)}
-.calib-list{display:grid;gap:4px;margin:6px 0}
-.calib-change{display:flex;justify-content:space-between;gap:8px;font-size:.72rem;border-top:1px solid rgba(157,178,208,.1);padding-top:5px}
-.calib-change:first-child{border-top:0;padding-top:0}
-.calib-change b{color:var(--txt)}
-.calib-change span{color:var(--dim);font-family:var(--ff)}
-.calib-alts{display:grid;gap:4px;margin-top:8px}
-.calib-alt{display:grid;gap:2px;padding:6px;border:1px solid rgba(157,178,208,.12);border-radius:7px;background:rgba(5,8,14,.22);font-size:.68rem}
-.calib-alt b{color:var(--txt);font-family:var(--ff)}
-.calib-alt span{color:var(--dim);line-height:1.35}
+.calib-title{font-family:var(--ff);font-size:.86rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;color:var(--txt)}
+.calib-goals{font-size:.8rem;color:var(--cyan);padding:6px 0;font-weight:800}
+.calib-diagnostics{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;font-family:var(--ff);font-size:.72rem;color:var(--dim)}
+.calib-diagnostics span{border:1px solid rgba(157,178,208,.14);border-radius:7px;padding:5px 7px;background:rgba(5,8,14,.26)}
+.calib-focus{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}
+.calib-focus-card{border:1px solid rgba(81,208,255,.2);border-radius:8px;background:rgba(5,8,14,.3);padding:9px}
+.calib-focus-card .l{font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.calib-focus-card .v{margin-top:4px;font-family:var(--ff);font-size:.9rem;font-weight:900;color:var(--txt)}
+.calib-list{display:grid;gap:7px;margin:8px 0}
+.calib-change{display:grid;grid-template-columns:minmax(120px,.45fr) minmax(0,1fr);gap:10px;align-items:center;font-size:.82rem;border:1px solid rgba(157,178,208,.12);border-radius:8px;padding:8px;background:rgba(5,8,14,.22)}
+.calib-change b{color:var(--txt);font-size:.84rem}
+.calib-change span{color:var(--dim);font-family:var(--ff);line-height:1.35;white-space:normal;overflow-wrap:anywhere}
+.calib-change.target-row{border-color:rgba(81,208,255,.34);background:rgba(81,208,255,.08)}
+.calib-change.col-row{border-color:rgba(255,193,90,.22)}
+.calib-change .change-meta{font-family:inherit;color:var(--dim)}
+.calib-impact-list{display:grid;gap:7px;margin-top:7px}
 .calib-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .calib-note{font-size:.72rem;color:var(--dim);line-height:1.45}
 @media(max-width:900px){.calib-target{grid-template-columns:repeat(2,minmax(0,1fr))}.calib-target .btn{grid-column:1/-1}}
@@ -1784,7 +1787,6 @@ async function findCalibration(goal,onProgress=null){
       refined.phase=refined.phase??usedPhase;
       refined.highCollateral=(refined.costInfo?.collateralRoleChanges||0)>2;
       refined.searchStats=searchStats;
-      refined.alternatives=hits.filter(item=>item!==best).sort((x,y)=>compareCalibration(x,y,strategy)).slice(0,4);
       await maybeYield(true);
       return refined;
     }
@@ -1818,12 +1820,13 @@ function renderCalibResult(result,goal){
   const cumulativeInfo=result.cumulativeInfo||incrementalInfo;
   const afterState=rolePairText(result.after)+" / "+STYLE_LABEL(result.after.playstyle);
   const beforeState=rolePairText(result.before)+" / "+STYLE_LABEL(result.before.playstyle);
-  const playerRows=incrementalDiff.players.slice(0,5).map(player=>{
+  const playerRows=incrementalDiff.players.slice(0,10).map(player=>{
     const tag=player.key===result.targetKey?'<span class="impact-tag target">ALVO</span>':'<span class="impact-tag col">COL</span>';
     const risk=player.rareWorsened?` | realidade ${signedDelta(player.dReality,2)}`:"";
     const meta=[player.roleChanged?`${player.old.role} -> ${player.role}`:player.role,player.styleChanged?`${player.old.style} -> ${player.style}`:player.style].join(" | ")+risk;
     const deltaCls=player.dOvr>0?"up":player.dOvr<0?"down":"";
-    return `<div class="calib-change"><b>${esc(player.nome)}${tag}</b><span>${esc(meta)} | OVR ${player.old.ovr} -> ${player.ovr} <span class="${deltaCls}">(${signedDelta(player.dOvr)})</span></span></div>`;
+    const rowCls=player.key===result.targetKey?" target-row":" col-row";
+    return `<div class="calib-change${rowCls}"><b>${esc(player.nome)}${tag}<span class="change-meta"> - ${esc(player.team)}</span></b><span>${esc(meta)} | OVR ${player.old.ovr} -> ${player.ovr} <span class="${deltaCls}">(${signedDelta(player.dOvr)})</span></span></div>`;
   }).join("");
   const changes=result.changes.map(change=>{
     if(change.type==="nm")return `<div class="calib-change"><b>NM.${change.axis.toUpperCase()}</b><span>${change.from.toFixed(2)} -> ${change.to.toFixed(2)}</span></div>`;
@@ -1841,6 +1844,10 @@ function renderCalibResult(result,goal){
   const st=result.searchStats||{};
   const gapText=st.roleTarget?`<span>Gap ${st.initialGap.toFixed(2)} -> ${(result.finalGap??0).toFixed(2)}</span>`:"";
   const roleScoreText=result.roleScores?.after?`<span>${result.roleScores.after.target} ${result.roleScores.after.targetScore.toFixed(1)} vs ${result.roleScores.after.current} ${result.roleScores.after.currentScore.toFixed(1)}</span>`:"";
+  const focus=`<div class="calib-focus">
+    <div class="calib-focus-card"><div class="l">Antes</div><div class="v">${esc(beforeState)}</div></div>
+    <div class="calib-focus-card"><div class="l">Depois</div><div class="v">${esc(afterState)}</div></div>
+  </div>`;
   const diagnostics=`<div class="calib-diagnostics">
     <span>Custo ${result.cost.toFixed(2)}</span>
     <span>Delta pesos ${incrementalInfo.deltaCost.toFixed(2)}</span>
@@ -1855,22 +1862,17 @@ function renderCalibResult(result,goal){
   const accumulatedNote=cumulativeSummary.total>previewSummary.total
     ?`<div class="calib-note">Previa: ${previewSummary.total} mudancas nesta sugestao. Impacto acumulado apos aplicar: ${cumulativeSummary.total} desde o baseline.</div>`
     :"";
-  const alternatives=(result.alternatives||[]).slice(0,3).map((alt,idx)=>{
-    const altDiff=alt.diff||{players:[],teams:[]};
-    const altSummary=summarizeDiff(altDiff,alt.targetKey||result.targetKey);
-    return `<div class="calib-alt"><b>Opcao ${idx+2} | custo ${alt.cost.toFixed(2)}</b><span>${altSummary.players} jog/${altSummary.teams} times | colateral ${altSummary.collateralPlayers} | ${esc(alt.label||"ajuste alternativo")}</span></div>`;
-  }).join("");
   return `<div class="calib-suggestion good">
     <div class="calib-title">Previa da IA global</div>
     ${goalInfo}
+    ${focus}
     ${renderAuditMetrics(previewSummary,"previa")}
     ${diagnostics}
-    <div class="calib-list">${changes}</div>
+    <div class="impact-section"><h4>Modificacoes no motor</h4><div class="calib-list">${changes}</div></div>
     ${result.highCollateral?`<div class="calib-note" style="color:var(--warn)">Solucao com alto colateral global (${previewSummary.collateralPlayers} jogadores fora do alvo).</div>`:""}
     <div class="calib-note">Modo ${esc(modeLabel)}${phaseNote}: ${esc(result.strategy?.explain||"")} ${esc(beforeState)} -> ${esc(afterState)}.</div>
     ${accumulatedNote}
-    ${playerRows?`<div class="impact-section"><h4>Afetados principais</h4>${playerRows}</div>`:""}
-    ${alternatives?`<div class="impact-section"><h4>Alternativas globais</h4><div class="calib-alts">${alternatives}</div></div>`:""}
+    ${playerRows?`<div class="impact-section"><h4>Jogadores afetados</h4><div class="calib-impact-list">${playerRows}</div></div>`:""}
     <div class="calib-actions"><button class="btn accent" id="calibApply">Aplicar sugestao</button><button class="btn" id="calibDiscard">Descartar</button></div>
   </div>`;
 }
@@ -1921,7 +1923,7 @@ function buildCalibrator(){
     document.querySelectorAll("#calibbox button,#calibbox select").forEach(el=>{el.disabled=true;});
     const progress=(stats,best)=>{
       const pct=stats.generated?Math.min(100,Math.round(stats.tested/stats.generated*100)):0;
-      if(resultBox)resultBox.innerHTML=`<div class="impact-empty">IA rodando busca global... ${stats.tested}/${stats.generated||"?"} testes (${pct}%) · validas ${stats.valid}${best?` · melhor custo ${best.cost.toFixed(1)}`:""}</div>`;
+      if(resultBox)resultBox.innerHTML=`<div class="impact-empty">IA rodando busca global... ${stats.tested}/${stats.generated||"?"} testes (${pct}%) - validas ${stats.valid}${best?` - melhor custo ${best.cost.toFixed(1)}`:""}</div>`;
     };
     progress({tested:0,generated:0,valid:0});
     try{
