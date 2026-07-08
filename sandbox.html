@@ -285,6 +285,10 @@ select:focus-visible,input[type=text]:focus-visible{border-color:var(--cyan);box
 .calib-change:first-child{border-top:0;padding-top:0}
 .calib-change b{color:var(--txt)}
 .calib-change span{color:var(--dim);font-family:var(--ff)}
+.calib-alts{display:grid;gap:4px;margin-top:8px}
+.calib-alt{display:grid;gap:2px;padding:6px;border:1px solid rgba(157,178,208,.12);border-radius:7px;background:rgba(5,8,14,.22);font-size:.68rem}
+.calib-alt b{color:var(--txt);font-family:var(--ff)}
+.calib-alt span{color:var(--dim);line-height:1.35}
 .calib-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .calib-note{font-size:.72rem;color:var(--dim);line-height:1.45}
 @media(max-width:900px){.calib-target{grid-template-columns:repeat(2,minmax(0,1fr))}.calib-target .btn{grid-column:1/-1}}
@@ -1154,9 +1158,9 @@ function renderImpactPanel(){
   }).join("");
   const empty=!changedPlayers&&!changedTeams;
   return `<div class="liveimpact">
-    <div class="liveimpact-head"><div class="liveimpact-title">Impacto ao vivo</div><div class="liveimpact-count">${changedPlayers+changedTeams} mudanças</div></div>
+    <div class="liveimpact-head"><div class="liveimpact-title">Impacto ao vivo</div><div class="liveimpact-count">${changedPlayers+changedTeams} acumuladas</div></div>
     <div class="liveimpact-grid">
-      <div class="liveimpact-stat"><div class="v mono">${changedPlayers}</div><div class="l">jogadores</div></div>
+      <div class="liveimpact-stat"><div class="v mono">${changedPlayers}</div><div class="l">jogadores acum.</div></div>
       <div class="liveimpact-stat"><div class="v mono">${roleChanges}/${styleChanges}</div><div class="l">função/estilo</div></div>
       <div class="liveimpact-stat"><div class="v mono">${rareWorsened}/${realityDamage.toFixed(2)}</div><div class="l">risco/realidade</div></div>
     </div>
@@ -1355,57 +1359,88 @@ function generateGoalCandidates(goal,current,raw,isIGL,opts){
   if(goal.style&&goal.style!==current.style)all.push(...generateStyleCandidates(goal.style,raw,current.r1||current.r2,goal.r1));
   return all;
 }
-const CALIB_PHASES={
-  seguro:[{maxDelta:.22}],
-  realista:[{maxDelta:.22},{maxDelta:.40}],
-  direto:[{maxDelta:.22},{maxDelta:.40},{maxDelta:.75}]
+const CALIB_STRATEGIES={
+  seguro:{
+    label:"menor dano",
+    phases:[{maxDelta:.12},{maxDelta:.22}],
+    weights:{delta:16,changed:.9,role:3.2,style:4.0,reality:12,rare:4.5,collateral:30,team:1.0},
+    explain:"prioriza quase zero colateral, mesmo que precise rejeitar atalhos."
+  },
+  realista:{
+    label:"mais realista",
+    phases:[{maxDelta:.16},{maxDelta:.30},{maxDelta:.45}],
+    weights:{delta:11,changed:.5,role:2.0,style:2.8,reality:16,rare:5.5,collateral:18,team:.7},
+    explain:"prioriza coerência de roles/playstyles e evita piorar raridades."
+  },
+  direto:{
+    label:"mais direto",
+    phases:[{maxDelta:.22},{maxDelta:.45},{maxDelta:.75}],
+    weights:{delta:7,changed:.25,role:1.0,style:1.4,reality:5,rare:1.2,collateral:8,team:.35},
+    explain:"prioriza atingir o alvo com poucas operações, aceitando mais impacto."
+  }
 };
 function scaleChanges(changes,factor){
   return changes.map(c=>({...c,to:+(c.from+(c.to-c.from)*factor).toFixed(3)}));
 }
-function calibrationCost(changes,diff,goalKey){
+function calibrationMetrics(changes,diff,goalKey){
   const changed=diff.players.length+diff.teams.length;
   const deltaCost=changes.reduce((sum,change)=>sum+Math.abs(change.to-change.from),0);
   const roleChanges=diff.players.filter(p=>p.roleChanged).length;
   const styleChanges=diff.players.filter(p=>p.styleChanged).length;
   const realityPenalty=diff.players.reduce((sum,p)=>sum+Math.max(0,p.dReality||0),0);
   const rareWorsened=diff.players.filter(p=>p.rareWorsened).length;
-  // collateral: role changes beyond the target player
   const targetRoleChanges=goalKey?diff.players.filter(p=>p.key===goalKey&&p.roleChanged).length:0;
   const collateralRoleChanges=roleChanges-targetRoleChanges;
-  const collateralPenalty=collateralRoleChanges*collateralRoleChanges*15; // quadratic penalty (heavy)
-  const weights={
-    realista:{delta:10,changed:.4,role:1.5,style:2.5,reality:8,rare:2.5},
-    seguro:{delta:14,changed:.6,role:2.5,style:3.5,reality:10,rare:3.5},
-    direto:{delta:7,changed:.25,role:1.0,style:1.5,reality:4,rare:1.0}
-  }[calibMode]||{delta:10,changed:.4,role:1.5,style:2.5,reality:8,rare:2.5};
-  return {
-    cost:deltaCost*weights.delta+changed*weights.changed+roleChanges*weights.role+styleChanges*weights.style+realityPenalty*weights.reality+rareWorsened*weights.rare+collateralPenalty,
-    changed,deltaCost,roleChanges,styleChanges,realityPenalty,rareWorsened,collateralRoleChanges
-  };
+  const teamChanges=diff.teams.length;
+  return {changed,deltaCost,roleChanges,styleChanges,realityPenalty,rareWorsened,collateralRoleChanges,teamChanges};
+}
+function scoreCalibration(metrics,strategy){
+  const w=strategy.weights;
+  const collateralPenalty=metrics.collateralRoleChanges*metrics.collateralRoleChanges*w.collateral;
+  return metrics.deltaCost*w.delta+
+    metrics.changed*w.changed+
+    metrics.roleChanges*w.role+
+    metrics.styleChanges*w.style+
+    metrics.realityPenalty*w.reality+
+    metrics.rareWorsened*w.rare+
+    metrics.teamChanges*w.team+
+    collateralPenalty;
+}
+function calibrationCost(changes,diff,goalKey,strategy){
+  const metrics=calibrationMetrics(changes,diff,goalKey);
+  return {...metrics,cost:scoreCalibration(metrics,strategy||CALIB_STRATEGIES.realista)};
 }
 function findCalibration(goal){
   if(loadedIdx==null)return {ok:false,message:"Carregue um jogador antes de calibrar."};
-  const raw=playerAt(loadedIdx), beforeConfig=configSnapshot(), base=impactSnapshot(), before=mainPlayer();
+  const raw=playerAt(loadedIdx), beforeConfig=configSnapshot(), proposalBase=impactSnapshot(), cumulativeBase=ensureBaseline(), before=mainPlayer();
   const current=rolePair(before);
   const isIGL=before.isIGL;
   // compute goal player key for collateral tracking
   const src=POOLRAW[loadedIdx];
   const goalKey=src?`${src.ti}:${src.pi}`:null;
   if(isIGL&&goal.r1&&goal.r1!=="IGL")return {ok:false,message:"IGL não pode mudar de papel primário via pesos. Altere a role2 (papel de combate).",before,goal};
-  const phases=CALIB_PHASES[calibMode]||CALIB_PHASES.realista;
+  const strategy=CALIB_STRATEGIES[calibMode]||CALIB_STRATEGIES.realista;
+  const phases=strategy.phases;
   const hasRoleGoal=!!(goal.r1||goal.r2);
   let best=null, bestRoleBase=null, usedPhase=-1;
-  const costWith=(changes,diff)=>calibrationCost(changes,diff,goalKey);
+  const hits=[];
   const evalOne=(changes,label)=>{
     if(!changes||!changes.length)return;
     restoreConfig(beforeConfig);
     applyCalibChanges(changes);
-    const after=mainPlayer(), now=impactSnapshot(), diff=snapshotDiff(base,now);
+    const after=mainPlayer(), now=impactSnapshot(), diff=snapshotDiff(proposalBase,now);
+    const cumulativeDiff=snapshotDiff(cumulativeBase,now);
     const hit=goalMet(after,goal);
-    const costInfo=costWith(changes,diff);
+    const costInfo=calibrationCost(changes,diff,goalKey,strategy);
+    const cumulativeInfo=calibrationCost(changes,cumulativeDiff,goalKey,strategy);
     const result={ok:hit,changes,before,after,diff,cost:costInfo.cost,costInfo,label:label||candidateLabel(changes)};
-    if(hit&&(!best||result.cost<best.cost))best=result;
+    result.cumulativeDiff=cumulativeDiff;
+    result.cumulativeInfo=cumulativeInfo;
+    result.strategy=strategy;
+    if(hit){
+      hits.push(result);
+      if(!best||result.cost<best.cost)best=result;
+    }
     if(hasRoleGoal&&goalMet(after,{r1:goal.r1,r2:goal.r2})&&(!bestRoleBase||result.cost<bestRoleBase.cost))bestRoleBase=result;
   };
   const tryRefinement=sol=>{
@@ -1415,10 +1450,15 @@ function findCalibration(goal){
       const scaled=scaleChanges(refined.changes,factor);
       restoreConfig(beforeConfig);
       applyCalibChanges(scaled);
-      const after=mainPlayer(), now=impactSnapshot(), diff=snapshotDiff(base,now);
+      const after=mainPlayer(), now=impactSnapshot(), diff=snapshotDiff(proposalBase,now);
       if(goalMet(after,goal)){
-        const costInfo=costWith(scaled,diff);
+        const cumulativeDiff=snapshotDiff(cumulativeBase,now);
+        const costInfo=calibrationCost(scaled,diff,goalKey,strategy);
+        const cumulativeInfo=calibrationCost(scaled,cumulativeDiff,goalKey,strategy);
         refined={ok:true,changes:scaled,before,after,diff,cost:costInfo.cost,costInfo,label:candidateLabel(scaled),phase:refined.phase};
+        refined.cumulativeDiff=cumulativeDiff;
+        refined.cumulativeInfo=cumulativeInfo;
+        refined.strategy=strategy;
       }
     });
     return refined;
@@ -1466,6 +1506,10 @@ function findCalibration(goal){
     const refined=tryRefinement(best);
     refined.phase=usedPhase;
     refined.highCollateral=(refined.costInfo?.collateralRoleChanges||0)>2;
+    refined.alternatives=hits
+      .filter(item=>item!==best)
+      .sort((a,b)=>a.cost-b.cost)
+      .slice(0,4);
     return refined;
   }
   // compute helpful failure message
@@ -1489,8 +1533,14 @@ function renderCalibResult(result,goal){
     const gapLine=result.message&&!result.message.startsWith("IGL")?`<div class="calib-note" style="color:var(--warn)">${esc(result.message)}</div>`:"";
     return `<div class="calib-suggestion bad"><div class="calib-title">Sem ajuste baixo</div>${gapLine}</div>`;
   }
-  const afterState=rolePairText(result.after)+" / "+esc(STYLE_LABEL(result.after.playstyle));
-  const beforeState=rolePairText(result.before)+" / "+esc(STYLE_LABEL(result.before.playstyle));
+  const incrementalDiff=result.diff||{players:[],teams:[]};
+  const incrementalInfo=result.costInfo||calibrationMetrics(result.changes||[],incrementalDiff,null);
+  const cumulativeDiff=result.cumulativeDiff||incrementalDiff;
+  const cumulativeInfo=result.cumulativeInfo||incrementalInfo;
+  const incrementalTotal=incrementalDiff.players.length+incrementalDiff.teams.length;
+  const cumulativeTotal=cumulativeDiff.players.length+cumulativeDiff.teams.length;
+  const afterState=rolePairText(result.after)+" / "+STYLE_LABEL(result.after.playstyle);
+  const beforeState=rolePairText(result.before)+" / "+STYLE_LABEL(result.before.playstyle);
   const playerRows=result.diff.players.slice(0,5).map(player=>{
     const risk=player.rareWorsened?` · risco +${player.dReality.toFixed(2)}`:"";
     const meta=[player.roleChanged?`${player.old.role} → ${player.role}`:player.role,player.styleChanged?`${player.old.style} → ${player.style}`:player.style].join(" · ")+risk;
@@ -1502,24 +1552,37 @@ function renderCalibResult(result,goal){
     if(change.type==="contra")return `<div class="calib-change"><b>✗${change.role}.${change.attr.toUpperCase()}</b><span style="color:var(--warn)">${change.from.toFixed(3)} → ${change.to.toFixed(3)}</span></div>`;
     return `<div class="calib-change"><b>${change.role}.${change.attr.toUpperCase()}</b><span>${change.from.toFixed(2)} → ${change.to.toFixed(2)}</span></div>`;
   }).join("");
-  const rareWorsened=result.diff.players.filter(p=>p.rareWorsened).length;
-  const modeLabel={realista:"mais realista",seguro:"menor dano",direto:"mais direto"}[calibMode]||calibMode;
+  const rareWorsened=incrementalDiff.players.filter(p=>p.rareWorsened).length;
+  const cumulativeRare=cumulativeDiff.players.filter(p=>p.rareWorsened).length;
+  const modeLabel=result.strategy?.label||({realista:"mais realista",seguro:"menor dano",direto:"mais direto"}[calibMode]||calibMode);
   const phaseNote=result.phase!=null?` (fase ${result.phase+1})`:"";
   const goalInfo=goal?`<div class="calib-goals">${[goal.r1&&`Role1: ${goal.r1} ${goal.r1===rolePairParts(result.after).r1?"✓":"✗"}`,goal.r2&&`Role2: ${goal.r2} ${goal.r2===rolePairParts(result.after).r2?"✓":"✗"}`,goal.style&&`Estilo: ${goal.style} ${goal.style===STYLE_LABEL(result.after.playstyle)?"✓":"✗"}`].filter(Boolean).join(" · ")}</div>`:"";
   const diagnostics=`<div class="calib-diagnostics">
     <span>Custo ${result.cost.toFixed(2)}</span>
-    <span>Δ pesos ${result.costInfo.deltaCost.toFixed(2)}</span>
-    <span>Colateral ${result.costInfo.collateralRoleChanges}</span>
-    <span>Realidade +${result.costInfo.realityPenalty.toFixed(2)}</span>
+    <span>Δ pesos ${incrementalInfo.deltaCost.toFixed(2)}</span>
+    <span>Prévia ${incrementalDiff.players.length} jog · ${incrementalDiff.teams.length} times</span>
+    <span>Acumulado ${cumulativeDiff.players.length} jog · ${cumulativeDiff.teams.length} times</span>
+    <span>Colateral ${incrementalInfo.collateralRoleChanges}</span>
+    <span>Realidade +${incrementalInfo.realityPenalty.toFixed(2)} / acum +${cumulativeInfo.realityPenalty.toFixed(2)}</span>
   </div>`;
+  const accumulatedNote=cumulativeTotal>incrementalTotal
+    ?`<div class="calib-note">Esta sugestão altera ${incrementalTotal} itens agora; depois de aplicar, o Impacto ao vivo pode mostrar ${cumulativeTotal} porque ele soma tudo que já mudou desde o baseline carregado.</div>`
+    :"";
+  const alternatives=(result.alternatives||[]).slice(0,3).map((alt,idx)=>{
+    const altDiff=alt.diff||{players:[],teams:[]};
+    const altCum=alt.cumulativeDiff||altDiff;
+    return `<div class="calib-alt"><b>Opção ${idx+2} · custo ${alt.cost.toFixed(2)}</b><span>Prévia ${altDiff.players.length} jog/${altDiff.teams.length} times · acumulado ${altCum.players.length} jog/${altCum.teams.length} times · ${esc(alt.label||"ajuste alternativo")}</span></div>`;
+  }).join("");
   return `<div class="calib-suggestion good">
     <div class="calib-title">Sugestão mínima encontrada</div>
     ${goalInfo}
     ${diagnostics}
     <div class="calib-list">${changes}</div>
     ${result.highCollateral?`<div class="calib-note" style="color:var(--warn)">⚠ Solução com alto impacto colateral (${result.costInfo?.collateralRoleChanges||'?'} jogadores com mudança de role). Revise antes de aplicar.</div>`:""}
-    <div class="calib-note">Modo ${esc(modeLabel)}${phaseNote}. ${esc(beforeState)} → ${esc(afterState)}. Impacto: ${result.diff.players.length} jog·${result.diff.teams.length} times. Realidade piorou em ${rareWorsened} jogadores.</div>
+    <div class="calib-note">Modo ${esc(modeLabel)}${phaseNote}: ${esc(result.strategy?.explain||"")} ${esc(beforeState)} → ${esc(afterState)}. Realidade piorou em ${rareWorsened} jogadores nesta sugestão e ${cumulativeRare} no acumulado.</div>
+    ${accumulatedNote}
     ${playerRows?`<div class="impact-section"><h4>Principais afetados</h4>${playerRows}</div>`:""}
+    ${alternatives?`<div class="impact-section"><h4>Alternativas próximas</h4><div class="calib-alts">${alternatives}</div></div>`:""}
     <div class="calib-actions"><button class="btn accent" id="calibApply">Aplicar sugestão</button><button class="btn" id="calibDiscard">Descartar</button></div>
   </div>`;
 }
