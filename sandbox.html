@@ -977,7 +977,7 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 
 let E=null, DEF=null, POOLRAW=[], loadedIdx=null, poolBySlot=new Map();
 let teamIdx=0, simA=0, simB=1, simSeed=2026, simRuns=80, simMap="auto", lastMap=null, lastBatch=null, tuningOpen=false, baseline=null;
-let calibTargetRole="Entry", calibTargetRole2="", calibTargetStyle="", calibMode="ia", calibLast=null;
+let calibTargetRole="Entry", calibTargetRole2="", calibTargetStyle="", calibMode="ia", calibLast=null, calibRunning=false;
 let nmOVR, STYLE_LABEL, PLAYSTYLE_IDS;
 const state={nome:"", fp:70,en:50,tr:50,op:50,cl:50,sn:20,ut:55, rating:1.10, isIGL:false, colocacao:"Campeao"};
 
@@ -1527,7 +1527,7 @@ const CALIB_STRATEGIES={
     phases:[{maxDelta:.12},{maxDelta:.22},{maxDelta:.45},{maxDelta:.85},{maxDelta:1.25}],
     weights:{delta:7,changed:.18,role:.7,style:.8,reality:9,rare:7,collateral:95,team:5,ovr:5,isolated:1.5},
     priority:["collateralRoleChanges","teamChanges","rareWorsened","realityPenalty","ovrImpact","styleChanges","deltaCost","changed"],
-    attrLimit:7,comboDepth:3,deepLeverLimit:18,pairLimit:13,tripleLimit:8,randomCandidates:900,maxRandomChanges:5,randomDelta:.95,maxTests:4500,maxMs:1200,
+    attrLimit:7,comboDepth:3,deepLeverLimit:18,pairLimit:13,tripleLimit:8,randomCandidates:2600,maxRandomChanges:5,randomDelta:.95,maxTests:22000,maxMs:9000,sliceMs:28,
     explain:"busca profunda: testa alavancas globais, contra-pesos e combinacoes antes de escolher o menor dano."
   },
   realista:{
@@ -1535,7 +1535,7 @@ const CALIB_STRATEGIES={
     phases:[{maxDelta:.14},{maxDelta:.28},{maxDelta:.50},{maxDelta:.72}],
     weights:{delta:11,changed:.35,role:1.6,style:2.4,reality:22,rare:12,collateral:28,team:1.8,ovr:2.6,isolated:55},
     priority:["rareWorsened","realityPenalty","isolatedTarget","collateralRoleChanges","teamChanges","ovrImpact","deltaCost","changed"],
-    attrLimit:6,comboDepth:2,deepLeverLimit:12,pairLimit:9,tripleLimit:0,randomCandidates:260,maxRandomChanges:4,randomDelta:.55,maxTests:2200,maxMs:850,stopOnFirst:false,
+    attrLimit:6,comboDepth:2,deepLeverLimit:12,pairLimit:9,tripleLimit:0,randomCandidates:850,maxRandomChanges:4,randomDelta:.55,maxTests:9000,maxMs:5500,sliceMs:28,stopOnFirst:false,
     explain:"busca sistemica: prefere mudancas plausiveis e penaliza ajuste que parece servir so ao alvo."
   }
 };
@@ -1584,7 +1584,7 @@ function compareCalibration(a,b,strategy){
   }
   return a.cost-b.cost;
 }
-function findCalibration(goal){
+async function findCalibration(goal,onProgress=null){
   if(loadedIdx==null)return {ok:false,message:"Carregue um jogador antes de calibrar."};
   const raw=playerAt(loadedIdx), beforeConfig=configSnapshot(), proposalBase=impactSnapshot(), cumulativeBase=ensureBaseline(), before=mainPlayer();
   const current=rolePair(before);
@@ -1595,6 +1595,7 @@ function findCalibration(goal){
   const strategy=CALIB_STRATEGIES[calibMode]||CALIB_STRATEGIES.ia;
   const phases=strategy.phases;
   const startedAt=performance.now();
+  let lastYield=startedAt, lastProgress=startedAt;
   const roleTarget=goalRoleTarget(goal,current,isIGL);
   const initialGap=roleTarget?targetGap(raw,roleTarget.target,roleTarget.current):0;
   const hasRoleGoal=!!(goal.r1||goal.r2);
@@ -1606,6 +1607,17 @@ function findCalibration(goal){
     const overTime=performance.now()-startedAt>(strategy.maxMs||Infinity);
     if(overTests||overTime)searchStats.truncated=true;
     return overTests||overTime;
+  };
+  const maybeYield=async(force=false)=>{
+    const now=performance.now();
+    if(onProgress&&(force||now-lastProgress>180)){
+      lastProgress=now;
+      onProgress(searchStats,best);
+    }
+    if(force||now-lastYield>(strategy.sliceMs||30)){
+      lastYield=now;
+      await new Promise(resolve=>setTimeout(resolve,0));
+    }
   };
   const evalOne=(changes,label,phaseIndex)=>{
     if(!changes||!changes.length)return;
@@ -1632,7 +1644,7 @@ function findCalibration(goal){
     }
     if(hasRoleGoal&&goalMet(after,{r1:goal.r1,r2:goal.r2})&&compareCalibration(result,bestRoleBase,strategy)<0)bestRoleBase=result;
   };
-  const tryRefinement=sol=>{
+  const tryRefinement=async sol=>{
     if(!sol||!sol.changes||!sol.changes.length)return sol;
     let refined=sol;
     const consider=changes=>{
@@ -1654,43 +1666,50 @@ function findCalibration(goal){
       if(compareCalibration(candidate,refined,strategy)<0)refined=candidate;
     };
     try{
-      refined.changes.forEach((_,idx)=>{
+      for(let idx=0;idx<refined.changes.length;idx++){
         if(refined.changes.length>1)consider(refined.changes.filter((__,j)=>j!==idx));
-      });
-      [.85,.7,.5,.35,.25,.125,.0625].forEach(factor=>consider(scaleChanges(refined.changes,factor)));
-      refined.changes.forEach((change,idx)=>{
-        [.85,.65,.45,.25].forEach(factor=>{
+        await maybeYield();
+      }
+      for(const factor of [.85,.7,.5,.35,.25,.125,.0625]){
+        consider(scaleChanges(refined.changes,factor));
+        await maybeYield();
+      }
+      for(let idx=0;idx<refined.changes.length;idx++){
+        for(const factor of [.85,.65,.45,.25]){
           const mixed=refined.changes.map((item,j)=>j===idx?scaleChanges([item],factor)[0]:item);
           consider(mixed);
-        });
-      });
+          await maybeYield();
+        }
+      }
     }finally{
       restoreConfig(beforeConfig);
     }
     return refined;
   };
   try{
-    phases.forEach((phase,pi)=>{
-      if(best&&strategy.stopOnFirst)return;
+    for(let pi=0;pi<phases.length;pi++){
+      const phase=phases[pi];
+      if(best&&strategy.stopOnFirst)break;
+      if(outOfBudget())break;
       usedPhase=pi;
       const candidates=generateGoalCandidates(goal,current,raw,isIGL,{role:{maxDelta:phase.maxDelta}});
       const deepCandidates=generateDeepRoleCandidates(goal,current,raw,isIGL,strategy,{maxDelta:phase.maxDelta,phase:pi});
       const randomCandidates=generateRandomRoleCandidates(goal,current,raw,isIGL,strategy,{maxDelta:phase.maxDelta,phase:pi});
       searchStats.generated+=candidates.length+deepCandidates.length+randomCandidates.length;
-      candidates.forEach(changes=>evalOne(changes,null,pi));
-      deepCandidates.forEach(changes=>evalOne(changes,null,pi));
-      randomCandidates.forEach(changes=>evalOne(changes,null,pi));
+      for(const changes of candidates){if(outOfBudget())break;evalOne(changes,null,pi);await maybeYield();}
+      for(const changes of deepCandidates){if(outOfBudget())break;evalOne(changes,null,pi);await maybeYield();}
+      for(const changes of randomCandidates){if(outOfBudget())break;evalOne(changes,null,pi);await maybeYield();}
       if(pi===0){
         const needStyle=goal.style&&goal.style!==current.style;
         if(needStyle&&(!best||STYLE_LABEL(best.after.playstyle)!==goal.style)){
           const combatRole=isIGL?current.r2:(goal.r1||current.r1);
           const sCands=generateStyleCandidates(goal.style,raw,current.r1,combatRole);
-          sCands.forEach(changes=>evalOne(changes,null,pi));
+          for(const changes of sCands){if(outOfBudget())break;evalOne(changes,null,pi);await maybeYield();}
           const top=[bestRoleBase,best].filter(Boolean);
-          top.forEach(roleSol=>{
-            if(!roleSol.changes||!roleSol.changes.length)return;
-            sCands.forEach(sChanges=>{if(sChanges&&sChanges.length)evalOne([...roleSol.changes,...sChanges],null,pi);});
-          });
+          for(const roleSol of top){
+            if(!roleSol.changes||!roleSol.changes.length)continue;
+            for(const sChanges of sCands){if(outOfBudget())break;if(sChanges&&sChanges.length)evalOne([...roleSol.changes,...sChanges],null,pi);await maybeYield();}
+          }
         }
         if(!best&&goal.r1&&goal.r1!==current.r1){
           const gap=computeAffinityGap(raw,goal.r1,current.r1);
@@ -1702,13 +1721,14 @@ function findCalibration(goal){
           }
         }
       }
-    });
+    }
     if(best){
-      const refined=tryRefinement(best);
+      const refined=await tryRefinement(best);
       refined.phase=refined.phase??usedPhase;
       refined.highCollateral=(refined.costInfo?.collateralRoleChanges||0)>2;
       refined.searchStats=searchStats;
       refined.alternatives=hits.filter(item=>item!==best).sort((x,y)=>compareCalibration(x,y,strategy)).slice(0,4);
+      await maybeYield(true);
       return refined;
     }
     let fbMsg="Nenhuma mudanca atingiu o alvo sem mexer em stats.";
@@ -1831,16 +1851,24 @@ function buildCalibrator(){
   document.getElementById("calibRole2").onchange=function(){calibTargetRole2=this.value;calibLast=null;buildCalibrator();};
   document.getElementById("calibStyle").onchange=function(){calibTargetStyle=this.value;calibLast=null;buildCalibrator();};
   document.getElementById("calibMode").onchange=function(){calibMode=this.value;calibLast=null;buildCalibrator();};
-  document.getElementById("calibSuggest").onclick=()=>{
+  document.getElementById("calibSuggest").onclick=async()=>{
+    if(calibRunning)return;
     const goal={r1:isIGL?"IGL":calibTargetRole,r2:calibTargetRole2,style:calibTargetStyle};
     if(!goal.r1&&!goal.r2&&!goal.style){toast("Selecione ao menos um alvo.");return;}
-    const btn=document.getElementById("calibSuggest"), resultBox=document.getElementById("calibResult");
-    if(btn)btn.disabled=true;
-    if(resultBox)resultBox.innerHTML='<div class="impact-empty">IA rodando busca global com limite anti-travamento...</div>';
-    setTimeout(()=>{
-      calibLast=findCalibration(goal);
+    const resultBox=document.getElementById("calibResult");
+    calibRunning=true;
+    document.querySelectorAll("#calibbox button,#calibbox select").forEach(el=>{el.disabled=true;});
+    const progress=(stats,best)=>{
+      const pct=stats.generated?Math.min(100,Math.round(stats.tested/stats.generated*100)):0;
+      if(resultBox)resultBox.innerHTML=`<div class="impact-empty">IA rodando busca global... ${stats.tested}/${stats.generated||"?"} testes (${pct}%) · validas ${stats.valid}${best?` · melhor custo ${best.cost.toFixed(1)}`:""}</div>`;
+    };
+    progress({tested:0,generated:0,valid:0});
+    try{
+      calibLast=await findCalibration(goal,progress);
+    }finally{
+      calibRunning=false;
       buildCalibrator();
-    },20);
+    }
   };
   document.getElementById("calibReset").onclick=()=>{copyInto(E.ROLE_PERFIL,DEF.ROLE);copyInto(E.NM_DEF,DEF.NM);copyInto(E.NM_COR,DEF.NM_COR);if(DEF.CONTRA)copyInto(E.ROLE_CONTRA,DEF.CONTRA);calibLast=null;refresh("all");};
   const apply=document.getElementById("calibApply");
