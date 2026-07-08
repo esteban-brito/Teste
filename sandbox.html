@@ -1527,7 +1527,7 @@ const CALIB_STRATEGIES={
     phases:[{maxDelta:.12},{maxDelta:.22},{maxDelta:.45},{maxDelta:.85},{maxDelta:1.25}],
     weights:{delta:7,changed:.18,role:.7,style:.8,reality:9,rare:7,collateral:95,team:5,ovr:5,isolated:1.5},
     priority:["collateralRoleChanges","teamChanges","rareWorsened","realityPenalty","ovrImpact","styleChanges","deltaCost","changed"],
-    attrLimit:7,comboDepth:3,deepLeverLimit:18,pairLimit:13,tripleLimit:8,randomCandidates:3200,maxRandomChanges:5,randomDelta:.95,maxTests:45000,
+    attrLimit:7,comboDepth:3,deepLeverLimit:18,pairLimit:13,tripleLimit:8,randomCandidates:900,maxRandomChanges:5,randomDelta:.95,maxTests:4500,maxMs:1200,
     explain:"busca profunda: testa alavancas globais, contra-pesos e combinacoes antes de escolher o menor dano."
   },
   realista:{
@@ -1535,7 +1535,7 @@ const CALIB_STRATEGIES={
     phases:[{maxDelta:.14},{maxDelta:.28},{maxDelta:.50},{maxDelta:.72}],
     weights:{delta:11,changed:.35,role:1.6,style:2.4,reality:22,rare:12,collateral:28,team:1.8,ovr:2.6,isolated:55},
     priority:["rareWorsened","realityPenalty","isolatedTarget","collateralRoleChanges","teamChanges","ovrImpact","deltaCost","changed"],
-    attrLimit:6,comboDepth:2,deepLeverLimit:12,pairLimit:9,tripleLimit:0,randomCandidates:850,maxRandomChanges:4,randomDelta:.55,maxTests:14000,stopOnFirst:false,
+    attrLimit:6,comboDepth:2,deepLeverLimit:12,pairLimit:9,tripleLimit:0,randomCandidates:260,maxRandomChanges:4,randomDelta:.55,maxTests:2200,maxMs:850,stopOnFirst:false,
     explain:"busca sistemica: prefere mudancas plausiveis e penaliza ajuste que parece servir so ao alvo."
   }
 };
@@ -1594,15 +1594,22 @@ function findCalibration(goal){
   if(isIGL&&goal.r1&&goal.r1!=="IGL")return {ok:false,message:"IGL nao pode mudar de papel primario via pesos. Altere a role2 (papel de combate).",before,goal};
   const strategy=CALIB_STRATEGIES[calibMode]||CALIB_STRATEGIES.ia;
   const phases=strategy.phases;
+  const startedAt=performance.now();
   const roleTarget=goalRoleTarget(goal,current,isIGL);
   const initialGap=roleTarget?targetGap(raw,roleTarget.target,roleTarget.current):0;
   const hasRoleGoal=!!(goal.r1||goal.r2);
   let best=null, bestRoleBase=null, usedPhase=-1;
   const hits=[];
-  const searchStats={tested:0,valid:0,generated:0,pruned:0,initialGap,roleTarget};
+  const searchStats={tested:0,valid:0,generated:0,pruned:0,truncated:false,initialGap,roleTarget};
+  const outOfBudget=()=>{
+    const overTests=searchStats.tested>=(strategy.maxTests||Infinity);
+    const overTime=performance.now()-startedAt>(strategy.maxMs||Infinity);
+    if(overTests||overTime)searchStats.truncated=true;
+    return overTests||overTime;
+  };
   const evalOne=(changes,label,phaseIndex)=>{
     if(!changes||!changes.length)return;
-    if(searchStats.tested>=(strategy.maxTests||Infinity)){searchStats.pruned++;return;}
+    if(outOfBudget()){searchStats.pruned++;return;}
     searchStats.tested++;
     restoreConfig(beforeConfig);
     applyCalibChanges(changes);
@@ -1629,6 +1636,7 @@ function findCalibration(goal){
     if(!sol||!sol.changes||!sol.changes.length)return sol;
     let refined=sol;
     const consider=changes=>{
+      if(outOfBudget())return;
       restoreConfig(beforeConfig);
       applyCalibChanges(changes);
       const after=mainPlayer(), now=impactSnapshot(), diff=snapshotDiff(proposalBase,now);
@@ -1758,6 +1766,7 @@ function renderCalibResult(result,goal){
     <span>Delta pesos ${incrementalInfo.deltaCost.toFixed(2)}</span>
     <span>Testes ${st.tested||0}/${st.generated||0}</span>
     <span>Validas ${st.valid||0}</span>
+    ${st.truncated?'<span>corte anti-trava</span>':""}
     ${gapText}
     <span>Acumulado ${cumulativeSummary.players} jog | ${cumulativeSummary.teams} times</span>
     <span>Realidade +${incrementalInfo.realityPenalty.toFixed(2)} / acum +${cumulativeInfo.realityPenalty.toFixed(2)}</span>
@@ -1825,7 +1834,13 @@ function buildCalibrator(){
   document.getElementById("calibSuggest").onclick=()=>{
     const goal={r1:isIGL?"IGL":calibTargetRole,r2:calibTargetRole2,style:calibTargetStyle};
     if(!goal.r1&&!goal.r2&&!goal.style){toast("Selecione ao menos um alvo.");return;}
-    calibLast=findCalibration(goal);buildCalibrator();
+    const btn=document.getElementById("calibSuggest"), resultBox=document.getElementById("calibResult");
+    if(btn)btn.disabled=true;
+    if(resultBox)resultBox.innerHTML='<div class="impact-empty">IA rodando busca global com limite anti-travamento...</div>';
+    setTimeout(()=>{
+      calibLast=findCalibration(goal);
+      buildCalibrator();
+    },20);
   };
   document.getElementById("calibReset").onclick=()=>{copyInto(E.ROLE_PERFIL,DEF.ROLE);copyInto(E.NM_DEF,DEF.NM);copyInto(E.NM_COR,DEF.NM_COR);if(DEF.CONTRA)copyInto(E.ROLE_CONTRA,DEF.CONTRA);calibLast=null;refresh("all");};
   const apply=document.getElementById("calibApply");
