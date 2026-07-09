@@ -464,6 +464,9 @@ let teamIdx=0, simA=0, simB=1, simSeed=2026, simRuns=80, simMap="auto", lastMap=
 let calibTargetRole="", calibTargetRole2="", calibTargetStyle="", calibMode="ia", calibLast=null, calibRunning=false;
 let nmOVR, STYLE_LABEL, PLAYSTYLE_IDS;
 let calibSession=null, reportFallbackText="";
+const teamEvalCache=new Map();
+function invalidateTeamEval(ti){teamEvalCache.delete(ti);}
+function invalidateAllTeamEval(){teamEvalCache.clear();}
 const state={nome:"", fp:70,en:50,tr:50,op:50,cl:50,sn:20,ut:55, rating:1.10, isIGL:false, colocacao:"Campeao"};
 
 async function carregarMotores(){
@@ -535,6 +538,12 @@ function teamCoverage(players){
     if(p.role2!=null&&cov[p.role2]!==undefined)cov[p.role2]+=.5;
   });
   return cov;
+}
+function evaluateTeamCached(t,ti){
+  if(teamEvalCache.has(ti))return teamEvalCache.get(ti);
+  const value=evaluateTeam(t,ti);
+  teamEvalCache.set(ti,value);
+  return value;
 }
 function evaluateTeam(t,ti){
   const players=teamPlayers(t,ti), visualCoverage=teamCoverage(players), coach=t.treinador;
@@ -901,6 +910,7 @@ function resetWorkbench(){
   if(DEF.STYLE_FIT)copyInto(E.STYLE_ROLE_FIT,DEF.STYLE_FIT);
   if(DEF.STYLE_CONTRA)copyInto(E.STYLE_CONTRA,DEF.STYLE_CONTRA);
   calibLast=null;baseline=null;calibSession=null;reportFallbackText="";
+  invalidateAllTeamEval();
   refresh("all");
   toast("Bancada resetada");
 }
@@ -1666,16 +1676,16 @@ function buildCalibrator(){
       try{buildCalibrator();}catch(err){console.error(err);}
     }
   };
-  document.getElementById("calibReset").onclick=()=>{copyInto(E.ROLE_PERFIL,DEF.ROLE);copyInto(E.NM_DEF,DEF.NM);copyInto(E.NM_COR,DEF.NM_COR);if(DEF.CONTRA)copyInto(E.ROLE_CONTRA,DEF.CONTRA);if(DEF.IGL)copyInto(E.IGL_ROLE_AFIN,DEF.IGL);if(DEF.RULES)copyInto(E.ROLE_RULES,DEF.RULES);if(DEF.STYLE_FIT)copyInto(E.STYLE_ROLE_FIT,DEF.STYLE_FIT);if(DEF.STYLE_CONTRA)copyInto(E.STYLE_CONTRA,DEF.STYLE_CONTRA);calibLast=null;refresh("all");};
+  document.getElementById("calibReset").onclick=()=>{copyInto(E.ROLE_PERFIL,DEF.ROLE);copyInto(E.NM_DEF,DEF.NM);copyInto(E.NM_COR,DEF.NM_COR);if(DEF.CONTRA)copyInto(E.ROLE_CONTRA,DEF.CONTRA);if(DEF.IGL)copyInto(E.IGL_ROLE_AFIN,DEF.IGL);if(DEF.RULES)copyInto(E.ROLE_RULES,DEF.RULES);if(DEF.STYLE_FIT)copyInto(E.STYLE_ROLE_FIT,DEF.STYLE_FIT);if(DEF.STYLE_CONTRA)copyInto(E.STYLE_CONTRA,DEF.STYLE_CONTRA);calibLast=null;invalidateAllTeamEval();refresh("all");};
   const apply=document.getElementById("calibApply");
-  if(apply)apply.onclick=()=>{if(calibLast&&calibLast.ok){const applied=calibLast;applyCalibChanges(applied.changes);registerCalibrationApplication(applied);calibLast=null;refresh("all");toast("Sugestão registrada na bancada");}};
+  if(apply)apply.onclick=()=>{if(calibLast&&calibLast.ok){const applied=calibLast;applyCalibChanges(applied.changes);registerCalibrationApplication(applied);calibLast=null;invalidateAllTeamEval();refresh("all");toast("Sugestão registrada na bancada");}};
   const discard=document.getElementById("calibDiscard");
   if(discard)discard.onclick=()=>{calibLast=null;buildCalibrator();};
 }
 function officialTeam(t,ti){
   const coach=t.treinador;
   const js=teamEngines(t,ti).map(eng=>{if(coach&&coach.ovr)eng._coach={ovr:coach.ovr,carac:coach.carac};return eng;});
-  const sandboxTeam=evaluateTeam(t,ti);
+  const sandboxTeam=evaluateTeamCached(t,ti);
   const ft={efetiva:sandboxTeam.efetiva, quimica:sandboxTeam.quimica};
   return {...t,jogadores:js,forca:ft};
 }
@@ -1770,6 +1780,7 @@ function wireAtributos(onChange){
 
 /* ===== UI unificada: roles + playstyle + OVR + time ===== */
 function refresh(target){
+  invalidateTeamEval(loadedIdx!=null?POOLRAW[loadedIdx].ti:teamIdx);
   if(!target||target==="all"){renderPlayerPanel();renderTeamPanel();renderMatchPanel();renderReportBox();if(tuningOpen)buildCalibrator();return;}
   if(target==="player"){renderPlayerPanel();return;}
   if(target==="team"){renderTeamPanel();return;}
@@ -1786,7 +1797,7 @@ function renderMain(){refresh("all");}
 /* === league sidebar === */
 function renderLeague(){
   const box=document.getElementById("league");if(!box)return;
-  const teams=E.TEAMS.map((src,i)=>({src,f:evaluateTeam(src,i)}));
+  const teams=E.TEAMS.map((src,i)=>({src,f:evaluateTeamCached(src,i)}));
   let html="";
   teams.forEach(({src,f},i)=>{
     const avg=f.bruta/5;
@@ -1820,7 +1831,7 @@ const ROLE_COLORS={AWPer:"#b8a4ef",Rifler:"#e0c374",Entry:"#e58f7c",Lurker:"#96d
 /* === team detail === */
 function renderTeamDetail(){
   const box=document.getElementById("teamdet");if(!box)return;
-  const t=E.TEAMS[teamIdx], f=evaluateTeam(t,teamIdx), src=t;
+  const t=E.TEAMS[teamIdx], f=evaluateTeamCached(t,teamIdx), src=t;
   const avg=f.bruta/5;
   // coach
   const coach=f.coach?`<div class="tdetail-coach"><div class="cv">${Math.min(20,f.coach.ovr)}</div><div><div class="cn">${esc(f.coach.nick)}</div><div class="cc">${esc(f.coach.carac||"—")}</div></div></div>`:`<div class="tdetail-coach"><div class="cn" style="color:var(--dim);font-style:italic">sem treinador</div></div>`;
