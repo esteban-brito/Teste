@@ -1008,9 +1008,9 @@ async function carregarMotores(){
   if(cut<0)cut=linhas.findIndex(l=>l.includes("document.getElementById"));
   if(cut<0)throw new Error("não encontrei o início da camada de UI em game.js");
   const slice=linhas.slice(0,cut).join("\n");
-  E=new Function(slice+"\nreturn {avaliarJogador,aplicarAvaliacaoContextual,curvaOVR,distribuirRoles,forcaTime,ovrUnificado,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,MAPAS_POOL,MAPA_LADO,srand,simularMapa,forcaDoDia,TEAMS,nmOVR,roleAfinidade,NM_DEF,NM_COR,STYLE_LABEL,PLAYSTYLE_IDS};")();
+  E=new Function(slice+"\nreturn {avaliarJogador,aplicarAvaliacaoContextual,curvaOVR,distribuirRoles,forcaTime,ovrUnificado,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,STYLE_ROLE_FIT,STYLE_CONTRA,MAPAS_POOL,MAPA_LADO,srand,simularMapa,forcaDoDia,TEAMS,nmOVR,roleAfinidade,NM_DEF,NM_COR,STYLE_LABEL,PLAYSTYLE_IDS};")();
   ["avaliarJogador","distribuirRoles","forcaTime","simularMapa","forcaDoDia","srand","TEAMS"].forEach(k=>{if(!E[k])throw new Error(`motor ausente: ${k}`);});
-  DEF={ROLE:clone(E.ROLE_PERFIL),NM:clone(E.NM_DEF),NM_COR:clone(E.NM_COR),CONTRA:clone(E.ROLE_CONTRA),IGL:clone(E.IGL_ROLE_AFIN),RULES:clone(E.ROLE_RULES)};
+  DEF={ROLE:clone(E.ROLE_PERFIL),NM:clone(E.NM_DEF),NM_COR:clone(E.NM_COR),CONTRA:clone(E.ROLE_CONTRA),IGL:clone(E.IGL_ROLE_AFIN),RULES:clone(E.ROLE_RULES),STYLE_FIT:clone(E.STYLE_ROLE_FIT),STYLE_CONTRA:clone(E.STYLE_CONTRA)};
   // aliases locais para as funções/dados importados do motor (evita E.xxx em toda a UI)
   ({nmOVR,STYLE_LABEL,PLAYSTYLE_IDS}=E);
   POOLRAW=[]; poolBySlot=new Map();
@@ -1081,7 +1081,8 @@ function rolePairText(p){
 }
 function rolePairParts(p){
   const r1=p.isIGL?"IGL":(p.role1||p.primario||p.combatRole||"Rifler");
-  const r2=p.isIGL?(p.combatRole||p.secundario||"Rifler"):(p.role2||p.secundario||p.combatRole||"Rifler");
+  let r2=p.isIGL?(p.combatRole||p.secundario||"Rifler"):(p.role2||p.secundario||p.combatRole||"Rifler");
+  if(!p.isIGL&&r2===r1)r2=ROLES.find(role=>role!==r1)||"Rifler";
   return {r1,r2,combat:p.isIGL?r2:r1};
 }
 function realityCost(p){
@@ -1218,6 +1219,8 @@ function renderImpactPanel(){
 function changeLine(change){
   if(change.type==="nm")return`NM_DEF.${change.style}.w.${change.axis}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
   if(change.type==="nmwr")return`NM_DEF.${change.style}.wR: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
+  if(change.type==="stylefit")return`STYLE_ROLE_FIT.${change.role}.${change.styleId}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
+  if(change.type==="stylecontra")return`STYLE_CONTRA.${change.styleId}.${change.axis}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
   if(change.type==="contra")return`ROLE_CONTRA.${change.role}.${change.attr}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
   if(change.type==="ovr")return`ROLE_PERFIL.${change.role}.ovr.${change.attr}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
   if(change.type==="wr")return`ROLE_PERFIL.${change.role}.wR: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
@@ -1341,7 +1344,7 @@ function setRoleWeight(role,attr,value){
   afin[attr]=Math.max(0,+value.toFixed(3));
 }
 function configSnapshot(){
-  return {role:clone(E.ROLE_PERFIL),nm:clone(E.NM_DEF),cor:clone(E.NM_COR),contra:clone(E.ROLE_CONTRA),igl:clone(E.IGL_ROLE_AFIN),rules:clone(E.ROLE_RULES)};
+  return {role:clone(E.ROLE_PERFIL),nm:clone(E.NM_DEF),cor:clone(E.NM_COR),contra:clone(E.ROLE_CONTRA),igl:clone(E.IGL_ROLE_AFIN),rules:clone(E.ROLE_RULES),styleFit:clone(E.STYLE_ROLE_FIT),styleContra:clone(E.STYLE_CONTRA)};
 }
 function restoreConfig(snapshot){
   copyInto(E.ROLE_PERFIL,snapshot.role);
@@ -1350,6 +1353,8 @@ function restoreConfig(snapshot){
   if(snapshot.contra)copyInto(E.ROLE_CONTRA,snapshot.contra);
   if(snapshot.igl)copyInto(E.IGL_ROLE_AFIN,snapshot.igl);
   if(snapshot.rules)copyInto(E.ROLE_RULES,snapshot.rules);
+  if(snapshot.styleFit)copyInto(E.STYLE_ROLE_FIT,snapshot.styleFit);
+  if(snapshot.styleContra)copyInto(E.STYLE_CONTRA,snapshot.styleContra);
 }
 function ensureCalibSession(){
   if(!calibSession){
@@ -1359,7 +1364,7 @@ function ensureCalibSession(){
 }
 function flatConfigDiff(){
   const before=configSnapshot();
-  const base={role:DEF.ROLE,nm:DEF.NM,cor:DEF.NM_COR,contra:DEF.CONTRA,igl:DEF.IGL,rules:DEF.RULES};
+  const base={role:DEF.ROLE,nm:DEF.NM,cor:DEF.NM_COR,contra:DEF.CONTRA,igl:DEF.IGL,rules:DEF.RULES,styleFit:DEF.STYLE_FIT,styleContra:DEF.STYLE_CONTRA};
   const out=[];
   const walk=(label,a,b)=>{
     const keys=new Set([...Object.keys(a||{}),...Object.keys(b||{})]);
@@ -1375,6 +1380,8 @@ function flatConfigDiff(){
   walk("ROLE_CONTRA",before.contra,base.contra);
   walk("IGL_ROLE_AFIN",before.igl,base.igl);
   walk("ROLE_RULES",before.rules,base.rules);
+  walk("STYLE_ROLE_FIT",before.styleFit,base.styleFit);
+  walk("STYLE_CONTRA",before.styleContra,base.styleContra);
   return out.sort((a,b)=>a.path.localeCompare(b.path));
 }
 function intentionState(intent){
@@ -1422,6 +1429,8 @@ function resetWorkbench(){
   if(DEF.CONTRA)copyInto(E.ROLE_CONTRA,DEF.CONTRA);
   if(DEF.IGL)copyInto(E.IGL_ROLE_AFIN,DEF.IGL);
   if(DEF.RULES)copyInto(E.ROLE_RULES,DEF.RULES);
+  if(DEF.STYLE_FIT)copyInto(E.STYLE_ROLE_FIT,DEF.STYLE_FIT);
+  if(DEF.STYLE_CONTRA)copyInto(E.STYLE_CONTRA,DEF.STYLE_CONTRA);
   calibLast=null;baseline=null;calibSession=null;reportFallbackText="";
   refresh("all");
   toast("Bancada resetada");
@@ -1430,6 +1439,14 @@ function applyCalibChanges(changes){
   changes.forEach(change=>{
     if(change.type==="nm"){const w=E.NM_DEF[change.style]?.w;if(w)w[change.axis]=change.to;}
     else if(change.type==="nmwr"){const rec=E.NM_DEF[change.style];if(rec)rec.wR=change.to;}
+    else if(change.type==="stylefit"){
+      if(!E.STYLE_ROLE_FIT[change.role])E.STYLE_ROLE_FIT[change.role]={};
+      E.STYLE_ROLE_FIT[change.role][change.styleId]=change.to;
+    }
+    else if(change.type==="stylecontra"){
+      if(!E.STYLE_CONTRA[change.styleId])E.STYLE_CONTRA[change.styleId]={};
+      E.STYLE_CONTRA[change.styleId][change.axis]=change.to;
+    }
     else if(change.type==="contra"){
       if(!E.ROLE_CONTRA[change.role])E.ROLE_CONTRA[change.role]={};
       E.ROLE_CONTRA[change.role][change.attr]=change.to;
@@ -1455,7 +1472,7 @@ function applyCalibChanges(changes){
 }
 const snapshotDiff=diffSnapshots;
 function changeKey(change){
-  return `${change.type||"afin"}:${change.role||change.style}:${change.attr||change.axis||"wr"}:${change.to.toFixed(3)}`;
+  return `${change.type||"afin"}:${change.role||change.style||change.styleId}:${change.attr||change.axis||"wr"}:${change.to.toFixed(3)}`;
 }
 function attrValue(player,attr){return player[attr]||0;}
 function candidateAttrsFor(role,player,limit=4){
@@ -1477,6 +1494,19 @@ function makeNmChange(style,axis,delta){
   const w=E.NM_DEF[style]?.w||{};
   const from=w[axis]||0;
   return {type:"nm",style,axis,from,to:Math.max(.01,+(from+delta).toFixed(3))};
+}
+function styleIdFromLabel(label){
+  return E.PLAYSTYLE_IDS.find(id=>E.STYLE_LABEL(id)===label||id===label)||label;
+}
+function makeStyleFitChange(role,styleId,delta){
+  const fit=E.STYLE_ROLE_FIT?.[role]||{};
+  const from=+(fit[styleId]||0);
+  return {type:"stylefit",role,styleId,from,to:Math.max(-.5,Math.min(.5,+(from+delta).toFixed(3)))};
+}
+function makeStyleContraChange(styleId,axis,delta){
+  const contra=E.STYLE_CONTRA?.[styleId]||{};
+  const from=+(contra[axis]||0);
+  return {type:"stylecontra",styleId,axis,from,to:Math.max(0,Math.min(.8,+(from+delta).toFixed(3)))};
 }
 function roleContraWeight(role,attr){return +(E.ROLE_CONTRA[role]?.[attr]||0);}
 function makeContraChange(role,attr,delta){
@@ -1536,6 +1566,8 @@ function candidateLabel(changes){
   return changes.map(change=>{
     if(change.type==="nm")return`NM.${change.axis.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     if(change.type==="nmwr")return`NM.${change.style}.wR ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
+    if(change.type==="stylefit")return`FIT.${change.role}.${change.styleId} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
+    if(change.type==="stylecontra")return`SCONTRA.${change.styleId}.${change.axis.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     if(change.type==="contra")return`${change.role}.CONTRA.${change.attr.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     if(change.type==="ovr")return`${change.role}.OVR.${change.attr.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     if(change.type==="wr")return`${change.role}.wR ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
@@ -1615,13 +1647,18 @@ function generateStyleCandidates(targetStyle,raw,role,goalRole1){
   const s6=nm.s6;
   const recipe=E.NM_DEF[targetStyle];
   if(!recipe||!s6)return[];
+  const targetId=styleIdFromLabel(targetStyle);
+  const currentId=nm.style;
   const keys=Object.keys(recipe.w);
   const profile=normalizedStyleProfile(s6);
   const axes=keys
     .map(k=>({axis:k,w:recipe.w[k]||0,s:profile[k]||0}))
     .filter(a=>a.s>0)
     .sort((a,b)=>(b.s-b.w)-(a.s-a.w));
-  const deltas=[.02,.04,.07];
+  const statAxes=Object.keys(s6).sort((a,b)=>(s6[b]||0)-(s6[a]||0));
+  const contraAxes=Object.keys(E.STYLE_CONTRA?.[targetId]||{}).sort((a,b)=>(s6[b]||0)-(s6[a]||0));
+  const deltas=[.02,.04,.07,.10,.14];
+  const fitDeltas=[.03,.06,.09,.12,.16];
   const out=[];
   deltas.forEach(delta=>{
     const strongest=axes.filter(axis=>axis.s>=axis.w*.72).slice(0,3);
@@ -1635,6 +1672,17 @@ function generateStyleCandidates(targetStyle,raw,role,goalRole1){
     if(weakest&&strongest.length){
       out.push([makeNmChange(targetStyle,strongest[0].axis,delta*.6),makeNmChange(targetStyle,weakest.axis,-delta*.35)]);
     }
+    statAxes.slice(0,3).forEach(axis=>{
+      if(!keys.includes(axis))out.push([makeNmChange(targetStyle,axis,delta*.5)]);
+    });
+  });
+  fitDeltas.forEach(delta=>{
+    out.push([makeStyleFitChange(evalRole,targetId,delta)]);
+    if(currentId&&currentId!==targetId)out.push([makeStyleFitChange(evalRole,targetId,delta),makeStyleFitChange(evalRole,currentId,-delta*.45)]);
+    contraAxes.slice(0,3).forEach(axis=>{
+      out.push([makeStyleContraChange(targetId,axis,-delta*.6)]);
+      out.push([makeStyleFitChange(evalRole,targetId,delta*.75),makeStyleContraChange(targetId,axis,-delta*.35)]);
+    });
   });
   const seen=new Set();
   return out.filter(changes=>{
@@ -2131,7 +2179,7 @@ function buildCalibrator(){
       buildCalibrator();
     }
   };
-  document.getElementById("calibReset").onclick=()=>{copyInto(E.ROLE_PERFIL,DEF.ROLE);copyInto(E.NM_DEF,DEF.NM);copyInto(E.NM_COR,DEF.NM_COR);if(DEF.CONTRA)copyInto(E.ROLE_CONTRA,DEF.CONTRA);if(DEF.IGL)copyInto(E.IGL_ROLE_AFIN,DEF.IGL);if(DEF.RULES)copyInto(E.ROLE_RULES,DEF.RULES);calibLast=null;refresh("all");};
+  document.getElementById("calibReset").onclick=()=>{copyInto(E.ROLE_PERFIL,DEF.ROLE);copyInto(E.NM_DEF,DEF.NM);copyInto(E.NM_COR,DEF.NM_COR);if(DEF.CONTRA)copyInto(E.ROLE_CONTRA,DEF.CONTRA);if(DEF.IGL)copyInto(E.IGL_ROLE_AFIN,DEF.IGL);if(DEF.RULES)copyInto(E.ROLE_RULES,DEF.RULES);if(DEF.STYLE_FIT)copyInto(E.STYLE_ROLE_FIT,DEF.STYLE_FIT);if(DEF.STYLE_CONTRA)copyInto(E.STYLE_CONTRA,DEF.STYLE_CONTRA);calibLast=null;refresh("all");};
   const apply=document.getElementById("calibApply");
   if(apply)apply.onclick=()=>{if(calibLast&&calibLast.ok){const applied=calibLast;applyCalibChanges(applied.changes);registerCalibrationApplication(applied);calibLast=null;refresh("all");toast("Sugestão registrada na bancada");}};
   const discard=document.getElementById("calibDiscard");

@@ -231,6 +231,12 @@ function classificar(p){
   const c=[prim,sec];
   c.secForte=(secondaryScore(prim,sec,p,sc)/Math.max(1,sc[prim]))>=.82; // bi-funcional de verdade (grau contínuo -> bool p/ química)
   return c;}
+function roleSecundarioSeguro(primary,secondary,p,scores=null){
+  if(secondary&&secondary!==primary)return secondary;
+  const sc=scores||afinidades(p);
+  return ROLES_COMBATE.filter(r=>r!==primary)
+    .sort((a,b)=>secondaryScore(primary,b,p,sc)-secondaryScore(primary,a,p,sc))[0]||"Rifler";
+}
 const ESTEIRA={AWPer:"Artilharia",Rifler:"Assalto",Entry:"Vanguarda",Lurker:"Ancora",Support:"Sistema",IGL:"Comando"};
 /* ┌─ ZÊNITE ─ OVR unificado ───────────────────────────────────────────┐ */
 // OVR unificado p/ TODAS as funções (escala única, sem cliffs):
@@ -418,7 +424,7 @@ const TIER_STAR=["kennyS","m0NESY","KSCERATO","blameF","shox","XANTARES","JW","r
 // ORQUESTRADOR PRISMA→ZÊNITE: classifica (função+sub) e avalia (OVR) um jogador de uma vez.
 function aplicarAvaliacaoContextual(p){
   const fallback=(!p.primario||!p.secundario)?classificar(p):null;
-  const role=p.primario||fallback[0],sec=p.secundario||fallback[1];
+  const role=p.primario||fallback[0],sec=role==="IGL"?(p.secundario||fallback[1]):roleSecundarioSeguro(role,p.secundario||fallback[1],p);
   const combatRole=role==="IGL"?(sec||"Rifler"):role,style=nmOVR(p,combatRole);
   let ovr=Math.min(role==="IGL"?CFG_AVALIACAO.IGL_TETO:CFG_AVALIACAO.OVR_MAX,Math.max(CFG_AVALIACAO.OVR_MIN,style.ovr));
   if(role==="IGL")ovr=Math.min(CFG_AVALIACAO.IGL_TETO,Math.max(1,curvaOVR(style.core+CFG_AVALIACAO.IGL_CREDITO*IGL_CREDITO_SHARE)+(CFG_AVALIACAO.IGL_TITULO[p.colocacao]||0)));
@@ -443,7 +449,7 @@ function distribuirRoles(engs){
   cand.forEach(c=>{if(prim.has(c.e)||count[c.r]>=capRole(c.r))return;prim.set(c.e,c.r);count[c.r]++;});
   const melhorRole=e=>{const s=sc.get(e);return ROLES_COMBATE.reduce((b,r)=>s[r]>s[b]?r:b,ROLES_COMBATE[0]);};
   naoIgl.forEach(e=>{const p=prim.get(e),s=sc.get(e);const ord=ROLES_COMBATE.slice().sort((a,b)=>secondaryScore(p,b,e,s)-secondaryScore(p,a,e,s));
-    e.primario=p;e.secundario=ord.find(r=>r!==p);
+    e.primario=p;e.secundario=roleSecundarioSeguro(p,ord.find(r=>r!==p),e,s);
     // regra do teto de AWP: quem PEGARIA AWPer primário mas foi barrado → AWPer é forçado como função 2 (sempre)
     if(p!=="AWPer"&&melhorRole(e)==="AWPer")e.secundario="AWPer";
     e.secForte=(secondaryScore(p,e.secundario,e,s)/Math.max(1,s[p]))>=.82;});
