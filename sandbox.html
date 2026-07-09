@@ -2095,6 +2095,8 @@ function renderCalibResult(result,goal){
   const changes=result.changes.map(change=>{
     if(change.type==="nm")return `<div class="calib-change"><b>NM.${change.axis.toUpperCase()}</b><span>${change.from.toFixed(2)} -> ${change.to.toFixed(2)}</span></div>`;
     if(change.type==="nmwr")return `<div class="calib-change"><b>NM.${esc(change.style)}.wR</b><span>${change.from.toFixed(2)} -> ${change.to.toFixed(2)}</span></div>`;
+    if(change.type==="stylefit")return `<div class="calib-change"><b>FIT.${change.role}.${esc(change.styleId)}</b><span>${change.from.toFixed(2)} -> ${change.to.toFixed(2)}</span></div>`;
+    if(change.type==="stylecontra")return `<div class="calib-change"><b>SCONTRA.${esc(change.styleId)}.${change.axis.toUpperCase()}</b><span>${change.from.toFixed(2)} -> ${change.to.toFixed(2)}</span></div>`;
     if(change.type==="contra")return `<div class="calib-change"><b>${change.role}.CONTRA.${change.attr.toUpperCase()}</b><span>${change.from.toFixed(2)} -> ${change.to.toFixed(2)}</span></div>`;
     if(change.type==="ovr")return `<div class="calib-change"><b>${change.role}.OVR.${change.attr.toUpperCase()}</b><span>${change.from.toFixed(2)} -> ${change.to.toFixed(2)}</span></div>`;
     if(change.type==="wr")return `<div class="calib-change"><b>${change.role}.wR</b><span>${change.from.toFixed(2)} -> ${change.to.toFixed(2)}</span></div>`;
