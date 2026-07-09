@@ -1242,7 +1242,8 @@ function buildCalibrationReport(){
   else lines.push("Sem mudancas pendentes.");
   lines.push("");
   lines.push("=== INTENCOES MONITORADAS ===");
-  const intentions=Array.from(session.intentions.values()).map(intentionState);
+  const reportSnap=impactSnapshot();
+  const intentions=Array.from(session.intentions.values()).map(intent=>intentionState(intent,reportSnap));
   if(intentions.length)intentions.forEach(item=>{
     lines.push(`${item.nome} (${item.team})`);
     lines.push(`  Esperado: ${item.expectedRole} / ${item.expectedStyle}`);
@@ -1384,15 +1385,16 @@ function flatConfigDiff(){
   walk("STYLE_CONTRA",before.styleContra,base.styleContra);
   return out.sort((a,b)=>a.path.localeCompare(b.path));
 }
-function intentionState(intent){
-  const current=impactSnapshot().players.find(player=>player.key===intent.key);
+function intentionState(intent,snap){
+  const current=(snap||impactSnapshot()).players.find(player=>player.key===intent.key);
   if(!current)return {...intent,status:"SUMIU",current:null};
   const ok=current.role===intent.expectedRole&&current.style===intent.expectedStyle;
   return {...intent,status:ok?"OK":"REGREDIU",current};
 }
 function sessionRegressions(){
   const session=ensureCalibSession();
-  return Array.from(session.intentions.values()).map(intentionState).filter(item=>item.status!=="OK");
+  const snap=impactSnapshot();
+  return Array.from(session.intentions.values()).map(intent=>intentionState(intent,snap)).filter(item=>item.status!=="OK");
 }
 function registerCalibrationApplication(result){
   const session=ensureCalibSession();
@@ -1540,12 +1542,11 @@ function normalizedStyleProfile(s6){
 }
 function deltasFor(max){
   const BASE=[.03,.06,.09,.12,.16,.22];
-  if(max<=.22)return BASE;
   const MORE=[];
   if(max>.22)MORE.push(.30,.40);
   if(max>.40)MORE.push(.55,.75);
   if(max>.75)MORE.push(1.0);
-  return [...BASE,...MORE.filter(d=>d<=max)];
+  return [...BASE,...MORE].filter(d=>d<=max);
 }
 function dedupeCandidates(arr){
   const seen=new Set();
