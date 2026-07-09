@@ -30,6 +30,7 @@ const browserGlobals = {
   DOMMatrixReadOnly: "readonly",
   addEventListener: "readonly",
   removeEventListener: "readonly",
+  Worker: "readonly",
 };
 
 const commonRules = {
@@ -74,6 +75,21 @@ export default [
       "no-redeclare": "off",
       "no-global-assign": "off",
     },
+  },
+  {
+    files: ["calibrator-worker.js"],
+    languageOptions: {
+      globals: {
+        self: "readonly",
+        postMessage: "readonly",
+        importScripts: "readonly",
+        fetch: "readonly",
+        performance: "readonly",
+        navigator: "readonly",
+        console: "readonly",
+      },
+    },
+    rules: commonRules,
   },
   {
     files: ["bancada/**/*.js", "tools/**/*.js"],
