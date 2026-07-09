@@ -132,3 +132,15 @@ Ou seja: todo o ajuste fino de pesos em `CALIB_STRATEGIES` é, na prática, **de
 4. **#2** — ⏸ investigado, **não corrigido**: ver nota de 2026-07-09 na seção do achado — a forma óbvia de escopar por role não é segura (reatribuição de role é colateral, não fixa por time, nos deltas grandes que a busca usa de verdade). Lentidão continua existindo; precisa de uma abordagem mais cuidadosa que ainda não foi desenhada.
 
 Também nessa passada (2026-07-09, fora da numeração original): extraído `buildCandidateResult` pra eliminar a duplicação do achado 🟡 acima (`evalOne`/`tryRefinement.consider`), e adicionado cache de `evaluateTeam` por time (`evaluateTeamCached`) pra cortar reavaliação redundante da liga inteira nas telas normais (fora da busca do calibrador, que não usa esse cache).
+
+---
+
+## 🟠 Reconstrução da busca (2026-07-09) — resposta arquitetural ao "IA burra"
+
+Corrigir só o `compareCalibration` (#4) resolve a parte de *decisão* entre candidatos, mas não resolve a parte de *busca*: o modo "IA" gerava uma pilha fixa de candidatos por fórmulas hard-coded, avaliava cada um isoladamente, e fazia **uma única passada final** de ajuste fino (`tryRefinement`: remove 1 mudança por vez, testa 7 fatores de reescala, para). Não existia iteração/aprendizado dentro de uma busca, a priorização de alavancas (`roleLeverBank`) era uma fórmula estática (stat bruto × posição, sem medir efeito real), e o orçamento era só por tempo/contagem, não por convergência.
+
+Substituí (só no modo "IA" — "Realista" ficou intocado, verificado byte-idêntico):
+- `roleLeverBank` agora mede a sensibilidade real de cada alavanca (efeito no gap pro cargo-alvo via `targetGap`/`roleAfinidade`, cálculo por-jogador, sem reavaliar a liga) em vez da fórmula estática.
+- `tryRefinement` ganhou uma segunda fase: busca local iterativa com aceitação tipo *simulated annealing* (perturbar a melhor solução — add/remove/reescala/troca de alavanca —, aceitar se melhorar, aceitar ocasionalmente se piorar um pouco pra escapar de ótimo local, esfriando ao longo do tempo), parando por convergência (N tentativas sem melhora) ou orçamento, em vez de uma passada fixa.
+
+Validado com harness diferencial (13 combinações jogador/objetivo/modo, motor real, fora do navegador): "Realista" idêntico em 100% dos casos; "IA" igual ou melhor em todo caso normal. Um caso-limite (`ropz -> Support`, objetivo quase impossível) passou de "sem solução" pra uma solução tecnicamente válida mas com custo altíssimo (~277 mil) — rastreado até a penalidade quadrática de colateral já existente em `scoreCalibration`, corretamente sinalizando uma cascata real de 54 jogadores afetados. Não é bug; é a IA sendo honesta sobre um objetivo essencialmente inviável em vez de simplesmente desistir.
