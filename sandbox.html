@@ -1267,13 +1267,29 @@ function roleLeverBank(target,current,raw,opts){
       if(E.ROLE_RULES?.Entry?.[rule])levers.push({weight,make:d=>makeRuleChange("Entry",rule,-d*.35),label:`Entry.rule.${rule}.transicao-`});
     });
   }
+  if(opts?.sensitize)sensitizeLevers(levers,raw,target,current);
+  return levers;
+}
+// mede o efeito real de cada alavanca no gap pro role-alvo (roleAfinidade e por-jogador,
+// nao recalcula a liga) em vez de usar so a heuristica estatica (stat bruto x posicao).
+function sensitizeLevers(levers,raw,target,current){
+  if(!target||!current||!levers.length)return levers;
+  const snap=configSnapshot();
+  const baseGap=targetGap(raw,target,current);
+  levers.forEach(lever=>{
+    applyCalibChanges([lever.make(.15)]);
+    const gap=targetGap(raw,target,current);
+    restoreConfig(snap);
+    lever.sensitivity=gap-baseGap;
+    lever.weight=lever.sensitivity>0?Math.max(.05,lever.sensitivity*100):.05;
+  });
   return levers;
 }
 function generateDeepRoleCandidates(goal,current,raw,isIGL,strategy,opts){
   const info=goalRoleTarget(goal,current,isIGL);
   if(!info)return[];
   const maxDelta=opts?.maxDelta||.55;
-  const levers=roleLeverBank(info.target,info.current,raw,{attrLimit:strategy.attrLimit||7})
+  const levers=roleLeverBank(info.target,info.current,raw,{attrLimit:strategy.attrLimit||7,sensitize:!!strategy.useSensitivity})
     .sort((a,b)=>b.weight-a.weight);
   const deltas=deltasFor(maxDelta);
   const out=[];
@@ -1293,7 +1309,7 @@ function generateRandomRoleCandidates(goal,current,raw,isIGL,strategy,opts){
   const info=goalRoleTarget(goal,current,isIGL);
   if(!info)return[];
   const rng=seededRandom((loadedIdx+1)*2654435761+(opts?.phase||0)*977);
-  const levers=roleLeverBank(info.target,info.current,raw,{attrLimit:strategy.attrLimit||7});
+  const levers=roleLeverBank(info.target,info.current,raw,{attrLimit:strategy.attrLimit||7,sensitize:!!strategy.useSensitivity});
   const count=strategy.randomCandidates||0;
   const maxChanges=strategy.maxRandomChanges||5;
   const maxDelta=opts?.maxDelta||strategy.randomDelta||.65;
@@ -1319,7 +1335,8 @@ const CALIB_STRATEGIES={
     weights:{delta:7,changed:.18,role:.7,style:.8,reality:9,rare:7,collateral:95,team:5,ovr:5,isolated:1.5,broadCut:170,thinRule:-1.8},
     priority:["collateralRoleChanges","teamChanges","rareWorsened","realityPenalty","ovrImpact","styleChanges","deltaCost","changed"],
     attrLimit:7,comboDepth:3,deepLeverLimit:18,pairLimit:13,tripleLimit:8,randomCandidates:2600,maxRandomChanges:5,randomDelta:.95,maxTests:22000,maxMs:9000,sliceMs:28,
-    explain:"busca profunda: testa alavancas globais, contra-pesos e combinacoes antes de escolher o menor dano."
+    useSensitivity:true,annealing:true,convergenceWindow:60,startTemp:1.4,coolingRate:.97,
+    explain:"busca profunda: mede sensibilidade real das alavancas, testa combinacoes e refina iterativamente (annealing) ate convergir ou esgotar o orcamento."
   },
   realista:{
     label:"Realista",
@@ -1453,30 +1470,89 @@ async function findCalibration(goal,onProgress=null){
     if(!sol||!sol.changes||!sol.changes.length)return sol;
     let refined=sol;
     const consider=changes=>{
-      if(outOfBudget())return;
+      if(outOfBudget()||!changes||!changes.length)return null;
       restoreConfig(beforeConfig);
       applyCalibChanges(changes);
+      searchStats.tested++;
       const after=mainPlayer(), now=impactSnapshot(), diff=diffSnapshots(proposalBase,now);
-      if(!goalMet(after,goal))return;
+      if(!goalMet(after,goal))return null;
+      searchStats.valid++;
       const cumulativeDiff=diffSnapshots(cumulativeBase,now);
-      const candidate=buildCandidateResult({changes,ok:true,before,after,diff,cumulativeDiff,goalKey,strategy,searchStats,roleTarget,raw,label:null,phase:refined.phase});
-      if(compareCalibration(candidate,refined,strategy)<0)refined=candidate;
+      return buildCandidateResult({changes,ok:true,before,after,diff,cumulativeDiff,goalKey,strategy,searchStats,roleTarget,raw,label:null,phase:refined.phase});
     };
     try{
+      // fase 1 - varredura local determinista (ablacao + reescala): igual pros dois modos.
       for(let idx=0;idx<refined.changes.length;idx++){
-        if(refined.changes.length>1)consider(refined.changes.filter((__,j)=>j!==idx));
+        if(refined.changes.length>1){
+          const c=consider(refined.changes.filter((__,j)=>j!==idx));
+          if(c&&compareCalibration(c,refined,strategy)<0)refined=c;
+        }
         await maybeYield();
       }
       for(const factor of [.85,.7,.5,.35,.25,.125,.0625]){
-        consider(scaleChanges(refined.changes,factor));
+        const c=consider(scaleChanges(refined.changes,factor));
+        if(c&&compareCalibration(c,refined,strategy)<0)refined=c;
         await maybeYield();
       }
       for(let idx=0;idx<refined.changes.length;idx++){
         for(const factor of [.85,.65,.45,.25]){
           const mixed=refined.changes.map((item,j)=>j===idx?scaleChanges([item],factor)[0]:item);
-          consider(mixed);
+          const c=consider(mixed);
+          if(c&&compareCalibration(c,refined,strategy)<0)refined=c;
           await maybeYield();
         }
+      }
+      // fase 2 (so modo "ia"): busca local iterativa com aceitacao tipo simulated annealing -
+      // continua perturbando a melhor solucao (add/remove/reescala/troca de alavanca) ate
+      // convergir (N tentativas seguidas sem melhora) ou o orcamento acabar, em vez de parar
+      // numa unica passada fixa. Usa a mesma sensibilidade medida em roleLeverBank pra escolher
+      // alavancas.
+      if(strategy.annealing){
+        let bestSeen=refined;
+        const levers=roleTarget?roleLeverBank(roleTarget.target,roleTarget.current,raw,{attrLimit:strategy.attrLimit||7,sensitize:!!strategy.useSensitivity}):[];
+        const rng=seededRandom(((loadedIdx||0)+1)*2654435761+909091);
+        const mutate=base=>{
+          const moves=["rescale-all","rescale-one"];
+          if(base.length>1)moves.push("remove");
+          if(levers.length)moves.push("add-lever","swap-lever");
+          const move=moves[Math.floor(rng()*moves.length)];
+          if(move==="remove"){
+            const idx=Math.floor(rng()*base.length);
+            return base.filter((__,j)=>j!==idx);
+          }
+          if(move==="rescale-all")return scaleChanges(base,.4+rng()*1.1);
+          if(move==="rescale-one"){
+            const idx=Math.floor(rng()*base.length);
+            return base.map((item,j)=>j===idx?scaleChanges([item],.3+rng()*1.2)[0]:item);
+          }
+          const lever=pickWeighted(rng,levers);
+          if(!lever)return base;
+          const d=+(.08+rng()*.6).toFixed(3);
+          if(move==="add-lever"){
+            const added=lever.make(d), usedKeys=new Set(base.map(changeKey));
+            return usedKeys.has(changeKey(added))?base:[...base,added];
+          }
+          const idx=Math.floor(rng()*base.length);
+          return base.map((item,j)=>j===idx?lever.make(d):item);
+        };
+        let noImprove=0, temp=strategy.startTemp||1.2;
+        const maxNoImprove=strategy.convergenceWindow||60, cooling=strategy.coolingRate||.97;
+        while(!outOfBudget()&&noImprove<maxNoImprove){
+          const candidate=consider(mutate(refined.changes));
+          await maybeYield();
+          if(!candidate){noImprove++;continue;}
+          if(compareCalibration(candidate,refined,strategy)<0){
+            refined=candidate;noImprove=0;
+          }else{
+            const worseBy=candidate.cost-refined.cost;
+            const acceptProb=worseBy<=0?1:Math.exp(-worseBy/Math.max(.01,temp));
+            if(rng()<acceptProb)refined=candidate;
+            noImprove++;
+          }
+          if(compareCalibration(refined,bestSeen,strategy)<0)bestSeen=refined;
+          temp*=cooling;
+        }
+        refined=bestSeen;
       }
     }finally{
       restoreConfig(beforeConfig);
