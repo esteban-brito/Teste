@@ -464,6 +464,7 @@ let teamIdx=0, simA=0, simB=1, simSeed=2026, simRuns=80, simMap="auto", lastMap=
 let calibTargetRole="", calibTargetRole2="", calibTargetStyle="", calibMode="ia", calibLast=null, calibRunning=false;
 let nmOVR, STYLE_LABEL, PLAYSTYLE_IDS;
 let calibSession=null, reportFallbackText="";
+let searchSeedSalt=0; // 0 = comportamento de sempre; workers em paralelo usam um valor diferente cada pra nao repetir a mesma busca
 const teamEvalCache=new Map();
 function invalidateTeamEval(ti){teamEvalCache.delete(ti);}
 function invalidateAllTeamEval(){teamEvalCache.clear();}
@@ -1327,7 +1328,7 @@ function generateDeepRoleCandidates(goal,current,raw,isIGL,strategy,opts){
 function generateRandomRoleCandidates(goal,current,raw,isIGL,strategy,opts){
   const info=goalRoleTarget(goal,current,isIGL);
   if(!info)return[];
-  const rng=seededRandom((loadedIdx+1)*2654435761+(opts?.phase||0)*977);
+  const rng=seededRandom((loadedIdx+1)*2654435761+(opts?.phase||0)*977+searchSeedSalt);
   const levers=roleLeverBank(info.target,info.current,raw,{attrLimit:strategy.attrLimit||7,sensitize:!!strategy.useSensitivity});
   const count=strategy.randomCandidates||0;
   const maxChanges=strategy.maxRandomChanges||5;
@@ -1529,7 +1530,7 @@ async function findCalibration(goal,onProgress=null){
       if(strategy.annealing){
         let bestSeen=refined;
         const levers=roleTarget?roleLeverBank(roleTarget.target,roleTarget.current,raw,{attrLimit:strategy.attrLimit||7,sensitize:!!strategy.useSensitivity}):[];
-        const rng=seededRandom(((loadedIdx||0)+1)*2654435761+909091);
+        const rng=seededRandom(((loadedIdx||0)+1)*2654435761+909091+searchSeedSalt);
         const mutate=base=>{
           const moves=["rescale-all","rescale-one"];
           if(base.length>1)moves.push("remove");
@@ -1713,6 +1714,83 @@ function renderCalibResult(result,goal){
     <div class="calib-actions"><button class="btn accent" id="calibApply">Aplicar sugestao</button><button class="btn" id="calibDiscard">Descartar</button></div>
   </div>`;
 }
+// === busca em paralelo via Web Workers (modo IA) ===
+// Cada worker roda o MESMO codigo do calibrador (busca o proprio sandbox.html, sem duplicar
+// logica - ver calibrator-worker.js), numa copia isolada do motor, com uma seed diferente. Isso
+// nao pula nada nem aproxima nada: e a mesma busca de sempre, testando N vezes mais candidatos
+// no mesmo tempo de espera porque roda em paralelo nos nucleos disponiveis. Qualquer falha (
+// Worker indisponivel, erro de protocolo, timeout) cai pra busca direta na thread principal -
+// o pior caso e "nao ficou mais rapido", nunca "quebrou".
+let calibWorkers=null;
+function ensureCalibWorkers(){
+  if(calibWorkers)return calibWorkers;
+  if(typeof Worker==="undefined")return null;
+  try{
+    const n=Math.max(1,Math.min(8,(typeof navigator!=="undefined"&&navigator.hardwareConcurrency)||4));
+    calibWorkers=[];
+    for(let i=0;i<n;i++)calibWorkers.push(new Worker("calibrator-worker.js"));
+    return calibWorkers;
+  }catch(err){
+    console.error("workers indisponiveis, usando busca direta:",err);
+    calibWorkers=null;
+    return null;
+  }
+}
+async function runCalibrationParallel(goal,onProgress){
+  try{
+    const strategy=CALIB_STRATEGIES[calibMode]||CALIB_STRATEGIES.ia;
+    const workers=calibMode==="ia"?ensureCalibWorkers():null;
+    const src=loadedIdx!=null?POOLRAW[loadedIdx]:null;
+    if(!workers||!workers.length||!src)return await findCalibration(goal,onProgress);
+    const config=configSnapshot();
+    const liveState={...state};
+    const timeoutMs=(strategy.maxMs||9000)+5000;
+    const jobId=Date.now()+"-"+Math.random();
+    const progressAgg=workers.map(()=>({tested:0,generated:0,valid:0}));
+    const reportProgress=()=>{
+      if(!onProgress)return;
+      const tested=progressAgg.reduce((s,p)=>s+p.tested,0);
+      const generated=progressAgg.reduce((s,p)=>s+p.generated,0);
+      const valid=progressAgg.reduce((s,p)=>s+p.valid,0);
+      onProgress({tested,generated,valid,stage:`busca paralela (${workers.length} nucleos)`});
+    };
+    const results=await Promise.allSettled(workers.map((worker,idx)=>new Promise((resolve,reject)=>{
+      let settled=false;
+      const timer=setTimeout(()=>{
+        if(settled)return;settled=true;
+        worker.removeEventListener("message",onMessage);
+        reject(new Error(`worker ${idx} expirou`));
+      },timeoutMs);
+      const onMessage=ev=>{
+        const msg=ev.data;
+        if(!msg||msg.jobId!==jobId)return;
+        if(msg.type==="progress"){
+          progressAgg[idx]={tested:msg.tested||0,generated:msg.generated||0,valid:msg.valid||0};
+          reportProgress();
+          return;
+        }
+        if(msg.type==="done"){
+          if(settled)return;settled=true;
+          clearTimeout(timer);
+          worker.removeEventListener("message",onMessage);
+          if(msg.ok)resolve(msg.result);else reject(new Error(msg.error||"worker falhou"));
+        }
+      };
+      worker.addEventListener("message",onMessage);
+      worker.postMessage({jobId,ti:src.ti,pi:src.pi,state:liveState,config,goal,mode:calibMode,seedSalt:(idx+1)*7919});
+    })));
+    const fulfilled=results.filter(r=>r.status==="fulfilled").map(r=>r.value);
+    if(!fulfilled.length)return await findCalibration(goal,onProgress);
+    const valid=fulfilled.filter(r=>r&&r.ok);
+    if(!valid.length)return fulfilled[0];
+    let best=valid[0];
+    for(const r of valid.slice(1))if(compareCalibration(r,best,strategy)<0)best=r;
+    return best;
+  }catch(err){
+    console.error("busca paralela falhou, caindo pra busca direta:",err);
+    return await findCalibration(goal,onProgress);
+  }
+}
 function buildCalibrator(){
   const box=document.getElementById("calibbox");if(!box)return;
   const player=loadedIdx==null?evaluatePlayer(jogadorAtual()):mainPlayer();
@@ -1764,7 +1842,7 @@ function buildCalibrator(){
     };
     progress({tested:0,generated:0,valid:0});
     try{
-      calibLast=await findCalibration(goal,progress);
+      calibLast=await runCalibrationParallel(goal,progress);
     }finally{
       calibRunning=false;
       if(resultBox)resultBox.innerHTML=renderCalibResult(calibLast,goal);
