@@ -545,10 +545,7 @@ function quimicaComposicao(jogadores,caracTreinador=null){const C=CFG_QUIMICA;
   if(temPrim("Entry")){alertas.push("Iniciativa");}
   else if(nSecRaw("Entry")>=2){alertas.push("Iniciativa (dupla cobertura)");} // 2 jogadores com Entry 2 = 1 primário
   else if(temPrim("Rifler")){const eSec=nSec("Entry");const fator=eSec>0?C.RIFLER_INICIATIVA*Math.pow(0.5,eSec):C.RIFLER_INICIATIVA;const p=C.PEN.semIniciativa*fator*corte;mult*=(1-p);alertas.push(`Iniciativa ${eSec>0?"parcial":"limitada"} −${Math.round(p*100)}%`);}
-  else{const secs=nSec("Entry")+nSec("Rifler"),secsRaw=nSecRaw("Entry")+nSecRaw("Rifler");
-    if(secsRaw>=2){alertas.push("Iniciativa (dupla cobertura)");}
-    else if(secs>0){const p=C.PEN.semIniciativa*Math.pow(0.5,secs)*corte;mult*=(1-p);alertas.push(`Iniciativa secundária −${Math.round(p*100)}%`);}
-    else{mult*=(1-C.PEN.semIniciativa*corte);alertas.push(`Iniciativa falta −${Math.round(C.PEN.semIniciativa*corte*100)}%`);}}
+  else pilar("Iniciativa",C.PEN.semIniciativa,false,nSec("Entry")+nSec("Rifler"),nSecRaw("Entry")+nSecRaw("Rifler"));
   // saturação: excesso de uma função primária além do ideal (a role 2 de cada IGL conta como +1 naquela função)
   let satTotal=0;
   ["IGL","AWPer","Lurker","Support","Entry","Rifler"].forEach(fn=>{
@@ -1219,6 +1216,7 @@ function simularSerie(A,B,fdA,fdB,md,leve){
    ║  playoffs e o reprodutor de partidas. Consome TEAMS e os motores    ║
    ║  acima; daqui pra baixo é apresentação (DOM/áudio/animação).        ║
    ╚═══════════════════════════════════════════════════════════════════╝ */
+// === UI START ===
 const SPIN_MS=2700; // giro mais rápido (era 4000)
 const WIN_INDEX=44;
 const rnd=n=>Math.floor(Math.random()*n);
@@ -1329,7 +1327,6 @@ const S={
 
 let spinSession=0;
 
-// === UI START ===
 const $=id=>document.getElementById(id);
 const roulette=$("roulette"),track=$("track"),picksEl=$("picks"),lineupEl=$("lineup"),lineupCoach=$("lineupCoach");
 const hintEl=$("hint"),spinwrap=$("spinwrap"),picksTag=$("picksTag"),picksNote=$("picksNote"),winnerPill=$("winnerPill");
@@ -1500,8 +1497,10 @@ function offsetParaCentralizar(index){
   return centroRoleta-centroCarta;
 }
 
+let spinCleanup=null;
 function pararAnimacao(){
   spinSession++;
+  if(spinCleanup){spinCleanup();spinCleanup=null;}
   track.style.transition="none";
   track.style.willChange="auto";
   S.spinning=false;
@@ -1599,6 +1598,7 @@ function sortear(){
     cancelAnimationFrame(rafTick);
     track.removeEventListener("transitionend",aoFim);
     clearTimeout(fallback);
+    spinCleanup=null;
     S.spinning=false;                                    // para o loop imediatamente
     const carta=track.children[WIN_INDEX];
     const idNaFita=carta?.dataset.team;
@@ -1619,6 +1619,7 @@ function sortear(){
 
   track.addEventListener("transitionend",aoFim);
   const fallback=setTimeout(finalizar,SPIN_MS+350);
+  spinCleanup=()=>{track.removeEventListener("transitionend",aoFim);clearTimeout(fallback);};
 }
 
 function renderLineup(){
@@ -2107,7 +2108,7 @@ $("playoffAvancar").onclick=avancarPlayoff;
 // mostra a seção do Major só quando o elenco estiver completo
 /* ——— UI · reprodutor de partida (cinematográfico) ——— */
 // ritmo dos rounds: pulso legível e mais pausado (rounds correm devagar pra acompanhar)
-const RITMO={base:260,preMomento:360,pausaMomento:1600,pausaForte:2200,troca:1000,inicio:500};
+const RITMO={base:260,troca:1000,inicio:500};
 const MP={ativo:false,timer:null,onFim:null,gen:0,jogo:null,ctx:""};
 
 function monoChip(nome,cor){return `<div class="team-mono" style="background:${cor||"#888"}">${mono(nome)}</div>`;}
