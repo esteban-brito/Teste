@@ -939,7 +939,6 @@ function applyCalibChanges(changes){
     else setRoleWeight(change.role,change.attr,change.to);
   });
 }
-const snapshotDiff=diffSnapshots;
 function changeKey(change){
   return `${change.type||"afin"}:${change.role||change.style||change.styleId}:${change.attr||change.axis||"wr"}:${change.to.toFixed(3)}`;
 }
@@ -1361,14 +1360,32 @@ function calibrationCost(changes,diff,goalKey,strategy){
   const metrics=calibrationMetrics(changes,diff,goalKey);
   return {...metrics,cost:scoreCalibration(metrics,strategy||CALIB_STRATEGIES.ia)};
 }
+const COMPARE_EPSILON=.05;
 function compareCalibration(a,b,strategy){
   if(!b)return -1;
   if(!a)return 1;
+  const costDiff=a.cost-b.cost;
+  if(Math.abs(costDiff)>COMPARE_EPSILON)return costDiff;
   for(const key of strategy.priority||[]){
     const av=a.costInfo?.[key]??0, bv=b.costInfo?.[key]??0;
     if(Math.abs(av-bv)>1e-9)return av-bv;
   }
-  return a.cost-b.cost;
+  return costDiff;
+}
+function buildCandidateResult({changes,ok,before,after,diff,cumulativeDiff,goalKey,strategy,searchStats,roleTarget,raw,label,phase}){
+  const costInfo=calibrationCost(changes,diff,goalKey,strategy);
+  const cumulativeInfo=calibrationCost(changes,cumulativeDiff,goalKey,strategy);
+  const result={ok,changes,before,after,diff,cost:costInfo.cost,costInfo,label:label||candidateLabel(changes),phase};
+  result.targetKey=goalKey;
+  result.cumulativeDiff=cumulativeDiff;
+  result.cumulativeInfo=cumulativeInfo;
+  result.strategy=strategy;
+  result.searchStats=searchStats;
+  if(roleTarget){
+    result.finalGap=targetGap(raw,roleTarget.target,roleTarget.current);
+    result.roleScores={before:roleScoresFor(before,roleTarget.target,roleTarget.current),after:roleScoresFor(after,roleTarget.target,roleTarget.current)};
+  }
+  return result;
 }
 async function findCalibration(goal,onProgress=null){
   if(loadedIdx==null)return {ok:false,message:"Carregue um jogador antes de calibrar."};
@@ -1411,19 +1428,10 @@ async function findCalibration(goal,onProgress=null){
     searchStats.tested++;
     restoreConfig(beforeConfig);
     applyCalibChanges(changes);
-    const after=mainPlayer(), now=impactSnapshot(), diff=snapshotDiff(proposalBase,now);
-    const cumulativeDiff=snapshotDiff(cumulativeBase,now);
+    const after=mainPlayer(), now=impactSnapshot(), diff=diffSnapshots(proposalBase,now);
+    const cumulativeDiff=diffSnapshots(cumulativeBase,now);
     const hit=goalMet(after,goal);
-    const costInfo=calibrationCost(changes,diff,goalKey,strategy);
-    const cumulativeInfo=calibrationCost(changes,cumulativeDiff,goalKey,strategy);
-    const result={ok:hit,changes,before,after,diff,cost:costInfo.cost,costInfo,label:label||candidateLabel(changes),phase:phaseIndex};
-    result.targetKey=goalKey;
-    result.cumulativeDiff=cumulativeDiff;
-    result.cumulativeInfo=cumulativeInfo;
-    result.strategy=strategy;
-    result.searchStats=searchStats;
-    if(roleTarget)result.finalGap=targetGap(raw,roleTarget.target,roleTarget.current);
-    if(roleTarget)result.roleScores={before:roleScoresFor(before,roleTarget.target,roleTarget.current),after:roleScoresFor(after,roleTarget.target,roleTarget.current)};
+    const result=buildCandidateResult({changes,ok:hit,before,after,diff,cumulativeDiff,goalKey,strategy,searchStats,roleTarget,raw,label,phase:phaseIndex});
     if(hit){
       searchStats.valid++;
       hits.push(result);
@@ -1438,19 +1446,10 @@ async function findCalibration(goal,onProgress=null){
       if(outOfBudget())return;
       restoreConfig(beforeConfig);
       applyCalibChanges(changes);
-      const after=mainPlayer(), now=impactSnapshot(), diff=snapshotDiff(proposalBase,now);
+      const after=mainPlayer(), now=impactSnapshot(), diff=diffSnapshots(proposalBase,now);
       if(!goalMet(after,goal))return;
-      const cumulativeDiff=snapshotDiff(cumulativeBase,now);
-      const costInfo=calibrationCost(changes,diff,goalKey,strategy);
-      const cumulativeInfo=calibrationCost(changes,cumulativeDiff,goalKey,strategy);
-      const candidate={ok:true,changes,before,after,diff,cost:costInfo.cost,costInfo,label:candidateLabel(changes),phase:refined.phase};
-      candidate.targetKey=goalKey;
-      candidate.cumulativeDiff=cumulativeDiff;
-      candidate.cumulativeInfo=cumulativeInfo;
-      candidate.strategy=strategy;
-      candidate.searchStats=searchStats;
-      if(roleTarget)candidate.finalGap=targetGap(raw,roleTarget.target,roleTarget.current);
-      if(roleTarget)candidate.roleScores={before:roleScoresFor(before,roleTarget.target,roleTarget.current),after:roleScoresFor(after,roleTarget.target,roleTarget.current)};
+      const cumulativeDiff=diffSnapshots(cumulativeBase,now);
+      const candidate=buildCandidateResult({changes,ok:true,before,after,diff,cumulativeDiff,goalKey,strategy,searchStats,roleTarget,raw,label:null,phase:refined.phase});
       if(compareCalibration(candidate,refined,strategy)<0)refined=candidate;
     };
     try{
