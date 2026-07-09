@@ -211,7 +211,7 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
    ============================================================ */
 .dash{display:grid;grid-template-columns:minmax(320px,380px) minmax(360px,1fr) minmax(380px,440px);gap:14px;align-items:stretch;flex:1;min-height:0;overflow:hidden}
 .dash>.card,.dash>div>.card{margin-bottom:0}
-.mcol{display:flex;flex-direction:column;gap:12px;min-width:0;overflow-y:auto;overflow-x:hidden;padding:0 4px 18px 0;
+.mcol{display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0;max-height:calc(100dvh - 96px);overflow-y:auto;overflow-x:hidden;padding:0 4px 18px 0;
   scrollbar-width:thin;scrollbar-color:#55657d transparent}
 .mcol::-webkit-scrollbar{width:11px}
 .mcol::-webkit-scrollbar-thumb{background:#3c4c64;border:3px solid transparent;background-clip:content-box;border-radius:999px}
