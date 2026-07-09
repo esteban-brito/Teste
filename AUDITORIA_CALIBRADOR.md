@@ -60,6 +60,11 @@ Com `maxTests` até 22000 e `maxMs` até 9000ms (modo `ia`), o calibrador pode r
 
 **Não é preciso reavaliar a liga inteira por candidato.** Praticamente todo `change` gerado (`makeChange`, `makeContraChange`, `makeStyleFitChange` etc.) mexe em pesos de **role/style específicos**; dá para restringir a reavaliação aos times que têm jogador nessas roles, ou pelo menos separar "avaliar só o jogador-alvo" de "avaliar times afetados" em vez de recalcular os 17 times a cada tentativa.
 
+> **Atualização 2026-07-09 — tentativa de fix investigada e abandonada por insegurança.**
+> A ideia óbvia é: montar um mapa `role -> times que têm jogador nessa role hoje` e pular a reavaliação de qualquer time fora desse conjunto. Testei essa hipótese direto contra o motor real (`game.js`) antes de implementar, com deltas pequenos (0.15) — bateu certo, zero violações.
+> Só que a busca de verdade usa deltas bem maiores (até 1.25). Testando nesses deltas, **times que não tinham nenhum jogador numa role passaram a ter um** depois da mudança de peso — reatribuição de role é colateral, não é fixa por time. Isso significa que o mapa "role -> times" calculado *antes* da mudança já não é confiável *depois* dela, e escopar por ele esconderia mudanças colaterais reais (justamente a métrica mais importante que o calibrador mostra pro usuário).
+> **Decisão: não implementado.** Um bug de performance é aceitável; um bug que faz a IA subestimar dano colateral silenciosamente não é. Fazer isso direito exigiria simular a reatribuição de roles antes de decidir o que pular — escopo bem maior, não tentar de novo sem uma abordagem que já nasça validando isso.
+
 ---
 
 ## 🔵 #3 — `intentionState` reavalia a liga inteira por intenção, em todo render
@@ -121,7 +126,9 @@ Ou seja: todo o ajuste fino de pesos em `CALIB_STRATEGIES` é, na prática, **de
 
 ## Prioridade de correção sugerida
 
-1. **#1** — trivial (1 linha), corrige metade do desperdício de orçamento de busca imediatamente.
-2. **#3** — trivial (hoist de uma chamada), melhora responsividade da UI em sessões longas sem tocar na busca.
-3. **#4** — decisão de produto: escolher entre "cascata de regras" e "otimização ponderada" antes de mexer no código; é a mudança que mais deve destravar a percepção de "IA burra".
-4. **#2** — a mais trabalhosa (escopar a reavaliação por time/jogador afetado), mas é a que resolve a lentidão de fato; vale fazer depois de #1 e #3 já aliviarem parte do volume de trabalho.
+1. **#1** — ✅ corrigido (2026-07-09): `deltasFor` agora filtra pelo teto pedido.
+2. **#3** — ✅ corrigido (2026-07-09): `sessionRegressions`/`buildCalibrationReport` computam `impactSnapshot()` uma vez só.
+3. **#4** — ✅ corrigido (2026-07-09): `compareCalibration` agora compara por `cost` primeiro, `priority` só desempata custos dentro de um epsilon (0.05).
+4. **#2** — ⏸ investigado, **não corrigido**: ver nota de 2026-07-09 na seção do achado — a forma óbvia de escopar por role não é segura (reatribuição de role é colateral, não fixa por time, nos deltas grandes que a busca usa de verdade). Lentidão continua existindo; precisa de uma abordagem mais cuidadosa que ainda não foi desenhada.
+
+Também nessa passada (2026-07-09, fora da numeração original): extraído `buildCandidateResult` pra eliminar a duplicação do achado 🟡 acima (`evalOne`/`tryRefinement.consider`), e adicionado cache de `evaluateTeam` por time (`evaluateTeamCached`) pra cortar reavaliação redundante da liga inteira nas telas normais (fora da busca do calibrador, que não usa esse cache).
