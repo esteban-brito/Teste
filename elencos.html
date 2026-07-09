@@ -9,7 +9,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="draft9-0 — base de elencos: OVR, funções, atributos e rating de todos os times, jogadores e treinadores.">
-<meta name="theme-color" content="#07090e">
+<meta name="theme-color" content="#080b10">
 <meta name="color-scheme" content="dark">
 <link rel="canonical" href="https://esteban-brito.github.io/Teste/elencos.html">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2307090e'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='16' font-weight='700' text-anchor='middle' fill='%23ff5a1f'%3E9%3C/text%3E%3C/svg%3E">
@@ -19,16 +19,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 /* ---------- tokens: paleta ARENA idêntica ao jogo (dark único, como o game) ---------- */
+/* valores sincronizados com a camada "Clean Matchday refinement" de style.css (2026-07-09) */
 :root{
-  --ground:#07090e; --panel:#0e1420; --panel2:#141b2b; --line:#1f293d; --line2:#161d2c;
-  --ink:#eaf1f8; --ink2:#c4cfdd; --muted:#8b9bb0; --faint:#7d8ba0; --dim:#7d8ba0;
-  --accent:#ff5a1f; --accent-ink:#07090e; --cyan:#39d3ff;
+  --ground:#080b10; --panel:#0d131d; --panel2:#111826; --line:#2c394e; --line2:#161d2c;
+  --ink:#f2f6fb; --ink2:#c4cfdd; --muted:#8b9bb0; --faint:#94a3b8; --dim:#94a3b8;
+  --accent:#ff6b2a; --accent-ink:#07090e; --cyan:#4bd7ff;
   --shadow:0 1px 0 rgba(255,255,255,.03),0 12px 34px rgba(0,0,0,.5);
   --barbg:rgba(255,255,255,.08);
   --ff:'Chakra Petch'; --fb:'Barlow Semi Condensed';
   /* faixas de OVR: dourado · âmbar · laranja(accent) · ciano · prata — do próprio jogo */
-  --t22:#ffce4a; --t22i:#07090e; --t21:#f0a93a; --t21i:#07090e; --t18:#ff5a1f; --t18i:#07090e;
-  --t15:#39d3ff; --t15i:#07090e; --t14:#aab6c4; --t14i:#0b1119;
+  --t22:#ffce4a; --t22i:#07090e; --t21:#f0a93a; --t21i:#07090e; --t18:#ff6b2a; --t18i:#07090e;
+  --t15:#4bd7ff; --t15i:#07090e; --t14:#aab6c4; --t14i:#0b1119;
 }
 *{box-sizing:border-box; margin:0; padding:0}
 body{
@@ -120,7 +121,7 @@ main{max-width:1180px; margin:0 auto; padding:20px 20px 80px}
   font-family:var(--ff); font-weight:700; font-size:.86rem; letter-spacing:.03em; min-width:44px; height:44px; padding:0 10px;
   display:flex; align-items:center; justify-content:center; border-radius:10px;
   /* texto = cor do time clareada · fundo = cor do time bem escurecida → contraste AA garantido, identidade mantida */
-  background:color-mix(in srgb,var(--tc) 13%,#0a0e16); color:color-mix(in srgb,var(--tc) 64%,#eaf1f8); border:1px solid color-mix(in srgb,var(--tc) 40%,transparent);
+  background:color-mix(in srgb,var(--tc) 13%,var(--ground)); color:color-mix(in srgb,var(--tc) 64%,var(--ink)); border:1px solid color-mix(in srgb,var(--tc) 40%,transparent);
 }
 .tmeta{display:flex; flex-direction:column; gap:2px; min-width:0}
 .tname{font-family:var(--ff); font-weight:700; font-size:1.02rem; letter-spacing:.02em; display:flex; align-items:center; gap:8px}
