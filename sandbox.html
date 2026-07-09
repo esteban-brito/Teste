@@ -1054,7 +1054,10 @@ function candidateLabel(changes){
   }).join(" | ");
 }
 function generateRoleCandidates(target,current,raw,opts){
-  const{maxDelta=.22,attrLimit=4,includeContra=false,comboDepth=2}=opts||{};
+  const{maxDelta=.22,attrLimit=4,includeContra=false,comboDepth=2,strategy}=opts||{};
+  if(strategy?.useSensitivity){
+    return generateLeverCandidates(target,current,raw,{maxDelta,attrLimit:Math.max(attrLimit,6),leverLimit:14,pairLimit:8,tripleLimit:comboDepth>=3?6:0,comboDepth,sensitize:true});
+  }
   const attrs=candidateAttrsFor(target,raw,attrLimit);
   const currentAttrs=current&&current!==target?candidateAttrsFor(current,raw,attrLimit):[];
   const deltas=deltasFor(maxDelta);
@@ -1086,7 +1089,10 @@ function generateRoleCandidates(target,current,raw,opts){
   return dedupeCandidates(out);
 }
 function generateRole2Candidates(target2,current1,raw,opts){
-  const{maxDelta=.16,attrLimit=4,includeContra=false,comboDepth=2}=opts||{};
+  const{maxDelta=.16,attrLimit=4,includeContra=false,comboDepth=2,strategy}=opts||{};
+  if(strategy?.useSensitivity){
+    return generateLeverCandidates(target2,current1,raw,{maxDelta,attrLimit:Math.max(attrLimit,6),leverLimit:14,pairLimit:8,tripleLimit:comboDepth>=3?6:0,comboDepth,sensitize:true});
+  }
   const attrs=candidateAttrsFor(target2,raw,attrLimit);
   const currentAttrs=current1==="IGL"?[]:candidateAttrsFor(current1,raw,attrLimit);
   const deltas=deltasFor(maxDelta);
@@ -1285,25 +1291,38 @@ function sensitizeLevers(levers,raw,target,current){
   });
   return levers;
 }
-function generateDeepRoleCandidates(goal,current,raw,isIGL,strategy,opts){
-  const info=goalRoleTarget(goal,current,isIGL);
-  if(!info)return[];
-  const maxDelta=opts?.maxDelta||.55;
-  const levers=roleLeverBank(info.target,info.current,raw,{attrLimit:strategy.attrLimit||7,sensitize:!!strategy.useSensitivity})
-    .sort((a,b)=>b.weight-a.weight);
+// nucleo compartilhado por generateDeepRoleCandidates e (quando strategy.useSensitivity)
+// por generateRoleCandidates/generateRole2Candidates - so 1 implementacao de "combos de alavancas
+// por delta" em vez de 3 reimplementacoes com multiplicadores magicos diferentes.
+function generateLeverCandidates(target,current,raw,opts){
+  const{maxDelta=.22,attrLimit=7,leverLimit=16,pairLimit=10,tripleLimit=7,comboDepth=2,sensitize=false}=opts||{};
+  const levers=roleLeverBank(target,current,raw,{attrLimit,sensitize}).sort((a,b)=>b.weight-a.weight);
   const deltas=deltasFor(maxDelta);
   const out=[];
   deltas.forEach(delta=>{
     const d=+delta.toFixed(3);
-    levers.slice(0,strategy.deepLeverLimit||16).forEach(lever=>out.push([lever.make(d)]));
-    const pairLimit=Math.min(strategy.pairLimit||10,levers.length);
-    for(let i=0;i<pairLimit;i++)for(let j=i+1;j<pairLimit;j++)out.push([levers[i].make(d*.85),levers[j].make(d*.65)]);
-    if((strategy.comboDepth||2)>=3&&d>=.09){
-      const triLimit=Math.min(strategy.tripleLimit||7,levers.length);
-      for(let i=0;i<triLimit;i++)for(let j=i+1;j<triLimit;j++)for(let k=j+1;k<triLimit;k++)out.push([levers[i].make(d*.7),levers[j].make(d*.5),levers[k].make(d*.35)]);
+    levers.slice(0,leverLimit).forEach(lever=>out.push([lever.make(d)]));
+    const pl=Math.min(pairLimit,levers.length);
+    for(let i=0;i<pl;i++)for(let j=i+1;j<pl;j++)out.push([levers[i].make(d*.85),levers[j].make(d*.65)]);
+    if(comboDepth>=3&&d>=.09){
+      const tl=Math.min(tripleLimit,levers.length);
+      for(let i=0;i<tl;i++)for(let j=i+1;j<tl;j++)for(let k=j+1;k<tl;k++)out.push([levers[i].make(d*.7),levers[j].make(d*.5),levers[k].make(d*.35)]);
     }
   });
   return dedupeCandidates(out);
+}
+function generateDeepRoleCandidates(goal,current,raw,isIGL,strategy,opts){
+  const info=goalRoleTarget(goal,current,isIGL);
+  if(!info)return[];
+  return generateLeverCandidates(info.target,info.current,raw,{
+    maxDelta:opts?.maxDelta||.55,
+    attrLimit:strategy.attrLimit||7,
+    leverLimit:strategy.deepLeverLimit||16,
+    pairLimit:strategy.pairLimit||10,
+    tripleLimit:strategy.tripleLimit||7,
+    comboDepth:strategy.comboDepth||2,
+    sensitize:!!strategy.useSensitivity
+  });
 }
 function generateRandomRoleCandidates(goal,current,raw,isIGL,strategy,opts){
   const info=goalRoleTarget(goal,current,isIGL);
@@ -1565,7 +1584,7 @@ async function findCalibration(goal,onProgress=null){
       if(best&&strategy.stopOnFirst)break;
       if(outOfBudget())break;
       usedPhase=pi;
-      const candidates=generateGoalCandidates(goal,current,raw,isIGL,{role:{maxDelta:phase.maxDelta}});
+      const candidates=generateGoalCandidates(goal,current,raw,isIGL,{role:{maxDelta:phase.maxDelta,strategy}});
       const deepCandidates=generateDeepRoleCandidates(goal,current,raw,isIGL,strategy,{maxDelta:phase.maxDelta,phase:pi});
       const randomCandidates=generateRandomRoleCandidates(goal,current,raw,isIGL,strategy,{maxDelta:phase.maxDelta,phase:pi});
       searchStats.generated+=candidates.length+deepCandidates.length+randomCandidates.length;
