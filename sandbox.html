@@ -994,7 +994,7 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 
 let E=null, DEF=null, POOLRAW=[], loadedIdx=null, poolBySlot=new Map();
 let teamIdx=0, simA=0, simB=1, simSeed=2026, simRuns=80, simMap="auto", lastMap=null, lastBatch=null, tuningOpen=false, baseline=null;
-let calibTargetRole="Entry", calibTargetRole2="", calibTargetStyle="", calibMode="ia", calibLast=null, calibRunning=false;
+let calibTargetRole="", calibTargetRole2="", calibTargetStyle="", calibMode="ia", calibLast=null, calibRunning=false;
 let nmOVR, STYLE_LABEL, PLAYSTYLE_IDS;
 let calibSession=null, reportFallbackText="";
 const state={nome:"", fp:70,en:50,tr:50,op:50,cl:50,sn:20,ut:55, rating:1.10, isIGL:false, colocacao:"Campeao"};
@@ -1176,7 +1176,7 @@ function renderAuditMetrics(summary,scope){
   return `<div class="audit-grid">
     <div class="audit-stat primary"><div class="v mono">${summary.players}/${summary.teams}</div><div class="l">${scope}</div></div>
     <div class="audit-stat ${colCls}"><div class="v mono">${summary.collateralPlayers}</div><div class="l">colateral</div></div>
-    <div class="audit-stat"><div class="v mono">${summary.roleChanges}/${summary.styleChanges}</div><div class="l">role/estilo</div></div>
+    <div class="audit-stat"><div class="v mono">${summary.roleChanges}/${summary.styleChanges}</div><div class="l">role/playstyle</div></div>
     <div class="audit-stat"><div class="v mono">${summary.ovrImpact.toFixed(0)}</div><div class="l">OVR total</div></div>
     <div class="audit-stat ${summary.rareWorsened?"warn":""}"><div class="v mono">${summary.rareWorsened}</div><div class="l">raros pioram</div></div>
     <div class="audit-stat"><div class="v mono">${summary.realityDamage.toFixed(2)}</div><div class="l">realidade</div></div>
@@ -1695,13 +1695,27 @@ function generateStyleCandidates(targetStyle,raw,role,goalRole1){
 function generateGoalCandidates(goal,current,raw,isIGL,opts){
   const all=[];
   const ro=opts?.role||{};
+  const styleRoles=isIGL?[current.r2||"Rifler"]:ROLES;
   if(isIGL&&goal.r2&&goal.r2!==current.r2){
     all.push(...generateRoleCandidates(goal.r2,current.r2,raw,ro));
   }else if(!isIGL){
     if(goal.r1&&goal.r1!==current.r1)all.push(...generateRoleCandidates(goal.r1,current.r1,raw,ro));
     if(goal.r2&&goal.r2!==current.r2)all.push(...generateRole2Candidates(goal.r2,current.r1,raw,ro));
+    if(goal.style&&!goal.r1&&!goal.r2){
+      ROLES.filter(role=>role!==current.r1).forEach(role=>{
+        const roleCands=generateRoleCandidates(role,current.r1,raw,ro);
+        all.push(...roleCands);
+        const styleCands=generateStyleCandidates(goal.style,raw,current.r1||current.r2,role);
+        roleCands.slice(0,18).forEach(roleChanges=>{
+          styleCands.slice(0,18).forEach(styleChanges=>all.push([...roleChanges,...styleChanges]));
+        });
+      });
+    }
   }
-  if(goal.style&&goal.style!==current.style)all.push(...generateStyleCandidates(goal.style,raw,current.r1||current.r2,goal.r1));
+  if(goal.style&&goal.style!==current.style){
+    const rolesToTry=goal.r1?[goal.r1]:styleRoles;
+    rolesToTry.forEach(role=>all.push(...generateStyleCandidates(goal.style,raw,current.r1||current.r2,role)));
+  }
   return all;
 }
 function goalRoleTarget(goal,current,isIGL){
@@ -2029,7 +2043,10 @@ async function findCalibration(goal,onProgress=null){
       }
     }
     if(best){
+      searchStats.stage="refinando melhor sugestao";
+      await maybeYield(true);
       const refined=await tryRefinement(best);
+      searchStats.stage="concluido";
       refined.phase=refined.phase??usedPhase;
       refined.highCollateral=(refined.costInfo?.collateralRoleChanges||0)>2;
       refined.searchStats=searchStats;
@@ -2086,7 +2103,7 @@ function renderCalibResult(result,goal){
   }).join("");
   const modeLabel=result.strategy?.label||({ia:"IA",realista:"Realista"}[calibMode]||calibMode);
   const phaseNote=result.phase!=null?` | fase ${result.phase+1}`:"";
-  const goalInfo=goal?`<div class="calib-goals">${[goal.r1&&`Role1: ${goal.r1} ${goal.r1===rolePairParts(result.after).r1?"OK":"--"}`,goal.r2&&`Role2: ${goal.r2} ${goal.r2===rolePairParts(result.after).r2?"OK":"--"}`,goal.style&&`Estilo: ${goal.style} ${goal.style===STYLE_LABEL(result.after.playstyle)?"OK":"--"}`].filter(Boolean).join(" | ")}</div>`:"";
+  const goalInfo=goal?`<div class="calib-goals">${[goal.r1&&`Role1: ${goal.r1} ${goal.r1===rolePairParts(result.after).r1?"OK":"--"}`,goal.r2&&`Role2: ${goal.r2} ${goal.r2===rolePairParts(result.after).r2?"OK":"--"}`,goal.style&&`Playstyle: ${goal.style} ${goal.style===STYLE_LABEL(result.after.playstyle)?"OK":"--"}`].filter(Boolean).join(" | ")}</div>`:"";
   const st=result.searchStats||{};
   const gapText=st.roleTarget?`<span>Gap ${st.initialGap.toFixed(2)} -> ${(result.finalGap??0).toFixed(2)}</span>`:"";
   const roleScoreText=result.roleScores?.after?`<span>${result.roleScores.after.target} ${result.roleScores.after.targetScore.toFixed(1)} vs ${result.roleScores.after.current} ${result.roleScores.after.currentScore.toFixed(1)}</span>`:"";
@@ -2126,7 +2143,6 @@ function buildCalibrator(){
   const box=document.getElementById("calibbox");if(!box)return;
   const player=loadedIdx==null?evaluatePlayer(jogadorAtual()):mainPlayer();
   const isIGL=player.isIGL;
-  const roleOptions=r=>ROLES.map(role=>`<option value="${role}" ${role===r?"selected":""}>${role}</option>`).join("");
   const anyRoleOptions=r=>`<option value="">Qualquer</option>${ROLES.map(role=>`<option value="${role}" ${role===r?"selected":""}>${role}</option>`).join("")}`;
   const modeOptions=[
     ["ia","IA"],
@@ -2136,23 +2152,23 @@ function buildCalibrator(){
   const curGoal={r1:isIGL?"IGL":calibTargetRole,r2:calibTargetRole2,style:calibTargetStyle};
   const role1Html=isIGL
     ?`<div class="calib-field"><label>Role1</label><select id="calibRole" disabled><option selected>IGL</option></select></div>`
-    :`<div class="calib-field"><label>Role1</label><select id="calibRole">${roleOptions(calibTargetRole)}</select></div>`;
+    :`<div class="calib-field"><label>Role1</label><select id="calibRole">${anyRoleOptions(calibTargetRole)}</select></div>`;
   const role2Label=isIGL?"Papel de combate":"Role2";
   const role2Html=`<div class="calib-field"><label>${role2Label}</label><select id="calibRole2">${anyRoleOptions(calibTargetRole2)}</select></div>`;
   box.innerHTML=`<div class="calib-panel">
     <div class="calib-summary">
       <div class="calib-metric"><div class="l">Jogador</div><div class="v">${esc(player.nome||state.nome||"Jogador")}</div></div>
       <div class="calib-metric"><div class="l">Atual</div><div class="v">${esc(rolePairText(player))}</div></div>
-      <div class="calib-metric"><div class="l">Estilo</div><div class="v">${esc(STYLE_LABEL(player.playstyle))}</div></div>
+      <div class="calib-metric"><div class="l">Playstyle</div><div class="v">${esc(STYLE_LABEL(player.playstyle))}</div></div>
     </div>
     <div class="calib-target">
       ${role1Html}
       ${role2Html}
-      <div class="calib-field"><label>Estilo</label><select id="calibStyle">${styleOptions}</select></div>
+      <div class="calib-field"><label>Playstyle</label><select id="calibStyle">${styleOptions}</select></div>
       <div class="calib-field"><label>Modo</label><select id="calibMode">${modeOptions}</select></div>
       <button class="btn accent" id="calibSuggest">Sugerir ajuste</button>
     </div>
-    <div class="calib-note">${isIGL?"IGL: role1 fixo, role2 e o papel de combate. ":""}IA tenta o menor dano global possivel; Realista prioriza coerencia de roles, estilos, quimica e raridade. Stats do jogador nunca sao alterados.</div>
+    <div class="calib-note">${isIGL?"IGL: role1 fixo, role2 e o papel de combate. ":""}A IA procura um ajuste global de baixo dano. Playstyle, roles, quimica e raridade entram na conta; stats do jogador nao sao alterados.</div>
     <div id="calibResult">${renderCalibResult(calibLast,curGoal)}</div>
     <div class="calib-actions"><button class="btn" id="calibReset">Resetar pesos</button></div>
   </div>`;
@@ -2169,14 +2185,16 @@ function buildCalibrator(){
     document.querySelectorAll("#calibbox button,#calibbox select").forEach(el=>{el.disabled=true;});
     const progress=(stats,best)=>{
       const pct=stats.generated?Math.min(100,Math.round(stats.tested/stats.generated*100)):0;
-      if(resultBox)resultBox.innerHTML=`<div class="impact-empty">IA rodando busca global... ${stats.tested}/${stats.generated||"?"} testes (${pct}%) - validas ${stats.valid}${best?` - melhor custo ${best.cost.toFixed(1)}`:""}</div>`;
+      const stage=stats.stage||"busca global";
+      if(resultBox)resultBox.innerHTML=`<div class="impact-empty">IA: ${stage}... ${stats.tested}/${stats.generated||"?"} testes (${pct}%) - validas ${stats.valid}${best?` - melhor custo ${best.cost.toFixed(1)}`:""}</div>`;
     };
     progress({tested:0,generated:0,valid:0});
     try{
       calibLast=await findCalibration(goal,progress);
     }finally{
       calibRunning=false;
-      buildCalibrator();
+      if(resultBox)resultBox.innerHTML=renderCalibResult(calibLast,goal);
+      try{buildCalibrator();}catch(err){console.error(err);}
     }
   };
   document.getElementById("calibReset").onclick=()=>{copyInto(E.ROLE_PERFIL,DEF.ROLE);copyInto(E.NM_DEF,DEF.NM);copyInto(E.NM_COR,DEF.NM_COR);if(DEF.CONTRA)copyInto(E.ROLE_CONTRA,DEF.CONTRA);if(DEF.IGL)copyInto(E.IGL_ROLE_AFIN,DEF.IGL);if(DEF.RULES)copyInto(E.ROLE_RULES,DEF.RULES);if(DEF.STYLE_FIT)copyInto(E.STYLE_ROLE_FIT,DEF.STYLE_FIT);if(DEF.STYLE_CONTRA)copyInto(E.STYLE_CONTRA,DEF.STYLE_CONTRA);calibLast=null;refresh("all");};
