@@ -121,13 +121,35 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
   background:var(--panel);border-radius:var(--radius-lg);padding:22px;margin-bottom:20px;box-shadow:var(--shadow);
 }
 
-.tstat,.prow,.coachrow,.metric,.tdetail-stat,.tdetail-coach,.lcard,
+.tstat,.prow,.coachrow,.metric,.tdetail-coach,.lcard,
 .calib-metric,.calib-suggestion,.calib-change,.calib-focus-card,
-.report-panel,.report-stat,.report-item,
-.audit-stat,.liveimpact,.liveimpact-stat,
-.result-compact .rc-row,.scoreboards table{
+.report-panel,.report-item,
+.liveimpact,
+.scoreboards table{
   background:var(--panel-soft);
 }
+
+/* ============================================================
+   HIERARQUIA DE NUMEROS — um numero-heroi grande por grupo de
+   metricas + o resto numa linha secundaria compacta (nao mais N
+   caixinhas do mesmo tamanho competindo pela atencao)
+   ============================================================ */
+.stat-hero{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  padding:16px;border-radius:var(--radius);background:var(--panel-soft);margin-bottom:10px}
+.stat-hero .v{font-family:var(--ff);font-weight:800;font-size:2.1rem;line-height:1.05;color:var(--txt);overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.stat-hero .l{font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);font-weight:700;margin-top:7px}
+.stat-hero.text .v{font-size:1.32rem;white-space:nowrap}
+.stat-hero.accent .v{color:var(--accent)}
+.stat-hero.cyan .v{color:var(--cyan)}
+.stat-hero.warn{background:color-mix(in srgb,var(--warn) 10%,var(--panel-soft))}
+.stat-hero.warn .v{color:var(--warn)}
+.stat-hero.good{background:color-mix(in srgb,var(--win) 10%,var(--panel-soft))}
+.stat-hero.good .v{color:var(--win)}
+.stat-hero-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.stat-hero-row .stat-hero{margin-bottom:0}
+.stat-mini{display:flex;flex-wrap:wrap;gap:5px 14px;justify-content:center;font-size:.76rem;color:var(--dim)}
+.stat-mini b{font-family:var(--ff);color:var(--neutral);font-weight:700;font-variant-numeric:tabular-nums;margin-right:4px}
+.stat-mini .warn-txt,.stat-mini .warn-txt b{color:var(--warn)}
 
 /* ============================================================
    PAINEL DE TIME
@@ -240,20 +262,18 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
    DETALHE DO TIME (agora embutido dentro do .lcard selecionado —
    sem coluna própria: era a duplicação que deixava a tela poluída)
    ============================================================ */
-.tdetail-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
-.tdetail-stat{border-radius:var(--radius-sm);padding:10px 8px;text-align:center}
-.tdetail-stat .v{font-size:1.28rem}
-.tdetail-stat .l{font-size:.62rem}
-.tdetail-stat.efe .v{color:var(--accent)}
-.tdetail-stat.qui .v{color:var(--cyan)}
 .tdetail-coach{display:flex;align-items:center;gap:8px;padding:10px;border-radius:var(--radius-sm);margin-bottom:8px}
 .tdetail-coach .cv{width:30px;height:30px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-family:var(--ff);font-weight:700;font-size:.82rem;background:var(--panel)}
 .tdetail-coach .cn{font-weight:700;font-size:.92rem}
 .tdetail-coach .cc{font-size:.74rem;color:var(--dim)}
-.tdetail-alerts{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.tdetail-alerts,.tdetail-alerts-more{display:flex;flex-wrap:wrap;gap:5px}
+.tdetail-alerts{margin-bottom:10px}
+.tdetail-alerts-more{margin:-4px 0 10px}
 .tdetail-al{font-size:.74rem;padding:5px 10px;border-radius:10px;background:var(--panel-soft);color:#cbd6e4}
 .tdetail-al.pen{color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,var(--panel-soft))}
 .tdetail-al.ok{color:var(--win);background:color-mix(in srgb,var(--win) 15%,var(--panel-soft))}
+.tdetail-al.more{cursor:pointer;color:var(--dim);background:transparent;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
+.tdetail-al.more:hover{color:var(--txt)}
 
 /* ============================================================
    CALIBRADOR INTELIGENTE · IMPACTO · RELATORIO
@@ -264,17 +284,6 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .liveimpact-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
 .liveimpact-title{font-family:var(--ff);font-size:.78rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--txt)}
 .liveimpact-count{font-family:var(--ff);font-size:.7rem;color:var(--cyan);white-space:nowrap}
-.liveimpact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px}
-.liveimpact-stat{border-radius:var(--radius-sm);padding:6px;text-align:center}
-.liveimpact-stat .v{font-size:.95rem}
-
-.audit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin:8px 0}
-.audit-stat{border-radius:var(--radius-sm);padding:7px}
-.audit-stat .v{font-weight:900;font-size:1rem}
-.audit-stat.primary .v{color:var(--cyan)}
-.audit-stat.warn .v{color:var(--warn)}
-.audit-stat.good .v{color:var(--win)}
-
 .impact-tag{display:inline-flex;align-items:center;height:18px;padding:0 6px;border-radius:5px;font-family:var(--ff);font-size:.56rem;font-weight:900;letter-spacing:.03em;color:var(--dim);margin-left:6px;background:var(--panel)}
 .impact-tag.target{color:var(--cyan);background:color-mix(in srgb,var(--cyan) 15%,var(--panel))}
 .impact-tag.col{color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,var(--panel))}
@@ -325,10 +334,6 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .report-panel{margin-top:10px;border-radius:var(--radius);padding:10px}
 .report-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
 .report-title{font-family:var(--ff);font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--txt)}
-.report-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:8px}
-.report-stat{border-radius:var(--radius-sm);padding:7px}
-.report-stat .v{font-size:.98rem;font-weight:900}
-.report-stat.warn .v{color:var(--warn)}
 .report-list{display:grid;gap:6px;margin-top:8px}
 .report-item{border-radius:var(--radius-sm);padding:7px;font-size:.76rem;border-left:3px solid transparent}
 .report-item.warn{border-left-color:var(--warn)}
@@ -360,10 +365,7 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
   box-shadow:inset 0 0 0 2px rgba(255,255,255,.22)}
 @keyframes valueBump{0%{transform:scale(1)}45%{transform:scale(1.14)}100%{transform:scale(1)}}
 .bump{animation:valueBump .32s var(--ease)}
-.result-compact{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:6px;margin-top:2px}
-.result-compact .rc-row{display:flex;flex-direction:column;gap:2px;font-size:.78rem;padding:8px;border-radius:var(--radius-sm);min-width:0}
-.result-compact .rc-label{color:var(--dim)}
-.result-compact .rc-val{font-family:var(--ff);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt)}
+.result-compact{margin-top:2px}
 
 /* ============================================================
    RESPONSIVO
@@ -399,9 +401,8 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
   .wrap{padding:10px}
   .dash{grid-template-columns:1fr}
   .lcard-players{grid-template-columns:repeat(auto-fill,minmax(108px,1fr))}
-  .result-compact{grid-template-columns:1fr 1fr}
   .field-c{grid-template-columns:28px minmax(0,1fr) 46px}
-  .calib-target,.calib-summary,.liveimpact-grid,.report-grid,.calib-focus{grid-template-columns:1fr}
+  .calib-target,.calib-summary,.calib-focus{grid-template-columns:1fr}
   .calib-focus-arrow{transform:rotate(90deg)}
 }
 </style>
@@ -434,7 +435,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 const clone=o=>JSON.parse(JSON.stringify(o));
 
 let E=null, DEF=null, POOLRAW=[], loadedIdx=null, poolBySlot=new Map();
-let teamIdx=0, simA=0, simB=1, simSeed=2026, simRuns=80, simMap="auto", lastMap=null, lastBatch=null, tuningOpen=false, baseline=null;
+let teamIdx=0, simA=0, simB=1, simSeed=2026, simRuns=80, simMap="auto", lastMap=null, lastBatch=null, tuningOpen=false, simOpen=false, baseline=null;
 let calibTargetRole="", calibTargetRole2="", calibTargetStyle="", calibMode="ia", calibLast=null, calibRunning=false;
 let nmOVR, STYLE_LABEL, PLAYSTYLE_IDS;
 let calibSession=null, reportFallbackText="";
@@ -623,14 +624,17 @@ function summarizeDiff(diff,goalKey=null){
   };
 }
 function renderAuditMetrics(summary,scope){
-  const colCls=summary.collateralPlayers>3?"warn":summary.collateralPlayers===0?"good":"";
-  return `<div class="audit-grid">
-    <div class="audit-stat primary"><div class="v mono">${summary.players}/${summary.teams}</div><div class="l">${scope}</div></div>
-    <div class="audit-stat ${colCls}"><div class="v mono">${summary.collateralPlayers}</div><div class="l">colateral</div></div>
-    <div class="audit-stat"><div class="v mono">${summary.roleChanges}/${summary.styleChanges}</div><div class="l">role/playstyle</div></div>
-    <div class="audit-stat"><div class="v mono">${summary.ovrImpact.toFixed(0)}</div><div class="l">OVR total</div></div>
-    <div class="audit-stat ${summary.rareWorsened?"warn":""}"><div class="v mono">${summary.rareWorsened}</div><div class="l">raros pioram</div></div>
-    <div class="audit-stat"><div class="v mono">${summary.realityDamage.toFixed(2)}</div><div class="l">realidade</div></div>
+  // "colateral" e o numero-heroi: e o que decide se uma mudanca/sugestao e arriscada. o resto vira linha secundaria.
+  const heroCls=summary.collateralPlayers>3?"warn":summary.collateralPlayers===0?"good":"";
+  const colBump=bumpTrack(`audit:${scope}:col`,summary.collateralPlayers);
+  const rareCls=summary.rareWorsened?" warn-txt":"";
+  return `<div class="stat-hero ${heroCls}"><div class="v mono${colBump}">${summary.collateralPlayers}</div><div class="l">colateral</div></div>
+  <div class="stat-mini">
+    <span><b class="mono">${summary.players}/${summary.teams}</b>${esc(scope)}</span>
+    <span><b class="mono">${summary.roleChanges}/${summary.styleChanges}</b>role/playstyle</span>
+    <span><b class="mono">${summary.ovrImpact.toFixed(0)}</b>OVR total</span>
+    <span class="${rareCls}"><b class="mono">${summary.rareWorsened}</b>raros pioram</span>
+    <span><b class="mono">${summary.realityDamage.toFixed(2)}</b>realidade</span>
   </div>`;
 }
 function impactReport(){
@@ -727,13 +731,14 @@ function renderReportPanel(){
   const session=ensureCalibSession(), report=impactReport(), summary=summarizeDiff(report), regressions=sessionRegressions(), finalChanges=flatConfigDiff();
   const last=session.applied.slice(-4).reverse().map(entry=>`<div class="report-item"><b>#${entry.id} ${esc(entry.targetName)}</b><span>${esc(entry.before)} -> ${esc(entry.after)}</span><span>${entry.incremental.players} jog/${entry.incremental.teams} times | colateral ${entry.incremental.collateralPlayers}</span></div>`).join("");
   const regressionRows=regressions.slice(0,4).map(item=>`<div class="report-item warn"><b>${esc(item.nome)} - REGREDIU</b><span>Esperado ${esc(item.expectedRole)} / ${esc(item.expectedStyle)}</span><span>Atual ${esc(item.current?.role||"-")} / ${esc(item.current?.style||"-")}</span></div>`).join("");
+  const changesBump=bumpTrack("report:changes",finalChanges.length);
   return `<div class="report-panel">
     <div class="report-head"><div class="report-title">Relatorio da bancada</div><div class="liveimpact-count">${session.applied.length} aplicacoes</div></div>
-    <div class="report-grid">
-      <div class="report-stat"><div class="v mono">${finalChanges.length}</div><div class="l">mudancas</div></div>
-      <div class="report-stat"><div class="v mono">${summary.players}</div><div class="l">jogadores</div></div>
-      <div class="report-stat"><div class="v mono">${summary.teams}</div><div class="l">times</div></div>
-      <div class="report-stat ${regressions.length?"warn":""}"><div class="v mono">${regressions.length}</div><div class="l">regressoes</div></div>
+    <div class="stat-hero${regressions.length?" warn":""}"><div class="v mono${changesBump}">${finalChanges.length}</div><div class="l">mudanças pendentes</div></div>
+    <div class="stat-mini" style="margin-bottom:8px">
+      <span><b class="mono">${summary.players}</b>jogadores</span>
+      <span><b class="mono">${summary.teams}</b>times</span>
+      <span class="${regressions.length?"warn-txt":""}"><b class="mono">${regressions.length}</b>regressões</span>
     </div>
     ${regressionRows?`<div class="impact-section"><h4>Regressoes</h4><div class="report-list">${regressionRows}</div></div>`:""}
     ${last?`<div class="impact-section"><h4>Historico recente</h4><div class="report-list">${last}</div></div>`:'<div class="impact-empty">Aplique sugestoes no calibrador para montar o relatorio final.</div>'}
@@ -1947,7 +1952,14 @@ function renderMain(){refresh("all");}
 /* === explorador: liga + detalhe do time fundidos num só card ===
    antes eram 2 colunas mostrando o mesmo time de formas parecidas (duplicação = poluição visual).
    agora só o time selecionado expande (acordeão); os outros ficam só com o cabeçalho. */
-let prevTeamStats=null; // ultimo bruta/quimica/efetiva mostrado, pra saber se o numero mudou de verdade (bump = "ao vivo")
+// rastreador generico de "isto mudou de verdade desde o ultimo render" -> classe .bump (pulso "ao vivo")
+// cada numero-heroi da UI chama bumpTrack(chave-unica, valor-atual) e recebe " bump" ou "" de volta.
+const _bumpPrev={};
+function bumpTrack(key,val){
+  const changed=_bumpPrev[key]!==undefined&&_bumpPrev[key]!==val;
+  _bumpPrev[key]=val;
+  return changed?" bump":"";
+}
 function renderLeague(){
   const box=document.getElementById("league");if(!box)return;
   const teams=E.TEAMS.map((src,i)=>({src,f:evaluateTeamCached(src,i)}));
@@ -1962,19 +1974,23 @@ function renderLeague(){
     let detail="";
     if(isOn){
       const bV=f.bruta,qV=Math.round(f.quimica*100),eV=f.efetiva;
-      const bump=k=>(prevTeamStats&&prevTeamStats.ti===i&&prevTeamStats[k]!==({b:bV,q:qV,e:eV})[k])?" bump":"";
-      const bB=bump("b"),qB=bump("q"),eB=bump("e");
-      prevTeamStats={ti:i,b:bV,q:qV,e:eV};
+      const bB=bumpTrack(`team:${i}:b`,bV),qB=bumpTrack(`team:${i}:q`,qV),eB=bumpTrack(`team:${i}:e`,eV);
       const coach=f.coach?`<div class="tdetail-coach"><div class="cv">${Math.min(20,f.coach.ovr)}</div><div><div class="cn">${esc(f.coach.nick)}</div><div class="cc">${esc(f.coach.carac||"—")}</div></div></div>`:`<div class="tdetail-coach"><div class="cn" style="color:var(--dim);font-style:italic">sem treinador</div></div>`;
-      const alerts=f.alertas.map(a=>`<span class="tdetail-al ${a.includes("-")||a.includes("−")?"pen":"ok"}">${esc(a)}</span>`).join("");
+      // alertas: penalidade primeiro (o que pede atencao); so os 3 primeiros ficam sempre visiveis, o resto e "+N mais"
+      const alertList=f.alertas.map(a=>({txt:a,pen:a.includes("-")||a.includes("−")})).sort((a,b)=>(b.pen?1:0)-(a.pen?1:0));
+      const chip=a=>`<span class="tdetail-al ${a.pen?"pen":"ok"}">${esc(a.txt)}</span>`;
+      const shownAlerts=alertList.slice(0,3),restAlerts=alertList.slice(3);
+      const alertsHtml=shownAlerts.map(chip).join("")+(restAlerts.length?`<span class="tdetail-al more" data-more-target="alertsMore${i}">+${restAlerts.length} mais</span>`:"");
+      const restHtml=restAlerts.length?`<div class="tdetail-alerts-more" id="alertsMore${i}" hidden>${restAlerts.map(chip).join("")}</div>`:"";
       detail=`${src.camp?`<div class="lcard-camp">${esc(src.camp)}</div>`:""}
-        <div class="tdetail-stats">
-          <div class="tdetail-stat"><div class="v mono${bB}">${bV}</div><div class="l">Bruta</div></div>
-          <div class="tdetail-stat qui"><div class="v mono${qB}">${qV}%</div><div class="l">Química</div></div>
-          <div class="tdetail-stat efe"><div class="v mono${eB}">${eV}</div><div class="l">Efetiva</div></div>
+        <div class="stat-hero accent"><div class="v mono${eB}">${eV}</div><div class="l">Força efetiva</div></div>
+        <div class="stat-mini" style="margin-bottom:10px">
+          <span><b class="mono${bB}">${bV}</b>Bruta</span>
+          <span><b class="mono${qB}">${qV}%</b>Química</span>
         </div>
         ${coach}
-        <div class="tdetail-alerts">${alerts}</div>`;
+        <div class="tdetail-alerts">${alertsHtml}</div>
+        ${restHtml}`;
     }
     html+=`<div class="lcard${isOn?" on":""}" data-ti="${i}">
       <div class="lcard-head"><div class="lcard-badge" style="background:${src.cor}">${esc(src.nome).slice(0,3).toUpperCase()}</div><div class="lcard-name">${esc(src.nome)}</div><div class="lcard-ovr mono">${avg.toFixed(1)}</div></div>
@@ -2000,6 +2016,7 @@ function renderLeague(){
   // click handlers
   box.querySelectorAll(".lcard-head").forEach(h=>{h.onclick=()=>{teamIdx=+h.closest(".lcard").dataset.ti;refresh("all");};});
   box.querySelectorAll(".pcard").forEach(r=>{r.onclick=()=>{loadPlayer(+r.dataset.pi,+r.dataset.ti);goMobileTab("editor");};});
+  box.querySelectorAll(".tdetail-al.more").forEach(m=>{m.onclick=()=>{const el=document.getElementById(m.dataset.moreTarget);if(el)el.hidden=!el.hidden;};});
 }
 const ROLE_COLORS={AWPer:"#b8a4ef",Rifler:"#e0c374",Entry:"#e58f7c",Lurker:"#96d19b",Support:"#77d2d2",IGL:"#9fb6d8"};
 
@@ -2062,12 +2079,20 @@ function renderEditorResult(){
     badge.textContent=novoOvr;badge.style.setProperty("--tc",`var(${tierVar(ev.ovr)})`);
   }
   const st=ev.style;
+  // Playstyle + Funcao sao o RESULTADO de mexer nos atributos -> viram os numeros-heroi.
+  // wR/statScore/clareza sao diagnostico interno -> viram linha secundaria.
+  const playLabel=STYLE_LABEL(ev.playstyle),funcLabel=rolePairText(ev);
+  const playBump=bumpTrack("editor:playstyle",playLabel),funcBump=bumpTrack("editor:funcao",funcLabel);
   box.innerHTML=`
-    <div class="rc-row"><span class="rc-label">Playstyle</span><span class="rc-val">${esc(STYLE_LABEL(ev.playstyle))}</span></div>
-    <div class="rc-row"><span class="rc-label">Função</span><span class="rc-val">${esc(rolePairText(ev))}</span></div>
-    <div class="rc-row"><span class="rc-label">wR</span><span class="rc-val mono">${st.wR.toFixed(2)}</span></div>
-    <div class="rc-row"><span class="rc-label">statScore</span><span class="rc-val mono">${Math.round(st.statScore)}</span></div>
-    <div class="rc-row"><span class="rc-label">clareza</span><span class="rc-val mono">${Math.round(st.matchScore*100)}%</span></div>`;
+    <div class="stat-hero-row">
+      <div class="stat-hero text"><div class="v${playBump}">${esc(playLabel)}</div><div class="l">Playstyle</div></div>
+      <div class="stat-hero text"><div class="v${funcBump}">${esc(funcLabel)}</div><div class="l">Função</div></div>
+    </div>
+    <div class="stat-mini">
+      <span><b class="mono">${st.wR.toFixed(2)}</b>wR</span>
+      <span><b class="mono">${Math.round(st.statScore)}</b>statScore</span>
+      <span><b class="mono">${Math.round(st.matchScore*100)}%</b>clareza</span>
+    </div>`;
 }
 
 function renderTeamPanel(){renderLeague();}
@@ -2080,9 +2105,12 @@ function montarUI(){
       <div class="mcol" id="mcol">
         ${atributosCardHTML_Compact()}
         <div class="card simcard">
-          <div class="eng-head" style="margin-bottom:8px"><span class="title">Simulação · PÓLVORA</span><div class="toggle"><button class="btn" id="runBatchBtn">Lote</button><button class="btn accent" id="runMapBtn">Mapa</button></div></div>
-          <div class="simgrid"><div class="simfield"><label>Time A</label><select id="simA"></select></div><div class="simfield"><label>Time B</label><select id="simB"></select></div><div class="simfield"><label>Mapa</label><select id="simMap"><option value="auto">Auto veto</option></select></div><div class="simfield"><label>Seed</label><input type="number" id="simSeed" value="${simSeed}" step="1"></div><div class="simfield"><label>Qtd</label><input type="number" id="simRuns" value="${simRuns}" min="1" max="500" step="10"></div></div>
-          <div id="matchout"></div>
+          <div class="eng-head" style="margin-bottom:8px"><span class="title">Simulação · PÓLVORA</span><div class="toggle"><button class="btn" id="simToggle">${simOpen?"Ocultar":"Mostrar"}</button></div></div>
+          <div id="simbox" ${simOpen?"":"hidden"}>
+            <div class="simgrid"><div class="simfield"><label>Time A</label><select id="simA"></select></div><div class="simfield"><label>Time B</label><select id="simB"></select></div><div class="simfield"><label>Mapa</label><select id="simMap"><option value="auto">Auto veto</option></select></div><div class="simfield"><label>Seed</label><input type="number" id="simSeed" value="${simSeed}" step="1"></div><div class="simfield"><label>Qtd</label><input type="number" id="simRuns" value="${simRuns}" min="1" max="500" step="10"></div></div>
+            <div class="row2"><button class="btn" id="runBatchBtn">Rodar lote</button><button class="btn accent" id="runMapBtn">Rodar mapa</button></div>
+            <div id="matchout"></div>
+          </div>
         </div>
         <div class="card tuning-card">
           <div class="eng-head" style="margin-bottom:6px"><span class="title">Calibrador Inteligente</span><div class="toggle"><button class="btn" id="engToggle">${tuningOpen?"Ocultar":"Mostrar"}</button></div></div>
@@ -2106,6 +2134,7 @@ function montarUI(){
   document.getElementById("simRuns").oninput=e=>{simRuns=Math.max(1,Math.min(500,+e.target.value||80));lastBatch=null;renderMatchPanel();};
   document.getElementById("runBatchBtn").onclick=runBatchLab;
   document.getElementById("runMapBtn").onclick=runMapLab;
+  document.getElementById("simToggle").onclick=()=>{simOpen=!simOpen;montarUI();};
   document.getElementById("engToggle").onclick=()=>{tuningOpen=!tuningOpen;montarUI();};
   wireReportPanel();
   if(tuningOpen)buildCalibrator();
