@@ -130,6 +130,24 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 }
 
 /* ============================================================
+   PESO VISUAL — 3 niveis de enfase pra pagina inteira.
+   A hierarquia segue o uso real, nao a ordem em que o codigo nasceu:
+   primario   = Calibrador Inteligente (o recurso mais usado)
+   secundario = Simulador, explorador de Liga/Time
+   terciario  = editor de atributos brutos (100% funcional, mas quieto)
+   ============================================================ */
+.panel-primary{position:relative;padding:20px!important;background:var(--panel-strong)}
+.panel-primary::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+  background:linear-gradient(90deg,var(--accent) 0%,color-mix(in srgb,var(--accent) 35%,transparent) 60%,transparent 100%)}
+.panel-primary>.eng-head .title{font-size:1.12rem;letter-spacing:.01em}
+.panel-secondary{padding:14px!important}
+.panel-secondary>.eng-head .title{font-size:.92rem}
+.panel-tertiary{padding:12px 14px!important;background:var(--panel-soft);box-shadow:none}
+.panel-tertiary>.eng-head{margin-bottom:0}
+.panel-tertiary>.eng-head .title{font-size:.72rem;color:var(--dim);letter-spacing:.1em;text-transform:uppercase}
+.panel-tertiary .btn{font-size:.7rem;padding:7px 12px}
+
+/* ============================================================
    HIERARQUIA DE NUMEROS — um numero-heroi grande por grupo de
    metricas + o resto numa linha secundaria compacta (nao mais N
    caixinhas do mesmo tamanho competindo pela atencao)
@@ -204,7 +222,6 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .eng-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
 .eng-head .title{font-family:var(--ff);font-size:.92rem;letter-spacing:.02em;color:var(--txt);font-weight:700}
 .toggle{margin-left:auto;display:flex;gap:8px}
-.simcard,.tuning-card{padding:14px!important}
 
 /* ============================================================
    DASHBOARD — shell de 3 colunas
@@ -240,7 +257,7 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .lcard-camp{font-size:.72rem;color:var(--dim);margin:-4px 0 2px}
 /* jogadores do time expandido viram cards de verdade (grade), não mais uma linha de tabela */
 .lcard-players{display:grid;grid-template-columns:repeat(auto-fill,minmax(126px,1fr));gap:8px}
-.pcard{display:flex;flex-direction:column;gap:4px;min-height:92px;padding:10px;border-radius:var(--radius-sm);
+.pcard{display:flex;flex-direction:column;gap:4px;min-height:76px;padding:10px;border-radius:var(--radius-sm);
   background:var(--panel-soft);cursor:pointer;transition:all .14s var(--ease)}
 .pcard:hover{background:#161e2c;transform:translateY(-2px)}
 .pcard:active{transform:translateY(0) scale(.98)}
@@ -254,7 +271,6 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .pcard-nm{font-size:.86rem;font-weight:700;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pcard-role{font-size:.66rem;font-weight:800;letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pcard-style{font-size:.64rem;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pcard-rt{margin-top:auto;font-size:.74rem;font-weight:700;color:var(--neutral)}
 
 /* ============================================================
    DETALHE DO TIME (agora embutido dentro do .lcard selecionado —
@@ -341,10 +357,16 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 /* ============================================================
    EDITOR COMPACTO DE JOGADOR
    ============================================================ */
-.editor-card{padding:0!important;overflow:hidden}
-.editor-head{padding:10px 12px;border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:12px;background:var(--panel-strong)}
-.editor-fields{padding:10px 12px 8px}
-.editor-card .result-compact{padding:0 12px 10px}
+/* colapsado por padrao: so a linha-resumo (nome · OVR · funcao); "Ajustar atributos" expande tudo */
+.editor-summary{display:flex;align-items:center;gap:10px;margin-top:10px;min-width:0}
+.editor-summary[hidden]{display:none}
+.editor-summary .ovr-badge{width:34px;height:34px;font-size:.95rem;border-radius:var(--radius-sm)}
+.editor-sum-name{font-family:var(--ff);font-weight:700;font-size:.88rem;color:var(--neutral);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.editor-sum-role{font-size:.74rem;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#editorBody{margin-top:10px}
+.editor-head{padding:10px 12px;border-radius:var(--radius-sm);display:flex;align-items:center;gap:12px;background:var(--panel);margin-bottom:10px}
+.editor-fields{padding:0}
+.editor-card .result-compact{padding:8px 0 0}
 .editor-meta{flex:1;min-width:0}
 .editor-name{width:100%;font-size:.95rem;font-family:var(--ff);font-weight:700;background:var(--panel-soft);color:var(--txt);border:none;border-radius:var(--radius-sm)}
 .editor-options{display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap}
@@ -431,7 +453,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 const clone=o=>JSON.parse(JSON.stringify(o));
 
 let E=null, DEF=null, POOLRAW=[], loadedIdx=null, poolBySlot=new Map();
-let teamIdx=0, simA=0, simB=1, simSeed=2026, simRuns=80, simMap="auto", lastMap=null, lastBatch=null, tuningOpen=false, simOpen=false, baseline=null;
+let teamIdx=0, simA=0, simB=1, simSeed=2026, simRuns=80, simMap="auto", lastMap=null, lastBatch=null, tuningOpen=true, simOpen=false, editorOpen=false, baseline=null;
 let calibTargetRole="", calibTargetRole2="", calibTargetStyle="", calibMode="ia", calibLast=null, calibRunning=false;
 let nmOVR, STYLE_LABEL, PLAYSTYLE_IDS;
 let calibSession=null, reportFallbackText="";
@@ -1991,14 +2013,13 @@ function renderLeague(){
         const rc=ROLE_COLORS[p.combatRole]||"var(--dim)";
         const rolePair=rolePairText(p);
         const star=p.star||isStarPlayer(p,avg);
-        return`<div class="pcard${p.pIdx===loadedIdx?" on":""}" data-pi="${p.pIdx}" data-ti="${i}">
+        return`<div class="pcard${p.pIdx===loadedIdx?" on":""}" data-pi="${p.pIdx}" data-ti="${i}" title="Rating ${p.rating} — detalhes no editor">
           <div class="pcard-top"><span class="pcard-ovr" style="background:var(${tierVar(p.ovr)})">${p.ovr}</span>
             <span class="pcard-badges">${star?'<span class="pcard-star">★</span>':""}${p.isIGL?'<span class="pcard-igl">IGL</span>':""}</span>
           </div>
           <div class="pcard-nm">${esc(p.nome)}</div>
           <div class="pcard-role" style="color:${rc}">${esc(rolePair)}</div>
           <div class="pcard-style">${esc(STYLE_LABEL(p.playstyle))}</div>
-          <div class="pcard-rt mono">${p.rating}</div>
         </div>`;
       }).join("")}</div>
       ${isOn?renderImpactPanel():""}
@@ -2039,24 +2060,34 @@ function loadPlayer(poolIdx,ti){
   refresh("all");
 }
 
-/* === compact player editor HTML === */
+/* === compact player editor HTML ===
+   terciario: fechado por padrao, so a linha-resumo; "Ajustar atributos" expande.
+   os controles continuam TODOS no DOM (so ficam hidden) -> wireAtributos/syncEditorControls seguem funcionando. */
 function atributosCardHTML_Compact(){
-  return `<div class="card mcol-grow editor-card">
-    <div class="editor-head">
-      <div class="ovr-badge" style="--tc:var(${state.fp>=70?"--t22":"--t15"})" id="editorOvrBadge">—</div>
-      <div class="editor-meta">
-        <input type="text" id="f_nome" class="editor-name" placeholder="Nome" value="${esc(state.nome)}">
-        <div class="editor-options">
-          <label class="chk"><input type="checkbox" id="c_igl" ${state.isIGL?"checked":""}> IGL</label>
-          <select id="s_coloc">${COLOC.map(c=>`<option value="${c}" ${c===state.colocacao?"selected":""}>${c}</option>`).join("")}</select>
+  return `<div class="card editor-card panel-tertiary">
+    <div class="eng-head"><span class="title">Atributos brutos</span><div class="toggle"><button class="btn" id="editorToggle">${editorOpen?"Ocultar":"Ajustar atributos"}</button></div></div>
+    <div class="editor-summary" id="editorSummary" ${editorOpen?"hidden":""}>
+      <span class="ovr-badge" style="--tc:var(--t14)" id="editorSumOvr">—</span>
+      <span class="editor-sum-name" id="editorSumName">${esc(state.nome)}</span>
+      <span class="editor-sum-role" id="editorSumRole">—</span>
+    </div>
+    <div id="editorBody" ${editorOpen?"":"hidden"}>
+      <div class="editor-head">
+        <div class="ovr-badge" style="--tc:var(${state.fp>=70?"--t22":"--t15"})" id="editorOvrBadge">—</div>
+        <div class="editor-meta">
+          <input type="text" id="f_nome" class="editor-name" placeholder="Nome" value="${esc(state.nome)}">
+          <div class="editor-options">
+            <label class="chk"><input type="checkbox" id="c_igl" ${state.isIGL?"checked":""}> IGL</label>
+            <select id="s_coloc">${COLOC.map(c=>`<option value="${c}" ${c===state.colocacao?"selected":""}>${c}</option>`).join("")}</select>
+          </div>
         </div>
       </div>
+      <div class="editor-fields">
+        ${STATS.map(([k,l])=>`<div class="field-c"><label title="${STAT_FULL[k]||l}">${l}</label><input type="range" id="r_${k}" min="0" max="100" value="${state[k]}"><input type="number" id="n_${k}" class="num" min="0" max="100" value="${state[k]}"></div>`).join("")}
+        <div class="field-c"><label>RT</label><input type="range" id="r_rating" min="0.50" max="2.00" step="0.01" value="${state.rating}"><input type="number" id="n_rating" class="num" min="0.50" max="2.00" step="0.01" value="${state.rating}"></div>
+      </div>
+      <div id="editorResult" class="result-compact"></div>
     </div>
-    <div class="editor-fields">
-      ${STATS.map(([k,l])=>`<div class="field-c"><label title="${STAT_FULL[k]||l}">${l}</label><input type="range" id="r_${k}" min="0" max="100" value="${state[k]}"><input type="number" id="n_${k}" class="num" min="0" max="100" value="${state[k]}"></div>`).join("")}
-      <div class="field-c"><label>RT</label><input type="range" id="r_rating" min="0.50" max="2.00" step="0.01" value="${state.rating}"><input type="number" id="n_rating" class="num" min="0.50" max="2.00" step="0.01" value="${state.rating}"></div>
-    </div>
-    <div id="editorResult" class="result-compact mcol-result"></div>
   </div>`;
 }
 
@@ -2070,6 +2101,13 @@ function renderEditorResult(){
     if(badge.textContent!==novoOvr&&badge.textContent!=="—"){badge.classList.remove("bump");void badge.offsetWidth;badge.classList.add("bump");}
     badge.textContent=novoOvr;badge.style.setProperty("--tc",`var(${tierVar(ev.ovr)})`);
   }
+  // linha-resumo do editor colapsado (nome · OVR · funcao atual)
+  const sumOvr=document.getElementById("editorSumOvr");
+  if(sumOvr){sumOvr.textContent=ev.ovr;sumOvr.style.setProperty("--tc",`var(${tierVar(ev.ovr)})`);}
+  const sumName=document.getElementById("editorSumName");
+  if(sumName)sumName.textContent=state.nome||ev.nome||"Jogador";
+  const sumRole=document.getElementById("editorSumRole");
+  if(sumRole)sumRole.textContent=rolePairText(ev);
   const st=ev.style;
   // Playstyle + Funcao sao o RESULTADO de mexer nos atributos -> viram os numeros-heroi.
   // wR/statScore/clareza sao diagnostico interno -> viram linha secundaria.
@@ -2091,12 +2129,19 @@ function renderTeamPanel(){renderLeague();}
 
 function montarUI(){
   const app=document.getElementById("app"); app.className="";
+  // ordem da coluna central segue a hierarquia de uso real:
+  // 1. Calibrador (primario, aberto) 2. Simulador (secundario) 3. Atributos brutos (terciario, colapsado)
   app.innerHTML=[
     `<div class="dash">
-      <div class="lcol card" id="league"></div>
+      <div class="lcol card panel-secondary" id="league"></div>
       <div class="mcol" id="mcol">
-        ${atributosCardHTML_Compact()}
-        <div class="card simcard">
+        <div class="card tuning-card panel-primary mcol-grow">
+          <div class="eng-head" style="margin-bottom:6px"><span class="title">Calibrador Inteligente</span><div class="toggle"><button class="btn" id="engToggle">${tuningOpen?"Ocultar":"Mostrar"}</button></div></div>
+          <div class="calib-note">O calibrador nao altera stats. Ele testa pesos, mostra a sugestao e so aplica se voce confirmar.</div>
+          <div id="calibbox" ${tuningOpen?"":"hidden"}></div>
+          <div id="reportbox">${renderReportPanel()}</div>
+        </div>
+        <div class="card simcard panel-secondary">
           <div class="eng-head" style="margin-bottom:8px"><span class="title">Simulação · PÓLVORA</span><div class="toggle"><button class="btn" id="simToggle">${simOpen?"Ocultar":"Mostrar"}</button></div></div>
           <div id="simbox" ${simOpen?"":"hidden"}>
             <div class="simgrid"><div class="simfield"><label>Time A</label><select id="simA"></select></div><div class="simfield"><label>Time B</label><select id="simB"></select></div><div class="simfield"><label>Mapa</label><select id="simMap"><option value="auto">Auto veto</option></select></div><div class="simfield"><label>Seed</label><input type="number" id="simSeed" value="${simSeed}" step="1"></div><div class="simfield"><label>Qtd</label><input type="number" id="simRuns" value="${simRuns}" min="1" max="500" step="10"></div></div>
@@ -2104,12 +2149,7 @@ function montarUI(){
             <div id="matchout"></div>
           </div>
         </div>
-        <div class="card tuning-card">
-          <div class="eng-head" style="margin-bottom:6px"><span class="title">Calibrador Inteligente</span><div class="toggle"><button class="btn" id="engToggle">${tuningOpen?"Ocultar":"Mostrar"}</button></div></div>
-          <div class="calib-note">O calibrador nao altera stats. Ele testa pesos, mostra a sugestao e so aplica se voce confirmar.</div>
-          <div id="calibbox" ${tuningOpen?"":"hidden"}></div>
-          <div id="reportbox">${renderReportPanel()}</div>
-        </div>
+        ${atributosCardHTML_Compact()}
       </div>
     </div>`
   ].join("");
@@ -2128,6 +2168,7 @@ function montarUI(){
   document.getElementById("runMapBtn").onclick=runMapLab;
   document.getElementById("simToggle").onclick=()=>{simOpen=!simOpen;montarUI();};
   document.getElementById("engToggle").onclick=()=>{tuningOpen=!tuningOpen;montarUI();};
+  document.getElementById("editorToggle").onclick=()=>{editorOpen=!editorOpen;montarUI();};
   wireReportPanel();
   if(tuningOpen)buildCalibrator();
   renderMain();
