@@ -146,15 +146,15 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 .coachrow .cova{width:34px;height:34px;border-radius:var(--radius-sm);background:var(--panel);display:flex;align-items:center;justify-content:center;font-family:var(--ff);font-weight:700}
 .alerts{display:flex;flex-wrap:wrap;gap:6px}
 .al{font-size:.78rem;padding:4px 10px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--neutral)}
-.al.ok{color:var(--r-lurker);border-color:color-mix(in srgb,var(--r-lurker) 40%,var(--line))}
+.al.ok{color:var(--win);border-color:color-mix(in srgb,var(--win) 40%,var(--line))}
 .al.pen{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
 .alh{width:100%;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);font-weight:700;margin-bottom:2px}
 .stylechips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
 .stylechip{font-size:.78rem;background:#0f1723;border:1px solid rgba(157,178,208,.2);border-radius:20px;padding:4px 9px;color:#cbd6e4}
 .risklist{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
 .risk{font-size:.78rem;border:1px solid rgba(157,178,208,.2);border-radius:20px;padding:4px 9px;background:#0f1723;color:#cbd6e4}
-.risk.bad{color:#ffd074;border-color:rgba(255,193,90,.36)}
-.risk.good{color:#95e8b4;border-color:rgba(127,230,168,.36)}
+.risk.bad{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
+.risk.good{color:var(--win);border-color:color-mix(in srgb,var(--win) 45%,transparent)}
 
 /* ============================================================
    SIMULADOR DE MAPA / PARTIDA
@@ -261,8 +261,8 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 .tdetail-coach .cc{font-size:.74rem;color:var(--dim)}
 .tdetail-alerts{display:flex;flex-wrap:wrap;gap:5px}
 .tdetail-al{font-size:.74rem;padding:4px 8px;border-radius:10px;border:1px solid rgba(157,178,208,.2);background:#0f1723;color:#cbd6e4}
-.tdetail-al.pen{color:#ffd074;border-color:rgba(255,193,90,.36)}
-.tdetail-al.ok{color:#95e8b4;border-color:rgba(127,230,168,.36)}
+.tdetail-al.pen{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
+.tdetail-al.ok{color:var(--win);border-color:color-mix(in srgb,var(--win) 45%,transparent)}
 .tdetail-players{display:flex;flex-direction:column;gap:6px}
 .tdrow{display:grid;grid-template-columns:38px 16px minmax(0,1fr) 96px 44px;align-items:center;gap:6px;min-height:50px;padding:8px 9px;
   border:1px solid transparent;border-radius:var(--radius-sm);cursor:pointer;transition:all .14s var(--ease)}
@@ -298,7 +298,7 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 
 .impact-tag{display:inline-flex;align-items:center;height:18px;padding:0 6px;border-radius:5px;border:1px solid rgba(157,178,208,.2);font-family:var(--ff);font-size:.56rem;font-weight:900;letter-spacing:.06em;color:var(--dim);margin-left:6px}
 .impact-tag.target{color:var(--cyan);border-color:rgba(72,216,255,.34)}
-.impact-tag.col{color:var(--warn);border-color:rgba(255,193,90,.34)}
+.impact-tag.col{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 34%,transparent)}
 .impact-section{margin-top:8px}
 .impact-section h4{margin:0 0 5px;font-family:var(--ff);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
 .impact-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:5px 0;border-top:1px solid rgba(157,178,208,.12)}
@@ -320,22 +320,24 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 .calib-metric .l{font-size:.58rem}
 .calib-metric .v{margin-top:3px;font-size:.86rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .calib-suggestion{border-radius:var(--radius);padding:12px}
-.calib-suggestion.good{border-color:rgba(127,230,168,.32)}
-.calib-suggestion.bad{border-color:rgba(255,193,90,.32)}
+.calib-suggestion.good{border-color:color-mix(in srgb,var(--win) 45%,transparent)}
+.calib-suggestion.bad{border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
 .calib-title{font-family:var(--ff);font-size:.86rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;color:var(--txt)}
 .calib-goals{font-size:.8rem;color:var(--cyan);padding:6px 0;font-weight:800}
 .calib-diagnostics{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;font-family:var(--ff);font-size:.72rem;color:var(--dim)}
 .calib-diagnostics span{border:1px solid rgba(157,178,208,.16);border-radius:var(--radius-sm);padding:5px 7px;background:var(--panel-soft)}
-.calib-focus{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}
+.calib-focus{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;margin:8px 0;align-items:center}
 .calib-focus-card{border-radius:var(--radius-sm);padding:9px;border-color:rgba(72,216,255,.24)}
+.calib-focus-card.after{border-color:color-mix(in srgb,var(--win) 40%,transparent)}
+.calib-focus-arrow{font-family:var(--ff);font-weight:700;font-size:1.2rem;color:var(--dim);text-align:center}
 .calib-focus-card .l{font-size:.6rem}
 .calib-focus-card .v{margin-top:4px;font-size:.9rem;font-weight:900}
 .calib-list{display:grid;gap:7px;margin:8px 0}
-.calib-change{display:grid;grid-template-columns:minmax(120px,.45fr) minmax(0,1fr);gap:10px;align-items:center;font-size:.82rem;border-radius:var(--radius-sm);padding:8px}
+.calib-change{display:grid;grid-template-columns:minmax(120px,.45fr) minmax(0,1fr);gap:10px;align-items:center;font-size:.82rem;border-radius:var(--radius-sm);padding:8px;border-left:3px solid transparent}
 .calib-change b{color:var(--txt);font-size:.84rem}
 .calib-change span{color:var(--dim);font-family:var(--ff);line-height:1.35;white-space:normal;overflow-wrap:anywhere}
-.calib-change.target-row{border-color:rgba(72,216,255,.34);background:rgba(72,216,255,.08)}
-.calib-change.col-row{border-color:rgba(255,193,90,.22)}
+.calib-change.target-row{border-left-color:var(--cyan);background:color-mix(in srgb,var(--cyan) 8%,transparent)}
+.calib-change.col-row{border-left-color:var(--warn)}
 .calib-change .change-meta{font-family:inherit;color:var(--dim)}
 .calib-impact-list{display:grid;gap:7px;margin-top:7px}
 .calib-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
@@ -349,7 +351,8 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 .report-stat .v{font-size:.98rem;font-weight:900}
 .report-stat.warn .v{color:var(--warn)}
 .report-list{display:grid;gap:6px;margin-top:8px}
-.report-item{border-radius:var(--radius-sm);padding:7px;font-size:.76rem}
+.report-item{border-radius:var(--radius-sm);padding:7px;font-size:.76rem;border-left:3px solid transparent}
+.report-item.warn{border-left-color:var(--warn)}
 .report-item b{color:var(--txt)}
 .report-item span{display:block;color:var(--dim);margin-top:3px;line-height:1.35}
 .report-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
@@ -376,6 +379,8 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 .ovr-badge{width:52px;height:52px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;
   font-family:var(--ff);font-weight:700;font-size:1.48rem;background:var(--tc);color:var(--accent-ink);flex:none;
   box-shadow:inset 0 0 0 2px rgba(255,255,255,.22)}
+@keyframes badgeBump{0%{transform:scale(1)}45%{transform:scale(1.14)}100%{transform:scale(1)}}
+.ovr-badge.bump{animation:badgeBump .32s var(--ease)}
 .result-compact{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:6px;margin-top:2px}
 .result-compact .rc-row{display:flex;flex-direction:column;gap:2px;font-size:.78rem;padding:8px;border-radius:var(--radius-sm);min-width:0}
 .result-compact .rc-label{color:var(--dim)}
@@ -403,9 +408,8 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
   .mtabs button{flex:1;padding:12px 8px;font-size:.72rem}
   .dash{grid-template-columns:1fr;overflow:visible;min-height:auto}
   #league,#mcol,#teamdet{display:none}
-  .wrap[data-mtab="liga"] #league{display:flex}
-  .wrap[data-mtab="editor"] #mcol{display:flex}
-  .wrap[data-mtab="time"] #teamdet{display:flex}
+  .wrap[data-mtab="liga"] #league,.wrap[data-mtab="editor"] #mcol,.wrap[data-mtab="time"] #teamdet{display:flex;animation:tabIn .22s var(--ease)}
+  @keyframes tabIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   .mcol{grid-column:1/-1;overflow:visible;max-height:none}
   .tdetail{position:static;max-height:none}
   .lcol{position:static;max-height:none}
@@ -424,6 +428,7 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
   .result-compact{grid-template-columns:1fr 1fr}
   .field-c{grid-template-columns:28px minmax(0,1fr) 46px}
   .calib-target,.calib-summary,.liveimpact-grid,.report-grid,.calib-focus{grid-template-columns:1fr}
+  .calib-focus-arrow{transform:rotate(90deg)}
 }
 </style>
 </head>
@@ -748,7 +753,7 @@ function buildCalibrationReport(){
 function renderReportPanel(){
   const session=ensureCalibSession(), report=impactReport(), summary=summarizeDiff(report), regressions=sessionRegressions(), finalChanges=flatConfigDiff();
   const last=session.applied.slice(-4).reverse().map(entry=>`<div class="report-item"><b>#${entry.id} ${esc(entry.targetName)}</b><span>${esc(entry.before)} -> ${esc(entry.after)}</span><span>${entry.incremental.players} jog/${entry.incremental.teams} times | colateral ${entry.incremental.collateralPlayers}</span></div>`).join("");
-  const regressionRows=regressions.slice(0,4).map(item=>`<div class="report-item"><b>${esc(item.nome)} - REGREDIU</b><span>Esperado ${esc(item.expectedRole)} / ${esc(item.expectedStyle)}</span><span>Atual ${esc(item.current?.role||"-")} / ${esc(item.current?.style||"-")}</span></div>`).join("");
+  const regressionRows=regressions.slice(0,4).map(item=>`<div class="report-item warn"><b>${esc(item.nome)} - REGREDIU</b><span>Esperado ${esc(item.expectedRole)} / ${esc(item.expectedStyle)}</span><span>Atual ${esc(item.current?.role||"-")} / ${esc(item.current?.style||"-")}</span></div>`).join("");
   return `<div class="report-panel">
     <div class="report-head"><div class="report-title">Relatorio da bancada</div><div class="liveimpact-count">${session.applied.length} aplicacoes</div></div>
     <div class="report-grid">
@@ -1679,8 +1684,9 @@ function renderCalibResult(result,goal){
   const gapText=st.roleTarget?`<span>Gap ${st.initialGap.toFixed(2)} -> ${(result.finalGap??0).toFixed(2)}</span>`:"";
   const roleScoreText=result.roleScores?.after?`<span>${result.roleScores.after.target} ${result.roleScores.after.targetScore.toFixed(1)} vs ${result.roleScores.after.current} ${result.roleScores.after.currentScore.toFixed(1)}</span>`:"";
   const focus=`<div class="calib-focus">
-    <div class="calib-focus-card"><div class="l">Antes</div><div class="v">${esc(beforeState)}</div></div>
-    <div class="calib-focus-card"><div class="l">Depois</div><div class="v">${esc(afterState)}</div></div>
+    <div class="calib-focus-card before"><div class="l">Antes</div><div class="v">${esc(beforeState)}</div></div>
+    <div class="calib-focus-arrow">→</div>
+    <div class="calib-focus-card after"><div class="l">Depois</div><div class="v">${esc(afterState)}</div></div>
   </div>`;
   const diagnostics=`<div class="calib-diagnostics">
     <span>Custo ${result.cost.toFixed(2)}</span>
@@ -1804,11 +1810,13 @@ function buildCalibrator(){
   const role2Label=isIGL?"Papel de combate":"Role2";
   const role2Html=`<div class="calib-field"><label>${role2Label}</label><select id="calibRole2">${anyRoleOptions(calibTargetRole2)}</select></div>`;
   box.innerHTML=`<div class="calib-panel">
+    <div class="l" style="margin:0">1. Jogador atual</div>
     <div class="calib-summary">
       <div class="calib-metric"><div class="l">Jogador</div><div class="v">${esc(player.nome||state.nome||"Jogador")}</div></div>
       <div class="calib-metric"><div class="l">Atual</div><div class="v">${esc(rolePairText(player))}</div></div>
       <div class="calib-metric"><div class="l">Playstyle</div><div class="v">${esc(STYLE_LABEL(player.playstyle))}</div></div>
     </div>
+    <div class="l" style="margin:0">2. Escolha o alvo</div>
     <div class="calib-target">
       ${role1Html}
       ${role2Html}
@@ -2086,7 +2094,11 @@ function renderEditorResult(){
   const box=document.getElementById("editorResult");if(!box)return;
   const ev=mainPlayer();
   const badge=document.getElementById("editorOvrBadge");
-  if(badge){badge.textContent=ev.ovr;badge.style.setProperty("--tc",`var(${tierVar(ev.ovr)})`);}
+  if(badge){
+    const novoOvr=String(ev.ovr);
+    if(badge.textContent!==novoOvr&&badge.textContent!=="—"){badge.classList.remove("bump");void badge.offsetWidth;badge.classList.add("bump");}
+    badge.textContent=novoOvr;badge.style.setProperty("--tc",`var(${tierVar(ev.ovr)})`);
+  }
   const st=ev.style;
   box.innerHTML=`
     <div class="rc-row"><span class="rc-label">Playstyle</span><span class="rc-val">${esc(STYLE_LABEL(ev.playstyle))}</span></div>
