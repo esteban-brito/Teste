@@ -53,7 +53,7 @@ body{
 footer{display:none}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
-  .lcard:hover,.lcard:active,.tdrow:hover,.tdrow:active,.btn:hover,.btn:active{transform:none}
+  .lcard:hover,.lcard:active,.pcard:hover,.pcard:active,.btn:hover,.btn:active{transform:none}
 }
 
 /* generic label/value pair used across every stat box */
@@ -120,7 +120,7 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
   background:var(--panel);border:1px solid var(--line-soft);border-top:3px solid var(--card-accent,var(--line-soft));border-radius:var(--radius);padding:16px;margin-bottom:18px;
 }
 
-.tstat,.prow,.coachrow,.metric,.tdetail-stat,.tdetail-coach,.tdrow,.lcard,
+.tstat,.prow,.coachrow,.metric,.tdetail-stat,.tdetail-coach,.lcard,
 .calib-metric,.calib-suggestion,.calib-change,.calib-focus-card,
 .report-panel,.report-stat,.report-item,
 .audit-stat,.liveimpact,.liveimpact-stat,
@@ -189,7 +189,7 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 /* ============================================================
    DASHBOARD — shell de 3 colunas
    ============================================================ */
-.dash{display:grid;grid-template-columns:minmax(320px,380px) minmax(360px,1fr) minmax(380px,440px);gap:14px;align-items:stretch;flex:1;min-height:0;overflow:hidden}
+.dash{display:grid;grid-template-columns:minmax(360px,460px) minmax(420px,1fr);gap:14px;align-items:stretch;flex:1;min-height:0;overflow:hidden}
 .dash>.card,.dash>div>.card{margin-bottom:0}
 .mcol{display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0;max-height:calc(100dvh - 96px);overflow-y:auto;overflow-x:hidden;padding:0 4px 18px 0;
   scrollbar-width:thin;scrollbar-color:#55657d transparent}
@@ -217,64 +217,44 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 .lcard-badge{width:36px;height:25px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-family:var(--ff);font-weight:700;font-size:.66rem;color:var(--accent-ink);flex:none}
 .lcard-name{font-family:var(--ff);font-weight:700;font-size:.92rem;letter-spacing:.02em;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txt)}
 .lcard-ovr{font-family:var(--ff);font-weight:700;font-size:.9rem;color:var(--neutral)}
-.lcard-players{display:flex;flex-direction:column}
-.lcard-row{display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;gap:9px;min-height:48px;padding:7px 8px;
-  border-radius:var(--radius-sm);color:#c5d0de;cursor:pointer;transition:background .1s;
-  border-bottom:1px solid rgba(157,178,208,.08)}
-.lcard-players .lcard-row:last-child{border-bottom:none}
-.lcard-row:hover{background:rgba(255,255,255,.055)}
-.lcard-row:active{background:rgba(255,107,42,.14)}
-.lcard-row.on{background:rgba(255,107,42,.18);color:#fff}
-.lcard-ovr-sm{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;text-align:center;font-family:var(--ff);font-weight:700;font-size:.76rem;border-radius:8px;flex:none;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.2)}
-.lcard-nm{font-size:.92rem;font-weight:800;color:var(--txt)}
-.lcard-r{font-size:.64rem;color:var(--dim);font-family:var(--ff);font-weight:700}
-.lcard-info{display:flex;flex-direction:column;gap:3px;min-width:0}
-.lcard-top{display:flex;align-items:baseline;gap:8px;min-width:0}
-.lcard-rate{margin-left:auto;color:var(--dim);font-size:.74rem;flex:none}
-.lcard-meta{display:flex;align-items:center;gap:6px;min-width:0;font-size:.7rem;line-height:1.1}
-.lcard-role{flex:none;font-family:var(--ff),ui-monospace,monospace;font-weight:800;letter-spacing:.02em;white-space:nowrap}
-.lcard-style{min-width:0;color:var(--neutral);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lcard-camp{font-size:.72rem;color:var(--dim);margin:-4px 0 2px}
+/* jogadores do time expandido viram cards de verdade (grade), não mais uma linha de tabela */
+.lcard-players{display:grid;grid-template-columns:repeat(auto-fill,minmax(126px,1fr));gap:8px}
+.pcard{display:flex;flex-direction:column;gap:4px;min-height:92px;padding:9px;border-radius:var(--radius-sm);
+  background:var(--panel-soft);border:1px solid rgba(157,178,208,.16);border-left:3px solid transparent;
+  cursor:pointer;transition:all .14s var(--ease)}
+.pcard:hover{border-color:rgba(157,178,208,.34);transform:translateY(-2px)}
+.pcard:active{transform:translateY(0) scale(.98)}
+.pcard.on{border-left-color:var(--accent);background:#181f2b}
+.pcard-top{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.pcard-ovr{width:30px;height:30px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:8px;
+  font-family:var(--ff);font-weight:700;font-size:.86rem;color:#07090e;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.2)}
+.pcard-badges{display:flex;align-items:center;gap:4px}
+.pcard-star{color:var(--gold);font-size:.8rem}
+.pcard-igl{font-size:.54rem;font-weight:800;color:var(--gold);border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);padding:0 3px;border-radius:3px}
+.pcard-nm{font-size:.86rem;font-weight:700;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pcard-role{font-size:.66rem;font-weight:800;letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pcard-style{font-size:.64rem;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pcard-rt{margin-top:auto;font-size:.74rem;font-weight:700;color:var(--neutral)}
 
 /* ============================================================
-   DETALHE DO TIME
+   DETALHE DO TIME (agora embutido dentro do .lcard selecionado —
+   sem coluna própria: era a duplicação que deixava a tela poluída)
    ============================================================ */
-.tdetail{position:sticky;top:0;max-height:calc(100dvh - 96px);overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:14px;
-  border:1px solid var(--line-soft);border-radius:var(--radius);background:var(--panel);
-  scrollbar-width:thin;scrollbar-color:#55657d transparent}
-.tdetail::-webkit-scrollbar{width:11px}
-.tdetail::-webkit-scrollbar-thumb{background:#3c4c64;border:3px solid transparent;background-clip:content-box;border-radius:999px}
-.tdetail::-webkit-scrollbar-thumb:hover{background:#60728d;background-clip:content-box}
-.tdetail-head{display:flex;align-items:center;gap:10px}
-.tdetail-badge{width:44px;height:34px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-family:var(--ff);font-weight:700;font-size:.8rem;color:var(--accent-ink);flex:none}
-.tdetail-info{flex:1;min-width:0}
-.tdetail-name{font-family:var(--ff);font-weight:700;font-size:1.08rem;color:var(--txt)}
-.tdetail-camp{font-size:.78rem;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tdetail-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tdetail-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
 .tdetail-stat{border-radius:var(--radius-sm);padding:10px 8px;text-align:center}
 .tdetail-stat .v{font-size:1.28rem}
 .tdetail-stat .l{font-size:.62rem}
 .tdetail-stat.efe .v{color:var(--accent)}
 .tdetail-stat.qui .v{color:var(--cyan)}
-.tdetail-coach{display:flex;align-items:center;gap:8px;padding:10px;border-radius:var(--radius-sm)}
+.tdetail-coach{display:flex;align-items:center;gap:8px;padding:10px;border-radius:var(--radius-sm);margin-bottom:8px}
 .tdetail-coach .cv{width:30px;height:30px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-family:var(--ff);font-weight:700;font-size:.82rem;background:var(--panel)}
 .tdetail-coach .cn{font-weight:700;font-size:.92rem}
 .tdetail-coach .cc{font-size:.74rem;color:var(--dim)}
-.tdetail-alerts{display:flex;flex-wrap:wrap;gap:5px}
+.tdetail-alerts{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
 .tdetail-al{font-size:.74rem;padding:4px 8px;border-radius:10px;border:1px solid rgba(157,178,208,.2);background:#0f1723;color:#cbd6e4}
 .tdetail-al.pen{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
 .tdetail-al.ok{color:var(--win);border-color:color-mix(in srgb,var(--win) 45%,transparent)}
-.tdetail-players{display:flex;flex-direction:column;gap:6px}
-.tdrow{display:grid;grid-template-columns:38px 16px minmax(0,1fr) 96px 44px;align-items:center;gap:6px;min-height:50px;padding:8px 9px;
-  border:1px solid transparent;border-radius:var(--radius-sm);cursor:pointer;transition:all .14s var(--ease)}
-.tdrow:hover{border-color:rgba(157,178,208,.34);background:#101826;transform:translateY(-1px)}
-.tdrow:active{background:#181f2b;transform:translateY(0) scale(.99)}
-.tdrow.on{border-color:rgba(255,107,42,.68);background:#181f2b}
-.tdrow-ovr{font-family:var(--ff);font-weight:700;font-size:.98rem;height:32px;text-align:center;border-radius:9px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.22)}
-.tdrow-star{color:var(--gold);font-size:.82rem}
-.tdrow-nm{font-weight:700;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txt)}
-.tdrow-fn{font-size:.72rem;font-weight:800;padding:2px 5px;border-radius:4px;white-space:nowrap;text-align:center;overflow:hidden;text-overflow:ellipsis}
-.tdrow-pl{font-size:.7rem;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
-.tdrow-rt{text-align:right;font-family:var(--ff);font-weight:600;font-size:.88rem;color:var(--neutral)}
 
 /* ============================================================
    CALIBRADOR INTELIGENTE · IMPACTO · RELATORIO
@@ -379,8 +359,8 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 .ovr-badge{width:52px;height:52px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;
   font-family:var(--ff);font-weight:700;font-size:1.48rem;background:var(--tc);color:var(--accent-ink);flex:none;
   box-shadow:inset 0 0 0 2px rgba(255,255,255,.22)}
-@keyframes badgeBump{0%{transform:scale(1)}45%{transform:scale(1.14)}100%{transform:scale(1)}}
-.ovr-badge.bump{animation:badgeBump .32s var(--ease)}
+@keyframes valueBump{0%{transform:scale(1)}45%{transform:scale(1.14)}100%{transform:scale(1)}}
+.bump{animation:valueBump .32s var(--ease)}
 .result-compact{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:6px;margin-top:2px}
 .result-compact .rc-row{display:flex;flex-direction:column;gap:2px;font-size:.78rem;padding:8px;border-radius:var(--radius-sm);min-width:0}
 .result-compact .rc-label{color:var(--dim)}
@@ -390,13 +370,10 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
    RESPONSIVO
    ============================================================ */
 @media(max-width:1320px){
-  .dash{grid-template-columns:minmax(300px,340px) minmax(340px,1fr) minmax(340px,390px)}
-  .tdrow{grid-template-columns:36px 14px minmax(0,1fr) 86px 42px}
+  .dash{grid-template-columns:minmax(340px,420px) minmax(380px,1fr)}
 }
 @media(max-width:1180px){
-  .dash{grid-template-columns:minmax(280px,320px) minmax(330px,1fr) minmax(310px,360px)}
-  .lcard-row{grid-template-columns:30px minmax(0,1fr) 34px}
-  .tdrow{grid-template-columns:34px 12px minmax(0,1fr) 74px 38px}
+  .dash{grid-template-columns:minmax(320px,380px) minmax(340px,1fr)}
 }
 @media(max-width:980px){
   body{height:auto;overflow:visible}
@@ -407,11 +384,10 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
   .mtabs{display:flex}
   .mtabs button{flex:1;padding:12px 8px;font-size:.72rem}
   .dash{grid-template-columns:1fr;overflow:visible;min-height:auto}
-  #league,#mcol,#teamdet{display:none}
-  .wrap[data-mtab="liga"] #league,.wrap[data-mtab="editor"] #mcol,.wrap[data-mtab="time"] #teamdet{display:flex;animation:tabIn .22s var(--ease)}
+  #league,#mcol{display:none}
+  .wrap[data-mtab="liga"] #league,.wrap[data-mtab="editor"] #mcol{display:flex;animation:tabIn .22s var(--ease)}
   @keyframes tabIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   .mcol{grid-column:1/-1;overflow:visible;max-height:none}
-  .tdetail{position:static;max-height:none}
   .lcol{position:static;max-height:none}
   .simgrid{grid-template-columns:1fr 1fr}
   .metricgrid,.scoreboards{grid-template-columns:1fr}
@@ -423,8 +399,7 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 @media(max-width:640px){
   .wrap{padding:10px}
   .dash{grid-template-columns:1fr}
-  .lcard-row{grid-template-columns:34px minmax(0,1fr)}
-  .tdrow{grid-template-columns:38px 16px minmax(0,1fr) 92px 44px}
+  .lcard-players{grid-template-columns:repeat(auto-fill,minmax(108px,1fr))}
   .result-compact{grid-template-columns:1fr 1fr}
   .field-c{grid-template-columns:28px minmax(0,1fr) 46px}
   .calib-target,.calib-summary,.liveimpact-grid,.report-grid,.calib-focus{grid-template-columns:1fr}
@@ -442,7 +417,6 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
   <div class="modeseg mtabs" id="mtabs" role="tablist" aria-label="Seções do laboratório">
     <button type="button" class="on" data-tab="liga">Liga</button>
     <button type="button" data-tab="editor">Editor</button>
-    <button type="button" data-tab="time">Time</button>
   </div>
   <div id="app" class="loading">Carregando os motores do jogo…</div>
 </div>
@@ -1971,7 +1945,10 @@ function mainPlayer(){
 }
 function renderPlayerPanel(){renderEditorResult();}
 function renderMain(){refresh("all");}
-/* === league sidebar === */
+/* === explorador: liga + detalhe do time fundidos num só card ===
+   antes eram 2 colunas mostrando o mesmo time de formas parecidas (duplicação = poluição visual).
+   agora só o time selecionado expande (acordeão); os outros ficam só com o cabeçalho. */
+let prevTeamStats=null; // ultimo bruta/quimica/efetiva mostrado, pra saber se o numero mudou de verdade (bump = "ao vivo")
 function renderLeague(){
   const box=document.getElementById("league");if(!box)return;
   const teams=E.TEAMS.map((src,i)=>({src,f:evaluateTeamCached(src,i)}));
@@ -1983,63 +1960,49 @@ function renderLeague(){
       const pIdx=poolBySlot.get(`${i}:${pi}`);
       return{...ev,pIdx,tIdx:i,pIdx2:pi};
     }).sort((a,b)=>b.ovr-a.ovr);
+    let detail="";
+    if(isOn){
+      const bV=f.bruta,qV=Math.round(f.quimica*100),eV=f.efetiva;
+      const bump=k=>(prevTeamStats&&prevTeamStats.ti===i&&prevTeamStats[k]!==({b:bV,q:qV,e:eV})[k])?" bump":"";
+      const bB=bump("b"),qB=bump("q"),eB=bump("e");
+      prevTeamStats={ti:i,b:bV,q:qV,e:eV};
+      const coach=f.coach?`<div class="tdetail-coach"><div class="cv">${Math.min(20,f.coach.ovr)}</div><div><div class="cn">${esc(f.coach.nick)}</div><div class="cc">${esc(f.coach.carac||"—")}</div></div></div>`:`<div class="tdetail-coach"><div class="cn" style="color:var(--dim);font-style:italic">sem treinador</div></div>`;
+      const alerts=f.alertas.map(a=>`<span class="tdetail-al ${a.includes("-")||a.includes("−")?"pen":"ok"}">${esc(a)}</span>`).join("");
+      detail=`${src.camp?`<div class="lcard-camp">${esc(src.camp)}</div>`:""}
+        <div class="tdetail-stats">
+          <div class="tdetail-stat"><div class="v mono${bB}">${bV}</div><div class="l">Bruta</div></div>
+          <div class="tdetail-stat qui"><div class="v mono${qB}">${qV}%</div><div class="l">Química</div></div>
+          <div class="tdetail-stat efe"><div class="v mono${eB}">${eV}</div><div class="l">Efetiva</div></div>
+        </div>
+        ${coach}
+        <div class="tdetail-alerts">${alerts}</div>`;
+    }
     html+=`<div class="lcard${isOn?" on":""}" data-ti="${i}">
       <div class="lcard-head"><div class="lcard-badge" style="background:${src.cor}">${esc(src.nome).slice(0,3).toUpperCase()}</div><div class="lcard-name">${esc(src.nome)}</div><div class="lcard-ovr mono">${avg.toFixed(1)}</div></div>
+      ${detail}
       <div class="lcard-players">${players.map(p=>{
         const rc=ROLE_COLORS[p.combatRole]||"var(--dim)";
         const rolePair=rolePairText(p);
-        return`<div class="lcard-row${p.pIdx===loadedIdx?" on":""}" data-pi="${p.pIdx}" data-ti="${i}">
-          <span class="lcard-ovr-sm" style="background:var(${tierVar(p.ovr)});color:#07090e">${p.ovr}</span>
-          <span class="lcard-info">
-            <span class="lcard-top"><span class="lcard-nm">${esc(p.nome)}</span><span class="lcard-rate mono">${p.rating}</span></span>
-            <span class="lcard-meta"><span class="lcard-role" style="color:${rc}">${esc(rolePair)}</span><span class="lcard-style">${esc(STYLE_LABEL(p.playstyle))}</span></span>
-          </span>
+        const star=p.star||isStarPlayer(p,avg);
+        return`<div class="pcard${p.pIdx===loadedIdx?" on":""}" data-pi="${p.pIdx}" data-ti="${i}">
+          <div class="pcard-top"><span class="pcard-ovr" style="background:var(${tierVar(p.ovr)})">${p.ovr}</span>
+            <span class="pcard-badges">${star?'<span class="pcard-star">★</span>':""}${p.isIGL?'<span class="pcard-igl">IGL</span>':""}</span>
+          </div>
+          <div class="pcard-nm">${esc(p.nome)}</div>
+          <div class="pcard-role" style="color:${rc}">${esc(rolePair)}</div>
+          <div class="pcard-style">${esc(STYLE_LABEL(p.playstyle))}</div>
+          <div class="pcard-rt mono">${p.rating}</div>
         </div>`;
       }).join("")}</div>
+      ${isOn?renderImpactPanel():""}
     </div>`;
   });
   box.innerHTML=html;
   // click handlers
-  box.querySelectorAll(".lcard").forEach(c=>{c.onclick=e=>{if(!e.target.closest(".lcard-row")){teamIdx=+c.dataset.ti;refresh("all");goMobileTab("time");}};});
-  box.querySelectorAll(".lcard-row").forEach(r=>{r.onclick=e=>{e.stopPropagation();loadPlayer(+r.dataset.pi,+r.dataset.ti);goMobileTab("editor");};});
+  box.querySelectorAll(".lcard-head").forEach(h=>{h.onclick=()=>{teamIdx=+h.closest(".lcard").dataset.ti;refresh("all");};});
+  box.querySelectorAll(".pcard").forEach(r=>{r.onclick=()=>{loadPlayer(+r.dataset.pi,+r.dataset.ti);goMobileTab("editor");};});
 }
 const ROLE_COLORS={AWPer:"#b8a4ef",Rifler:"#e0c374",Entry:"#e58f7c",Lurker:"#96d19b",Support:"#77d2d2",IGL:"#9fb6d8"};
-
-/* === team detail === */
-function renderTeamDetail(){
-  const box=document.getElementById("teamdet");if(!box)return;
-  const t=E.TEAMS[teamIdx], f=evaluateTeamCached(t,teamIdx), src=t;
-  const avg=f.bruta/5;
-  // coach
-  const coach=f.coach?`<div class="tdetail-coach"><div class="cv">${Math.min(20,f.coach.ovr)}</div><div><div class="cn">${esc(f.coach.nick)}</div><div class="cc">${esc(f.coach.carac||"—")}</div></div></div>`:`<div class="tdetail-coach"><div class="cn" style="color:var(--dim);font-style:italic">sem treinador</div></div>`;
-  // alerts
-  const alerts=f.alertas.map(a=>`<span class="tdetail-al ${a.includes("-")||a.includes("−")?"pen":"ok"}">${esc(a)}</span>`).join("");
-  // players
-  const rows=f.players.map((e,pi)=>({...e,pIdx:poolBySlot.get(`${teamIdx}:${pi}`)})).sort((a,b)=>b.ovr-a.ovr).map(e=>{
-    const rc=ROLE_COLORS[e.combatRole]||"var(--dim)";
-    const rolePair=rolePairText(e);
-    return`<div class="tdrow${e.pIdx===loadedIdx?" on":""}" data-pi="${e.pIdx}" style="--tc:var(${tierVar(e.ovr)})">
-      <div class="tdrow-ovr" style="background:var(${tierVar(e.ovr)});color:#07090e">${e.ovr}</div>
-      <div class="tdrow-star">${e.star||isStarPlayer(e,avg)?"★":""}</div>
-      <div class="tdrow-nm">${esc(e.nome)}${e.isIGL?' <span style="font-size:.56rem;color:var(--gold);border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);padding:0 3px;border-radius:3px">IGL</span>':''}</div>
-      <div><div class="tdrow-fn" title="${esc(rolePair)}" style="color:${rc};background:color-mix(in srgb,${rc} 14%,transparent)">${esc(rolePair)}</div><div class="tdrow-pl">${esc(STYLE_LABEL(e.playstyle))}</div></div>
-      <div class="tdrow-rt mono">${e.rating}</div>
-    </div>`;
-  }).join("");
-  box.innerHTML=`
-    <div class="tdetail-head"><div class="tdetail-badge" style="background:${src.cor}">${esc(src.nome).slice(0,3).toUpperCase()}</div><div class="tdetail-info"><div class="tdetail-name">${esc(src.nome)}</div><div class="tdetail-camp">${esc(src.camp||"")}</div></div></div>
-    <div class="tdetail-stats">
-      <div class="tdetail-stat"><div class="v mono">${f.bruta}</div><div class="l">Bruta</div></div>
-      <div class="tdetail-stat qui"><div class="v mono">${Math.round(f.quimica*100)}%</div><div class="l">Química</div></div>
-      <div class="tdetail-stat efe"><div class="v mono">${f.efetiva}</div><div class="l">Efetiva</div></div>
-    </div>
-    ${coach}
-    <div class="tdetail-alerts">${alerts}</div>
-    <div class="tdetail-players">${rows}</div>
-    ${renderImpactPanel()}`;
-  // click handlers
-  box.querySelectorAll(".tdrow").forEach(r=>{r.onclick=()=>{const pi=r.dataset.pi;if(pi!=="undefined"){loadPlayer(+pi,teamIdx);goMobileTab("editor");}};});
-}
 
 /* === load player into editor === */
 function syncEditorControls(){
@@ -2108,8 +2071,7 @@ function renderEditorResult(){
     <div class="rc-row"><span class="rc-label">clareza</span><span class="rc-val mono">${Math.round(st.matchScore*100)}%</span></div>`;
 }
 
-/* === old team panel (kept for compatibility) === */
-function renderTeamPanel(){renderLeague();renderTeamDetail();}
+function renderTeamPanel(){renderLeague();}
 
 function montarUI(){
   const app=document.getElementById("app"); app.className="";
@@ -2130,7 +2092,6 @@ function montarUI(){
           <div id="reportbox">${renderReportPanel()}</div>
         </div>
       </div>
-      <div class="tdetail card" id="teamdet" style="--card-accent:var(--cyan)"></div>
     </div>`
   ].join("");
   // wire editor
