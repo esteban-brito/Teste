@@ -2135,7 +2135,7 @@ function montarUI(){
       <div class="mcol" id="mcol">
         <div class="card tuning-card panel-primary">
           <div class="eng-head" style="margin-bottom:6px"><span class="title">Calibrador Inteligente</span><div class="toggle"><button class="btn" id="engToggle">${tuningOpen?"Ocultar":"Mostrar"}</button></div></div>
-          <div class="calib-note">O calibrador nao altera stats. Ele testa pesos, mostra a sugestao e so aplica se voce confirmar.</div>
+          <div class="calib-note" ${tuningOpen?"":"hidden"}>O calibrador nao altera stats. Ele testa pesos, mostra a sugestao e so aplica se voce confirmar.</div>
           <div id="calibbox" ${tuningOpen?"":"hidden"}></div>
           <div id="reportbox">${renderReportPanel()}</div>
         </div>
