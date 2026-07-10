@@ -121,8 +121,8 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
   background:var(--panel);border-radius:var(--radius-lg);padding:22px;margin-bottom:20px;box-shadow:var(--shadow);
 }
 
-.tstat,.prow,.coachrow,.metric,.tdetail-coach,.lcard,
-.calib-metric,.calib-suggestion,.calib-change,.calib-focus-card,
+.tstat,.prow,.coachrow,.tdetail-coach,.lcard,
+.calib-suggestion,.calib-change,.calib-focus-card,
 .report-panel,.report-item,
 .liveimpact,
 .scoreboards table{
@@ -190,8 +190,6 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .scoreline{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
 .scoreteam{font-family:var(--ff);font-weight:700;color:var(--txt)}
 .scoreval{font-family:var(--ff);font-size:2rem;font-weight:700;color:var(--accent)}
-.metricgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;margin-bottom:12px}
-.metric{border-radius:var(--radius-sm);padding:9px;text-align:center}
 .scoreboards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .scoreboards table{width:100%;border-collapse:collapse;font-size:.82rem;border-radius:var(--radius);overflow:hidden}
 .scoreboards th,.scoreboards td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--line2)}
@@ -303,10 +301,8 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .calib-target{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr)) auto;gap:8px;align-items:end}
 .calib-field label{display:block;margin:0 0 4px;font-family:var(--ff);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
 .calib-field select{width:100%}
-.calib-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.calib-metric{border-radius:var(--radius-sm);padding:8px}
-.calib-metric .l{font-size:.58rem}
-.calib-metric .v{margin-top:3px;font-size:.86rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.calib-summary-line{font-size:.86rem;color:var(--dim);margin-bottom:12px}
+.calib-summary-line b{font-family:var(--ff);color:var(--txt);font-weight:700}
 .calib-suggestion{border-radius:var(--radius);padding:14px}
 .calib-suggestion.good{background:color-mix(in srgb,var(--win) 8%,var(--panel-soft))}
 .calib-suggestion.bad{background:color-mix(in srgb,var(--warn) 8%,var(--panel-soft))}
@@ -391,7 +387,7 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
   .mcol{grid-column:1/-1;overflow:visible;max-height:none}
   .lcol{position:static;max-height:none}
   .simgrid{grid-template-columns:1fr 1fr}
-  .metricgrid,.scoreboards{grid-template-columns:1fr}
+  .scoreboards{grid-template-columns:1fr}
 }
 @media(max-width:900px){
   .calib-target{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -402,7 +398,7 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
   .dash{grid-template-columns:1fr}
   .lcard-players{grid-template-columns:repeat(auto-fill,minmax(108px,1fr))}
   .field-c{grid-template-columns:28px minmax(0,1fr) 46px}
-  .calib-target,.calib-summary,.calib-focus{grid-template-columns:1fr}
+  .calib-target,.calib-focus{grid-template-columns:1fr}
   .calib-focus-arrow{transform:rotate(90deg)}
 }
 </style>
@@ -1789,11 +1785,7 @@ function buildCalibrator(){
   const role2Html=`<div class="calib-field"><label>${role2Label}</label><select id="calibRole2">${anyRoleOptions(calibTargetRole2)}</select></div>`;
   box.innerHTML=`<div class="calib-panel">
     <div class="l" style="margin:0">1. Jogador atual</div>
-    <div class="calib-summary">
-      <div class="calib-metric"><div class="l">Jogador</div><div class="v">${esc(player.nome||state.nome||"Jogador")}</div></div>
-      <div class="calib-metric"><div class="l">Atual</div><div class="v">${esc(rolePairText(player))}</div></div>
-      <div class="calib-metric"><div class="l">Playstyle</div><div class="v">${esc(STYLE_LABEL(player.playstyle))}</div></div>
-    </div>
+    <div class="calib-summary-line"><b>${esc(player.nome||state.nome||"Jogador")}</b> — ${esc(rolePairText(player))} · ${esc(STYLE_LABEL(player.playstyle))}</div>
     <div class="l" style="margin:0">2. Escolha o alvo</div>
     <div class="calib-target">
       ${role1Html}
@@ -1889,17 +1881,17 @@ function renderBatchPanel(b){
   const kpr=b.kills/Math.max(1,b.rounds*10), avgRating=b.ratings/Math.max(1,b.ratingsN);
   return `<div class="simres">
     <div class="scoreline"><span class="scoreteam">${esc(E.TEAMS[simA].nome)}</span><span class="scoreval">${Math.round(b.wA/b.n*100)}%</span><span class="hint">winrate em ${b.n} mapas · seed ${simSeed}..${simSeed+b.n-1}</span><span class="scoreval">${Math.round((1-b.wA/b.n)*100)}%</span><span class="scoreteam">${esc(E.TEAMS[simB].nome)}</span></div>
-    <div class="metricgrid">
-      <div class="metric"><div class="v mono">${(b.rounds/b.n).toFixed(1)}</div><div class="l">rounds/mapa</div></div>
-      <div class="metric"><div class="v mono">${Math.round(b.ctWins/b.rounds*100)}%</div><div class="l">CT win</div></div>
-      <div class="metric"><div class="v mono">${Math.round(b.plants/b.rounds*100)}%</div><div class="l">plant</div></div>
-      <div class="metric"><div class="v mono">${Math.round(b.otMaps/b.n*100)}%</div><div class="l">OT mapas</div></div>
-      <div class="metric"><div class="v mono">${kpr.toFixed(2)}</div><div class="l">KPR</div></div>
-      <div class="metric"><div class="v mono">${(b.force/b.n).toFixed(1)}</div><div class="l">force/mapa</div></div>
-      <div class="metric"><div class="v mono">${(b.eco/b.n).toFixed(1)}</div><div class="l">eco/mapa</div></div>
-      <div class="metric"><div class="v mono">${(b.clutches/b.n).toFixed(1)}</div><div class="l">clutch/mapa</div></div>
-      <div class="metric"><div class="v mono">${avgRating.toFixed(2)}</div><div class="l">rating médio</div></div>
-      <div class="metric"><div class="v mono">${(b.otRounds/b.n).toFixed(1)}</div><div class="l">rounds OT</div></div>
+    <div class="stat-mini" style="margin-bottom:12px">
+      <span><b class="mono">${(b.rounds/b.n).toFixed(1)}</b>rounds/mapa</span>
+      <span><b class="mono">${Math.round(b.ctWins/b.rounds*100)}%</b>CT win</span>
+      <span><b class="mono">${Math.round(b.plants/b.rounds*100)}%</b>plant</span>
+      <span><b class="mono">${Math.round(b.otMaps/b.n*100)}%</b>OT mapas</span>
+      <span><b class="mono">${kpr.toFixed(2)}</b>KPR</span>
+      <span><b class="mono">${(b.force/b.n).toFixed(1)}</b>force/mapa</span>
+      <span><b class="mono">${(b.eco/b.n).toFixed(1)}</b>eco/mapa</span>
+      <span><b class="mono">${(b.clutches/b.n).toFixed(1)}</b>clutch/mapa</span>
+      <span><b class="mono">${avgRating.toFixed(2)}</b>rating médio</span>
+      <span><b class="mono">${(b.otRounds/b.n).toFixed(1)}</b>rounds OT</span>
     </div>
     <div class="hint">Mapas: ${esc(mapTxt||"mapa fixo")}. Use esse lote para comparar antes/depois de pesos, química, economia e playstyles.</div>
   </div>`;
@@ -1911,12 +1903,12 @@ function renderMatchPanel(){
   const g=lastMap, m=simMetrics(g), pa=g.placar[0], pb=g.placar[1];
   box.innerHTML=`<div class="simres">
     <div class="scoreline"><span class="scoreteam">${esc(g.nomeA)}</span><span class="scoreval">${pa}</span><span class="hint">${esc(g.mapa)} · ${g.half1?g.half1.join("-"):""} · seed ${simSeed}</span><span class="scoreval">${pb}</span><span class="scoreteam">${esc(g.nomeB)}</span></div>
-    <div class="metricgrid">
-      <div class="metric"><div class="v mono">${g.totalRounds}</div><div class="l">rounds</div></div>
-      <div class="metric"><div class="v mono">${Math.round(m.ct*100)}%</div><div class="l">CT win</div></div>
-      <div class="metric"><div class="v mono">${Math.round(m.plants*100)}%</div><div class="l">plant</div></div>
-      <div class="metric"><div class="v mono">${m.ots}</div><div class="l">OT rounds</div></div>
-      <div class="metric"><div class="v mono">${m.force}/${m.eco}</div><div class="l">force/eco</div></div>
+    <div class="stat-mini" style="margin-bottom:12px">
+      <span><b class="mono">${g.totalRounds}</b>rounds</span>
+      <span><b class="mono">${Math.round(m.ct*100)}%</b>CT win</span>
+      <span><b class="mono">${Math.round(m.plants*100)}%</b>plant</span>
+      <span><b class="mono">${m.ots}</b>OT rounds</span>
+      <span><b class="mono">${m.force}/${m.eco}</b>force/eco</span>
     </div>
     <div class="hint">Clutches detectados: ${m.clutches}. O rating abaixo vem do log contextual do mapa, incluindo KAST, eco-adjust, ADR, trade, multi-kill e swing.</div>
     <div class="scoreboards">${scoreTable(g.nomeA,g.statsA)}${scoreTable(g.nomeB,g.statsB)}</div>
