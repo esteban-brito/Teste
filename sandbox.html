@@ -123,7 +123,7 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 
 .tstat,.prow,.coachrow,.tdetail-coach,.lcard,
 .calib-suggestion,.calib-change,.calib-focus-card,
-.report-panel,.report-item,
+.report-item,
 .liveimpact,
 .scoreboards table{
   background:var(--panel-soft);
@@ -144,7 +144,7 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .panel-secondary>.eng-head .title{font-size:.92rem}
 .panel-tertiary{padding:12px 14px!important;background:var(--panel-soft);box-shadow:none}
 .panel-tertiary>.eng-head{margin-bottom:0}
-.panel-tertiary>.eng-head .title{font-size:.72rem;color:var(--dim);letter-spacing:.1em;text-transform:uppercase}
+.panel-tertiary>.eng-head .title{font-size:.82rem;color:var(--dim);letter-spacing:.01em;font-weight:700}
 .panel-tertiary .btn{font-size:.7rem;padding:7px 12px}
 
 /* ============================================================
@@ -279,6 +279,7 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .tdetail-coach .cn{font-weight:700;font-size:.92rem}
 .tdetail-coach .cc{font-size:.74rem;color:var(--dim)}
 .tdetail-alerts,.tdetail-alerts-more{display:flex;flex-wrap:wrap;gap:5px}
+.tdetail-alerts-more[hidden]{display:none}
 .tdetail-alerts{margin-bottom:10px}
 .tdetail-alerts-more{margin:-4px 0 10px}
 .tdetail-al{font-size:.74rem;padding:5px 10px;border-radius:10px;background:var(--panel-soft);color:#cbd6e4}
@@ -294,7 +295,7 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
    ============================================================ */
 .liveimpact{margin-top:8px;padding:10px;border-radius:var(--radius-sm)}
 .liveimpact-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
-.liveimpact-title{font-family:var(--ff);font-size:.78rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--txt)}
+.liveimpact-title{font-family:var(--ff);font-size:.82rem;font-weight:700;letter-spacing:.01em;color:var(--txt)}
 .liveimpact-count{font-family:var(--ff);font-size:.7rem;color:var(--cyan);white-space:nowrap}
 .impact-tag{display:inline-flex;align-items:center;height:18px;padding:0 6px;border-radius:5px;font-family:var(--ff);font-size:.56rem;font-weight:900;letter-spacing:.03em;color:var(--dim);margin-left:6px;background:var(--panel)}
 .impact-tag.target{color:var(--cyan);background:color-mix(in srgb,var(--cyan) 15%,var(--panel))}
@@ -317,12 +318,17 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .calib-field select{width:100%}
 .calib-summary-line{font-size:.86rem;color:var(--dim);margin-bottom:12px}
 .calib-summary-line b{font-family:var(--ff);color:var(--txt);font-weight:700}
-.calib-suggestion{border-radius:var(--radius);padding:14px}
+.calib-suggestion{border-radius:var(--radius);padding:14px;animation:liveIn .24s var(--ease)}
 .calib-suggestion.good{background:color-mix(in srgb,var(--win) 8%,var(--panel-soft))}
 .calib-suggestion.bad{background:color-mix(in srgb,var(--warn) 8%,var(--panel-soft))}
-.calib-title{font-family:var(--ff);font-size:.86rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;color:var(--txt)}
+.calib-title{font-family:var(--ff);font-size:.9rem;font-weight:700;letter-spacing:.01em;margin-bottom:8px;color:var(--txt)}
 .calib-goals{font-size:.8rem;color:var(--cyan);padding:6px 0;font-weight:800}
-.calib-diagnostics{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;font-family:var(--ff);font-size:.72rem;color:var(--dim)}
+.calib-details{margin:8px 0}
+.calib-details>summary{cursor:pointer;font-size:.72rem;color:var(--dim);font-weight:700;letter-spacing:.02em;list-style:none;padding:4px 0;user-select:none}
+.calib-details>summary::-webkit-details-marker{display:none}
+.calib-details>summary::before{content:"▸ ";color:var(--line)}
+.calib-details[open]>summary::before{content:"▾ "}
+.calib-diagnostics{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 0;font-family:var(--ff);font-size:.72rem;color:var(--dim)}
 .calib-diagnostics span{border-radius:var(--radius-sm);padding:5px 7px;background:var(--panel-soft)}
 .calib-focus{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;margin:8px 0;align-items:center}
 .calib-focus-card{border-radius:var(--radius-sm);padding:10px;background:color-mix(in srgb,var(--cyan) 8%,var(--panel-soft))}
@@ -341,9 +347,28 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .calib-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .calib-note{font-size:.72rem;color:var(--dim);line-height:1.45}
 
-.report-panel{margin-top:10px;border-radius:var(--radius);padding:10px}
+/* preview AO VIVO do alvo (atual → alvo), atualiza na hora ao mexer nos dropdowns */
+.calib-live{display:flex;align-items:stretch;gap:10px;margin-bottom:2px}
+.calib-live-cell{flex:1;min-width:0;padding:10px 12px;border-radius:var(--radius);background:var(--panel-soft)}
+.calib-live-cell.target{background:var(--panel-soft);transition:background .18s var(--ease)}
+.calib-live-cell.target.on{background:color-mix(in srgb,var(--accent) 12%,var(--panel-soft));animation:liveIn .22s var(--ease)}
+.calib-live-l{display:block;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:700;margin-bottom:4px}
+.calib-live-v{display:block;font-family:var(--ff);font-weight:700;font-size:.92rem;color:var(--txt);overflow:hidden;text-overflow:ellipsis}
+.calib-live-cell.target.on .calib-live-v{color:var(--accent)}
+.calib-live-arrow{display:flex;align-items:center;font-family:var(--ff);font-weight:700;font-size:1.1rem;color:var(--line)}
+.calib-live-arrow.on{color:var(--accent)}
+@keyframes liveIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* estados vazios quietos: nada de herói "0" gigante ocupando a coluna */
+.liveimpact-quiet{margin-top:8px;padding:11px 13px;border-radius:var(--radius-sm);background:var(--panel-soft);font-size:.78rem;color:var(--dim);font-weight:600}
+.reportcard.is-empty{padding:14px 16px!important}
+.report-quiet{display:flex;flex-direction:column;gap:3px}
+.report-quiet-title{font-family:var(--ff);font-weight:700;font-size:.86rem;color:var(--neutral)}
+.report-quiet-sub{font-size:.74rem;color:var(--dim);line-height:1.4}
+
+.report-panel{margin-top:0;border-radius:var(--radius);padding:0}
 .report-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
-.report-title{font-family:var(--ff);font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--txt)}
+.report-title{font-family:var(--ff);font-size:.82rem;font-weight:700;letter-spacing:.01em;color:var(--txt)}
 .report-list{display:grid;gap:6px;margin-top:8px}
 .report-item{border-radius:var(--radius-sm);padding:7px;font-size:.76rem;border-left:3px solid transparent}
 .report-item.warn{border-left-color:var(--warn)}
@@ -677,12 +702,16 @@ function renderImpactPanel(){
     return `<div class="impact-row"><div class="impact-main"><div class="impact-name">${esc(team.nome)}</div><div class="impact-meta">${esc(meta)}</div></div><div class="impact-delta ${deltaCls}">Efet ${team.old.efet} -> ${team.efet}</div></div>`;
   }).join("");
   const empty=!changedPlayers&&!changedTeams;
-  const regressionRows=regressions.slice(0,5).map(item=>`<div class="impact-row"><div class="impact-main"><div class="impact-name">${esc(item.nome)} <span style="color:var(--warn);font-weight:700">REGREDIU</span></div><div class="impact-meta">esperado ${esc(item.expectedRole)} / ${esc(item.expectedStyle)} | atual ${esc(item.current?.role||"-")} / ${esc(item.current?.style||"-")}</div></div></div>`).join("");
+  // estado vazio: uma linha quieta, sem herói "0" gigante ocupando a coluna
+  if(empty&&!regressions.length){
+    return `<div class="liveimpact liveimpact-quiet">Impacto acumulado · sem mudanças desde o baseline</div>`;
+  }
+  const regressionRows=regressions.slice(0,5).map(item=>`<div class="impact-row"><div class="impact-main"><div class="impact-name">${esc(item.nome)} <span style="color:var(--warn);font-weight:700">regrediu</span></div><div class="impact-meta">esperado ${esc(item.expectedRole)} / ${esc(item.expectedStyle)} · atual ${esc(item.current?.role||"-")} / ${esc(item.current?.style||"-")}</div></div></div>`).join("");
   return `<div class="liveimpact">
     <div class="liveimpact-head"><div class="liveimpact-title">Impacto acumulado</div><div class="liveimpact-count">${changedPlayers+changedTeams} desde o baseline</div></div>
     ${renderAuditMetrics(summary,"jog/times")}
-    ${regressions.length?`<div class="impact-section"><h4>Regressoes de intencao</h4>${regressionRows}</div>`:""}
-    ${empty?'<div class="impact-empty">Sem diferenca contra o baseline carregado. Ao mexer em receitas, pesos ou atributos, as mudancas aparecem aqui imediatamente.</div>':`
+    ${regressions.length?`<div class="impact-section"><h4>Regressões de intenção</h4>${regressionRows}</div>`:""}
+    ${empty?"":`
       <div class="impact-section"><h4>Jogadores</h4>${playerRows||'<div class="impact-empty">Sem jogador alterado.</div>'}</div>
       <div class="impact-section"><h4>Times</h4>${teamRows||'<div class="impact-empty">Sem time alterado.</div>'}</div>`}
   </div>`;
@@ -743,28 +772,35 @@ function buildCalibrationReport(){
   else lines.push("Sem times alterados.");
   return lines.join("\n");
 }
+function reportIsEmpty(){
+  return !flatConfigDiff().length && !ensureCalibSession().applied.length && !sessionRegressions().length;
+}
 function renderReportPanel(){
   const session=ensureCalibSession(), report=impactReport(), summary=summarizeDiff(report), regressions=sessionRegressions(), finalChanges=flatConfigDiff();
-  const last=session.applied.slice(-4).reverse().map(entry=>`<div class="report-item"><b>#${entry.id} ${esc(entry.targetName)}</b><span>${esc(entry.before)} -> ${esc(entry.after)}</span><span>${entry.incremental.players} jog/${entry.incremental.teams} times | colateral ${entry.incremental.collateralPlayers}</span></div>`).join("");
-  const regressionRows=regressions.slice(0,4).map(item=>`<div class="report-item warn"><b>${esc(item.nome)} - REGREDIU</b><span>Esperado ${esc(item.expectedRole)} / ${esc(item.expectedStyle)}</span><span>Atual ${esc(item.current?.role||"-")} / ${esc(item.current?.style||"-")}</span></div>`).join("");
+  // estado vazio: uma linha quieta, sem herói gigante de "0" nem botões inúteis
+  if(reportIsEmpty()){
+    return `<div class="report-quiet"><span class="report-quiet-title">Relatório da bancada</span><span class="report-quiet-sub">Nada aplicado ainda — as sugestões que você confirmar aparecem aqui.</span></div>`;
+  }
+  const last=session.applied.slice(-4).reverse().map(entry=>`<div class="report-item"><b>#${entry.id} ${esc(entry.targetName)}</b><span>${esc(entry.before)} → ${esc(entry.after)}</span><span>${entry.incremental.players} jog · ${entry.incremental.teams} times · colateral ${entry.incremental.collateralPlayers}</span></div>`).join("");
+  const regressionRows=regressions.slice(0,4).map(item=>`<div class="report-item warn"><b>${esc(item.nome)} — regrediu</b><span>Esperado ${esc(item.expectedRole)} / ${esc(item.expectedStyle)}</span><span>Atual ${esc(item.current?.role||"-")} / ${esc(item.current?.style||"-")}</span></div>`).join("");
   const changesBump=bumpTrack("report:changes",finalChanges.length);
   return `<div class="report-panel">
-    <div class="report-head"><div class="report-title">Relatorio da bancada</div><div class="liveimpact-count">${session.applied.length} aplicacoes</div></div>
-    <div class="stat-hero${regressions.length?" warn":""}"><div class="v mono${changesBump}">${finalChanges.length}</div><div class="l">mudanças pendentes</div></div>
+    <div class="report-head"><div class="report-title">Relatório da bancada</div><div class="liveimpact-count">${session.applied.length} ${session.applied.length===1?"aplicação":"aplicações"}</div></div>
+    <div class="stat-hero${regressions.length?" warn":""}"><div class="v mono${changesBump}">${finalChanges.length}</div><div class="l">Mudanças pendentes</div></div>
     <div class="stat-mini" style="margin-bottom:8px">
       <span><b class="mono">${summary.players}</b>jogadores</span>
       <span><b class="mono">${summary.teams}</b>times</span>
       <span class="${regressions.length?"warn-txt":""}"><b class="mono">${regressions.length}</b>regressões</span>
     </div>
-    ${regressionRows?`<div class="impact-section"><h4>Regressoes</h4><div class="report-list">${regressionRows}</div></div>`:""}
-    ${last?`<div class="impact-section"><h4>Historico recente</h4><div class="report-list">${last}</div></div>`:'<div class="impact-empty">Aplique sugestoes no calibrador para montar o relatorio final.</div>'}
-    <div class="report-actions"><button class="btn accent" id="copyReportBtn">Copiar relatorio</button><button class="btn" id="downloadReportBtn">Baixar .txt</button><button class="btn" id="resetWorkbenchBtn">Resetar tudo</button></div>
+    ${regressionRows?`<div class="impact-section"><h4>Regressões</h4><div class="report-list">${regressionRows}</div></div>`:""}
+    ${last?`<div class="impact-section"><h4>Histórico recente</h4><div class="report-list">${last}</div></div>`:""}
+    <div class="report-actions"><button class="btn accent" id="copyReportBtn">Copiar relatório</button><button class="btn" id="downloadReportBtn">Baixar .txt</button><button class="btn" id="resetWorkbenchBtn">Resetar tudo</button></div>
     ${reportFallbackText?`<textarea class="report-textarea" readonly>${esc(reportFallbackText)}</textarea>`:""}
   </div>`;
 }
 function renderReportBox(){
   const box=document.getElementById("reportbox");
-  if(box){box.innerHTML=renderReportPanel();wireReportPanel();}
+  if(box){box.classList.toggle("is-empty",reportIsEmpty());box.innerHTML=renderReportPanel();wireReportPanel();}
 }
 function wireReportPanel(){
   const copy=document.getElementById("copyReportBtn");
@@ -1638,7 +1674,7 @@ async function findCalibration(goal,onProgress=null){
   }
 }
 function renderCalibResult(result,goal){
-  if(!result)return '<div class="impact-empty">Escolha um alvo e rode uma sugestao. Nada e aplicado automaticamente.</div>';
+  if(!result)return "";
   if(!result.ok){
     const gapLine=result.message&&!result.message.startsWith("IGL")?`<div class="calib-note" style="color:var(--warn)">${esc(result.message)}</div>`:"";
     return `<div class="calib-suggestion bad"><div class="calib-title">Sem ajuste global limpo</div>${gapLine}</div>`;
@@ -1682,17 +1718,17 @@ function renderCalibResult(result,goal){
     <div class="calib-focus-arrow">→</div>
     <div class="calib-focus-card after"><div class="l">Depois</div><div class="v">${esc(afterState)}</div></div>
   </div>`;
-  const diagnostics=`<div class="calib-diagnostics">
+  const diagnostics=`<details class="calib-details"><summary>Diagnóstico da busca</summary><div class="calib-diagnostics">
     <span>Custo ${result.cost.toFixed(2)}</span>
     <span>Delta pesos ${incrementalInfo.deltaCost.toFixed(2)}</span>
     <span>Testes ${st.tested||0}/${st.generated||0}</span>
-    <span>Validas ${st.valid||0}</span>
+    <span>Válidas ${st.valid||0}</span>
     ${st.truncated?'<span>corte anti-trava</span>':""}
     ${gapText}
     ${roleScoreText}
-    <span>Acumulado ${cumulativeSummary.players} jog | ${cumulativeSummary.teams} times</span>
+    <span>Acumulado ${cumulativeSummary.players} jog · ${cumulativeSummary.teams} times</span>
     <span>Realidade +${incrementalInfo.realityPenalty.toFixed(2)} / acum +${cumulativeInfo.realityPenalty.toFixed(2)}</span>
-  </div>`;
+  </div></details>`;
   const accumulatedNote=cumulativeSummary.total>previewSummary.total
     ?`<div class="calib-note">Previa: ${previewSummary.total} mudancas nesta sugestao. Impacto acumulado apos aplicar: ${cumulativeSummary.total} desde o baseline.</div>`
     :"";
@@ -1803,10 +1839,22 @@ function buildCalibrator(){
     :`<div class="calib-field"><label>Role1</label><select id="calibRole">${anyRoleOptions(calibTargetRole)}</select></div>`;
   const role2Label=isIGL?"Papel de combate":"Role2";
   const role2Html=`<div class="calib-field"><label>${role2Label}</label><select id="calibRole2">${anyRoleOptions(calibTargetRole2)}</select></div>`;
+  // preview AO VIVO do alvo: atual → alvo, atualiza na hora ao mexer nos dropdowns (sem rodar a busca)
+  const curParts=rolePairParts(player);
+  const curText=`${esc(rolePairText(player))} · ${esc(STYLE_LABEL(player.playstyle))}`;
+  const tR1=isIGL?"IGL":(calibTargetRole||curParts.r1);
+  const tR2=calibTargetRole2||curParts.r2;
+  const tStyle=calibTargetStyle||STYLE_LABEL(player.playstyle);
+  const targetText=`${esc(tR2?`${tR1} / ${tR2}`:tR1)} · ${esc(tStyle)}`;
+  const hasTarget=!!(calibTargetRole||calibTargetRole2||calibTargetStyle);
+  const changed=hasTarget&&targetText!==curText;
+  const livePreview=`<div class="calib-live">
+    <div class="calib-live-cell"><span class="calib-live-l">Jogador atual</span><span class="calib-live-v">${curText}</span></div>
+    ${hasTarget?`<div class="calib-live-arrow${changed?" on":""}">→</div>
+    <div class="calib-live-cell target${changed?" on":""}"><span class="calib-live-l">Alvo</span><span class="calib-live-v">${targetText}</span></div>`:""}
+  </div>`;
   box.innerHTML=`<div class="calib-panel">
-    <div class="l" style="margin:0">1. Jogador atual</div>
-    <div class="calib-summary-line"><b>${esc(player.nome||state.nome||"Jogador")}</b> — ${esc(rolePairText(player))} · ${esc(STYLE_LABEL(player.playstyle))}</div>
-    <div class="l" style="margin:0">2. Escolha o alvo</div>
+    ${livePreview}
     <div class="calib-target">
       ${role1Html}
       ${role2Html}
@@ -1814,7 +1862,7 @@ function buildCalibrator(){
       <div class="calib-field"><label>Modo</label><select id="calibMode">${modeOptions}</select></div>
       <button class="btn accent" id="calibSuggest">Sugerir ajuste</button>
     </div>
-    <div class="calib-note">${isIGL?"IGL: role1 fixo, role2 e o papel de combate. ":""}A IA procura um ajuste global de baixo dano. Playstyle, roles, quimica e raridade entram na conta; stats do jogador nao sao alterados.</div>
+    <div class="calib-note">${isIGL?"IGL tem role1 fixo; role2 é o papel de combate. ":""}A busca ajusta pesos globais de baixo impacto — não altera os stats do jogador.</div>
     <div id="calibResult">${renderCalibResult(calibLast,curGoal)}</div>
     <div class="calib-actions"><button class="btn" id="calibReset">Resetar pesos</button></div>
   </div>`;
@@ -2135,10 +2183,10 @@ function montarUI(){
       <div class="mcol" id="mcol">
         <div class="card tuning-card panel-primary">
           <div class="eng-head" style="margin-bottom:6px"><span class="title">Calibrador Inteligente</span><div class="toggle"><button class="btn" id="engToggle">${tuningOpen?"Ocultar":"Mostrar"}</button></div></div>
-          <div class="calib-note" ${tuningOpen?"":"hidden"}>O calibrador nao altera stats. Ele testa pesos, mostra a sugestao e so aplica se voce confirmar.</div>
+          <div class="calib-note" ${tuningOpen?"":"hidden"}>Testa pesos e mostra a prévia — nada é aplicado sem você confirmar.</div>
           <div id="calibbox" ${tuningOpen?"":"hidden"}></div>
-          <div id="reportbox">${renderReportPanel()}</div>
         </div>
+        <div id="reportbox" class="card reportcard panel-secondary${reportIsEmpty()?" is-empty":""}">${renderReportPanel()}</div>
         <div class="card simcard panel-secondary">
           <div class="eng-head" style="margin-bottom:8px"><span class="title">Simulação · PÓLVORA</span><div class="toggle"><button class="btn" id="simToggle">${simOpen?"Ocultar":"Mostrar"}</button></div></div>
           <div id="simbox" ${simOpen?"":"hidden"}>
