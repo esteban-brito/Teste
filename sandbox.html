@@ -25,14 +25,15 @@
 :root{
   /* escala de superfície (do fundo pro topo): bg < panel-soft < panel < panel-strong */
   --bg:#080b10; --panel:#111826; --panel-strong:#151e2d; --panel-soft:#0d131d;
-  --line:#334158; --line2:#202b3c; --line-soft:rgba(157,178,208,.22);
+  --line2:#202b3c;
   --txt:#f3f7fb; --neutral:#dce5ef; --dim:#9aa8ba;
   --accent:#ff6b2a; --accent-ink:#07090e; --cyan:#48d8ff; --warn:#ffc15a;
   --gold:#ffce4a; --gold-lit:#ffd968; --gold-dim:#f0a93a;
   --win:#7fe6a8; --loss:#e07a6a;
   --ff:'Chakra Petch'; --fb:'Barlow Semi Condensed';
   --ease:cubic-bezier(.2,.8,.2,1);
-  --radius:8px; --radius-sm:6px;
+  --radius:12px; --radius-sm:9px; --radius-lg:18px;
+  --shadow:0 1px 1px rgba(0,0,0,.3),0 12px 30px -16px rgba(0,0,0,.65);
   --t22:var(--gold); --t21:var(--gold-dim); --t18:var(--accent); --t15:var(--cyan); --t14:#aab6c4;
   --r-igl:#7a93b8; --r-awper:#9a86c4; --r-entry:#c47a6a; --r-rifler:#bf9f63; --r-lurker:#7fa882; --r-support:#5fa6a6;
   --c-gestor:#c9a36a; --c-estrategista:#2fd6d6; --c-desenvolvedor:#4a82ff; --c-motivador:#c79bff;
@@ -65,30 +66,30 @@ footer{display:none}
    ============================================================ */
 header{
   display:grid;grid-template-columns:auto minmax(260px,1fr) minmax(240px,420px);align-items:center;gap:14px;
-  min-height:60px;padding:12px 14px;margin-bottom:14px;border:1px solid var(--line-soft);border-radius:var(--radius);
+  min-height:60px;padding:14px 18px;margin-bottom:18px;border-radius:var(--radius-lg);
   background:var(--panel);
 }
 .backlink{
-  font-family:var(--ff);font-weight:700;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;
-  color:var(--dim);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:9px 14px;
-  background:rgba(7,9,14,.36);transition:all .14s var(--ease);
+  font-family:var(--ff);font-weight:700;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--dim);text-decoration:none;border-radius:999px;padding:9px 14px;
+  background:var(--panel-soft);transition:all .14s var(--ease);
 }
-.backlink:hover{color:var(--accent);border-color:rgba(255,107,42,.4);transform:translateY(-1px)}
+.backlink:hover{color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--panel-soft));transform:translateY(-1px)}
 .logo{font-family:var(--ff);font-weight:700;font-size:clamp(1.12rem,2.4vw,1.42rem);letter-spacing:.08em;line-height:1}
 .logo b{color:var(--accent)}
-.logo span{display:block;font-family:var(--fb);color:var(--dim);font-size:.64rem;letter-spacing:.24em;text-transform:uppercase;font-weight:700;margin-top:5px}
+.logo span{display:block;font-family:var(--fb);color:var(--dim);font-size:.68rem;letter-spacing:.04em;font-weight:600;margin-top:4px}
 .loader{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;min-width:0}
 
 /* ============================================================
    INPUTS · BOTOES · TOAST
    ============================================================ */
 select,input[type=text],input[type=number]{
-  font-family:var(--fb);font-size:.85rem;background:#0b1018;color:var(--txt);max-width:100%;
-  border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px 12px;outline:none;
-  transition:border-color .14s,box-shadow .14s;
+  font-family:var(--fb);font-size:.85rem;background:var(--panel-soft);color:var(--txt);max-width:100%;
+  border:none;border-radius:var(--radius-sm);padding:10px 12px;outline:none;
+  transition:box-shadow .14s;
 }
-select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(72,216,255,.22)}
-.modeseg{display:inline-flex;background:var(--panel-soft);border:1px solid var(--line);border-radius:9px;padding:2px;gap:2px}
+select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
+.modeseg{display:inline-flex;background:var(--panel-soft);border-radius:11px;padding:2px;gap:2px}
 .modeseg button{border:0;background:transparent;color:var(--dim);font-family:var(--fb);font-weight:700;font-size:.78rem;padding:7px 14px;border-radius:7px;cursor:pointer}
 .modeseg button.on{background:var(--accent);color:var(--accent-ink)}
 /* abas mobile (Liga/Editor/Time): escondidas no desktop — no mobile trocam qual coluna do .dash aparece via [data-mtab] no .wrap */
@@ -96,14 +97,14 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 .chk{display:flex;align-items:center;gap:7px;font-size:.88rem;font-weight:700;cursor:pointer}
 .chk input{accent-color:var(--accent);width:16px;height:16px}
 .btn{
-  border:1px solid #35435a;background:#0d141f;color:var(--neutral);cursor:pointer;font-family:var(--ff);
-  font-weight:700;font-size:.76rem;letter-spacing:.1em;text-transform:uppercase;padding:9px 16px;border-radius:var(--radius-sm);
+  border:none;background:var(--panel-soft);color:var(--neutral);cursor:pointer;font-family:var(--ff);
+  font-weight:700;font-size:.76rem;letter-spacing:.04em;padding:9px 16px;border-radius:var(--radius-sm);
   transition:all .14s var(--ease);
 }
-.btn:hover{border-color:#5b6c86;color:#fff;transform:translateY(-1px)}
+.btn:hover{color:#fff;background:#1a2333;transform:translateY(-1px)}
 .btn:active{transform:translateY(1px) scale(.97)}
-.btn.accent{border-color:rgba(255,107,42,.62);color:#fff;background:#1f2a38}
-.btn.accent:hover{background:#28364a;border-color:rgba(255,107,42,.85)}
+.btn.accent{color:var(--accent-ink);background:var(--accent)}
+.btn.accent:hover{background:#ff7c40}
 .advbtn{margin-top:12px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--accent);color:var(--accent-ink);
   font-weight:700;font-size:.82rem;padding:10px 18px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:50;opacity:0;transition:opacity .2s}
@@ -117,7 +118,7 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
    copia do mesmo gradiente/borda/sombra)
    ============================================================ */
 .card,.panel{
-  background:var(--panel);border:1px solid var(--line-soft);border-top:3px solid var(--card-accent,var(--line-soft));border-radius:var(--radius);padding:16px;margin-bottom:18px;
+  background:var(--panel);border-radius:var(--radius-lg);padding:22px;margin-bottom:20px;box-shadow:var(--shadow);
 }
 
 .tstat,.prow,.coachrow,.metric,.tdetail-stat,.tdetail-coach,.lcard,
@@ -125,7 +126,7 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 .report-panel,.report-stat,.report-item,
 .audit-stat,.liveimpact,.liveimpact-stat,
 .result-compact .rc-row,.scoreboards table{
-  background:var(--panel-soft);border:1px solid rgba(157,178,208,.16);
+  background:var(--panel-soft);
 }
 
 /* ============================================================
@@ -142,19 +143,19 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 .prow .pn{font-weight:700;font-size:.92rem;display:flex;align-items:center;gap:6px}
 .prow .pr{font-size:.72rem;color:var(--dim);font-family:var(--ff)}
 .prow .ptag{font-size:.62rem;font-weight:800;padding:1px 5px;border-radius:5px;letter-spacing:.04em}
-.coachrow{display:flex;align-items:center;gap:10px;border-radius:var(--radius);border-style:dashed;padding:8px 11px;margin-bottom:14px}
+.coachrow{display:flex;align-items:center;gap:10px;border-radius:var(--radius);padding:8px 11px;margin-bottom:14px;background:var(--panel-soft)}
 .coachrow .cova{width:34px;height:34px;border-radius:var(--radius-sm);background:var(--panel);display:flex;align-items:center;justify-content:center;font-family:var(--ff);font-weight:700}
 .alerts{display:flex;flex-wrap:wrap;gap:6px}
-.al{font-size:.78rem;padding:4px 10px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--neutral)}
-.al.ok{color:var(--win);border-color:color-mix(in srgb,var(--win) 40%,var(--line))}
-.al.pen{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
-.alh{width:100%;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);font-weight:700;margin-bottom:2px}
+.al{font-size:.78rem;padding:5px 11px;border-radius:20px;background:var(--panel-soft);color:var(--neutral)}
+.al.ok{color:var(--win);background:color-mix(in srgb,var(--win) 15%,var(--panel-soft))}
+.al.pen{color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,var(--panel-soft))}
+.alh{width:100%;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:700;margin-bottom:2px}
 .stylechips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
-.stylechip{font-size:.78rem;background:#0f1723;border:1px solid rgba(157,178,208,.2);border-radius:20px;padding:4px 9px;color:#cbd6e4}
+.stylechip{font-size:.78rem;background:var(--panel-soft);border-radius:20px;padding:5px 11px;color:#cbd6e4}
 .risklist{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
-.risk{font-size:.78rem;border:1px solid rgba(157,178,208,.2);border-radius:20px;padding:4px 9px;background:#0f1723;color:#cbd6e4}
-.risk.bad{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
-.risk.good{color:var(--win);border-color:color-mix(in srgb,var(--win) 45%,transparent)}
+.risk{font-size:.78rem;border-radius:20px;padding:5px 11px;background:var(--panel-soft);color:#cbd6e4}
+.risk.bad{color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,var(--panel-soft))}
+.risk.good{color:var(--win);background:color-mix(in srgb,var(--win) 15%,var(--panel-soft))}
 
 /* ============================================================
    SIMULADOR DE MAPA / PARTIDA
@@ -181,8 +182,7 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
    MOTORES / EDITOR DE PESOS
    ============================================================ */
 .eng-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
-.eng-head .title{font-family:var(--ff);font-size:.88rem;letter-spacing:.18em;text-transform:uppercase;color:var(--card-accent,var(--accent));font-weight:700}
-.eng-head .title::before{content:"";display:inline-block;width:6px;height:6px;margin-right:8px;border-radius:1.5px;transform:rotate(45deg);background:currentColor;vertical-align:middle}
+.eng-head .title{font-family:var(--ff);font-size:.92rem;letter-spacing:.02em;color:var(--txt);font-weight:700}
 .toggle{margin-left:auto;display:flex;gap:8px}
 .simcard,.tuning-card{padding:14px!important}
 
@@ -203,16 +203,16 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 /* ============================================================
    SIDEBAR DA LIGA
    ============================================================ */
-.lcol{position:sticky;top:0;max-height:calc(100dvh - 96px);overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:10px;
-  border:1px solid var(--line-soft);border-radius:var(--radius);background:var(--panel);
+.lcol{position:sticky;top:0;max-height:calc(100dvh - 96px);overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:14px;
+  border-radius:var(--radius-lg);background:var(--panel);box-shadow:var(--shadow);
   scrollbar-width:thin;scrollbar-color:#55657d transparent}
 .lcol::-webkit-scrollbar{width:11px}
 .lcol::-webkit-scrollbar-thumb{background:#3c4c64;border:3px solid transparent;background-clip:content-box;border-radius:999px}
 .lcol::-webkit-scrollbar-thumb:hover{background:#60728d;background-clip:content-box}
-.lcard{border-radius:9px;padding:10px;cursor:pointer;transition:all .14s var(--ease);flex-shrink:0}
-.lcard:hover{border-color:rgba(157,178,208,.34);background:#101826;transform:translateY(-1px)}
+.lcard{border-radius:var(--radius);padding:12px;cursor:pointer;transition:all .14s var(--ease);flex-shrink:0}
+.lcard:hover{background:#101826;transform:translateY(-1px)}
 .lcard:active{background:#181f2b;transform:translateY(0) scale(.99)}
-.lcard.on{border-color:rgba(255,107,42,.7);background:#181f2b}
+.lcard.on{background:#181f2b}
 .lcard-head{display:flex;align-items:center;gap:8px;margin-bottom:7px}
 .lcard-badge{width:36px;height:25px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-family:var(--ff);font-weight:700;font-size:.66rem;color:var(--accent-ink);flex:none}
 .lcard-name{font-family:var(--ff);font-weight:700;font-size:.92rem;letter-spacing:.02em;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txt)}
@@ -220,18 +220,17 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 .lcard-camp{font-size:.72rem;color:var(--dim);margin:-4px 0 2px}
 /* jogadores do time expandido viram cards de verdade (grade), não mais uma linha de tabela */
 .lcard-players{display:grid;grid-template-columns:repeat(auto-fill,minmax(126px,1fr));gap:8px}
-.pcard{display:flex;flex-direction:column;gap:4px;min-height:92px;padding:9px;border-radius:var(--radius-sm);
-  background:var(--panel-soft);border:1px solid rgba(157,178,208,.16);border-left:3px solid transparent;
-  cursor:pointer;transition:all .14s var(--ease)}
-.pcard:hover{border-color:rgba(157,178,208,.34);transform:translateY(-2px)}
+.pcard{display:flex;flex-direction:column;gap:4px;min-height:92px;padding:10px;border-radius:var(--radius-sm);
+  background:var(--panel-soft);cursor:pointer;transition:all .14s var(--ease)}
+.pcard:hover{background:#161e2c;transform:translateY(-2px)}
 .pcard:active{transform:translateY(0) scale(.98)}
-.pcard.on{border-left-color:var(--accent);background:#181f2b}
+.pcard.on{background:color-mix(in srgb,var(--accent) 16%,var(--panel-soft));box-shadow:0 0 0 1.5px var(--accent)}
 .pcard-top{display:flex;align-items:center;justify-content:space-between;gap:6px}
 .pcard-ovr{width:30px;height:30px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:8px;
   font-family:var(--ff);font-weight:700;font-size:.86rem;color:#07090e;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.2)}
 .pcard-badges{display:flex;align-items:center;gap:4px}
 .pcard-star{color:var(--gold);font-size:.8rem}
-.pcard-igl{font-size:.54rem;font-weight:800;color:var(--gold);border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);padding:0 3px;border-radius:3px}
+.pcard-igl{font-size:.6rem;font-weight:800;color:var(--gold)}
 .pcard-nm{font-size:.86rem;font-weight:700;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pcard-role{font-size:.66rem;font-weight:800;letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pcard-style{font-size:.64rem;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -252,9 +251,9 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 .tdetail-coach .cn{font-weight:700;font-size:.92rem}
 .tdetail-coach .cc{font-size:.74rem;color:var(--dim)}
 .tdetail-alerts{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
-.tdetail-al{font-size:.74rem;padding:4px 8px;border-radius:10px;border:1px solid rgba(157,178,208,.2);background:#0f1723;color:#cbd6e4}
-.tdetail-al.pen{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
-.tdetail-al.ok{color:var(--win);border-color:color-mix(in srgb,var(--win) 45%,transparent)}
+.tdetail-al{font-size:.74rem;padding:5px 10px;border-radius:10px;background:var(--panel-soft);color:#cbd6e4}
+.tdetail-al.pen{color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,var(--panel-soft))}
+.tdetail-al.ok{color:var(--win);background:color-mix(in srgb,var(--win) 15%,var(--panel-soft))}
 
 /* ============================================================
    CALIBRADOR INTELIGENTE · IMPACTO · RELATORIO
@@ -276,9 +275,9 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 .audit-stat.warn .v{color:var(--warn)}
 .audit-stat.good .v{color:var(--win)}
 
-.impact-tag{display:inline-flex;align-items:center;height:18px;padding:0 6px;border-radius:5px;border:1px solid rgba(157,178,208,.2);font-family:var(--ff);font-size:.56rem;font-weight:900;letter-spacing:.06em;color:var(--dim);margin-left:6px}
-.impact-tag.target{color:var(--cyan);border-color:rgba(72,216,255,.34)}
-.impact-tag.col{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 34%,transparent)}
+.impact-tag{display:inline-flex;align-items:center;height:18px;padding:0 6px;border-radius:5px;font-family:var(--ff);font-size:.56rem;font-weight:900;letter-spacing:.03em;color:var(--dim);margin-left:6px;background:var(--panel)}
+.impact-tag.target{color:var(--cyan);background:color-mix(in srgb,var(--cyan) 15%,var(--panel))}
+.impact-tag.col{color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,var(--panel))}
 .impact-section{margin-top:8px}
 .impact-section h4{margin:0 0 5px;font-family:var(--ff);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
 .impact-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:5px 0;border-top:1px solid rgba(157,178,208,.12)}
@@ -299,16 +298,16 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 .calib-metric{border-radius:var(--radius-sm);padding:8px}
 .calib-metric .l{font-size:.58rem}
 .calib-metric .v{margin-top:3px;font-size:.86rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.calib-suggestion{border-radius:var(--radius);padding:12px}
-.calib-suggestion.good{border-color:color-mix(in srgb,var(--win) 45%,transparent)}
-.calib-suggestion.bad{border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
+.calib-suggestion{border-radius:var(--radius);padding:14px}
+.calib-suggestion.good{background:color-mix(in srgb,var(--win) 8%,var(--panel-soft))}
+.calib-suggestion.bad{background:color-mix(in srgb,var(--warn) 8%,var(--panel-soft))}
 .calib-title{font-family:var(--ff);font-size:.86rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;color:var(--txt)}
 .calib-goals{font-size:.8rem;color:var(--cyan);padding:6px 0;font-weight:800}
 .calib-diagnostics{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;font-family:var(--ff);font-size:.72rem;color:var(--dim)}
-.calib-diagnostics span{border:1px solid rgba(157,178,208,.16);border-radius:var(--radius-sm);padding:5px 7px;background:var(--panel-soft)}
+.calib-diagnostics span{border-radius:var(--radius-sm);padding:5px 7px;background:var(--panel-soft)}
 .calib-focus{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;margin:8px 0;align-items:center}
-.calib-focus-card{border-radius:var(--radius-sm);padding:9px;border-color:rgba(72,216,255,.24)}
-.calib-focus-card.after{border-color:color-mix(in srgb,var(--win) 40%,transparent)}
+.calib-focus-card{border-radius:var(--radius-sm);padding:10px;background:color-mix(in srgb,var(--cyan) 8%,var(--panel-soft))}
+.calib-focus-card.after{background:color-mix(in srgb,var(--win) 8%,var(--panel-soft))}
 .calib-focus-arrow{font-family:var(--ff);font-weight:700;font-size:1.2rem;color:var(--dim);text-align:center}
 .calib-focus-card .l{font-size:.6rem}
 .calib-focus-card .v{margin-top:4px;font-size:.9rem;font-weight:900}
@@ -336,7 +335,7 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 .report-item b{color:var(--txt)}
 .report-item span{display:block;color:var(--dim);margin-top:3px;line-height:1.35}
 .report-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.report-textarea{width:100%;min-height:150px;background:#070b11;color:var(--txt);border:1px solid var(--line);border-radius:var(--radius-sm);padding:8px;font-family:var(--ff);font-size:.68rem;margin-top:8px}
+.report-textarea{width:100%;min-height:150px;background:var(--panel-soft);color:var(--txt);border:none;border-radius:var(--radius-sm);padding:10px;font-family:var(--ff);font-size:.68rem;margin-top:8px}
 
 /* ============================================================
    EDITOR COMPACTO DE JOGADOR
@@ -346,16 +345,16 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 .editor-fields{padding:10px 12px 8px}
 .editor-card .result-compact{padding:0 12px 10px}
 .editor-meta{flex:1;min-width:0}
-.editor-name{width:100%;font-size:.95rem;font-family:var(--ff);font-weight:700;background:#0c121b;color:var(--txt);border:1px solid #334158;border-radius:var(--radius-sm)}
+.editor-name{width:100%;font-size:.95rem;font-family:var(--ff);font-weight:700;background:var(--panel-soft);color:var(--txt);border:none;border-radius:var(--radius-sm)}
 .editor-options{display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap}
 .editor-options select{font-size:.78rem;padding:5px 7px}
 .field-c{display:grid;grid-template-columns:30px minmax(0,1fr) 48px;align-items:center;gap:8px;margin-bottom:7px}
 .field-c label{font-size:.76rem;font-weight:700;color:var(--dim);text-align:right;letter-spacing:.06em;font-family:var(--ff)}
 .field-c input[type=range]{width:100%;accent-color:var(--accent);height:5px}
 .field-c .num{width:44px;text-align:center;font-family:var(--ff);font-variant-numeric:tabular-nums;
-  background:#090e17;border:1px solid var(--line);border-radius:var(--radius-sm);color:var(--txt);padding:4px;font-size:.82rem;
-  outline:none;transition:border-color .14s}
-.field-c .num:focus-visible{border-color:var(--cyan)}
+  background:var(--panel-soft);border:none;border-radius:var(--radius-sm);color:var(--txt);padding:6px 4px;font-size:.82rem;
+  outline:none;transition:box-shadow .14s}
+.field-c .num:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .ovr-badge{width:52px;height:52px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;
   font-family:var(--ff);font-weight:700;font-size:1.48rem;background:var(--tc);color:var(--accent-ink);flex:none;
   box-shadow:inset 0 0 0 2px rgba(255,255,255,.22)}
@@ -2033,7 +2032,7 @@ function loadPlayer(poolIdx,ti){
 
 /* === compact player editor HTML === */
 function atributosCardHTML_Compact(){
-  return `<div class="card mcol-grow editor-card" style="--card-accent:var(--accent)">
+  return `<div class="card mcol-grow editor-card">
     <div class="editor-head">
       <div class="ovr-badge" style="--tc:var(${state.fp>=70?"--t22":"--t15"})" id="editorOvrBadge">—</div>
       <div class="editor-meta">
@@ -2077,15 +2076,15 @@ function montarUI(){
   const app=document.getElementById("app"); app.className="";
   app.innerHTML=[
     `<div class="dash">
-      <div class="lcol card" id="league" style="--card-accent:var(--cyan)"></div>
+      <div class="lcol card" id="league"></div>
       <div class="mcol" id="mcol">
         ${atributosCardHTML_Compact()}
-        <div class="card simcard" style="--card-accent:var(--gold)">
+        <div class="card simcard">
           <div class="eng-head" style="margin-bottom:8px"><span class="title">Simulação · PÓLVORA</span><div class="toggle"><button class="btn" id="runBatchBtn">Lote</button><button class="btn accent" id="runMapBtn">Mapa</button></div></div>
           <div class="simgrid"><div class="simfield"><label>Time A</label><select id="simA"></select></div><div class="simfield"><label>Time B</label><select id="simB"></select></div><div class="simfield"><label>Mapa</label><select id="simMap"><option value="auto">Auto veto</option></select></div><div class="simfield"><label>Seed</label><input type="number" id="simSeed" value="${simSeed}" step="1"></div><div class="simfield"><label>Qtd</label><input type="number" id="simRuns" value="${simRuns}" min="1" max="500" step="10"></div></div>
           <div id="matchout"></div>
         </div>
-        <div class="card tuning-card" style="--card-accent:var(--win)">
+        <div class="card tuning-card">
           <div class="eng-head" style="margin-bottom:6px"><span class="title">Calibrador Inteligente</span><div class="toggle"><button class="btn" id="engToggle">${tuningOpen?"Ocultar":"Mostrar"}</button></div></div>
           <div class="calib-note">O calibrador nao altera stats. Ele testa pesos, mostra a sugestao e so aplica se voce confirmar.</div>
           <div id="calibbox" ${tuningOpen?"":"hidden"}></div>
