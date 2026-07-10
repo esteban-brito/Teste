@@ -53,7 +53,7 @@ body{
 footer{display:none}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
-  .lcard:hover,.tdrow:hover,.btn:hover{transform:none}
+  .lcard:hover,.lcard:active,.tdrow:hover,.tdrow:active,.btn:hover,.btn:active{transform:none}
 }
 
 /* generic label/value pair used across every stat box */
@@ -91,6 +91,8 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 .modeseg{display:inline-flex;background:var(--panel-soft);border:1px solid var(--line);border-radius:9px;padding:2px;gap:2px}
 .modeseg button{border:0;background:transparent;color:var(--dim);font-family:var(--fb);font-weight:700;font-size:.78rem;padding:7px 14px;border-radius:7px;cursor:pointer}
 .modeseg button.on{background:var(--accent);color:var(--accent-ink)}
+/* abas mobile (Liga/Editor/Time): escondidas no desktop — no mobile trocam qual coluna do .dash aparece via [data-mtab] no .wrap */
+.mtabs{display:none}
 .chk{display:flex;align-items:center;gap:7px;font-size:.88rem;font-weight:700;cursor:pointer}
 .chk input{accent-color:var(--accent);width:16px;height:16px}
 .btn{
@@ -209,6 +211,7 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 .lcol::-webkit-scrollbar-thumb:hover{background:#60728d;background-clip:content-box}
 .lcard{border-radius:9px;padding:10px;cursor:pointer;transition:all .14s var(--ease);flex-shrink:0}
 .lcard:hover{border-color:rgba(157,178,208,.34);background:#101826;transform:translateY(-1px)}
+.lcard:active{background:#181f2b;transform:translateY(0) scale(.99)}
 .lcard.on{border-color:rgba(255,107,42,.7);background:#181f2b}
 .lcard-head{display:flex;align-items:center;gap:8px;margin-bottom:7px}
 .lcard-badge{width:36px;height:25px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-family:var(--ff);font-weight:700;font-size:.66rem;color:var(--accent-ink);flex:none}
@@ -218,6 +221,7 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 .lcard-row{display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;gap:9px;min-height:48px;padding:7px 8px;
   border-radius:var(--radius-sm);color:#c5d0de;cursor:pointer;transition:background .1s}
 .lcard-row:hover{background:rgba(255,255,255,.055)}
+.lcard-row:active{background:rgba(255,107,42,.14)}
 .lcard-row.on{background:rgba(255,107,42,.18);color:#fff}
 .lcard-ovr-sm{width:26px;text-align:center;font-family:var(--ff);font-weight:700;font-size:.76rem;border-radius:4px;flex:none}
 .lcard-nm{font-size:.92rem;font-weight:800;color:var(--txt)}
@@ -261,6 +265,7 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 .tdrow{display:grid;grid-template-columns:38px 16px minmax(0,1fr) 96px 44px;align-items:center;gap:6px;min-height:50px;padding:8px 9px;
   border:1px solid transparent;border-radius:var(--radius-sm);cursor:pointer;transition:all .14s var(--ease)}
 .tdrow:hover{border-color:rgba(157,178,208,.34);background:#101826;transform:translateY(-1px)}
+.tdrow:active{background:#181f2b;transform:translateY(0) scale(.99)}
 .tdrow.on{border-color:rgba(255,107,42,.68);background:#181f2b}
 .tdrow-ovr{font-family:var(--ff);font-weight:700;font-size:.98rem;height:30px;text-align:center;border-radius:5px;display:flex;align-items:center;justify-content:center}
 .tdrow-star{color:var(--gold);font-size:.82rem}
@@ -390,10 +395,17 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
   .wrap{height:auto;overflow:visible}
   header{grid-template-columns:1fr;gap:10px}
   .loader{justify-content:stretch}.loader select{width:100%}
-  .dash{grid-template-columns:1fr 1fr;overflow:visible;min-height:auto}
-  .mcol{grid-column:1/-1;order:1;overflow:visible;max-height:none}
-  .tdetail{order:2;position:static;max-height:none}
-  .lcol{order:3;position:static;max-height:none}
+  /* abaixo de 980px a navegação vira abas: só a coluna da aba ativa aparece, cada uma ocupa a largura toda */
+  .mtabs{display:flex}
+  .mtabs button{flex:1;padding:12px 8px;font-size:.72rem}
+  .dash{grid-template-columns:1fr;overflow:visible;min-height:auto}
+  #league,#mcol,#teamdet{display:none}
+  .wrap[data-mtab="liga"] #league{display:flex}
+  .wrap[data-mtab="editor"] #mcol{display:flex}
+  .wrap[data-mtab="time"] #teamdet{display:flex}
+  .mcol{grid-column:1/-1;overflow:visible;max-height:none}
+  .tdetail{position:static;max-height:none}
+  .lcol{position:static;max-height:none}
   .simgrid{grid-template-columns:1fr 1fr}
   .metricgrid,.scoreboards{grid-template-columns:1fr}
 }
@@ -413,12 +425,17 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="wrap" data-mtab="liga">
   <header>
     <a class="backlink" href="elencos.html">‹ Elencos</a>
     <div class="logo">draft<b>9</b>-<b>0</b><span>Laboratório de motores</span></div>
     <div class="loader"><select id="loadSel"><option value="">— carregar jogador —</option></select></div>
   </header>
+  <div class="modeseg mtabs" id="mtabs" role="tablist" aria-label="Seções do laboratório">
+    <button type="button" class="on" data-tab="liga">Liga</button>
+    <button type="button" data-tab="editor">Editor</button>
+    <button type="button" data-tab="time">Time</button>
+  </div>
   <div id="app" class="loading">Carregando os motores do jogo…</div>
 </div>
 <footer>
@@ -1971,8 +1988,8 @@ function renderLeague(){
   });
   box.innerHTML=html;
   // click handlers
-  box.querySelectorAll(".lcard").forEach(c=>{c.onclick=e=>{if(!e.target.closest(".lcard-row")){teamIdx=+c.dataset.ti;refresh("all");}};});
-  box.querySelectorAll(".lcard-row").forEach(r=>{r.onclick=e=>{e.stopPropagation();loadPlayer(+r.dataset.pi,+r.dataset.ti);};});
+  box.querySelectorAll(".lcard").forEach(c=>{c.onclick=e=>{if(!e.target.closest(".lcard-row")){teamIdx=+c.dataset.ti;refresh("all");goMobileTab("time");}};});
+  box.querySelectorAll(".lcard-row").forEach(r=>{r.onclick=e=>{e.stopPropagation();loadPlayer(+r.dataset.pi,+r.dataset.ti);goMobileTab("editor");};});
 }
 const ROLE_COLORS={AWPer:"#b8a4ef",Rifler:"#e0c374",Entry:"#e58f7c",Lurker:"#96d19b",Support:"#77d2d2",IGL:"#9fb6d8"};
 
@@ -2009,7 +2026,7 @@ function renderTeamDetail(){
     <div class="tdetail-players">${rows}</div>
     ${renderImpactPanel()}`;
   // click handlers
-  box.querySelectorAll(".tdrow").forEach(r=>{r.onclick=()=>{const pi=r.dataset.pi;if(pi!=="undefined")loadPlayer(+pi,teamIdx);};});
+  box.querySelectorAll(".tdrow").forEach(r=>{r.onclick=()=>{const pi=r.dataset.pi;if(pi!=="undefined"){loadPlayer(+pi,teamIdx);goMobileTab("editor");}};});
 }
 
 /* === load player into editor === */
@@ -2118,6 +2135,17 @@ function montarUI(){
   if(tuningOpen)buildCalibrator();
   renderMain();
 }
+
+/* abas mobile: no desktop isto é inerte (o CSS que esconde/mostra só existe abaixo de 980px) —
+   por isso pode ser chamado sempre, sem checar a largura da tela. */
+function goMobileTab(tab){
+  document.querySelector(".wrap").dataset.mtab=tab;
+  document.querySelectorAll("#mtabs button").forEach(x=>x.classList.toggle("on",x.dataset.tab===tab));
+}
+document.getElementById("mtabs").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-tab]"); if(!b)return;
+  goMobileTab(b.dataset.tab);
+});
 
 (async()=>{
   try{
