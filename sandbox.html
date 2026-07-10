@@ -117,9 +117,8 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
    copia do mesmo gradiente/borda/sombra)
    ============================================================ */
 .card,.panel{
-  background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--radius);padding:16px;margin-bottom:18px;
+  background:var(--panel);border:1px solid var(--line-soft);border-top:3px solid var(--card-accent,var(--line-soft));border-radius:var(--radius);padding:16px;margin-bottom:18px;
 }
-.card h2,.panel h2{font-family:var(--ff);font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
 
 .tstat,.prow,.coachrow,.metric,.tdetail-stat,.tdetail-coach,.tdrow,.lcard,
 .calib-metric,.calib-suggestion,.calib-change,.calib-focus-card,
@@ -139,7 +138,7 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 .tstat.efe .v{color:var(--accent)} .tstat.qui .v{color:var(--cyan)}
 .plist{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
 .prow{display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:10px;border-radius:var(--radius);padding:8px 11px}
-.prow .po{font-family:var(--ff);font-weight:700;font-size:1.05rem;width:38px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);background:var(--tc);color:var(--accent-ink)}
+.prow .po{font-family:var(--ff);font-weight:700;font-size:1.05rem;width:38px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius);background:var(--tc);color:var(--accent-ink);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.22)}
 .prow .pn{font-weight:700;font-size:.92rem;display:flex;align-items:center;gap:6px}
 .prow .pr{font-size:.72rem;color:var(--dim);font-family:var(--ff)}
 .prow .ptag{font-size:.62rem;font-weight:800;padding:1px 5px;border-radius:5px;letter-spacing:.04em}
@@ -182,7 +181,8 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
    MOTORES / EDITOR DE PESOS
    ============================================================ */
 .eng-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
-.eng-head .title{font-family:var(--ff);font-size:.88rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.eng-head .title{font-family:var(--ff);font-size:.88rem;letter-spacing:.18em;text-transform:uppercase;color:var(--card-accent,var(--accent));font-weight:700}
+.eng-head .title::before{content:"";display:inline-block;width:6px;height:6px;margin-right:8px;border-radius:1.5px;transform:rotate(45deg);background:currentColor;vertical-align:middle}
 .toggle{margin-left:auto;display:flex;gap:8px}
 .simcard,.tuning-card{padding:14px!important}
 
@@ -217,13 +217,15 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 .lcard-badge{width:36px;height:25px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-family:var(--ff);font-weight:700;font-size:.66rem;color:var(--accent-ink);flex:none}
 .lcard-name{font-family:var(--ff);font-weight:700;font-size:.92rem;letter-spacing:.02em;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txt)}
 .lcard-ovr{font-family:var(--ff);font-weight:700;font-size:.9rem;color:var(--neutral)}
-.lcard-players{display:flex;flex-direction:column;gap:4px}
+.lcard-players{display:flex;flex-direction:column}
 .lcard-row{display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;gap:9px;min-height:48px;padding:7px 8px;
-  border-radius:var(--radius-sm);color:#c5d0de;cursor:pointer;transition:background .1s}
+  border-radius:var(--radius-sm);color:#c5d0de;cursor:pointer;transition:background .1s;
+  border-bottom:1px solid rgba(157,178,208,.08)}
+.lcard-players .lcard-row:last-child{border-bottom:none}
 .lcard-row:hover{background:rgba(255,255,255,.055)}
 .lcard-row:active{background:rgba(255,107,42,.14)}
 .lcard-row.on{background:rgba(255,107,42,.18);color:#fff}
-.lcard-ovr-sm{width:26px;text-align:center;font-family:var(--ff);font-weight:700;font-size:.76rem;border-radius:4px;flex:none}
+.lcard-ovr-sm{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;text-align:center;font-family:var(--ff);font-weight:700;font-size:.76rem;border-radius:8px;flex:none;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.2)}
 .lcard-nm{font-size:.92rem;font-weight:800;color:var(--txt)}
 .lcard-r{font-size:.64rem;color:var(--dim);font-family:var(--ff);font-weight:700}
 .lcard-info{display:flex;flex-direction:column;gap:3px;min-width:0}
@@ -267,7 +269,7 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 .tdrow:hover{border-color:rgba(157,178,208,.34);background:#101826;transform:translateY(-1px)}
 .tdrow:active{background:#181f2b;transform:translateY(0) scale(.99)}
 .tdrow.on{border-color:rgba(255,107,42,.68);background:#181f2b}
-.tdrow-ovr{font-family:var(--ff);font-weight:700;font-size:.98rem;height:30px;text-align:center;border-radius:5px;display:flex;align-items:center;justify-content:center}
+.tdrow-ovr{font-family:var(--ff);font-weight:700;font-size:.98rem;height:32px;text-align:center;border-radius:9px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.22)}
 .tdrow-star{color:var(--gold);font-size:.82rem}
 .tdrow-nm{font-weight:700;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txt)}
 .tdrow-fn{font-size:.72rem;font-weight:800;padding:2px 5px;border-radius:4px;white-space:nowrap;text-align:center;overflow:hidden;text-overflow:ellipsis}
@@ -372,7 +374,8 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
   outline:none;transition:border-color .14s}
 .field-c .num:focus-visible{border-color:var(--cyan)}
 .ovr-badge{width:52px;height:52px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;
-  font-family:var(--ff);font-weight:700;font-size:1.48rem;background:var(--tc);color:var(--accent-ink);flex:none}
+  font-family:var(--ff);font-weight:700;font-size:1.48rem;background:var(--tc);color:var(--accent-ink);flex:none;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.22)}
 .result-compact{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:6px;margin-top:2px}
 .result-compact .rc-row{display:flex;flex-direction:column;gap:2px;font-size:.78rem;padding:8px;border-radius:var(--radius-sm);min-width:0}
 .result-compact .rc-label{color:var(--dim)}
@@ -446,6 +449,7 @@ select:focus-visible,input:focus-visible{border-color:var(--cyan);box-shadow:0 0
 <script>
 const ROLES=["AWPer","Rifler","Entry","Lurker","Support"];
 const STATS=[["fp","FP"],["en","EN"],["tr","TR"],["op","OP"],["cl","CL"],["sn","SN"],["ut","UT"]];
+const STAT_FULL={fp:"Firepower",en:"Entrada",tr:"Trade",op:"Abertura",cl:"Clutch",sn:"AWP",ut:"Utilitário"};
 const COLOC=["Campeao","Final","Top4","Top8","Grupos"];
 const tierVar=o=>o>=22?"--t22":o>=21?"--t21":o>=18?"--t18":o>=15?"--t15":"--t14";
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -1963,7 +1967,7 @@ function renderMain(){refresh("all");}
 function renderLeague(){
   const box=document.getElementById("league");if(!box)return;
   const teams=E.TEAMS.map((src,i)=>({src,f:evaluateTeamCached(src,i)}));
-  let html="";
+  let html='<div class="eng-head" style="margin-bottom:10px"><span class="title">Liga</span></div>';
   teams.forEach(({src,f},i)=>{
     const avg=f.bruta/5;
     const isOn=i===teamIdx;
@@ -2058,7 +2062,7 @@ function loadPlayer(poolIdx,ti){
 
 /* === compact player editor HTML === */
 function atributosCardHTML_Compact(){
-  return `<div class="card mcol-grow editor-card">
+  return `<div class="card mcol-grow editor-card" style="--card-accent:var(--accent)">
     <div class="editor-head">
       <div class="ovr-badge" style="--tc:var(${state.fp>=70?"--t22":"--t15"})" id="editorOvrBadge">—</div>
       <div class="editor-meta">
@@ -2070,7 +2074,7 @@ function atributosCardHTML_Compact(){
       </div>
     </div>
     <div class="editor-fields">
-      ${STATS.map(([k,l])=>`<div class="field-c"><label>${l}</label><input type="range" id="r_${k}" min="0" max="100" value="${state[k]}"><input type="number" id="n_${k}" class="num" min="0" max="100" value="${state[k]}"></div>`).join("")}
+      ${STATS.map(([k,l])=>`<div class="field-c"><label title="${STAT_FULL[k]||l}">${l}</label><input type="range" id="r_${k}" min="0" max="100" value="${state[k]}"><input type="number" id="n_${k}" class="num" min="0" max="100" value="${state[k]}"></div>`).join("")}
       <div class="field-c"><label>RT</label><input type="range" id="r_rating" min="0.50" max="2.00" step="0.01" value="${state.rating}"><input type="number" id="n_rating" class="num" min="0.50" max="2.00" step="0.01" value="${state.rating}"></div>
     </div>
     <div id="editorResult" class="result-compact mcol-result"></div>
@@ -2099,22 +2103,22 @@ function montarUI(){
   const app=document.getElementById("app"); app.className="";
   app.innerHTML=[
     `<div class="dash">
-      <div class="lcol card" id="league"></div>
+      <div class="lcol card" id="league" style="--card-accent:var(--cyan)"></div>
       <div class="mcol" id="mcol">
         ${atributosCardHTML_Compact()}
-        <div class="card simcard">
+        <div class="card simcard" style="--card-accent:var(--gold)">
           <div class="eng-head" style="margin-bottom:8px"><span class="title">Simulação · PÓLVORA</span><div class="toggle"><button class="btn" id="runBatchBtn">Lote</button><button class="btn accent" id="runMapBtn">Mapa</button></div></div>
           <div class="simgrid"><div class="simfield"><label>Time A</label><select id="simA"></select></div><div class="simfield"><label>Time B</label><select id="simB"></select></div><div class="simfield"><label>Mapa</label><select id="simMap"><option value="auto">Auto veto</option></select></div><div class="simfield"><label>Seed</label><input type="number" id="simSeed" value="${simSeed}" step="1"></div><div class="simfield"><label>Qtd</label><input type="number" id="simRuns" value="${simRuns}" min="1" max="500" step="10"></div></div>
           <div id="matchout"></div>
         </div>
-        <div class="card tuning-card">
+        <div class="card tuning-card" style="--card-accent:var(--win)">
           <div class="eng-head" style="margin-bottom:6px"><span class="title">Calibrador Inteligente</span><div class="toggle"><button class="btn" id="engToggle">${tuningOpen?"Ocultar":"Mostrar"}</button></div></div>
           <div class="calib-note">O calibrador nao altera stats. Ele testa pesos, mostra a sugestao e so aplica se voce confirmar.</div>
           <div id="calibbox" ${tuningOpen?"":"hidden"}></div>
           <div id="reportbox">${renderReportPanel()}</div>
         </div>
       </div>
-      <div class="tdetail card" id="teamdet"></div>
+      <div class="tdetail card" id="teamdet" style="--card-accent:var(--cyan)"></div>
     </div>`
   ].join("");
   // wire editor
