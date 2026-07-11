@@ -224,37 +224,69 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .toggle{margin-left:auto;display:flex;gap:8px}
 
 /* ============================================================
-   DASHBOARD — shell de 3 colunas
+   SHELL — navegação quieta + canvas de foco único (estilo Apple)
    ============================================================ */
-.dash{display:grid;grid-template-columns:minmax(360px,460px) minmax(420px,1fr);gap:14px;align-items:stretch;flex:1;min-height:0;overflow:hidden}
-.dash>.card,.dash>div>.card{margin-bottom:0}
-.mcol{display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0;max-height:calc(100dvh - 96px);overflow-y:auto;overflow-x:hidden;padding:0 4px 18px 0;
+.shell{display:grid;grid-template-columns:minmax(240px,300px) minmax(0,1fr);gap:16px;flex:1;min-height:0;overflow:hidden}
+.canvas{display:flex;flex-direction:column;min-width:0;min-height:0;gap:14px}
+/* jogador fixo no topo (âncora ao vivo) */
+.pctx{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:var(--radius-lg);background:var(--panel);box-shadow:var(--shadow);flex:none}
+.pctx-ovr{width:52px;height:52px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:var(--radius);font-family:var(--ff);font-weight:800;font-size:1.5rem;color:#07090e;box-shadow:inset 0 0 0 2px rgba(255,255,255,.22)}
+.pctx-id{min-width:0}
+.pctx-nm{font-family:var(--ff);font-weight:800;font-size:1.25rem;color:var(--txt);display:flex;align-items:center;gap:8px;flex-wrap:wrap;line-height:1.1}
+.pctx-igl{font-family:var(--ff);font-size:.6rem;font-weight:800;color:var(--gold);letter-spacing:.06em;border:1px solid color-mix(in srgb,var(--gold) 50%,transparent);border-radius:5px;padding:1px 5px}
+.pctx-team{font-size:.78rem;font-weight:600;color:var(--dim)}
+.pctx-sub{display:flex;align-items:center;gap:8px;margin-top:5px;font-size:.92rem}
+.pctx-role{font-weight:800;color:var(--accent)}
+.pctx-style{color:var(--neutral);font-weight:600}
+.pctx-dot{color:var(--line)}
+/* segmented control: troca a ferramenta ativa (uma por vez) */
+.modebar{display:inline-flex;align-self:flex-start;background:var(--panel-soft);border-radius:var(--radius);padding:4px;gap:2px;flex:none;flex-wrap:wrap}
+.modebar button{border:none;background:transparent;color:var(--dim);cursor:pointer;font-family:var(--ff);font-weight:700;font-size:.82rem;letter-spacing:.01em;padding:8px 16px;border-radius:var(--radius-sm);transition:all .16s var(--ease)}
+.modebar button:hover{color:var(--txt)}
+.modebar button.on{background:var(--accent);color:var(--accent-ink)}
+/* corpo do canvas: só a ferramenta ativa, com scroll próprio */
+.canvas-body{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding-right:4px;animation:tabIn .2s var(--ease);
   scrollbar-width:thin;scrollbar-color:#55657d transparent}
-.mcol::-webkit-scrollbar{width:11px}
-.mcol::-webkit-scrollbar-thumb{background:#3c4c64;border:3px solid transparent;background-clip:content-box;border-radius:999px}
-.mcol::-webkit-scrollbar-thumb:hover{background:#60728d;background-clip:content-box}
-.mcol>.card{margin:0;flex-shrink:0}
+.canvas-body::-webkit-scrollbar{width:11px}
+.canvas-body::-webkit-scrollbar-thumb{background:#3c4c64;border:3px solid transparent;background-clip:content-box;border-radius:999px}
+.canvas-body>.card{margin-bottom:0}
 
 /* ============================================================
-   SIDEBAR DA LIGA
+   BARRA DE NAVEGAÇÃO (LIGA) — só nav, sem stats amontoados
    ============================================================ */
-.lcol{position:sticky;top:0;max-height:calc(100dvh - 96px);overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:14px;
+.navrail{display:flex;flex-direction:column;gap:2px;padding:12px;min-height:0;overflow-y:auto;overflow-x:hidden;
   border-radius:var(--radius-lg);background:var(--panel);box-shadow:var(--shadow);
   scrollbar-width:thin;scrollbar-color:#55657d transparent}
-.lcol::-webkit-scrollbar{width:11px}
-.lcol::-webkit-scrollbar-thumb{background:#3c4c64;border:3px solid transparent;background-clip:content-box;border-radius:999px}
-.lcol::-webkit-scrollbar-thumb:hover{background:#60728d;background-clip:content-box}
-.lcard{border-radius:var(--radius);padding:12px;cursor:pointer;transition:all .14s var(--ease);flex-shrink:0}
-.lcard:hover{background:#101826;transform:translateY(-1px)}
-.lcard:active{background:#181f2b;transform:translateY(0) scale(.99)}
-.lcard.on{background:#181f2b}
-.lcard-head{display:flex;align-items:center;gap:8px;margin-bottom:7px}
-.lcard-badge{width:36px;height:25px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-family:var(--ff);font-weight:700;font-size:.66rem;color:var(--accent-ink);flex:none}
-.lcard-name{font-family:var(--ff);font-weight:700;font-size:.92rem;letter-spacing:.02em;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txt)}
-.lcard-ovr{font-family:var(--ff);font-weight:700;font-size:.9rem;color:var(--neutral)}
-.lcard-camp{font-size:.72rem;color:var(--dim);margin:-4px 0 2px}
-/* jogadores do time expandido viram cards de verdade (grade), não mais uma linha de tabela */
-.lcard-players{display:grid;grid-template-columns:repeat(auto-fill,minmax(126px,1fr));gap:8px}
+.navrail::-webkit-scrollbar{width:11px}
+.navrail::-webkit-scrollbar-thumb{background:#3c4c64;border:3px solid transparent;background-clip:content-box;border-radius:999px}
+.navrail-title{font-family:var(--ff);font-weight:700;font-size:.9rem;color:var(--txt);padding:6px 8px 10px}
+.nav-team{display:flex;flex-direction:column}
+.nav-team-head{display:flex;align-items:center;gap:9px;width:100%;border:none;background:transparent;cursor:pointer;padding:9px 8px;border-radius:var(--radius-sm);transition:background .14s var(--ease)}
+.nav-team-head:hover{background:var(--panel-soft)}
+.nav-team.on>.nav-team-head{background:var(--panel-soft)}
+.nav-badge{width:34px;height:23px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-family:var(--ff);font-weight:700;font-size:.62rem;color:var(--accent-ink);flex:none}
+.nav-badge.lg{width:46px;height:32px;font-size:.8rem}
+.nav-team-name{flex:1;min-width:0;text-align:left;font-family:var(--ff);font-weight:700;font-size:.88rem;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav-team-ovr{font-family:var(--ff);font-weight:700;font-size:.82rem;color:var(--neutral)}
+.nav-players{display:flex;flex-direction:column;gap:1px;margin:2px 0 6px;padding-left:6px}
+.nav-player{display:flex;align-items:center;gap:9px;width:100%;border:none;background:transparent;cursor:pointer;padding:7px 8px;border-radius:var(--radius-sm);transition:background .12s var(--ease)}
+.nav-player:hover{background:var(--panel-soft)}
+.nav-player.on{background:color-mix(in srgb,var(--accent) 15%,transparent);box-shadow:inset 2px 0 0 var(--accent)}
+.nav-player-ovr{width:26px;height:22px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:6px;font-family:var(--ff);font-weight:700;font-size:.72rem;color:#07090e}
+.nav-player-nm{flex:1;min-width:0;text-align:left;font-size:.82rem;font-weight:700;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:5px}
+.nav-igl{font-size:.54rem;font-weight:800;color:var(--gold)}
+.nav-player-role{font-size:.66rem;font-weight:800;white-space:nowrap}
+
+/* ============================================================
+   MODO TIME — cabeçalho do time + roster
+   ============================================================ */
+.team-mode-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.team-mode-id{min-width:0;flex:1}
+.team-mode-name{font-family:var(--ff);font-weight:800;font-size:1.15rem;color:var(--txt)}
+.team-mode-camp{font-size:.76rem;color:var(--dim);margin-top:2px}
+.team-mode-rating{font-family:var(--ff);font-weight:800;font-size:1.1rem;color:var(--neutral)}
+.team-roster{margin-bottom:14px}
+.lcard-players{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
 .pcard{display:flex;flex-direction:column;gap:4px;min-height:76px;padding:10px;border-radius:var(--radius-sm);
   background:var(--panel-soft);cursor:pointer;transition:all .14s var(--ease)}
 .pcard:hover{background:#161e2c;transform:translateY(-2px)}
@@ -407,30 +439,32 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 @keyframes valueBump{0%{transform:scale(1)}45%{transform:scale(1.14)}100%{transform:scale(1)}}
 .bump{animation:valueBump .32s var(--ease)}
 .result-compact{margin-top:2px}
+.editor-diag{justify-content:flex-start;margin-top:12px;padding-top:12px;border-top:1px solid var(--panel-soft)}
 
 /* ============================================================
    RESPONSIVO
    ============================================================ */
 @media(max-width:1320px){
-  .dash{grid-template-columns:minmax(340px,420px) minmax(380px,1fr)}
+  .shell{grid-template-columns:minmax(230px,280px) minmax(0,1fr)}
 }
 @media(max-width:1180px){
-  .dash{grid-template-columns:minmax(320px,380px) minmax(340px,1fr)}
+  .shell{grid-template-columns:minmax(210px,250px) minmax(0,1fr)}
 }
 @media(max-width:980px){
   body{height:auto;overflow:visible}
   .wrap{height:auto;overflow:visible}
   header{grid-template-columns:1fr;gap:10px}
   .loader{justify-content:stretch}.loader select{width:100%}
-  /* abaixo de 980px a navegação vira abas: só a coluna da aba ativa aparece, cada uma ocupa a largura toda */
+  /* abaixo de 980px a navegação vira abas: nav (Liga) OU canvas (Ferramentas), largura toda */
   .mtabs{display:flex}
   .mtabs button{flex:1;padding:12px 8px;font-size:.72rem}
-  .dash{grid-template-columns:1fr;overflow:visible;min-height:auto}
-  #league,#mcol{display:none}
-  .wrap[data-mtab="liga"] #league,.wrap[data-mtab="editor"] #mcol{display:flex;animation:tabIn .22s var(--ease)}
+  .shell{grid-template-columns:1fr;overflow:visible;min-height:auto}
+  #league,.canvas{display:none}
+  .wrap[data-mtab="liga"] #league,.wrap[data-mtab="canvas"] .canvas{display:flex;animation:tabIn .22s var(--ease)}
   @keyframes tabIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-  .mcol{grid-column:1/-1;overflow:visible;max-height:none;margin-top:12px}
-  .lcol{position:static;max-height:none;margin-top:12px}
+  .navrail{max-height:none;overflow:visible;margin-top:12px}
+  .canvas{margin-top:12px}
+  .canvas-body{overflow:visible;max-height:none}
   .simgrid{grid-template-columns:1fr 1fr}
   .scoreboards{grid-template-columns:1fr}
 }
@@ -440,11 +474,13 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 }
 @media(max-width:640px){
   .wrap{padding:10px}
-  .dash{grid-template-columns:1fr}
+  .shell{grid-template-columns:1fr}
   .lcard-players{grid-template-columns:repeat(auto-fill,minmax(108px,1fr))}
   .field-c{grid-template-columns:28px minmax(0,1fr) 46px}
   .calib-target,.calib-focus{grid-template-columns:1fr}
   .calib-focus-arrow{transform:rotate(90deg)}
+  .pctx-ovr{width:44px;height:44px;font-size:1.25rem}
+  .pctx-nm{font-size:1.1rem}
 }
 </style>
 </head>
@@ -457,7 +493,7 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
   </header>
   <div class="modeseg mtabs" id="mtabs" role="tablist" aria-label="Seções do laboratório">
     <button type="button" class="on" data-tab="liga">Liga</button>
-    <button type="button" data-tab="editor">Editor</button>
+    <button type="button" data-tab="canvas">Ferramentas</button>
   </div>
   <div id="app" class="loading">Carregando os motores do jogo…</div>
 </div>
@@ -477,6 +513,8 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 
 let E=null, DEF=null, POOLRAW=[], loadedIdx=null, poolBySlot=new Map();
 let teamIdx=0, simA=0, simB=1, simSeed=2026, simRuns=80, simMap="auto", lastMap=null, lastBatch=null, tuningOpen=true, simOpen=false, editorOpen=false, baseline=null;
+// estrutura nova: uma ferramenta por vez no canvas central (segmented control), jogador fixado no topo
+let centerMode="calibrar"; // calibrar | time | simular | editar | relatorio
 let calibTargetRole="", calibTargetRole2="", calibTargetStyle="", calibMode="ia", calibLast=null, calibRunning=false;
 let nmOVR, STYLE_LABEL, PLAYSTYLE_IDS;
 let calibSession=null, reportFallbackText="";
@@ -1848,11 +1886,10 @@ function buildCalibrator(){
   const targetText=`${esc(tR2?`${tR1} / ${tR2}`:tR1)} · ${esc(tStyle)}`;
   const hasTarget=!!(calibTargetRole||calibTargetRole2||calibTargetStyle);
   const changed=hasTarget&&targetText!==curText;
-  const livePreview=`<div class="calib-live">
-    <div class="calib-live-cell"><span class="calib-live-l">Jogador atual</span><span class="calib-live-v">${curText}</span></div>
-    ${hasTarget?`<div class="calib-live-arrow${changed?" on":""}">→</div>
-    <div class="calib-live-cell target${changed?" on":""}"><span class="calib-live-l">Alvo</span><span class="calib-live-v">${targetText}</span></div>`:""}
-  </div>`;
+  // o jogador atual já está fixado no topo (pctx); aqui mostramos só o ALVO ao vivo quando escolhido
+  const livePreview=hasTarget?`<div class="calib-live">
+    <div class="calib-live-cell target${changed?" on":""}"><span class="calib-live-l">Alvo desta calibração</span><span class="calib-live-v">${targetText}</span></div>
+  </div>`:"";
   box.innerHTML=`<div class="calib-panel">
     ${livePreview}
     <div class="calib-target">
@@ -1996,10 +2033,11 @@ function wireAtributos(onChange){
 /* ===== UI unificada: roles + playstyle + OVR + time ===== */
 function refresh(target){
   invalidateTeamEval(loadedIdx!=null?POOLRAW[loadedIdx].ti:teamIdx);
-  if(!target||target==="all"){renderPlayerPanel();renderTeamPanel();renderMatchPanel();renderReportBox();if(tuningOpen)buildCalibrator();return;}
-  if(target==="player"){renderPlayerPanel();return;}
-  if(target==="team"){renderTeamPanel();return;}
-  if(target==="match"){renderMatchPanel();return;}
+  renderPlayerContext(); // âncora ao vivo, sempre
+  // "live": tecla de slider — só atualiza âncora + resultado do editor, sem reconstruir controles (não perde foco)
+  if(target==="live"){if(centerMode==="editar")renderEditorResult();return;}
+  renderNavRail();
+  renderCanvasMode();
 }
 function mainPlayer(){
   if(loadedIdx==null)return evaluatePlayer(jogadorAtual());
@@ -2020,62 +2058,103 @@ function bumpTrack(key,val){
   _bumpPrev[key]=val;
   return changed?" bump":"";
 }
-function renderLeague(){
+// barra de navegação quieta (só nav): lista de times; o time selecionado abre os jogadores em linhas compactas
+function renderNavRail(){
   const box=document.getElementById("league");if(!box)return;
   const teams=E.TEAMS.map((src,i)=>({src,f:evaluateTeamCached(src,i)}));
-  let html='<div class="eng-head" style="margin-bottom:10px"><span class="title">Liga</span></div>';
+  let html='<div class="navrail-title">Liga</div>';
   teams.forEach(({src,f},i)=>{
     const avg=f.bruta/5;
     const isOn=i===teamIdx;
-    const players=f.players.map((ev,pi)=>{
-      const pIdx=poolBySlot.get(`${i}:${pi}`);
-      return{...ev,pIdx,tIdx:i,pIdx2:pi};
-    }).sort((a,b)=>b.ovr-a.ovr);
-    let detail="";
-    if(isOn){
-      const bV=f.bruta,qV=Math.round(f.quimica*100),eV=f.efetiva;
-      const bB=bumpTrack(`team:${i}:b`,bV),qB=bumpTrack(`team:${i}:q`,qV),eB=bumpTrack(`team:${i}:e`,eV);
-      const coach=f.coach?`<div class="tdetail-coach"><div class="cv">${Math.min(20,f.coach.ovr)}</div><div><div class="cn">${esc(f.coach.nick)}</div><div class="cc">${esc(f.coach.carac||"—")}</div></div></div>`:`<div class="tdetail-coach"><div class="cn" style="color:var(--dim);font-style:italic">sem treinador</div></div>`;
-      // alertas: penalidade primeiro (o que pede atencao); so os 3 primeiros ficam sempre visiveis, o resto e "+N mais"
-      const alertList=f.alertas.map(a=>({txt:a,pen:a.includes("-")||a.includes("−")})).sort((a,b)=>(b.pen?1:0)-(a.pen?1:0));
-      const chip=a=>`<span class="tdetail-al ${a.pen?"pen":"ok"}">${esc(a.txt)}</span>`;
-      const shownAlerts=alertList.slice(0,3),restAlerts=alertList.slice(3);
-      const alertsHtml=shownAlerts.map(chip).join("")+(restAlerts.length?`<span class="tdetail-al more" data-more-target="alertsMore${i}">+${restAlerts.length} mais</span>`:"");
-      const restHtml=restAlerts.length?`<div class="tdetail-alerts-more" id="alertsMore${i}" hidden>${restAlerts.map(chip).join("")}</div>`:"";
-      detail=`${src.camp?`<div class="lcard-camp">${esc(src.camp)}</div>`:""}
-        <div class="stat-hero accent"><div class="v mono${eB}">${eV}</div><div class="l">Força efetiva</div></div>
-        <div class="stat-mini" style="margin-bottom:10px">
-          <span><b class="mono${bB}">${bV}</b>Bruta</span>
-          <span><b class="mono${qB}">${qV}%</b>Química</span>
-        </div>
-        ${coach}
-        <div class="tdetail-alerts">${alertsHtml}</div>
-        ${restHtml}`;
-    }
-    html+=`<div class="lcard${isOn?" on":""}" data-ti="${i}">
-      <div class="lcard-head"><div class="lcard-badge" style="background:${src.cor}">${esc(src.nome).slice(0,3).toUpperCase()}</div><div class="lcard-name">${esc(src.nome)}</div><div class="lcard-ovr mono">${avg.toFixed(1)}</div></div>
-      ${detail}
-      <div class="lcard-players">${players.map(p=>{
+    const players=f.players.map((ev,pi)=>({...ev,pIdx:poolBySlot.get(`${i}:${pi}`),tIdx:i})).sort((a,b)=>b.ovr-a.ovr);
+    html+=`<div class="nav-team${isOn?" on":""}">
+      <button type="button" class="nav-team-head" data-ti="${i}">
+        <span class="nav-badge" style="background:${src.cor}">${esc(src.nome).slice(0,3).toUpperCase()}</span>
+        <span class="nav-team-name">${esc(src.nome)}</span>
+        <span class="nav-team-ovr mono">${avg.toFixed(1)}</span>
+      </button>
+      ${isOn?`<div class="nav-players">${players.map(p=>{
         const rc=ROLE_COLORS[p.combatRole]||"var(--dim)";
-        const rolePair=rolePairText(p);
-        const star=p.star||isStarPlayer(p,avg);
-        return`<div class="pcard${p.pIdx===loadedIdx?" on":""}" data-pi="${p.pIdx}" data-ti="${i}" title="Rating ${p.rating} — detalhes no editor">
-          <div class="pcard-top"><span class="pcard-ovr" style="background:var(${tierVar(p.ovr)})">${p.ovr}</span>
-            <span class="pcard-badges">${star?'<span class="pcard-star">★</span>':""}${p.isIGL?'<span class="pcard-igl">IGL</span>':""}</span>
-          </div>
-          <div class="pcard-nm">${esc(p.nome)}</div>
-          <div class="pcard-role" style="color:${rc}">${esc(rolePair)}</div>
-          <div class="pcard-style">${esc(STYLE_LABEL(p.playstyle))}</div>
-        </div>`;
-      }).join("")}</div>
-      ${isOn?renderImpactPanel():""}
+        return`<button type="button" class="nav-player${p.pIdx===loadedIdx?" on":""}" data-pi="${p.pIdx}" data-ti="${i}">
+          <span class="nav-player-ovr mono" style="background:var(${tierVar(p.ovr)})">${p.ovr}</span>
+          <span class="nav-player-nm">${esc(p.nome)}${p.isIGL?'<span class="nav-igl">IGL</span>':""}</span>
+          <span class="nav-player-role" style="color:${rc}">${esc(rolePairText(p))}</span>
+        </button>`;
+      }).join("")}</div>`:""}
     </div>`;
   });
   box.innerHTML=html;
-  // click handlers
-  box.querySelectorAll(".lcard-head").forEach(h=>{h.onclick=()=>{teamIdx=+h.closest(".lcard").dataset.ti;refresh("all");};});
-  box.querySelectorAll(".pcard").forEach(r=>{r.onclick=()=>{loadPlayer(+r.dataset.pi,+r.dataset.ti);goMobileTab("editor");};});
-  box.querySelectorAll(".tdetail-al.more").forEach(m=>{m.onclick=()=>{const el=document.getElementById(m.dataset.moreTarget);if(el)el.hidden=!el.hidden;};});
+  box.querySelectorAll(".nav-team-head").forEach(h=>{h.onclick=()=>{teamIdx=+h.dataset.ti;refresh("all");};});
+  box.querySelectorAll(".nav-player").forEach(r=>{r.onclick=()=>{loadPlayer(+r.dataset.pi,+r.dataset.ti);goMobileTab("canvas");};});
+}
+// âncora AO VIVO: o jogador atual fixo no topo do canvas (OVR/função/playstyle atualizam na hora)
+function renderPlayerContext(){
+  const box=document.getElementById("pcontext");if(!box)return;
+  const ev=mainPlayer();
+  const nm=state.nome||ev.nome||"Jogador";
+  const teamNm=loadedIdx!=null?(POOLRAW[loadedIdx]?.time||""):"";
+  const ovrBump=bumpTrack("ctx:ovr",ev.ovr);
+  const roleBump=bumpTrack("ctx:role",rolePairText(ev));
+  const styleBump=bumpTrack("ctx:style",STYLE_LABEL(ev.playstyle));
+  box.innerHTML=`<span class="pctx-ovr mono${ovrBump}" style="background:var(${tierVar(ev.ovr)})">${ev.ovr}</span>
+    <div class="pctx-id">
+      <div class="pctx-nm">${esc(nm)}${ev.isIGL?'<span class="pctx-igl">IGL</span>':""}${teamNm?`<span class="pctx-team">${esc(teamNm)}</span>`:""}</div>
+      <div class="pctx-sub"><span class="pctx-role${roleBump}">${esc(rolePairText(ev))}</span><span class="pctx-dot">·</span><span class="pctx-style${styleBump}">${esc(STYLE_LABEL(ev.playstyle))}</span></div>
+    </div>`;
+}
+// modo "Time": o detalhe rico do time selecionado (era o acordeão embutido na antiga coluna da liga)
+function renderTeamMode(){
+  const i=teamIdx, src=E.TEAMS[i], f=evaluateTeamCached(src,i);
+  const avg=f.bruta/5;
+  const players=f.players.map((ev,pi)=>({...ev,pIdx:poolBySlot.get(`${i}:${pi}`),tIdx:i})).sort((a,b)=>b.ovr-a.ovr);
+  const bV=f.bruta,qV=Math.round(f.quimica*100),eV=f.efetiva;
+  const bB=bumpTrack(`team:${i}:b`,bV),qB=bumpTrack(`team:${i}:q`,qV),eB=bumpTrack(`team:${i}:e`,eV);
+  const coach=f.coach?`<div class="tdetail-coach"><div class="cv">${Math.min(20,f.coach.ovr)}</div><div><div class="cn">${esc(f.coach.nick)}</div><div class="cc">${esc(f.coach.carac||"—")}</div></div></div>`:`<div class="tdetail-coach"><div class="cn" style="color:var(--dim);font-style:italic">sem treinador</div></div>`;
+  const alertList=f.alertas.map(a=>({txt:a,pen:a.includes("-")||a.includes("−")})).sort((a,b)=>(b.pen?1:0)-(a.pen?1:0));
+  const chip=a=>`<span class="tdetail-al ${a.pen?"pen":"ok"}">${esc(a.txt)}</span>`;
+  const shownAlerts=alertList.slice(0,3),restAlerts=alertList.slice(3);
+  const alertsHtml=shownAlerts.map(chip).join("")+(restAlerts.length?`<span class="tdetail-al more" data-more-target="alertsMoreTM">+${restAlerts.length} mais</span>`:"");
+  const restHtml=restAlerts.length?`<div class="tdetail-alerts-more" id="alertsMoreTM" hidden>${restAlerts.map(chip).join("")}</div>`:"";
+  return `<div class="team-mode-head"><span class="nav-badge lg" style="background:${src.cor}">${esc(src.nome).slice(0,3).toUpperCase()}</span><div class="team-mode-id"><div class="team-mode-name">${esc(src.nome)}</div>${src.camp?`<div class="team-mode-camp">${esc(src.camp)}</div>`:""}</div><div class="team-mode-rating mono">${avg.toFixed(1)}</div></div>
+    <div class="stat-hero accent"><div class="v mono${eB}">${eV}</div><div class="l">Força efetiva</div></div>
+    <div class="stat-mini" style="margin-bottom:12px"><span><b class="mono${bB}">${bV}</b>Bruta</span><span><b class="mono${qB}">${qV}%</b>Química</span></div>
+    ${coach}
+    <div class="tdetail-alerts">${alertsHtml}</div>${restHtml}
+    <div class="lcard-players team-roster">${players.map(p=>{
+      const rc=ROLE_COLORS[p.combatRole]||"var(--dim)";
+      const star=p.star||isStarPlayer(p,avg);
+      return`<div class="pcard${p.pIdx===loadedIdx?" on":""}" data-pi="${p.pIdx}" data-ti="${i}" title="Rating ${p.rating}">
+        <div class="pcard-top"><span class="pcard-ovr" style="background:var(${tierVar(p.ovr)})">${p.ovr}</span>
+          <span class="pcard-badges">${star?'<span class="pcard-star">★</span>':""}${p.isIGL?'<span class="pcard-igl">IGL</span>':""}</span></div>
+        <div class="pcard-nm">${esc(p.nome)}</div>
+        <div class="pcard-role" style="color:${rc}">${esc(rolePairText(p))}</div>
+        <div class="pcard-style">${esc(STYLE_LABEL(p.playstyle))}</div>
+      </div>`;
+    }).join("")}</div>
+    ${renderImpactPanel()}`;
+}
+function wireTeamMode(){
+  const card=document.getElementById("teamModeCard");if(!card)return;
+  card.querySelectorAll(".pcard").forEach(r=>{r.onclick=()=>{loadPlayer(+r.dataset.pi,+r.dataset.ti);};});
+  card.querySelectorAll(".tdetail-al.more").forEach(m=>{m.onclick=()=>{const el=document.getElementById(m.dataset.moreTarget);if(el)el.hidden=!el.hidden;};});
+}
+// corpo do editor de atributos (cabeçalho + sliders + resultado) usado no modo "Editar"
+function editorBodyHTML(){
+  return `<div class="editor-head">
+      <div class="ovr-badge" style="--tc:var(${state.fp>=70?"--t22":"--t15"})" id="editorOvrBadge">—</div>
+      <div class="editor-meta">
+        <input type="text" id="f_nome" class="editor-name" placeholder="Nome" value="${esc(state.nome)}">
+        <div class="editor-options">
+          <label class="chk"><input type="checkbox" id="c_igl" ${state.isIGL?"checked":""}> IGL</label>
+          <select id="s_coloc">${COLOC.map(c=>`<option value="${c}" ${c===state.colocacao?"selected":""}>${c}</option>`).join("")}</select>
+        </div>
+      </div>
+    </div>
+    <div class="editor-fields">
+      ${STATS.map(([k,l])=>`<div class="field-c"><label title="${STAT_FULL[k]||l}">${l}</label><input type="range" id="r_${k}" min="0" max="100" value="${state[k]}"><input type="number" id="n_${k}" class="num" min="0" max="100" value="${state[k]}"></div>`).join("")}
+      <div class="field-c"><label>RT</label><input type="range" id="r_rating" min="0.50" max="2.00" step="0.01" value="${state.rating}"><input type="number" id="n_rating" class="num" min="0.50" max="2.00" step="0.01" value="${state.rating}"></div>
+    </div>
+    <div id="editorResult" class="result-compact"></div>`;
 }
 const ROLE_COLORS={AWPer:"#b8a4ef",Rifler:"#e0c374",Entry:"#e58f7c",Lurker:"#96d19b",Support:"#77d2d2",IGL:"#9fb6d8"};
 
@@ -2106,36 +2185,6 @@ function loadPlayer(poolIdx,ti){
   refresh("all");
 }
 
-/* === compact player editor HTML ===
-   terciario: fechado por padrao, so a linha-resumo; "Ajustar atributos" expande.
-   os controles continuam TODOS no DOM (so ficam hidden) -> wireAtributos/syncEditorControls seguem funcionando. */
-function atributosCardHTML_Compact(){
-  return `<div class="card editor-card panel-tertiary">
-    <div class="eng-head"><span class="title">Atributos brutos</span><div class="toggle"><button class="btn" id="editorToggle">${editorOpen?"Ocultar":"Ajustar atributos"}</button></div></div>
-    <div class="editor-summary" id="editorSummary" ${editorOpen?"hidden":""}>
-      <span class="ovr-badge" style="--tc:var(--t14)" id="editorSumOvr">—</span>
-      <span class="editor-sum-name" id="editorSumName">${esc(state.nome)}</span>
-      <span class="editor-sum-role" id="editorSumRole">—</span>
-    </div>
-    <div id="editorBody" ${editorOpen?"":"hidden"}>
-      <div class="editor-head">
-        <div class="ovr-badge" style="--tc:var(${state.fp>=70?"--t22":"--t15"})" id="editorOvrBadge">—</div>
-        <div class="editor-meta">
-          <input type="text" id="f_nome" class="editor-name" placeholder="Nome" value="${esc(state.nome)}">
-          <div class="editor-options">
-            <label class="chk"><input type="checkbox" id="c_igl" ${state.isIGL?"checked":""}> IGL</label>
-            <select id="s_coloc">${COLOC.map(c=>`<option value="${c}" ${c===state.colocacao?"selected":""}>${c}</option>`).join("")}</select>
-          </div>
-        </div>
-      </div>
-      <div class="editor-fields">
-        ${STATS.map(([k,l])=>`<div class="field-c"><label title="${STAT_FULL[k]||l}">${l}</label><input type="range" id="r_${k}" min="0" max="100" value="${state[k]}"><input type="number" id="n_${k}" class="num" min="0" max="100" value="${state[k]}"></div>`).join("")}
-        <div class="field-c"><label>RT</label><input type="range" id="r_rating" min="0.50" max="2.00" step="0.01" value="${state.rating}"><input type="number" id="n_rating" class="num" min="0.50" max="2.00" step="0.01" value="${state.rating}"></div>
-      </div>
-      <div id="editorResult" class="result-compact"></div>
-    </div>
-  </div>`;
-}
 
 /* === render compact player result === */
 function renderEditorResult(){
@@ -2157,51 +2206,75 @@ function renderEditorResult(){
   const st=ev.style;
   // Playstyle + Funcao sao o RESULTADO de mexer nos atributos -> viram os numeros-heroi.
   // wR/statScore/clareza sao diagnostico interno -> viram linha secundaria.
-  const playLabel=STYLE_LABEL(ev.playstyle),funcLabel=rolePairText(ev);
-  const playBump=bumpTrack("editor:playstyle",playLabel),funcBump=bumpTrack("editor:funcao",funcLabel);
-  box.innerHTML=`
-    <div class="stat-hero-row">
-      <div class="stat-hero text"><div class="v${playBump}">${esc(playLabel)}</div><div class="l">Playstyle</div></div>
-      <div class="stat-hero text"><div class="v${funcBump}">${esc(funcLabel)}</div><div class="l">Função</div></div>
-    </div>
-    <div class="stat-mini">
+  // função/playstyle/OVR já aparecem AO VIVO na âncora do topo (pctx) — aqui fica só o diagnóstico interno
+  box.innerHTML=`<div class="stat-mini editor-diag">
       <span><b class="mono">${st.wR.toFixed(2)}</b>wR</span>
       <span><b class="mono">${Math.round(st.statScore)}</b>statScore</span>
       <span><b class="mono">${Math.round(st.matchScore*100)}%</b>clareza</span>
     </div>`;
 }
 
-function renderTeamPanel(){renderLeague();}
+function renderTeamPanel(){renderNavRail();}
 
+const CENTER_MODES=[["calibrar","Calibrar"],["time","Time"],["simular","Simular"],["editar","Editar"],["relatorio","Relatório"]];
 function montarUI(){
   const app=document.getElementById("app"); app.className="";
-  // ordem da coluna central segue a hierarquia de uso real:
-  // 1. Calibrador (primario, aberto) 2. Simulador (secundario) 3. Atributos brutos (terciario, colapsado)
-  app.innerHTML=[
-    `<div class="dash">
-      <div class="lcol card panel-secondary" id="league"></div>
-      <div class="mcol" id="mcol">
-        <div class="card tuning-card panel-primary">
-          <div class="eng-head" style="margin-bottom:6px"><span class="title">Calibrador Inteligente</span><div class="toggle"><button class="btn" id="engToggle">${tuningOpen?"Ocultar":"Mostrar"}</button></div></div>
-          <div class="calib-note" ${tuningOpen?"":"hidden"}>Testa pesos e mostra a prévia — nada é aplicado sem você confirmar.</div>
-          <div id="calibbox" ${tuningOpen?"":"hidden"}></div>
-        </div>
-        <div id="reportbox" class="card reportcard panel-secondary${reportIsEmpty()?" is-empty":""}">${renderReportPanel()}</div>
-        <div class="card simcard panel-secondary">
-          <div class="eng-head" style="margin-bottom:8px"><span class="title">Simulação · PÓLVORA</span><div class="toggle"><button class="btn" id="simToggle">${simOpen?"Ocultar":"Mostrar"}</button></div></div>
-          <div id="simbox" ${simOpen?"":"hidden"}>
-            <div class="simgrid"><div class="simfield"><label>Time A</label><select id="simA"></select></div><div class="simfield"><label>Time B</label><select id="simB"></select></div><div class="simfield"><label>Mapa</label><select id="simMap"><option value="auto">Auto veto</option></select></div><div class="simfield"><label>Seed</label><input type="number" id="simSeed" value="${simSeed}" step="1"></div><div class="simfield"><label>Qtd</label><input type="number" id="simRuns" value="${simRuns}" min="1" max="500" step="10"></div></div>
-            <div class="row2"><button class="btn" id="runBatchBtn">Rodar lote</button><button class="btn accent" id="runMapBtn">Rodar mapa</button></div>
-            <div id="matchout"></div>
-          </div>
-        </div>
-        ${atributosCardHTML_Compact()}
+  // casca nova estilo Apple: navegação quieta à esquerda + canvas com foco único.
+  // o jogador atual fica FIXO no topo (âncora ao vivo); o segmented control troca a ferramenta ativa.
+  app.innerHTML=`<div class="shell">
+    <aside class="navrail" id="league"></aside>
+    <main class="canvas">
+      <div class="pctx" id="pcontext"></div>
+      <div class="modebar" id="modebar">
+        ${CENTER_MODES.map(([id,label])=>`<button type="button" data-mode="${id}" class="${id===centerMode?"on":""}">${label}</button>`).join("")}
       </div>
-    </div>`
-  ].join("");
-  // wire editor
-  wireAtributos(()=>refresh("all"));
-  // wire simulation
+      <div class="canvas-body" id="canvasBody"></div>
+    </main>
+  </div>`;
+  document.getElementById("modebar").addEventListener("click",e=>{
+    const b=e.target.closest("button[data-mode]"); if(!b)return;
+    setCenterMode(b.dataset.mode);
+  });
+  renderNavRail();
+  renderPlayerContext();
+  renderCanvasMode();
+}
+function setCenterMode(mode){
+  centerMode=mode;
+  document.querySelectorAll("#modebar button").forEach(b=>b.classList.toggle("on",b.dataset.mode===mode));
+  renderCanvasMode();
+  goMobileTab("canvas");
+}
+// renderiza SÓ a ferramenta ativa no canvas central (uma por vez), e liga seus controles
+function renderCanvasMode(){
+  const body=document.getElementById("canvasBody"); if(!body)return;
+  body.className="canvas-body mode-"+centerMode;
+  if(centerMode==="calibrar"){
+    body.innerHTML=`<div class="card tuning-card panel-primary">
+      <div class="calib-note">Testa pesos e mostra a prévia — nada é aplicado sem você confirmar.</div>
+      <div id="calibbox"></div>
+    </div>`;
+    buildCalibrator();
+  }else if(centerMode==="time"){
+    body.innerHTML=`<div class="card panel-secondary" id="teamModeCard">${renderTeamMode()}</div>`;
+    wireTeamMode();
+  }else if(centerMode==="simular"){
+    body.innerHTML=`<div class="card panel-secondary">
+      <div class="simgrid"><div class="simfield"><label>Time A</label><select id="simA"></select></div><div class="simfield"><label>Time B</label><select id="simB"></select></div><div class="simfield"><label>Mapa</label><select id="simMap"><option value="auto">Auto veto</option></select></div><div class="simfield"><label>Seed</label><input type="number" id="simSeed" value="${simSeed}" step="1"></div><div class="simfield"><label>Qtd</label><input type="number" id="simRuns" value="${simRuns}" min="1" max="500" step="10"></div></div>
+      <div class="row2"><button class="btn" id="runBatchBtn">Rodar lote</button><button class="btn accent" id="runMapBtn">Rodar mapa</button></div>
+      <div id="matchout"></div>
+    </div>`;
+    wireSimulador();
+  }else if(centerMode==="editar"){
+    body.innerHTML=`<div class="card panel-secondary">${editorBodyHTML()}</div>`;
+    wireAtributos(()=>refresh("live"));
+    renderEditorResult();
+  }else if(centerMode==="relatorio"){
+    body.innerHTML=`<div id="reportbox" class="card panel-secondary${reportIsEmpty()?" reportcard is-empty":""}">${renderReportPanel()}</div>`;
+    wireReportPanel();
+  }
+}
+function wireSimulador(){
   const fillTeamSel=(id,val)=>{const s=document.getElementById(id);E.TEAMS.forEach((t,i)=>{const o=document.createElement("option");o.value=i;o.textContent=t.nome+" · "+t.camp;if(i===val)o.selected=true;s.appendChild(o);});return s;};
   const sa=fillTeamSel("simA",simA), sb=fillTeamSel("simB",simB), sm=document.getElementById("simMap");
   E.MAPAS_POOL.forEach(m=>{const o=document.createElement("option");o.value=m;o.textContent=m+(E.MAPA_LADO[m]?` (${E.MAPA_LADO[m]>0?"CT":"TR"} ${Math.abs(E.MAPA_LADO[m])})`:"");if(m===simMap)o.selected=true;sm.appendChild(o);});
@@ -2212,12 +2285,7 @@ function montarUI(){
   document.getElementById("simRuns").oninput=e=>{simRuns=Math.max(1,Math.min(500,+e.target.value||80));lastBatch=null;renderMatchPanel();};
   document.getElementById("runBatchBtn").onclick=runBatchLab;
   document.getElementById("runMapBtn").onclick=runMapLab;
-  document.getElementById("simToggle").onclick=()=>{simOpen=!simOpen;montarUI();};
-  document.getElementById("engToggle").onclick=()=>{tuningOpen=!tuningOpen;montarUI();};
-  document.getElementById("editorToggle").onclick=()=>{editorOpen=!editorOpen;montarUI();};
-  wireReportPanel();
-  if(tuningOpen)buildCalibrator();
-  renderMain();
+  renderMatchPanel();
 }
 
 /* abas mobile: no desktop isto é inerte (o CSS que esconde/mostra só existe abaixo de 980px) —
