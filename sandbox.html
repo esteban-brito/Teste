@@ -410,18 +410,10 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .report-textarea{width:100%;min-height:150px;background:var(--panel-soft);color:var(--txt);border:none;border-radius:var(--radius-sm);padding:10px;font-family:var(--ff);font-size:.68rem;margin-top:8px}
 
 /* ============================================================
-   EDITOR COMPACTO DE JOGADOR
+   EDITOR DE JOGADOR (modo "Editar")
    ============================================================ */
-/* colapsado por padrao: so a linha-resumo (nome · OVR · funcao); "Ajustar atributos" expande tudo */
-.editor-summary{display:flex;align-items:center;gap:10px;margin-top:10px;min-width:0}
-.editor-summary[hidden]{display:none}
-.editor-summary .ovr-badge{width:34px;height:34px;font-size:.95rem;border-radius:var(--radius-sm)}
-.editor-sum-name{font-family:var(--ff);font-weight:700;font-size:.88rem;color:var(--neutral);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.editor-sum-role{font-size:.74rem;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#editorBody{margin-top:10px}
 .editor-head{padding:10px 12px;border-radius:var(--radius-sm);display:flex;align-items:center;gap:12px;background:var(--panel);margin-bottom:10px}
 .editor-fields{padding:0}
-.editor-card .result-compact{padding:8px 0 0}
 .editor-meta{flex:1;min-width:0}
 .editor-name{width:100%;font-size:.95rem;font-family:var(--ff);font-weight:700;background:var(--panel-soft);color:var(--txt);border:none;border-radius:var(--radius-sm)}
 .editor-options{display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap}
@@ -512,7 +504,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 const clone=o=>JSON.parse(JSON.stringify(o));
 
 let E=null, DEF=null, POOLRAW=[], loadedIdx=null, poolBySlot=new Map();
-let teamIdx=0, simA=0, simB=1, simSeed=2026, simRuns=80, simMap="auto", lastMap=null, lastBatch=null, tuningOpen=true, simOpen=false, editorOpen=false, baseline=null;
+let teamIdx=0, simA=0, simB=1, simSeed=2026, simRuns=80, simMap="auto", lastMap=null, lastBatch=null, baseline=null;
 // estrutura nova: uma ferramenta por vez no canvas central (segmented control), jogador fixado no topo
 let centerMode="calibrar"; // calibrar | time | simular | editar | relatorio
 let calibTargetRole="", calibTargetRole2="", calibTargetStyle="", calibMode="ia", calibLast=null, calibRunning=false;
@@ -835,10 +827,6 @@ function renderReportPanel(){
     <div class="report-actions"><button class="btn accent" id="copyReportBtn">Copiar relatório</button><button class="btn" id="downloadReportBtn">Baixar .txt</button><button class="btn" id="resetWorkbenchBtn">Resetar tudo</button></div>
     ${reportFallbackText?`<textarea class="report-textarea" readonly>${esc(reportFallbackText)}</textarea>`:""}
   </div>`;
-}
-function renderReportBox(){
-  const box=document.getElementById("reportbox");
-  if(box){box.classList.toggle("is-empty",reportIsEmpty());box.innerHTML=renderReportPanel();wireReportPanel();}
 }
 function wireReportPanel(){
   const copy=document.getElementById("copyReportBtn");
@@ -2045,8 +2033,6 @@ function mainPlayer(){
   const team=E.TEAMS[p.ti];
   return team?teamPlayers(team,p.ti)[p.pi]||evaluatePlayer(playerAt(loadedIdx)):evaluatePlayer(playerAt(loadedIdx));
 }
-function renderPlayerPanel(){renderEditorResult();}
-function renderMain(){refresh("all");}
 /* === explorador: liga + detalhe do time fundidos num só card ===
    antes eram 2 colunas mostrando o mesmo time de formas parecidas (duplicação = poluição visual).
    agora só o time selecionado expande (acordeão); os outros ficam só com o cabeçalho. */
@@ -2196,16 +2182,7 @@ function renderEditorResult(){
     if(badge.textContent!==novoOvr&&badge.textContent!=="—"){badge.classList.remove("bump");void badge.offsetWidth;badge.classList.add("bump");}
     badge.textContent=novoOvr;badge.style.setProperty("--tc",`var(${tierVar(ev.ovr)})`);
   }
-  // linha-resumo do editor colapsado (nome · OVR · funcao atual)
-  const sumOvr=document.getElementById("editorSumOvr");
-  if(sumOvr){sumOvr.textContent=ev.ovr;sumOvr.style.setProperty("--tc",`var(${tierVar(ev.ovr)})`);}
-  const sumName=document.getElementById("editorSumName");
-  if(sumName)sumName.textContent=state.nome||ev.nome||"Jogador";
-  const sumRole=document.getElementById("editorSumRole");
-  if(sumRole)sumRole.textContent=rolePairText(ev);
   const st=ev.style;
-  // Playstyle + Funcao sao o RESULTADO de mexer nos atributos -> viram os numeros-heroi.
-  // wR/statScore/clareza sao diagnostico interno -> viram linha secundaria.
   // função/playstyle/OVR já aparecem AO VIVO na âncora do topo (pctx) — aqui fica só o diagnóstico interno
   box.innerHTML=`<div class="stat-mini editor-diag">
       <span><b class="mono">${st.wR.toFixed(2)}</b>wR</span>
@@ -2213,8 +2190,6 @@ function renderEditorResult(){
       <span><b class="mono">${Math.round(st.matchScore*100)}%</b>clareza</span>
     </div>`;
 }
-
-function renderTeamPanel(){renderNavRail();}
 
 const CENTER_MODES=[["calibrar","Calibrar"],["time","Time"],["simular","Simular"],["editar","Editar"],["relatorio","Relatório"]];
 function montarUI(){
