@@ -344,7 +344,7 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .impact-delta.down{color:var(--loss)}
 .impact-empty{font-size:.72rem;color:var(--dim);line-height:1.45}
 
-.calib-panel{display:grid;gap:10px}
+.calib-panel{display:grid;gap:14px}
 .calib-target{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr)) auto;gap:8px;align-items:end}
 .calib-field label{display:block;margin:0 0 4px;font-family:var(--ff);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
 .calib-field select{width:100%}
@@ -2251,7 +2251,7 @@ function renderCanvasMode(){
   body.className="canvas-body mode-"+centerMode;
   if(centerMode==="calibrar"){
     body.innerHTML=`<div class="card tuning-card panel-primary">
-      <div class="calib-note">Testa pesos e mostra a prévia — nada é aplicado sem você confirmar.</div>
+      <div class="calib-note" style="margin-bottom:14px">Testa pesos e mostra a prévia — nada é aplicado sem você confirmar.</div>
       <div id="calibbox"></div>
     </div>`;
     buildCalibrator();
@@ -2309,6 +2309,13 @@ document.getElementById("mtabs").addEventListener("click",e=>{
       Object.assign(state,{nome:p.nome,fp:p.fp,en:p.en,tr:p.tr,op:p.op,cl:p.cl,sn:p.sn,ut:p.ut,rating:p.rating,isIGL:p.isIGL,colocacao:p.colocacao});
       loadedIdx=+sel.value; teamIdx=p.ti; montarUI();};
     montarUI();
+    // abre já num jogador real (o de maior OVR do 1º time) — evita a âncora "fantasma" com jogador em branco no load
+    try{
+      const f0=evaluateTeamCached(E.TEAMS[0],0);
+      let best=0,bo=-1; f0.players.forEach((ev,pi)=>{if(ev.ovr>bo){bo=ev.ovr;best=pi;}});
+      const pidx=poolBySlot.get(`0:${best}`);
+      if(pidx!=null)loadPlayer(pidx,0);
+    }catch(e){/* mantém o estado padrão se algo falhar */}
   }catch(err){
     document.getElementById("app").innerHTML='<div class="loading err">Não deu pra carregar os motores: '+esc(err.message)+'<br><br>Abra pela URL do site (github.io), não pelo arquivo local.</div>';
   }
