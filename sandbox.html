@@ -92,7 +92,7 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .modeseg{display:inline-flex;background:var(--panel-soft);border-radius:11px;padding:2px;gap:2px}
 .modeseg button{border:0;background:transparent;color:var(--dim);font-family:var(--fb);font-weight:700;font-size:.78rem;padding:7px 14px;border-radius:7px;cursor:pointer}
 .modeseg button.on{background:var(--accent);color:var(--accent-ink)}
-/* abas mobile (Liga/Editor/Time): escondidas no desktop — no mobile trocam qual coluna do .dash aparece via [data-mtab] no .wrap */
+/* abas mobile (Liga/Editor/Time): escondidas no desktop — no mobile trocam qual coluna do .wrap aparece via [data-mtab] */
 .mtabs{display:none}
 .chk{display:flex;align-items:center;gap:7px;font-size:.88rem;font-weight:700;cursor:pointer}
 .chk input{accent-color:var(--accent);width:16px;height:16px}
@@ -105,7 +105,6 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .btn:active{transform:translateY(1px) scale(.97)}
 .btn.accent{color:var(--accent-ink);background:var(--accent)}
 .btn.accent:hover{background:#ff7c40}
-.advbtn{margin-top:12px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--accent);color:var(--accent-ink);
   font-weight:700;font-size:.82rem;padding:10px 18px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:50;opacity:0;transition:opacity .2s}
 .toast.show{opacity:1}
@@ -121,7 +120,7 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
   background:var(--panel);border-radius:var(--radius-lg);padding:22px;margin-bottom:20px;box-shadow:var(--shadow);
 }
 
-.tstat,.prow,.coachrow,.tdetail-coach,.lcard,
+.tdetail-coach,.lcard,
 .calib-suggestion,.calib-change,.calib-focus-card,
 .report-item,
 .liveimpact,
@@ -139,13 +138,7 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .panel-primary{position:relative;padding:20px!important;background:var(--panel-strong)}
 .panel-primary::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;border-radius:var(--radius-lg) var(--radius-lg) 0 0;
   background:linear-gradient(90deg,var(--accent) 0%,color-mix(in srgb,var(--accent) 35%,transparent) 60%,transparent 100%)}
-.panel-primary>.eng-head .title{font-size:1.12rem;letter-spacing:.01em}
 .panel-secondary{padding:14px!important}
-.panel-secondary>.eng-head .title{font-size:.92rem}
-.panel-tertiary{padding:12px 14px!important;background:var(--panel-soft);box-shadow:none}
-.panel-tertiary>.eng-head{margin-bottom:0}
-.panel-tertiary>.eng-head .title{font-size:.82rem;color:var(--dim);letter-spacing:.01em;font-weight:700}
-.panel-tertiary .btn{font-size:.7rem;padding:7px 12px}
 
 /* ============================================================
    HIERARQUIA DE NUMEROS — um numero-heroi grande por grupo de
@@ -158,41 +151,19 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .stat-hero .l{font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);font-weight:700;margin-top:7px}
 .stat-hero.text .v{font-size:1.32rem;white-space:nowrap}
 .stat-hero.accent .v{color:var(--accent)}
-.stat-hero.cyan .v{color:var(--cyan)}
 .stat-hero.warn{background:color-mix(in srgb,var(--warn) 10%,var(--panel-soft))}
 .stat-hero.warn .v{color:var(--warn)}
 .stat-hero.good{background:color-mix(in srgb,var(--win) 10%,var(--panel-soft))}
 .stat-hero.good .v{color:var(--win)}
-.stat-hero-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
-.stat-hero-row .stat-hero{margin-bottom:0}
 .stat-mini{display:flex;flex-wrap:wrap;gap:5px 14px;justify-content:center;font-size:.76rem;color:var(--dim)}
 .stat-mini b{font-family:var(--ff);color:var(--neutral);font-weight:700;font-variant-numeric:tabular-nums;margin-right:4px}
 .stat-mini .warn-txt,.stat-mini .warn-txt b{color:var(--warn)}
 
-/* ============================================================
-   PAINEL DE TIME
-   ============================================================ */
-.teamsel{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
-.tstats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
-.tstat{border-radius:var(--radius);padding:12px;text-align:center}
-.tstat .v{font-size:1.7rem;line-height:1}
-.tstat.efe .v{color:var(--accent)} .tstat.qui .v{color:var(--cyan)}
-.plist{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
-.prow{display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:10px;border-radius:var(--radius);padding:8px 11px}
-.prow .po{font-family:var(--ff);font-weight:700;font-size:1.05rem;width:38px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius);background:var(--tc);color:var(--accent-ink);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.22)}
-.prow .pn{font-weight:700;font-size:.92rem;display:flex;align-items:center;gap:6px}
-.prow .pr{font-size:.72rem;color:var(--dim);font-family:var(--ff)}
-.prow .ptag{font-size:.62rem;font-weight:800;padding:1px 5px;border-radius:5px;letter-spacing:.04em}
-.coachrow{display:flex;align-items:center;gap:10px;border-radius:var(--radius);padding:8px 11px;margin-bottom:14px;background:var(--panel-soft)}
-.coachrow .cova{width:34px;height:34px;border-radius:var(--radius-sm);background:var(--panel);display:flex;align-items:center;justify-content:center;font-family:var(--ff);font-weight:700}
 .alerts{display:flex;flex-wrap:wrap;gap:6px}
 .al{font-size:.78rem;padding:5px 11px;border-radius:20px;background:var(--panel-soft);color:var(--neutral)}
 .al.ok{color:var(--win);background:color-mix(in srgb,var(--win) 15%,var(--panel-soft))}
 .al.pen{color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,var(--panel-soft))}
 .alh{width:100%;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:700;margin-bottom:2px}
-.stylechips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
-.stylechip{font-size:.78rem;background:var(--panel-soft);border-radius:20px;padding:5px 11px;color:#cbd6e4}
-.risklist{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
 .risk{font-size:.78rem;border-radius:20px;padding:5px 11px;background:var(--panel-soft);color:#cbd6e4}
 .risk.bad{color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,var(--panel-soft))}
 .risk.good{color:var(--win);background:color-mix(in srgb,var(--win) 15%,var(--panel-soft))}
@@ -219,8 +190,6 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 /* ============================================================
    MOTORES / EDITOR DE PESOS
    ============================================================ */
-.eng-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
-.eng-head .title{font-family:var(--ff);font-size:.92rem;letter-spacing:.02em;color:var(--txt);font-weight:700}
 .toggle{margin-left:auto;display:flex;gap:8px}
 
 /* ============================================================
@@ -348,8 +317,6 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .calib-target{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr)) auto;gap:8px;align-items:end}
 .calib-field label{display:block;margin:0 0 4px;font-family:var(--ff);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
 .calib-field select{width:100%}
-.calib-summary-line{font-size:.86rem;color:var(--dim);margin-bottom:12px}
-.calib-summary-line b{font-family:var(--ff);color:var(--txt);font-weight:700}
 .calib-suggestion{border-radius:var(--radius);padding:14px;animation:liveIn .24s var(--ease)}
 .calib-suggestion.good{background:color-mix(in srgb,var(--win) 8%,var(--panel-soft))}
 .calib-suggestion.bad{background:color-mix(in srgb,var(--warn) 8%,var(--panel-soft))}
@@ -387,8 +354,6 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .calib-live-l{display:block;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:700;margin-bottom:4px}
 .calib-live-v{display:block;font-family:var(--ff);font-weight:700;font-size:.92rem;color:var(--txt);overflow:hidden;text-overflow:ellipsis}
 .calib-live-cell.target.on .calib-live-v{color:var(--accent)}
-.calib-live-arrow{display:flex;align-items:center;font-family:var(--ff);font-weight:700;font-size:1.1rem;color:var(--line)}
-.calib-live-arrow.on{color:var(--accent)}
 @keyframes liveIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 
 /* estados vazios quietos: nada de herói "0" gigante ocupando a coluna */
@@ -2269,7 +2234,7 @@ function goMobileTab(tab){
   document.querySelector(".wrap").dataset.mtab=tab;
   document.querySelectorAll("#mtabs button").forEach(x=>x.classList.toggle("on",x.dataset.tab===tab));
 }
-document.getElementById("mtabs").addEventListener("click",e=>{
+document.getElementById("mtabs")?.addEventListener("click",e=>{
   const b=e.target.closest("button[data-tab]"); if(!b)return;
   goMobileTab(b.dataset.tab);
 });
@@ -2290,7 +2255,7 @@ document.getElementById("mtabs").addEventListener("click",e=>{
       let best=0,bo=-1; f0.players.forEach((ev,pi)=>{if(ev.ovr>bo){bo=ev.ovr;best=pi;}});
       const pidx=poolBySlot.get(`0:${best}`);
       if(pidx!=null)loadPlayer(pidx,0);
-    }catch(e){/* mantém o estado padrão se algo falhar */}
+    }catch{/* mantém o estado padrão se algo falhar */}
   }catch(err){
     document.getElementById("app").innerHTML='<div class="loading err">Não deu pra carregar os motores: '+esc(err.message)+'<br><br>Abra pela URL do site (github.io), não pelo arquivo local.</div>';
   }
