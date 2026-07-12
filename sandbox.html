@@ -1076,76 +1076,52 @@ function candidateLabel(changes){
     return`${change.role}.${change.attr.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
   }).join(" | ");
 }
-function generateRoleCandidates(target,current,raw,opts){
-  const{maxDelta=.22,attrLimit=4,includeContra=false,comboDepth=2,strategy}=opts||{};
+// Tuning por variante do gerador de candidatos de função. role1 (alvo primário) usa
+// deltas maiores e thresholds mais altos; role2 (secundário) é mais fino. A estrutura
+// da busca é uma só (roleCandidateCore) — só os números e 2 ramos mudam por variante.
+const ROLE_CAND_TUNE={
+  role1:{maxDelta:.22,contraT:.35,contraC:.28,thB:.09,redB:.65,cbBchg:.75,cbBcon:.25,thC:.09,cC:[.7,.5],c3:[.55,.45,.35],redD:.45,chgD:.75},
+  role2:{maxDelta:.16,contraT:.32,contraC:.22,thB:.06,redB:.40,cbBchg:.70,cbBcon:.20,thC:.06,cC:[.6,.4],c3:[.50,.38,.28],redD:.35,chgD:.65}
+};
+function roleCandidateCore(target,current,raw,opts,T,secondary){
+  const{maxDelta=T.maxDelta,attrLimit=4,includeContra=false,comboDepth=2,strategy}=opts||{};
   if(strategy?.useSensitivity){
     return generateLeverCandidates(target,current,raw,{maxDelta,attrLimit:Math.max(attrLimit,6),leverLimit:14,pairLimit:8,tripleLimit:comboDepth>=3?6:0,comboDepth,sensitize:true});
   }
   const attrs=candidateAttrsFor(target,raw,attrLimit);
-  const currentAttrs=current&&current!==target?candidateAttrsFor(current,raw,attrLimit):[];
+  const currentAttrs=secondary
+    ?(current==="IGL"?[]:candidateAttrsFor(current,raw,attrLimit))
+    :(current&&current!==target?candidateAttrsFor(current,raw,attrLimit):[]);
   const deltas=deltasFor(maxDelta);
   const out=[];
   deltas.forEach(delta=>{
     const d=+delta.toFixed(3);
     attrs.forEach(attr=>out.push([makeChange(target,attr,d)]));          // Type A
     if(includeContra){
-      attrs.forEach(attr=>out.push([makeContraChange(target,attr,-d*.35)]));
-      if(current&&current!==target)currentAttrs.forEach(attr=>out.push([makeContraChange(current,attr,d*.28)]));
+      attrs.forEach(attr=>out.push([makeContraChange(target,attr,-d*T.contraT)]));
+      if(current&&current!==target)currentAttrs.forEach(attr=>out.push([makeContraChange(current,attr,d*T.contraC)]));
     }
-    if(current&&current!==target&&d>=.09){                               // Type B (combined)
+    if(current&&current!==target&&d>=T.thB){                             // Type B (combined)
       attrs.slice(0,2).forEach(attr=>currentAttrs.slice(0,2).forEach(cur=>
-        out.push([makeChange(target,attr,d),makeReduce(current,cur,d*.65)])));
+        out.push([makeChange(target,attr,d),makeReduce(current,cur,d*T.redB)])));
       if(includeContra)attrs.slice(0,3).forEach(attr=>currentAttrs.slice(0,3).forEach(cur=>
-        out.push([makeChange(target,attr,d*.75),makeContraChange(current,cur,d*.25)])));
+        out.push([makeChange(target,attr,d*T.cbBchg),makeContraChange(current,cur,d*T.cbBcon)])));
     }
-    if(attrs.length>=2&&d>=.09)out.push([makeChange(target,attrs[0],d*.7),makeChange(target,attrs[1],d*.5)]); // Type C
-    if(comboDepth>=3&&attrs.length>=3&&d>=.12)out.push([makeChange(target,attrs[0],d*.55),makeChange(target,attrs[1],d*.45),makeChange(target,attrs[2],d*.35)]);
+    if(attrs.length>=2&&d>=T.thC)out.push([makeChange(target,attrs[0],d*T.cC[0]),makeChange(target,attrs[1],d*T.cC[1])]); // Type C
+    if(comboDepth>=3&&attrs.length>=3&&d>=.12)out.push([makeChange(target,attrs[0],d*T.c3[0]),makeChange(target,attrs[1],d*T.c3[1]),makeChange(target,attrs[2],d*T.c3[2])]);
     if(d>=.06){                                                          // Type D (reduce competitors)
       attrs.slice(0,2).forEach(attr=>{
-        const reducers=ROLES.filter(r=>r!==target&&roleWeight(r,attr)>0)
+        const reducers=ROLES.filter(r=>r!==target&&(!secondary||r!==current)&&roleWeight(r,attr)>0)
           .sort((a,b)=>roleWeight(b,attr)-roleWeight(a,attr)).slice(0,2)
-          .map(r=>makeReduce(r,attr,d*.45));
-        if(reducers.length)out.push([makeChange(target,attr,d*.75),...reducers]);
+          .map(r=>makeReduce(r,attr,d*T.redD));
+        if(reducers.length)out.push([makeChange(target,attr,d*T.chgD),...reducers]);
       });
     }
   });
   return dedupeCandidates(out);
 }
-function generateRole2Candidates(target2,current1,raw,opts){
-  const{maxDelta=.16,attrLimit=4,includeContra=false,comboDepth=2,strategy}=opts||{};
-  if(strategy?.useSensitivity){
-    return generateLeverCandidates(target2,current1,raw,{maxDelta,attrLimit:Math.max(attrLimit,6),leverLimit:14,pairLimit:8,tripleLimit:comboDepth>=3?6:0,comboDepth,sensitize:true});
-  }
-  const attrs=candidateAttrsFor(target2,raw,attrLimit);
-  const currentAttrs=current1==="IGL"?[]:candidateAttrsFor(current1,raw,attrLimit);
-  const deltas=deltasFor(maxDelta);
-  const out=[];
-  deltas.forEach(delta=>{
-    const d=+delta.toFixed(3);
-    attrs.forEach(attr=>out.push([makeChange(target2,attr,d)]));
-    if(includeContra){
-      attrs.forEach(attr=>out.push([makeContraChange(target2,attr,-d*.32)]));
-      if(current1&&current1!==target2)currentAttrs.forEach(attr=>out.push([makeContraChange(current1,attr,d*.22)]));
-    }
-    if(current1&&current1!==target2&&d>=.06){
-      attrs.slice(0,2).forEach(attr=>currentAttrs.slice(0,2).forEach(cur=>
-        out.push([makeChange(target2,attr,d),makeReduce(current1,cur,d*.4)])));
-      if(includeContra)attrs.slice(0,3).forEach(attr=>currentAttrs.slice(0,3).forEach(cur=>
-        out.push([makeChange(target2,attr,d*.7),makeContraChange(current1,cur,d*.2)])));
-    }
-    if(attrs.length>=2&&d>=.06)out.push([makeChange(target2,attrs[0],d*.6),makeChange(target2,attrs[1],d*.4)]);
-    if(comboDepth>=3&&attrs.length>=3&&d>=.12)out.push([makeChange(target2,attrs[0],d*.5),makeChange(target2,attrs[1],d*.38),makeChange(target2,attrs[2],d*.28)]);
-    if(d>=.06){
-      attrs.slice(0,2).forEach(attr=>{
-        const reducers=ROLES.filter(r=>r!==target2&&r!==current1&&roleWeight(r,attr)>0)
-          .sort((a,b)=>roleWeight(b,attr)-roleWeight(a,attr)).slice(0,2)
-          .map(r=>makeReduce(r,attr,d*.35));
-        if(reducers.length)out.push([makeChange(target2,attr,d*.65),...reducers]);
-      });
-    }
-  });
-  return dedupeCandidates(out);
-}
+function generateRoleCandidates(target,current,raw,opts){return roleCandidateCore(target,current,raw,opts,ROLE_CAND_TUNE.role1,false);}
+function generateRole2Candidates(target2,current1,raw,opts){return roleCandidateCore(target2,current1,raw,opts,ROLE_CAND_TUNE.role2,true);}
 function generateStyleCandidates(targetStyle,raw,role,goalRole1){
   const evalRole=goalRole1||role;
   const nm=nmOVR(raw,evalRole);
