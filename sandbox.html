@@ -236,22 +236,29 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .navrail::-webkit-scrollbar{width:11px}
 .navrail::-webkit-scrollbar-thumb{background:#3c4c64;border:3px solid transparent;background-clip:content-box;border-radius:999px}
 .navrail-title{font-family:var(--ff);font-weight:700;font-size:.9rem;color:var(--txt);padding:6px 8px 10px}
-.nav-team{display:flex;flex-direction:column}
-.nav-team-head{display:flex;align-items:center;gap:9px;width:100%;border:none;background:transparent;cursor:pointer;padding:9px 8px;border-radius:var(--radius-sm);transition:background .14s var(--ease)}
+.nav-team{display:flex;flex-direction:column;border-radius:var(--radius-sm)}
+.nav-team+.nav-team{margin-top:1px;border-top:1px solid var(--line-soft)} /* divisor sutil entre times */
+.nav-team.on{background:color-mix(in srgb,var(--panel-soft) 55%,transparent);padding-bottom:5px} /* time aberto + jogadores lem como um grupo */
+.nav-team.on+.nav-team,.nav-team+.nav-team.on{border-top-color:transparent}
+.nav-team-head{display:flex;align-items:center;gap:9px;width:100%;border:none;background:transparent;cursor:pointer;padding:10px 8px;border-radius:var(--radius-sm);transition:background .14s var(--ease)}
 .nav-team-head:hover{background:var(--panel-soft)}
-.nav-team.on>.nav-team-head{background:var(--panel-soft)}
+.nav-team.on>.nav-team-head{background:transparent}
 .nav-badge{width:34px;height:23px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-family:var(--ff);font-weight:700;font-size:.62rem;color:var(--accent-ink);flex:none}
 .nav-badge.lg{width:46px;height:32px;font-size:.8rem}
-.nav-team-name{flex:1;min-width:0;text-align:left;font-family:var(--ff);font-weight:700;font-size:.88rem;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav-team-name{flex:1;min-width:0;text-align:left;font-family:var(--ff);font-weight:800;font-size:.9rem;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.01em}
 .nav-team-ovr{font-family:var(--ff);font-weight:700;font-size:.82rem;color:var(--neutral)}
-.nav-players{display:flex;flex-direction:column;gap:1px;margin:2px 0 6px;padding-left:6px}
-.nav-player{display:flex;align-items:center;gap:9px;width:100%;border:none;background:transparent;cursor:pointer;padding:7px 8px;border-radius:var(--radius-sm);transition:background .12s var(--ease)}
+/* jogadores: recuados sob um trilho-guia, deixando claro que pertencem ao time acima */
+.nav-players{display:flex;flex-direction:column;gap:1px;margin:1px 0 4px 17px;padding-left:9px;border-left:2px solid color-mix(in srgb,var(--accent) 22%,var(--line))}
+.nav-player{display:flex;align-items:center;gap:9px;width:100%;border:none;background:transparent;cursor:pointer;padding:6px 8px;border-radius:var(--radius-sm);transition:background .12s var(--ease)}
 .nav-player:hover{background:var(--panel-soft)}
 .nav-player.on{background:color-mix(in srgb,var(--accent) 15%,transparent);box-shadow:inset 2px 0 0 var(--accent)}
 .nav-player-ovr{width:26px;height:22px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:6px;font-family:var(--ff);font-weight:700;font-size:.72rem;color:#07090e}
-.nav-player-nm{flex:1;min-width:0;text-align:left;font-size:.82rem;font-weight:700;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:5px}
+.nav-player-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;text-align:left}
+.nav-player-nm{min-width:0;font-size:.82rem;font-weight:700;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:5px}
 .nav-igl{font-size:.54rem;font-weight:800;color:var(--gold)}
-.nav-player-role{font-size:.66rem;font-weight:800;white-space:nowrap}
+.nav-player-meta{display:flex;align-items:baseline;gap:7px;min-width:0}
+.nav-player-role{font-size:.66rem;font-weight:800;white-space:nowrap;flex:none}
+.nav-player-style{font-size:.66rem;font-weight:600;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* ============================================================
    MODO TIME — cabeçalho do time + roster
@@ -327,9 +334,24 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .calib-suggestion{border-radius:var(--radius);padding:14px;animation:liveIn .24s var(--ease)}
 .calib-suggestion.good{background:color-mix(in srgb,var(--win) 8%,var(--panel-soft))}
 .calib-suggestion.bad{background:color-mix(in srgb,var(--warn) 8%,var(--panel-soft))}
-.calib-title{font-family:var(--ff);font-size:.9rem;font-weight:700;letter-spacing:.01em;margin-bottom:8px;color:var(--txt)}
-.calib-goals{font-size:.8rem;color:var(--cyan);padding:6px 0;font-weight:800}
-.calib-details{margin:8px 0}
+.calib-title{font-family:var(--ff);font-size:.9rem;font-weight:700;letter-spacing:.01em;color:var(--txt)}
+/* cabeçalho do resultado: título + pill de status do alvo */
+.calib-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.calib-status{font-family:var(--ff);font-size:.64rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:3px 9px;border-radius:999px}
+.calib-status.ok{color:var(--win);background:color-mix(in srgb,var(--win) 18%,transparent)}
+.calib-status.partial{color:var(--warn);background:color-mix(in srgb,var(--warn) 18%,transparent)}
+.calib-goalchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.goal-chip{font-size:.7rem;font-weight:700;font-family:var(--ff);padding:3px 9px;border-radius:999px;background:var(--panel-soft);color:var(--dim)}
+.goal-chip.ok{color:var(--win)} .goal-chip.no{color:var(--warn)}
+/* linha de risco humana */
+.calib-risk{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;margin:10px 0;font-size:.82rem;color:var(--neutral)}
+.calib-risk b{font-family:var(--ff);font-weight:800;color:var(--txt)}
+.calib-risk .warn-txt,.calib-risk .warn-txt b{color:var(--warn)}
+.calib-risk .caution-txt,.calib-risk .caution-txt b{color:var(--gold)}
+.calib-risk .good-txt,.calib-risk .good-txt b{color:var(--win)}
+.calib-sub{font-family:var(--ff);font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);font-weight:700;margin:4px 0 6px}
+.calib-tech{padding-top:6px}
+.calib-details{margin:10px 0 4px}
 .calib-details>summary{cursor:pointer;font-size:.72rem;color:var(--dim);font-weight:700;letter-spacing:.02em;list-style:none;padding:4px 0;user-select:none}
 .calib-details>summary::-webkit-details-marker{display:none}
 .calib-details>summary::before{content:"▸ ";color:var(--line)}
@@ -361,6 +383,8 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .calib-live-l{display:block;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:700;margin-bottom:4px}
 .calib-live-v{display:block;font-family:var(--ff);font-weight:700;font-size:.92rem;color:var(--txt);overflow:hidden;text-overflow:ellipsis}
 .calib-live-cell.target.on .calib-live-v{color:var(--accent)}
+.calib-live-v .tgt-free{color:var(--dim);font-weight:400} /* slot livre "Qualquer" — a IA decide */
+.calib-live-cell.target.on .calib-live-v .tgt-free{color:color-mix(in srgb,var(--accent) 55%,var(--dim))}
 @keyframes liveIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 
 /* estados vazios quietos: nada de herói "0" gigante ocupando a coluna */
@@ -1659,10 +1683,9 @@ function renderCalibResult(result,goal){
   const previewSummary=summarizeDiff(incrementalDiff,result.targetKey);
   const cumulativeSummary=summarizeDiff(cumulativeDiff,result.targetKey);
   const incrementalInfo=result.costInfo||calibrationMetrics(result.changes||[],incrementalDiff,null);
-  const cumulativeInfo=result.cumulativeInfo||incrementalInfo;
   const afterState=rolePairText(result.after)+" / "+STYLE_LABEL(result.after.playstyle);
   const beforeState=rolePairText(result.before)+" / "+STYLE_LABEL(result.before.playstyle);
-  const playerRows=incrementalDiff.players.slice(0,10).map(player=>{
+  const playerRows=incrementalDiff.players.slice().sort((a,b)=>(b.key===result.targetKey?1:0)-(a.key===result.targetKey?1:0)).slice(0,10).map(player=>{
     const tag=player.key===result.targetKey?'<span class="impact-tag target">ALVO</span>':'<span class="impact-tag col">COL</span>';
     const risk=player.rareWorsened?` | realidade ${signedDelta(player.dReality,2)}`:"";
     const meta=[player.roleChanged?`${player.old.role} -> ${player.role}`:player.role,player.styleChanged?`${player.old.style} -> ${player.style}`:player.style].join(" | ")+risk;
@@ -1683,42 +1706,59 @@ function renderCalibResult(result,goal){
     return `<div class="calib-change"><b>${change.role}.${change.attr.toUpperCase()}</b><span>${change.from.toFixed(2)} -> ${change.to.toFixed(2)}</span></div>`;
   }).join("");
   const modeLabel=result.strategy?.label||({ia:"IA",realista:"Realista"}[calibMode]||calibMode);
-  const phaseNote=result.phase!=null?` | fase ${result.phase+1}`:"";
-  const goalInfo=goal?`<div class="calib-goals">${[goal.r1&&`Role1: ${goal.r1} ${goal.r1===rolePairParts(result.after).r1?"OK":"--"}`,goal.r2&&`Role2: ${goal.r2} ${goal.r2===rolePairParts(result.after).r2?"OK":"--"}`,goal.style&&`Playstyle: ${goal.style} ${goal.style===STYLE_LABEL(result.after.playstyle)?"OK":"--"}`].filter(Boolean).join(" | ")}</div>`:"";
-  const st=result.searchStats||{};
-  const gapText=st.roleTarget?`<span>Gap ${st.initialGap.toFixed(2)} -> ${(result.finalGap??0).toFixed(2)}</span>`:"";
-  const roleScoreText=result.roleScores?.after?`<span>${result.roleScores.after.target} ${result.roleScores.after.targetScore.toFixed(1)} vs ${result.roleScores.after.current} ${result.roleScores.after.currentScore.toFixed(1)}</span>`:"";
+  const phaseNote=result.phase!=null?` · fase ${result.phase+1}`:"";
+  // status do alvo: cada slot pedido (role1/role2/style) foi atingido?
+  const parts=rolePairParts(result.after);
+  const goalChecks=[
+    goal&&goal.r1&&{lab:"Role1",v:goal.r1,ok:goal.r1===parts.r1},
+    goal&&goal.r2&&{lab:"Role2",v:goal.r2,ok:goal.r2===parts.r2},
+    goal&&goal.style&&{lab:"Playstyle",v:goal.style,ok:goal.style===STYLE_LABEL(result.after.playstyle)}
+  ].filter(Boolean);
+  const allMet=goalChecks.length>0&&goalChecks.every(c=>c.ok);
+  const statusPill=goalChecks.length?`<span class="calib-status ${allMet?"ok":"partial"}">${allMet?"Alvo atingido":"Parcial"}</span>`:"";
+  const goalChips=goalChecks.length?`<div class="calib-goalchips">${goalChecks.map(c=>`<span class="goal-chip ${c.ok?"ok":"no"}">${esc(c.v)} ${c.ok?"✓":"✕"}</span>`).join("")}</div>`:"";
   const focus=`<div class="calib-focus">
     <div class="calib-focus-card before"><div class="l">Antes</div><div class="v">${esc(beforeState)}</div></div>
     <div class="calib-focus-arrow">→</div>
     <div class="calib-focus-card after"><div class="l">Depois</div><div class="v">${esc(afterState)}</div></div>
   </div>`;
-  const diagnostics=`<details class="calib-details"><summary>Diagnóstico da busca</summary><div class="calib-diagnostics">
-    <span>Custo ${result.cost.toFixed(2)}</span>
-    <span>Delta pesos ${incrementalInfo.deltaCost.toFixed(2)}</span>
-    <span>Testes ${st.tested||0}/${st.generated||0}</span>
-    <span>Válidas ${st.valid||0}</span>
-    ${st.truncated?'<span>corte anti-trava</span>':""}
-    ${gapText}
-    ${roleScoreText}
-    <span>Acumulado ${cumulativeSummary.players} jog · ${cumulativeSummary.teams} times</span>
-    <span>Realidade +${incrementalInfo.realityPenalty.toFixed(2)} / acum +${cumulativeInfo.realityPenalty.toFixed(2)}</span>
+  // linha de risco humana (substitui as métricas crípticas)
+  const col=previewSummary.collateralPlayers;
+  const colCls=col>3?"warn-txt":col>0?"caution-txt":"good-txt";
+  const riskLine=`<div class="calib-risk">
+    <span>Toca <b>${previewSummary.players}</b> ${previewSummary.players===1?"jogador":"jogadores"}</span>
+    <span class="${colCls}"><b>${col}</b> ${col===1?"colateral":"colaterais"}</span>
+    ${previewSummary.rareWorsened?`<span class="warn-txt"><b>${previewSummary.rareWorsened}</b> raros pioram</span>`:""}
+    <span>realidade <b>+${previewSummary.realityDamage.toFixed(2)}</b></span>
+  </div>`;
+  const st=result.searchStats||{};
+  const gapText=st.roleTarget?`<span>Gap ${st.initialGap.toFixed(2)} → ${(result.finalGap??0).toFixed(2)}</span>`:"";
+  const roleScoreText=result.roleScores?.after?`<span>${result.roleScores.after.target} ${result.roleScores.after.targetScore.toFixed(1)} vs ${result.roleScores.after.current} ${result.roleScores.after.currentScore.toFixed(1)}</span>`:"";
+  // técnico recolhido: explicação do modo + modificações no motor + diagnóstico
+  const technical=`<details class="calib-details"><summary>Detalhes técnicos</summary><div class="calib-tech">
+    <div class="calib-note" style="margin:0 0 10px">Modo ${esc(modeLabel)}${phaseNote}: ${esc(result.strategy?.explain||"")}</div>
+    <h4 class="calib-sub">Modificações no motor</h4>
+    <div class="calib-list">${changes}</div>
+    <div class="calib-diagnostics">
+      <span>Custo ${result.cost.toFixed(2)}</span>
+      <span>Δ pesos ${incrementalInfo.deltaCost.toFixed(2)}</span>
+      <span>Testes ${st.tested||0}/${st.generated||0}</span>
+      <span>Válidas ${st.valid||0}</span>
+      ${st.truncated?'<span>corte anti-trava</span>':""}
+      ${gapText}
+      ${roleScoreText}
+      <span>Acumulado ${cumulativeSummary.players} jog · ${cumulativeSummary.teams} times</span>
+    </div>
   </div></details>`;
-  const accumulatedNote=cumulativeSummary.total>previewSummary.total
-    ?`<div class="calib-note">Previa: ${previewSummary.total} mudancas nesta sugestao. Impacto acumulado apos aplicar: ${cumulativeSummary.total} desde o baseline.</div>`
-    :"";
   return `<div class="calib-suggestion good">
-    <div class="calib-title">Previa da IA global</div>
-    ${goalInfo}
+    <div class="calib-head"><div class="calib-title">Sugestão da IA</div>${statusPill}</div>
+    ${goalChips}
     ${focus}
-    ${renderAuditMetrics(previewSummary,"previa")}
-    ${diagnostics}
-    <div class="impact-section"><h4>Modificacoes no motor</h4><div class="calib-list">${changes}</div></div>
-    ${result.highCollateral?`<div class="calib-note" style="color:var(--warn)">Solucao com alto colateral global (${previewSummary.collateralPlayers} jogadores fora do alvo).</div>`:""}
-    <div class="calib-note">Modo ${esc(modeLabel)}${phaseNote}: ${esc(result.strategy?.explain||"")} ${esc(beforeState)} -> ${esc(afterState)}.</div>
-    ${accumulatedNote}
+    ${riskLine}
+    ${result.highCollateral?`<div class="calib-note" style="color:var(--warn)">Alto colateral global — ${col} jogadores fora do alvo.</div>`:""}
     ${playerRows?`<div class="impact-section"><h4>Jogadores afetados</h4><div class="calib-impact-list">${playerRows}</div></div>`:""}
-    <div class="calib-actions"><button class="btn accent" id="calibApply">Aplicar sugestao</button><button class="btn" id="calibDiscard">Descartar</button></div>
+    ${technical}
+    <div class="calib-actions"><button class="btn accent" id="calibApply">Aplicar sugestão</button><button class="btn" id="calibDiscard">Descartar</button></div>
   </div>`;
 }
 // === busca em paralelo via Web Workers (modo IA) ===
@@ -1814,15 +1854,15 @@ function buildCalibrator(){
     :`<div class="calib-field"><label>Role1</label><select id="calibRole">${anyRoleOptions(calibTargetRole)}</select></div>`;
   const role2Label=isIGL?"Papel de combate":"Role2";
   const role2Html=`<div class="calib-field"><label>${role2Label}</label><select id="calibRole2">${anyRoleOptions(calibTargetRole2)}</select></div>`;
-  // preview AO VIVO do alvo: atual → alvo, atualiza na hora ao mexer nos dropdowns (sem rodar a busca)
-  const curParts=rolePairParts(player);
-  const curText=`${esc(rolePairText(player))} · ${esc(STYLE_LABEL(player.playstyle))}`;
-  const tR1=isIGL?"IGL":(calibTargetRole||curParts.r1);
-  const tR2=calibTargetRole2||curParts.r2;
-  const tStyle=calibTargetStyle||STYLE_LABEL(player.playstyle);
-  const targetText=`${esc(tR2?`${tR1} / ${tR2}`:tR1)} · ${esc(tStyle)}`;
+  // preview AO VIVO do alvo: atualiza na hora ao mexer nos dropdowns (sem rodar a busca)
+  // slots vazios = "Qualquer" (a IA decide) — mostrados dim, nunca preenchidos com o valor atual do jogador
+  const freeTag=`<span class="tgt-free">Qualquer</span>`;
+  const tR1=isIGL?"IGL":(calibTargetRole?esc(calibTargetRole):freeTag);
+  const tR2=calibTargetRole2?esc(calibTargetRole2):freeTag;
+  const tStyle=calibTargetStyle?esc(calibTargetStyle):freeTag;
+  const targetText=`${tR1} / ${tR2} · ${tStyle}`;
   const hasTarget=!!(calibTargetRole||calibTargetRole2||calibTargetStyle);
-  const changed=hasTarget&&targetText!==curText;
+  const changed=hasTarget;
   // o jogador atual já está fixado no topo (pctx); aqui mostramos só o ALVO ao vivo quando escolhido
   const livePreview=hasTarget?`<div class="calib-live">
     <div class="calib-live-cell target${changed?" on":""}"><span class="calib-live-l">Alvo desta calibração</span><span class="calib-live-v">${targetText}</span></div>
@@ -2012,8 +2052,10 @@ function renderNavRail(){
         const rc=ROLE_COLORS[p.combatRole]||"var(--dim)";
         return`<button type="button" class="nav-player${p.pIdx===loadedIdx?" on":""}" data-pi="${p.pIdx}" data-ti="${i}">
           <span class="nav-player-ovr mono" style="background:var(${tierVar(p.ovr)})">${p.ovr}</span>
-          <span class="nav-player-nm">${esc(p.nome)}${p.isIGL?'<span class="nav-igl">IGL</span>':""}</span>
-          <span class="nav-player-role" style="color:${rc}">${esc(rolePairText(p))}</span>
+          <span class="nav-player-body">
+            <span class="nav-player-nm">${esc(p.nome)}${p.isIGL?'<span class="nav-igl">IGL</span>':""}</span>
+            <span class="nav-player-meta"><span class="nav-player-role" style="color:${rc}">${esc(rolePairText(p))}</span><span class="nav-player-style">${esc(STYLE_LABEL(p.playstyle))}</span></span>
+          </span>
         </button>`;
       }).join("")}</div>`:""}
     </div>`;
