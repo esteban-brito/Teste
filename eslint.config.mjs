@@ -57,7 +57,7 @@ export default [
       ...commonRules,
       "no-unused-vars": ["warn", {
         args: "none",
-        varsIgnorePattern: "^(STYLE_LABEL|roleStyleReality|_|ovrUnificado|srand)$",
+        varsIgnorePattern: "^(STYLE_LABEL|STYLE_DESC|roleStyleReality|_|ovrUnificado|srand)$",
       }],
     },
   },
