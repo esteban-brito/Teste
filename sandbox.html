@@ -344,6 +344,7 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .cr-pill.ok{color:var(--win);background:color-mix(in srgb,var(--win) 15%,transparent)}
 .cr-pill.partial{color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,transparent)}
 .cr-pill.miss{color:var(--loss);background:color-mix(in srgb,var(--loss) 15%,transparent)}
+.cr-pill.warn{color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,transparent)}
 .cr-empty{font-size:var(--fs-base);color:var(--neutral);line-height:1.5;padding:2px 0 4px}
 .cr-target{font-family:var(--ff);font-weight:700;font-size:var(--fs-md);color:var(--txt);margin-bottom:9px}
 .cr-tteam{color:var(--dim);font-weight:600;font-size:var(--fs-sm);margin-left:8px}
@@ -353,7 +354,10 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .cr-from{color:var(--dim);font-size:var(--fs-base);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cr-arw{color:var(--dim);font-family:var(--ff);text-align:center}
 .cr-to{color:var(--win);font-weight:800;font-size:var(--fs-md);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cr-nochange{color:var(--dim);font-size:var(--fs-base)}
+.cr-stat{grid-column:2 / -1;color:var(--neutral);font-weight:700;font-size:var(--fs-base);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cr-warn{margin-top:8px;font-size:var(--fs-s);color:var(--warn);line-height:1.45;background:color-mix(in srgb,var(--warn) 9%,transparent);border-radius:var(--radius-sm);padding:8px 10px}
+.cr-styledesc{font-size:var(--fs-s);color:var(--dim);line-height:1.45;margin:-4px 0 12px}
+.cr-styledesc b{color:var(--neutral);font-weight:700}
 .cr-cost{display:flex;align-items:baseline;gap:9px;margin-bottom:4px;flex-wrap:wrap}
 .cr-clab{font-size:var(--fs-2xs);font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--dim)}
 .cr-sev{font-family:var(--ff);font-weight:800;font-size:var(--fs-md)}
@@ -388,6 +392,8 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .calib-change span{color:var(--dim);font-family:var(--ff);font-size:var(--fs-s);white-space:nowrap}
 .calib-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .calib-note{font-size:var(--fs-s);color:var(--dim);line-height:1.45}
+.calib-styledesc{font-size:var(--fs-s);color:var(--dim);line-height:1.45;background:var(--panel-soft);border-radius:var(--radius-sm);padding:8px 11px}
+.calib-styledesc b{color:var(--neutral);font-weight:700}
 
 /* preview AO VIVO do alvo (atual → alvo), atualiza na hora ao mexer nos dropdowns */
 .calib-live{display:flex;align-items:stretch;gap:10px;margin-bottom:2px}
@@ -536,7 +542,7 @@ async function carregarMotores(){
   if(cut<0)cut=linhas.findIndex(l=>l.includes("document.getElementById"));
   if(cut<0)throw new Error("não encontrei o início da camada de UI em game.js");
   const slice=linhas.slice(0,cut).join("\n");
-  E=new Function(slice+"\nreturn {avaliarJogador,aplicarAvaliacaoContextual,curvaOVR,distribuirRoles,forcaTime,ovrUnificado,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,STYLE_ROLE_FIT,STYLE_CONTRA,MAPAS_POOL,MAPA_LADO,srand,simularMapa,forcaDoDia,TEAMS,nmOVR,roleAfinidade,NM_DEF,NM_COR,STYLE_LABEL,PLAYSTYLE_IDS};")();
+  E=new Function(slice+"\nreturn {avaliarJogador,aplicarAvaliacaoContextual,curvaOVR,distribuirRoles,forcaTime,ovrUnificado,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,STYLE_ROLE_FIT,STYLE_CONTRA,MAPAS_POOL,MAPA_LADO,srand,simularMapa,forcaDoDia,TEAMS,nmOVR,roleAfinidade,NM_DEF,NM_COR,STYLE_LABEL,PLAYSTYLE_IDS,STYLE_DESC};")();
   ["avaliarJogador","distribuirRoles","forcaTime","simularMapa","forcaDoDia","srand","TEAMS"].forEach(k=>{if(!E[k])throw new Error(`motor ausente: ${k}`);});
   DEF={ROLE:clone(E.ROLE_PERFIL),NM:clone(E.NM_DEF),NM_COR:clone(E.NM_COR),CONTRA:clone(E.ROLE_CONTRA),IGL:clone(E.IGL_ROLE_AFIN),RULES:clone(E.ROLE_RULES),STYLE_FIT:clone(E.STYLE_ROLE_FIT),STYLE_CONTRA:clone(E.STYLE_CONTRA)};
   // aliases locais para as funções/dados importados do motor (evita E.xxx em toda a UI)
@@ -767,6 +773,7 @@ function changeLine(change){
   if(change.type==="wr")return`ROLE_PERFIL.${change.role}.wR: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
   if(change.type==="rule")return`ROLE_RULES.${change.role}.${change.rule}.w: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
   if(change.type==="igl")return`IGL_ROLE_AFIN.${change.role}.${change.attr}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
+  if(change.type==="cor")return`NM_COR.${change.key}: ${change.from.toFixed(1)} -> ${change.to.toFixed(1)}`;
   return`ROLE_PERFIL.${change.role}.afin.${change.attr}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
 }
 function buildCalibrationReport(){
@@ -1015,6 +1022,7 @@ function applyCalibChanges(changes){
       if(!E.IGL_ROLE_AFIN[change.role])E.IGL_ROLE_AFIN[change.role]={};
       E.IGL_ROLE_AFIN[change.role][change.attr]=change.to;
     }
+    else if(change.type==="cor"){E.NM_COR[change.key]=change.to;} // limiar global do Coringa (pisoMin/spreadMax)
     else setRoleWeight(change.role,change.attr,change.to);
   });
 }
@@ -1119,6 +1127,7 @@ function candidateLabel(changes){
     if(change.type==="wr")return`${change.role}.wR ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     if(change.type==="rule")return`${change.role}.REGRA.${change.rule} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     if(change.type==="igl")return`IGL.${change.role}.${change.attr.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
+    if(change.type==="cor")return`COR.${change.key} ${change.from.toFixed(1)}->${change.to.toFixed(1)}`;
     return`${change.role}.${change.attr.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
   }).join(" | ");
 }
@@ -1220,8 +1229,26 @@ function generateStyleCandidates(targetStyle,raw,role,goalRole1){
     return changes.some(change=>Math.abs(change.to-change.from)>1e-9);
   });
 }
+// Coringa é STAT-based: nenhum peso de receita faz um jogador virar joker — só o limiar
+// GLOBAL (pisoMin/spreadMax). Gera o ajuste mínimo de limiar pro jogador qualificar
+// (5/7≥pisoMin, spread≤spreadMax). Como é global, muitos viram Coringa junto → alto custo.
+function generateJokerCandidates(raw){
+  const s7=[raw.fp,raw.en,raw.tr,raw.op,raw.cl,raw.sn,raw.ut].map(v=>+v||0).sort((a,b)=>b-a);
+  const cur=E.NM_COR||{pisoMin:45,spreadMax:35};
+  const needPiso=s7[5], needSpread=s7[0]-s7[4]; // pisoMin ≤ 6º maior; spreadMax ≥ (maior − 5º)
+  const out=[];
+  [0,2,5].forEach(m=>{
+    const changes=[];
+    const piso=Math.min(cur.pisoMin,needPiso-m), spread=Math.max(cur.spreadMax,needSpread+m);
+    if(piso<cur.pisoMin-1e-6)changes.push({type:"cor",key:"pisoMin",from:cur.pisoMin,to:Math.max(0,+piso.toFixed(1))});
+    if(spread>cur.spreadMax+1e-6)changes.push({type:"cor",key:"spreadMax",from:cur.spreadMax,to:Math.min(100,+spread.toFixed(1))});
+    if(changes.length)out.push(changes);
+  });
+  return dedupeCandidates(out.length?out:[[]]); // já é Coringa → conjunto vazio (no-op) mantém
+}
 function generateGoalCandidates(goal,current,raw,isIGL,opts){
   const all=[];
+  if(goal.style==="Coringa")all.push(...generateJokerCandidates(raw));
   const ro=opts?.role||{};
   const styleRoles=isIGL?[current.r2||"Rifler"]:ROLES;
   if(isIGL&&goal.r2&&goal.r2!==current.r2){
@@ -1699,6 +1726,7 @@ function calibChangeRow(change){
   if(change.type==="wr")return two(`${change.role}.wR`);
   if(change.type==="rule")return two(`${change.role}.REGRA.${esc(change.rule)}`);
   if(change.type==="igl")return two(`IGL.${change.role}.${U(change.attr)}`);
+  if(change.type==="cor")return two(`Coringa.${change.key}`);
   return two(`${change.role}.${U(change.attr)}`);
 }
 function renderCalibResult(result,goal){
@@ -1715,7 +1743,14 @@ function renderCalibResult(result,goal){
   const sum=summarizeDiff(diff,result.targetKey);
   const info=result.costInfo||calibrationMetrics(result.changes||[],diff,null);
   const cum=summarizeDiff(result.cumulativeDiff||diff,result.targetKey);
-  // — status (ignora IGL, que é fixo e sempre "atingido") —
+  // — custo/severidade (calculado ANTES: o status reflete o custo, não só o alvo) —
+  const col=sum.collateralPlayers,rare=sum.rareWorsened,rd=sum.realityDamage;
+  const highCost=col>3||rd>1||rare>3;
+  let sev,sevCls;
+  if(col===0&&rare===0){sev="baixo";sevCls="ok";}
+  else if(highCost){sev="alto";sevCls="high";}
+  else{sev="médio";sevCls="mid";}
+  // — status: verde só quando bate o alvo E o custo é baixo; senão reflete o custo —
   const parts=rolePairParts(result.after);
   const checks=[
     goal&&goal.r1&&goal.r1!=="IGL"&&goal.r1===parts.r1,
@@ -1724,27 +1759,27 @@ function renderCalibResult(result,goal){
   ];
   const asked=[goal&&goal.r1&&goal.r1!=="IGL",goal&&goal.r2,goal&&goal.style].filter(Boolean).length;
   const allMet=asked===0||checks.filter(Boolean).length>=asked;
-  const pill=`<span class="cr-pill ${allMet?"ok":"partial"}"><span class="cr-dot"></span>${allMet?"Alvo atingido":"Parcial"}</span>`;
+  const pillCls=!allMet?"partial":highCost?"warn":"ok";
+  const pillTxt=!allMet?"Parcial":highCost?"Atingido · alto custo":"Alvo atingido";
+  const pill=`<span class="cr-pill ${pillCls}"><span class="cr-dot"></span>${pillTxt}</span>`;
   // — pra quem é —
   const tgtNome=esc((loadedIdx!=null&&POOLRAW[loadedIdx]?.nome)||result.after.nome||state.nome||"Jogador");
   const tgtTime=loadedIdx!=null?esc(POOLRAW[loadedIdx]?.time||""):"";
-  // — bloco delta: só as dimensões que mudaram no alvo —
+  // — bloco delta: Função e Estilo SEMPRE visíveis (seta só quando muda; playstyle nunca some) —
   // IGL tem role1 fixo → mostra só o papel de combate; senão o par inteiro
   const igl=!!result.after.isIGL;
   const bRole=igl?rolePairParts(result.before).r2:rolePairText(result.before);
   const aRole=igl?parts.r2:rolePairText(result.after);
   const bStyle=STYLE_LABEL(result.before.playstyle),aStyle=STYLE_LABEL(result.after.playstyle);
   const drow=(lab,b,a)=>`<div class="cr-drow"><span class="cr-dlab">${lab}</span><span class="cr-from">${esc(b)}</span><span class="cr-arw">→</span><span class="cr-to">${esc(a)}</span></div>`;
-  const deltas=[bRole!==aRole?drow("Função",bRole,aRole):"",bStyle!==aStyle?drow("Estilo",bStyle,aStyle):""].filter(Boolean).join("");
-  const deltaBlock=deltas?`<div class="cr-delta">${deltas}</div>`:`<div class="cr-delta cr-nochange">Sem mudança de função ou estilo no alvo.</div>`;
-  // — custo em palavras —
-  const col=sum.collateralPlayers,rare=sum.rareWorsened,rd=sum.realityDamage;
-  let sev,sevCls;
-  if(col===0&&rare===0){sev="baixo";sevCls="ok";}
-  else if(col>3||rd>1||rare>3){sev="alto";sevCls="high";}
-  else{sev="médio";sevCls="mid";}
+  const srow=(lab,v)=>`<div class="cr-drow"><span class="cr-dlab">${lab}</span><span class="cr-stat">${esc(v)}</span></div>`;
+  const roleRow=bRole!==aRole?drow("Função",bRole,aRole):srow("Função",aRole);
+  const styleRow=bStyle!==aStyle?drow("Estilo",bStyle,aStyle):srow("Estilo",aStyle);
+  const deltaBlock=`<div class="cr-delta">${roleRow}${styleRow}</div>`;
+  // — custo em palavras + aviso quando alto —
   const costTxt=col===0?"só o alvo muda":`${col} ${col===1?"jogador muda junto":"jogadores mudam junto"}`;
-  const costLine=`<div class="cr-cost"><span class="cr-clab">Custo</span><span class="cr-sev ${sevCls}">${sev}</span><span class="cr-ctxt">${costTxt}</span></div>`;
+  const costLine=`<div class="cr-cost"><span class="cr-clab">Custo</span><span class="cr-sev ${sevCls}">${sev}</span><span class="cr-ctxt">${costTxt}</span></div>`
+    +(highCost?`<div class="cr-warn">Não recomendado: mexe em ${col} ${col===1?"jogador":"jogadores"} fora do alvo. Esse alvo é distante do natural do jogador — a IA só chega lá com um ajuste global grande.</div>`:"");
   // — jogadores afetados (recolhido) —
   const rows=diff.players.slice().sort((a,b)=>(b.key===result.targetKey?1:0)-(a.key===result.targetKey?1:0)).slice(0,12).map(p=>{
     const isTgt=p.key===result.targetKey;
@@ -1777,6 +1812,7 @@ function renderCalibResult(result,goal){
     <div class="cr-head"><span class="cr-kicker">Sugestão da IA</span>${pill}</div>
     <div class="cr-target">${tgtNome}${tgtTime?`<span class="cr-tteam">${tgtTime}</span>`:""}</div>
     ${deltaBlock}
+    ${E.STYLE_DESC?.[result.after.playstyle]?`<div class="cr-styledesc"><b>${esc(aStyle)}</b> · ${esc(E.STYLE_DESC[result.after.playstyle])}</div>`:""}
     ${costLine}
     ${affected}
     ${technical}
@@ -1806,6 +1842,9 @@ function ensureCalibWorkers(){
   }
 }
 async function runCalibrationParallel(goal,onProgress){
+  // Coringa depende do limiar global (poucos candidatos) — a busca direta resolve; os workers
+  // (partição aleatória) não cobrem esse caso bem, então roda na thread principal.
+  if(goal.style==="Coringa")return await findCalibration(goal,onProgress);
   try{
     const strategy=CALIB_STRATEGIES[calibMode]||CALIB_STRATEGIES.ia;
     const workers=calibMode==="ia"?ensureCalibWorkers():null;
@@ -1869,7 +1908,11 @@ function buildCalibrator(){
     ["ia","IA"],
     ["realista","Realista"]
   ].map(([id,label])=>`<option value="${id}" ${id===calibMode?"selected":""}>${label}</option>`).join("");
-  const styleOptions=`<option value="">Qualquer</option>${PLAYSTYLE_IDS.map(id=>`<option value="${STYLE_LABEL(id)}" ${STYLE_LABEL(id)===calibTargetStyle?"selected":""}>${STYLE_LABEL(id)}</option>`).join("")}`;
+  const styleIdOf=lbl=>lbl==="Coringa"?"joker":(PLAYSTYLE_IDS.find(id=>STYLE_LABEL(id)===lbl)||"");
+  const styleOptions=`<option value="">Qualquer</option>`
+    +PLAYSTYLE_IDS.map(id=>`<option value="${STYLE_LABEL(id)}" ${STYLE_LABEL(id)===calibTargetStyle?"selected":""}>${STYLE_LABEL(id)}</option>`).join("")
+    +`<option value="Coringa" ${calibTargetStyle==="Coringa"?"selected":""}>Coringa</option>`;
+  const selStyleDesc=calibTargetStyle&&E.STYLE_DESC?.[styleIdOf(calibTargetStyle)]?`<div class="calib-styledesc"><b>${esc(calibTargetStyle)}</b> · ${esc(E.STYLE_DESC[styleIdOf(calibTargetStyle)])}</div>`:"";
   const curGoal={r1:isIGL?"IGL":calibTargetRole,r2:calibTargetRole2,style:calibTargetStyle};
   const role1Html=isIGL
     ?`<div class="calib-field"><label>Role1</label><select id="calibRole" disabled><option selected>IGL</option></select></div>`
@@ -1898,6 +1941,7 @@ function buildCalibrator(){
       <div class="calib-field"><label>Modo</label><select id="calibMode">${modeOptions}</select></div>
       <button class="btn accent" id="calibSuggest">Sugerir ajuste</button>
     </div>
+    ${selStyleDesc}
     <div class="calib-note">Ajusta pesos globais de baixo impacto — não altera stats.</div>
     <div id="calibResult">${renderCalibResult(calibLast,curGoal)}</div>
     <div class="calib-actions"><button class="btn" id="calibReset">Resetar pesos</button></div>
