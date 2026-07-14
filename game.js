@@ -280,7 +280,7 @@ const STYLE_ROLE_FIT={
   Support:{support:.20,trader:.13,cerebral:.13,anchor:.12,clutcher:.04,aggressive:-.10,spacetaker:-.12,playmaker:-.04},
   IGL:{cerebral:.12,support:.10,trader:.06,playmaker:.04}
 };
-const NM_COR={pisoMin:45,spreadMax:35};
+const NM_COR={pisoMin:52,spreadMax:35};
 const STYLE_KEYS={aggressive:"Agressivo",spacetaker:"Spacetaker",trader:"Trader",playmaker:"Playmaker",infiltrator:"Infiltrador",baiter:"Baiter",clutcher:"Clutcher",support:"Facilitador",cerebral:"Cerebral",anchor:Object.keys(NM_DEF).find(k=>k.includes("ncora"))||"Ancora"};
 const PLAYSTYLES={
   aggressive:{label:"Agressivo",traits:{pace:1,space:.7,trade:.2,structure:-.1,ct:-.2,t:.8}},
