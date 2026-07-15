@@ -64,6 +64,7 @@ const ROLE_PERFIL={
   Support:{afin:{ut:.50,tr:.25,en:.12,fp:.08,op:.05}, ovr:{ut:.45,tr:.22,fp:.15,op:.10,cl:.08},wR:.45,credito:3}};
 const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22, // ⚙ balanceamento do PRISMA (afinidade/sub) + ZÊNITE (curva de OVR)
   RAT_LO:.85,RAT_HI:1.50,RAT_CAP:1.25,       // mapa do rating HLTV -> 0..125 (sem cliffs)
+  OVR_BASE:8.5,OVR_SPAN:10,RAT_BASE:1.0,RAT_K:8, // MODELO NOVO: OVR = base(receita do playstyle) + bônus(rating) uniforme
   FLOOR:9,SPAN:13.7,K:.0495,MID:55,          // core -> OVR (logística). teto um pouco mais seletivo: o 22 exige elite clara (rating ~1.6+), não satura cedo; MID recentrado mantém o miolo do elenco intacto
   IGL_RAT_K:.80,IGL_CREDITO:9,               // IGL: rating descontado (sacrifica stats) + crédito de liderança intrínseco
   IGL_TITULO:{Campeao:3,Final:2,Top4:1,Top8:0,Grupos:0}, // liderança comprovada por título soma OVR (só p/ IGL)
@@ -246,20 +247,21 @@ const ESTEIRA={AWPer:"Artilharia",Rifler:"Assalto",Entry:"Vanguarda",Lurker:"Anc
 // Como o IGL sacrifica stats individuais, o peso de rating é descontado (IGL_RAT_K) + crédito de
 // liderança intrínseco, e ainda soma um bônus de TÍTULO (IGL_TITULO): liderança que ganhou Major
 // vale OVR. Esse bônus é exclusivo do IGL — fragger nunca depende da colocação do time.
-const ratingScore=r=>clamp((r-CFG_AVALIACAO.RAT_LO)/(CFG_AVALIACAO.RAT_HI-CFG_AVALIACAO.RAT_LO),0,CFG_AVALIACAO.RAT_CAP)*100;
 const curvaOVR=core=>{const C=CFG_AVALIACAO;return clipOVR(C.FLOOR+C.SPAN/(1+Math.exp(-C.K*(core-C.MID))));};
 const NM_AXES=[["fogo","Fogo"],["ent","Entrada"],["ab","Abertura"],["tr","Trade"],["cl","Clutch"],["ut","Utilitário"]];
+// receitas reformuladas do 0 (cada w soma 100%; rating NÃO entra aqui — é bônus por cima no OVR).
+// Baiter não tem receita: é regra de baixo impacto (badBaiterProfile). Coringa é piso de stats (jokerProfile).
 const NM_DEF={
-  Agressivo:{w:{ent:.45,ab:.30,fogo:.15,tr:.10},wR:.40},
-  Spacetaker:{w:{ab:.35,fogo:.35,ent:.30},wR:.52},
-  Trader:{w:{tr:.45,fogo:.30,ut:.25},wR:.48},
-  Playmaker:{w:{fogo:.50,ab:.30,cl:.10,tr:.10},wR:.60},
-  Infiltrador:{w:{cl:.40,ab:.30,fogo:.30},wR:.52},
-  Baiter:{w:{tr:.40,cl:.30,fogo:.30},wR:.32},
-  Clutcher:{w:{cl:.55,fogo:.45},wR:.52},
-  Facilitador:{w:{ut:.45,tr:.30,ab:.25},wR:.40},
-  Cerebral:{w:{ab:.35,ut:.35,cl:.30},wR:.52},
-  Ancora:{w:{cl:.40,ut:.35,tr:.25},wR:.45}};
+  Opener:{w:{ab:.50,fogo:.40,ent:.10},wR:.40},
+  Spacetaker:{w:{ent:.70,fogo:.15,ab:.15},wR:.40},
+  Trader:{w:{tr:.50,fogo:.30,ut:.20},wR:.45},
+  Playmaker:{w:{fogo:.45,ab:.35,cl:.20},wR:.55},
+  Infiltrador:{w:{cl:.40,ab:.35,fogo:.25},wR:.50},
+  Baiter:{w:{tr:.50,cl:.30,fogo:.20},wR:.35},
+  Closer:{w:{cl:.55,fogo:.45},wR:.50},
+  Facilitador:{w:{ut:.50,tr:.30,ab:.20},wR:.40},
+  Cerebral:{w:{ut:.40,ab:.30,cl:.30},wR:.50},
+  Ancora:{w:{cl:.45,ut:.35,tr:.20},wR:.45}};
 const STYLE_CONTRA={
   aggressive:{cl:.14,ut:.08,sn:.06},
   spacetaker:{cl:.08,ut:.05,sn:.06},
@@ -269,7 +271,7 @@ const STYLE_CONTRA={
   baiter:{ent:.28,ab:.16,ut:.08,sn:.06},
   clutcher:{ent:.14,ab:.08,tr:.06,sn:.06},
   support:{fogo:.10,ent:.12,sn:.08},
-  cerebral:{ent:.16,fogo:.06,sn:.06},
+  cerebral:{ent:.22,fogo:.08,sn:.06},
   anchor:{ent:.24,ab:.12,fogo:.06,sn:.06}
 };
 const STYLE_ROLE_FIT={
@@ -281,15 +283,15 @@ const STYLE_ROLE_FIT={
   IGL:{cerebral:.12,support:.10,trader:.06,playmaker:.04}
 };
 const NM_COR={pisoMin:45,spreadMax:35};
-const STYLE_KEYS={aggressive:"Agressivo",spacetaker:"Spacetaker",trader:"Trader",playmaker:"Playmaker",infiltrator:"Infiltrador",baiter:"Baiter",clutcher:"Clutcher",support:"Facilitador",cerebral:"Cerebral",anchor:Object.keys(NM_DEF).find(k=>k.includes("ncora"))||"Ancora"};
+const STYLE_KEYS={aggressive:"Opener",spacetaker:"Spacetaker",trader:"Trader",playmaker:"Playmaker",infiltrator:"Infiltrador",baiter:"Baiter",clutcher:"Closer",support:"Facilitador",cerebral:"Cerebral",anchor:"Ancora"};
 const PLAYSTYLES={
-  aggressive:{label:"Agressivo",traits:{pace:1,space:.7,trade:.2,structure:-.1,ct:-.2,t:.8}},
+  aggressive:{label:"Opener",traits:{pace:1,space:.7,trade:.2,structure:-.1,ct:-.2,t:.8}},
   spacetaker:{label:"Spacetaker",traits:{pace:.8,space:1,trade:0,structure:-.2,ct:-.2,t:1}},
   trader:{label:"Trader",traits:{pace:.2,space:.1,trade:1,structure:.4,ct:.2,t:.5}},
   playmaker:{label:"Playmaker",traits:{pace:.4,space:.8,trade:.1,structure:-.1,ct:.1,t:.6}},
   infiltrator:{label:"Infiltrador",traits:{pace:-.2,space:.8,trade:-.2,structure:.1,ct:.3,t:.3}},
   baiter:{label:"Baiter",traits:{pace:-.5,space:-.4,trade:.4,structure:-.2,ct:.2,t:-.3}},
-  clutcher:{label:"Clutcher",traits:{pace:-.1,space:.1,trade:0,structure:.2,ct:.5,t:.1}},
+  clutcher:{label:"Closer",traits:{pace:-.1,space:.1,trade:0,structure:.2,ct:.5,t:.1}},
   support:{label:"Facilitador",traits:{pace:.1,space:.2,trade:.6,structure:1,ct:.5,t:.5}},
   cerebral:{label:"Cerebral",traits:{pace:-.1,space:.4,trade:.2,structure:.9,ct:.4,t:.3}},
   anchor:{label:"Ancora",traits:{pace:-.6,space:-.2,trade:.2,structure:.8,ct:1,t:-.3}}};
@@ -297,7 +299,6 @@ const PLAYSTYLE_IDS=Object.keys(PLAYSTYLES);
 const STYLE_LABEL=id=>id==="joker"?"Coringa":(PLAYSTYLES[id]?.label||id);
 const STYLE_ID=x=>x==="Coringa"||x==="joker"?"joker":(PLAYSTYLE_IDS.find(id=>id===x||STYLE_KEYS[id]===x||PLAYSTYLES[id].label===x)||x);
 const STYLE_RECIPE=id=>NM_DEF[STYLE_KEYS[id]];
-const coringaWR=()=>PLAYSTYLE_IDS.reduce((s,id)=>s+(STYLE_RECIPE(id)?.wR||0),0)/PLAYSTYLE_IDS.length;
 const ROLE_STYLE_BASE={
   Entry:{anchor:.46,support:.30,cerebral:.26,clutcher:.22,infiltrator:.18,trader:.12},
   Support:{aggressive:.28,spacetaker:.24,playmaker:.14,infiltrator:.12,baiter:.10},
@@ -327,11 +328,11 @@ function roleStyleReality(role,style,p){
 }
 function nmStats6(p,role){const fogo=role==="AWPer"?(p.sn||0):(p.fp||0);return {fogo,ent:p.en||0,ab:p.op||0,tr:p.tr||0,cl:p.cl||0,ut:p.ut||0};}
 function stats7(p){return [p.fp||0,p.en||0,p.tr||0,p.op||0,p.cl||0,p.sn||0,p.ut||0];}
+// Baiter = BAIXO IMPACTO (não é receita): poucos stats fortes, rating fraco, sem abrir/entrar.
 function badBaiterProfile(p){
-  if(p.isIGL)return false; // IGL fraco em stats pode ser sacrifício de função, não egoísmo.
+  if(p.isIGL)return false; // IGL fraco em stats é sacrifício de função, não egoísmo.
   const above=["fp","en","tr","op","cl","sn","ut"].filter(k=>(p[k]||0)>50).length;
-  return above<=1&&(p.rating||0)<=1.00&&(p.fp||0)<=35&&(p.en||0)<=45&&
-    (p.tr||0)<=25&&(p.cl||0)<=55&&(p.sn||0)<=30&&(p.ut||0)<=60;
+  return above<=2&&(p.rating||0)<=1.02&&(p.op||0)<=45&&(p.en||0)<=50;
 }
 function jokerProfile(s7){
   const sorted=[...s7].sort((a,b)=>b-a),below=s7.filter(v=>v<NM_COR.pisoMin).length;
@@ -350,25 +351,28 @@ function styleMatch(s6,s7,role="Rifler",p=null){
     const contra=STYLE_CONTRA[id]||{};let cd=0,cw=0;
     for(const k in contra){cd+=contra[k]*(s6[k]||0);cw+=contra[k];}
     score-=cw?cd/(100*cw)*.42:0;
-    score+=(STYLE_ROLE_FIT[role]?.[id]||0);
+    // MODELO NOVO: o playstyle é identidade INDEPENDENTE da função — sem STYLE_ROLE_FIT na classificação.
     scores.push({id,score});}
   scores.sort((a,b)=>b.score-a.score);
   const best=scores[0]||{id:"playmaker",score:0},second=scores[1]?.score||0;
   return {...best,second,margin:best.score-second,clarity:clamp((best.score-second)*5,0,1)};
 }
+// MODELO NOVO — OVR = base(receita do playstyle) + bônus de rating (uniforme). Função NÃO entra.
+//   score = média ponderada dos stats pela receita (0..100) → é a IDENTIDADE do jogador.
+//   base  = OVR_BASE + score×(OVR_SPAN/100)  → trava ~18.5 (ninguém é perfeito no estilo).
+//   bônus = max(0, rating − RAT_BASE) × RAT_K → a estrela (donk) sobe daqui pro teto 22.
 function nmOVR(p,role,forcedStyle=null){
   const s6=nmStats6(p,role),s7=stats7(p),match=forcedStyle?{id:STYLE_ID(forcedStyle),score:1,second:.75,margin:.25,clarity:.9}:styleMatch(s6,s7,role,p);
-  const style=match.id,rating=ratingScore(p.rating);let wR,statScore;
-  const roleRec=ROLE_PERFIL[role]||ROLE_PERFIL.Rifler,roleScore=dot(roleRec.ovr||{},p);
-  if(style==="joker"){wR=clamp(.65*(roleRec.wR??coringaWR())+.35*coringaWR(),.35,.72);const jp=jokerProfile(s7),top5=jp.sorted.slice(0,5),meanTop5=top5.reduce((a,b)=>a+b,0)/5,meanAll=s7.reduce((a,b)=>a+b,0)/7;const styleScore=.55*meanTop5+.35*jp.min5+.10*(meanAll-meanTop5);statScore=.58*roleScore+.42*styleScore;}
-  else{const rec=STYLE_RECIPE(style);wR=clamp(.65*(roleRec.wR??rec.wR)+.35*rec.wR,.35,.72);const styleScore=dot(rec.w,s6);statScore=.58*roleScore+.42*styleScore;}
-  const clarityAdj=style==="joker"?1.2:(match.clarity-.45)*2.2,roleDutyAdj=clamp((statScore-55)/18,-2.5,1.5);
-  const core=wR*rating+(1-wR)*statScore+clarityAdj+roleDutyAdj;
-  return {style,ovr:curvaOVR(core),wR,statScore,core,s6,matchScore:match.score,matchMargin:match.margin};
+  const style=match.id,C=CFG_AVALIACAO;
+  let score;
+  if(style==="joker"){const jp=jokerProfile(s7),top5=jp.sorted.slice(0,5);score=top5.reduce((a,b)=>a+b,0)/5;}
+  else{const rec=STYLE_RECIPE(style);score=dot(rec.w,s6);}
+  const base=C.OVR_BASE+(score/100)*C.OVR_SPAN;
+  const bonus=Math.max(0,(p.rating||0)-C.RAT_BASE)*C.RAT_K;
+  return {style,ovr:clipOVR(base+bonus),statScore:score,score,base,bonus,core:base+bonus,s6,matchScore:match.score,matchMargin:match.margin};
 }
-const IGL_CREDITO_SHARE=.55;
 function ovrUnificado(role,p,sec){const C=CFG_AVALIACAO,combatRole=role==="IGL"?(sec||"Rifler"):role,style=nmOVR(p,combatRole);
-  if(role==="IGL")return Math.min(C.IGL_TETO,Math.max(1,curvaOVR(style.core+C.IGL_CREDITO*IGL_CREDITO_SHARE)+(C.IGL_TITULO[p.colocacao]||0)));
+  // MODELO NOVO: o OVR vem SÓ do playstyle (a função é estratégia de time, não OVR). IGL não é mais especial.
   return Math.min(C.OVR_MAX,Math.max(C.OVR_MIN,style.ovr));}
 /* ┌─ PRISMA ─ arquétipo unificado ────────────────────────────────────┐ */
 // Playstyle é a identidade principal; sub-arquétipo é a tradução dessa identidade
@@ -426,8 +430,7 @@ function aplicarAvaliacaoContextual(p){
   const fallback=(!p.primario||!p.secundario)?classificar(p):null;
   const role=p.primario||fallback[0],sec=role==="IGL"?(p.secundario||fallback[1]):roleSecundarioSeguro(role,p.secundario||fallback[1],p);
   const combatRole=role==="IGL"?(sec||"Rifler"):role,style=nmOVR(p,combatRole);
-  let ovr=Math.min(role==="IGL"?CFG_AVALIACAO.IGL_TETO:CFG_AVALIACAO.OVR_MAX,Math.max(CFG_AVALIACAO.OVR_MIN,style.ovr));
-  if(role==="IGL")ovr=Math.min(CFG_AVALIACAO.IGL_TETO,Math.max(1,curvaOVR(style.core+CFG_AVALIACAO.IGL_CREDITO*IGL_CREDITO_SHARE)+(CFG_AVALIACAO.IGL_TITULO[p.colocacao]||0)));
+  const ovr=Math.min(CFG_AVALIACAO.OVR_MAX,Math.max(CFG_AVALIACAO.OVR_MIN,style.ovr)); // OVR só do playstyle (função não entra; IGL igual aos outros)
   const sub=subArquetipo(combatRole,p,style.style);
   return Object.assign(p,{ovr,combatRole,role1:role==="IGL"?"IGL":role,role2:role==="IGL"?null:sec,playstyle:style.style,style,sub,esteira:ESTEIRA[role]});
 }
