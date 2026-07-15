@@ -533,7 +533,7 @@ let E=null, DEF=null, POOLRAW=[], loadedIdx=null, poolBySlot=new Map();
 let teamIdx=0, simA=0, simB=1, simSeed=2026, simRuns=80, simMap="auto", lastMap=null, lastBatch=null, baseline=null;
 // estrutura nova: uma ferramenta por vez no canvas central (segmented control), jogador fixado no topo
 let centerMode="calibrar"; // calibrar | time | simular | editar | relatorio
-let calibTargetRole="", calibTargetRole2="", calibTargetStyle="", calibMode="ia", calibLast=null, calibRunning=false;
+let calibTargetRole="", calibTargetRole2="", calibTargetStyle="", calibTargetOvr="", calibMode="ia", calibLast=null, calibRunning=false;
 let nmOVR, STYLE_LABEL, PLAYSTYLE_IDS;
 let calibSession=null, reportFallbackText="";
 let searchSeedSalt=0; // 0 = comportamento de sempre; workers em paralelo usam um valor diferente cada pra nao repetir a mesma busca
@@ -553,7 +553,7 @@ async function carregarMotores(){
   const slice=linhas.slice(0,cut).join("\n");
   E=new Function(slice+"\nreturn {avaliarJogador,aplicarAvaliacaoContextual,curvaOVR,distribuirRoles,forcaTime,ovrUnificado,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,STYLE_ROLE_FIT,STYLE_CONTRA,MAPAS_POOL,MAPA_LADO,srand,simularMapa,forcaDoDia,TEAMS,nmOVR,roleAfinidade,NM_DEF,NM_COR,STYLE_LABEL,PLAYSTYLE_IDS,PLAYSTYLES,NM_AXES,STYLE_KEYS,SUBARQ};")();
   ["avaliarJogador","distribuirRoles","forcaTime","simularMapa","forcaDoDia","srand","TEAMS"].forEach(k=>{if(!E[k])throw new Error(`motor ausente: ${k}`);});
-  DEF={ROLE:clone(E.ROLE_PERFIL),NM:clone(E.NM_DEF),NM_COR:clone(E.NM_COR),CONTRA:clone(E.ROLE_CONTRA),IGL:clone(E.IGL_ROLE_AFIN),RULES:clone(E.ROLE_RULES),STYLE_FIT:clone(E.STYLE_ROLE_FIT),STYLE_CONTRA:clone(E.STYLE_CONTRA)};
+  DEF={ROLE:clone(E.ROLE_PERFIL),NM:clone(E.NM_DEF),NM_COR:clone(E.NM_COR),CONTRA:clone(E.ROLE_CONTRA),IGL:clone(E.IGL_ROLE_AFIN),RULES:clone(E.ROLE_RULES),STYLE_FIT:clone(E.STYLE_ROLE_FIT),STYLE_CONTRA:clone(E.STYLE_CONTRA),CFG:clone(E.CFG_AVALIACAO)};
   // aliases locais para as funções/dados importados do motor (evita E.xxx em toda a UI)
   ({nmOVR,STYLE_LABEL,PLAYSTYLE_IDS}=E);
   POOLRAW=[]; poolBySlot=new Map();
@@ -783,6 +783,7 @@ function changeLine(change){
   if(change.type==="rule")return`ROLE_RULES.${change.role}.${change.rule}.w: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
   if(change.type==="igl")return`IGL_ROLE_AFIN.${change.role}.${change.attr}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
   if(change.type==="cor")return`NM_COR.${change.key}: ${change.from.toFixed(1)} -> ${change.to.toFixed(1)}`;
+  if(change.type==="ovrparam")return`CFG_AVALIACAO.${change.key}: ${(+change.from).toFixed(2)} -> ${(+change.to).toFixed(2)}`;
   return`ROLE_PERFIL.${change.role}.afin.${change.attr}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
 }
 function buildCalibrationReport(){
@@ -894,6 +895,7 @@ function goalMet(player,goal){
   if(goal.r1&&goal.r1!==parts.r1)return false;
   if(goal.r2&&parts.r2!==goal.r2)return false;
   if(goal.style&&STYLE_LABEL(player.playstyle)!==goal.style)return false;
+  if(goal.ovr&&Math.round(player.ovr)!==goal.ovr)return false;
   return true;
 }
 function roleWeight(role,attr){
@@ -906,7 +908,7 @@ function setRoleWeight(role,attr,value){
   afin[attr]=Math.max(0,+value.toFixed(3));
 }
 function configSnapshot(){
-  return {role:clone(E.ROLE_PERFIL),nm:clone(E.NM_DEF),cor:clone(E.NM_COR),contra:clone(E.ROLE_CONTRA),igl:clone(E.IGL_ROLE_AFIN),rules:clone(E.ROLE_RULES),styleFit:clone(E.STYLE_ROLE_FIT),styleContra:clone(E.STYLE_CONTRA)};
+  return {role:clone(E.ROLE_PERFIL),nm:clone(E.NM_DEF),cor:clone(E.NM_COR),contra:clone(E.ROLE_CONTRA),igl:clone(E.IGL_ROLE_AFIN),rules:clone(E.ROLE_RULES),styleFit:clone(E.STYLE_ROLE_FIT),styleContra:clone(E.STYLE_CONTRA),cfg:clone(E.CFG_AVALIACAO)};
 }
 function restoreConfig(snapshot){
   copyInto(E.ROLE_PERFIL,snapshot.role);
@@ -917,6 +919,7 @@ function restoreConfig(snapshot){
   if(snapshot.rules)copyInto(E.ROLE_RULES,snapshot.rules);
   if(snapshot.styleFit)copyInto(E.STYLE_ROLE_FIT,snapshot.styleFit);
   if(snapshot.styleContra)copyInto(E.STYLE_CONTRA,snapshot.styleContra);
+  if(snapshot.cfg)copyInto(E.CFG_AVALIACAO,snapshot.cfg);
 }
 function ensureCalibSession(){
   if(!calibSession){
@@ -1002,6 +1005,7 @@ function resetWorkbench(){
 function applyCalibChanges(changes){
   changes.forEach(change=>{
     if(change.type==="nm"){const w=E.NM_DEF[change.style]?.w;if(w)w[change.axis]=change.to;}
+    else if(change.type==="ovrparam"){E.CFG_AVALIACAO[change.key]=change.to;} // botões do OVR novo (base/span/K)
     else if(change.type==="nmwr"){const rec=E.NM_DEF[change.style];if(rec)rec.wR=change.to;}
     else if(change.type==="stylefit"){
       if(!E.STYLE_ROLE_FIT[change.role])E.STYLE_ROLE_FIT[change.role]={};
@@ -1036,7 +1040,7 @@ function applyCalibChanges(changes){
   });
 }
 function changeKey(change){
-  return `${change.type||"afin"}:${change.role||change.style||change.styleId}:${change.attr||change.axis||"wr"}:${change.to.toFixed(3)}`;
+  return `${change.type||"afin"}:${change.role||change.style||change.styleId||change.key||""}:${change.attr||change.axis||"wr"}:${change.to.toFixed(3)}`;
 }
 function attrValue(player,attr){return player[attr]||0;}
 function candidateAttrsFor(role,player,limit=4){
@@ -1137,6 +1141,7 @@ function candidateLabel(changes){
     if(change.type==="rule")return`${change.role}.REGRA.${change.rule} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     if(change.type==="igl")return`IGL.${change.role}.${change.attr.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     if(change.type==="cor")return`COR.${change.key} ${change.from.toFixed(1)}->${change.to.toFixed(1)}`;
+    if(change.type==="ovrparam")return`OVR.${change.key} ${(+change.from).toFixed(2)}->${(+change.to).toFixed(2)}`;
     return`${change.role}.${change.attr.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
   }).join(" | ");
 }
@@ -1255,8 +1260,24 @@ function generateJokerCandidates(raw){
   });
   return dedupeCandidates(out.length?out:[[]]); // já é Coringa → conjunto vazio (no-op) mantém
 }
+// alvo de OVR: mexe nos parâmetros GLOBAIS do OVR novo (CFG_AVALIACAO) pra o jogador
+// atingir o OVR pedido. 3 alavancas — a busca escolhe a de menor colateral (ovrImpact):
+//   OVR_BASE (desloca todos igual) · OVR_SPAN (∝ score) · RAT_K (∝ rating; barato p/ estrela).
+function generateOvrCandidates(raw,targetOvr){
+  const ev=E.avaliarJogador({...raw}), st=ev.style||{};
+  const score=+(st.score??st.statScore??0), core=+(st.core??ev.ovr??0), C=E.CFG_AVALIACAO;
+  const d=targetOvr-core; // quanto o core (base+bônus, sem clip) precisa mover
+  if(Math.abs(d)<.35)return [[]]; // já está no alvo
+  const cl=(v,lo,hi)=>Math.max(lo,Math.min(hi,v)), out=[];
+  out.push([{type:"ovrparam",key:"OVR_BASE",from:C.OVR_BASE,to:+cl(C.OVR_BASE+d,0,16).toFixed(2)}]);
+  if(score>5)out.push([{type:"ovrparam",key:"OVR_SPAN",from:C.OVR_SPAN,to:+cl(C.OVR_SPAN+d*100/score,0,20).toFixed(2)}]);
+  const rex=(+raw.rating||0)-C.RAT_BASE;
+  if(rex>.05)out.push([{type:"ovrparam",key:"RAT_K",from:C.RAT_K,to:+cl(C.RAT_K+d/rex,0,25).toFixed(2)}]);
+  return dedupeCandidates(out);
+}
 function generateGoalCandidates(goal,current,raw,isIGL,opts){
   const all=[];
+  if(goal.ovr)all.push(...generateOvrCandidates(raw,goal.ovr));
   if(goal.style==="Coringa")all.push(...generateJokerCandidates(raw));
   const ro=opts?.role||{};
   const styleRoles=isIGL?[current.r2||"Rifler"]:ROLES;
@@ -1736,6 +1757,7 @@ function calibChangeRow(change){
   if(change.type==="rule")return two(`${change.role}.REGRA.${esc(change.rule)}`);
   if(change.type==="igl")return two(`IGL.${change.role}.${U(change.attr)}`);
   if(change.type==="cor")return two(`Coringa.${change.key}`);
+  if(change.type==="ovrparam")return two(`OVR.${esc(change.key)}`);
   return two(`${change.role}.${U(change.attr)}`);
 }
 function renderCalibResult(result,goal){
@@ -1764,9 +1786,10 @@ function renderCalibResult(result,goal){
   const checks=[
     goal&&goal.r1&&goal.r1!=="IGL"&&goal.r1===parts.r1,
     goal&&goal.r2&&goal.r2===parts.r2,
-    goal&&goal.style&&goal.style===STYLE_LABEL(result.after.playstyle)
+    goal&&goal.style&&goal.style===STYLE_LABEL(result.after.playstyle),
+    goal&&goal.ovr&&goal.ovr===Math.round(result.after.ovr)
   ];
-  const asked=[goal&&goal.r1&&goal.r1!=="IGL",goal&&goal.r2,goal&&goal.style].filter(Boolean).length;
+  const asked=[goal&&goal.r1&&goal.r1!=="IGL",goal&&goal.r2,goal&&goal.style,goal&&goal.ovr].filter(Boolean).length;
   const allMet=asked===0||checks.filter(Boolean).length>=asked;
   const pillCls=!allMet?"partial":highCost?"warn":"ok";
   const pillTxt=!allMet?"Parcial":highCost?"Atingido · alto custo":"Alvo atingido";
@@ -1784,7 +1807,9 @@ function renderCalibResult(result,goal){
   const srow=(lab,v)=>`<div class="cr-drow"><span class="cr-dlab">${lab}</span><span class="cr-stat">${esc(v)}</span></div>`;
   const roleRow=bRole!==aRole?drow("Função",bRole,aRole):srow("Função",aRole);
   const styleRow=bStyle!==aStyle?drow("Estilo",bStyle,aStyle):srow("Estilo",aStyle);
-  const deltaBlock=`<div class="cr-delta">${roleRow}${styleRow}</div>`;
+  const bOvr=result.before.ovr,aOvr=result.after.ovr;
+  const ovrRow=((goal&&goal.ovr)||bOvr!==aOvr)?(bOvr!==aOvr?drow("OVR",bOvr,aOvr):srow("OVR",aOvr)):"";
+  const deltaBlock=`<div class="cr-delta">${roleRow}${styleRow}${ovrRow}</div>`;
   // — custo em palavras + aviso quando alto —
   const costTxt=col===0?"só o alvo muda":`${col} ${col===1?"jogador muda junto":"jogadores mudam junto"}`;
   const costLine=`<div class="cr-cost"><span class="cr-clab">Custo</span><span class="cr-sev ${sevCls}">${sev}</span><span class="cr-ctxt">${costTxt}</span></div>`
@@ -1853,7 +1878,7 @@ function ensureCalibWorkers(){
 async function runCalibrationParallel(goal,onProgress){
   // Coringa depende do limiar global (poucos candidatos) — a busca direta resolve; os workers
   // (partição aleatória) não cobrem esse caso bem, então roda na thread principal.
-  if(goal.style==="Coringa")return await findCalibration(goal,onProgress);
+  if(goal.style==="Coringa"||goal.ovr)return await findCalibration(goal,onProgress);
   try{
     const strategy=CALIB_STRATEGIES[calibMode]||CALIB_STRATEGIES.ia;
     const workers=calibMode==="ia"?ensureCalibWorkers():null;
@@ -1923,7 +1948,7 @@ function buildCalibrator(){
     +`<option value="Coringa" ${calibTargetStyle==="Coringa"?"selected":""}>Coringa</option>`;
   const _selDesc=calibTargetStyle?describeStyle(styleIdOf(calibTargetStyle)):"";
   const selStyleDesc=_selDesc?`<div class="calib-styledesc"><b>${esc(calibTargetStyle)}</b> · ${esc(_selDesc)}</div>`:"";
-  const curGoal={r1:isIGL?"IGL":calibTargetRole,r2:calibTargetRole2,style:calibTargetStyle};
+  const curGoal={r1:isIGL?"IGL":calibTargetRole,r2:calibTargetRole2,style:calibTargetStyle,ovr:calibTargetOvr?+calibTargetOvr:0};
   const role1Html=isIGL
     ?`<div class="calib-field"><label>Role1</label><select id="calibRole" disabled><option selected>IGL</option></select></div>`
     :`<div class="calib-field"><label>Role1</label><select id="calibRole">${anyRoleOptions(calibTargetRole)}</select></div>`;
@@ -1935,8 +1960,9 @@ function buildCalibrator(){
   const tR1=isIGL?"IGL":(calibTargetRole?esc(calibTargetRole):freeTag);
   const tR2=calibTargetRole2?esc(calibTargetRole2):freeTag;
   const tStyle=calibTargetStyle?esc(calibTargetStyle):freeTag;
-  const targetText=`${tR1} / ${tR2} · ${tStyle}`;
-  const hasTarget=!!(calibTargetRole||calibTargetRole2||calibTargetStyle);
+  const tOvr=calibTargetOvr?`OVR ${esc(calibTargetOvr)}`:freeTag;
+  const targetText=`${tR1} / ${tR2} · ${tStyle} · ${tOvr}`;
+  const hasTarget=!!(calibTargetRole||calibTargetRole2||calibTargetStyle||calibTargetOvr);
   const changed=hasTarget;
   // o jogador atual já está fixado no topo (pctx); aqui mostramos só o ALVO ao vivo quando escolhido
   const livePreview=hasTarget?`<div class="calib-live">
@@ -1948,6 +1974,7 @@ function buildCalibrator(){
       ${role1Html}
       ${role2Html}
       <div class="calib-field"><label>Playstyle</label><select id="calibStyle">${styleOptions}</select></div>
+      <div class="calib-field"><label>OVR</label><input type="number" id="calibOvr" min="5" max="22" step="1" placeholder="Qualquer" value="${esc(calibTargetOvr)}"></div>
       <div class="calib-field"><label>Modo</label><select id="calibMode">${modeOptions}</select></div>
       <button class="btn accent" id="calibSuggest">Sugerir ajuste</button>
     </div>
@@ -1959,11 +1986,12 @@ function buildCalibrator(){
   if(!isIGL)document.getElementById("calibRole").onchange=function(){calibTargetRole=this.value;calibLast=null;buildCalibrator();};
   document.getElementById("calibRole2").onchange=function(){calibTargetRole2=this.value;calibLast=null;buildCalibrator();};
   document.getElementById("calibStyle").onchange=function(){calibTargetStyle=this.value;calibLast=null;buildCalibrator();};
+  document.getElementById("calibOvr").onchange=function(){const v=this.value?Math.max(5,Math.min(22,Math.round(+this.value))):"";calibTargetOvr=v===""?"":String(v);calibLast=null;buildCalibrator();};
   document.getElementById("calibMode").onchange=function(){calibMode=this.value;calibLast=null;buildCalibrator();};
   document.getElementById("calibSuggest").onclick=async()=>{
     if(calibRunning)return;
-    const goal={r1:isIGL?"IGL":calibTargetRole,r2:calibTargetRole2,style:calibTargetStyle};
-    if(!goal.r1&&!goal.r2&&!goal.style){toast("Selecione ao menos um alvo.");return;}
+    const goal={r1:isIGL?"IGL":calibTargetRole,r2:calibTargetRole2,style:calibTargetStyle,ovr:calibTargetOvr?+calibTargetOvr:0};
+    if(!goal.r1&&!goal.r2&&!goal.style&&!goal.ovr){toast("Selecione ao menos um alvo.");return;}
     const resultBox=document.getElementById("calibResult");
     calibRunning=true;
     document.querySelectorAll("#calibbox button,#calibbox select").forEach(el=>{el.disabled=true;});
@@ -1981,7 +2009,7 @@ function buildCalibrator(){
       try{buildCalibrator();}catch(err){console.error(err);}
     }
   };
-  document.getElementById("calibReset").onclick=()=>{copyInto(E.ROLE_PERFIL,DEF.ROLE);copyInto(E.NM_DEF,DEF.NM);copyInto(E.NM_COR,DEF.NM_COR);if(DEF.CONTRA)copyInto(E.ROLE_CONTRA,DEF.CONTRA);if(DEF.IGL)copyInto(E.IGL_ROLE_AFIN,DEF.IGL);if(DEF.RULES)copyInto(E.ROLE_RULES,DEF.RULES);if(DEF.STYLE_FIT)copyInto(E.STYLE_ROLE_FIT,DEF.STYLE_FIT);if(DEF.STYLE_CONTRA)copyInto(E.STYLE_CONTRA,DEF.STYLE_CONTRA);calibLast=null;invalidateAllTeamEval();refresh("all");};
+  document.getElementById("calibReset").onclick=()=>{copyInto(E.ROLE_PERFIL,DEF.ROLE);copyInto(E.NM_DEF,DEF.NM);copyInto(E.NM_COR,DEF.NM_COR);if(DEF.CONTRA)copyInto(E.ROLE_CONTRA,DEF.CONTRA);if(DEF.IGL)copyInto(E.IGL_ROLE_AFIN,DEF.IGL);if(DEF.RULES)copyInto(E.ROLE_RULES,DEF.RULES);if(DEF.STYLE_FIT)copyInto(E.STYLE_ROLE_FIT,DEF.STYLE_FIT);if(DEF.STYLE_CONTRA)copyInto(E.STYLE_CONTRA,DEF.STYLE_CONTRA);if(DEF.CFG)copyInto(E.CFG_AVALIACAO,DEF.CFG);calibLast=null;invalidateAllTeamEval();refresh("all");};
   const apply=document.getElementById("calibApply");
   if(apply)apply.onclick=()=>{if(calibLast&&calibLast.ok){const applied=calibLast;applyCalibChanges(applied.changes);registerCalibrationApplication(applied);calibLast=null;invalidateAllTeamEval();refresh("all");toast("Sugestão registrada na bancada");}};
   const discard=document.getElementById("calibDiscard");
