@@ -775,12 +775,8 @@ function renderImpactPanel(){
 }
 function changeLine(change){
   if(change.type==="nm")return`NM_DEF.${change.style}.w.${change.axis}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
-  if(change.type==="nmwr")return`NM_DEF.${change.style}.wR: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
-  if(change.type==="stylefit")return`STYLE_ROLE_FIT.${change.role}.${change.styleId}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
   if(change.type==="stylecontra")return`STYLE_CONTRA.${change.styleId}.${change.axis}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
   if(change.type==="contra")return`ROLE_CONTRA.${change.role}.${change.attr}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
-  if(change.type==="ovr")return`ROLE_PERFIL.${change.role}.ovr.${change.attr}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
-  if(change.type==="wr")return`ROLE_PERFIL.${change.role}.wR: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
   if(change.type==="rule")return`ROLE_RULES.${change.role}.${change.rule}.w: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
   if(change.type==="igl")return`IGL_ROLE_AFIN.${change.role}.${change.attr}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
   if(change.type==="cor")return`NM_COR.${change.key}: ${change.from.toFixed(1)} -> ${change.to.toFixed(1)}`;
@@ -1009,11 +1005,6 @@ function applyCalibChanges(changes){
   changes.forEach(change=>{
     if(change.type==="nm"){const w=E.NM_DEF[change.style]?.w;if(w)w[change.axis]=change.to;}
     else if(change.type==="ovrparam"){E.CFG_AVALIACAO[change.key]=change.to;} // botões do OVR novo (base/span/K)
-    else if(change.type==="nmwr"){const rec=E.NM_DEF[change.style];if(rec)rec.wR=change.to;}
-    else if(change.type==="stylefit"){
-      if(!E.STYLE_ROLE_FIT[change.role])E.STYLE_ROLE_FIT[change.role]={};
-      E.STYLE_ROLE_FIT[change.role][change.styleId]=change.to;
-    }
     else if(change.type==="stylecontra"){
       if(!E.STYLE_CONTRA[change.styleId])E.STYLE_CONTRA[change.styleId]={};
       E.STYLE_CONTRA[change.styleId][change.axis]=change.to;
@@ -1021,14 +1012,6 @@ function applyCalibChanges(changes){
     else if(change.type==="contra"){
       if(!E.ROLE_CONTRA[change.role])E.ROLE_CONTRA[change.role]={};
       E.ROLE_CONTRA[change.role][change.attr]=change.to;
-    }
-    else if(change.type==="ovr"){
-      const w=E.ROLE_PERFIL[change.role]?.ovr;
-      if(w)w[change.attr]=change.to;
-    }
-    else if(change.type==="wr"){
-      const rec=E.ROLE_PERFIL[change.role];
-      if(rec)rec.wR=change.to;
     }
     else if(change.type==="rule"){
       const rule=E.ROLE_RULES?.[change.role]?.[change.rule];
@@ -1066,17 +1049,8 @@ function makeNmChange(style,axis,delta){
   const from=w[axis]||0;
   return {type:"nm",style,axis,from,to:Math.max(.01,+(from+delta).toFixed(3))};
 }
-function makeNmWrChange(style,delta){
-  const rec=E.NM_DEF[style]||{},from=+(rec.wR||0);
-  return {type:"nmwr",style,from,to:Math.max(.2,Math.min(.8,+(from+delta).toFixed(3)))};
-}
 function styleIdFromLabel(label){
   return E.PLAYSTYLE_IDS.find(id=>E.STYLE_LABEL(id)===label||id===label)||label;
-}
-function makeStyleFitChange(role,styleId,delta){
-  const fit=E.STYLE_ROLE_FIT?.[role]||{};
-  const from=+(fit[styleId]||0);
-  return {type:"stylefit",role,styleId,from,to:Math.max(-.5,Math.min(.5,+(from+delta).toFixed(3)))};
 }
 function makeStyleContraChange(styleId,axis,delta){
   const contra=E.STYLE_CONTRA?.[styleId]||{};
@@ -1087,15 +1061,6 @@ function roleContraWeight(role,attr){return +(E.ROLE_CONTRA[role]?.[attr]||0);}
 function makeContraChange(role,attr,delta){
   const from=roleContraWeight(role,attr);
   return {type:"contra",role,attr,from,to:Math.max(0,+(from+delta).toFixed(3))};
-}
-function roleOvrWeight(role,attr){return +(E.ROLE_PERFIL[role]?.ovr?.[attr]||0);}
-function makeOvrChange(role,attr,delta){
-  const from=roleOvrWeight(role,attr);
-  return {type:"ovr",role,attr,from,to:Math.max(0,+(from+delta).toFixed(3))};
-}
-function makeRoleWrChange(role,delta){
-  const rec=E.ROLE_PERFIL[role]||{}, from=+(rec.wR||0);
-  return {type:"wr",role,from,to:Math.max(.05,Math.min(.9,+(from+delta).toFixed(3)))};
 }
 function roleRuleWeight(role,rule){return +(E.ROLE_RULES?.[role]?.[rule]?.w||0);}
 function makeRuleChange(role,rule,delta){
@@ -1114,12 +1079,10 @@ function normalizedStyleProfile(s6){
   return out;
 }
 function deltasFor(max){
-  const BASE=[.03,.06,.09,.12,.16,.22];
-  const MORE=[];
-  if(max>.22)MORE.push(.30,.40);
-  if(max>.40)MORE.push(.55,.75);
-  if(max>.75)MORE.push(1.0);
-  return [...BASE,...MORE].filter(d=>d<=max);
+  // [7] escada única; cada fase maior destrava degraus maiores. Antes empacava em 1.0, deixando
+  // as fases 1.25 e 1.7 com candidatos determinísticos IDÊNTICOS (a 6ª fase só refazia a 5ª).
+  const RUNGS=[.03,.06,.09,.12,.16,.22,.30,.40,.55,.75,1.0,1.3,1.7];
+  return RUNGS.filter(d=>d<=max);
 }
 function dedupeCandidates(arr){
   const seen=new Set();
@@ -1139,12 +1102,8 @@ function computeAffinityGap(player,target,current){
 function candidateLabel(changes){
   return changes.map(change=>{
     if(change.type==="nm")return`NM.${change.axis.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
-    if(change.type==="nmwr")return`NM.${change.style}.wR ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
-    if(change.type==="stylefit")return`FIT.${change.role}.${change.styleId} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     if(change.type==="stylecontra")return`SCONTRA.${change.styleId}.${change.axis.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     if(change.type==="contra")return`${change.role}.CONTRA.${change.attr.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
-    if(change.type==="ovr")return`${change.role}.OVR.${change.attr.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
-    if(change.type==="wr")return`${change.role}.wR ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     if(change.type==="rule")return`${change.role}.REGRA.${change.rule} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     if(change.type==="igl")return`IGL.${change.role}.${change.attr.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     if(change.type==="cor")return`COR.${change.key} ${change.from.toFixed(1)}->${change.to.toFixed(1)}`;
@@ -1206,7 +1165,6 @@ function generateStyleCandidates(targetStyle,raw,role,goalRole1){
   const recipe=E.NM_DEF[targetStyle];
   if(!recipe||!s6)return[];
   const targetId=styleIdFromLabel(targetStyle);
-  const currentId=nm.style;
   const keys=Object.keys(recipe.w);
   const profile=normalizedStyleProfile(s6);
   const axes=keys
@@ -1216,7 +1174,7 @@ function generateStyleCandidates(targetStyle,raw,role,goalRole1){
   const statAxes=Object.keys(s6).sort((a,b)=>(s6[b]||0)-(s6[a]||0));
   const contraAxes=Object.keys(E.STYLE_CONTRA?.[targetId]||{}).sort((a,b)=>(s6[b]||0)-(s6[a]||0));
   const deltas=[.02,.04,.07,.10,.14];
-  const fitDeltas=[.03,.06,.09,.12,.16];
+  const contraDeltas=[.03,.06,.09,.12,.16];
   const out=[];
   deltas.forEach(delta=>{
     const strongest=axes.filter(axis=>axis.s>=axis.w*.72).slice(0,3);
@@ -1234,12 +1192,11 @@ function generateStyleCandidates(targetStyle,raw,role,goalRole1){
       if(!keys.includes(axis))out.push([makeNmChange(targetStyle,axis,delta*.5)]);
     });
   });
-  fitDeltas.forEach(delta=>{
-    out.push([makeStyleFitChange(evalRole,targetId,delta)]);
-    if(currentId&&currentId!==targetId)out.push([makeStyleFitChange(evalRole,targetId,delta),makeStyleFitChange(evalRole,currentId,-delta*.45)]);
+  // [1] STYLE_ROLE_FIT saiu da classificação de estilo (modelo novo) → só STYLE_CONTRA empurra o alvo.
+  contraDeltas.forEach(delta=>{
     contraAxes.slice(0,3).forEach(axis=>{
       out.push([makeStyleContraChange(targetId,axis,-delta*.6)]);
-      out.push([makeStyleFitChange(evalRole,targetId,delta*.75),makeStyleContraChange(targetId,axis,-delta*.35)]);
+      out.push([makeStyleContraChange(targetId,axis,-delta*.35)]);
     });
   });
   const seen=new Set();
@@ -1346,7 +1303,6 @@ function roleLeverBank(target,current,raw,opts){
     const v=attrValue(raw,attr), weight=(attrLimit-idx)*Math.max(8,v);
     levers.push({weight,make:d=>makeChange(target,attr,d),label:`${target}.${attr}+`});
     if(roleContraWeight(target,attr)>0)levers.push({weight:weight*.7,make:d=>makeContraChange(target,attr,-d*.35),label:`${target}.contra.${attr}-`});
-    levers.push({weight:weight*.35,make:d=>makeOvrChange(target,attr,d*.25),label:`${target}.ovr.${attr}+`});
   });
   currentAttrs.forEach((attr,idx)=>{
     const v=attrValue(raw,attr), weight=(attrLimit-idx)*Math.max(8,v);
@@ -1358,8 +1314,6 @@ function roleLeverBank(target,current,raw,opts){
       if(roleWeight(role,attr)>0)levers.push({weight:Math.max(1,attrValue(raw,attr))*.22,make:d=>makeReduce(role,attr,d*.28),label:`${role}.${attr}-`});
     });
   });
-  levers.push({weight:16,make:d=>makeRoleWrChange(target,-d*.08),label:`${target}.wR-`});
-  if(current&&current!==target)levers.push({weight:12,make:d=>makeRoleWrChange(current,d*.06),label:`${current}.wR+`});
   if(raw.isIGL){
     targetAttrs.forEach((attr,idx)=>{
       const v=attrValue(raw,attr), weight=(attrLimit-idx)*Math.max(8,v)*1.4;
@@ -1398,15 +1352,13 @@ function styleLeverBank(targetStyleLabel,raw,evalRole,opts){
     keys.forEach(k=>levers.push({weight:Math.max(1,(s6[k]||0)),make:d=>makeNmChange(targetStyleLabel,k,d),label:`NM.${targetStyleLabel}.${k}+`}));
     Object.keys(s6).sort((a,b)=>(s6[b]||0)-(s6[a]||0)).slice(0,3).forEach(k=>{
       if(!keys.includes(k))levers.push({weight:Math.max(1,(s6[k]||0))*.6,make:d=>makeNmChange(targetStyleLabel,k,d*.6),label:`NM.${targetStyleLabel}.${k}+`});});
-    levers.push({weight:14,make:d=>makeNmWrChange(targetStyleLabel,d*.1),label:`NM.${targetStyleLabel}.wR`});
   }
-  levers.push({weight:20,make:d=>makeStyleFitChange(evalRole,targetId,d),label:`FIT.${evalRole}.${targetId}+`});
+  // STYLE_ROLE_FIT e NM_DEF.wR não entram na classificação de estilo (modelo novo) → só a receita (w) e STYLE_CONTRA movem o alvo.
   Object.keys(E.STYLE_CONTRA?.[targetId]||{}).sort((a,b)=>(s6[b]||0)-(s6[a]||0)).slice(0,3).forEach(k=>
     levers.push({weight:Math.max(1,(s6[k]||0))*.5,make:d=>makeStyleContraChange(targetId,k,-d*.6),label:`SCONTRA.${targetId}.${k}-`}));
   if(currentId&&currentId!==targetId){
     Object.keys(s6).sort((a,b)=>(s6[b]||0)-(s6[a]||0)).slice(0,3).forEach(k=>
       levers.push({weight:Math.max(1,(s6[k]||0))*.35,make:d=>makeStyleContraChange(currentId,k,d*.4),label:`SCONTRA.${currentId}.${k}+`}));
-    levers.push({weight:12,make:d=>makeStyleFitChange(evalRole,currentId,-d*.6),label:`FIT.${evalRole}.${currentId}-`});
   }
   if(opts?.sensitize)sensitizeLevers(levers,raw,()=>goalMetric(raw,{style:targetStyleLabel}));
   return levers;
@@ -1426,7 +1378,6 @@ function ovrLeverBank(raw,targetOvr,opts){
       levers.push({weight:110,make:x=>makeNmChange(styleLabel,k,dir*x*.6),label:`NM.${styleLabel}.${k}(surg)`}));
     keys.slice().sort((a,b)=>(s6[a]||0)-(s6[b]||0)).slice(0,2).forEach(k=>
       levers.push({weight:80,make:x=>makeNmChange(styleLabel,k,-dir*x*.4),label:`NM.${styleLabel}.${k}-(surg)`}));
-    levers.push({weight:70,make:x=>makeNmWrChange(styleLabel,dir*x*.15),label:`NM.${styleLabel}.wR(surg)`});
   }
   levers.push({weight:6,make:x=>({type:"ovrparam",key:"OVR_BASE",from:C.OVR_BASE,to:+Math.max(0,Math.min(16,C.OVR_BASE+dir*x*3)).toFixed(2)}),label:"OVR_BASE"});
   levers.push({weight:14,make:x=>({type:"ovrparam",key:"OVR_SPAN",from:C.OVR_SPAN,to:+Math.max(0,Math.min(20,C.OVR_SPAN+dir*x*3)).toFixed(2)}),label:"OVR_SPAN"});
@@ -1668,15 +1619,17 @@ async function findCalibration(goal,onProgress=null){
     searchStats.tested++;
     restoreConfig(beforeConfig);
     applyCalibChanges(changes);
-    const after=mainPlayer(), now=impactSnapshot(), diff=diffSnapshots(proposalBase,now);
-    const cumulativeDiff=diffSnapshots(cumulativeBase,now);
+    const after=mainPlayer(); // [6] avalia só o alvo (1 jogador); o snapshot da liga inteira é caro
     const hit=goalMet(after,goal);
+    const roleHit=hasRoleGoal&&goalMet(after,{r1:goal.r1,r2:goal.r2});
+    if(!hit&&!roleHit)return; // candidato irrelevante: nem bate o alvo nem o sub-alvo de função → não paga o snapshot
+    const now=impactSnapshot(), diff=diffSnapshots(proposalBase,now), cumulativeDiff=diffSnapshots(cumulativeBase,now);
     const result=buildCandidateResult({changes,ok:hit,before,after,diff,cumulativeDiff,goalKey,strategy,searchStats,roleTarget,raw,label,phase:phaseIndex});
     if(hit){
       searchStats.valid++;
       if(compareCalibration(result,best,strategy)<0)best=result;
     }
-    if(hasRoleGoal&&goalMet(after,{r1:goal.r1,r2:goal.r2})&&compareCalibration(result,bestRoleBase,strategy)<0)bestRoleBase=result;
+    if(roleHit&&compareCalibration(result,bestRoleBase,strategy)<0)bestRoleBase=result;
   };
   const tryRefinement=async sol=>{
     if(!sol||!sol.changes||!sol.changes.length)return sol;
@@ -1686,10 +1639,10 @@ async function findCalibration(goal,onProgress=null){
       restoreConfig(beforeConfig);
       applyCalibChanges(changes);
       searchStats.tested++;
-      const after=mainPlayer(), now=impactSnapshot(), diff=diffSnapshots(proposalBase,now);
-      if(!goalMet(after,goal))return null;
+      const after=mainPlayer();
+      if(!goalMet(after,goal))return null; // [6] checa o alvo (1 jogador) antes de pagar o snapshot da liga
       searchStats.valid++;
-      const cumulativeDiff=diffSnapshots(cumulativeBase,now);
+      const now=impactSnapshot(), diff=diffSnapshots(proposalBase,now), cumulativeDiff=diffSnapshots(cumulativeBase,now);
       return buildCandidateResult({changes,ok:true,before,after,diff,cumulativeDiff,goalKey,strategy,searchStats,roleTarget,raw,label:null,phase:refined.phase});
     };
     try{
@@ -1839,12 +1792,8 @@ function calibChangeRow(change){
   const two=(a,b)=>`<div class="calib-change"><b>${a}</b><span>${change.from.toFixed(2)} → ${change.to.toFixed(2)}</span></div>`;
   const U=s=>String(s).toUpperCase();
   if(change.type==="nm")return two(`NM.${U(change.axis)}`);
-  if(change.type==="nmwr")return two(`NM.${esc(change.style)}.wR`);
-  if(change.type==="stylefit")return two(`FIT.${change.role}.${esc(change.styleId)}`);
   if(change.type==="stylecontra")return two(`SCONTRA.${esc(change.styleId)}.${U(change.axis)}`);
   if(change.type==="contra")return two(`${change.role}.CONTRA.${U(change.attr)}`);
-  if(change.type==="ovr")return two(`${change.role}.OVR.${U(change.attr)}`);
-  if(change.type==="wr")return two(`${change.role}.wR`);
   if(change.type==="rule")return two(`${change.role}.REGRA.${esc(change.rule)}`);
   if(change.type==="igl")return two(`IGL.${change.role}.${U(change.attr)}`);
   if(change.type==="cor")return two(`Coringa.${change.key}`);
