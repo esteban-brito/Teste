@@ -66,9 +66,9 @@ const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22, // ⚙ balanceamento do PRISMA (afini
   RAT_LO:.85,RAT_HI:1.50,RAT_CAP:1.25,       // mapa do rating HLTV -> 0..125 (sem cliffs)
   OVR_BASE:8.5,OVR_SPAN:10,RAT_BASE:1.0,RAT_K:8, // MODELO NOVO: OVR = base(receita do playstyle) + bônus(rating) uniforme
   FLOOR:9,SPAN:13.7,K:.0495,MID:55,          // core -> OVR (logística). teto um pouco mais seletivo: o 22 exige elite clara (rating ~1.6+), não satura cedo; MID recentrado mantém o miolo do elenco intacto
-  IGL_RAT_K:.80,IGL_CREDITO:9,               // IGL: rating descontado (sacrifica stats) + crédito de liderança intrínseco
-  IGL_TITULO:{Campeao:3,Final:2,Top4:1,Top8:0,Grupos:0}, // liderança comprovada por título soma OVR (só p/ IGL)
-  IGL_TETO:20,                               // nenhum IGL passa de 20 (o jogo é decidido pelos fraggers)
+  IGL_CREDIT_OVR:2,                          // IGL: crédito fixo de liderança em PONTOS DE OVR (o IGL sacrifica stats individuais)
+  IGL_TITULO:{Campeao:2,Final:1,Top4:1,Top8:0,Grupos:0}, // bônus por título, em pontos de OVR (só p/ IGL)
+  IGL_TETO:21,                               // teto do IGL: um degrau abaixo do 22 dos fraggers (o jogo é decidido por eles)
   VERS_REF:40,VERS_W:.4,VERS_CAP:3,VERS_FADE:60,VERS_SPAN:14, // "Coringa": polivalência (piso alto em TODOS os atributos) resgata quem é subvalorizado; desvanece conforme o core sobe (não empurra quem já é bem avaliado); especialista recebe 0
   SUP_FRAG:72,                               // fp acima disso: não é Support role 1, é Lurker de utilidade (frag + util)
   CORINGA_PISO:42,CORINGA_SPREAD:24,         // sub "Coringa": piso alto E sem especialidade dominante (spread baixo) = polivalente
@@ -372,7 +372,8 @@ function nmOVR(p,role,forcedStyle=null){
   return {style,ovr:clipOVR(base+bonus),statScore:score,score,base,bonus,core:base+bonus,s6,matchScore:match.score,matchMargin:match.margin};
 }
 function ovrUnificado(role,p,sec){const C=CFG_AVALIACAO,combatRole=role==="IGL"?(sec||"Rifler"):role,style=nmOVR(p,combatRole);
-  // MODELO NOVO: o OVR vem SÓ do playstyle (a função é estratégia de time, não OVR). IGL não é mais especial.
+  // OVR vem do playstyle. Exceção CURADA do IGL: crédito de liderança + bônus de título por cima (teto próprio).
+  if(role==="IGL")return Math.min(C.IGL_TETO,Math.max(C.OVR_MIN,clipOVR(style.core+C.IGL_CREDIT_OVR+(C.IGL_TITULO[p.colocacao]||0))));
   return Math.min(C.OVR_MAX,Math.max(C.OVR_MIN,style.ovr));}
 /* ┌─ PRISMA ─ arquétipo unificado ────────────────────────────────────┐ */
 // Playstyle é a identidade principal; sub-arquétipo é a tradução dessa identidade
@@ -429,8 +430,10 @@ const TIER_STAR=["kennyS","m0NESY","KSCERATO","blameF","shox","XANTARES","JW","r
 function aplicarAvaliacaoContextual(p){
   const fallback=(!p.primario||!p.secundario)?classificar(p):null;
   const role=p.primario||fallback[0],sec=role==="IGL"?(p.secundario||fallback[1]):roleSecundarioSeguro(role,p.secundario||fallback[1],p);
-  const combatRole=role==="IGL"?(sec||"Rifler"):role,style=nmOVR(p,combatRole);
-  const ovr=Math.min(CFG_AVALIACAO.OVR_MAX,Math.max(CFG_AVALIACAO.OVR_MIN,style.ovr)); // OVR só do playstyle (função não entra; IGL igual aos outros)
+  const combatRole=role==="IGL"?(sec||"Rifler"):role,style=nmOVR(p,combatRole),C=CFG_AVALIACAO;
+  const ovr=role==="IGL"
+    ?Math.min(C.IGL_TETO,Math.max(C.OVR_MIN,clipOVR(style.core+C.IGL_CREDIT_OVR+(C.IGL_TITULO[p.colocacao]||0)))) // IGL: playstyle + liderança + título (teto 21)
+    :Math.min(C.OVR_MAX,Math.max(C.OVR_MIN,style.ovr)); // demais: só o playstyle
   const sub=subArquetipo(combatRole,p,style.style);
   return Object.assign(p,{ovr,combatRole,role1:role==="IGL"?"IGL":role,role2:role==="IGL"?null:sec,playstyle:style.style,style,sub,esteira:ESTEIRA[role]});
 }
