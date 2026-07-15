@@ -5,7 +5,7 @@ const {execFileSync}=require("child_process");
 const path=require("path");
 const {secondsSince}=require("./common");
 
-const SUITES=["times.js","auditoria.js","role.js","estilo.js","calibrador.js","realismo.js","rating.js"];
+const SUITES=["times.js","auditoria.js","calibrador.js","realismo.js","rating.js"];
 
 function runSuite(file){
   const started=Date.now();

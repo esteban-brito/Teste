@@ -172,13 +172,31 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .risk{font-size:var(--fs-sm);border-radius:var(--radius-pill);padding:5px 11px;background:var(--panel-soft);color:var(--neutral)}
 .risk.bad{color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,var(--panel-soft))}
 .risk.good{color:var(--win);background:color-mix(in srgb,var(--win) 15%,var(--panel-soft))}
-/* aba Fidelidade (funcoes reais) */
-.fid-list{display:flex;flex-direction:column;gap:6px;margin-top:12px}
-.fid-row{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;background:var(--panel-soft);border-radius:var(--radius);padding:8px 11px}
-.fid-who{font-size:var(--fs-base)} .fid-who .dim{color:var(--dim);font-weight:400;font-size:var(--fs-sm);margin-left:4px}
-.fid-meta{color:var(--dim);font-size:var(--fs-s);margin-top:2px}
-.fid-tag{font-size:var(--fs-2xs);font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--dim)}
-.fid-tag.bad{color:var(--warn)}
+/* aba Guia — Funções & Estilos (referência viva dos pesos do motor) */
+.guia-intro{font-size:var(--fs-s);color:var(--dim);line-height:1.5;margin-bottom:16px}
+.guia-intro b{color:var(--neutral)}
+.guia-sec{margin-bottom:22px}
+.guia-sec-h{font-size:var(--fs-sm);font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);margin:0 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.guia-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:10px}
+.guia-card{background:var(--panel-soft);border:1px solid var(--line-soft);border-radius:var(--radius);padding:12px 13px}
+.guia-card-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:4px}
+.guia-name{font-size:var(--fs-base);font-weight:800;color:var(--neutral)}
+.guia-kind{font-size:var(--fs-2xs);font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--dim)}
+.guia-desc{font-size:var(--fs-s);color:var(--dim);line-height:1.4;margin-bottom:10px}
+.guia-block{margin-top:9px}
+.guia-block-h{font-size:var(--fs-2xs);font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:5px}
+.guia-bars{display:flex;flex-direction:column;gap:4px}
+.guia-bar{display:grid;grid-template-columns:64px 1fr 30px;align-items:center;gap:8px}
+.guia-bar-l{font-size:var(--fs-xs);color:var(--neutral)}
+.guia-track{height:6px;border-radius:99px;background:color-mix(in srgb,var(--neutral) 12%,transparent);overflow:hidden}
+.guia-fill{height:100%;border-radius:99px;background:var(--accent)}
+.guia-bar-v{font-size:var(--fs-xs);color:var(--dim);text-align:right;font-variant-numeric:tabular-nums}
+.guia-chips{display:flex;flex-wrap:wrap;gap:5px}
+.guia-chip{font-size:var(--fs-xs);padding:2px 8px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--neutral) 8%,transparent);color:var(--neutral);white-space:nowrap}
+.guia-chip .v{color:var(--dim);font-variant-numeric:tabular-nums;margin-left:3px}
+.guia-chip.pos{background:color-mix(in srgb,var(--win) 16%,transparent)}
+.guia-chip.neg{background:color-mix(in srgb,var(--warn) 15%,transparent)}
+.guia-wr{font-size:var(--fs-xs);color:var(--dim)} .guia-wr b{color:var(--neutral)}
 
 /* ============================================================
    SIMULADOR DE MAPA / PARTIDA
@@ -526,7 +544,6 @@ let centerMode="calibrar"; // calibrar | time | simular | editar | relatorio
 let calibTargetRole="", calibTargetRole2="", calibTargetStyle="", calibMode="ia", calibLast=null, calibRunning=false;
 let nmOVR, STYLE_LABEL, PLAYSTYLE_IDS;
 let calibSession=null, reportFallbackText="";
-let ROLE_CORPUS=null; // corpus de funcoes reais (bancada/role-corpus.json); null = nao carregou
 let searchSeedSalt=0; // 0 = comportamento de sempre; workers em paralelo usam um valor diferente cada pra nao repetir a mesma busca
 const teamEvalCache=new Map();
 function invalidateTeamEval(ti){teamEvalCache.delete(ti);}
@@ -542,7 +559,7 @@ async function carregarMotores(){
   if(cut<0)cut=linhas.findIndex(l=>l.includes("document.getElementById"));
   if(cut<0)throw new Error("não encontrei o início da camada de UI em game.js");
   const slice=linhas.slice(0,cut).join("\n");
-  E=new Function(slice+"\nreturn {avaliarJogador,aplicarAvaliacaoContextual,curvaOVR,distribuirRoles,forcaTime,ovrUnificado,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,STYLE_ROLE_FIT,STYLE_CONTRA,MAPAS_POOL,MAPA_LADO,srand,simularMapa,forcaDoDia,TEAMS,nmOVR,roleAfinidade,NM_DEF,NM_COR,STYLE_LABEL,PLAYSTYLE_IDS,STYLE_DESC};")();
+  E=new Function(slice+"\nreturn {avaliarJogador,aplicarAvaliacaoContextual,curvaOVR,distribuirRoles,forcaTime,ovrUnificado,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,STYLE_ROLE_FIT,STYLE_CONTRA,MAPAS_POOL,MAPA_LADO,srand,simularMapa,forcaDoDia,TEAMS,nmOVR,roleAfinidade,NM_DEF,NM_COR,STYLE_LABEL,PLAYSTYLE_IDS,PLAYSTYLES,NM_AXES,STYLE_KEYS,SUBARQ};")();
   ["avaliarJogador","distribuirRoles","forcaTime","simularMapa","forcaDoDia","srand","TEAMS"].forEach(k=>{if(!E[k])throw new Error(`motor ausente: ${k}`);});
   DEF={ROLE:clone(E.ROLE_PERFIL),NM:clone(E.NM_DEF),NM_COR:clone(E.NM_COR),CONTRA:clone(E.ROLE_CONTRA),IGL:clone(E.IGL_ROLE_AFIN),RULES:clone(E.ROLE_RULES),STYLE_FIT:clone(E.STYLE_ROLE_FIT),STYLE_CONTRA:clone(E.STYLE_CONTRA)};
   // aliases locais para as funções/dados importados do motor (evita E.xxx em toda a UI)
@@ -1812,7 +1829,7 @@ function renderCalibResult(result,goal){
     <div class="cr-head"><span class="cr-kicker">Sugestão da IA</span>${pill}</div>
     <div class="cr-target">${tgtNome}${tgtTime?`<span class="cr-tteam">${tgtTime}</span>`:""}</div>
     ${deltaBlock}
-    ${E.STYLE_DESC?.[result.after.playstyle]?`<div class="cr-styledesc"><b>${esc(aStyle)}</b> · ${esc(E.STYLE_DESC[result.after.playstyle])}</div>`:""}
+    ${describeStyle(result.after.playstyle)?`<div class="cr-styledesc"><b>${esc(aStyle)}</b> · ${esc(describeStyle(result.after.playstyle))}</div>`:""}
     ${costLine}
     ${affected}
     ${technical}
@@ -1912,7 +1929,8 @@ function buildCalibrator(){
   const styleOptions=`<option value="">Qualquer</option>`
     +PLAYSTYLE_IDS.map(id=>`<option value="${STYLE_LABEL(id)}" ${STYLE_LABEL(id)===calibTargetStyle?"selected":""}>${STYLE_LABEL(id)}</option>`).join("")
     +`<option value="Coringa" ${calibTargetStyle==="Coringa"?"selected":""}>Coringa</option>`;
-  const selStyleDesc=calibTargetStyle&&E.STYLE_DESC?.[styleIdOf(calibTargetStyle)]?`<div class="calib-styledesc"><b>${esc(calibTargetStyle)}</b> · ${esc(E.STYLE_DESC[styleIdOf(calibTargetStyle)])}</div>`:"";
+  const _selDesc=calibTargetStyle?describeStyle(styleIdOf(calibTargetStyle)):"";
+  const selStyleDesc=_selDesc?`<div class="calib-styledesc"><b>${esc(calibTargetStyle)}</b> · ${esc(_selDesc)}</div>`:"";
   const curGoal={r1:isIGL?"IGL":calibTargetRole,r2:calibTargetRole2,style:calibTargetStyle};
   const role1Html=isIGL
     ?`<div class="calib-field"><label>Role1</label><select id="calibRole" disabled><option selected>IGL</option></select></div>`
@@ -2248,52 +2266,75 @@ function renderEditorResult(){
     </div>`;
 }
 
-const CENTER_MODES=[["calibrar","Calibrar"],["time","Time"],["simular","Simular"],["editar","Editar"],["fidelidade","Fidelidade"],["relatorio","Relatório"]];
-// Fidelidade de funcoes: compara a funcao de combate que o motor da a cada jogador
-// (no contexto do time, com os pesos ATUAIS) com o que ele jogou de verdade (ROLE_CORPUS).
-function computeFidelidade(){
-  if(!ROLE_CORPUS)return null;
-  const combat=e=>e.isIGL?e.secundario:e.primario;
-  let cobertos=0,total=0,soma=0,hits=0,parciais=0,secundarios=0,misses=0,violacoes=0;
-  const divs=[];
-  E.TEAMS.forEach((t,ti)=>{
-    const labels=ROLE_CORPUS[`${t.nome} · ${t.camp}`]||{};
-    teamEngines(t,ti).forEach(e=>{
-      total++;
-      const lab=labels[e.nome||e.nick];
-      if(!lab)return;
-      cobertos++;
-      const eff=combat(e), acc=lab.aceitavel||[], prob=lab.proibido||[];
-      let nota,tag;
-      if(eff===lab.certo){nota=1;tag="ok";hits++;}
-      else if(acc.includes(eff)){nota=.6;tag="parcial";parciais++;}
-      else if(!e.isIGL&&lab.certo===e.secundario){nota=.4;tag="2ª-função";secundarios++;}
-      else if(prob.includes(eff)){nota=-1;tag="proibido";violacoes++;}
-      else{nota=0;tag="miss";misses++;}
-      soma+=nota;
-      if(tag!=="ok")divs.push({nome:e.nome||e.nick,time:t.nome,certo:lab.certo,acc,eff,tag,nota});
-    });
-  });
-  divs.sort((a,b)=>a.nota-b.nota);
-  return {cobertos,total,nota:cobertos?soma/cobertos:0,hits,parciais,secundarios,misses,violacoes,divs};
+const CENTER_MODES=[["calibrar","Calibrar"],["time","Time"],["simular","Simular"],["editar","Editar"],["guia","Guia"],["relatorio","Relatório"]];
+// aba Guia — referência VIVA dos pesos do motor (funções e estilos). Lê tudo de E,
+// então reflete as calibrações aplicadas. Nada de "vida real": só as receitas de verdade.
+const TRAIT_LABEL={pace:"Ritmo",space:"Espaço",trade:"Trade",structure:"Estrutura",ct:"CT",t:"TR"};
+function axLabel(k){const nm=(E.NM_AXES||[]).find(a=>a[0]===k);return nm?nm[1]:(STAT_FULL[k]||k);}
+function statLabel(k){return STAT_FULL[k]||k;}
+const fmtW=v=>v.toFixed(2).replace(/^0(?=\.)/,"");        // 0.45 -> .45
+const fmtS=v=>(v<0?"−":"+")+Math.abs(v).toFixed(2).replace(/^0(?=\.)/,""); // signed
+function guiaBars(weights,labelFn){
+  const ents=Object.entries(weights).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  if(!ents.length)return "";
+  const max=Math.max(...ents.map(([,v])=>v));
+  return `<div class="guia-bars">${ents.map(([k,v])=>
+    `<div class="guia-bar"><span class="guia-bar-l">${esc(labelFn(k))}</span><span class="guia-track"><span class="guia-fill" style="width:${Math.round(v/max*100)}%"></span></span><span class="guia-bar-v">${fmtW(v)}</span></div>`).join("")}</div>`;
 }
-function renderFidelidade(){
-  const f=computeFidelidade();
-  if(!f)return `<div class="calib-note">O corpus de funções reais não carregou (abra pela URL do site, não por <code>file://</code>). Esta aba é só leitura: compara a função que o motor dá a cada jogador com a que ele jogou de verdade.</div>`;
-  const pct=Math.round(f.nota*1000)/10, exato=f.cobertos?Math.round(f.hits/f.cobertos*100):0;
-  const rows=f.divs.map(d=>{
-    const alvo=d.acc.length?`${d.certo} (ac: ${d.acc.join("/")})`:d.certo;
-    const bad=d.tag==="proibido"||d.tag==="miss";
-    return `<div class="fid-row"><div><div class="fid-who"><b>${esc(d.nome)}</b> <span class="dim">${esc(d.time)}</span></div><div class="fid-meta">real ${esc(alvo)} · motor <b>${esc(d.eff)}</b></div></div><div class="fid-tag${bad?" bad":""}">${esc(d.tag)}</div></div>`;
-  }).join("");
+function guiaChips(obj,labelFn,signed){
+  const ents=Object.entries(obj).sort((a,b)=>b[1]-a[1]);
+  if(!ents.length)return "";
+  return `<div class="guia-chips">${ents.map(([k,v])=>
+    `<span class="guia-chip${signed?(v>0?" pos":v<0?" neg":""):""}">${esc(labelFn(k))}<span class="v">${signed?fmtS(v):fmtW(v)}</span></span>`).join("")}</div>`;
+}
+function describeStyle(id){
+  if(id==="joker"){const c=E.NM_COR||{};return `Sem receita — entra por stats: pelo menos 5 de 7 acima de ${c.pisoMin} e amplitude ≤ ${c.spreadMax}.`;}
+  const rec=E.NM_DEF[E.STYLE_KEYS[id]];if(!rec)return "";
+  const top=Object.entries(rec.w).sort((a,b)=>b[1]-a[1]).slice(0,2).map(([k])=>axLabel(k));
+  const pen=Object.entries(E.STYLE_CONTRA[id]||{}).filter(([k])=>k!=="sn").sort((a,b)=>b[1]-a[1]).slice(0,2).map(([k])=>axLabel(k));
+  return `Recompensa ${top.join(" e ")}${pen.length?`; penaliza ${pen.join(" e ")}`:""}. Rating pesa ${Math.round(rec.wR*100)}%.`;
+}
+function describeRole(role){
+  const rp=E.ROLE_PERFIL[role];if(!rp)return "";
+  const top=Object.entries(rp.afin).sort((a,b)=>b[1]-a[1]).slice(0,2).map(([k])=>statLabel(k));
+  return `Classificado por ${top.join(" e ")}. No OVR, rating pesa ${Math.round(rp.wR*100)}%.`;
+}
+function guiaStyleCard(id){
+  const rec=id==="joker"?null:E.NM_DEF[E.STYLE_KEYS[id]];
+  const traits=E.PLAYSTYLES[id]?.traits, contra=E.STYLE_CONTRA[id];
+  return `<div class="guia-card">
+    <div class="guia-card-head"><span class="guia-name">${esc(E.STYLE_LABEL(id))}</span><span class="guia-kind">Estilo</span></div>
+    <div class="guia-desc">${esc(describeStyle(id))}</div>
+    ${rec?`<div class="guia-block"><div class="guia-block-h">Receita</div>${guiaBars(rec.w,axLabel)}</div>
+    <div class="guia-block"><div class="guia-wr">Rating × stats: <b>${fmtW(rec.wR)}</b> / ${fmtW(1-rec.wR)}</div></div>`:""}
+    ${contra&&Object.keys(contra).length?`<div class="guia-block"><div class="guia-block-h">Penaliza</div>${guiaChips(contra,axLabel,false)}</div>`:""}
+    ${traits?`<div class="guia-block"><div class="guia-block-h">Traços</div>${guiaChips(traits,k=>TRAIT_LABEL[k]||k,true)}</div>`:""}
+  </div>`;
+}
+function guiaRoleCard(role){
+  const rp=E.ROLE_PERFIL[role],fit=E.STYLE_ROLE_FIT[role],subs=E.SUBARQ?.[role];
+  return `<div class="guia-card">
+    <div class="guia-card-head"><span class="guia-name">${esc(role)}</span><span class="guia-kind">Função</span></div>
+    <div class="guia-desc">${esc(describeRole(role))}</div>
+    <div class="guia-block"><div class="guia-block-h">Afinidade (classifica)</div>${guiaBars(rp.afin,statLabel)}</div>
+    <div class="guia-block"><div class="guia-block-h">OVR</div>${guiaBars(rp.ovr,statLabel)}<div class="guia-wr" style="margin-top:5px">Rating × stats: <b>${fmtW(rp.wR)}</b> / ${fmtW(1-rp.wR)}</div></div>
+    ${fit&&Object.keys(fit).length?`<div class="guia-block"><div class="guia-block-h">Estilos que combinam</div>${guiaChips(fit,id=>E.STYLE_LABEL(id),true)}</div>`:""}
+    ${subs?`<div class="guia-block"><div class="guia-block-h">Sub-arquétipos</div><div class="guia-chips">${subs.map(s=>`<span class="guia-chip">${esc(s.nome)}</span>`).join("")}</div></div>`:""}
+  </div>`;
+}
+function renderGuia(){
+  const roles=Object.keys(E.ROLE_PERFIL||{});
+  const styles=[...(E.PLAYSTYLE_IDS||[]),"joker"];
+  const iglFit=E.STYLE_ROLE_FIT?.IGL;
+  const iglCard=`<div class="guia-card">
+    <div class="guia-card-head"><span class="guia-name">IGL</span><span class="guia-kind">Função · curada</span></div>
+    <div class="guia-desc">Não é classificado por stats: é marcado à mão. Herda o perfil de OVR do secundário e ganha crédito de liderança + bônus de título.</div>
+    ${iglFit&&Object.keys(iglFit).length?`<div class="guia-block"><div class="guia-block-h">Estilos que combinam</div>${guiaChips(iglFit,id=>E.STYLE_LABEL(id),true)}</div>`:""}
+  </div>`;
   return `
-    <div class="calib-note" style="margin-bottom:12px">Compara a função de combate que o motor dá a cada jogador (no contexto do time, com os pesos <b>atuais</b>) com o que ele jogou de verdade. <b>Reflete calibrações aplicadas</b> — dá pra ver se um ajuste melhorou ou piorou a fidelidade. Só leitura, não muda nada.</div>
-    <div class="metricgrid" style="grid-template-columns:1fr 1fr">
-      <div class="metric"><div class="v mono">${pct}%</div><div class="l">concordância (0–100)</div></div>
-      <div class="metric"><div class="v mono">${exato}%</div><div class="l">função exata</div></div>
-    </div>
-    <div class="stat-mini" style="margin:10px 0 4px"><b>${f.hits}</b> cheios · <b>${f.parciais}</b> parciais · <b>${f.secundarios}</b> 2ª-função · <span class="${f.misses?"warn-txt":""}"><b>${f.misses}</b> miss</span> · <span class="${f.violacoes?"warn-txt":""}"><b>${f.violacoes}</b> proibido</span> · ${f.cobertos}/${f.total} rotulados</div>
-    <div class="fid-list">${rows||'<div class="calib-note">Sem divergências — o motor bate com o corpus em tudo.</div>'}</div>`;
+    <div class="guia-intro">Os <b>pesos de verdade</b> do motor, ao vivo. Mexa na aba <b>Calibrar</b> e volte aqui: os números mudam junto. É referência sua pra experimentar — não um veredito.</div>
+    <div class="guia-sec"><div class="guia-sec-h">Estilos (${styles.length})</div><div class="guia-grid">${styles.map(guiaStyleCard).join("")}</div></div>
+    <div class="guia-sec"><div class="guia-sec-h">Funções (${roles.length}+1)</div><div class="guia-grid">${roles.map(guiaRoleCard).join("")}${iglCard}</div></div>`;
 }
 function montarUI(){
   const app=document.getElementById("app"); app.className="";
@@ -2347,8 +2388,8 @@ function renderCanvasMode(){
     body.innerHTML=`<div class="card panel-secondary">${editorBodyHTML()}</div>`;
     wireAtributos(()=>refresh("live"));
     renderEditorResult();
-  }else if(centerMode==="fidelidade"){
-    body.innerHTML=`<div class="card panel-secondary">${renderFidelidade()}</div>`;
+  }else if(centerMode==="guia"){
+    body.innerHTML=`<div class="card panel-secondary">${renderGuia()}</div>`;
   }else if(centerMode==="relatorio"){
     body.innerHTML=`<div id="reportbox" class="card panel-secondary${reportIsEmpty()?" reportcard is-empty":""}">${renderReportPanel()}</div>`;
     wireReportPanel();
@@ -2382,7 +2423,6 @@ document.getElementById("mtabs")?.addEventListener("click",e=>{
 (async()=>{
   try{
     await carregarMotores();
-    try{ROLE_CORPUS=await (await fetch("bancada/role-corpus.json?nc="+Date.now())).json();}catch{ROLE_CORPUS=null;} // corpus de funcoes reais (opcional; so a aba Fidelidade usa)
     const sel=document.getElementById("loadSel");
     POOLRAW.forEach((p,i)=>{const o=document.createElement("option");o.value=i;o.textContent=p.nome+" — "+p.time;sel.appendChild(o);});
     sel.onchange=()=>{if(sel.value==="")return;const p=POOLRAW[+sel.value];
