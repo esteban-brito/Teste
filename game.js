@@ -256,17 +256,17 @@ const NM_DEF={
   Spacetaker:{w:{ent:.70,fogo:.15,ab:.15},wR:.40},
   Trader:{w:{tr:.50,fogo:.30,ut:.20},wR:.45},
   Playmaker:{w:{fogo:.45,ab:.35,cl:.20},wR:.55},
-  Infiltrador:{w:{cl:.40,ab:.35,fogo:.25},wR:.50},
+  Infiltrador:{w:{cl:.46,ab:.34,fogo:.20},wR:.50},
   Baiter:{w:{tr:.50,cl:.30,fogo:.20},wR:.35},
   Closer:{w:{cl:.55,fogo:.45},wR:.50},
   Facilitador:{w:{ut:.50,tr:.30,ab:.20},wR:.40},
   Cerebral:{w:{ut:.40,ab:.30,cl:.30},wR:.50},
-  Ancora:{w:{cl:.45,ut:.35,tr:.20},wR:.45}};
+  Ancora:{w:{cl:.50,ut:.32,tr:.18},wR:.45}};
 const STYLE_CONTRA={
   aggressive:{cl:.14,ut:.08,sn:.06},
   spacetaker:{cl:.08,ut:.05,sn:.06},
-  trader:{ent:.10,ab:.08,sn:.06},
-  playmaker:{ut:.06,tr:.04,sn:.06},
+  trader:{ent:.10,ab:.08,sn:.06,cl:.06},
+  playmaker:{ut:.06,tr:.04,sn:.06,cl:.05},
   infiltrator:{ent:.18,tr:.08,sn:.06},
   baiter:{ent:.28,ab:.16,ut:.08,sn:.06},
   clutcher:{ent:.14,ab:.08,tr:.06,sn:.06},
