@@ -930,7 +930,7 @@ function ensureCalibSession(){
 }
 function flatConfigDiff(){
   const before=configSnapshot();
-  const base={role:DEF.ROLE,nm:DEF.NM,cor:DEF.NM_COR,contra:DEF.CONTRA,igl:DEF.IGL,rules:DEF.RULES,styleFit:DEF.STYLE_FIT,styleContra:DEF.STYLE_CONTRA};
+  const base={role:DEF.ROLE,nm:DEF.NM,cor:DEF.NM_COR,contra:DEF.CONTRA,igl:DEF.IGL,rules:DEF.RULES,styleFit:DEF.STYLE_FIT,styleContra:DEF.STYLE_CONTRA,cfg:DEF.CFG};
   const out=[];
   const walk=(label,a,b)=>{
     const keys=new Set([...Object.keys(a||{}),...Object.keys(b||{})]);
@@ -948,6 +948,7 @@ function flatConfigDiff(){
   walk("ROLE_RULES",before.rules,base.rules);
   walk("STYLE_ROLE_FIT",before.styleFit,base.styleFit);
   walk("STYLE_CONTRA",before.styleContra,base.styleContra);
+  walk("CFG_AVALIACAO",before.cfg,base.cfg); // [21] params de OVR (base/span/K) entram no relatório
   return out.sort((a,b)=>a.path.localeCompare(b.path));
 }
 function intentionState(intent,snap){
@@ -998,6 +999,7 @@ function resetWorkbench(){
   if(DEF.RULES)copyInto(E.ROLE_RULES,DEF.RULES);
   if(DEF.STYLE_FIT)copyInto(E.STYLE_ROLE_FIT,DEF.STYLE_FIT);
   if(DEF.STYLE_CONTRA)copyInto(E.STYLE_CONTRA,DEF.STYLE_CONTRA);
+  if(DEF.CFG)copyInto(E.CFG_AVALIACAO,DEF.CFG); // [22] os params de OVR (base/span/K) também voltam ao padrão
   calibLast=null;baseline=null;calibSession=null;reportFallbackText="";
   invalidateAllTeamEval();
   refresh("all");
@@ -1271,7 +1273,9 @@ function generateJokerCandidates(raw){
 function generateOvrCandidates(raw,targetOvr){
   const ev=E.avaliarJogador({...raw}), st=ev.style||{};
   const score=+(st.score??st.statScore??0), core=+(st.core??ev.ovr??0), C=E.CFG_AVALIACAO;
-  const d=targetOvr-core; // quanto o core (base+bônus, sem clip) precisa mover
+  // [3-IGL] distância no OVR EXIBIDO: o IGL soma bônus por colocação e não passa do teto.
+  const title=ev.isIGL?(C.IGL_TITULO[ev.colocacao]||0):0, teto=ev.isIGL?C.IGL_TETO:C.OVR_MAX;
+  const d=Math.min(targetOvr,teto)-(core+title); // quanto o core precisa mover pro OVR exibido bater o alvo
   if(Math.abs(d)<.35)return [[]]; // já está no alvo
   const cl=(v,lo,hi)=>Math.max(lo,Math.min(hi,v)), out=[];
   out.push([{type:"ovrparam",key:"OVR_BASE",from:C.OVR_BASE,to:+cl(C.OVR_BASE+d,0,16).toFixed(2)}]);
@@ -1412,7 +1416,9 @@ function styleLeverBank(targetStyleLabel,raw,evalRole,opts){
 function ovrLeverBank(raw,targetOvr,opts){
   const ev=E.avaliarJogador({...raw}), styleLabel=E.STYLE_LABEL(ev.playstyle), rec=E.NM_DEF[styleLabel];
   const nm=nmOVR(raw,ev.combatRole||"Rifler"), s6=nm.s6||{}, C=E.CFG_AVALIACAO;
-  const d=targetOvr-(+ev.style?.core||ev.ovr||0), dir=d>=0?1:-1;
+  // [3-IGL] distância no OVR exibido (com bônus por colocação + teto do IGL), não no core cru
+  const core=+(ev.style?.core||ev.ovr||0), title=ev.isIGL?(C.IGL_TITULO[ev.colocacao]||0):0;
+  const d=Math.min(targetOvr,ev.isIGL?C.IGL_TETO:C.OVR_MAX)-(core+title), dir=d>=0?1:-1;
   const levers=[];
   if(rec&&styleLabel!=="Coringa"){
     const keys=Object.keys(rec.w);
@@ -1447,7 +1453,9 @@ function sensitizeLevers(levers,raw,metricFn){
 }
 // métrica unificada do alvo (maior = mais perto): gap de função / margem de estilo / −distância de OVR.
 function goalMetric(raw,goal){
-  if(goal.ovr){const ev=E.avaliarJogador({...raw});return -Math.abs(goal.ovr-(+ev.style?.core||ev.ovr||0));}
+  if(goal.ovr){const ev=E.avaliarJogador({...raw}),C=E.CFG_AVALIACAO; // [3-IGL] mede o OVR exibido (bônus+teto), não o core cru
+    const disp=(+ev.style?.core||ev.ovr||0)+(ev.isIGL?(C.IGL_TITULO[ev.colocacao]||0):0);
+    return -Math.abs(Math.min(goal.ovr,ev.isIGL?C.IGL_TETO:C.OVR_MAX)-disp);}
   if(goal.style&&goal.style!=="Coringa"){
     const ev=E.avaliarJogador({...raw}),tid=styleIdFromLabel(goal.style);
     const nm=nmOVR(raw,ev.combatRole||"Rifler");
@@ -1534,8 +1542,8 @@ const CALIB_STRATEGIES={
     weights:{delta:7,changed:.18,role:.7,style:.8,reality:9,rare:7,collateral:95,ovrCollateral:34,team:5,ovr:5,isolated:1.5,broadCut:170,thinRule:-1.8},
     priority:["collateralRoleChanges","collateralOvrShifts","teamChanges","rareWorsened","realityPenalty","ovrImpact","styleChanges","deltaCost","changed"],
     attrLimit:7,comboDepth:3,deepLeverLimit:22,pairLimit:16,tripleLimit:10,randomCandidates:4800,maxRandomChanges:6,randomDelta:.95,maxTests:60000,maxMs:28000,sliceMs:26,
-    useSensitivity:true,annealing:true,convergenceWindow:110,startTemp:1.5,coolingRate:.975,beamWidth:6,
-    explain:"busca profunda: mede sensibilidade real das alavancas, testa combinacoes cirurgicas e refina em feixe (annealing) ate convergir ou esgotar o orcamento."
+    useSensitivity:true,annealing:true,convergenceWindow:110,startTemp:1.5,coolingRate:.975,
+    explain:"busca profunda: mede sensibilidade real das alavancas, testa combinacoes cirurgicas e refina iterativamente ate convergir ou esgotar o orcamento."
   },
   realista:{
     label:"Realista",
@@ -1627,6 +1635,7 @@ async function findCalibration(goal,onProgress=null){
   const src=POOLRAW[loadedIdx];
   const goalKey=src?`${src.ti}:${src.pi}`:null;
   if(isIGL&&goal.r1&&goal.r1!=="IGL")return {ok:false,message:"IGL nao pode mudar de papel primario via pesos. Altere a role2 (papel de combate).",before,goal};
+  if(goalMet(before,goal))return {ok:true,alreadyMet:true,before,after:before,changes:[],goal,goalKey}; // [4] já está no alvo → nenhuma mudança
   const strategy=CALIB_STRATEGIES[calibMode]||CALIB_STRATEGIES.ia;
   const phases=strategy.phases;
   const startedAt=performance.now();
@@ -1635,7 +1644,6 @@ async function findCalibration(goal,onProgress=null){
   const initialGap=roleTarget?targetGap(raw,roleTarget.target,roleTarget.current):0;
   const hasRoleGoal=!!(goal.r1||goal.r2);
   let best=null, bestRoleBase=null, usedPhase=-1;
-  const hits=[];
   const searchStats={tested:0,valid:0,generated:0,pruned:0,truncated:false,initialGap,roleTarget};
   const outOfBudget=()=>{
     const overTests=searchStats.tested>=(strategy.maxTests||Infinity);
@@ -1666,7 +1674,6 @@ async function findCalibration(goal,onProgress=null){
     const result=buildCandidateResult({changes,ok:hit,before,after,diff,cumulativeDiff,goalKey,strategy,searchStats,roleTarget,raw,label,phase:phaseIndex});
     if(hit){
       searchStats.valid++;
-      hits.push(result);
       if(compareCalibration(result,best,strategy)<0)best=result;
     }
     if(hasRoleGoal&&goalMet(after,{r1:goal.r1,r2:goal.r2})&&compareCalibration(result,bestRoleBase,strategy)<0)bestRoleBase=result;
@@ -1846,6 +1853,11 @@ function calibChangeRow(change){
 }
 function renderCalibResult(result,goal){
   if(!result)return "";
+  // [4] alvo já atingido: nada a fazer, sem sugerir mudança inútil
+  if(result.alreadyMet)return `<div class="cr">
+      <div class="cr-head"><span class="cr-kicker">Sugestão da IA</span><span class="cr-pill ok"><span class="cr-dot"></span>Já atingido</span></div>
+      <div class="cr-empty">Este jogador já está no alvo — nenhuma mudança necessária.</div>
+    </div>`;
   // caminho "sem ajuste": mesmo cabeçalho, pill âmbar, mensagem clara
   if(!result.ok){
     const msg=result.message&&!result.message.startsWith("IGL")?esc(result.message):"Nenhum ajuste global de baixo impacto atingiu esse alvo.";

@@ -105,6 +105,9 @@ api.overrideBudget(budgetMs);
     try{ result=await api.findCalibration(caso.goal,null); }
     catch(e){ err=e; }
     check(!err,`${caso.nome} [${caso.mode}] nao lanca excecao${err?": "+err.message:""}`);
+    // [27] modo IA DEVE achar solução (é a busca "acha qualquer coisa"); realista pode recusar
+    // legitimamente um alvo implausível (é conservador de propósito), então não exigimos ok nele.
+    if(caso.mode==="ia")check(!err&&result&&result.ok,`${caso.nome} [ia] a IA ACHOU solucao (nao devolveu ok:false)`);
     if(!err&&result.ok){
       const parts=api.rolePairParts(result.after);
       const styleLabel=api.STYLE_LABEL(result.after.playstyle);
