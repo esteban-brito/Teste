@@ -172,38 +172,23 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .risk{font-size:var(--fs-sm);border-radius:var(--radius-pill);padding:5px 11px;background:var(--panel-soft);color:var(--neutral)}
 .risk.bad{color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,var(--panel-soft))}
 .risk.good{color:var(--win);background:color-mix(in srgb,var(--win) 15%,var(--panel-soft))}
-/* aba Guia — Funções & Estilos (referência VIVA dos pesos do motor).
-   Mesma linguagem visual do resto: kicker .impact-section h4, pill .cr-pill,
-   cor com papel único (--win/--loss p/ sinal, --accent p/ magnitude). */
-.guia-intro{font-size:var(--fs-s);color:var(--dim);line-height:1.5;margin-bottom:16px}
+/* aba Guia — como o motor lê cada função e estilo. Minimalista: só as barras
+   que definem cada um, em linguagem simples. Lê E ao vivo. */
+.guia-intro{font-size:var(--fs-s);color:var(--dim);line-height:1.55;margin-bottom:18px;max-width:72ch}
 .guia-intro b{color:var(--txt)}
-.guia-live{display:inline-flex;align-items:center;gap:6px;font-family:var(--ff);font-size:var(--fs-2xs);font-weight:800;letter-spacing:.02em;color:var(--win);background:color-mix(in srgb,var(--win) 14%,transparent);padding:3px 10px;border-radius:var(--radius-pill);margin-left:2px}
-.guia-live .cr-dot{background:var(--win);animation:guiaPulse 1.8s var(--ease) infinite}
-@keyframes guiaPulse{0%,100%{opacity:1}50%{opacity:.35}}
-.guia-sec{margin-bottom:20px}
-.guia-sec-h{font-family:var(--ff);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin:0 0 10px;padding-bottom:7px;border-bottom:1px solid var(--line)}
-.guia-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:10px}
-.guia-card{background:var(--panel-soft);border-radius:var(--radius);padding:12px 13px}
-.guia-card-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:5px}
-.guia-name{font-size:var(--fs-md);font-weight:800;color:var(--txt)}
-.guia-kind{font-family:var(--ff);font-size:var(--fs-2xs);font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--dim)}
-.guia-desc{font-size:var(--fs-s);color:var(--dim);line-height:1.45;margin-bottom:11px}
-.guia-block{margin-top:11px}
-.guia-block-h{font-family:var(--ff);font-size:var(--fs-2xs);text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin-bottom:6px}
-.guia-bars{display:flex;flex-direction:column;gap:5px}
-.guia-bar{display:grid;grid-template-columns:64px minmax(0,1fr) 30px;align-items:center;gap:9px}
-.guia-bar-l{font-size:var(--fs-xs);color:var(--neutral)}
-.guia-track{height:6px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--txt) 10%,transparent);overflow:hidden}
-.guia-fill{height:100%;border-radius:var(--radius-pill);background:var(--accent)}
+.guia-sec{margin-bottom:22px}
+.guia-sec-h{font-family:var(--ff);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin:0 0 11px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.guia-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.guia-card{background:var(--panel-soft);border-radius:var(--radius);padding:14px 15px}
+.guia-name{font-size:var(--fs-md);font-weight:800;color:var(--txt);margin-bottom:12px}
+.guia-bars{display:flex;flex-direction:column;gap:7px}
+.guia-bar{display:grid;grid-template-columns:78px minmax(0,1fr) 26px;align-items:center;gap:10px}
+.guia-bar-l{font-size:var(--fs-sm);color:var(--neutral)}
+.guia-track{display:block;height:6px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--txt) 9%,transparent);overflow:hidden}
+.guia-fill{display:block;height:100%;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--accent) 62%,var(--dim))}
 .guia-bar-v{font-family:var(--ff);font-size:var(--fs-xs);color:var(--dim);text-align:right;font-variant-numeric:tabular-nums}
-.guia-chips{display:flex;flex-wrap:wrap;gap:5px}
-.guia-chip{font-family:var(--ff);font-size:var(--fs-xs);font-weight:700;padding:3px 9px;border-radius:var(--radius-pill);background:var(--panel);color:var(--neutral);white-space:nowrap}
-.guia-chip .v{color:var(--dim);font-variant-numeric:tabular-nums;margin-left:4px}
-.guia-chip.pos{color:var(--win);background:color-mix(in srgb,var(--win) 15%,transparent)}
-.guia-chip.pos .v{color:var(--win)}
-.guia-chip.neg{color:var(--loss);background:color-mix(in srgb,var(--loss) 15%,transparent)}
-.guia-chip.neg .v{color:var(--loss)}
-.guia-wr{font-family:var(--ff);font-size:var(--fs-xs);color:var(--dim)} .guia-wr b{color:var(--txt);font-variant-numeric:tabular-nums}
+.guia-meta{font-size:var(--fs-s);color:var(--dim);margin-top:12px}
+.guia-note{font-size:var(--fs-s);color:var(--dim);line-height:1.5}
 
 /* ============================================================
    SIMULADOR DE MAPA / PARTIDA
@@ -2274,74 +2259,45 @@ function renderEditorResult(){
 }
 
 const CENTER_MODES=[["calibrar","Calibrar"],["time","Time"],["simular","Simular"],["editar","Editar"],["guia","Guia"],["relatorio","Relatório"]];
-// aba Guia — referência VIVA dos pesos do motor (funções e estilos). Lê tudo de E,
-// então reflete as calibrações aplicadas. Nada de "vida real": só as receitas de verdade.
-const TRAIT_LABEL={pace:"Ritmo",space:"Espaço",trade:"Trade",structure:"Estrutura",ct:"CT",t:"TR"};
-function axLabel(k){const nm=(E.NM_AXES||[]).find(a=>a[0]===k);return nm?nm[1]:(STAT_FULL[k]||k);}
-function statLabel(k){return STAT_FULL[k]||k;}
+// aba Guia — como o motor lê cada estilo e função: os stats que mais pesam.
+// Lê tudo de E ao vivo (reflete calibrações). De propósito minimalista: só as
+// barras que definem cada um, em linguagem simples. Sem vetores nem jargão.
+const GLABEL={fogo:"Fogo",fp:"Fogo",ent:"Entrada",en:"Entrada",ab:"Abertura",op:"Abertura",tr:"Trade",cl:"Clutch",ut:"Utilitário",sn:"AWP"};
+function gLabel(k){return GLABEL[k]||STAT_FULL[k]||k;}
 const fmtW=v=>v.toFixed(2).replace(/^0(?=\.)/,"");        // 0.45 -> .45
-const fmtS=v=>(v<0?"−":"+")+Math.abs(v).toFixed(2).replace(/^0(?=\.)/,""); // signed
-function guiaBars(weights,labelFn){
+function guiaBars(weights){
   const ents=Object.entries(weights).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
   if(!ents.length)return "";
   const max=Math.max(...ents.map(([,v])=>v));
   return `<div class="guia-bars">${ents.map(([k,v])=>
-    `<div class="guia-bar"><span class="guia-bar-l">${esc(labelFn(k))}</span><span class="guia-track"><span class="guia-fill" style="width:${Math.round(v/max*100)}%"></span></span><span class="guia-bar-v">${fmtW(v)}</span></div>`).join("")}</div>`;
+    `<div class="guia-bar"><span class="guia-bar-l">${esc(gLabel(k))}</span><span class="guia-track"><span class="guia-fill" style="width:${Math.round(v/max*100)}%"></span></span><span class="guia-bar-v">${fmtW(v)}</span></div>`).join("")}</div>`;
 }
-function guiaChips(obj,labelFn,signed){
-  const ents=Object.entries(obj).sort((a,b)=>b[1]-a[1]);
-  if(!ents.length)return "";
-  return `<div class="guia-chips">${ents.map(([k,v])=>
-    `<span class="guia-chip${signed?(v>0?" pos":v<0?" neg":""):""}">${esc(labelFn(k))}<span class="v">${signed?fmtS(v):fmtW(v)}</span></span>`).join("")}</div>`;
-}
+// frase curta e humana pro calibrador (não pra Guia): "vive de fogo e abertura"
 function describeStyle(id){
-  if(id==="joker"){const c=E.NM_COR||{};return `Sem receita — entra por stats: pelo menos 5 de 7 acima de ${c.pisoMin} e amplitude ≤ ${c.spreadMax}.`;}
+  if(id==="joker")return "bom em tudo, sem ponto fraco";
   const rec=E.NM_DEF[E.STYLE_KEYS[id]];if(!rec)return "";
-  const top=Object.entries(rec.w).sort((a,b)=>b[1]-a[1]).slice(0,2).map(([k])=>axLabel(k));
-  const pen=Object.entries(E.STYLE_CONTRA[id]||{}).filter(([k])=>k!=="sn").sort((a,b)=>b[1]-a[1]).slice(0,2).map(([k])=>axLabel(k));
-  return `Recompensa ${top.join(" e ")}${pen.length?`; penaliza ${pen.join(" e ")}`:""}. Rating pesa ${Math.round(rec.wR*100)}%.`;
-}
-function describeRole(role){
-  const rp=E.ROLE_PERFIL[role];if(!rp)return "";
-  const top=Object.entries(rp.afin).sort((a,b)=>b[1]-a[1]).slice(0,2).map(([k])=>statLabel(k));
-  return `Classificado por ${top.join(" e ")}. No OVR, rating pesa ${Math.round(rp.wR*100)}%.`;
+  const top=Object.entries(rec.w).sort((a,b)=>b[1]-a[1]).slice(0,2).map(([k])=>gLabel(k).toLowerCase());
+  return `vive de ${top.join(" e ")}`;
 }
 function guiaStyleCard(id){
-  const rec=id==="joker"?null:E.NM_DEF[E.STYLE_KEYS[id]];
-  const traits=E.PLAYSTYLES[id]?.traits, contra=E.STYLE_CONTRA[id];
-  return `<div class="guia-card">
-    <div class="guia-card-head"><span class="guia-name">${esc(E.STYLE_LABEL(id))}</span><span class="guia-kind">Estilo</span></div>
-    <div class="guia-desc">${esc(describeStyle(id))}</div>
-    ${rec?`<div class="guia-block"><div class="guia-block-h">Receita</div>${guiaBars(rec.w,axLabel)}</div>
-    <div class="guia-block"><div class="guia-wr">Rating × stats: <b>${fmtW(rec.wR)}</b> / ${fmtW(1-rec.wR)}</div></div>`:""}
-    ${contra&&Object.keys(contra).length?`<div class="guia-block"><div class="guia-block-h">Penaliza</div>${guiaChips(contra,axLabel,false)}</div>`:""}
-    ${traits?`<div class="guia-block"><div class="guia-block-h">Traços</div>${guiaChips(traits,k=>TRAIT_LABEL[k]||k,true)}</div>`:""}
-  </div>`;
+  if(id==="joker"){const c=E.NM_COR||{};
+    return `<div class="guia-card"><div class="guia-name">Coringa</div><div class="guia-note">Não tem receita de stats — é o jogador bom em tudo, sem ponto fraco. Precisa de pelo menos 5 dos 7 stats acima de ${c.pisoMin}.</div></div>`;}
+  const rec=E.NM_DEF[E.STYLE_KEYS[id]];
+  return `<div class="guia-card"><div class="guia-name">${esc(E.STYLE_LABEL(id))}</div>${rec?guiaBars(rec.w):""}</div>`;
 }
 function guiaRoleCard(role){
-  const rp=E.ROLE_PERFIL[role],fit=E.STYLE_ROLE_FIT[role],subs=E.SUBARQ?.[role];
-  return `<div class="guia-card">
-    <div class="guia-card-head"><span class="guia-name">${esc(role)}</span><span class="guia-kind">Função</span></div>
-    <div class="guia-desc">${esc(describeRole(role))}</div>
-    <div class="guia-block"><div class="guia-block-h">Afinidade (classifica)</div>${guiaBars(rp.afin,statLabel)}</div>
-    <div class="guia-block"><div class="guia-block-h">OVR</div>${guiaBars(rp.ovr,statLabel)}<div class="guia-wr" style="margin-top:5px">Rating × stats: <b>${fmtW(rp.wR)}</b> / ${fmtW(1-rp.wR)}</div></div>
-    ${fit&&Object.keys(fit).length?`<div class="guia-block"><div class="guia-block-h">Estilos que combinam</div>${guiaChips(fit,id=>E.STYLE_LABEL(id),true)}</div>`:""}
-    ${subs?`<div class="guia-block"><div class="guia-block-h">Sub-arquétipos</div><div class="guia-chips">${subs.map(s=>`<span class="guia-chip">${esc(s.nome)}</span>`).join("")}</div></div>`:""}
-  </div>`;
+  const rp=E.ROLE_PERFIL[role],fit=E.STYLE_ROLE_FIT[role]||{};
+  const comuns=Object.entries(fit).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([id])=>E.STYLE_LABEL(id));
+  return `<div class="guia-card"><div class="guia-name">${esc(role)}</div>${guiaBars(rp.afin)}${comuns.length?`<div class="guia-meta">Estilos comuns: ${comuns.map(esc).join(", ")}</div>`:""}</div>`;
 }
 function renderGuia(){
   const roles=Object.keys(E.ROLE_PERFIL||{});
   const styles=[...(E.PLAYSTYLE_IDS||[]),"joker"];
-  const iglFit=E.STYLE_ROLE_FIT?.IGL;
-  const iglCard=`<div class="guia-card">
-    <div class="guia-card-head"><span class="guia-name">IGL</span><span class="guia-kind">Função · curada</span></div>
-    <div class="guia-desc">Não é classificado por stats: é marcado à mão. Herda o perfil de OVR do secundário e ganha crédito de liderança + bônus de título.</div>
-    ${iglFit&&Object.keys(iglFit).length?`<div class="guia-block"><div class="guia-block-h">Estilos que combinam</div>${guiaChips(iglFit,id=>E.STYLE_LABEL(id),true)}</div>`:""}
-  </div>`;
+  const iglCard=`<div class="guia-card"><div class="guia-name">IGL</div><div class="guia-note">É escolhido à mão, não pelos stats. Herda a função do parceiro de dupla e ganha um bônus por liderança e títulos.</div></div>`;
   return `
-    <div class="guia-intro"><span class="guia-live"><span class="cr-dot"></span>ao vivo</span> &nbsp;Os <b>pesos de verdade</b> do motor. Mexa na aba <b>Calibrar</b> e volte aqui: os números mudam junto. É referência sua pra experimentar — não um veredito.</div>
-    <div class="guia-sec"><div class="guia-sec-h">Estilos (${styles.length})</div><div class="guia-grid">${styles.map(guiaStyleCard).join("")}</div></div>
-    <div class="guia-sec"><div class="guia-sec-h">Funções (${roles.length}+1)</div><div class="guia-grid">${roles.map(guiaRoleCard).join("")}${iglCard}</div></div>`;
+    <div class="guia-intro">Como o motor enxerga cada estilo e função: os stats que mais pesam definem cada um — quanto maior a barra, mais aquele atributo conta. São os números de verdade e <b>ao vivo</b>: mudou algo na aba <b>Calibrar</b>, muda aqui também.</div>
+    <div class="guia-sec"><div class="guia-sec-h">Estilos</div><div class="guia-grid">${styles.map(guiaStyleCard).join("")}</div></div>
+    <div class="guia-sec"><div class="guia-sec-h">Funções</div><div class="guia-grid">${roles.map(guiaRoleCard).join("")}${iglCard}</div></div>`;
 }
 function montarUI(){
   const app=document.getElementById("app"); app.className="";
