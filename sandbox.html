@@ -172,31 +172,38 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .risk{font-size:var(--fs-sm);border-radius:var(--radius-pill);padding:5px 11px;background:var(--panel-soft);color:var(--neutral)}
 .risk.bad{color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,var(--panel-soft))}
 .risk.good{color:var(--win);background:color-mix(in srgb,var(--win) 15%,var(--panel-soft))}
-/* aba Guia — Funções & Estilos (referência viva dos pesos do motor) */
+/* aba Guia — Funções & Estilos (referência VIVA dos pesos do motor).
+   Mesma linguagem visual do resto: kicker .impact-section h4, pill .cr-pill,
+   cor com papel único (--win/--loss p/ sinal, --accent p/ magnitude). */
 .guia-intro{font-size:var(--fs-s);color:var(--dim);line-height:1.5;margin-bottom:16px}
-.guia-intro b{color:var(--neutral)}
-.guia-sec{margin-bottom:22px}
-.guia-sec-h{font-size:var(--fs-sm);font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);margin:0 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.guia-intro b{color:var(--txt)}
+.guia-live{display:inline-flex;align-items:center;gap:6px;font-family:var(--ff);font-size:var(--fs-2xs);font-weight:800;letter-spacing:.02em;color:var(--win);background:color-mix(in srgb,var(--win) 14%,transparent);padding:3px 10px;border-radius:var(--radius-pill);margin-left:2px}
+.guia-live .cr-dot{background:var(--win);animation:guiaPulse 1.8s var(--ease) infinite}
+@keyframes guiaPulse{0%,100%{opacity:1}50%{opacity:.35}}
+.guia-sec{margin-bottom:20px}
+.guia-sec-h{font-family:var(--ff);font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin:0 0 10px;padding-bottom:7px;border-bottom:1px solid var(--line)}
 .guia-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:10px}
-.guia-card{background:var(--panel-soft);border:1px solid var(--line-soft);border-radius:var(--radius);padding:12px 13px}
-.guia-card-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:4px}
-.guia-name{font-size:var(--fs-base);font-weight:800;color:var(--neutral)}
-.guia-kind{font-size:var(--fs-2xs);font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--dim)}
-.guia-desc{font-size:var(--fs-s);color:var(--dim);line-height:1.4;margin-bottom:10px}
-.guia-block{margin-top:9px}
-.guia-block-h{font-size:var(--fs-2xs);font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);margin-bottom:5px}
-.guia-bars{display:flex;flex-direction:column;gap:4px}
-.guia-bar{display:grid;grid-template-columns:64px 1fr 30px;align-items:center;gap:8px}
+.guia-card{background:var(--panel-soft);border-radius:var(--radius);padding:12px 13px}
+.guia-card-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:5px}
+.guia-name{font-size:var(--fs-md);font-weight:800;color:var(--txt)}
+.guia-kind{font-family:var(--ff);font-size:var(--fs-2xs);font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--dim)}
+.guia-desc{font-size:var(--fs-s);color:var(--dim);line-height:1.45;margin-bottom:11px}
+.guia-block{margin-top:11px}
+.guia-block-h{font-family:var(--ff);font-size:var(--fs-2xs);text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin-bottom:6px}
+.guia-bars{display:flex;flex-direction:column;gap:5px}
+.guia-bar{display:grid;grid-template-columns:64px minmax(0,1fr) 30px;align-items:center;gap:9px}
 .guia-bar-l{font-size:var(--fs-xs);color:var(--neutral)}
-.guia-track{height:6px;border-radius:99px;background:color-mix(in srgb,var(--neutral) 12%,transparent);overflow:hidden}
-.guia-fill{height:100%;border-radius:99px;background:var(--accent)}
-.guia-bar-v{font-size:var(--fs-xs);color:var(--dim);text-align:right;font-variant-numeric:tabular-nums}
+.guia-track{height:6px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--txt) 10%,transparent);overflow:hidden}
+.guia-fill{height:100%;border-radius:var(--radius-pill);background:var(--accent)}
+.guia-bar-v{font-family:var(--ff);font-size:var(--fs-xs);color:var(--dim);text-align:right;font-variant-numeric:tabular-nums}
 .guia-chips{display:flex;flex-wrap:wrap;gap:5px}
-.guia-chip{font-size:var(--fs-xs);padding:2px 8px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--neutral) 8%,transparent);color:var(--neutral);white-space:nowrap}
-.guia-chip .v{color:var(--dim);font-variant-numeric:tabular-nums;margin-left:3px}
-.guia-chip.pos{background:color-mix(in srgb,var(--win) 16%,transparent)}
-.guia-chip.neg{background:color-mix(in srgb,var(--warn) 15%,transparent)}
-.guia-wr{font-size:var(--fs-xs);color:var(--dim)} .guia-wr b{color:var(--neutral)}
+.guia-chip{font-family:var(--ff);font-size:var(--fs-xs);font-weight:700;padding:3px 9px;border-radius:var(--radius-pill);background:var(--panel);color:var(--neutral);white-space:nowrap}
+.guia-chip .v{color:var(--dim);font-variant-numeric:tabular-nums;margin-left:4px}
+.guia-chip.pos{color:var(--win);background:color-mix(in srgb,var(--win) 15%,transparent)}
+.guia-chip.pos .v{color:var(--win)}
+.guia-chip.neg{color:var(--loss);background:color-mix(in srgb,var(--loss) 15%,transparent)}
+.guia-chip.neg .v{color:var(--loss)}
+.guia-wr{font-family:var(--ff);font-size:var(--fs-xs);color:var(--dim)} .guia-wr b{color:var(--txt);font-variant-numeric:tabular-nums}
 
 /* ============================================================
    SIMULADOR DE MAPA / PARTIDA
@@ -2332,7 +2339,7 @@ function renderGuia(){
     ${iglFit&&Object.keys(iglFit).length?`<div class="guia-block"><div class="guia-block-h">Estilos que combinam</div>${guiaChips(iglFit,id=>E.STYLE_LABEL(id),true)}</div>`:""}
   </div>`;
   return `
-    <div class="guia-intro">Os <b>pesos de verdade</b> do motor, ao vivo. Mexa na aba <b>Calibrar</b> e volte aqui: os números mudam junto. É referência sua pra experimentar — não um veredito.</div>
+    <div class="guia-intro"><span class="guia-live"><span class="cr-dot"></span>ao vivo</span> &nbsp;Os <b>pesos de verdade</b> do motor. Mexa na aba <b>Calibrar</b> e volte aqui: os números mudam junto. É referência sua pra experimentar — não um veredito.</div>
     <div class="guia-sec"><div class="guia-sec-h">Estilos (${styles.length})</div><div class="guia-grid">${styles.map(guiaStyleCard).join("")}</div></div>
     <div class="guia-sec"><div class="guia-sec-h">Funções (${roles.length}+1)</div><div class="guia-grid">${roles.map(guiaRoleCard).join("")}${iglCard}</div></div>`;
 }
