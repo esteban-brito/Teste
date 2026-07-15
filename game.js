@@ -248,7 +248,7 @@ const ESTEIRA={AWPer:"Artilharia",Rifler:"Assalto",Entry:"Vanguarda",Lurker:"Anc
 // vale OVR. Esse bônus é exclusivo do IGL — fragger nunca depende da colocação do time.
 const ratingScore=r=>clamp((r-CFG_AVALIACAO.RAT_LO)/(CFG_AVALIACAO.RAT_HI-CFG_AVALIACAO.RAT_LO),0,CFG_AVALIACAO.RAT_CAP)*100;
 const curvaOVR=core=>{const C=CFG_AVALIACAO;return clipOVR(C.FLOOR+C.SPAN/(1+Math.exp(-C.K*(core-C.MID))));};
-const NM_AXES=[["fogo","Fogo"],["ent","Entrada"],["ab","Abertura"],["tr","Trade"],["cl","Clutch"],["ut","Utilitario"]];
+const NM_AXES=[["fogo","Fogo"],["ent","Entrada"],["ab","Abertura"],["tr","Trade"],["cl","Clutch"],["ut","Utilitário"]];
 const NM_DEF={
   Agressivo:{w:{ent:.45,ab:.30,fogo:.15,tr:.10},wR:.40},
   Spacetaker:{w:{ab:.35,fogo:.35,ent:.30},wR:.52},
@@ -280,7 +280,7 @@ const STYLE_ROLE_FIT={
   Support:{support:.20,trader:.13,cerebral:.13,anchor:.12,clutcher:.04,aggressive:-.10,spacetaker:-.12,playmaker:-.04},
   IGL:{cerebral:.12,support:.10,trader:.06,playmaker:.04}
 };
-const NM_COR={pisoMin:52,spreadMax:35};
+const NM_COR={pisoMin:45,spreadMax:35};
 const STYLE_KEYS={aggressive:"Agressivo",spacetaker:"Spacetaker",trader:"Trader",playmaker:"Playmaker",infiltrator:"Infiltrador",baiter:"Baiter",clutcher:"Clutcher",support:"Facilitador",cerebral:"Cerebral",anchor:Object.keys(NM_DEF).find(k=>k.includes("ncora"))||"Ancora"};
 const PLAYSTYLES={
   aggressive:{label:"Agressivo",traits:{pace:1,space:.7,trade:.2,structure:-.1,ct:-.2,t:.8}},
@@ -294,20 +294,6 @@ const PLAYSTYLES={
   cerebral:{label:"Cerebral",traits:{pace:-.1,space:.4,trade:.2,structure:.9,ct:.4,t:.3}},
   anchor:{label:"Ancora",traits:{pace:-.6,space:-.2,trade:.2,structure:.8,ct:1,t:-.3}}};
 const PLAYSTYLE_IDS=Object.keys(PLAYSTYLES);
-// Descrição legível de cada estilo (fonte única — usada pelo sandbox). 1 frase: o que é / o que faz.
-const STYLE_DESC={
-  aggressive:"Abre o mapa na raça: entrada e agressão constantes, aceita a troca pra criar espaço pro time.",
-  spacetaker:"O primeiro a tomar território, com mira afiada na frente — fogo e abertura pra ganhar o espaço.",
-  trader:"Vive de trocar mortes: segue a entrada e capitaliza cada abertura que o time cria.",
-  playmaker:"Estrela de fogo: decide rounds no talento individual e nos picks de abertura.",
-  infiltrator:"Joga por trás das linhas — presença fora do óbvio, abre e fecha rounds no clutch.",
-  baiter:"Fica na retaguarda esperando a troca fácil: evita risco, joga pelo próprio K/D, impacto baixo.",
-  clutcher:"Frio no 1vX: brilha quando o round já parece perdido, no fogo puro e na cabeça fria.",
-  support:"Cola o time: utilitário, trades e abertura pros outros brilharem — o trabalho invisível.",
-  cerebral:"A cabeça do time: leitura, utilitário e clutch; joga pelo mapa, não pelo frag.",
-  anchor:"Segura o bombsite sozinho no CT: clutch, utilitário e paciência defensiva.",
-  joker:"Polivalente: stats equilibrados, sem fraqueza clara — faz um pouco de tudo em qualquer função."
-};
 const STYLE_LABEL=id=>id==="joker"?"Coringa":(PLAYSTYLES[id]?.label||id);
 const STYLE_ID=x=>x==="Coringa"||x==="joker"?"joker":(PLAYSTYLE_IDS.find(id=>id===x||STYLE_KEYS[id]===x||PLAYSTYLES[id].label===x)||x);
 const STYLE_RECIPE=id=>NM_DEF[STYLE_KEYS[id]];
