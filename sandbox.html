@@ -1240,6 +1240,25 @@ function generateOvrCandidates(raw,targetOvr){
   if(score>5)out.push([{type:"ovrparam",key:"OVR_SPAN",from:C.OVR_SPAN,to:+cl(C.OVR_SPAN+d*100/score,0,20).toFixed(2)}]);
   const rex=(+raw.rating||0)-C.RAT_BASE;
   if(rex>.05)out.push([{type:"ovrparam",key:"RAT_K",from:C.RAT_K,to:+cl(C.RAT_K+d/rex,0,25).toFixed(2)}]);
+  // [19] candidato CIRÚRGICO RENORMALIZADO: sobe o eixo forte da receita e desce o fraco em igual
+  // medida. Σw preservado → a receita continua somando ~100% (o score = dot(w,s6) não estoura de
+  // escala) e o ganho de OVR vem do PERFIL do alvo, então colegas de estilo de outro perfil sobem menos.
+  const styleLabel=E.STYLE_LABEL(ev.playstyle), rec=E.NM_DEF[styleLabel];
+  const s6=st.s6||nmOVR(raw,ev.combatRole||"Rifler").s6||{};
+  if(rec&&styleLabel!=="Coringa"&&C.OVR_SPAN>0){
+    const keys=Object.keys(rec.w);
+    const strong=keys.slice().sort((a,b)=>(s6[b]||0)-(s6[a]||0))[0];
+    const weak=keys.slice().sort((a,b)=>(s6[a]||0)-(s6[b]||0))[0];
+    const spread=(s6[strong]||0)-(s6[weak]||0);
+    if(strong&&weak&&strong!==weak&&spread>5){
+      const base=d*100/C.OVR_SPAN/spread, wS=rec.w[strong], wW=rec.w[weak]; // δ de peso que move o OVR em ~d
+      [.8,1,1.25].forEach(m=>{const dw=cl(base*m,-.22,.22);
+        if(Math.abs(dw)>1e-3)out.push([
+          {type:"nm",style:styleLabel,axis:strong,from:wS,to:Math.max(.01,+(wS+dw).toFixed(3))},
+          {type:"nm",style:styleLabel,axis:weak,from:wW,to:Math.max(.01,+(wW-dw).toFixed(3))}]);
+      });
+    }
+  }
   return dedupeCandidates(out);
 }
 function generateGoalCandidates(goal,current,raw,isIGL,opts){
@@ -1419,11 +1438,23 @@ function goalMetric(raw,goal){
     return -Math.abs(Math.min(goal.ovr,ev.isIGL?C.IGL_TETO:C.OVR_MAX)-disp);}
   if(goal.style&&goal.style!=="Coringa"){
     const ev=E.avaliarJogador({...raw}),tid=styleIdFromLabel(goal.style);
-    const nm=nmOVR(raw,ev.combatRole||"Rifler");
-    // proximidade do estilo-alvo: quão perto o score da receita-alvo está de vencer o atual
-    const s6=nm.s6||{},rec=E.NM_DEF[goal.style];if(!rec)return 0;
-    const dotT=Object.keys(rec.w).reduce((s,k)=>s+(rec.w[k]||0)*(s6[k]||0),0);
-    return (ev.playstyle===tid?100:0)+dotT*.1;
+    const nm=nmOVR(raw,ev.combatRole||"Rifler"),s6=nm.s6||{};
+    // [3] replica a decisão real do motor (styleMatch): score = cosseno(receita, s6) − margem de contra.
+    // Antes usava o produto-escalar cru (dotT), que não bate com o cosseno normalizado que escolhe o estilo.
+    const styleScore=id=>{
+      const rec=E.NM_DEF[E.STYLE_KEYS[id]];if(!rec)return -1e9;
+      const w=rec.w;let d=0,nw=0,ns=0;
+      for(const [k] of E.NM_AXES){const wi=w[k]||0,si=s6[k]||0;d+=wi*si;nw+=wi*wi;ns+=si*si;}
+      let sc=d/(Math.sqrt(nw*ns)+1e-9);
+      const contra=E.STYLE_CONTRA[id]||{};let cd=0,cw=0;
+      for(const k in contra){cd+=(contra[k]||0)*(s6[k]||0);cw+=(contra[k]||0);}
+      return sc-(cw?cd/(100*cw)*.42:0);
+    };
+    const tScore=styleScore(tid);
+    let rival=-Infinity; // melhor concorrente que o alvo precisa superar (a decisão é o argmax dos scores)
+    for(const id of E.PLAYSTYLE_IDS){if(id===tid||id==="baiter")continue;const s=styleScore(id);if(s>rival)rival=s;}
+    // margem do alvo sobre o melhor rival (>0 = o motor já escolheria o alvo); +100 quando já é o alvo.
+    return (ev.playstyle===tid?100:0)+(tScore-rival)*50;
   }
   return 0;
 }
