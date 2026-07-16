@@ -479,7 +479,7 @@ function quimicaPlaystyles(jogadores,caracTreinador=null){
   if(qtd.infiltrator&&qtd.aggressive){const b=.03;quimica+=b;sinergias++;alertas.push(`Split Setup +${Math.round(b*100)}%`);}
   if(qtd.infiltrator&&qtd.cerebral){const b=.05;quimica+=b;sinergias++;alertas.push(`Rede de Informacao +${Math.round(b*100)}%`);}
   if(qtd.anchor&&qtd.clutcher){const b=.05;quimica+=b;sinergias++;alertas.push(`Retake Perfeito +${Math.round(b*100)}%`);}
-  if(temCoringa&&qtd.aggressive){const b=.02;quimica+=b;sinergias++;alertas.push(`Coringa + Agressivo +${Math.round(b*100)}%`);}
+  if(temCoringa&&qtd.aggressive){const b=.02;quimica+=b;sinergias++;alertas.push(`Coringa + Opener +${Math.round(b*100)}%`);}
   if(temCoringa&&qtd.cerebral){const b=.03;quimica+=b;sinergias++;alertas.push(`Coringa + Cerebral +${Math.round(b*100)}%`);}
   const avgPace=jogadores.reduce((s,j)=>{const id=STYLE_ID(j.playstyle);return s+(PLAYSTYLES[id]?.traits?.pace||0);},0)/Math.max(1,jogadores.length);
   const satPlaymakers=(qtd.playmaker||0)+(qtd.baiter||0)>=3,invasaoEspaco=(qtd.infiltrator||0)>=2;
