@@ -41,7 +41,7 @@ async function bootstrap() {
   core += `
 return {
   setupEngine(engine){
-    E=engine; DEF={ROLE:clone(E.ROLE_PERFIL),NM:clone(E.NM_DEF),NM_COR:clone(E.NM_COR),CONTRA:clone(E.ROLE_CONTRA),IGL:clone(E.IGL_ROLE_AFIN),RULES:clone(E.ROLE_RULES),STYLE_FIT:clone(E.STYLE_ROLE_FIT),STYLE_CONTRA:clone(E.STYLE_CONTRA)};
+    E=engine; DEF={ROLE:clone(E.ROLE_PERFIL),NM:clone(E.NM_DEF),NM_COR:clone(E.NM_COR),CONTRA:clone(E.ROLE_CONTRA),IGL:clone(E.IGL_ROLE_AFIN),RULES:clone(E.ROLE_RULES),STYLE_FIT:clone(E.STYLE_ROLE_FIT),STYLE_CONTRA:clone(E.STYLE_CONTRA),CFG:clone(E.CFG_AVALIACAO)}; // [21] CFG faltava (o sandbox principal inclui)
     ({nmOVR,STYLE_LABEL,PLAYSTYLE_IDS}=E);
     POOLRAW=[]; poolBySlot=new Map();
     E.TEAMS.forEach((t,ti)=>t.jogadores.forEach((j,pi)=>{const e=j._eng;
@@ -52,6 +52,10 @@ return {
   },
   runSearch(job){
     if(job.config)restoreConfig(job.config);
+    // [21] worker é REUSADO entre jobs: zera o estado de sessão pra não vazar baseline/caches de uma
+    // busca anterior (senão ensureBaseline mantém o baseline do job antigo e cumulativeInfo mede
+    // contra ele → desempate [18]/[19] errado). Recalcula tudo contra a config recém-restaurada.
+    baseline=null; calibSession=null; reportFallbackText=""; invalidateAllTeamEval();
     loadedIdx = poolBySlot.get(\`\${job.ti}:\${job.pi}\`);
     if(loadedIdx==null) throw new Error("jogador nao encontrado no worker: "+job.ti+":"+job.pi);
     Object.assign(state, job.state||{});
