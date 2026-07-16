@@ -49,7 +49,9 @@ return {
   },
   setMode(mode){ calibMode=mode; },
   overrideBudget(ms){ Object.values(CALIB_STRATEGIES).forEach(s=>{ if(ms)s.maxMs=ms; }); },
-  findCalibration, renderCalibResult, rolePairParts, deltasFor, compareCalibration, CALIB_STRATEGIES,
+  info(nome){ const p=POOLRAW.find(x=>x.nome===nome); if(!p)throw new Error("nao achei: "+nome);
+    const ev=E.avaliarJogador({...p}); return {isIGL:!!ev.isIGL,ovr:Math.round(ev.ovr),style:STYLE_LABEL(ev.playstyle),r1:ev.role1||ev.combatRole,r2:ev.role2||ev.secundario}; },
+  findCalibration, renderCalibResult, rolePairParts, deltasFor, scaleChanges, compareCalibration, CALIB_STRATEGIES,
   get STYLE_LABEL(){ return STYLE_LABEL; }
 };
 `;
@@ -86,6 +88,15 @@ const api=loadCalibrator();
   check(melhorVence,"compareCalibration escolhe o custo total menor mesmo com 1 colateral a mais");
 }
 
+// [22/clamps] scaleChanges reaplica os limites por tipo mesmo em fator>1 (extrapolação): não
+// deixa peso negativo, contra>0.8, igl fora de [-1,1]. Antes escapava e gerava config inválida.
+{
+  const cont=api.scaleChanges([{type:"stylecontra",from:.5,to:.75}],1.5)[0].to; // 0.5+0.25*1.5=0.875
+  const nm=api.scaleChanges([{type:"nm",from:.2,to:.05}],1.5)[0].to;             // 0.2-0.15*1.5=-0.025
+  const igl=api.scaleChanges([{type:"igl",from:.5,to:.9}],1.5)[0].to;            // 0.5+0.4*1.5=1.1
+  check(cont<=.8+1e-9&&nm>=.01-1e-9&&igl<=1+1e-9,`scaleChanges capa por tipo (stylecontra=${cont}≤.8, nm=${nm}≥.01, igl=${igl}≤1)`);
+}
+
 // bateria ponta-a-ponta: nunca lanca excecao; quando ok=true, o resultado bate o goal de
 // verdade (revalidado contra rolePairParts/STYLE_LABEL, nao so confiando no proprio "ok").
 const CASOS=[
@@ -120,6 +131,46 @@ api.overrideBudget(budgetMs);
       catch(e){ renderErr=e; }
       check(!renderErr,`${caso.nome} [${caso.mode}] renderCalibResult nao lanca excecao${renderErr?": "+renderErr.message:""}`);
     }
+  }
+  // [22] alvos DETERMINISTICAMENTE impossíveis: falham rápido com mensagem clara (a IA só mexe em pesos).
+  const feas=async(nome,goal)=>{ api.loadByName(nome); api.setMode("ia");
+    try{ return await api.findCalibration(goal,null); }catch(e){ return {threw:e}; } };
+  {
+    const igl=await feas("karrigan",{ovr:22}); // teto do IGL é 21
+    check(!igl.threw&&igl.infeasible&&/21/.test(igl.message||""),`IGL ovr22 → impossível ("${String(igl.message||igl.threw||"").slice(0,45)}")`);
+    let iglHtml=""; try{ iglHtml=api.renderCalibResult(igl,{ovr:22}); }catch(e){ iglHtml="ERRO:"+e.message; }
+    check(/Impossível/.test(iglHtml)&&/21/.test(iglHtml),"a mensagem de impossível RENDERIZA (não cai no genérico)");
+    const rr=await feas("ZywOo",{r1:"Entry",r2:"Entry"});
+    check(!rr.threw&&!!rr.infeasible,"Role1==Role2 → impossível");
+    const bt=await feas("ZywOo",{style:"Baiter"});
+    check(!bt.threw&&!!bt.infeasible,"estilo Baiter → impossível (é definido por stats)");
+  }
+  // [22] alvo de OVR: a IA acha e o OVR EXIBIDO bate o alvo.
+  {
+    const inf=api.info("mezii"), alvo=Math.min(21,inf.ovr+1);
+    api.loadByName("mezii"); api.setMode("ia");
+    const r=await api.findCalibration({ovr:alvo},null);
+    check(!!(r&&r.ok&&Math.round(r.after.ovr)===alvo),`mezii ovr ${inf.ovr}→${alvo}: ok e OVR bate (${r&&r.ok?Math.round(r.after.ovr):r&&r.message})`);
+  }
+  // [22] alvo já atingido: retorno imediato, sem sugerir mudança.
+  {
+    const inf=api.info("yuurih"); api.loadByName("yuurih"); api.setMode("ia");
+    const r=await api.findCalibration({style:inf.style},null);
+    check(!!(r&&r.alreadyMet&&(!r.changes||!r.changes.length)),`yuurih já é ${inf.style} → alreadyMet sem mudanças`);
+  }
+  // [22] objetivo COMBINADO {estilo(segura)+OVR}: fecha as DUAS dimensões juntas.
+  {
+    const inf=api.info("electroNic"), alvo=Math.min(21,inf.ovr+1);
+    api.loadByName("electroNic"); api.setMode("ia");
+    const r=await api.findCalibration({style:inf.style,ovr:alvo},null);
+    const ok=r&&r.ok&&api.STYLE_LABEL(r.after.playstyle)===inf.style&&Math.round(r.after.ovr)===alvo;
+    check(!!ok,`electroNic {${inf.style}+ovr${alvo}}: fecha estilo E ovr (${r&&r.ok?api.STYLE_LABEL(r.after.playstyle)+"/"+Math.round(r.after.ovr):r&&r.message})`);
+  }
+  // [22] Coringa: não lança; se achar, o estilo é mesmo Coringa (limiar global NM_COR, não receita).
+  {
+    api.loadByName("KSCERATO"); api.setMode("ia");
+    let r=null,err=null; try{ r=await api.findCalibration({style:"Coringa"},null); }catch(e){ err=e; }
+    check(!err&&(!r.ok||api.STYLE_LABEL(r.after.playstyle)==="Coringa"),`Coringa não lança e, se ok, vira Coringa${err?": "+err.message:""}`);
   }
   console.log(failures?`✗ ${failures} checagem(ns) do calibrador falharam`:"✓ calibrador ok");
   process.exitCode=failures?1:0;
