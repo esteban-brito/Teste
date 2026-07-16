@@ -538,6 +538,7 @@ let calibGoalHint=null; // alvo ativo da busca — pra o custo pesar colateral d
 let nmOVR, STYLE_LABEL, PLAYSTYLE_IDS;
 let calibSession=null, reportFallbackText="";
 let searchSeedSalt=0; // 0 = comportamento de sempre; workers em paralelo usam um valor diferente cada pra nao repetir a mesma busca
+let _bankMemo=null; // [9] memo dos bancos sensibilizados dentro de UMA busca: a sensibilidade só depende do jogador+alvo (não da fase), então mede-se 1x contra o baseline limpo e reusa
 const teamEvalCache=new Map();
 function invalidateTeamEval(ti){teamEvalCache.delete(ti);}
 function invalidateAllTeamEval(){teamEvalCache.clear();}
@@ -1296,6 +1297,8 @@ function pickWeighted(rng,items){
 }
 function roleLeverBank(target,current,raw,opts){
   const attrLimit=opts?.attrLimit||7;
+  const memoK=opts?.sensitize&&_bankMemo?`role|${target}|${current}|${attrLimit}`:null; // [9]
+  if(memoK&&_bankMemo.has(memoK))return _bankMemo.get(memoK);
   const targetAttrs=candidateAttrsFor(target,raw,attrLimit);
   const currentAttrs=current&&current!==target?candidateAttrsFor(current,raw,attrLimit):[];
   const levers=[];
@@ -1339,11 +1342,14 @@ function roleLeverBank(target,current,raw,opts){
     });
   }
   if(opts?.sensitize)sensitizeLevers(levers,raw,()=>targetGap(raw,target,current));
+  if(memoK)_bankMemo.set(memoK,levers);
   return levers;
 }
 // banco de alavancas p/ alvo de ESTILO: receita do alvo (sobe stats fortes), fit, contra, e
 // empurra o estilo atual pra baixo. Cirúrgico por natureza (mexe só nos estilos envolvidos).
 function styleLeverBank(targetStyleLabel,raw,evalRole,opts){
+  const memoK=opts?.sensitize&&_bankMemo?`style|${targetStyleLabel}|${evalRole||"Rifler"}`:null; // [9]
+  if(memoK&&_bankMemo.has(memoK))return _bankMemo.get(memoK);
   const targetId=styleIdFromLabel(targetStyleLabel), rec=E.NM_DEF[targetStyleLabel];
   const nm=nmOVR(raw,evalRole||"Rifler"), s6=nm.s6||{}, currentId=nm.style;
   const levers=[];
@@ -1361,11 +1367,14 @@ function styleLeverBank(targetStyleLabel,raw,evalRole,opts){
       levers.push({weight:Math.max(1,(s6[k]||0))*.35,make:d=>makeStyleContraChange(currentId,k,d*.4),label:`SCONTRA.${currentId}.${k}+`}));
   }
   if(opts?.sensitize)sensitizeLevers(levers,raw,()=>goalMetric(raw,{style:targetStyleLabel}));
+  if(memoK)_bankMemo.set(memoK,levers);
   return levers;
 }
 // banco de alavancas p/ alvo de OVR: CIRÚRGICAS (receita do próprio estilo, peso alto) +
 // GLOBAIS (base/span/K, peso baixo). A busca prefere as cirúrgicas → menos colateral.
 function ovrLeverBank(raw,targetOvr,opts){
+  const memoK=opts?.sensitize&&_bankMemo?`ovr|${targetOvr}`:null; // [9]
+  if(memoK&&_bankMemo.has(memoK))return _bankMemo.get(memoK);
   const ev=E.avaliarJogador({...raw}), styleLabel=E.STYLE_LABEL(ev.playstyle), rec=E.NM_DEF[styleLabel];
   const nm=nmOVR(raw,ev.combatRole||"Rifler"), s6=nm.s6||{}, C=E.CFG_AVALIACAO;
   // [3-IGL] distância no OVR exibido (com bônus por colocação + teto do IGL), não no core cru
@@ -1384,6 +1393,7 @@ function ovrLeverBank(raw,targetOvr,opts){
   const rex=(+raw.rating||0)-C.RAT_BASE;
   if(rex>.05)levers.push({weight:22,make:x=>({type:"ovrparam",key:"RAT_K",from:C.RAT_K,to:+Math.max(0,Math.min(25,C.RAT_K+dir*x*6)).toFixed(2)}),label:"RAT_K"});
   if(opts?.sensitize)sensitizeLevers(levers,raw,()=>goalMetric(raw,{ovr:targetOvr}));
+  if(memoK)_bankMemo.set(memoK,levers);
   return levers;
 }
 // mede o efeito REAL de cada alavanca numa métrica de alvo (avalia 1 jogador, não a liga):
@@ -1595,6 +1605,7 @@ async function findCalibration(goal,onProgress=null){
   const initialGap=roleTarget?targetGap(raw,roleTarget.target,roleTarget.current):0;
   const hasRoleGoal=!!(goal.r1||goal.r2);
   let best=null, bestRoleBase=null, usedPhase=-1;
+  _bankMemo=new Map(); // [9] sensibilidade medida 1x contra o baseline limpo (fase 0) e reusada em todas as fases + refino
   const searchStats={tested:0,valid:0,generated:0,pruned:0,truncated:false,initialGap,roleTarget};
   const outOfBudget=()=>{
     const overTests=searchStats.tested>=(strategy.maxTests||Infinity);
@@ -1785,6 +1796,7 @@ async function findCalibration(goal,onProgress=null){
     return {ok:false,message:fbMsg,before,goal};
   }finally{
     restoreConfig(beforeConfig);
+    _bankMemo=null; // [9] memo só vale dentro de uma busca
   }
 }
 // helper: uma linha "modificação no motor" (só no técnico)
@@ -1923,7 +1935,10 @@ function ensureCalibWorkers(){
 async function runCalibrationParallel(goal,onProgress){
   // Coringa depende do limiar global (poucos candidatos) — a busca direta resolve; os workers
   // (partição aleatória) não cobrem esse caso bem, então roda na thread principal.
-  if(goal.style==="Coringa"||goal.ovr)return await findCalibration(goal,onProgress);
+  // [10] alvo de OVR passou a ir pros workers também: a busca (varredura de ovrparam + combos
+  // de receita) é pesada e travava a thread principal por segundos; nos workers ela é não-
+  // bloqueante e as seeds diferentes diversificam os candidatos aleatórios.
+  if(goal.style==="Coringa")return await findCalibration(goal,onProgress);
   try{
     const strategy=CALIB_STRATEGIES[calibMode]||CALIB_STRATEGIES.ia;
     const workers=calibMode==="ia"?ensureCalibWorkers():null;
