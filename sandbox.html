@@ -533,7 +533,7 @@ let E=null, DEF=null, POOLRAW=[], loadedIdx=null, poolBySlot=new Map();
 let teamIdx=0, simA=0, simB=1, simSeed=2026, simRuns=80, simMap="auto", lastMap=null, lastBatch=null, baseline=null;
 // estrutura nova: uma ferramenta por vez no canvas central (segmented control), jogador fixado no topo
 let centerMode="calibrar"; // calibrar | time | simular | editar | relatorio
-let calibTargetRole="", calibTargetRole2="", calibTargetStyle="", calibTargetOvr="", calibMode="ia", calibLast=null, calibRunning=false;
+let calibTargetRole="", calibTargetRole2="", calibTargetStyle="", calibTargetOvr="", calibMode="ia", calibLast=null, calibRunning=false, calibBuilding=false;
 let calibGoalHint=null; // alvo ativo da busca — pra o custo pesar colateral de OVR só em alvo de OVR
 let nmOVR, STYLE_LABEL, PLAYSTYLE_IDS;
 let calibSession=null, reportFallbackText="";
@@ -2091,6 +2091,11 @@ async function runCalibrationParallel(goal,onProgress){
 }
 function buildCalibrator(){
   const box=document.getElementById("calibbox");if(!box)return;
+  // re-entrância: trocar innerHTML remove um input focado (ex.: OVR com valor mudado) e dispara o
+  // blur→change SÍNCRONO dele, que reentra aqui no meio da troca ("node no longer a child"). Guarda.
+  if(calibBuilding)return;
+  calibBuilding=true;
+  try{
   const player=loadedIdx==null?evaluatePlayer(jogadorAtual()):mainPlayer();
   const isIGL=player.isIGL;
   const anyRoleOptions=r=>`<option value="">Qualquer</option>${ROLES.map(role=>`<option value="${role}" ${role===r?"selected":""}>${role}</option>`).join("")}`;
@@ -2161,8 +2166,10 @@ function buildCalibrator(){
       calibLast=await runCalibrationParallel(goal,progress);
     }finally{
       calibRunning=false;
-      if(resultBox)resultBox.innerHTML=renderCalibResult(calibLast,goal);
-      try{buildCalibrator();}catch(err){console.error(err);}
+      // buildCalibrator já re-renderiza #calibResult (via calibLast) e recria os botões habilitados.
+      // Fallback só se ele lançar: reescreve no nó ATUAL (re-obtido), nunca no capturado (pode estar solto).
+      try{buildCalibrator();}
+      catch(err){console.error(err);const rb=document.getElementById("calibResult");if(rb)rb.innerHTML=renderCalibResult(calibLast,goal);}
     }
   };
   document.getElementById("calibReset").onclick=()=>{copyInto(E.ROLE_PERFIL,DEF.ROLE);copyInto(E.NM_DEF,DEF.NM);copyInto(E.NM_COR,DEF.NM_COR);if(DEF.CONTRA)copyInto(E.ROLE_CONTRA,DEF.CONTRA);if(DEF.IGL)copyInto(E.IGL_ROLE_AFIN,DEF.IGL);if(DEF.RULES)copyInto(E.ROLE_RULES,DEF.RULES);if(DEF.STYLE_FIT)copyInto(E.STYLE_ROLE_FIT,DEF.STYLE_FIT);if(DEF.STYLE_CONTRA)copyInto(E.STYLE_CONTRA,DEF.STYLE_CONTRA);if(DEF.CFG)copyInto(E.CFG_AVALIACAO,DEF.CFG);calibLast=null;invalidateAllTeamEval();refresh("all");};
@@ -2170,6 +2177,7 @@ function buildCalibrator(){
   if(apply)apply.onclick=()=>{if(calibLast&&calibLast.ok){const applied=calibLast;applyCalibChanges(applied.changes);registerCalibrationApplication(applied);calibLast=null;invalidateAllTeamEval();refresh("all");toast("Sugestão registrada na bancada");}};
   const discard=document.getElementById("calibDiscard");
   if(discard)discard.onclick=()=>{calibLast=null;buildCalibrator();};
+  }finally{calibBuilding=false;}
 }
 function officialTeam(t,ti){
   const coach=t.treinador;
@@ -2433,12 +2441,14 @@ function renderEditorResult(){
     if(badge.textContent!==novoOvr&&badge.textContent!=="—"){badge.classList.remove("bump");void badge.offsetWidth;badge.classList.add("bump");}
     badge.textContent=novoOvr;badge.style.setProperty("--tc",`var(${tierVar(ev.ovr)})`);
   }
-  const st=ev.style;
-  // função/playstyle/OVR já aparecem AO VIVO na âncora do topo (pctx) — aqui fica só o diagnóstico interno
+  const st=ev.style||{};
+  // função/playstyle/OVR já aparecem AO VIVO na âncora do topo (pctx) — aqui fica só o diagnóstico
+  // interno do MODELO NOVO: score da receita (identidade 0..100), bônus de rating (pontos de OVR)
+  // e clareza (quão distante o estilo vencedor está do 2º). O antigo wR não existe mais no nmOVR.
   box.innerHTML=`<div class="stat-mini editor-diag">
-      <span><b class="mono">${st.wR.toFixed(2)}</b>wR</span>
-      <span><b class="mono">${Math.round(st.statScore)}</b>statScore</span>
-      <span><b class="mono">${Math.round(st.matchScore*100)}%</b>clareza</span>
+      <span><b class="mono">${Math.round(st.score??st.statScore??0)}</b>score</span>
+      <span><b class="mono">+${(st.bonus??0).toFixed(1)}</b>rating</span>
+      <span><b class="mono">${Math.round((st.matchScore??0)*100)}%</b>clareza</span>
     </div>`;
 }
 
