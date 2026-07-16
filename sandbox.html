@@ -1665,8 +1665,12 @@ function buildCandidateResult({changes,ok,before,after,diff,cumulativeDiff,goalK
   }
   // [17] folga do alvo até "virar" (maior = mais robusto): função usa o gap ao rival (já calculado),
   // OVR usa a distância até a borda de arredondamento. Estilo fica neutro (colateral já o protege).
+  // [18-fix] o OVR EXIBIDO já é arredondado (clipOVR→Math.round), então after.ovr==goal.ovr sempre
+  // numa solução válida → margem 1 inútil. Mede no valor CONTÍNUO (style.core + bônus de colocação
+  // do IGL): quão centrado no meio da faixa [alvo±.5] o jogador está.
+  const C=E.CFG_AVALIACAO, ovrCont=(after?.style?.core??after?.ovr??0)+(after?.isIGL?(C.IGL_TITULO[after.colocacao]||0):0);
   result.goalMargin=result.finalGap!=null?Math.max(0,Math.min(1,result.finalGap/6))
-    :(goal&&goal.ovr!=null&&after)?Math.max(0,(.5-Math.abs((after.ovr||0)-goal.ovr))/.5):1;
+    :(goal&&goal.ovr!=null&&after)?Math.max(0,Math.min(1,(.5-Math.abs(ovrCont-goal.ovr))/.5)):1;
   return result;
 }
 async function findCalibration(goal,onProgress=null){
