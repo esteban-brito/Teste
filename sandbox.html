@@ -1262,30 +1262,40 @@ function generateOvrCandidates(raw,targetOvr){
   return dedupeCandidates(out);
 }
 function generateGoalCandidates(goal,current,raw,isIGL,opts){
-  const all=[];
-  if(goal.ovr)all.push(...generateOvrCandidates(raw,goal.ovr));
-  if(goal.style==="Coringa")all.push(...generateJokerCandidates(raw));
+  const all=[], struct=[]; // struct = sementes de função/estilo, separadas p/ cruzar com OVR (objetivo combinado)
+  const ovrCands=goal.ovr?generateOvrCandidates(raw,goal.ovr):[];
+  all.push(...ovrCands);
+  if(goal.style==="Coringa")struct.push(...generateJokerCandidates(raw));
   const ro=opts?.role||{};
   const styleRoles=isIGL?[current.r2||"Rifler"]:ROLES;
   if(isIGL&&goal.r2&&goal.r2!==current.r2){
-    all.push(...generateRoleCandidates(goal.r2,current.r2,raw,ro));
+    struct.push(...generateRoleCandidates(goal.r2,current.r2,raw,ro));
   }else if(!isIGL){
-    if(goal.r1&&goal.r1!==current.r1)all.push(...generateRoleCandidates(goal.r1,current.r1,raw,ro));
-    if(goal.r2&&goal.r2!==current.r2)all.push(...generateRole2Candidates(goal.r2,current.r1,raw,ro));
+    if(goal.r1&&goal.r1!==current.r1)struct.push(...generateRoleCandidates(goal.r1,current.r1,raw,ro));
+    if(goal.r2&&goal.r2!==current.r2)struct.push(...generateRole2Candidates(goal.r2,current.r1,raw,ro));
     if(goal.style&&!goal.r1&&!goal.r2){
       ROLES.filter(role=>role!==current.r1).forEach(role=>{
         const roleCands=generateRoleCandidates(role,current.r1,raw,ro);
-        all.push(...roleCands);
+        struct.push(...roleCands);
         const styleCands=generateStyleCandidates(goal.style,raw,current.r1||current.r2,role);
         roleCands.slice(0,18).forEach(roleChanges=>{
-          styleCands.slice(0,18).forEach(styleChanges=>all.push([...roleChanges,...styleChanges]));
+          styleCands.slice(0,18).forEach(styleChanges=>struct.push([...roleChanges,...styleChanges]));
         });
       });
     }
   }
   if(goal.style&&goal.style!==current.style){
     const rolesToTry=goal.r1?[goal.r1]:styleRoles;
-    rolesToTry.forEach(role=>all.push(...generateStyleCandidates(goal.style,raw,current.r1||current.r2,role)));
+    rolesToTry.forEach(role=>struct.push(...generateStyleCandidates(goal.style,raw,current.r1||current.r2,role)));
+  }
+  all.push(...struct);
+  // [2] objetivo COMBINADO (OVR + função/estilo): um candidato de UMA dimensão nunca bate as DUAS.
+  // Cruza (capado) as sementes estruturais com as de OVR pra a busca ter candidatos que mexem nas
+  // duas ao mesmo tempo; o refino (scaleChanges) ajusta a magnitude depois. Objetivo de 1 dimensão
+  // não entra aqui (struct ou ovrCands vazio), então nada muda pros alvos simples.
+  if(ovrCands.length&&struct.length){
+    const oc=ovrCands.filter(c=>c.length).slice(0,6);
+    struct.filter(c=>c.length).slice(0,24).forEach(sc=>oc.forEach(o=>all.push([...sc,...o])));
   }
   return all;
 }
