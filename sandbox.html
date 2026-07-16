@@ -1630,9 +1630,16 @@ function compareCalibration(a,b,strategy){
     const av=a.costInfo?.[key]??0, bv=b.costInfo?.[key]??0;
     if(Math.abs(av-bv)>1e-9)return av-bv;
   }
+  // [17] custo ~igual → prefere a solução com MAIOR folga até virar (menos frágil na borda).
+  const ma=a.goalMargin??1, mb=b.goalMargin??1;
+  if(Math.abs(ma-mb)>.03)return mb-ma;
+  // [18] regularização anti-drift: depois, prefere a que deixa a config menos longe do baseline
+  // acumulado (custo cumulativo) — evita a config afastar-se de DEF ao longo de muitas calibrações.
+  const ca=a.cumulativeInfo?.cost??a.cost, cb=b.cumulativeInfo?.cost??b.cost;
+  if(Math.abs(ca-cb)>COMPARE_EPSILON)return ca-cb;
   return costDiff;
 }
-function buildCandidateResult({changes,ok,before,after,diff,cumulativeDiff,goalKey,strategy,searchStats,roleTarget,raw,label,phase}){
+function buildCandidateResult({changes,ok,before,after,diff,cumulativeDiff,goalKey,strategy,searchStats,roleTarget,raw,label,phase,goal}){
   const costInfo=calibrationCost(changes,diff,goalKey,strategy);
   const cumulativeInfo=calibrationCost(changes,cumulativeDiff,goalKey,strategy);
   const result={ok,changes,before,after,diff,cost:costInfo.cost,costInfo,label:label||candidateLabel(changes),phase};
@@ -1645,6 +1652,10 @@ function buildCandidateResult({changes,ok,before,after,diff,cumulativeDiff,goalK
     result.finalGap=targetGap(raw,roleTarget.target,roleTarget.current);
     result.roleScores={before:roleScoresFor(before,roleTarget.target,roleTarget.current),after:roleScoresFor(after,roleTarget.target,roleTarget.current)};
   }
+  // [17] folga do alvo até "virar" (maior = mais robusto): função usa o gap ao rival (já calculado),
+  // OVR usa a distância até a borda de arredondamento. Estilo fica neutro (colateral já o protege).
+  result.goalMargin=result.finalGap!=null?Math.max(0,Math.min(1,result.finalGap/6))
+    :(goal&&goal.ovr!=null&&after)?Math.max(0,(.5-Math.abs((after.ovr||0)-goal.ovr))/.5):1;
   return result;
 }
 async function findCalibration(goal,onProgress=null){
@@ -1695,7 +1706,7 @@ async function findCalibration(goal,onProgress=null){
     const roleHit=hasRoleGoal&&goalMet(after,{r1:goal.r1,r2:goal.r2});
     if(!hit&&!roleHit)return; // candidato irrelevante: nem bate o alvo nem o sub-alvo de função → não paga o snapshot
     const now=impactSnapshot(), diff=diffSnapshots(proposalBase,now), cumulativeDiff=diffSnapshots(cumulativeBase,now);
-    const result=buildCandidateResult({changes,ok:hit,before,after,diff,cumulativeDiff,goalKey,strategy,searchStats,roleTarget,raw,label,phase:phaseIndex});
+    const result=buildCandidateResult({changes,ok:hit,before,after,diff,cumulativeDiff,goalKey,strategy,searchStats,roleTarget,raw,label,phase:phaseIndex,goal});
     if(hit){
       searchStats.valid++;
       if(compareCalibration(result,best,strategy)<0)best=result;
@@ -1714,7 +1725,7 @@ async function findCalibration(goal,onProgress=null){
       if(!goalMet(after,goal))return null; // [6] checa o alvo (1 jogador) antes de pagar o snapshot da liga
       searchStats.valid++;
       const now=impactSnapshot(), diff=diffSnapshots(proposalBase,now), cumulativeDiff=diffSnapshots(cumulativeBase,now);
-      return buildCandidateResult({changes,ok:true,before,after,diff,cumulativeDiff,goalKey,strategy,searchStats,roleTarget,raw,label:null,phase:refined.phase});
+      return buildCandidateResult({changes,ok:true,before,after,diff,cumulativeDiff,goalKey,strategy,searchStats,roleTarget,raw,label:null,phase:refined.phase,goal});
     };
     try{
       // fase 1 - varredura local determinista (ablacao + reescala): igual pros dois modos.
@@ -2015,6 +2026,7 @@ async function runCalibrationParallel(goal,onProgress){
     const timeoutMs=(strategy.maxMs||9000)+5000;
     const jobId=Date.now()+"-"+Math.random();
     const progressAgg=workers.map(()=>({tested:0,generated:0,valid:0}));
+    let poolStale=false; // [23] marca que algum worker foi morto → reconstrói o pool no próximo job
     const reportProgress=()=>{
       if(!onProgress)return;
       const tested=progressAgg.reduce((s,p)=>s+p.tested,0);
@@ -2027,6 +2039,10 @@ async function runCalibrationParallel(goal,onProgress){
       const timer=setTimeout(()=>{
         if(settled)return;settled=true;
         worker.removeEventListener("message",onMessage);
+        // [23] worker travado: mata (senão segue queimando CPU com a busca antiga e, como os workers
+        // são reusados, emperra o próximo job atrás dele) e marca o pool p/ reconstrução.
+        try{worker.terminate();}catch{}
+        poolStale=true;
         reject(new Error(`worker ${idx} expirou`));
       },timeoutMs);
       const onMessage=ev=>{
@@ -2047,6 +2063,9 @@ async function runCalibrationParallel(goal,onProgress){
       worker.addEventListener("message",onMessage);
       worker.postMessage({jobId,ti:src.ti,pi:src.pi,state:liveState,config,goal,mode:calibMode,seedSalt:(idx+1)*7919});
     })));
+    // [23] se algum worker foi morto por timeout, descarta o pool inteiro (o morto é inutilizável e
+    // os vivos estão ociosos) → ensureCalibWorkers recria tudo do zero no próximo job.
+    if(poolStale){workers.forEach(w=>{try{w.terminate();}catch{}});calibWorkers=null;}
     const fulfilled=results.filter(r=>r.status==="fulfilled").map(r=>r.value);
     if(!fulfilled.length)return await findCalibration(goal,onProgress);
     const valid=fulfilled.filter(r=>r&&r.ok);
