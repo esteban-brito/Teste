@@ -1026,8 +1026,14 @@ function applyCalibChanges(changes){
     else setRoleWeight(change.role,change.attr,change.to);
   });
 }
+// identidade do ALVO da mudança (sem o valor). changeKey inclui o "to" (dedup de candidatos
+// idênticos); knobKey identifica só a alavanca (dedup de knob — [16]: evita 2 mudanças no mesmo
+// parâmetro num só candidato, que se sobrescrevem e gastam um slot à toa).
+function knobKey(change){
+  return `${change.type||"afin"}:${change.role||change.style||change.styleId||change.key||""}:${change.attr||change.axis||change.rule||"wr"}`;
+}
 function changeKey(change){
-  return `${change.type||"afin"}:${change.role||change.style||change.styleId||change.key||""}:${change.attr||change.axis||"wr"}:${change.to.toFixed(3)}`;
+  return `${knobKey(change)}:${change.to.toFixed(3)}`;
 }
 function attrValue(player,attr){return player[attr]||0;}
 function candidateAttrsFor(role,player,limit=4){
@@ -1556,8 +1562,21 @@ const CALIB_STRATEGIES={
     explain:"busca sistemica: prefere mudancas plausiveis e penaliza ajuste que parece servir so ao alvo."
   }
 };
+// [15] limites por tipo de alavanca — os MESMOS que os make*Change aplicam. scaleChanges
+// interpola/extrapola o delta e podia estourar (fator>1 → peso negativo, contra>0.8, etc.);
+// agora o "to" reescalado é capado aqui, então o annealing só produz estados de config válidos.
+function clampChangeTo(change,v){
+  const t=change.type;
+  if(t==="nm")return Math.max(.01,v);
+  if(t==="stylecontra")return Math.max(0,Math.min(.8,v));
+  if(t==="rule")return Math.max(-2,Math.min(2,v));
+  if(t==="igl")return Math.max(-1,Math.min(1,v));
+  if(t==="cor")return Math.max(0,Math.min(100,v));
+  if(t==="ovrparam")return Math.max(0,Math.min(change.key==="OVR_BASE"?16:change.key==="OVR_SPAN"?20:25,v));
+  return Math.max(0,v); // afin/contra (make*Change usa piso 0, sem teto)
+}
 function scaleChanges(changes,factor){
-  return changes.map(c=>({...c,to:+(c.from+(c.to-c.from)*factor).toFixed(3)}));
+  return changes.map(c=>({...c,to:+clampChangeTo(c,c.from+(c.to-c.from)*factor).toFixed(3)}));
 }
 function calibrationMetrics(changes,diff,goalKey){
   const changed=diff.players.length+diff.teams.length;
@@ -1726,7 +1745,9 @@ async function findCalibration(goal,onProgress=null){
       // alavancas.
       if(strategy.annealing){
         let bestSeen=refined;
-        const levers=roleTarget?roleLeverBank(roleTarget.target,roleTarget.current,raw,{attrLimit:strategy.attrLimit||7,sensitize:!!strategy.useSensitivity}):[];
+        // [14] alavancas do banco CERTO pra dimensão do alvo (função/estilo/OVR). Antes só função
+        // tinha banco → em alvo de estilo/OVR o annealing só reescalava/removia, sem add/swap de alavanca.
+        const levers=goalLeverBank(goal,current,raw,isIGL,{sensitize:!!strategy.useSensitivity,attrLimit:strategy.attrLimit||7});
         const rng=seededRandom(((loadedIdx||0)+1)*2654435761+909091+searchSeedSalt);
         const mutate=base=>{
           const moves=["rescale-all","rescale-one"];
@@ -1744,13 +1765,14 @@ async function findCalibration(goal,onProgress=null){
           }
           const lever=pickWeighted(rng,levers);
           if(!lever)return base;
-          const d=+(.08+rng()*.6).toFixed(3);
-          if(move==="add-lever"){
-            const added=lever.make(d), usedKeys=new Set(base.map(changeKey));
-            return usedKeys.has(changeKey(added))?base:[...base,added];
+          const d=+(.08+rng()*.6).toFixed(3), made=lever.make(d);
+          if(move==="add-lever"){ // [16] knobKey (sem o valor): não adiciona 2ª mudança no MESMO parâmetro
+            const used=new Set(base.map(knobKey));
+            return used.has(knobKey(made))?base:[...base,made];
           }
-          const idx=Math.floor(rng()*base.length);
-          return base.map((item,j)=>j===idx?lever.make(d):item);
+          const idx=Math.floor(rng()*base.length); // swap: troca uma alavanca, sem duplicar knob de outra posição
+          if(base.some((item,j)=>j!==idx&&knobKey(item)===knobKey(made)))return base;
+          return base.map((item,j)=>j===idx?made:item);
         };
         let noImprove=0, temp=strategy.startTemp||1.2;
         const maxNoImprove=strategy.convergenceWindow||60, cooling=strategy.coolingRate||.97;
@@ -1762,7 +1784,10 @@ async function findCalibration(goal,onProgress=null){
             refined=candidate;noImprove=0;
           }else{
             const worseBy=candidate.cost-refined.cost;
-            const acceptProb=worseBy<=0?1:Math.exp(-worseBy/Math.max(.01,temp));
+            // [12] ΔE RELATIVA à escala do custo. Antes worseBy era absoluto (dezenas/centenas) e
+            // temp~1.5 → exp(-worseBy/temp)≈0 sempre: o "annealing" nunca aceitava piora (só ganância).
+            const rel=worseBy/Math.max(1,Math.abs(refined.cost));
+            const acceptProb=worseBy<=0?1:Math.exp(-rel/Math.max(.01,temp));
             if(rng()<acceptProb)refined=candidate;
             noImprove++;
           }
