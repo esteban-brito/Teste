@@ -5,7 +5,9 @@ const {execFileSync}=require("child_process");
 const path=require("path");
 const {secondsSince}=require("./common");
 
-const SUITES=["times.js","auditoria.js","calibrador.js","worker-calibrador.js","realismo.js","rating.js"];
+// e2e-intent.js é o teste de navegador (Playwright); ele mesmo se PULA com exit 0 onde não há
+// browser (ex.: CI), então mantém o bench verde lá e roda de verdade onde o Chromium existe.
+const SUITES=["times.js","auditoria.js","calibrador.js","worker-calibrador.js","realismo.js","rating.js","e2e-intent.js"];
 
 function runSuite(file){
   const started=Date.now();

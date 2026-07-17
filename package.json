@@ -5,7 +5,8 @@
     "bench": "node bancada/run.js",
     "check": "node --check game.js && node tools/check-sandbox-engine.js && node tools/check-sandbox-syntax.js",
     "lint": "eslint game.js sandbox.html calibrator-worker.js bancada/*.js tools/*.js",
-    "serve": "node tools/serve-static.js"
+    "serve": "node tools/serve-static.js",
+    "test:e2e": "node bancada/e2e-intent.js"
   },
   "devDependencies": {
     "eslint": "^10.6.0",
