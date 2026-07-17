@@ -657,8 +657,7 @@ function playerDecisionMargins(player){
     roleMargin=Math.min(primaryMargin,secScore(parts.r2)-alt2);
   }
   const styleMargin=+(player.style?.matchMargin||0);
-  const C=E.CFG_AVALIACAO;
-  const ovrContinuous=(player.style?.core??player.ovr)+(player.isIGL?(C.IGL_TITULO[player.colocacao]||0):0);
+  const ovrContinuous=displayedOvrContinuous(player);
   const ovrMargin=Math.max(0,.5-Math.abs(ovrContinuous-Math.round(player.ovr)));
   return {roleMargin,styleMargin,ovrMargin};
 }
@@ -674,7 +673,7 @@ function impactSnapshot(){
         team:team.nome,
         nome:player.nome,
         ovr:player.ovr,
-        ovrContinuous:(player.style?.core??player.ovr)+(player.isIGL?(E.CFG_AVALIACAO.IGL_TITULO[player.colocacao]||0):0),
+        ovrContinuous:displayedOvrContinuous(player),
         r1:parts.r1,r2:parts.r2,
         role:rolePairText(player),
         style:STYLE_LABEL(player.playstyle),
@@ -943,8 +942,11 @@ function goalMet(player,goal){
   return true;
 }
 function displayedOvrContinuous(player){
-  const C=E.CFG_AVALIACAO;
-  return (player.style?.core??player.ovr??0)+(player.isIGL?(C.IGL_TITULO[player.colocacao]||0):0);
+  const C=E.CFG_AVALIACAO,teto=player.isIGL?C.IGL_TETO:C.OVR_MAX;
+  const cont=(player.style?.core??player.ovr??0)+(player.isIGL?(C.IGL_TITULO[player.colocacao]||0):0);
+  // capa no teto igual ao OVR real: acima dele o OVR fica pinado (min(IGL_TETO,…)), então medir
+  // gap/margem contra o valor não-capado faz um IGL travado em 21 parecer longe do alvo/pouco robusto.
+  return Math.max(C.OVR_MIN,Math.min(teto,cont));
 }
 function goalDistance(player,goal,raw){
   const parts=rolePairParts(player);let d=0;
@@ -1064,6 +1066,22 @@ function configValueRange(path){
   if(path==="CFG_AVALIACAO.RAT_K")return 25;
   if(path==="CFG_AVALIACAO.AWP_LEAN")return .4;
   return 1;
+}
+// caminho canônico do alvo de UMA mudança — pontua o custo na MESMA escala de configValueRange
+// que configDistanceFromDef usa. Sem isso, tipos sem mapeamento (cor/stylecontra/contra/rule/igl)
+// caíam na escala genérica 1 e ficavam desproporcionais (ex.: NM_COR tem faixa 100 → custava ~100x).
+function changeRangePath(change){
+  switch(change.type){
+    case "nm": return `NM_DEF.${change.style}.w.${change.axis}`;
+    case "rating": return `NM_DEF.${change.style}.ratingWeight`;
+    case "stylecontra": return `STYLE_CONTRA.${change.styleId}.${change.axis}`;
+    case "contra": return `ROLE_CONTRA.${change.role}.${change.attr}`;
+    case "rule": return `ROLE_RULES.${change.role}.${change.rule}`;
+    case "igl": return `IGL_ROLE_AFIN.${change.role}.${change.attr}`;
+    case "cor": return `NM_COR.${change.key}`;
+    case "cfg": case "ovrparam": return `CFG_AVALIACAO.${change.key}`;
+    default: return `ROLE_PERFIL.${change.role}.afin.${change.attr}`;
+  }
 }
 function configDistanceFromDef(snapshot=null){
   const current=snapshot||configSnapshot();
@@ -1701,9 +1719,8 @@ function sensitizeLevers(levers,raw,metricFn){
 }
 // métrica unificada do alvo (maior = mais perto): gap de função / margem de estilo / −distância de OVR.
 function goalMetric(raw,goal){
-  if(goal.ovr){const ev=E.avaliarJogador({...raw}),C=E.CFG_AVALIACAO; // [3-IGL] mede o OVR exibido (bônus+teto), não o core cru
-    const disp=(+ev.style?.core||ev.ovr||0)+(ev.isIGL?(C.IGL_TITULO[ev.colocacao]||0):0);
-    return -Math.abs(Math.min(goal.ovr,ev.isIGL?C.IGL_TETO:C.OVR_MAX)-disp);}
+  if(goal.ovr){const ev=E.avaliarJogador({...raw}); // [3-IGL] mede o OVR exibido (bônus+teto capado), não o core cru
+    return -Math.abs(goal.ovr-displayedOvrContinuous(ev));}
   if(goal.style&&goal.style!=="Coringa"){
     const ev=E.avaliarJogador({...raw}),tid=styleIdFromLabel(goal.style),role=ev.combatRole||"Rifler";
     const nm=nmOVR(raw,role),s6=nm.s6||{};
@@ -1844,7 +1861,7 @@ function scaleChanges(changes,factor){
 }
 function calibrationMetrics(changes,diff,goalKey,extra={}){
   const changed=diff.players.length+diff.teams.length;
-  const deltaCost=changes.reduce((sum,change)=>sum+Math.abs(change.to-change.from)/Math.max(.05,configValueRange(change.type==="nm"?`NM_DEF.x.w.x`:change.type==="rating"?`NM_DEF.x.ratingWeight`:(change.type==="ovrparam"||change.type==="cfg")?`CFG_AVALIACAO.${change.key}`:"x")),0);
+  const deltaCost=changes.reduce((sum,change)=>sum+Math.abs(change.to-change.from)/Math.max(.05,configValueRange(changeRangePath(change))),0);
   const roleChanges=diff.players.filter(p=>p.roleChanged).length;
   const styleChanges=diff.players.filter(p=>p.styleChanged).length;
   const realityPenalty=diff.players.reduce((sum,p)=>sum+Math.max(0,p.dReality||0),0);
@@ -1854,13 +1871,14 @@ function calibrationMetrics(changes,diff,goalKey,extra={}){
   const targetRoleChanges=goalKey?diff.players.filter(p=>p.key===goalKey&&p.roleChanged).length:0;
   const collateralRoleChanges=roleChanges-targetRoleChanges;
   const collateralOvrShifts=diff.players.filter(p=>p.key!==goalKey&&Math.abs(p.dOvr||0)>=1).length;
+  const collateralStyleChanges=diff.players.filter(p=>p.key!==goalKey&&p.styleChanged).length;
   const targetChanged=goalKey?diff.players.some(p=>p.key===goalKey):false;
   const isolatedTarget=targetChanged&&diff.players.length===1&&diff.teams.length===0?1:0;
   const teamChanges=diff.teams.length;
   const broadCut=changes.reduce((sum,change)=>sum+(!change.type&&change.to<change.from?change.from-change.to:0),0);
   const thinRule=changes.reduce((sum,change)=>sum+(change.type==="igl"||change.type==="rule"?Math.abs(change.to-change.from):0),0);
   const configDrift=extra.configDrift??0;
-  return {changed,deltaCost,roleChanges,styleChanges,realityPenalty,marginDamage,rareWorsened,ovrImpact,collateralRoleChanges,collateralOvrShifts,teamChanges,isolatedTarget,broadCut,thinRule,configDrift};
+  return {changed,deltaCost,roleChanges,styleChanges,realityPenalty,marginDamage,rareWorsened,ovrImpact,collateralRoleChanges,collateralOvrShifts,collateralStyleChanges,teamChanges,isolatedTarget,broadCut,thinRule,configDrift};
 }
 function scoreCalibration(metrics,strategy){
   const w=strategy.weights;
@@ -1927,7 +1945,7 @@ function goalRobustness(player,goal,raw){
     }
   }
   if(goal.ovr){
-    const C=E.CFG_AVALIACAO,cont=(player.style?.core??player.ovr)+(player.isIGL?(C.IGL_TITULO[player.colocacao]||0):0);
+    const cont=displayedOvrContinuous(player); // capado no teto: IGL travado em 21 conta como robusto
     margins.push(Math.max(0,Math.min(1,(.5-Math.abs(cont-goal.ovr))/.5)));
   }
   return margins.length?Math.min(...margins):1;
@@ -2120,6 +2138,10 @@ async function findCalibration(goal,onProgress=null,options={}){
         if(!solved.ok&&!outOfBudget()){
           restoreConfig(beforeConfig);applyCalibChanges(combined);
           const sub=await findCalibration(component,null,{
+            // partitionCount:1 é PROPOSITAL: a composição encadeia componentes DENTRO de um worker;
+            // particionar as subbuscas poderia deixar nenhum worker com peças compatíveis pra TODOS
+            // os elos (troca correção por CPU numa busca já limitada no tempo). Os workers já
+            // diversificam por seedSalt, então a duplicação determinística é o preço da robustez.
             skipCombined:true,skipBeam:true,firstValid:true,skipRefinement:true,partitionCount:1,
             shouldCancel:options.shouldCancel,
             strategyOverride:{
@@ -2376,7 +2398,9 @@ function archetypeContraVariants(styleLabel,profile,currentStyle){
 }
 function syntheticArchetypeValidation(raw,role,styleLabel){
   const deltas=[[-8,0,4,0,6,0], [6,-5,0,3,0,-2], [0,7,-4,0,-5,3], [-4,3,6,-3,0,0], [3,0,-6,5,4,-2], [0,-7,3,4,0,5], [5,4,0,-6,2,0], [-6,2,0,5,-3,4], [2,-3,5,0,6,-4], [0,5,-2,-4,3,6], [-3,0,4,6,-5,2], [4,-6,2,0,-2,5]];
-  const attrs=["fp","en","op","tr","cl","ut"],hits=deltas.reduce((sum,row)=>{
+  // a 1ª coluna alimenta o eixo "fogo" do s6; p/ AWPer fogo=sn (nmStats6), não fp — senão a
+  // força principal do AWPer nunca é perturbada e o holdout não estressa o eixo que o define.
+  const attrs=[role==="AWPer"?"sn":"fp","en","op","tr","cl","ut"],hits=deltas.reduce((sum,row)=>{
     const syn={...raw};attrs.forEach((k,i)=>syn[k]=Math.max(0,Math.min(100,(raw[k]||0)+row[i])));
     return sum+(STYLE_LABEL(nmOVR(syn,role).style)===styleLabel?1:0);
   },0);
@@ -2638,9 +2662,13 @@ async function runCalibrationParallel(goal,onProgress){
           worker.removeEventListener("message",onMessage);
           if(msg.ok){
             const r=msg.result,ci=r?.costInfo||{};
+            // "dominante" cancela os outros workers — só quando é REALMENTE cirúrgico: sem colateral
+            // de função/OVR/ESTILO, sem time alterado, sem dano de realidade e sem piorar raros. Antes
+            // ignorava estilo colateral/times/realidade e podia cancelar buscas melhores cedo demais.
             const dominant=!!(r?.ok&&(r.alreadyMet||(
               (ci.collateralRoleChanges||0)===0&&(ci.collateralOvrShifts||0)===0&&
-              (ci.rareWorsened||0)===0&&(r.goalMargin??0)>=.55
+              (ci.collateralStyleChanges||0)===0&&(ci.teamChanges||0)===0&&
+              (ci.rareWorsened||0)===0&&(ci.realityPenalty||0)<=.5&&(r.goalMargin??0)>=.55
             )));
             if(dominant&&!cancelBroadcasted){
               cancelBroadcasted=true;

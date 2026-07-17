@@ -257,17 +257,18 @@ const NM_DEF={
   Facilitador:{w:{ut:.50,tr:.30,ab:.20},ratingWeight:1},
   Cerebral:{w:{ut:.40,ab:.30,cl:.30},ratingWeight:1},
   Ancora:{w:{cl:.50,ut:.32,tr:.18},ratingWeight:1}};
+// contraindicações por estilo — só eixos do s6 (o antigo sn era inerte: dobrado em fogo, diluía o resto).
 const STYLE_CONTRA={
-  aggressive:{cl:.14,ut:.08,sn:.06},
-  spacetaker:{cl:.08,ut:.05,sn:.06},
-  trader:{ent:.10,ab:.08,sn:.06,cl:.06},
-  playmaker:{ut:.06,tr:.04,sn:.06,cl:.05},
-  infiltrator:{ent:.18,tr:.08,sn:.06},
-  baiter:{ent:.28,ab:.16,ut:.08,sn:.06},
-  clutcher:{ent:.14,ab:.08,tr:.06,sn:.06},
-  support:{fogo:.10,ent:.12,sn:.08},
-  cerebral:{ent:.22,fogo:.08,sn:.06},
-  anchor:{ent:.24,ab:.12,fogo:.06,sn:.06}
+  aggressive:{cl:.14,ut:.08},
+  spacetaker:{cl:.08,ut:.05},
+  trader:{ent:.10,ab:.08,cl:.06},
+  playmaker:{ut:.06,tr:.04,cl:.05},
+  infiltrator:{ent:.18,tr:.08},
+  baiter:{ent:.28,ab:.16,ut:.08},
+  clutcher:{ent:.14,ab:.08,tr:.06},
+  support:{fogo:.10,ent:.12},
+  cerebral:{ent:.22,fogo:.08},
+  anchor:{ent:.24,ab:.12,fogo:.06}
 };
 const STYLE_ROLE_FIT={
   AWPer:{spacetaker:.06,clutcher:.07,playmaker:.055,infiltrator:.04,baiter:.02,anchor:.02,aggressive:.02},
@@ -346,7 +347,9 @@ function styleScoreTable(s6,role="Rifler"){
     for(const [k] of NM_AXES){const wi=w[k]||0,si=s6[k]||0;d+=wi*si;nw+=wi*wi;ns+=si*si;}
     let score=d/(Math.sqrt(nw*ns)+1e-9);
     const contra=STYLE_CONTRA[id]||{};let cd=0,cw=0;
-    for(const k in contra){cd+=(contra[k]||0)*(s6[k]||0);cw+=(contra[k]||0);}
+    // só eixos do s6 (fogo/ent/ab/tr/cl/ut). Um eixo fora dele (ex.: sn, já dobrado em fogo) somava
+    // 0 no numerador mas inflava o denominador cw, DILUINDO as penalidades reais. Guarda a invariante.
+    for(const k in contra){if(!(k in s6))continue;cd+=(contra[k]||0)*(s6[k]||0);cw+=(contra[k]||0);}
     score-=cw?cd/(100*cw)*.42:0;
     if(role==="AWPer"&&CFG_AVALIACAO.AWP_LEAN){
       const lean=CFG_AVALIACAO.AWP_LEAN*clamp(1-(s6.ent||0)/50,0,1);
