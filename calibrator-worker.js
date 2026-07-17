@@ -12,6 +12,7 @@
  *                    | {type:"done", jobId, ok:false, error}
  */
 let apiPromise = null;
+const cancelledJobs = new Set();
 
 async function bootstrap() {
   const [gameRes, sandboxRes] = await Promise.all([
@@ -30,7 +31,7 @@ async function bootstrap() {
   const engineSlice = linhas.slice(0, cut).join("\n");
   const E = new Function(
     engineSlice +
-      "\nreturn {avaliarJogador,aplicarAvaliacaoContextual,distribuirRoles,forcaTime,ovrUnificado,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,STYLE_ROLE_FIT,STYLE_CONTRA,MAPAS_POOL,MAPA_LADO,srand,simularMapa,forcaDoDia,TEAMS,nmOVR,roleAfinidade,secondaryScore,NM_DEF,NM_COR,STYLE_LABEL,PLAYSTYLE_IDS,PLAYSTYLES,NM_AXES,STYLE_KEYS,SUBARQ};"
+      "\nreturn {avaliarJogador,aplicarAvaliacaoContextual,distribuirRoles,forcaTime,ovrUnificado,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,STYLE_ROLE_FIT,STYLE_CONTRA,MAPAS_POOL,MAPA_LADO,srand,simularMapa,forcaDoDia,TEAMS,nmOVR,styleScoreTable,roleAfinidade,secondaryScore,NM_DEF,NM_COR,STYLE_LABEL,PLAYSTYLE_IDS,PLAYSTYLES,NM_AXES,STYLE_KEYS,SUBARQ};"
   )();
 
   const m = sandboxSrc.match(/<script>([\s\S]*)<\/script>/);
@@ -61,7 +62,12 @@ return {
     Object.assign(state, job.state||{});
     calibMode = job.mode;
     searchSeedSalt = job.seedSalt||0;
-    return findCalibration(job.goal, job.onProgress||null);
+    return findCalibration(job.goal, job.onProgress||null,{
+      partitionIndex:job.partitionIndex||0,
+      partitionCount:job.partitionCount||1,
+      shouldCancel:job.shouldCancel||null,
+      strategyOverride:job.strategyOverride||null
+    });
   }
 };
 `;
@@ -73,7 +79,11 @@ return {
 }
 
 self.onmessage = async (ev) => {
-  const job = ev.data;
+  const job = ev.data||{};
+  if(job.type==="cancel"){
+    if(job.jobId)cancelledJobs.add(job.jobId);
+    return;
+  }
   try {
     if (!apiPromise) apiPromise = bootstrap();
     const api = await apiPromise;
@@ -82,11 +92,13 @@ self.onmessage = async (ev) => {
       const now = self.performance.now();
       if (now - lastPost < 200) return;
       lastPost = now;
-      self.postMessage({ type: "progress", jobId: job.jobId, tested: stats.tested, generated: stats.generated, valid: stats.valid });
+      self.postMessage({ type: "progress", jobId: job.jobId, tested: stats.tested, generated: stats.generated, valid: stats.valid, partitionSkipped:stats.partitionSkipped||0 });
     };
-    const result = await api.runSearch({ ...job, onProgress });
+    const result = await api.runSearch({ ...job, onProgress, shouldCancel:()=>cancelledJobs.has(job.jobId) });
     self.postMessage({ type: "done", jobId: job.jobId, ok: true, result });
   } catch (err) {
     self.postMessage({ type: "done", jobId: job.jobId, ok: false, error: String((err && err.message) || err) });
+  } finally {
+    if(job.jobId)cancelledJobs.delete(job.jobId);
   }
 };
