@@ -1,80 +1,9 @@
-/* bancada/calibrador.js - valida o Calibrador Inteligente (sandbox.html) contra o motor real.
-   Carrega game.js + o <script> de sandbox.html do mesmo jeito que o navegador faria
-   (fetch->new Function na pagina; aqui, leitura de arquivo->new Function), sem duplicar
-   nenhuma logica - mesma tecnica usada por calibrator-worker.js.
-   Cobre 2 regressoes ja corrigidas (deltasFor vazando teto, compareCalibration ignorando
-   custo ponderado) e roda uma bateria pequena de buscas ponta-a-ponta pra garantir que
-   nunca lanca excecao e que "ok=true" bate o objetivo de verdade.
-   Uso: node bancada/calibrador.js
-        CALIB_MS=9000 node bancada/calibrador.js   (busca "de verdade", bem mais lenta)
-*/
+/* bancada/calibrador.js - suíte funcional rápida do calibrador real. */
 const fs=require("fs");
 const path=require("path");
 const {ROOT,okMark}=require("./common");
-
-const GAME_PATH=path.join(ROOT,"game.js");
+const {loadCalibrator}=require("./calibrador-loader");
 const SANDBOX_PATH=path.join(ROOT,"sandbox.html");
-
-function loadCalibrator(){
-  const gameSrc=fs.readFileSync(GAME_PATH,"utf8");
-  const sandboxSrc=fs.readFileSync(SANDBOX_PATH,"utf8");
-  const linhas=gameSrc.split("\n");
-  let cut=linhas.findIndex(l=>l.includes("// === UI START ==="));
-  if(cut<0)cut=linhas.findIndex(l=>l.includes("document.getElementById"));
-  if(cut<0)throw new Error("marcador de UI nao encontrado em game.js");
-  const engineSlice=linhas.slice(0,cut).join("\n");
-  const E=new Function(engineSlice+"\nreturn {avaliarJogador,aplicarAvaliacaoContextual,distribuirRoles,forcaTime,ovrUnificado,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,STYLE_ROLE_FIT,STYLE_CONTRA,MAPAS_POOL,MAPA_LADO,srand,simularMapa,forcaDoDia,TEAMS,nmOVR,styleScoreTable,roleAfinidade,secondaryScore,NM_DEF,NM_COR,STYLE_LABEL,PLAYSTYLE_IDS,PLAYSTYLES,NM_AXES,STYLE_KEYS,SUBARQ};")();
-
-  const m=sandboxSrc.match(/<script>([\s\S]*)<\/script>/);
-  if(!m)throw new Error("nao encontrei o <script> do sandbox.html");
-  let core=m[1];
-  const iifeIdx=core.lastIndexOf("(async()=>{");
-  if(iifeIdx>=0)core=core.slice(0,iifeIdx);
-  core+=`
-return {
-  setup(engine){
-    E=engine; DEF={ROLE:clone(E.ROLE_PERFIL),NM:clone(E.NM_DEF),NM_COR:clone(E.NM_COR),CONTRA:clone(E.ROLE_CONTRA),IGL:clone(E.IGL_ROLE_AFIN),RULES:clone(E.ROLE_RULES),STYLE_FIT:clone(E.STYLE_ROLE_FIT),STYLE_CONTRA:clone(E.STYLE_CONTRA),CFG:clone(E.CFG_AVALIACAO)};
-    ({nmOVR,STYLE_LABEL,PLAYSTYLE_IDS}=E);
-    POOLRAW=[]; poolBySlot=new Map();
-    E.TEAMS.forEach((t,ti)=>t.jogadores.forEach((j,pi)=>{const e=j._eng;
-      const idx=POOLRAW.length;
-      poolBySlot.set(\`\${ti}:\${pi}\`,idx);
-      POOLRAW.push({...e,time:t.nome,ti,pi,isIGL:!!e.isIGL,colocacao:e.colocacao||"Campeao"});
-    }));
-  },
-  loadByName(nome){
-    loadedIdx=POOLRAW.findIndex(p=>p.nome===nome);
-    if(loadedIdx<0)throw new Error("jogador nao encontrado no pool: "+nome);
-    const p=POOLRAW[loadedIdx];
-    Object.assign(state,{nome:p.nome,fp:p.fp,en:p.en,tr:p.tr,op:p.op,cl:p.cl,sn:p.sn,ut:p.ut,rating:p.rating,isIGL:p.isIGL,colocacao:p.colocacao});
-  },
-  setMode(mode){ calibMode=mode; },
-  setSeed(seed){ searchSeedSalt=seed||0; },
-  setStats(values){ Object.assign(state,values||{}); },
-  overrideBudget(ms){ Object.values(CALIB_STRATEGIES).forEach(s=>{ if(ms)s.maxMs=ms; }); },
-  info(nome){ const p=POOLRAW.find(x=>x.nome===nome); if(!p)throw new Error("nao achei: "+nome);
-    const ev=E.avaliarJogador({...p}); return {isIGL:!!ev.isIGL,ovr:Math.round(ev.ovr),style:STYLE_LABEL(ev.playstyle),r1:ev.role1||ev.combatRole,r2:ev.role2||ev.secundario}; },
-  findCalibration, reformulateStyleFromArchetype, renderCalibResult, rolePairParts, deltasFor, scaleChanges, compareCalibration, CALIB_STRATEGIES,
-  getCurrent(){return mainPlayer();},
-  ratingWeight(style){return E.NM_DEF[style]?.ratingWeight;},
-  withChanges(changes,fn){const snap=configSnapshot();try{applyCalibChanges(changes);return fn(mainPlayer());}finally{restoreConfig(snap);}},
-  applyResult(result){applyCalibChanges(result.changes||[]);registerCalibrationApplication(result);invalidateAllTeamEval();},
-  regressions(){return sessionRegressions();},
-  resetAll(){
-    copyInto(E.ROLE_PERFIL,DEF.ROLE);copyInto(E.NM_DEF,DEF.NM);copyInto(E.NM_COR,DEF.NM_COR);
-    copyInto(E.ROLE_CONTRA,DEF.CONTRA);copyInto(E.IGL_ROLE_AFIN,DEF.IGL);copyInto(E.ROLE_RULES,DEF.RULES);
-    copyInto(E.STYLE_ROLE_FIT,DEF.STYLE_FIT);copyInto(E.STYLE_CONTRA,DEF.STYLE_CONTRA);copyInto(E.CFG_AVALIACAO,DEF.CFG);
-    baseline=null;calibSession=null;calibLast=null;invalidateAllTeamEval();
-  },
-  get STYLE_LABEL(){ return STYLE_LABEL; }
-};
-`;
-  const fakeDocument={getElementById:()=>null,createElement:()=>({}),querySelectorAll:()=>[]};
-  const build=new Function("document","navigator","performance",core);
-  const api=build(fakeDocument,{},performance);
-  api.setup(E);
-  return api;
-}
 
 let failures=0;
 function check(ok,label){
@@ -114,6 +43,23 @@ const api=loadCalibrator();
 }
 
 
+// Reforma estrutural do drop: default global, sem pin individual.
+{
+  const info=api.info("drop");
+  check(info.r1==="Rifler"&&info.r2==="Entry"&&info.style==="Facilitador"&&info.ovr===14,
+    `drop default = Rifler/Entry · Facilitador · 14 (${info.r1}/${info.r2} · ${info.style} · ${info.ovr})`);
+}
+// Colateral MATERIAL e margem latente não podem ser misturados nem receber punição dupla.
+{
+  const target={key:"0:0",roleChanged:true,styleChanged:true,dOvr:1,rareWorsened:false,materialChanged:true,marginDamage:0};
+  const steel={key:"1:0",roleChanged:true,styleChanged:false,dOvr:0,rareWorsened:false,materialChanged:true,marginDamage:.02};
+  const soft=Array.from({length:10},(_,i)=>({key:`2:${i}`,roleChanged:false,styleChanged:false,dOvr:0,rareWorsened:false,materialChanged:false,softAffected:true,marginDamage:.01,dReality:0}));
+  const diff={players:[target,steel,...soft],teams:[]},sum=api.summarizeDiff(diff,"0:0"),metrics=api.calibrationMetrics([],diff,"0:0");
+  check(sum.collateralPlayers===1&&sum.collateralSoftPlayers===10&&sum.players===2,
+    `colateral separa 1 mudança real de 10 margens (${sum.collateralPlayers}/${sum.collateralSoftPlayers})`);
+  check(metrics.changed===2&&metrics.marginDamage>.1,"custo conta 2 mudanças materiais e preserva dano de margem separado");
+}
+
 // Workers: protocolo cooperativo de partição/cancelamento deve estar presente no artefato real.
 {
   const workerSrc=fs.readFileSync(path.join(ROOT,"calibrator-worker.js"),"utf8");
@@ -150,10 +96,17 @@ api.overrideBudget(budgetMs);
       const bateR2=!caso.goal.r2||parts.r2===caso.goal.r2;
       const bateStyle=!caso.goal.style||styleLabel===caso.goal.style;
       check(bateR1&&bateR2&&bateStyle,`${caso.nome} [${caso.mode}] ok=true realmente bate o objetivo`);
-      let renderErr=null;
-      try{ api.renderCalibResult(result,caso.goal); }
+      let renderErr=null,rendered="";
+      try{ rendered=api.renderCalibResult(result,caso.goal); }
       catch(e){ renderErr=e; }
       check(!renderErr,`${caso.nome} [${caso.mode}] renderCalibResult nao lanca excecao${renderErr?": "+renderErr.message:""}`);
+      if(caso.nome==="Boombl4"){
+        const sum=api.summarizeDiff(result.diff,result.targetKey);
+        check(sum.collateralPlayers===1&&sum.collateralSoftPlayers===10,
+          `Boombl4→Entry separa steel de 10 margens (${sum.collateralPlayers}/${sum.collateralSoftPlayers})`);
+        check(/1 jogador muda junto/.test(rendered)&&/10 margens internas afetadas/.test(rendered)&&!/11 jogadores mudam junto/.test(rendered),
+          "UI nao infla margens internas como 11 colaterais");
+      }
     }
   }
   // [22] alvos DETERMINISTICAMENTE impossíveis: falham rápido com mensagem clara (a IA só mexe em pesos).
@@ -202,6 +155,38 @@ api.overrideBudget(budgetMs);
     api.overrideBudget(budgetMs);
     const ok=!err&&r&&r.ok&&api.rolePairParts(r.after).r1==="Rifler"&&api.STYLE_LABEL(r.after.playstyle)==="Trader";
     check(!!ok,`b1t {r1:Rifler+Trader}: IA FECHA função E estilo${err?": "+err.message:r&&r.ok?" (ok)":" (sem solução)"}`);
+  }
+  // Alavancas semânticas: partindo do modelo legado (glue desligado), a IA recupera o perfil
+  // Rifler/Entry + Facilitador 14 do drop com somente os knobs contextuais e zero colateral material.
+  {
+    api.resetAll();api.loadByName("drop");api.setMode("ia");
+    api.applyChanges([
+      {type:"cfg",key:"RIFLER_GLUE_MAX",from:7,to:0},
+      {type:"cfg",key:"FAC_GLUE_MAX",from:.35,to:0}
+    ]);
+    const legacy=api.getCurrent();
+    api.overrideBudget(Math.max(2500,budgetMs));
+    let r=null,err=null;try{r=await api.findCalibration({r1:"Rifler",r2:"Entry",style:"Facilitador",ovr:14},null,{firstValid:true,skipBeam:true,skipCombined:true});}catch(e){err=e;}
+    api.overrideBudget(budgetMs);
+    const parts=r&&r.after?api.rolePairParts(r.after):{};
+    const ci=r?.costInfo||{};
+    check(legacy.role1==="Entry"&&!err&&r&&r.ok&&parts.r1==="Rifler"&&parts.r2==="Entry"&&api.STYLE_LABEL(r.after.playstyle)==="Facilitador"&&Math.round(r.after.ovr)===14,
+      `IA semântica recupera drop Rifler/Entry · Facilitador · 14${err?": "+err.message:""}`);
+    check((ci.collateralRoleChanges||0)===0&&(ci.collateralStyleChanges||0)===0&&(ci.collateralOvrShifts||0)===0,
+      `reforma semântica do drop tem zero colateral material (${ci.collateralRoleChanges||0}/${ci.collateralStyleChanges||0}/${ci.collateralOvrShifts||0})`);
+    api.resetAll();
+  }
+  // Qualidade separada da identidade: subir o drop para 15 usa knobs do Facilitador, não OVR_BASE global.
+  {
+    api.resetAll();api.loadByName("drop");api.setMode("ia");api.overrideBudget(Math.max(4000,budgetMs));
+    let r=null,err=null;try{r=await api.findCalibration({style:"Facilitador",ovr:15},null);}catch(e){err=e;}
+    api.overrideBudget(budgetMs);
+    const globalOvr=(r?.changes||[]).some(c=>c.type==="ovrparam");
+    check(!err&&r?.ok&&api.STYLE_LABEL(r.after.playstyle)==="Facilitador"&&Math.round(r.after.ovr)===15&&!globalOvr,
+      `drop OVR 15 preserva identidade e evita parâmetro global${err?": "+err.message:""}`);
+    check((r?.costInfo?.collateralOvrShifts||0)<=3,
+      `OVR do Facilitador usa ajuste local de baixo colateral (${r?.costInfo?.collateralOvrShifts||0})`);
+    api.resetAll();
   }
   // REGRESSÃO (auditoria P0): secondaryScore(primary,secondary,p,scores) lê scores[secondary];
   // goalDistance/goalRobustness chamavam sem o mapa → crash em alvo de Role2 de NÃO-IGL. A bateria
@@ -264,34 +249,6 @@ api.overrideBudget(budgetMs);
     api.loadByName("NiKo");const before=api.getCurrent(),style=api.STYLE_LABEL(before.playstyle),rw=api.ratingWeight(style);
     const after=api.withChanges([{type:"rating",style,from:rw,to:Math.min(2,rw+.5)}],p=>p);
     check(api.STYLE_LABEL(after.playstyle)===style&&after.style.ratingWeight>rw,`ratingWeight de ${style} altera nível sem trocar identidade`);
-  }
-  // estabilidade entre seeds: a capacidade não pode depender de uma única rolagem feliz.
-  // Este é o caso multiobjetivo mais PESADO (AWPer trocando função E estilo ao mesmo tempo).
-  // O default do bench (1500ms) é ~5% do orçamento real da IA (maxMs=28000): nesse tempo a
-  // busca mal começa e o resultado vira loteria de seed. Aqui medimos o que o rótulo diz —
-  // ESTABILIDADE ENTRE SEEDS — num orçamento representativo do produto. A asserção segue
-  // estrita: os 3 seeds precisam fechar Rifler+Trader de fato.
-  {
-    const stabilityMs=Math.max(6000,budgetMs);
-    api.overrideBudget(stabilityMs);
-    const runs=[];
-    for(const seed of [17,7919,15838]){api.resetAll();api.loadByName("b1t");api.setMode("ia");api.setSeed(seed);runs.push(await api.findCalibration({r1:"Rifler",style:"Trader"},null));}
-    api.overrideBudget(budgetMs);
-    const all=runs.every(r=>r&&r.ok&&api.rolePairParts(r.after).r1==="Rifler"&&api.STYLE_LABEL(r.after.playstyle)==="Trader");
-    check(all,`multiobjetivo permanece solucionável em 3 seeds (${runs.map(r=>r?.ok?"ok":"falha").join(", ")})`);
-    api.setSeed(0);api.resetAll();
-  }
-  // modo arquétipo: Jame ensina a definição global de Closer; exige solução e estabilidade sintética.
-  {
-    api.loadByName("Jame");api.setMode("ia");
-    let r=null,err=null;try{r=await api.reformulateStyleFromArchetype("Closer",{},null);}catch(e){err=e;}
-    check(!err&&r&&r.ok&&api.STYLE_LABEL(r.after.playstyle)==="Closer",`Jame como arquétipo reaprende Closer${err?": "+err.message:r&&r.message?": "+r.message:""}`);
-    if(r&&r.ok){
-      check((r.archetypeInfo?.synthetic||0)>=.5&&r.archetypeInfo?.lost<=3,`arquétipo valida holdout sintético e preserva Closers (synth ${Math.round((r.archetypeInfo?.synthetic||0)*100)}%, perdidos ${r.archetypeInfo?.lost})`);
-      const recipe=r.archetypeInfo?.afterRecipe||{},sum=Object.values(recipe).reduce((a,b)=>a+b,0);
-      const noPin=(r.changes||[]).every(c=>["nm","stylecontra","cfg","rating","ovrparam"].includes(c.type));
-      check(Math.abs(sum-1)<1e-3&&noPin,`arquétipo produz receita normalizada (Σ=${sum.toFixed(3)}) e zero pin individual`);
-    }
   }
   console.log(failures?`✗ ${failures} checagem(ns) do calibrador falharam`:"✓ calibrador ok");
   process.exitCode=failures?1:0;

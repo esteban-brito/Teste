@@ -10,8 +10,9 @@ const UI_MARKER="// === UI START ===";
 const EXPORTS=[
   "TEAMS","POOL","ATRIBUTOS","TIMES_DEF",
   "forcaTime","simularMapa","simularSerie","forcaDoDia","sortearFormaCampanha",
-  "avaliarJogador","distribuirRoles","quimicaComposicao","fallenAngels",
-  "afinidades","rolePairReality","roleStyleReality","STYLE_LABEL"
+  "avaliarJogador","aplicarAvaliacaoContextual","distribuirRoles","quimicaComposicao","fallenAngels",
+  "afinidades","roleAfinidade","rolePairReality","roleStyleReality","STYLE_LABEL","styleScoreTable","nmOVR",
+  "CFG_AVALIACAO","NM_DEF"
 ];
 
 function loadEngines(){
