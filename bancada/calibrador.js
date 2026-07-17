@@ -217,6 +217,15 @@ api.overrideBudget(budgetMs);
     api.overrideBudget(budgetMs);
     check(!threw,`Role2 de não-IGL nunca lança (crash de secondaryScore)${threw?": "+threw:""}`);
   }
+  // CAPACIDADE (não só segurança): a IA precisa FECHAR de fato um Role2 de não-IGL. mezii→Support
+  // é alcançável no orçamento representativo (medido); revalida o r2 final contra o alvo.
+  {
+    api.resetAll();api.loadByName("mezii");api.setMode("ia");api.overrideBudget(Math.max(6000,budgetMs));
+    let r=null,err=null; try{ r=await api.findCalibration({r2:"Support"},null); }catch(e){ err=e; }
+    api.overrideBudget(budgetMs);
+    const ok=!err&&r&&r.ok&&api.rolePairParts(r.after).r2==="Support";
+    check(!!ok,`mezii {r2:Support}: IA FECHA Role2 de não-IGL${err?": "+err.message:r&&r.ok?" ("+api.rolePairParts(r.after).r2+")":" (sem solução)"}`);
+  }
   // [22] Coringa: não lança; se achar, o estilo é mesmo Coringa (limiar global NM_COR, não receita).
   {
     api.loadByName("KSCERATO"); api.setMode("ia");

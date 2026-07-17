@@ -2706,6 +2706,16 @@ async function runCalibrationParallel(goal,onProgress){
     }
     let best=valid[0];
     for(const r of valid.slice(1))if(compareCalibration(r,best,strategy)<0)best=r;
+    // as alternativas vêm do worker (sessão vazia) — filtra as que regridem intenção pra a UI não
+    // oferecer um "Usar" que a revalidação obrigatória no apply recusaria de qualquer forma.
+    if(session.intentions.size&&best?.alternatives?.length){
+      best.alternatives=best.alternatives.filter(alt=>{
+        try{restoreConfig(config);applyCalibChanges(alt.changes||[]);
+          return sessionRegressions(impactSnapshot(),goalKey,goal).length===0;
+        }finally{restoreConfig(config);}
+      });
+      restoreConfig(config);
+    }
     return best;
   }catch(err){
     console.error("busca paralela falhou, caindo pra busca direta:",err);
@@ -2810,7 +2820,23 @@ function buildCalibrator(){
     buildCalibrator();
   });
   const apply=document.getElementById("calibApply");
-  if(apply)apply.onclick=()=>{if(calibLast&&calibLast.ok){const applied=calibLast;applyCalibChanges(applied.changes);registerCalibrationApplication(applied);calibLast=null;invalidateAllTeamEval();refresh("all");toast("Sugestão registrada na bancada");}};
+  if(apply)apply.onclick=()=>{
+    if(!calibLast||!calibLast.ok)return;
+    const applied=calibLast;
+    // Revalidação OBRIGATÓRIA no ato de aplicar — único ponto por onde TODA aplicação passa
+    // (principal, alternativa de worker, arquétipo, direta). A solução principal já é podada por
+    // intenção na busca, mas uma ALTERNATIVA pode não ter passado; aqui vira garantia dura.
+    const snap=configSnapshot();
+    applyCalibChanges(applied.changes);
+    const regressions=sessionRegressions(impactSnapshot(),applied.targetKey,applied.goal);
+    if(regressions.length){
+      restoreConfig(snap);invalidateAllTeamEval();
+      const nomes=[...new Set(regressions.map(x=>x.nome))].slice(0,2).join(", ");
+      toast(`Não apliquei: desfaria a calibração de ${nomes}. Escolha outra alternativa.`);
+      return;
+    }
+    registerCalibrationApplication(applied);calibLast=null;invalidateAllTeamEval();refresh("all");toast("Sugestão registrada na bancada");
+  };
   const discard=document.getElementById("calibDiscard");
   if(discard)discard.onclick=()=>{calibLast=null;buildCalibrator();};
   }finally{calibBuilding=false;}
