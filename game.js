@@ -54,16 +54,16 @@
 /* ╔═══════════════════════════════════════════════════════════════════╗
    ║  PRISMA · ZÊNITE · SINAPSE — avaliação de jogador e de elenco       ║
    ╚═══════════════════════════════════════════════════════════════════╝ */
-/* Perfil por função: AFIN (pesos da identidade) + OVR (pesos do nível) + wR (peso do
-   rating HLTV no OVR daquela função) + crédito intrínseco (cérebro/cola, não por título). */
+/* Perfil por função: somente AFIN (identidade da função) e crédito intrínseco.
+   OVR e peso de rating pertencem ao playstyle no ZÊNITE, não à função. */
 const ROLE_PERFIL={
-  AWPer:  {afin:{sn:.80,op:.12,fp:.05},        ovr:{sn:.45,fp:.25,op:.20,cl:.10},       wR:.66},
-  Rifler: {afin:{fp:.44,op:.25,tr:.17,cl:.14,ut:.03}, ovr:{fp:.45,op:.25,tr:.15,cl:.15},wR:.66},
-  Entry:  {afin:{en:.56,op:.25,fp:.12,tr:.07}, ovr:{en:.40,op:.30,fp:.20,tr:.10},       wR:.64},
-  Lurker: {afin:{cl:.50,op:.30,fp:.20},        ovr:{cl:.40,op:.24,fp:.26,ut:.10},       wR:.66},
-  Support:{afin:{ut:.50,tr:.25,en:.12,fp:.08,op:.05}, ovr:{ut:.45,tr:.22,fp:.15,op:.10,cl:.08},wR:.45,credito:3}};
+  AWPer:  {afin:{sn:.80,op:.12,fp:.05}},
+  Rifler: {afin:{fp:.44,op:.25,tr:.17,cl:.14,ut:.03}},
+  Entry:  {afin:{en:.56,op:.25,fp:.12,tr:.07}},
+  Lurker: {afin:{cl:.50,op:.30,fp:.20}},
+  Support:{afin:{ut:.50,tr:.25,en:.12,fp:.08,op:.05},credito:3}};
 const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22, // ⚙ balanceamento do PRISMA (afinidade/sub) + ZÊNITE (OVR)
-  OVR_BASE:8.5,OVR_SPAN:10,RAT_BASE:1.0,RAT_K:8, // OVR = base(receita do playstyle) + bônus(rating) uniforme
+  OVR_BASE:8.5,OVR_SPAN:10,RAT_BASE:1.0,RAT_K:8, // OVR = base(receita) + bônus(rating × ratingWeight do estilo)
   IGL_TITULO:{Campeao:3,Final:2,Top4:1,Top8:0,Grupos:0}, // bônus de OVR do IGL por COLOCAÇÃO (campeão 3 · vice 2 · 3-4º 1); qualquer campeonato, só p/ IGL
   IGL_TETO:21,                               // teto do IGL: um degrau abaixo do 22 dos fraggers (o jogo é decidido por eles)
   SUP_FRAG:72,                               // fp acima disso: não é Support role 1, é Lurker de utilidade (frag + util)
@@ -243,19 +243,20 @@ const ESTEIRA={AWPer:"Artilharia",Rifler:"Assalto",Entry:"Vanguarda",Lurker:"Anc
 // colocação; fragger nunca. Helper único usado nos dois pontos de avaliação:
 const iglOvr=(core,coloc)=>Math.min(CFG_AVALIACAO.IGL_TETO,Math.max(CFG_AVALIACAO.OVR_MIN,clipOVR(core+(CFG_AVALIACAO.IGL_TITULO[coloc]||0))));
 const NM_AXES=[["fogo","Fogo"],["ent","Entrada"],["ab","Abertura"],["tr","Trade"],["cl","Clutch"],["ut","Utilitário"]];
-// receitas reformuladas do 0 (cada w soma 100%; rating NÃO entra aqui — é bônus por cima no OVR).
-// Baiter não tem receita: é regra de baixo impacto (badBaiterProfile). Coringa é piso de stats (jokerProfile).
+// Cada receita possui direção de identidade (w, normalizada no uso) e ratingWeight.
+// ratingWeight=1 preserva o motor anterior; o calibrador pode aprender quanto o rating pesa
+// no OVR de cada estilo sem deixar rating decidir a identidade do playstyle.
 const NM_DEF={
-  Opener:{w:{ab:.50,fogo:.40,ent:.10},wR:.40},
-  Spacetaker:{w:{ent:.70,fogo:.15,ab:.15},wR:.40},
-  Trader:{w:{tr:.50,fogo:.30,ut:.20},wR:.45},
-  Playmaker:{w:{fogo:.45,ab:.35,cl:.20},wR:.55},
-  Infiltrador:{w:{cl:.46,ab:.34,fogo:.20},wR:.50},
-  Baiter:{w:{tr:.50,cl:.30,fogo:.20},wR:.35},
-  Closer:{w:{cl:.55,fogo:.45},wR:.50},
-  Facilitador:{w:{ut:.50,tr:.30,ab:.20},wR:.40},
-  Cerebral:{w:{ut:.40,ab:.30,cl:.30},wR:.50},
-  Ancora:{w:{cl:.50,ut:.32,tr:.18},wR:.45}};
+  Opener:{w:{ab:.50,fogo:.40,ent:.10},ratingWeight:1},
+  Spacetaker:{w:{ent:.70,fogo:.15,ab:.15},ratingWeight:1},
+  Trader:{w:{tr:.50,fogo:.30,ut:.20},ratingWeight:1},
+  Playmaker:{w:{fogo:.45,ab:.35,cl:.20},ratingWeight:1},
+  Infiltrador:{w:{cl:.46,ab:.34,fogo:.20},ratingWeight:1},
+  Baiter:{w:{tr:.50,cl:.30,fogo:.20},ratingWeight:1},
+  Closer:{w:{cl:.55,fogo:.45},ratingWeight:1},
+  Facilitador:{w:{ut:.50,tr:.30,ab:.20},ratingWeight:1},
+  Cerebral:{w:{ut:.40,ab:.30,cl:.30},ratingWeight:1},
+  Ancora:{w:{cl:.50,ut:.32,tr:.18},ratingWeight:1}};
 const STYLE_CONTRA={
   aggressive:{cl:.14,ut:.08,sn:.06},
   spacetaker:{cl:.08,ut:.05,sn:.06},
@@ -334,32 +335,38 @@ function jokerProfile(s7){
   const variance=s7.reduce((s,v)=>s+(v-mean)**2,0)/7;
   return {ok:below<=1&&min5>=NM_COR.pisoMin&&spread<=NM_COR.spreadMax,sorted,below,min5,spread,mean,score:clamp(1-variance/800,0,1)};
 }
-function styleMatch(s6,s7,role="Rifler",p=null){
-  if(p&&badBaiterProfile(p))return {id:"baiter",score:.9,second:.7,margin:.2,clarity:.85};
-  const jp=jokerProfile(s7);
-  if(jp.ok)return {id:"joker",score:.88+.12*jp.score,second:.72,margin:.16+.12*jp.score,clarity:.75+.25*jp.score};
+// Fonte única da competição entre estilos normais. O calibrador usa esta mesma função,
+// evitando que novas regras contextuais (como AWP_LEAN) fiquem invisíveis à sensibilidade.
+function styleScoreTable(s6,role="Rifler"){
   const scores=[];
-  for(const id of PLAYSTYLE_IDS){if(id==="baiter")continue;const rec=STYLE_RECIPE(id);if(!rec)continue;const w=rec.w;let d=0,nw=0,ns=0;
-    for(const [k] of NM_AXES){const wi=w[k]||0,si=s6[k];d+=wi*si;nw+=wi*wi;ns+=si*si;}
+  for(const id of PLAYSTYLE_IDS){
+    if(id==="baiter")continue;
+    const rec=STYLE_RECIPE(id);if(!rec)continue;
+    const w=rec.w;let d=0,nw=0,ns=0;
+    for(const [k] of NM_AXES){const wi=w[k]||0,si=s6[k]||0;d+=wi*si;nw+=wi*wi;ns+=si*si;}
     let score=d/(Math.sqrt(nw*ns)+1e-9);
     const contra=STYLE_CONTRA[id]||{};let cd=0,cw=0;
-    for(const k in contra){cd+=contra[k]*(s6[k]||0);cw+=contra[k];}
+    for(const k in contra){cd+=(contra[k]||0)*(s6[k]||0);cw+=(contra[k]||0);}
     score-=cw?cd/(100*cw)*.42:0;
-    // MODELO NOVO: o playstyle é identidade INDEPENDENTE da função — sem STYLE_ROLE_FIT na classificação.
-    // ÚNICA exceção (calibrável, default 0): o AWPer PASSIVO. A "abertura" dele é pick de AWP segurando
-    // ângulo (traço de Closer/Ancora), não criação de espaço de Infiltrador — o modelo, cego à função,
-    // confundia os dois. Puxa proporcional à passividade (entrada baixa); AWPer agressivo quase não sente.
-    if(role==="AWPer"&&CFG_AVALIACAO.AWP_LEAN){const lean=CFG_AVALIACAO.AWP_LEAN*clamp(1-(s6.ent||0)/50,0,1);
-      if(id==="clutcher")score+=lean; else if(id==="infiltrator")score-=lean;} // só Closer↑ / Infiltrador↓: não mexe no AWP agressivo (Opener/Playmaker)
-    scores.push({id,score});}
-  scores.sort((a,b)=>b.score-a.score);
-  const best=scores[0]||{id:"playmaker",score:0},second=scores[1]?.score||0;
-  return {...best,second,margin:best.score-second,clarity:clamp((best.score-second)*5,0,1)};
+    if(role==="AWPer"&&CFG_AVALIACAO.AWP_LEAN){
+      const lean=CFG_AVALIACAO.AWP_LEAN*clamp(1-(s6.ent||0)/50,0,1);
+      if(id==="clutcher")score+=lean;
+      else if(id==="infiltrator")score-=lean;
+    }
+    scores.push({id,score});
+  }
+  return scores.sort((a,b)=>b.score-a.score);
 }
-// MODELO NOVO — OVR = base(receita do playstyle) + bônus de rating (uniforme). Função NÃO entra.
-//   score = média ponderada dos stats pela receita (0..100) → é a IDENTIDADE do jogador.
-//   base  = OVR_BASE + score×(OVR_SPAN/100)  → trava ~18.5 (ninguém é perfeito no estilo).
-//   bônus = max(0, rating − RAT_BASE) × RAT_K → a estrela (donk) sobe daqui pro teto 22.
+function styleMatch(s6,s7,role="Rifler",p=null){
+  if(p&&badBaiterProfile(p))return {id:"baiter",score:.9,second:.7,margin:.2,clarity:.85,locked:"baiter"};
+  const jp=jokerProfile(s7);
+  if(jp.ok)return {id:"joker",score:.88+.12*jp.score,second:.72,margin:.16+.12*jp.score,clarity:.75+.25*jp.score,locked:"joker"};
+  const scores=styleScoreTable(s6,role);
+  const best=scores[0]||{id:"playmaker",score:0},second=scores[1]?.score||0;
+  return {...best,second,margin:best.score-second,clarity:clamp((best.score-second)*5,0,1),scores};
+}
+// OVR = base da receita + bônus de rating ponderado PELO ESTILO. A função não entra.
+// ratingWeight afeta somente o nível (OVR), nunca a identidade/classificação do playstyle.
 function nmOVR(p,role,forcedStyle=null){
   const s6=nmStats6(p,role),s7=stats7(p),match=forcedStyle?{id:STYLE_ID(forcedStyle),score:1,second:.75,margin:.25,clarity:.9}:styleMatch(s6,s7,role,p);
   const style=match.id,C=CFG_AVALIACAO;
@@ -370,8 +377,10 @@ function nmOVR(p,role,forcedStyle=null){
   // estourar a escala do score. Receitas padrão somam 1.0 → idêntico ao de antes (bench intacto).
   else{const rec=STYLE_RECIPE(style),sw=Object.values(rec.w).reduce((a,b)=>a+b,0);score=dot(rec.w,s6)/(sw||1);}
   const base=C.OVR_BASE+(score/100)*C.OVR_SPAN;
-  const bonus=Math.max(0,(p.rating||0)-C.RAT_BASE)*C.RAT_K;
-  return {style,ovr:clipOVR(base+bonus),statScore:score,score,base,bonus,core:base+bonus,s6,matchScore:match.score,matchMargin:match.margin};
+  const rec=style==="joker"?null:STYLE_RECIPE(style);
+  const ratingWeight=clamp(+(rec?.ratingWeight??1),.25,2);
+  const bonus=Math.max(0,(p.rating||0)-C.RAT_BASE)*C.RAT_K*ratingWeight;
+  return {style,ovr:clipOVR(base+bonus),statScore:score,score,base,bonus,core:base+bonus,ratingWeight,s6,matchScore:match.score,matchMargin:match.margin};
 }
 function ovrUnificado(role,p,sec){const C=CFG_AVALIACAO,combatRole=role==="IGL"?(sec||"Rifler"):role,style=nmOVR(p,combatRole);
   if(role==="IGL")return iglOvr(style.core,p.colocacao); // exceção curada: playstyle + bônus por colocação

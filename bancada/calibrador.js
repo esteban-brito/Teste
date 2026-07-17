@@ -23,7 +23,7 @@ function loadCalibrator(){
   if(cut<0)cut=linhas.findIndex(l=>l.includes("document.getElementById"));
   if(cut<0)throw new Error("marcador de UI nao encontrado em game.js");
   const engineSlice=linhas.slice(0,cut).join("\n");
-  const E=new Function(engineSlice+"\nreturn {avaliarJogador,aplicarAvaliacaoContextual,distribuirRoles,forcaTime,ovrUnificado,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,STYLE_ROLE_FIT,STYLE_CONTRA,MAPAS_POOL,MAPA_LADO,srand,simularMapa,forcaDoDia,TEAMS,nmOVR,roleAfinidade,secondaryScore,NM_DEF,NM_COR,STYLE_LABEL,PLAYSTYLE_IDS,PLAYSTYLES,NM_AXES,STYLE_KEYS,SUBARQ};")();
+  const E=new Function(engineSlice+"\nreturn {avaliarJogador,aplicarAvaliacaoContextual,distribuirRoles,forcaTime,ovrUnificado,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,STYLE_ROLE_FIT,STYLE_CONTRA,MAPAS_POOL,MAPA_LADO,srand,simularMapa,forcaDoDia,TEAMS,nmOVR,styleScoreTable,roleAfinidade,secondaryScore,NM_DEF,NM_COR,STYLE_LABEL,PLAYSTYLE_IDS,PLAYSTYLES,NM_AXES,STYLE_KEYS,SUBARQ};")();
 
   const m=sandboxSrc.match(/<script>([\s\S]*)<\/script>/);
   if(!m)throw new Error("nao encontrei o <script> do sandbox.html");
@@ -33,7 +33,8 @@ function loadCalibrator(){
   core+=`
 return {
   setup(engine){
-    E=engine; ({nmOVR,STYLE_LABEL,PLAYSTYLE_IDS}=E);
+    E=engine; DEF={ROLE:clone(E.ROLE_PERFIL),NM:clone(E.NM_DEF),NM_COR:clone(E.NM_COR),CONTRA:clone(E.ROLE_CONTRA),IGL:clone(E.IGL_ROLE_AFIN),RULES:clone(E.ROLE_RULES),STYLE_FIT:clone(E.STYLE_ROLE_FIT),STYLE_CONTRA:clone(E.STYLE_CONTRA),CFG:clone(E.CFG_AVALIACAO)};
+    ({nmOVR,STYLE_LABEL,PLAYSTYLE_IDS}=E);
     POOLRAW=[]; poolBySlot=new Map();
     E.TEAMS.forEach((t,ti)=>t.jogadores.forEach((j,pi)=>{const e=j._eng;
       const idx=POOLRAW.length;
@@ -48,10 +49,23 @@ return {
     Object.assign(state,{nome:p.nome,fp:p.fp,en:p.en,tr:p.tr,op:p.op,cl:p.cl,sn:p.sn,ut:p.ut,rating:p.rating,isIGL:p.isIGL,colocacao:p.colocacao});
   },
   setMode(mode){ calibMode=mode; },
+  setSeed(seed){ searchSeedSalt=seed||0; },
+  setStats(values){ Object.assign(state,values||{}); },
   overrideBudget(ms){ Object.values(CALIB_STRATEGIES).forEach(s=>{ if(ms)s.maxMs=ms; }); },
   info(nome){ const p=POOLRAW.find(x=>x.nome===nome); if(!p)throw new Error("nao achei: "+nome);
     const ev=E.avaliarJogador({...p}); return {isIGL:!!ev.isIGL,ovr:Math.round(ev.ovr),style:STYLE_LABEL(ev.playstyle),r1:ev.role1||ev.combatRole,r2:ev.role2||ev.secundario}; },
-  findCalibration, renderCalibResult, rolePairParts, deltasFor, scaleChanges, compareCalibration, CALIB_STRATEGIES,
+  findCalibration, reformulateStyleFromArchetype, renderCalibResult, rolePairParts, deltasFor, scaleChanges, compareCalibration, CALIB_STRATEGIES,
+  getCurrent(){return mainPlayer();},
+  ratingWeight(style){return E.NM_DEF[style]?.ratingWeight;},
+  withChanges(changes,fn){const snap=configSnapshot();try{applyCalibChanges(changes);return fn(mainPlayer());}finally{restoreConfig(snap);}},
+  applyResult(result){applyCalibChanges(result.changes||[]);registerCalibrationApplication(result);invalidateAllTeamEval();},
+  regressions(){return sessionRegressions();},
+  resetAll(){
+    copyInto(E.ROLE_PERFIL,DEF.ROLE);copyInto(E.NM_DEF,DEF.NM);copyInto(E.NM_COR,DEF.NM_COR);
+    copyInto(E.ROLE_CONTRA,DEF.CONTRA);copyInto(E.IGL_ROLE_AFIN,DEF.IGL);copyInto(E.ROLE_RULES,DEF.RULES);
+    copyInto(E.STYLE_ROLE_FIT,DEF.STYLE_FIT);copyInto(E.STYLE_CONTRA,DEF.STYLE_CONTRA);copyInto(E.CFG_AVALIACAO,DEF.CFG);
+    baseline=null;calibSession=null;calibLast=null;invalidateAllTeamEval();
+  },
   get STYLE_LABEL(){ return STYLE_LABEL; }
 };
 `;
@@ -93,10 +107,20 @@ const api=loadCalibrator();
 {
   const cont=api.scaleChanges([{type:"stylecontra",from:.5,to:.75}],1.5)[0].to; // 0.5+0.25*1.5=0.875
   const nm=api.scaleChanges([{type:"nm",from:.2,to:.05}],1.5)[0].to;             // 0.2-0.15*1.5=-0.025
-  const igl=api.scaleChanges([{type:"igl",from:.5,to:.9}],1.5)[0].to;            // 0.5+0.4*1.5=1.1
-  check(cont<=.8+1e-9&&nm>=.01-1e-9&&igl<=1+1e-9,`scaleChanges capa por tipo (stylecontra=${cont}≤.8, nm=${nm}≥.01, igl=${igl}≤1)`);
+  const igl=api.scaleChanges([{type:"igl",from:.5,to:.9}],1.5)[0].to;
+  const lean=api.scaleChanges([{type:"cfg",key:"AWP_LEAN",from:.2,to:.4}],2)[0].to;
+  const rating=api.scaleChanges([{type:"rating",style:"Closer",from:1,to:1.8}],2)[0].to;
+  check(cont<=.8+1e-9&&nm>=.01-1e-9&&igl<=1+1e-9&&lean<=.4+1e-9&&rating<=2+1e-9,`scaleChanges capa por tipo (contra=${cont}, nm=${nm}, igl=${igl}, lean=${lean}, rating=${rating})`);
 }
 
+
+// Workers: protocolo cooperativo de partição/cancelamento deve estar presente no artefato real.
+{
+  const workerSrc=fs.readFileSync(path.join(ROOT,"calibrator-worker.js"),"utf8");
+  const sandboxSrc=fs.readFileSync(SANDBOX_PATH,"utf8");
+  check(workerSrc.includes('job.type==="cancel"'),"worker aceita cancelamento cooperativo");
+  check(workerSrc.includes("partitionIndex")&&sandboxSrc.includes("partitionCount:workers.length"),"workers recebem partições distintas do espaço de busca");
+}
 // bateria ponta-a-ponta: nunca lanca excecao; quando ok=true, o resultado bate o goal de
 // verdade (revalidado contra rolePairParts/STYLE_LABEL, nao so confiando no proprio "ok").
 const CASOS=[
@@ -169,17 +193,82 @@ api.overrideBudget(budgetMs);
   // objetivo estrutural de 2 dimensões (função + estilo): não lança e, se ok, fecha AS DUAS
   // (guarda de regressão pra objetivo combinado — nunca devolve ok com só uma dimensão batida).
   {
-    api.loadByName("b1t"); api.setMode("ia");
+    // mesmo caso pesado (AWPer→função+estilo): a 1500ms o resultado é loteria de seed, então
+    // roda no orçamento representativo (ver nota no bloco de estabilidade abaixo). O que se
+    // verifica aqui é a GUARDA: se devolver ok, as DUAS dimensões batem de verdade.
+    api.loadByName("b1t"); api.setMode("ia"); api.overrideBudget(Math.max(6000,budgetMs));
     const goal={r1:"Rifler",style:"Trader"};
     let r=null,err=null; try{ r=await api.findCalibration(goal,null); }catch(e){ err=e; }
-    const okOrGraceful=!err&&r&&(!r.ok||(api.rolePairParts(r.after).r1==="Rifler"&&api.STYLE_LABEL(r.after.playstyle)==="Trader"));
-    check(!!okOrGraceful,`b1t {r1:Rifler+Trader}: não lança e, se ok, fecha função E estilo${err?": "+err.message:r&&r.ok?" (ok)":" (sem solução)"}`);
+    api.overrideBudget(budgetMs);
+    const ok=!err&&r&&r.ok&&api.rolePairParts(r.after).r1==="Rifler"&&api.STYLE_LABEL(r.after.playstyle)==="Trader";
+    check(!!ok,`b1t {r1:Rifler+Trader}: IA FECHA função E estilo${err?": "+err.message:r&&r.ok?" (ok)":" (sem solução)"}`);
   }
   // [22] Coringa: não lança; se achar, o estilo é mesmo Coringa (limiar global NM_COR, não receita).
   {
     api.loadByName("KSCERATO"); api.setMode("ia");
     let r=null,err=null; try{ r=await api.findCalibration({style:"Coringa"},null); }catch(e){ err=e; }
     check(!err&&(!r.ok||api.STYLE_LABEL(r.after.playstyle)==="Coringa"),`Coringa não lança e, se ok, vira Coringa${err?": "+err.message:""}`);
+  }
+  // Coringa atual consegue sair do hard gate por NM_COR e assumir um estilo normal.
+  {
+    api.resetAll();api.loadByName("Skadoodle");api.setMode("ia");
+    const before=api.getCurrent();
+    let r=null,err=null;try{r=await api.findCalibration({style:"Playmaker"},null);}catch(e){err=e;}
+    check(api.STYLE_LABEL(before.playstyle)==="Coringa"&&!err&&r&&r.ok&&api.STYLE_LABEL(r.after.playstyle)==="Playmaker",`Skadoodle Coringa → Playmaker destrava o gate sem curadoria${err?": "+err.message:r&&r.message?": "+r.message:""}`);
+  }
+  // Baiter já existente pode manter a identidade e calibrar OVR; só CRIAR Baiter é impossível.
+  {
+    api.resetAll();api.loadByName("Skadoodle");api.setMode("ia");
+    api.setStats({nome:"Baiter sintético",fp:40,en:35,tr:42,op:38,cl:55,sn:44,ut:36,rating:1,isIGL:false});
+    const before=api.getCurrent(),target=Math.min(21,Math.round(before.ovr)+1);
+    let r=null,err=null;try{r=await api.findCalibration({style:"Baiter",ovr:target},null);}catch(e){err=e;}
+    check(api.STYLE_LABEL(before.playstyle)==="Baiter"&&!err&&r&&!r.infeasible&&r.ok&&api.STYLE_LABEL(r.after.playstyle)==="Baiter"&&Math.round(r.after.ovr)===target,`Baiter atual mantém estilo e muda OVR ${Math.round(before.ovr)}→${target}${err?": "+err.message:r&&r.message?": "+r.message:""}`);
+    api.resetAll();
+  }
+  // Intenções aplicadas viram restrições rígidas para calibrações seguintes.
+  {
+    api.resetAll();api.setMode("ia");
+    api.loadByName("mezii");const base=api.getCurrent(),target=Math.min(21,Math.round(base.ovr)+1);
+    const first=await api.findCalibration({ovr:target},null);if(first?.ok)api.applyResult(first);
+    api.loadByName("Boombl4");const second=await api.findCalibration({r2:"Entry"},null);if(second?.ok)api.applyResult(second);
+    api.loadByName("mezii");const kept=Math.round(api.getCurrent().ovr)===target;
+    check(!!(first?.ok&&second?.ok&&kept&&api.regressions().length===0),`intenção anterior de OVR é preservada após calibrar outro jogador (OVR ${target})`);
+    api.resetAll();
+  }
+
+  // ratingWeight é funcional no OVR, mas não muda a identidade do playstyle.
+  {
+    api.loadByName("NiKo");const before=api.getCurrent(),style=api.STYLE_LABEL(before.playstyle),rw=api.ratingWeight(style);
+    const after=api.withChanges([{type:"rating",style,from:rw,to:Math.min(2,rw+.5)}],p=>p);
+    check(api.STYLE_LABEL(after.playstyle)===style&&after.style.ratingWeight>rw,`ratingWeight de ${style} altera nível sem trocar identidade`);
+  }
+  // estabilidade entre seeds: a capacidade não pode depender de uma única rolagem feliz.
+  // Este é o caso multiobjetivo mais PESADO (AWPer trocando função E estilo ao mesmo tempo).
+  // O default do bench (1500ms) é ~5% do orçamento real da IA (maxMs=28000): nesse tempo a
+  // busca mal começa e o resultado vira loteria de seed. Aqui medimos o que o rótulo diz —
+  // ESTABILIDADE ENTRE SEEDS — num orçamento representativo do produto. A asserção segue
+  // estrita: os 3 seeds precisam fechar Rifler+Trader de fato.
+  {
+    const stabilityMs=Math.max(6000,budgetMs);
+    api.overrideBudget(stabilityMs);
+    const runs=[];
+    for(const seed of [17,7919,15838]){api.resetAll();api.loadByName("b1t");api.setMode("ia");api.setSeed(seed);runs.push(await api.findCalibration({r1:"Rifler",style:"Trader"},null));}
+    api.overrideBudget(budgetMs);
+    const all=runs.every(r=>r&&r.ok&&api.rolePairParts(r.after).r1==="Rifler"&&api.STYLE_LABEL(r.after.playstyle)==="Trader");
+    check(all,`multiobjetivo permanece solucionável em 3 seeds (${runs.map(r=>r?.ok?"ok":"falha").join(", ")})`);
+    api.setSeed(0);api.resetAll();
+  }
+  // modo arquétipo: Jame ensina a definição global de Closer; exige solução e estabilidade sintética.
+  {
+    api.loadByName("Jame");api.setMode("ia");
+    let r=null,err=null;try{r=await api.reformulateStyleFromArchetype("Closer",{},null);}catch(e){err=e;}
+    check(!err&&r&&r.ok&&api.STYLE_LABEL(r.after.playstyle)==="Closer",`Jame como arquétipo reaprende Closer${err?": "+err.message:r&&r.message?": "+r.message:""}`);
+    if(r&&r.ok){
+      check((r.archetypeInfo?.synthetic||0)>=.5&&r.archetypeInfo?.lost<=3,`arquétipo valida holdout sintético e preserva Closers (synth ${Math.round((r.archetypeInfo?.synthetic||0)*100)}%, perdidos ${r.archetypeInfo?.lost})`);
+      const recipe=r.archetypeInfo?.afterRecipe||{},sum=Object.values(recipe).reduce((a,b)=>a+b,0);
+      const noPin=(r.changes||[]).every(c=>["nm","stylecontra","cfg","rating","ovrparam"].includes(c.type));
+      check(Math.abs(sum-1)<1e-3&&noPin,`arquétipo produz receita normalizada (Σ=${sum.toFixed(3)}) e zero pin individual`);
+    }
   }
   console.log(failures?`✗ ${failures} checagem(ns) do calibrador falharam`:"✓ calibrador ok");
   process.exitCode=failures?1:0;

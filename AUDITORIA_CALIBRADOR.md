@@ -160,3 +160,67 @@ Perfilei o custo real antes de mexer: `impactSnapshot()` custa ~2ms/chamada (500
 Única forma segura de multiplicar esse número sem repetir o risco do #2: testar candidatos em paralelo, em vários núcleos, via Web Workers — mesma conta, N vezes mais rápida. `calibrator-worker.js` busca o próprio `game.js` e `sandbox.html` (mesma técnica de `carregarMotores`), reaproveitando o MESMO código-fonte do calibrador sem duplicar nada. A página cria `min(hardwareConcurrency,8)` workers, manda o mesmo objetivo pra cada um com uma seed diferente (`searchSeedSalt`, novo, default 0 — aditivo, não muda o comportamento single-thread), e escolhe o melhor resultado via `compareCalibration`. Qualquer falha cai pra chamada direta na thread principal (comportamento de hoje, sem quebrar).
 
 Validado o que dava pra validar sem navegador: simulei a lógica exata do worker (bootstrap + busca) em Node contra o motor real, confirmei que builds independentes não compartilham nenhum estado (mutar o `ROLE_PERFIL` de um não afeta o outro), e confirmei execução sequencial 100% confiável. **Não consegui validar a orquestração real de `Worker`/`postMessage` num navegador de verdade** — fica pendente de teste manual após o deploy.
+
+---
+
+## 🟢 Reforma estrutural 2026-07-17 — multiobjetivo, arquétipos e workers reais
+
+Esta rodada fecha os principais blocos arquiteturais que permaneceram abertos após a segunda auditoria.
+
+### Modelo e identidade
+
+- `styleScoreTable` virou a fonte única da competição entre estilos normais. O motor e o calibrador usam a mesma implementação, incluindo regras contextuais como `AWP_LEAN`; a sensibilidade não replica mais uma fórmula incompleta.
+- `NM_DEF.<estilo>.ratingWeight` substitui o antigo `wR` morto. O parâmetro afeta somente o bônus de rating no OVR; nunca decide a identidade do playstyle. O valor padrão `1` preserva o motor anterior.
+- Receitas alteradas são normalizadas automaticamente. A classificação continua olhando a direção por cosseno e o OVR usa média ponderada, sem poder explorar inflação de `Σw`.
+- `AWP_LEAN` agora é um knob contextual `cfg`, com limite próprio `[0, 0.4]`, relatório e reset corretos — não é mais tratado como parâmetro de OVR.
+
+### Busca
+
+- `goalLeverBank` passou a unir as alavancas de todas as dimensões pedidas (`role1`, `role2`, estilo e OVR), em vez de escolher apenas a primeira.
+- Objetivos combinados ganharam composição sequencial rápida, beam search com estados parciais e fronteira de Pareto. A bancada agora exige que `b1t → Rifler + Trader` seja realmente encontrado, inclusive em três seeds diferentes.
+- O annealing pode atravessar estados temporariamente inválidos usando distância contínua até o objetivo; não fica mais restrito ao subconjunto que já satisfaz integralmente o alvo.
+- Candidatos são regularizados pela distância normalizada da configuração até `DEF`, além do custo de impacto na liga.
+- Margens latentes de role, estilo e OVR entram no snapshot; aproximar jogadores colaterais de uma borda de classificação agora gera `marginDamage` mesmo sem mudança discreta imediata.
+- Intenções aplicadas viraram restrições rígidas nas buscas futuras. São preservadas somente as dimensões originalmente pedidas, incluindo OVR; recalibrar o mesmo jogador substitui apenas as dimensões explicitamente solicitadas na nova meta.
+
+### Reformular estilo por arquétipo
+
+Novo modo **Reformular estilo**:
+
+1. usa o jogador selecionado como exemplo rotulado, sem criar pin individual;
+2. reaprende o vetor completo da receita global;
+3. testa contraindicações e contexto de função;
+4. preserva membros naturais do estilo;
+5. valida perturbações sintéticas ao redor do arquétipo;
+6. respeita intenções anteriores;
+7. pode combinar a reformulação com um alvo de OVR, permitindo calibrar também `ratingWeight`;
+8. retorna alternativas da fronteira de Pareto para escolha na interface.
+
+Caso de guarda: `Jame → Closer` deve ser encontrado, preservar os Closers existentes dentro do limite e manter estabilidade sintética. A receita proposta deve somar `1` e conter somente mudanças globais de modelo.
+
+### Hard gates
+
+- Criar Baiter continua corretamente impossível sem alterar stats.
+- Um jogador que **já é Baiter** pode manter essa identidade e calibrar seu OVR.
+- Coringa pode entrar ou sair do hard gate por ajustes globais de `NM_COR`; a bancada exige `Skadoodle: Coringa → Playmaker`.
+- IGL respeita teto de OVR 21 também no campo da interface, não apenas na validação interna.
+
+### Paralelismo
+
+- Workers recebem partições distintas do espaço por hash de candidato.
+- Solução dominante dispara cancelamento cooperativo dos demais núcleos.
+- Cancelamento é separado de timeout e aparece em `searchStats`.
+- Timeouts continuam terminando e reconstruindo o pool.
+- Foi adicionada `bancada/worker-calibrador.js`, que executa o `calibrator-worker.js` real em `worker_threads` e valida bootstrap, partição e cancelamento — não apenas presença de strings no fonte.
+
+### Validação executada
+
+- `npm run check`: verde.
+- `npm run lint`: verde, zero warnings.
+- bancada do calibrador: todas as checagens verdes, incluindo multiobjetivo, três seeds, intenções, Baiter, Coringa, `ratingWeight` e arquétipo.
+- bancada de workers: partição e cancelamento reais verdes.
+- `times.js` e `auditoria.js`: verdes (somente avisos históricos de `coachPais`).
+- realismo com `N=30`: todas as faixas verdes.
+- rating com `N=30`: correlação `r=0.796`, MAE `0.091`.
+
+A amostra estatística profunda padrão (`N=300/400`) não foi concluída dentro do limite do executor desta sessão; o CI continua configurado para rodar `npm run bench` sem a redução de `N`.

@@ -553,7 +553,7 @@ async function carregarMotores(){
   if(cut<0)cut=linhas.findIndex(l=>l.includes("document.getElementById"));
   if(cut<0)throw new Error("não encontrei o início da camada de UI em game.js");
   const slice=linhas.slice(0,cut).join("\n");
-  E=new Function(slice+"\nreturn {avaliarJogador,aplicarAvaliacaoContextual,distribuirRoles,forcaTime,ovrUnificado,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,STYLE_ROLE_FIT,STYLE_CONTRA,MAPAS_POOL,MAPA_LADO,srand,simularMapa,forcaDoDia,TEAMS,nmOVR,roleAfinidade,secondaryScore,NM_DEF,NM_COR,STYLE_LABEL,PLAYSTYLE_IDS,PLAYSTYLES,NM_AXES,STYLE_KEYS,SUBARQ};")();
+  E=new Function(slice+"\nreturn {avaliarJogador,aplicarAvaliacaoContextual,distribuirRoles,forcaTime,ovrUnificado,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,STYLE_ROLE_FIT,STYLE_CONTRA,MAPAS_POOL,MAPA_LADO,srand,simularMapa,forcaDoDia,TEAMS,nmOVR,styleScoreTable,roleAfinidade,secondaryScore,NM_DEF,NM_COR,STYLE_LABEL,PLAYSTYLE_IDS,PLAYSTYLES,NM_AXES,STYLE_KEYS,SUBARQ};")();
   ["avaliarJogador","distribuirRoles","forcaTime","simularMapa","forcaDoDia","srand","TEAMS"].forEach(k=>{if(!E[k])throw new Error(`motor ausente: ${k}`);});
   DEF={ROLE:clone(E.ROLE_PERFIL),NM:clone(E.NM_DEF),NM_COR:clone(E.NM_COR),CONTRA:clone(E.ROLE_CONTRA),IGL:clone(E.IGL_ROLE_AFIN),RULES:clone(E.ROLE_RULES),STYLE_FIT:clone(E.STYLE_ROLE_FIT),STYLE_CONTRA:clone(E.STYLE_CONTRA),CFG:clone(E.CFG_AVALIACAO)};
   // aliases locais para as funções/dados importados do motor (evita E.xxx em toda a UI)
@@ -642,20 +642,44 @@ function realityCost(p){
   const style=E.roleStyleReality?E.roleStyleReality(parts.combat,p.playstyle,p):{cost:0,label:"natural",reasons:[]};
   return {score:pair.cost+style.cost,pair,style};
 }
+function playerDecisionMargins(player){
+  const parts=rolePairParts(player), roles=ROLES.filter(r=>r!=="IGL");
+  const affin=Object.fromEntries(roles.map(r=>[r,E.roleAfinidade(r,player)]));
+  let roleMargin;
+  if(player.isIGL){
+    const alt=roles.filter(r=>r!==parts.r2).reduce((m,r)=>Math.max(m,affin[r]),-Infinity);
+    roleMargin=(affin[parts.r2]||0)-alt;
+  }else{
+    const alt1=roles.filter(r=>r!==parts.r1).reduce((m,r)=>Math.max(m,affin[r]),-Infinity);
+    const primaryMargin=(affin[parts.r1]||0)-alt1;
+    const secScore=r=>E.secondaryScore(parts.r1,r,player,affin);
+    const alt2=roles.filter(r=>r!==parts.r1&&r!==parts.r2).reduce((m,r)=>Math.max(m,secScore(r)),-Infinity);
+    roleMargin=Math.min(primaryMargin,secScore(parts.r2)-alt2);
+  }
+  const styleMargin=+(player.style?.matchMargin||0);
+  const C=E.CFG_AVALIACAO;
+  const ovrContinuous=(player.style?.core??player.ovr)+(player.isIGL?(C.IGL_TITULO[player.colocacao]||0):0);
+  const ovrMargin=Math.max(0,.5-Math.abs(ovrContinuous-Math.round(player.ovr)));
+  return {roleMargin,styleMargin,ovrMargin};
+}
 function impactSnapshot(){
   const players=[], teams=[];
   E.TEAMS.forEach((team,ti)=>{
     const evaluated=evaluateTeam(team,ti);
     teams.push({key:String(ti),nome:team.nome,bruta:evaluated.bruta,quim:evaluated.quimica,efet:evaluated.efetiva});
     evaluated.players.forEach((player,pi)=>{
+      const parts=rolePairParts(player), margins=playerDecisionMargins(player);
       players.push({
         key:`${ti}:${pi}`,
         team:team.nome,
         nome:player.nome,
         ovr:player.ovr,
+        ovrContinuous:(player.style?.core??player.ovr)+(player.isIGL?(E.CFG_AVALIACAO.IGL_TITULO[player.colocacao]||0):0),
+        r1:parts.r1,r2:parts.r2,
         role:rolePairText(player),
         style:STYLE_LABEL(player.playstyle),
-        reality:realityCost(player).score
+        reality:realityCost(player).score,
+        ...margins
       });
     });
   });
@@ -684,8 +708,11 @@ function diffSnapshots(base,now){
     const styleChanged=current.style!==old.style;
     const dReality=(current.reality||0)-(old.reality||0);
     const rareWorsened=dReality>.08;
-    const weight=Math.abs(dOvr)+(roleChanged?2:0)+(styleChanged?1:0)+Math.max(0,dReality)*4;
-    return {...current,old,dOvr,dReality,rareWorsened,roleChanged,styleChanged,weight};
+    const marginDamage=Math.max(0,(old.roleMargin||0)-(current.roleMargin||0))/12+
+      Math.max(0,(old.styleMargin||0)-(current.styleMargin||0))*4+
+      Math.max(0,(old.ovrMargin||0)-(current.ovrMargin||0));
+    const weight=Math.abs(dOvr)+(roleChanged?2:0)+(styleChanged?1:0)+Math.max(0,dReality)*4+marginDamage;
+    return {...current,old,dOvr,dReality,marginDamage,rareWorsened,roleChanged,styleChanged,weight};
   }).filter(change=>change&&change.weight>0)
     .sort((a,b)=>b.weight-a.weight||Math.abs(b.dOvr)-Math.abs(a.dOvr)||a.nome.localeCompare(b.nome));
   const teams=now.teams.map(current=>{
@@ -764,7 +791,7 @@ function renderImpactPanel(){
   if(empty&&!regressions.length){
     return `<div class="liveimpact liveimpact-quiet">Impacto acumulado · sem mudanças desde o baseline</div>`;
   }
-  const regressionRows=regressions.slice(0,5).map(item=>`<div class="impact-row"><div class="impact-main"><div class="impact-name">${esc(item.nome)} <span style="color:var(--warn);font-weight:700">regrediu</span></div><div class="impact-meta">esperado ${esc(item.expectedRole)} / ${esc(item.expectedStyle)} · atual ${esc(item.current?.role||"-")} / ${esc(item.current?.style||"-")}</div></div></div>`).join("");
+  const regressionRows=regressions.slice(0,5).map(item=>`<div class="impact-row"><div class="impact-main"><div class="impact-name">${esc(item.nome)} <span style="color:var(--warn);font-weight:700">regrediu</span></div><div class="impact-meta">esperado ${esc(intentionExpectedText(item))} · ${esc((item.failed||[]).join(", "))}</div></div></div>`).join("");
   return `<div class="liveimpact">
     <div class="liveimpact-head"><div class="liveimpact-title">Impacto acumulado</div><div class="liveimpact-count">${changedPlayers+changedTeams} desde o baseline</div></div>
     ${renderAuditMetrics(summary,"jog/times")}
@@ -776,11 +803,13 @@ function renderImpactPanel(){
 }
 function changeLine(change){
   if(change.type==="nm")return`NM_DEF.${change.style}.w.${change.axis}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
+  if(change.type==="rating")return`NM_DEF.${change.style}.ratingWeight: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
   if(change.type==="stylecontra")return`STYLE_CONTRA.${change.styleId}.${change.axis}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
   if(change.type==="contra")return`ROLE_CONTRA.${change.role}.${change.attr}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
   if(change.type==="rule")return`ROLE_RULES.${change.role}.${change.rule}.w: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
   if(change.type==="igl")return`IGL_ROLE_AFIN.${change.role}.${change.attr}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
   if(change.type==="cor")return`NM_COR.${change.key}: ${change.from.toFixed(1)} -> ${change.to.toFixed(1)}`;
+  if(change.type==="cfg")return`CFG_AVALIACAO.${change.key}: ${(+change.from).toFixed(3)} -> ${(+change.to).toFixed(3)}`;
   if(change.type==="ovrparam")return`CFG_AVALIACAO.${change.key}: ${(+change.from).toFixed(2)} -> ${(+change.to).toFixed(2)}`;
   return`ROLE_PERFIL.${change.role}.afin.${change.attr}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
 }
@@ -802,8 +831,8 @@ function buildCalibrationReport(){
   const intentions=Array.from(session.intentions.values()).map(intent=>intentionState(intent,reportSnap));
   if(intentions.length)intentions.forEach(item=>{
     lines.push(`${item.nome} (${item.team})`);
-    lines.push(`  Esperado: ${item.expectedRole} / ${item.expectedStyle}`);
-    lines.push(`  Atual: ${item.current?`${item.current.role} / ${item.current.style}`:"-"}`);
+    lines.push(`  Esperado: ${intentionExpectedText(item)}`);
+    lines.push(`  Atual: ${item.current?`${item.current.r1} / ${item.current.r2} · ${item.current.style} · OVR ${item.current.ovr}`:"-"}`);
     lines.push(`  Status: ${item.status}`);
   });
   else lines.push("Nenhuma intencao aplicada.");
@@ -838,7 +867,7 @@ function renderReportPanel(){
     return `<div class="report-quiet"><span class="report-quiet-title">Relatório da bancada</span><span class="report-quiet-sub">Nada aplicado ainda — as sugestões que você confirmar aparecem aqui.</span></div>`;
   }
   const last=session.applied.slice(-4).reverse().map(entry=>`<div class="report-item"><b>#${entry.id} ${esc(entry.targetName)}</b><span>${esc(entry.before)} → ${esc(entry.after)}</span><span>${entry.incremental.players} jog · ${entry.incremental.teams} times · colateral ${entry.incremental.collateralPlayers}</span></div>`).join("");
-  const regressionRows=regressions.slice(0,4).map(item=>`<div class="report-item warn"><b>${esc(item.nome)} — regrediu</b><span>Esperado ${esc(item.expectedRole)} / ${esc(item.expectedStyle)}</span><span>Atual ${esc(item.current?.role||"-")} / ${esc(item.current?.style||"-")}</span></div>`).join("");
+  const regressionRows=regressions.slice(0,4).map(item=>`<div class="report-item warn"><b>${esc(item.nome)} — regrediu</b><span>Esperado ${esc(intentionExpectedText(item))}</span><span>${esc((item.failed||[]).join(", "))}</span></div>`).join("");
   const changesBump=bumpTrack("report:changes",finalChanges.length);
   return `<div class="report-panel">
     <div class="report-head"><div class="report-title">Relatório da bancada</div><div class="liveimpact-count">${session.applied.length} ${session.applied.length===1?"aplicação":"aplicações"}</div></div>
@@ -893,12 +922,11 @@ function rolePair(p){
 function goalInfeasible(goal,before,isIGL){
   const C=E.CFG_AVALIACAO;
   if(!isIGL&&goal.r1&&goal.r2&&goal.r1===goal.r2)return "Função 1 e Função 2 não podem ser a mesma.";
-  if(goal.style==="Baiter")return "Baiter é definido pelos stats (perfil de baixo impacto), não por uma receita — a IA não altera stats.";
-  // jogador preso no hard gate de Baiter/Coringa: styleMatch decide isso ANTES das receitas, então
-  // nenhum peso o tira de lá — só mudar stats (Baiter) ou o limiar NM_COR (Coringa, não via estilo).
-  if(goal.style&&goal.style!==STYLE_LABEL(before.playstyle)){
-    if(before.playstyle==="baiter")return "Este jogador cai no perfil de Baiter (stats de baixo impacto) — mudar o estilo dele exige mudar stats, não pesos.";
-  }
+  const currentStyle=STYLE_LABEL(before.playstyle);
+  if(goal.style==="Baiter"&&currentStyle!=="Baiter")return "Baiter é definido pelos stats (perfil de baixo impacto), não por uma receita — a IA não altera stats.";
+  // Baiter é o único hard gate que pesos não destravam. Coringa pode ser destravado ajustando NM_COR.
+  if(goal.style&&goal.style!==currentStyle&&before.playstyle==="baiter")
+    return "Este jogador cai no perfil de Baiter (stats de baixo impacto) — mudar o estilo dele exige mudar stats, não pesos.";
   if(goal.ovr){
     const teto=isIGL?C.IGL_TETO:C.OVR_MAX;
     if(goal.ovr>teto)return `${isIGL?"IGL":"Jogador"} não passa de OVR ${teto}${isIGL?" (teto do IGL)":""}.`;
@@ -913,6 +941,47 @@ function goalMet(player,goal){
   if(goal.style&&STYLE_LABEL(player.playstyle)!==goal.style)return false;
   if(goal.ovr&&Math.round(player.ovr)!==goal.ovr)return false;
   return true;
+}
+function displayedOvrContinuous(player){
+  const C=E.CFG_AVALIACAO;
+  return (player.style?.core??player.ovr??0)+(player.isIGL?(C.IGL_TITULO[player.colocacao]||0):0);
+}
+function goalDistance(player,goal,raw){
+  const parts=rolePairParts(player);let d=0;
+  if(goal.r1&&!player.isIGL&&parts.r1!==goal.r1){
+    const t=E.roleAfinidade(goal.r1,raw),cur=E.roleAfinidade(parts.r1,raw);
+    d+=1+Math.max(0,cur-t)/24;
+  }
+  if(goal.r2&&parts.r2!==goal.r2){
+    const primary=player.isIGL?null:parts.r1,score=r=>primary?E.secondaryScore(primary,r,raw):E.roleAfinidade(r,raw);
+    d+=1+Math.max(0,score(parts.r2)-score(goal.r2))/24;
+  }
+  if(goal.style&&STYLE_LABEL(player.playstyle)!==goal.style){
+    if(player.playstyle==="baiter")d+=8;
+    else if(goal.style==="Coringa"){
+      const vals=[raw.fp,raw.en,raw.tr,raw.op,raw.cl,raw.sn,raw.ut].map(v=>+v||0).sort((a,b)=>b-a);
+      const needPiso=Math.max(0,E.NM_COR.pisoMin-(vals[5]||0)),needSpread=Math.max(0,((vals[0]||0)-(vals[4]||0))-E.NM_COR.spreadMax);
+      d+=1+Math.min(3,(needPiso+needSpread)/20);
+    }else{
+      const role=parts.combat,nm=nmOVR(raw,role),tid=styleIdFromLabel(goal.style),scores=E.styleScoreTable(nm.s6||{},role);
+      const t=scores.find(x=>x.id===tid)?.score??-1,rival=scores.filter(x=>x.id!==tid).reduce((m,x)=>Math.max(m,x.score),-Infinity);
+      d+=1+Math.max(0,rival-t)*4;
+      if(player.playstyle==="joker")d+=.35;
+    }
+  }
+  if(goal.ovr){
+    const gap=Math.abs(displayedOvrContinuous(player)-goal.ovr);
+    d+=Math.max(0,gap-.49)/1.5;
+  }
+  return d;
+}
+function unmetGoalComponents(player,goal){
+  const parts=rolePairParts(player),out=[];
+  if(goal.r1&&!player.isIGL&&parts.r1!==goal.r1)out.push({r1:goal.r1});
+  if(goal.r2&&parts.r2!==goal.r2)out.push({r2:goal.r2});
+  if(goal.style&&STYLE_LABEL(player.playstyle)!==goal.style)out.push({style:goal.style});
+  if(goal.ovr&&Math.round(player.ovr)!==goal.ovr)out.push({ovr:goal.ovr});
+  return out;
 }
 function roleWeight(role,attr){
   const afin=E.ROLE_PERFIL[role]?.afin;
@@ -966,16 +1035,74 @@ function flatConfigDiff(){
   walk("CFG_AVALIACAO",before.cfg,base.cfg); // [21] params de OVR (base/span/K) entram no relatório
   return out.sort((a,b)=>a.path.localeCompare(b.path));
 }
-function intentionState(intent,snap){
-  const current=(snap||impactSnapshot()).players.find(player=>player.key===intent.key);
-  if(!current)return {...intent,status:"SUMIU",current:null};
-  const ok=current.role===intent.expectedRole&&current.style===intent.expectedStyle;
-  return {...intent,status:ok?"OK":"REGREDIU",current};
+function goalExpectation(goal,current){
+  const expected={};
+  if(goal?.r1)expected.r1=current.r1;
+  if(goal?.r2)expected.r2=current.r2;
+  if(goal?.style)expected.style=current.style;
+  if(goal?.ovr)expected.ovr=current.ovr;
+  return expected;
 }
-function sessionRegressions(){
-  const session=ensureCalibSession();
-  const snap=impactSnapshot();
-  return Array.from(session.intentions.values()).map(intent=>intentionState(intent,snap)).filter(item=>item.status!=="OK");
+function intentionExpectedText(intent){
+  const e=intent.expected||{};
+  return [e.r1&&`R1 ${e.r1}`,e.r2&&`R2 ${e.r2}`,e.style&&e.style,e.ovr&&`OVR ${e.ovr}`].filter(Boolean).join(" · ")||"sem dimensão fixa";
+}
+
+function configValueRange(path){
+  if(path.includes(".ratingWeight"))return 1.75;
+  if(path.startsWith("NM_DEF.")&&path.includes(".w."))return 1;
+  if(path.startsWith("STYLE_CONTRA."))return .8;
+  if(path.startsWith("ROLE_RULES."))return 4;
+  if(path.startsWith("IGL_ROLE_AFIN."))return 2;
+  if(path.startsWith("NM_COR."))return 100;
+  if(path==="CFG_AVALIACAO.OVR_BASE")return 16;
+  if(path==="CFG_AVALIACAO.OVR_SPAN")return 20;
+  if(path==="CFG_AVALIACAO.RAT_K")return 25;
+  if(path==="CFG_AVALIACAO.AWP_LEAN")return .4;
+  return 1;
+}
+function configDistanceFromDef(snapshot=null){
+  const current=snapshot||configSnapshot();
+  const base={role:DEF.ROLE,nm:DEF.NM,cor:DEF.NM_COR,contra:DEF.CONTRA,igl:DEF.IGL,rules:DEF.RULES,styleFit:DEF.STYLE_FIT,styleContra:DEF.STYLE_CONTRA,cfg:DEF.CFG};
+  let total=0;
+  const walk=(label,a,b)=>{
+    const keys=new Set([...Object.keys(a||{}),...Object.keys(b||{})]);
+    keys.forEach(key=>{
+      const av=a?.[key],bv=b?.[key],path=label?`${label}.${key}`:key;
+      const ao=av&&typeof av==="object"&&!Array.isArray(av),bo=bv&&typeof bv==="object"&&!Array.isArray(bv);
+      if(ao||bo){walk(path,ao?av:{},bo?bv:{});return;}
+      if(typeof av!=="number"&&typeof bv!=="number")return;
+      const d=((+av||0)-(+bv||0))/Math.max(1e-9,configValueRange(path));
+      total+=d*d;
+    });
+  };
+  walk("ROLE_PERFIL",current.role,base.role);walk("NM_DEF",current.nm,base.nm);
+  walk("NM_COR",current.cor,base.cor);walk("ROLE_CONTRA",current.contra,base.contra);
+  walk("IGL_ROLE_AFIN",current.igl,base.igl);walk("ROLE_RULES",current.rules,base.rules);
+  walk("STYLE_CONTRA",current.styleContra,base.styleContra);walk("CFG_AVALIACAO",current.cfg,base.cfg);
+  return Math.sqrt(total);
+}
+function intentionState(intent,snap,overrideGoal=null,overrideKey=null){
+  const current=(snap||impactSnapshot()).players.find(player=>player.key===intent.key);
+  if(!current)return {...intent,status:"SUMIU",current:null,failed:["jogador ausente"]};
+  const expected={...(intent.expected||{})};
+  // Recalibrar o mesmo jogador pode substituir SOMENTE as dimensões explicitamente pedidas agora.
+  if(intent.key===overrideKey&&overrideGoal){
+    if(overrideGoal.r1)delete expected.r1;
+    if(overrideGoal.r2)delete expected.r2;
+    if(overrideGoal.style)delete expected.style;
+    if(overrideGoal.ovr)delete expected.ovr;
+  }
+  const failed=[];
+  if(expected.r1&&current.r1!==expected.r1)failed.push(`R1 ${expected.r1}→${current.r1}`);
+  if(expected.r2&&current.r2!==expected.r2)failed.push(`R2 ${expected.r2}→${current.r2}`);
+  if(expected.style&&current.style!==expected.style)failed.push(`${expected.style}→${current.style}`);
+  if(expected.ovr&&current.ovr!==expected.ovr)failed.push(`OVR ${expected.ovr}→${current.ovr}`);
+  return {...intent,status:failed.length?"REGREDIU":"OK",current,failed};
+}
+function sessionRegressions(snap=null,overrideKey=null,overrideGoal=null){
+  const session=ensureCalibSession(), currentSnap=snap||impactSnapshot();
+  return Array.from(session.intentions.values()).map(intent=>intentionState(intent,currentSnap,overrideGoal,overrideKey)).filter(item=>item.status!=="OK");
 }
 function registerCalibrationApplication(result){
   const session=ensureCalibSession();
@@ -995,12 +1122,14 @@ function registerCalibrationApplication(result){
   };
   session.applied.push(entry);
   if(target){
+    const previous=session.intentions.get(result.targetKey), expected={...(previous?.expected||{})};
+    Object.assign(expected,goalExpectation(result.goal||{},target));
     session.intentions.set(result.targetKey,{
       key:result.targetKey,
       nome:target.nome,
       team:target.team,
-      expectedRole:target.role,
-      expectedStyle:target.style,
+      expected,
+      requested:{...(previous?.requested||{}),...(result.goal||{})},
       appliedAt:entry.id
     });
   }
@@ -1020,10 +1149,18 @@ function resetWorkbench(){
   refresh("all");
   toast("Bancada resetada");
 }
+function normalizeRecipeInPlace(style){
+  const w=E.NM_DEF[style]?.w;if(!w)return;
+  const keys=Object.keys(w),total=keys.reduce((sum,k)=>sum+Math.max(.01,+w[k]||0),0)||1;
+  keys.forEach(k=>w[k]=+(Math.max(.01,+w[k]||0)/total).toFixed(6));
+}
 function applyCalibChanges(changes){
+  const touchedRecipes=new Set();
   changes.forEach(change=>{
-    if(change.type==="nm"){const w=E.NM_DEF[change.style]?.w;if(w)w[change.axis]=change.to;}
-    else if(change.type==="ovrparam"){E.CFG_AVALIACAO[change.key]=change.to;} // botões do OVR novo (base/span/K)
+    if(change.type==="nm"){const w=E.NM_DEF[change.style]?.w;if(w){w[change.axis]=change.to;touchedRecipes.add(change.style);}}
+    else if(change.type==="rating"){const rec=E.NM_DEF[change.style];if(rec)rec.ratingWeight=change.to;}
+    else if(change.type==="cfg"){E.CFG_AVALIACAO[change.key]=change.to;}
+    else if(change.type==="ovrparam"){E.CFG_AVALIACAO[change.key]=change.to;}
     else if(change.type==="stylecontra"){
       if(!E.STYLE_CONTRA[change.styleId])E.STYLE_CONTRA[change.styleId]={};
       E.STYLE_CONTRA[change.styleId][change.axis]=change.to;
@@ -1033,16 +1170,28 @@ function applyCalibChanges(changes){
       E.ROLE_CONTRA[change.role][change.attr]=change.to;
     }
     else if(change.type==="rule"){
-      const rule=E.ROLE_RULES?.[change.role]?.[change.rule];
-      if(rule)rule.w=change.to;
+      const rule=E.ROLE_RULES?.[change.role]?.[change.rule];if(rule)rule.w=change.to;
     }
     else if(change.type==="igl"){
       if(!E.IGL_ROLE_AFIN[change.role])E.IGL_ROLE_AFIN[change.role]={};
       E.IGL_ROLE_AFIN[change.role][change.attr]=change.to;
     }
-    else if(change.type==="cor"){E.NM_COR[change.key]=change.to;} // limiar global do Coringa (pisoMin/spreadMax)
+    else if(change.type==="cor")E.NM_COR[change.key]=change.to;
     else setRoleWeight(change.role,change.attr,change.to);
   });
+  touchedRecipes.forEach(normalizeRecipeInPlace);
+}
+function materializeAppliedChanges(changes,baseSnapshot){
+  const styles=new Set(changes.filter(c=>c.type==="nm").map(c=>c.style));
+  const other=changes.filter(c=>c.type!=="nm"),nm=[];
+  styles.forEach(style=>{
+    const before=baseSnapshot?.nm?.[style]?.w||{},after=E.NM_DEF[style]?.w||{};
+    new Set([...Object.keys(before),...Object.keys(after)]).forEach(axis=>{
+      const from=+(before[axis]||0),to=+(after[axis]||0);
+      if(Math.abs(to-from)>1e-9)nm.push({type:"nm",style,axis,from,to});
+    });
+  });
+  return mergeChanges(other,nm);
 }
 // identidade do ALVO da mudança (sem o valor). changeKey inclui o "to" (dedup de candidatos
 // idênticos); knobKey identifica só a alavanca (dedup de knob — [16]: evita 2 mudanças no mesmo
@@ -1073,6 +1222,10 @@ function makeNmChange(style,axis,delta){
   const w=E.NM_DEF[style]?.w||{};
   const from=w[axis]||0;
   return {type:"nm",style,axis,from,to:Math.max(.01,+(from+delta).toFixed(3))};
+}
+function makeRatingWeightChange(style,delta){
+  const from=+(E.NM_DEF[style]?.ratingWeight??1);
+  return {type:"rating",style,from,to:+Math.max(.25,Math.min(2,from+delta)).toFixed(3)};
 }
 function styleIdFromLabel(label){
   return E.PLAYSTYLE_IDS.find(id=>E.STYLE_LABEL(id)===label||id===label)||label;
@@ -1119,6 +1272,34 @@ function dedupeCandidates(arr){
     return changes.some(c=>Math.abs(c.to-c.from)>1e-9);
   });
 }
+function mergeChanges(...groups){
+  const map=new Map(),order=[];
+  groups.flat().filter(Boolean).forEach(change=>{
+    const k=knobKey(change),prev=map.get(k);
+    if(!prev){map.set(k,{...change});order.push(k);}
+    else map.set(k,{...prev,...change,from:prev.from,to:clampChangeTo(change,change.to)});
+  });
+  return order.map(k=>map.get(k)).filter(c=>Math.abs(c.to-c.from)>1e-9);
+}
+function candidateSignature(changes){return mergeChanges(changes).map(changeKey).sort().join("|");}
+function stableHash(text){
+  let h=2166136261>>>0;
+  for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619);}
+  return h>>>0;
+}
+function paretoDominates(a,b){
+  const av=[a.costInfo?.collateralRoleChanges||0,a.costInfo?.collateralOvrShifts||0,a.cost||0,a.configDrift||0,1-(a.goalMargin||0)];
+  const bv=[b.costInfo?.collateralRoleChanges||0,b.costInfo?.collateralOvrShifts||0,b.cost||0,b.configDrift||0,1-(b.goalMargin||0)];
+  return av.every((v,i)=>v<=bv[i]+1e-9)&&av.some((v,i)=>v<bv[i]-1e-9);
+}
+function updatePareto(front,result,limit=5){
+  if(!result?.ok)return front;
+  if(front.some(x=>paretoDominates(x,result)))return front;
+  const kept=front.filter(x=>!paretoDominates(result,x));
+  kept.push(result);
+  kept.sort((a,b)=>a.cost-b.cost||(b.goalMargin||0)-(a.goalMargin||0));
+  return kept.slice(0,limit);
+}
 function computeAffinityGap(player,target,current){
   const afin=E.roleAfinidade;
   const tAfin=afin(target,player), cAfin=afin(current,player);
@@ -1127,11 +1308,13 @@ function computeAffinityGap(player,target,current){
 function candidateLabel(changes){
   return changes.map(change=>{
     if(change.type==="nm")return`NM.${change.axis.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
+    if(change.type==="rating")return`NM.${change.style}.RATING ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     if(change.type==="stylecontra")return`SCONTRA.${change.styleId}.${change.axis.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     if(change.type==="contra")return`${change.role}.CONTRA.${change.attr.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     if(change.type==="rule")return`${change.role}.REGRA.${change.rule} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     if(change.type==="igl")return`IGL.${change.role}.${change.attr.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     if(change.type==="cor")return`COR.${change.key} ${change.from.toFixed(1)}->${change.to.toFixed(1)}`;
+    if(change.type==="cfg")return`CFG.${change.key} ${(+change.from).toFixed(3)}->${(+change.to).toFixed(3)}`;
     if(change.type==="ovrparam")return`OVR.${change.key} ${(+change.from).toFixed(2)}->${(+change.to).toFixed(2)}`;
     return`${change.role}.${change.attr.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
   }).join(" | ");
@@ -1252,6 +1435,19 @@ function generateJokerCandidates(raw){
 // alvo de OVR: mexe nos parâmetros GLOBAIS do OVR novo (CFG_AVALIACAO) pra o jogador
 // atingir o OVR pedido. 3 alavancas — a busca escolhe a de menor colateral (ovrImpact):
 //   OVR_BASE (desloca todos igual) · OVR_SPAN (∝ score) · RAT_K (∝ rating; barato p/ estrela).
+function generateUnjokerCandidates(raw){
+  const vals=[raw.fp,raw.en,raw.tr,raw.op,raw.cl,raw.sn,raw.ut].map(v=>+v||0).sort((a,b)=>b-a);
+  const cur=E.NM_COR||{pisoMin:45,spreadMax:35}, sixth=vals[5]||0, spread=(vals[0]||0)-(vals[4]||0);
+  const out=[];
+  // Para deixar de ser Coringa basta tornar UMA das condições falsa; testa caminhos mínimos separados.
+  [1,3,6].forEach(m=>{
+    const piso=Math.min(100,Math.max(cur.pisoMin,sixth+m));
+    if(piso>cur.pisoMin+1e-6)out.push([{type:"cor",key:"pisoMin",from:cur.pisoMin,to:+piso.toFixed(1)}]);
+    const sp=Math.max(0,Math.min(cur.spreadMax,spread-m));
+    if(sp<cur.spreadMax-1e-6)out.push([{type:"cor",key:"spreadMax",from:cur.spreadMax,to:+sp.toFixed(1)}]);
+  });
+  return dedupeCandidates(out);
+}
 function generateOvrCandidates(raw,targetOvr){
   const ev=E.avaliarJogador({...raw}), st=ev.style||{};
   const score=+(st.score??st.statScore??0), core=+(st.core??ev.ovr??0), C=E.CFG_AVALIACAO;
@@ -1263,7 +1459,12 @@ function generateOvrCandidates(raw,targetOvr){
   out.push([{type:"ovrparam",key:"OVR_BASE",from:C.OVR_BASE,to:+cl(C.OVR_BASE+d,0,16).toFixed(2)}]);
   if(score>5)out.push([{type:"ovrparam",key:"OVR_SPAN",from:C.OVR_SPAN,to:+cl(C.OVR_SPAN+d*100/score,0,20).toFixed(2)}]);
   const rex=(+raw.rating||0)-C.RAT_BASE;
-  if(rex>.05)out.push([{type:"ovrparam",key:"RAT_K",from:C.RAT_K,to:+cl(C.RAT_K+d/rex,0,25).toFixed(2)}]);
+  if(rex>.05){
+    const rw=+(st.ratingWeight??E.NM_DEF[E.STYLE_LABEL(ev.playstyle)]?.ratingWeight??1);
+    out.push([{type:"ovrparam",key:"RAT_K",from:C.RAT_K,to:+cl(C.RAT_K+d/(rex*Math.max(.25,rw)),0,25).toFixed(2)}]);
+    const styleLabel=E.STYLE_LABEL(ev.playstyle), denom=rex*Math.max(.01,C.RAT_K);
+    if(styleLabel!=="Coringa"&&E.NM_DEF[styleLabel])out.push([{type:"rating",style:styleLabel,from:rw,to:+cl(rw+d/denom,.25,2).toFixed(3)}]);
+  }
   // [19] candidato CIRÚRGICO RENORMALIZADO: sobe o eixo forte da receita e desce o fraco em igual
   // medida. Σw preservado → a receita continua somando ~100% (o score = dot(w,s6) não estoura de
   // escala) e o ganho de OVR vem do PERFIL do alvo, então colegas de estilo de outro perfil sobem menos.
@@ -1290,6 +1491,7 @@ function generateGoalCandidates(goal,current,raw,isIGL,opts){
   const ovrCands=goal.ovr?generateOvrCandidates(raw,goal.ovr):[];
   all.push(...ovrCands);
   if(goal.style==="Coringa")struct.push(...generateJokerCandidates(raw));
+  else if(goal.style&&current.style==="Coringa")struct.push(...generateUnjokerCandidates(raw));
   const ro=opts?.role||{};
   const styleRoles=isIGL?[current.r2||"Rifler"]:ROLES;
   if(isIGL&&goal.r2&&goal.r2!==current.r2){
@@ -1323,13 +1525,17 @@ function generateGoalCandidates(goal,current,raw,isIGL,opts){
   }
   return all;
 }
-function goalRoleTarget(goal,current,isIGL){
-  if(isIGL&&goal.r2&&goal.r2!==current.r2)return {target:goal.r2,current:current.r2||"Rifler",kind:"combat"};
-  if(!isIGL&&goal.r1&&goal.r1!==current.r1)return {target:goal.r1,current:current.r1,kind:"primary"};
-  // [3-role2] função SECUNDÁRIA: carrega o primário p/ medir o gap no espaço de secondaryScore.
-  if(!isIGL&&goal.r2&&goal.r2!==current.r2)return {target:goal.r2,current:current.r2||current.r1,kind:"secondary",secondary:true,primary:current.r1};
-  return null;
+function goalRoleTargets(goal,current,isIGL){
+  const out=[];
+  if(isIGL){
+    if(goal.r2&&goal.r2!==current.r2)out.push({target:goal.r2,current:current.r2||"Rifler",kind:"combat"});
+    return out;
+  }
+  if(goal.r1&&goal.r1!==current.r1)out.push({target:goal.r1,current:current.r1,kind:"primary"});
+  if(goal.r2&&goal.r2!==current.r2)out.push({target:goal.r2,current:current.r2||current.r1,kind:"secondary",secondary:true,primary:goal.r1||current.r1});
+  return out;
 }
+function goalRoleTarget(goal,current,isIGL){return goalRoleTargets(goal,current,isIGL)[0]||null;}
 // [3] score de DECISÃO do motor pra uma função no slot. Primária/combate = afinidade crua (o motor
 // escolhe o primário pelo argmax de afinidade; o combate do IGL idem). SECUNDÁRIA = secondaryScore
 // (afinidade − custo de par ×18), que é como classificar() escolhe o 2º papel — não a afinidade crua.
@@ -1359,7 +1565,8 @@ function pickWeighted(rng,items){
 }
 function roleLeverBank(target,current,raw,opts){
   const attrLimit=opts?.attrLimit||7;
-  const memoK=opts?.sensitize&&_bankMemo?`role|${target}|${current}|${attrLimit}`:null; // [9]
+  const ctx=opts?.ctx||null;
+  const memoK=opts?.sensitize&&_bankMemo?`role|${target}|${current}|${attrLimit}|${ctx?.primary||""}|${ctx?.secondary?1:0}`:null; // [9]
   if(memoK&&_bankMemo.has(memoK))return _bankMemo.get(memoK);
   const targetAttrs=candidateAttrsFor(target,raw,attrLimit);
   const currentAttrs=current&&current!==target?candidateAttrsFor(current,raw,attrLimit):[];
@@ -1405,7 +1612,7 @@ function roleLeverBank(target,current,raw,opts){
   }
   // [3-role2] gap de afinidade (sem ctx) de propósito: p/ SENSIBILIDADE é equivalente ao de
   // secondaryScore — o custo de par é constante sob as alavancas, cancela na derivada (Δgap idêntico).
-  if(opts?.sensitize)sensitizeLevers(levers,raw,()=>targetGap(raw,target,current));
+  if(opts?.sensitize)sensitizeLevers(levers,raw,()=>targetGap(raw,target,current,ctx));
   if(memoK)_bankMemo.set(memoK,levers);
   return levers;
 }
@@ -1434,7 +1641,11 @@ function styleLeverBank(targetStyleLabel,raw,evalRole,opts){
   // não espaço de Infiltrador). Move SÓ AWPers → colateral contido neles (não bagunça riflers como a
   // receita global fazia). É o knob certo pra "AWPer passivo → Closer" com o menor colateral possível.
   if((evalRole==="AWPer")&&(targetId==="clutcher"||targetId==="anchor"))
-    levers.push({weight:120,make:d=>({type:"ovrparam",key:"AWP_LEAN",from:E.CFG_AVALIACAO.AWP_LEAN,to:+Math.max(0,Math.min(.4,E.CFG_AVALIACAO.AWP_LEAN+d*.6)).toFixed(3)}),label:"AWP_LEAN"});
+    levers.push({weight:120,make:d=>({type:"cfg",key:"AWP_LEAN",from:E.CFG_AVALIACAO.AWP_LEAN,to:+Math.max(0,Math.min(.4,E.CFG_AVALIACAO.AWP_LEAN+d*.6)).toFixed(3)}),label:"AWP_LEAN"});
+  if(currentId==="joker"){
+    levers.push({weight:95,make:d=>({type:"cor",key:"pisoMin",from:E.NM_COR.pisoMin,to:+Math.min(100,E.NM_COR.pisoMin+d*24).toFixed(2)}),label:"Coringa.pisoMin+"});
+    levers.push({weight:95,make:d=>({type:"cor",key:"spreadMax",from:E.NM_COR.spreadMax,to:+Math.max(0,E.NM_COR.spreadMax-d*24).toFixed(2)}),label:"Coringa.spreadMax-"});
+  }
   if(opts?.sensitize)sensitizeLevers(levers,raw,()=>goalMetric(raw,{style:targetStyleLabel}));
   if(memoK)_bankMemo.set(memoK,levers);
   return levers;
@@ -1460,7 +1671,10 @@ function ovrLeverBank(raw,targetOvr,opts){
   levers.push({weight:6,make:x=>({type:"ovrparam",key:"OVR_BASE",from:C.OVR_BASE,to:+Math.max(0,Math.min(16,C.OVR_BASE+dir*x*3)).toFixed(2)}),label:"OVR_BASE"});
   levers.push({weight:14,make:x=>({type:"ovrparam",key:"OVR_SPAN",from:C.OVR_SPAN,to:+Math.max(0,Math.min(20,C.OVR_SPAN+dir*x*3)).toFixed(2)}),label:"OVR_SPAN"});
   const rex=(+raw.rating||0)-C.RAT_BASE;
-  if(rex>.05)levers.push({weight:22,make:x=>({type:"ovrparam",key:"RAT_K",from:C.RAT_K,to:+Math.max(0,Math.min(25,C.RAT_K+dir*x*6)).toFixed(2)}),label:"RAT_K"});
+  if(rex>.05){
+    levers.push({weight:22,make:x=>({type:"ovrparam",key:"RAT_K",from:C.RAT_K,to:+Math.max(0,Math.min(25,C.RAT_K+dir*x*6)).toFixed(2)}),label:"RAT_K"});
+    if(rec&&styleLabel!=="Coringa")levers.push({weight:75,make:x=>makeRatingWeightChange(styleLabel,dir*x*.45),label:`NM.${styleLabel}.ratingWeight`});
+  }
   if(opts?.sensitize)sensitizeLevers(levers,raw,()=>goalMetric(raw,{ovr:targetOvr}));
   if(memoK)_bankMemo.set(memoK,levers);
   return levers;
@@ -1487,24 +1701,19 @@ function goalMetric(raw,goal){
     const disp=(+ev.style?.core||ev.ovr||0)+(ev.isIGL?(C.IGL_TITULO[ev.colocacao]||0):0);
     return -Math.abs(Math.min(goal.ovr,ev.isIGL?C.IGL_TETO:C.OVR_MAX)-disp);}
   if(goal.style&&goal.style!=="Coringa"){
-    const ev=E.avaliarJogador({...raw}),tid=styleIdFromLabel(goal.style);
-    const nm=nmOVR(raw,ev.combatRole||"Rifler"),s6=nm.s6||{};
-    // [3] replica a decisão real do motor (styleMatch): score = cosseno(receita, s6) − margem de contra.
-    // Antes usava o produto-escalar cru (dotT), que não bate com o cosseno normalizado que escolhe o estilo.
-    const styleScore=id=>{
-      const rec=E.NM_DEF[E.STYLE_KEYS[id]];if(!rec)return -1e9;
-      const w=rec.w;let d=0,nw=0,ns=0;
-      for(const [k] of E.NM_AXES){const wi=w[k]||0,si=s6[k]||0;d+=wi*si;nw+=wi*wi;ns+=si*si;}
-      let sc=d/(Math.sqrt(nw*ns)+1e-9);
-      const contra=E.STYLE_CONTRA[id]||{};let cd=0,cw=0;
-      for(const k in contra){cd+=(contra[k]||0)*(s6[k]||0);cw+=(contra[k]||0);}
-      return sc-(cw?cd/(100*cw)*.42:0);
-    };
-    const tScore=styleScore(tid);
-    let rival=-Infinity; // melhor concorrente que o alvo precisa superar (a decisão é o argmax dos scores)
-    for(const id of E.PLAYSTYLE_IDS){if(id===tid||id==="baiter")continue;const s=styleScore(id);if(s>rival)rival=s;}
-    // margem do alvo sobre o melhor rival (>0 = o motor já escolheria o alvo); +100 quando já é o alvo.
-    return (ev.playstyle===tid?100:0)+(tScore-rival)*50;
+    const ev=E.avaliarJogador({...raw}),tid=styleIdFromLabel(goal.style),role=ev.combatRole||"Rifler";
+    const nm=nmOVR(raw,role),s6=nm.s6||{};
+    const scores=E.styleScoreTable?E.styleScoreTable(s6,role):[];
+    const target=scores.find(x=>x.id===tid)?.score??-1e9;
+    const rival=scores.filter(x=>x.id!==tid).reduce((m,x)=>Math.max(m,x.score),-Infinity);
+    let gate=0;
+    if(ev.playstyle==="joker"){
+      const vals=[raw.fp,raw.en,raw.tr,raw.op,raw.cl,raw.sn,raw.ut].map(v=>+v||0).sort((a,b)=>b-a);
+      const toPiso=Math.max(0,(vals[5]||0)-E.NM_COR.pisoMin+.01);
+      const spread=(vals[0]||0)-(vals[4]||0),toSpread=Math.max(0,E.NM_COR.spreadMax-spread+.01);
+      gate=-Math.min(toPiso,toSpread)*.12;
+    }
+    return (ev.playstyle===tid?100:0)+(target-rival)*50+gate;
   }
   return 0;
 }
@@ -1538,15 +1747,19 @@ function generateLeverCandidates(target,current,raw,opts){
   const levers=roleLeverBank(target,current,raw,{attrLimit,sensitize});
   return combineLevers(levers,{maxDelta,leverLimit,pairLimit,tripleLimit,comboDepth});
 }
-// dispatcher: escolhe o banco de alavancas certo pra a dimensão do alvo (OVR / estilo / função).
+function dedupeLevers(levers){
+  const out=[],seen=new Set();
+  levers.forEach(l=>{let k;try{k=knobKey(l.make(.1));}catch{return;}if(seen.has(k))return;seen.add(k);out.push(l);});
+  return out;
+}
+// Banco UNIFICADO: objetivos combinados recebem alavancas de TODAS as dimensões ativas.
 function goalLeverBank(goal,current,raw,isIGL,opts){
-  const sens=!!opts?.sensitize, attrLimit=opts?.attrLimit||7, evalRole=(isIGL?current.r2:current.r1)||"Rifler";
-  if(goal.ovr)return ovrLeverBank(raw,goal.ovr,{sensitize:sens});
-  const info=goalRoleTarget(goal,current,isIGL);
-  if(info)return roleLeverBank(info.target,info.current,raw,{attrLimit,sensitize:sens});
-  if(goal.style&&goal.style!=="Coringa"&&goal.style!==current.style)
-    return styleLeverBank(goal.style,raw,goal.r1||evalRole,{sensitize:sens});
-  return [];
+  const sens=!!opts?.sensitize,attrLimit=opts?.attrLimit||7,evalRole=(isIGL?current.r2:(goal.r1||current.r1))||"Rifler";
+  const levers=[];
+  goalRoleTargets(goal,current,isIGL).forEach(info=>levers.push(...roleLeverBank(info.target,info.current,raw,{attrLimit,sensitize:sens,ctx:info})));
+  if(goal.style&&goal.style!==current.style&&goal.style!=="Coringa")levers.push(...styleLeverBank(goal.style,raw,evalRole,{sensitize:sens}));
+  if(goal.ovr)levers.push(...ovrLeverBank(raw,goal.ovr,{sensitize:sens}));
+  return dedupeLevers(levers);
 }
 function generateDeepRoleCandidates(goal,current,raw,isIGL,strategy,opts){
   const levers=goalLeverBank(goal,current,raw,isIGL,{sensitize:!!strategy.useSensitivity,attrLimit:strategy.attrLimit||7});
@@ -1586,7 +1799,7 @@ const CALIB_STRATEGIES={
   ia:{
     label:"IA",
     phases:[{maxDelta:.12},{maxDelta:.22},{maxDelta:.45},{maxDelta:.85},{maxDelta:1.25},{maxDelta:1.7}],
-    weights:{delta:7,changed:.18,role:.7,style:.8,reality:9,rare:7,collateral:95,ovrCollateral:34,team:5,ovr:5,isolated:1.5,broadCut:170,thinRule:-1.8},
+    weights:{delta:7,changed:.18,role:.7,style:.8,reality:9,rare:7,collateral:95,ovrCollateral:34,team:5,ovr:5,isolated:1.5,broadCut:170,thinRule:-1.8,margin:16,drift:7},
     priority:["collateralRoleChanges","collateralOvrShifts","teamChanges","rareWorsened","realityPenalty","ovrImpact","styleChanges","deltaCost","changed"],
     attrLimit:7,comboDepth:3,deepLeverLimit:22,pairLimit:16,tripleLimit:10,randomCandidates:4800,maxRandomChanges:6,randomDelta:.95,maxTests:60000,maxMs:28000,sliceMs:26,
     useSensitivity:true,annealing:true,convergenceWindow:110,startTemp:1.5,coolingRate:.975,
@@ -1595,7 +1808,7 @@ const CALIB_STRATEGIES={
   realista:{
     label:"Realista",
     phases:[{maxDelta:.14},{maxDelta:.28},{maxDelta:.50},{maxDelta:.72}],
-    weights:{delta:11,changed:.35,role:1.6,style:2.4,reality:22,rare:12,collateral:28,team:1.8,ovr:2.6,isolated:55,broadCut:95,thinRule:-.8},
+    weights:{delta:11,changed:.35,role:1.6,style:2.4,reality:22,rare:12,collateral:28,team:1.8,ovr:2.6,isolated:55,broadCut:95,thinRule:-.8,margin:24,drift:12},
     priority:["rareWorsened","realityPenalty","isolatedTarget","collateralRoleChanges","teamChanges","ovrImpact","deltaCost","changed"],
     attrLimit:6,comboDepth:2,deepLeverLimit:12,pairLimit:9,tripleLimit:0,randomCandidates:850,maxRandomChanges:4,randomDelta:.55,maxTests:9000,maxMs:5500,sliceMs:28,stopOnFirst:false,
     explain:"busca sistemica: prefere mudancas plausiveis e penaliza ajuste que parece servir so ao alvo."
@@ -1607,35 +1820,43 @@ const CALIB_STRATEGIES={
 function clampChangeTo(change,v){
   const t=change.type;
   if(t==="nm")return Math.max(.01,v);
+  if(t==="rating")return Math.max(.25,Math.min(2,v));
   if(t==="stylecontra")return Math.max(0,Math.min(.8,v));
   if(t==="rule")return Math.max(-2,Math.min(2,v));
   if(t==="igl")return Math.max(-1,Math.min(1,v));
   if(t==="cor")return Math.max(0,Math.min(100,v));
-  if(t==="ovrparam")return Math.max(0,Math.min(change.key==="OVR_BASE"?16:change.key==="OVR_SPAN"?20:25,v));
+  if(t==="cfg"){
+    const limits={AWP_LEAN:[0,.4]},range=limits[change.key]||[-Infinity,Infinity];
+    return Math.max(range[0],Math.min(range[1],v));
+  }
+  if(t==="ovrparam"){
+    const hi=change.key==="OVR_BASE"?16:change.key==="OVR_SPAN"?20:25;
+    return Math.max(0,Math.min(hi,v));
+  }
   return Math.max(0,v); // afin/contra (make*Change usa piso 0, sem teto)
 }
 function scaleChanges(changes,factor){
   return changes.map(c=>({...c,to:+clampChangeTo(c,c.from+(c.to-c.from)*factor).toFixed(3)}));
 }
-function calibrationMetrics(changes,diff,goalKey){
+function calibrationMetrics(changes,diff,goalKey,extra={}){
   const changed=diff.players.length+diff.teams.length;
-  const deltaCost=changes.reduce((sum,change)=>sum+Math.abs(change.to-change.from),0);
+  const deltaCost=changes.reduce((sum,change)=>sum+Math.abs(change.to-change.from)/Math.max(.05,configValueRange(change.type==="nm"?`NM_DEF.x.w.x`:change.type==="rating"?`NM_DEF.x.ratingWeight`:(change.type==="ovrparam"||change.type==="cfg")?`CFG_AVALIACAO.${change.key}`:"x")),0);
   const roleChanges=diff.players.filter(p=>p.roleChanged).length;
   const styleChanges=diff.players.filter(p=>p.styleChanged).length;
   const realityPenalty=diff.players.reduce((sum,p)=>sum+Math.max(0,p.dReality||0),0);
+  const marginDamage=diff.players.reduce((sum,p)=>sum+Math.max(0,p.marginDamage||0),0);
   const rareWorsened=diff.players.filter(p=>p.rareWorsened).length;
   const ovrImpact=diff.players.reduce((sum,p)=>sum+Math.abs(p.dOvr||0),0);
   const targetRoleChanges=goalKey?diff.players.filter(p=>p.key===goalKey&&p.roleChanged).length:0;
   const collateralRoleChanges=roleChanges-targetRoleChanges;
-  // colateral de OVR: não-alvos cujo OVR inteiro se moveu (≥1). Dominante em alvo de OVR, onde
-  // não há reclassificação — faz a busca preferir a alavanca cirúrgica sobre a global.
   const collateralOvrShifts=diff.players.filter(p=>p.key!==goalKey&&Math.abs(p.dOvr||0)>=1).length;
   const targetChanged=goalKey?diff.players.some(p=>p.key===goalKey):false;
   const isolatedTarget=targetChanged&&diff.players.length===1&&diff.teams.length===0?1:0;
   const teamChanges=diff.teams.length;
   const broadCut=changes.reduce((sum,change)=>sum+(!change.type&&change.to<change.from?change.from-change.to:0),0);
   const thinRule=changes.reduce((sum,change)=>sum+(change.type==="igl"||change.type==="rule"?Math.abs(change.to-change.from):0),0);
-  return {changed,deltaCost,roleChanges,styleChanges,realityPenalty,rareWorsened,ovrImpact,collateralRoleChanges,collateralOvrShifts,teamChanges,isolatedTarget,broadCut,thinRule};
+  const configDrift=extra.configDrift??0;
+  return {changed,deltaCost,roleChanges,styleChanges,realityPenalty,marginDamage,rareWorsened,ovrImpact,collateralRoleChanges,collateralOvrShifts,teamChanges,isolatedTarget,broadCut,thinRule,configDrift};
 }
 function scoreCalibration(metrics,strategy){
   const w=strategy.weights;
@@ -1653,10 +1874,12 @@ function scoreCalibration(metrics,strategy){
     metrics.isolatedTarget*w.isolated+
     metrics.broadCut*(w.broadCut||0)+
     metrics.thinRule*(w.thinRule||0)+
+    metrics.marginDamage*(w.margin||0)+
+    metrics.configDrift*(w.drift||0)+
     collateralPenalty;
 }
-function calibrationCost(changes,diff,goalKey,strategy){
-  const metrics=calibrationMetrics(changes,diff,goalKey);
+function calibrationCost(changes,diff,goalKey,strategy,extra={}){
+  const metrics=calibrationMetrics(changes,diff,goalKey,extra);
   return {...metrics,cost:scoreCalibration(metrics,strategy||CALIB_STRATEGIES.ia)};
 }
 const COMPARE_EPSILON=.05;
@@ -1678,10 +1901,36 @@ function compareCalibration(a,b,strategy){
   if(Math.abs(ca-cb)>COMPARE_EPSILON)return ca-cb;
   return costDiff;
 }
+function goalRobustness(player,goal,raw){
+  const margins=[],parts=rolePairParts(player),roles=ROLES.filter(r=>r!=="IGL");
+  if(goal.r1&&!player.isIGL){
+    const t=E.roleAfinidade(goal.r1,raw),rival=roles.filter(r=>r!==goal.r1).reduce((m,r)=>Math.max(m,E.roleAfinidade(r,raw)),-Infinity);
+    margins.push(Math.max(0,Math.min(1,(t-rival)/6)));
+  }
+  if(goal.r2){
+    const primary=player.isIGL?null:parts.r1,score=r=>primary?E.secondaryScore(primary,r,raw):E.roleAfinidade(r,raw);
+    const rival=roles.filter(r=>r!==goal.r2&&r!==primary).reduce((m,r)=>Math.max(m,score(r)),-Infinity);
+    margins.push(Math.max(0,Math.min(1,(score(goal.r2)-rival)/6)));
+  }
+  if(goal.style){
+    if(player.playstyle==="baiter"||player.playstyle==="joker")margins.push(Math.max(0,Math.min(1,(player.style?.matchMargin||0)*4)));
+    else{
+      const role=parts.combat,nm=nmOVR(raw,role),tid=styleIdFromLabel(goal.style),scores=E.styleScoreTable(nm.s6||{},role);
+      const t=scores.find(x=>x.id===tid)?.score??-Infinity,rival=scores.filter(x=>x.id!==tid).reduce((m,x)=>Math.max(m,x.score),-Infinity);
+      margins.push(Math.max(0,Math.min(1,(t-rival)*5)));
+    }
+  }
+  if(goal.ovr){
+    const C=E.CFG_AVALIACAO,cont=(player.style?.core??player.ovr)+(player.isIGL?(C.IGL_TITULO[player.colocacao]||0):0);
+    margins.push(Math.max(0,Math.min(1,(.5-Math.abs(cont-goal.ovr))/.5)));
+  }
+  return margins.length?Math.min(...margins):1;
+}
 function buildCandidateResult({changes,ok,before,after,diff,cumulativeDiff,goalKey,strategy,searchStats,roleTarget,raw,label,phase,goal}){
-  const costInfo=calibrationCost(changes,diff,goalKey,strategy);
-  const cumulativeInfo=calibrationCost(changes,cumulativeDiff,goalKey,strategy);
-  const result={ok,changes,before,after,diff,cost:costInfo.cost,costInfo,label:label||candidateLabel(changes),phase};
+  const configDrift=configDistanceFromDef();
+  const costInfo=calibrationCost(changes,diff,goalKey,strategy,{configDrift});
+  const cumulativeInfo=calibrationCost(changes,cumulativeDiff,goalKey,strategy,{configDrift});
+  const result={ok,changes,before,after,diff,cost:costInfo.cost,costInfo,label:label||candidateLabel(changes),phase,goal,configDrift};
   result.targetKey=goalKey;
   result.cumulativeDiff=cumulativeDiff;
   result.cumulativeInfo=cumulativeInfo;
@@ -1691,17 +1940,10 @@ function buildCandidateResult({changes,ok,before,after,diff,cumulativeDiff,goalK
     result.finalGap=targetGap(raw,roleTarget.target,roleTarget.current,roleTarget);
     result.roleScores={before:roleScoresFor(before,roleTarget.target,roleTarget.current,roleTarget),after:roleScoresFor(after,roleTarget.target,roleTarget.current,roleTarget)};
   }
-  // [17] folga do alvo até "virar" (maior = mais robusto): função usa o gap ao rival (já calculado),
-  // OVR usa a distância até a borda de arredondamento. Estilo fica neutro (colateral já o protege).
-  // [18-fix] o OVR EXIBIDO já é arredondado (clipOVR→Math.round), então after.ovr==goal.ovr sempre
-  // numa solução válida → margem 1 inútil. Mede no valor CONTÍNUO (style.core + bônus de colocação
-  // do IGL): quão centrado no meio da faixa [alvo±.5] o jogador está.
-  const C=E.CFG_AVALIACAO, ovrCont=(after?.style?.core??after?.ovr??0)+(after?.isIGL?(C.IGL_TITULO[after.colocacao]||0):0);
-  result.goalMargin=result.finalGap!=null?Math.max(0,Math.min(1,result.finalGap/6))
-    :(goal&&goal.ovr!=null&&after)?Math.max(0,Math.min(1,(.5-Math.abs(ovrCont-goal.ovr))/.5)):1;
+  result.goalMargin=goalRobustness(after,goal||{},raw);
   return result;
 }
-async function findCalibration(goal,onProgress=null){
+async function findCalibration(goal,onProgress=null,options={}){
   if(loadedIdx==null)return {ok:false,message:"Carregue um jogador antes de calibrar."};
   calibGoalHint=goal;
   const raw=playerAt(loadedIdx), beforeConfig=configSnapshot(), proposalBase=impactSnapshot(), cumulativeBase=ensureBaseline(), before=mainPlayer();
@@ -1713,22 +1955,27 @@ async function findCalibration(goal,onProgress=null){
   if(goalMet(before,goal))return {ok:true,alreadyMet:true,before,after:before,changes:[],goal,goalKey}; // [4] já está no alvo → nenhuma mudança
   const infeasible=goalInfeasible(goal,before,isIGL); // [15] alvo impossível → falha rápido, sem gastar a busca
   if(infeasible)return {ok:false,message:infeasible,infeasible:true,before,goal,goalKey};
-  const strategy=CALIB_STRATEGIES[calibMode]||CALIB_STRATEGIES.ia;
+  const baseStrategy=CALIB_STRATEGIES[calibMode]||CALIB_STRATEGIES.ia;
+  const strategy=options.strategyOverride?{...baseStrategy,...options.strategyOverride,weights:{...baseStrategy.weights,...(options.strategyOverride.weights||{})}}:baseStrategy;
   const phases=strategy.phases;
   const startedAt=performance.now();
   let lastYield=startedAt, lastProgress=startedAt;
   const roleTarget=goalRoleTarget(goal,current,isIGL);
   const initialGap=roleTarget?targetGap(raw,roleTarget.target,roleTarget.current,roleTarget):0;
   const hasRoleGoal=!!(goal.r1||goal.r2);
-  let best=null, bestRoleBase=null, usedPhase=-1;
+  let best=null, bestRoleBase=null, usedPhase=-1, pareto=[];
   _bankMemo=new Map(); // [9] sensibilidade medida 1x contra o baseline limpo (fase 0) e reusada em todas as fases + refino
   const testedSigs=new Set(); // [16] assinaturas já avaliadas: fases maiores regeneram os degraus menores; não re-testa idêntico
-  const searchStats={tested:0,valid:0,generated:0,pruned:0,deduped:0,truncated:false,initialGap,roleTarget};
+  const partitionCount=Math.max(1,Math.floor(options.partitionCount||1));
+  const partitionIndex=Math.max(0,Math.min(partitionCount-1,Math.floor(options.partitionIndex||0)));
+  const searchStats={tested:0,valid:0,generated:0,pruned:0,deduped:0,partitionSkipped:0,intentPruned:0,beamExpanded:0,subsearches:0,truncated:false,cancelled:false,initialGap,roleTarget};
   const outOfBudget=()=>{
+    const cancelled=!!(options.shouldCancel&&options.shouldCancel());
     const overTests=searchStats.tested>=(strategy.maxTests||Infinity);
     const overTime=performance.now()-startedAt>(strategy.maxMs||Infinity);
+    if(cancelled)searchStats.cancelled=true;
     if(overTests||overTime)searchStats.truncated=true;
-    return overTests||overTime;
+    return cancelled||overTests||overTime;
   };
   const maybeYield=async(force=false)=>{
     const now=performance.now();
@@ -1741,40 +1988,175 @@ async function findCalibration(goal,onProgress=null){
       await new Promise(resolve=>setTimeout(resolve,0));
     }
   };
-  const evalOne=(changes,label,phaseIndex)=>{
-    if(!changes||!changes.length)return;
-    if(outOfBudget()){searchStats.pruned++;return;}
-    const sig=changes.map(changeKey).sort().join("|"); // [16] já testado (em outra fase)? pula o trabalho caro
-    if(testedSigs.has(sig)){searchStats.deduped++;return;}
-    testedSigs.add(sig);
-    searchStats.tested++;
-    restoreConfig(beforeConfig);
-    applyCalibChanges(changes);
-    const after=mainPlayer(); // [6] avalia só o alvo (1 jogador); o snapshot da liga inteira é caro
-    const hit=goalMet(after,goal);
+  const acceptValidCandidate=(changes,after,label,phaseIndex)=>{
+    const now=impactSnapshot(), regressions=sessionRegressions(now,goalKey,goal);
+    if(regressions.length){searchStats.intentPruned++;return null;}
+    const diff=diffSnapshots(proposalBase,now),cumulativeDiff=diffSnapshots(cumulativeBase,now);
+    const result=buildCandidateResult({changes,ok:true,before,after,diff,cumulativeDiff,goalKey,strategy,searchStats,roleTarget,raw,label,phase:phaseIndex,goal});
+    searchStats.valid++;
+    if(compareCalibration(result,best,strategy)<0)best=result;
+    pareto=updatePareto(pareto,result,5);
+    return result;
+  };
+  const evalOne=(candidateChanges,label,phaseIndex)=>{
+    let changes=mergeChanges(candidateChanges);
+    if(!changes.length)return null;
+    if(outOfBudget()){searchStats.pruned++;return null;}
+    const sig=candidateSignature(changes);
+    if(partitionCount>1&&stableHash(sig)%partitionCount!==partitionIndex){searchStats.partitionSkipped++;return null;}
+    if(testedSigs.has(sig)){searchStats.deduped++;return null;}
+    testedSigs.add(sig);searchStats.tested++;
+    restoreConfig(beforeConfig);applyCalibChanges(changes);changes=materializeAppliedChanges(changes,beforeConfig);
+    const after=mainPlayer(),hit=goalMet(after,goal);
+    const assessment={changes,after,distance:goalDistance(after,goal,raw),drift:configDistanceFromDef()};
+    if(hit){assessment.result=acceptValidCandidate(changes,after,label,phaseIndex);return assessment;}
     const roleHit=hasRoleGoal&&goalMet(after,{r1:goal.r1,r2:goal.r2});
-    if(!hit&&!roleHit)return; // candidato irrelevante: nem bate o alvo nem o sub-alvo de função → não paga o snapshot
-    const now=impactSnapshot(), diff=diffSnapshots(proposalBase,now), cumulativeDiff=diffSnapshots(cumulativeBase,now);
-    const result=buildCandidateResult({changes,ok:hit,before,after,diff,cumulativeDiff,goalKey,strategy,searchStats,roleTarget,raw,label,phase:phaseIndex,goal});
-    if(hit){
-      searchStats.valid++;
-      if(compareCalibration(result,best,strategy)<0)best=result;
+    if(roleHit){
+      const now=impactSnapshot(),diff=diffSnapshots(proposalBase,now),cumulativeDiff=diffSnapshots(cumulativeBase,now);
+      const result=buildCandidateResult({changes,ok:false,before,after,diff,cumulativeDiff,goalKey,strategy,searchStats,roleTarget,raw,label,phase:phaseIndex,goal});
+      if(compareCalibration(result,bestRoleBase,strategy)<0)bestRoleBase=result;
     }
-    if(roleHit&&compareCalibration(result,bestRoleBase,strategy)<0)bestRoleBase=result;
+    return assessment;
+  };
+  const runBeamSearch=async()=>{
+    const dimensions=[goal.r1&&!isIGL,goal.r2,goal.style,goal.ovr].filter(Boolean).length;
+    if(dimensions<2||options.skipBeam)return;
+    const width=8,rounds=Math.min(5,dimensions+2),beamSeen=new Set();
+    const initial=[{changes:[],after:before,distance:goalDistance(before,goal,raw),drift:configDistanceFromDef(beforeConfig)},...compositionSeeds];
+    const initialBySig=new Map();
+    initial.sort((a,b)=>a.distance-b.distance||a.drift-b.drift).forEach(x=>{const k=candidateSignature(x.changes);if(!initialBySig.has(k))initialBySig.set(k,x);});
+    let beam=[...initialBySig.values()].slice(0,width);
+    for(let round=0;round<rounds&&!outOfBudget();round++){
+      const pool=[];
+      for(const stateNode of beam){
+        restoreConfig(beforeConfig);applyCalibChanges(stateNode.changes);
+        const stateAfter=mainPlayer(),stateCurrent=rolePair(stateAfter),phase=phases[Math.min(round+1,phases.length-1)];
+        const shallow={...strategy,useSensitivity:false};
+        const direct=generateGoalCandidates(goal,stateCurrent,raw,isIGL,{role:{maxDelta:phase.maxDelta,strategy:shallow}});
+        const levers=goalLeverBank(goal,stateCurrent,raw,isIGL,{sensitize:false,attrLimit:strategy.attrLimit||7});
+        const combos=combineLevers(levers,{maxDelta:phase.maxDelta,leverLimit:18,pairLimit:12,tripleLimit:7,comboDepth:3});
+        const targeted=[];
+        unmetGoalComponents(stateAfter,goal).forEach(component=>{
+          targeted.push(...generateGoalCandidates(component,stateCurrent,raw,isIGL,{role:{maxDelta:phase.maxDelta,strategy:shallow}}).slice(0,180));
+          const bank=goalLeverBank(component,stateCurrent,raw,isIGL,{sensitize:false,attrLimit:strategy.attrLimit||7});
+          targeted.push(...combineLevers(bank,{maxDelta:phase.maxDelta,leverLimit:16,pairLimit:10,tripleLimit:6,comboDepth:3}).slice(0,220));
+        });
+        const seeds=dedupeCandidates([...targeted,...direct,...combos]).slice(0,760);
+        searchStats.generated+=seeds.length;
+        for(const seed of seeds){
+          if(outOfBudget())break;
+          const merged=mergeChanges(stateNode.changes,seed),sig=candidateSignature(merged);
+          if(!merged.length||beamSeen.has(sig))continue;beamSeen.add(sig);searchStats.beamExpanded++;
+          const assessed=evalOne(merged,"beam multiobjetivo",round);
+          if(assessed&&!assessed.result&&assessed.distance<=stateNode.distance+.12)
+            pool.push({...assessed,energy:assessed.distance+assessed.drift*.08+merged.length*.015});
+          await maybeYield();
+        }
+      }
+      if(!pool.length)break;
+      const uniq=new Map();pool.sort((a,b)=>a.energy-b.energy||a.changes.length-b.changes.length).forEach(x=>{const k=candidateSignature(x.changes);if(!uniq.has(k))uniq.set(k,x);});
+      beam=[...uniq.values()].slice(0,width);
+      if(best&&best.goalMargin>=.35&&best.costInfo?.collateralRoleChanges===0)break;
+    }
+  };
+  const compositionSeeds=[];
+  const absorbSubStats=sub=>{
+    const st=sub?.searchStats;if(!st)return;
+    searchStats.subsearches++;
+    for(const key of ["tested","valid","generated","pruned","deduped","partitionSkipped","intentPruned","beamExpanded"])
+      searchStats[key]=(searchStats[key]||0)+(st[key]||0);
+  };
+  const quickSolveComponent=async(component,combined,attained)=>{
+    restoreConfig(beforeConfig);applyCalibChanges(combined);
+    const componentBase=configSnapshot(),stateAfter=mainPlayer();
+    if(goalMet(stateAfter,component))return {ok:true,changes:combined,after:stateAfter};
+    const stateCurrent=rolePair(stateAfter),shallow={...strategy,useSensitivity:false,randomCandidates:0,comboDepth:2};
+    let bestLocal=null;const localSeen=new Set(),phaseSteps=[.12,.30,.75,1.7];
+    for(let pi=0;pi<phaseSteps.length&&!outOfBudget();pi++){
+      restoreConfig(componentBase);
+      const maxDelta=phaseSteps[pi];
+      const direct=generateGoalCandidates(component,stateCurrent,raw,isIGL,{role:{maxDelta,strategy:shallow}});
+      const deep=generateDeepRoleCandidates(component,stateCurrent,raw,isIGL,shallow,{maxDelta,phase:pi});
+      const random=generateRandomRoleCandidates(component,stateCurrent,raw,isIGL,{...shallow,randomCandidates:pi<2?160:320,maxRandomChanges:4,randomDelta:maxDelta},{maxDelta,phase:pi});
+      const candidates=dedupeCandidates([...direct,...deep,...random]);searchStats.generated+=candidates.length;
+      for(const local of candidates){
+        if(outOfBudget())break;
+        const localSig=candidateSignature(local);if(localSeen.has(localSig))continue;localSeen.add(localSig);
+        restoreConfig(componentBase);applyCalibChanges(local);searchStats.tested++;
+        const after=mainPlayer(),nextGoal={...attained,...component};
+        if(!goalMet(after,nextGoal))continue;
+        const appliedLocal=materializeAppliedChanges(local,componentBase),full=mergeChanges(combined,appliedLocal);
+        const score=configDistanceFromDef()+full.length*.018-goalRobustness(after,nextGoal,raw)*.35;
+        if(!bestLocal||score<bestLocal.score)bestLocal={ok:true,changes:full,after,score};
+        if(bestLocal&&goalRobustness(after,nextGoal,raw)>=.18&&pi<=1)break;
+      }
+      if(bestLocal)break;
+      if(pi%2===1)await new Promise(resolve=>setTimeout(resolve,0));
+    }
+    restoreConfig(beforeConfig);applyCalibChanges(combined);
+    return bestLocal||{ok:false};
+  };
+  const runSequentialComposition=async()=>{
+    const components=[];
+    if(goal.r1&&!isIGL)components.push({r1:goal.r1});
+    if(goal.r2)components.push({r2:goal.r2});
+    if(goal.style)components.push({style:goal.style});
+    if(goal.ovr)components.push({ovr:goal.ovr});
+    if(options.skipCombined||components.length<2)return;
+    const structural=components.filter(c=>!c.ovr),orders=[components];
+    if(structural.length>1)orders.push([...structural].reverse().concat(components.filter(c=>c.ovr)));
+    const perMs=Math.max(450,Math.min(1800,(strategy.maxMs||28000)/Math.max(8,components.length*4)));
+    for(const order of orders){
+      if(outOfBudget())break;
+      restoreConfig(beforeConfig);let combined=[],attained={},failed=false;
+      for(const component of order){
+        let solved=await quickSolveComponent(component,combined,attained);
+        if(!solved.ok&&!outOfBudget()){
+          restoreConfig(beforeConfig);applyCalibChanges(combined);
+          const sub=await findCalibration(component,null,{
+            skipCombined:true,skipBeam:true,firstValid:true,skipRefinement:true,partitionCount:1,
+            shouldCancel:options.shouldCancel,
+            strategyOverride:{
+              phases:[{maxDelta:.22},{maxDelta:.75},{maxDelta:1.7}],maxMs:perMs,maxTests:3500,
+              randomCandidates:320,comboDepth:2,deepLeverLimit:12,pairLimit:8,tripleLimit:0,stopOnFirst:true
+            }
+          });
+          absorbSubStats(sub);calibGoalHint=goal;_bankMemo=new Map();
+          if(sub?.ok){
+            combined=mergeChanges(combined,sub.changes||[]);restoreConfig(beforeConfig);applyCalibChanges(combined);
+            const ev=mainPlayer();solved=goalMet(ev,{...attained,...component})?{ok:true,changes:combined,after:ev}:{ok:false};
+          }
+        }
+        if(!solved.ok){failed=true;break;}
+        combined=solved.changes;attained={...attained,...component};
+        restoreConfig(beforeConfig);applyCalibChanges(combined);
+        const partial=mainPlayer();
+        compositionSeeds.push({changes:combined,after:partial,distance:goalDistance(partial,goal,raw),drift:configDistanceFromDef()});
+      }
+      if(failed)continue;
+      restoreConfig(beforeConfig);applyCalibChanges(combined);
+      const after=mainPlayer();
+      if(goalMet(after,goal)){
+        const accepted=acceptValidCandidate(materializeAppliedChanges(combined,beforeConfig),after,"composição sequencial",-1);
+        if(accepted){searchStats.sequential=true;return;}
+      }
+    }
+    restoreConfig(beforeConfig);_bankMemo=new Map();calibGoalHint=goal;
   };
   const tryRefinement=async sol=>{
     if(!sol||!sol.changes||!sol.changes.length)return sol;
     let refined=sol;
-    const consider=changes=>{
-      if(outOfBudget()||!changes||!changes.length)return null;
-      restoreConfig(beforeConfig);
-      applyCalibChanges(changes);
-      searchStats.tested++;
+    const consider=(candidateChanges,allowPartial=false)=>{
+      let changes=mergeChanges(candidateChanges);
+      if(outOfBudget()||!changes.length)return null;
+      restoreConfig(beforeConfig);applyCalibChanges(changes);changes=materializeAppliedChanges(changes,beforeConfig);searchStats.tested++;
       const after=mainPlayer();
-      if(!goalMet(after,goal))return null; // [6] checa o alvo (1 jogador) antes de pagar o snapshot da liga
-      searchStats.valid++;
-      const now=impactSnapshot(), diff=diffSnapshots(proposalBase,now), cumulativeDiff=diffSnapshots(cumulativeBase,now);
-      return buildCandidateResult({changes,ok:true,before,after,diff,cumulativeDiff,goalKey,strategy,searchStats,roleTarget,raw,label:null,phase:refined.phase,goal});
+      if(!goalMet(after,goal)){
+        if(!allowPartial)return null;
+        const distance=goalDistance(after,goal,raw),drift=configDistanceFromDef();
+        return {ok:false,changes,after,targetDistance:distance,energy:distance*120+drift*8+changes.length*.2};
+      }
+      return acceptValidCandidate(changes,after,null,refined.phase);
     };
     try{
       // fase 1 - varredura local determinista (ablacao + reescala): igual pros dois modos.
@@ -1804,7 +2186,7 @@ async function findCalibration(goal,onProgress=null){
       // numa unica passada fixa. Usa a mesma sensibilidade medida em roleLeverBank pra escolher
       // alavancas.
       if(strategy.annealing){
-        let bestSeen=refined;
+        let bestSeen=refined,walkState=refined;
         // [14] alavancas do banco CERTO pra dimensão do alvo (função/estilo/OVR). Antes só função
         // tinha banco → em alvo de estilo/OVR o annealing só reescalava/removia, sem add/swap de alavanca.
         const levers=goalLeverBank(goal,current,raw,isIGL,{sensitize:!!strategy.useSensitivity,attrLimit:strategy.attrLimit||7});
@@ -1837,21 +2219,17 @@ async function findCalibration(goal,onProgress=null){
         let noImprove=0, temp=strategy.startTemp||1.2;
         const maxNoImprove=strategy.convergenceWindow||60, cooling=strategy.coolingRate||.97;
         while(!outOfBudget()&&noImprove<maxNoImprove){
-          const candidate=consider(mutate(refined.changes));
+          const candidate=consider(mutate(walkState.changes),true);
           await maybeYield();
           if(!candidate){noImprove++;continue;}
-          if(compareCalibration(candidate,refined,strategy)<0){
-            refined=candidate;noImprove=0;
-          }else{
-            const worseBy=candidate.cost-refined.cost;
-            // [12] ΔE RELATIVA à escala do custo. Antes worseBy era absoluto (dezenas/centenas) e
-            // temp~1.5 → exp(-worseBy/temp)≈0 sempre: o "annealing" nunca aceitava piora (só ganância).
-            const rel=worseBy/Math.max(1,Math.abs(refined.cost));
-            const acceptProb=worseBy<=0?1:Math.exp(-rel/Math.max(.01,temp));
-            if(rng()<acceptProb)refined=candidate;
+          const curEnergy=walkState.ok?walkState.cost:walkState.energy,candEnergy=candidate.ok?candidate.cost:candidate.energy;
+          if(candEnergy<curEnergy){walkState=candidate;noImprove=0;}
+          else{
+            const rel=(candEnergy-curEnergy)/Math.max(1,Math.abs(curEnergy));
+            if(rng()<Math.exp(-rel/Math.max(.01,temp)))walkState=candidate;
             noImprove++;
           }
-          if(compareCalibration(refined,bestSeen,strategy)<0)bestSeen=refined;
+          if(candidate.ok&&compareCalibration(candidate,bestSeen,strategy)<0)bestSeen=candidate;
           temp*=cooling;
         }
         refined=bestSeen;
@@ -1862,18 +2240,20 @@ async function findCalibration(goal,onProgress=null){
     return refined;
   };
   try{
+    await runSequentialComposition();
+    if(!best)await runBeamSearch();
     for(let pi=0;pi<phases.length;pi++){
       const phase=phases[pi];
-      if(best&&strategy.stopOnFirst)break;
+      if((best&&strategy.stopOnFirst)||(options.firstValid&&best))break;
       if(outOfBudget())break;
       usedPhase=pi;
       const candidates=generateGoalCandidates(goal,current,raw,isIGL,{role:{maxDelta:phase.maxDelta,strategy}});
       const deepCandidates=generateDeepRoleCandidates(goal,current,raw,isIGL,strategy,{maxDelta:phase.maxDelta,phase:pi});
       const randomCandidates=generateRandomRoleCandidates(goal,current,raw,isIGL,strategy,{maxDelta:phase.maxDelta,phase:pi});
       searchStats.generated+=candidates.length+deepCandidates.length+randomCandidates.length;
-      for(const changes of candidates){if(outOfBudget())break;evalOne(changes,null,pi);await maybeYield();}
-      for(const changes of deepCandidates){if(outOfBudget())break;evalOne(changes,null,pi);await maybeYield();}
-      for(const changes of randomCandidates){if(outOfBudget())break;evalOne(changes,null,pi);await maybeYield();}
+      for(const changes of candidates){if(outOfBudget()||(options.firstValid&&best))break;evalOne(changes,null,pi);await maybeYield();}
+      for(const changes of deepCandidates){if(outOfBudget()||(options.firstValid&&best))break;evalOne(changes,null,pi);await maybeYield();}
+      for(const changes of randomCandidates){if(outOfBudget()||(options.firstValid&&best))break;evalOne(changes,null,pi);await maybeYield();}
       if(pi===0){
         const needStyle=goal.style&&goal.style!==current.style;
         if(needStyle&&(!best||STYLE_LABEL(best.after.playstyle)!==goal.style)){
@@ -1898,13 +2278,15 @@ async function findCalibration(goal,onProgress=null){
       }
     }
     if(best){
-      searchStats.stage="refinando melhor sugestao";
+      searchStats.stage=options.skipRefinement?"concluido":"refinando melhor sugestao";
       await maybeYield(true);
-      const refined=await tryRefinement(best);
+      const refined=options.skipRefinement?best:await tryRefinement(best);
       searchStats.stage="concluido";
       refined.phase=refined.phase??usedPhase;
       refined.highCollateral=(refined.costInfo?.collateralRoleChanges||0)>2;
+      searchStats.pareto=pareto.length;
       refined.searchStats=searchStats;
+      refined.alternatives=pareto.filter(r=>candidateSignature(r.changes)!==candidateSignature(refined.changes)).slice(0,3);
       await maybeYield(true);
       return refined;
     }
@@ -1919,22 +2301,151 @@ async function findCalibration(goal,onProgress=null){
       const modeTip=calibMode==="realista"?" Tente modo IA.":"";
       fbMsg=`${roleTarget.target} precisa superar ${currentLeader.role} por ${(-gap).toFixed(2)} pts de afinidade.${tip}${modeTip} Testes: ${searchStats.tested}/${searchStats.generated}.`;
     }
-    return {ok:false,message:fbMsg,before,goal};
+    return {ok:false,message:fbMsg,before,goal,searchStats,cancelled:!!searchStats.cancelled};
   }finally{
     restoreConfig(beforeConfig);
     _bankMemo=null; // [9] memo só vale dentro de uma busca
   }
 }
+
+function normalizeRecipeVector(vec){
+  const axes=E.NM_AXES.map(([k])=>k),min=.01;
+  const clean=Object.fromEntries(axes.map(k=>[k,Math.max(min,+vec[k]||0)]));
+  const total=Object.values(clean).reduce((a,b)=>a+b,0)||1;
+  Object.keys(clean).forEach(k=>clean[k]/=total);
+  return clean;
+}
+function meanVectors(vectors,fallback){
+  if(!vectors.length)return normalizeRecipeVector(fallback||{});
+  const out=Object.fromEntries(E.NM_AXES.map(([k])=>[k,0]));
+  vectors.forEach(v=>Object.keys(out).forEach(k=>out[k]+=v[k]||0));
+  Object.keys(out).forEach(k=>out[k]/=vectors.length);
+  return normalizeRecipeVector(out);
+}
+function leagueArchetypeRows(){
+  const rows=[];
+  E.TEAMS.forEach((team,ti)=>{
+    const evaluated=evaluateTeam(team,ti);
+    evaluated.players.forEach((ev,pi)=>{
+      const idx=poolBySlot.get(`${ti}:${pi}`),raw=playerAt(idx),parts=rolePairParts(ev),profile=normalizedStyleProfile(nmOVR(raw,parts.combat).s6||{});
+      rows.push({key:`${ti}:${pi}`,raw,ev,parts,profile,style:STYLE_LABEL(ev.playstyle)});
+    });
+  });
+  return rows;
+}
+function archetypeVectors(styleLabel,raw,before,rows,seed=1){
+  const axes=E.NM_AXES.map(([k])=>k),role=rolePairParts(before).combat;
+  const exemplar=normalizeRecipeVector(normalizedStyleProfile(nmOVR(raw,role).s6||{}));
+  const positives=rows.filter(r=>r.style===styleLabel).map(r=>r.profile);
+  const currentStyle=STYLE_LABEL(before.playstyle),negatives=rows.filter(r=>r.style===currentStyle&&r.key!==`${raw.ti}:${raw.pi}`).map(r=>r.profile);
+  const pos=meanVectors(positives,E.NM_DEF[styleLabel]?.w),neg=meanVectors(negatives,{}),current=normalizeRecipeVector(E.NM_DEF[styleLabel]?.w||{});
+  const bases=[current,exemplar,pos];
+  [.2,.35,.5,.65,.8,.92].forEach(a=>bases.push(normalizeRecipeVector(Object.fromEntries(axes.map(k=>[k,current[k]*(1-a)+exemplar[k]*a])))));
+  [.25,.5,.8,1.1].forEach(beta=>bases.push(normalizeRecipeVector(Object.fromEntries(axes.map(k=>[k,Math.max(.005,(exemplar[k]+pos[k])*.5+beta*(exemplar[k]-neg[k]))])))));
+  const rng=seededRandom(seed),out=[],seen=new Set();
+  const push=v=>{v=normalizeRecipeVector(v);const key=axes.map(k=>v[k].toFixed(3)).join("|");if(!seen.has(key)){seen.add(key);out.push(v);}};
+  bases.forEach(push);
+  for(let i=0;i<220;i++){
+    const base=bases[Math.floor(rng()*bases.length)],v={};
+    axes.forEach(k=>v[k]=Math.max(.005,base[k]*(.65+rng()*.7)+(rng()-.5)*.055));
+    push(v);
+  }
+  return {vectors:out,exemplar,current,pos,neg};
+}
+function recipeVectorChanges(styleLabel,vector){
+  const rec=E.NM_DEF[styleLabel],axes=E.NM_AXES.map(([k])=>k);
+  return axes.map(axis=>({type:"nm",style:styleLabel,axis,from:+(rec?.w?.[axis]||0),to:+vector[axis].toFixed(4)}));
+}
+function archetypeContraVariants(styleLabel,profile,currentStyle){
+  const targetId=styleIdFromLabel(styleLabel),rivalId=styleIdFromLabel(currentStyle),axes=E.NM_AXES.map(([k])=>k);
+  const ranked=axes.slice().sort((a,b)=>(profile[b]||0)-(profile[a]||0)).slice(0,3),variants=[[]];
+  [.45,1].forEach(scale=>{
+    const reduce=ranked.map(axis=>{const from=+(E.STYLE_CONTRA?.[targetId]?.[axis]||0);return {type:"stylecontra",styleId:targetId,axis,from,to:+Math.max(0,from*(1-scale)).toFixed(3)};});
+    variants.push(reduce);
+    if(rivalId&&rivalId!==targetId)variants.push(reduce.concat(ranked.slice(0,2).map(axis=>{
+      const from=+(E.STYLE_CONTRA?.[rivalId]?.[axis]||0);return {type:"stylecontra",styleId:rivalId,axis,from,to:+Math.min(.8,from+.04*scale).toFixed(3)};
+    })));
+  });
+  return variants;
+}
+function syntheticArchetypeValidation(raw,role,styleLabel){
+  const deltas=[[-8,0,4,0,6,0], [6,-5,0,3,0,-2], [0,7,-4,0,-5,3], [-4,3,6,-3,0,0], [3,0,-6,5,4,-2], [0,-7,3,4,0,5], [5,4,0,-6,2,0], [-6,2,0,5,-3,4], [2,-3,5,0,6,-4], [0,5,-2,-4,3,6], [-3,0,4,6,-5,2], [4,-6,2,0,-2,5]];
+  const attrs=["fp","en","op","tr","cl","ut"],hits=deltas.reduce((sum,row)=>{
+    const syn={...raw};attrs.forEach((k,i)=>syn[k]=Math.max(0,Math.min(100,(raw[k]||0)+row[i])));
+    return sum+(STYLE_LABEL(nmOVR(syn,role).style)===styleLabel?1:0);
+  },0);
+  return hits/deltas.length;
+}
+async function reformulateStyleFromArchetype(styleLabel,goal={},onProgress=null){
+  if(loadedIdx==null)return {ok:false,message:"Carregue um jogador antes de reformular um estilo."};
+  if(!styleLabel||styleLabel==="Baiter"||styleLabel==="Coringa")return {ok:false,infeasible:true,message:"Reformulação por arquétipo exige um estilo com receita normal."};
+  const raw=playerAt(loadedIdx),beforeConfig=configSnapshot(),proposalBase=impactSnapshot(),cumulativeBase=ensureBaseline(),before=mainPlayer();
+  const src=POOLRAW[loadedIdx],goalKey=src?`${src.ti}:${src.pi}`:null,fullGoal={style:styleLabel,...(goal.ovr?{ovr:goal.ovr}:{})};
+  if(goalMet(before,fullGoal))return {ok:true,alreadyMet:true,before,after:before,changes:[],goal:fullGoal,goalKey,archetype:true};
+  const rows=leagueArchetypeRows(),baselineTarget=new Set(rows.filter(r=>r.style===styleLabel).map(r=>r.key));
+  const learned=archetypeVectors(styleLabel,raw,before,rows,(loadedIdx+1)*31337),contraVariants=archetypeContraVariants(styleLabel,learned.exemplar,STYLE_LABEL(before.playstyle));
+  const awpValues=rolePairParts(before).combat==="AWPer"&&["Closer","Ancora"].includes(styleLabel)?[null,.04,.08,.12,.18,.25,.32,.4]:[null];
+  const started=performance.now(),maxMs=24000,stats={tested:0,generated:learned.vectors.length,valid:0,stage:"reaprendendo receita",archetype:true};
+  let best=null,front=[];const shortlist=[];
+  const progress=force=>{if(onProgress&&(force||stats.tested%20===0))onProgress(stats,best);};
+  try{
+    // Estágio 1: aprende a direção completa da receita usando o jogador como exemplo rotulado.
+    for(const vector of learned.vectors){
+      if(performance.now()-started>maxMs)break;
+      const changes=recipeVectorChanges(styleLabel,vector);restoreConfig(beforeConfig);applyCalibChanges(changes);stats.tested++;
+      const after=mainPlayer(),distance=goalDistance(after,fullGoal,raw);
+      if(STYLE_LABEL(after.playstyle)===styleLabel)shortlist.push({changes,distance,margin:goalRobustness(after,fullGoal,raw)});
+      else if(shortlist.length<24)shortlist.push({changes,distance,margin:0});
+      progress(false);if(stats.tested%18===0)await new Promise(r=>setTimeout(r,0));
+    }
+    shortlist.sort((a,b)=>a.distance-b.distance||b.margin-a.margin);
+    // Estágio 2: valida receita + contra + contexto no elenco inteiro e em perturbações sintéticas.
+    const bases=shortlist.slice(0,36);stats.generated+=bases.length*contraVariants.length*awpValues.length;
+    for(const base of bases)for(const contra of contraVariants)for(const lean of awpValues){
+      if(performance.now()-started>maxMs)break;
+      let changes=mergeChanges(base.changes,contra);
+      if(lean!=null)changes=mergeChanges(changes,[{type:"cfg",key:"AWP_LEAN",from:E.CFG_AVALIACAO.AWP_LEAN,to:lean}]);
+      restoreConfig(beforeConfig);applyCalibChanges(changes);
+      let after=mainPlayer();
+      if(goal.ovr&&Math.round(after.ovr)!==goal.ovr){
+        const ovrSeeds=generateOvrCandidates(raw,goal.ovr).slice(0,5);
+        let bestOvr=null;
+        for(const seed of ovrSeeds){restoreConfig(beforeConfig);const merged=mergeChanges(changes,seed);applyCalibChanges(merged);const ev=mainPlayer();if(goalMet(ev,fullGoal)){bestOvr=merged;break;}}
+        if(bestOvr){changes=bestOvr;restoreConfig(beforeConfig);applyCalibChanges(changes);after=mainPlayer();}
+      }
+      stats.tested++;
+      if(!goalMet(after,fullGoal)){progress(false);continue;}
+      changes=materializeAppliedChanges(changes,beforeConfig);
+      const now=impactSnapshot(),regressions=sessionRegressions(now,goalKey,fullGoal);if(regressions.length)continue;
+      const diff=diffSnapshots(proposalBase,now),cumulativeDiff=diffSnapshots(cumulativeBase,now),strategy=CALIB_STRATEGIES.ia;
+      const result=buildCandidateResult({changes,ok:true,before,after,diff,cumulativeDiff,goalKey,strategy,searchStats:stats,roleTarget:null,raw,label:`Reformular ${styleLabel} por ${raw.nome}`,phase:"archetype",goal:fullGoal});
+      const currentTarget=new Set(now.players.filter(p=>p.style===styleLabel).map(p=>p.key));
+      const lost=[...baselineTarget].filter(k=>!currentTarget.has(k)).length,entrants=[...currentTarget].filter(k=>!baselineTarget.has(k)&&k!==goalKey).length;
+      const synth=syntheticArchetypeValidation(raw,rolePairParts(after).combat,styleLabel),archetypeLoss=lost*14+entrants*3+(1-synth)*24+(1-result.goalMargin)*18;
+      result.archetype=true;result.strategy={...strategy,label:"Arquétipo",explain:"reaprende a definição global do estilo a partir do jogador-exemplo, preservando membros naturais, intenções anteriores e estabilidade sintética."};
+      result.archetypeInfo={style:styleLabel,exemplar:raw.nome,lost,entrants,retained:baselineTarget.size-lost,synthetic:synth,beforeRecipe:clone(DEF.NM[styleLabel]?.w||{}),afterRecipe:clone(E.NM_DEF[styleLabel]?.w||{}),ratingWeight:E.NM_DEF[styleLabel]?.ratingWeight??1};
+      result.cost+=archetypeLoss;result.costInfo.archetypeLoss=archetypeLoss;stats.valid++;
+      if(!best||compareCalibration(result,best,strategy)<0)best=result;
+      front=updatePareto(front,result,5);progress(false);
+      if(stats.tested%12===0)await new Promise(r=>setTimeout(r,0));
+    }
+    if(best){best.alternatives=front.filter(x=>candidateSignature(x.changes)!==candidateSignature(best.changes)).slice(0,3);best.searchStats=stats;progress(true);return best;}
+    return {ok:false,message:`Não encontrei uma definição global de ${styleLabel} que inclua ${raw.nome} sem destruir o modelo. Os atributos atuais podem ser insuficientes.`,before,goal:fullGoal,archetype:true,searchStats:stats};
+  }finally{restoreConfig(beforeConfig);}
+}
+
 // helper: uma linha "modificação no motor" (só no técnico)
 function calibChangeRow(change){
   const two=(a,b)=>`<div class="calib-change"><b>${a}</b><span>${change.from.toFixed(2)} → ${change.to.toFixed(2)}</span></div>`;
   const U=s=>String(s).toUpperCase();
   if(change.type==="nm")return two(`NM.${U(change.axis)}`);
+  if(change.type==="rating")return two(`NM.${esc(change.style)}.RATING`);
   if(change.type==="stylecontra")return two(`SCONTRA.${esc(change.styleId)}.${U(change.axis)}`);
   if(change.type==="contra")return two(`${change.role}.CONTRA.${U(change.attr)}`);
   if(change.type==="rule")return two(`${change.role}.REGRA.${esc(change.rule)}`);
   if(change.type==="igl")return two(`IGL.${change.role}.${U(change.attr)}`);
   if(change.type==="cor")return two(`Coringa.${change.key}`);
+  if(change.type==="cfg")return two(`CFG.${esc(change.key)}`);
   if(change.type==="ovrparam")return two(`OVR.${esc(change.key)}`);
   return two(`${change.role}.${U(change.attr)}`);
 }
@@ -2000,6 +2511,13 @@ function renderCalibResult(result,goal){
   const costTxt=col===0?"só o alvo muda":`${col} ${col===1?"jogador muda junto":"jogadores mudam junto"}`;
   const costLine=`<div class="cr-cost"><span class="cr-clab">Custo</span><span class="cr-sev ${sevCls}">${sev}</span><span class="cr-ctxt">${costTxt}</span></div>`
     +(highCost?`<div class="cr-warn">Não recomendado: mexe em ${col} ${col===1?"jogador":"jogadores"} fora do alvo. Esse alvo é distante do natural do jogador — a IA só chega lá com um ajuste global grande.</div>`:"");
+  const ai=result.archetypeInfo;
+  const archetypeBlock=ai?`<div class="cr-styledesc"><b>Estilo reaprendido por ${esc(ai.exemplar)}</b> · retenção ${ai.retained}, entradas ${ai.entrants}, saídas ${ai.lost}, estabilidade sintética ${Math.round(ai.synthetic*100)}%, peso de rating ${(+ai.ratingWeight).toFixed(2)}</div>`:"";
+  const alternatives=(result.alternatives||[]).slice(0,3);
+  const alternativesBlock=alternatives.length?`<details class="cr-fold"><summary>Outras soluções válidas (${alternatives.length})</summary><div class="cr-aff-list">${alternatives.map((alt,i)=>{
+    const d=alt.diff||{players:[],teams:[]},sumAlt=summarizeDiff(d,alt.targetKey);
+    return `<div class="cr-aff"><span class="cr-aid">Alternativa ${i+1}<span class="cr-atm">custo ${(+alt.cost||0).toFixed(1)} · ${sumAlt.collateralPlayers} colateral · margem ${Math.round((alt.goalMargin||0)*100)}%</span></span><button class="btn" type="button" data-calib-alt="${i}">Usar</button></div>`;
+  }).join("")}</div></details>`:"";
   // — jogadores afetados (recolhido) —
   const rows=diff.players.slice().sort((a,b)=>(b.key===result.targetKey?1:0)-(a.key===result.targetKey?1:0)).slice(0,12).map(p=>{
     const isTgt=p.key===result.targetKey;
@@ -2011,8 +2529,8 @@ function renderCalibResult(result,goal){
   }).join("");
   const affected=`<details class="cr-fold"><summary>Jogadores afetados (${sum.players})</summary><div class="cr-aff-list">${rows}</div></details>`;
   // — técnico (recolhido) —
-  const modeLabel=result.strategy?.label||({ia:"IA",realista:"Realista"}[calibMode]||calibMode);
-  const phaseNote=result.phase!=null?` · fase ${result.phase+1}`:"";
+  const modeLabel=result.strategy?.label||({ia:"IA",realista:"Realista",arquetipo:"Arquétipo"}[calibMode]||calibMode);
+  const phaseNote=Number.isInteger(result.phase)?` · fase ${result.phase+1}`:"";
   const changes=result.changes.map(calibChangeRow).join("");
   const st=result.searchStats||{};
   const technical=`<details class="cr-fold"><summary>Detalhes técnicos</summary><div class="cr-tech">
@@ -2033,7 +2551,9 @@ function renderCalibResult(result,goal){
     <div class="cr-target">${tgtNome}${tgtTime?`<span class="cr-tteam">${tgtTime}</span>`:""}</div>
     ${deltaBlock}
     ${describeStyle(result.after.playstyle)?`<div class="cr-styledesc"><b>${esc(aStyle)}</b> · ${esc(describeStyle(result.after.playstyle))}</div>`:""}
+    ${archetypeBlock}
     ${costLine}
+    ${alternativesBlock}
     ${affected}
     ${technical}
     <div class="cr-actions"><button class="btn accent" id="calibApply">Aplicar sugestão</button><button class="btn" id="calibDiscard">Descartar</button></div>
@@ -2077,14 +2597,15 @@ async function runCalibrationParallel(goal,onProgress){
     const liveState={...state};
     const timeoutMs=(strategy.maxMs||9000)+5000;
     const jobId=Date.now()+"-"+Math.random();
-    const progressAgg=workers.map(()=>({tested:0,generated:0,valid:0}));
-    let poolStale=false; // [23] marca que algum worker foi morto → reconstrói o pool no próximo job
+    const progressAgg=workers.map(()=>({tested:0,generated:0,valid:0,partitionSkipped:0}));
+    let poolStale=false,cancelBroadcasted=false; // timeout reconstrói o pool; ótimo dominante cancela cooperativamente
     const reportProgress=()=>{
       if(!onProgress)return;
       const tested=progressAgg.reduce((s,p)=>s+p.tested,0);
       const generated=progressAgg.reduce((s,p)=>s+p.generated,0);
       const valid=progressAgg.reduce((s,p)=>s+p.valid,0);
-      onProgress({tested,generated,valid,stage:`busca paralela (${workers.length} nucleos)`});
+      const partitionSkipped=progressAgg.reduce((s,p)=>s+(p.partitionSkipped||0),0);
+      onProgress({tested,generated,valid,partitionSkipped,stage:`busca paralela particionada (${workers.length} nucleos)`});
     };
     const results=await Promise.allSettled(workers.map((worker,idx)=>new Promise((resolve,reject)=>{
       let settled=false;
@@ -2101,7 +2622,7 @@ async function runCalibrationParallel(goal,onProgress){
         const msg=ev.data;
         if(!msg||msg.jobId!==jobId)return;
         if(msg.type==="progress"){
-          progressAgg[idx]={tested:msg.tested||0,generated:msg.generated||0,valid:msg.valid||0};
+          progressAgg[idx]={tested:msg.tested||0,generated:msg.generated||0,valid:msg.valid||0,partitionSkipped:msg.partitionSkipped||0};
           reportProgress();
           return;
         }
@@ -2109,11 +2630,22 @@ async function runCalibrationParallel(goal,onProgress){
           if(settled)return;settled=true;
           clearTimeout(timer);
           worker.removeEventListener("message",onMessage);
-          if(msg.ok)resolve(msg.result);else reject(new Error(msg.error||"worker falhou"));
+          if(msg.ok){
+            const r=msg.result,ci=r?.costInfo||{};
+            const dominant=!!(r?.ok&&(r.alreadyMet||(
+              (ci.collateralRoleChanges||0)===0&&(ci.collateralOvrShifts||0)===0&&
+              (ci.rareWorsened||0)===0&&(r.goalMargin??0)>=.55
+            )));
+            if(dominant&&!cancelBroadcasted){
+              cancelBroadcasted=true;
+              workers.forEach((other,j)=>{if(j!==idx)try{other.postMessage({type:"cancel",jobId});}catch{}});
+            }
+            resolve(r);
+          }else reject(new Error(msg.error||"worker falhou"));
         }
       };
       worker.addEventListener("message",onMessage);
-      worker.postMessage({jobId,ti:src.ti,pi:src.pi,state:liveState,config,goal,mode:calibMode,seedSalt:(idx+1)*7919});
+      worker.postMessage({jobId,ti:src.ti,pi:src.pi,state:liveState,config,goal,mode:calibMode,seedSalt:(idx+1)*7919,partitionIndex:idx,partitionCount:workers.length});
     })));
     // [23] se algum worker foi morto por timeout, descarta o pool inteiro (o morto é inutilizável e
     // os vivos estão ociosos) → ensureCalibWorkers recria tudo do zero no próximo job.
@@ -2142,7 +2674,8 @@ function buildCalibrator(){
   const anyRoleOptions=r=>`<option value="">Qualquer</option>${ROLES.map(role=>`<option value="${role}" ${role===r?"selected":""}>${role}</option>`).join("")}`;
   const modeOptions=[
     ["ia","IA"],
-    ["realista","Realista"]
+    ["realista","Realista"],
+    ["arquetipo","Reformular estilo"]
   ].map(([id,label])=>`<option value="${id}" ${id===calibMode?"selected":""}>${label}</option>`).join("");
   const styleIdOf=lbl=>lbl==="Coringa"?"joker":(PLAYSTYLE_IDS.find(id=>STYLE_LABEL(id)===lbl)||"");
   const styleOptions=`<option value="">Qualquer</option>`
@@ -2151,6 +2684,7 @@ function buildCalibrator(){
   const _selDesc=calibTargetStyle?describeStyle(styleIdOf(calibTargetStyle)):"";
   const selStyleDesc=_selDesc?`<div class="calib-styledesc"><b>${esc(calibTargetStyle)}</b> · ${esc(_selDesc)}</div>`:"";
   const curGoal={r1:isIGL?"IGL":calibTargetRole,r2:calibTargetRole2,style:calibTargetStyle,ovr:calibTargetOvr?+calibTargetOvr:0};
+  const maxOvr=isIGL?E.CFG_AVALIACAO.IGL_TETO:E.CFG_AVALIACAO.OVR_MAX;
   const role1Html=isIGL
     ?`<div class="calib-field"><label>Role1</label><select id="calibRole" disabled><option selected>IGL</option></select></div>`
     :`<div class="calib-field"><label>Role1</label><select id="calibRole">${anyRoleOptions(calibTargetRole)}</select></div>`;
@@ -2166,6 +2700,8 @@ function buildCalibrator(){
   const targetText=`${tR1} / ${tR2} · ${tStyle} · ${tOvr}`;
   const hasTarget=!!(calibTargetRole||calibTargetRole2||calibTargetStyle||calibTargetOvr);
   const changed=hasTarget;
+  const archetypeMode=calibMode==="arquetipo",actionLabel=archetypeMode?"Reformular estilo":"Sugerir ajuste";
+  const modeNote=archetypeMode?`Usa <b>${esc(player.nome||state.nome)}</b> como exemplo rotulado e reaprende a receita global — não fixa o jogador.`:"Ajusta pesos globais de baixo impacto — não altera stats.";
   // o jogador atual já está fixado no topo (pctx); aqui mostramos só o ALVO ao vivo quando escolhido
   const livePreview=hasTarget?`<div class="calib-live">
     <div class="calib-live-cell target${changed?" on":""}"><span class="calib-live-l">Alvo desta calibração</span><span class="calib-live-v">${targetText}</span></div>
@@ -2176,27 +2712,27 @@ function buildCalibrator(){
       ${role1Html}
       ${role2Html}
       <div class="calib-field"><label>Playstyle</label><select id="calibStyle">${styleOptions}</select></div>
-      <div class="calib-field"><label>OVR</label><input type="number" id="calibOvr" min="5" max="22" step="1" placeholder="Qualquer" value="${esc(calibTargetOvr)}"></div>
+      <div class="calib-field"><label>OVR</label><input type="number" id="calibOvr" min="${E.CFG_AVALIACAO.OVR_MIN}" max="${maxOvr}" step="1" placeholder="Qualquer" value="${esc(calibTargetOvr)}"></div>
       <div class="calib-field"><label>Modo</label><select id="calibMode">${modeOptions}</select></div>
-      <button class="btn accent" id="calibSuggest">Sugerir ajuste</button>
+      <button class="btn accent" id="calibSuggest">${actionLabel}</button>
     </div>
     ${selStyleDesc}
-    <div class="calib-note">Ajusta pesos globais de baixo impacto — não altera stats.</div>
+    <div class="calib-note">${modeNote}</div>
     <div id="calibResult">${renderCalibResult(calibLast,curGoal)}</div>
     <div class="calib-actions"><button class="btn" id="calibReset">Resetar pesos</button></div>
   </div>`;
   if(!isIGL)document.getElementById("calibRole").onchange=function(){calibTargetRole=this.value;calibLast=null;buildCalibrator();};
   document.getElementById("calibRole2").onchange=function(){calibTargetRole2=this.value;calibLast=null;buildCalibrator();};
   document.getElementById("calibStyle").onchange=function(){calibTargetStyle=this.value;calibLast=null;buildCalibrator();};
-  document.getElementById("calibOvr").onchange=function(){const v=this.value?Math.max(5,Math.min(22,Math.round(+this.value))):"";calibTargetOvr=v===""?"":String(v);calibLast=null;buildCalibrator();};
-  document.getElementById("calibMode").onchange=function(){calibMode=this.value;calibLast=null;buildCalibrator();};
+  document.getElementById("calibOvr").onchange=function(){const v=this.value?Math.max(E.CFG_AVALIACAO.OVR_MIN,Math.min(maxOvr,Math.round(+this.value))):"";calibTargetOvr=v===""?"":String(v);calibLast=null;buildCalibrator();};
+  document.getElementById("calibMode").onchange=function(){calibMode=this.value;if(calibMode==="arquetipo"){calibTargetRole="";calibTargetRole2="";}calibLast=null;buildCalibrator();};
   document.getElementById("calibSuggest").onclick=async()=>{
     if(calibRunning)return;
     const goal={r1:isIGL?"IGL":calibTargetRole,r2:calibTargetRole2,style:calibTargetStyle,ovr:calibTargetOvr?+calibTargetOvr:0};
     if(!goal.r1&&!goal.r2&&!goal.style&&!goal.ovr){toast("Selecione ao menos um alvo.");return;}
     const resultBox=document.getElementById("calibResult");
     calibRunning=true;
-    document.querySelectorAll("#calibbox button,#calibbox select").forEach(el=>{el.disabled=true;});
+    document.querySelectorAll("#calibbox button,#calibbox select,#calibbox input").forEach(el=>{el.disabled=true;});
     const progress=(stats,best)=>{
       const pct=stats.generated?Math.min(100,Math.round(stats.tested/stats.generated*100)):0;
       const stage=stats.stage||"busca global";
@@ -2204,7 +2740,10 @@ function buildCalibrator(){
     };
     progress({tested:0,generated:0,valid:0});
     try{
-      calibLast=await runCalibrationParallel(goal,progress);
+      if(calibMode==="arquetipo"){
+        if(!goal.style||goal.style==="Baiter"||goal.style==="Coringa"){toast("Escolha um estilo normal para reaprender.");return;}
+        calibLast=await reformulateStyleFromArchetype(goal.style,{ovr:goal.ovr||0},progress);
+      }else calibLast=await runCalibrationParallel(goal,progress);
     }finally{
       calibRunning=false;
       // buildCalibrator já re-renderiza #calibResult (via calibLast) e recria os botões habilitados.
@@ -2214,6 +2753,12 @@ function buildCalibrator(){
     }
   };
   document.getElementById("calibReset").onclick=()=>{copyInto(E.ROLE_PERFIL,DEF.ROLE);copyInto(E.NM_DEF,DEF.NM);copyInto(E.NM_COR,DEF.NM_COR);if(DEF.CONTRA)copyInto(E.ROLE_CONTRA,DEF.CONTRA);if(DEF.IGL)copyInto(E.IGL_ROLE_AFIN,DEF.IGL);if(DEF.RULES)copyInto(E.ROLE_RULES,DEF.RULES);if(DEF.STYLE_FIT)copyInto(E.STYLE_ROLE_FIT,DEF.STYLE_FIT);if(DEF.STYLE_CONTRA)copyInto(E.STYLE_CONTRA,DEF.STYLE_CONTRA);if(DEF.CFG)copyInto(E.CFG_AVALIACAO,DEF.CFG);calibLast=null;invalidateAllTeamEval();refresh("all");};
+  document.querySelectorAll("[data-calib-alt]").forEach(btn=>btn.onclick=()=>{
+    const idx=+btn.dataset.calibAlt,alt=calibLast?.alternatives?.[idx];
+    if(!alt)return;
+    const previous=calibLast;calibLast={...alt,alternatives:[previous,...(previous.alternatives||[]).filter((__,i)=>i!==idx)].slice(0,3)};
+    buildCalibrator();
+  });
   const apply=document.getElementById("calibApply");
   if(apply)apply.onclick=()=>{if(calibLast&&calibLast.ok){const applied=calibLast;applyCalibChanges(applied.changes);registerCalibrationApplication(applied);calibLast=null;invalidateAllTeamEval();refresh("all");toast("Sugestão registrada na bancada");}};
   const discard=document.getElementById("calibDiscard");
