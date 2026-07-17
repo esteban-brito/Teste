@@ -3250,6 +3250,19 @@ document.getElementById("mtabs")?.addEventListener("click",e=>{
   goMobileTab(b.dataset.tab);
 });
 
+// Seam de teste (SÓ com ?e2e na URL): janela read-only pro teste de navegador observar o estado
+// de intenções/jogador enquanto dirige a UI real. Não expõe NENHUMA mutação — inerte no uso normal.
+// typeof guards: em Node (harness da bancada) e no Worker não há location/window → bloco é pulado.
+if(typeof window!=="undefined"&&typeof location!=="undefined"&&/[?&]e2e(?:=|&|$)/.test(location.search)){
+  window.__e2e={
+    ready:true,
+    intentions:()=>calibSession?calibSession.intentions.size:0,
+    regressions:()=>calibSession?sessionRegressions().map(r=>({nome:r.nome,failed:r.failed||[]})):[],
+    player:()=>{const p=mainPlayer(),pr=rolePairParts(p);return {nome:p.nome,ovr:Math.round(p.ovr),r1:pr.r1,r2:pr.r2,style:STYLE_LABEL(p.playstyle)};},
+    loadedIdx:()=>loadedIdx
+  };
+}
+
 (async()=>{
   try{
     await carregarMotores();
