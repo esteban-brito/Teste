@@ -953,7 +953,11 @@ function goalDistance(player,goal,raw){
     d+=1+Math.max(0,cur-t)/24;
   }
   if(goal.r2&&parts.r2!==goal.r2){
-    const primary=player.isIGL?null:parts.r1,score=r=>primary?E.secondaryScore(primary,r,raw):E.roleAfinidade(r,raw);
+    // secondaryScore precisa do mapa de afinidades (scores[secundario]); sem ele crashava em
+    // alvo de Role2 de não-IGL. afin[r]===afinidades(raw)[r] no motor, então o cálculo bate.
+    const primary=player.isIGL?null:parts.r1;
+    const affin=Object.fromEntries(ROLES.filter(r=>r!=="IGL").map(r=>[r,E.roleAfinidade(r,raw)]));
+    const score=r=>primary?E.secondaryScore(primary,r,raw,affin):affin[r];
     d+=1+Math.max(0,score(parts.r2)-score(goal.r2))/24;
   }
   if(goal.style&&STYLE_LABEL(player.playstyle)!==goal.style){
@@ -1908,7 +1912,9 @@ function goalRobustness(player,goal,raw){
     margins.push(Math.max(0,Math.min(1,(t-rival)/6)));
   }
   if(goal.r2){
-    const primary=player.isIGL?null:parts.r1,score=r=>primary?E.secondaryScore(primary,r,raw):E.roleAfinidade(r,raw);
+    const primary=player.isIGL?null:parts.r1;
+    const affin=Object.fromEntries(roles.map(r=>[r,E.roleAfinidade(r,raw)]));
+    const score=r=>primary?E.secondaryScore(primary,r,raw,affin):affin[r];
     const rival=roles.filter(r=>r!==goal.r2&&r!==primary).reduce((m,r)=>Math.max(m,score(r)),-Infinity);
     margins.push(Math.max(0,Math.min(1,(score(goal.r2)-rival)/6)));
   }
@@ -2652,8 +2658,24 @@ async function runCalibrationParallel(goal,onProgress){
     if(poolStale){workers.forEach(w=>{try{w.terminate();}catch{}});calibWorkers=null;}
     const fulfilled=results.filter(r=>r.status==="fulfilled").map(r=>r.value);
     if(!fulfilled.length)return await findCalibration(goal,onProgress);
-    const valid=fulfilled.filter(r=>r&&r.ok);
+    let valid=fulfilled.filter(r=>r&&r.ok);
     if(!valid.length)return fulfilled[0];
+    // Os workers rodam com sessão VAZIA (baseline/calibSession zerados por job; as intenções não
+    // são enviadas), então a poda anti-regressão de intenção que roda na busca direta NÃO acontece
+    // lá dentro. Revalida cada resultado AQUI, na thread principal: aplica as mudanças propostas,
+    // mede sessionRegressions (isentando o alvo atual) e descarta quem desfaz uma calibração
+    // anterior. Se TODOS regridem, cai pra busca direta, que respeita as intenções por construção.
+    const session=ensureCalibSession(),goalKey=src?`${src.ti}:${src.pi}`:null;
+    if(session.intentions.size){
+      const safe=valid.filter(r=>{
+        try{restoreConfig(config);applyCalibChanges(r.changes||[]);
+          return sessionRegressions(impactSnapshot(),goalKey,goal).length===0;
+        }finally{restoreConfig(config);}
+      });
+      restoreConfig(config);
+      if(!safe.length)return await findCalibration(goal,onProgress);
+      valid=safe;
+    }
     let best=valid[0];
     for(const r of valid.slice(1))if(compareCalibration(r,best,strategy)<0)best=r;
     return best;

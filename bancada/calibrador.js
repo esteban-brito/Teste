@@ -203,6 +203,20 @@ api.overrideBudget(budgetMs);
     const ok=!err&&r&&r.ok&&api.rolePairParts(r.after).r1==="Rifler"&&api.STYLE_LABEL(r.after.playstyle)==="Trader";
     check(!!ok,`b1t {r1:Rifler+Trader}: IA FECHA função E estilo${err?": "+err.message:r&&r.ok?" (ok)":" (sem solução)"}`);
   }
+  // REGRESSÃO (auditoria P0): secondaryScore(primary,secondary,p,scores) lê scores[secondary];
+  // goalDistance/goalRobustness chamavam sem o mapa → crash em alvo de Role2 de NÃO-IGL. A bateria
+  // só cobria Role2 de IGL (Boombl4/karrigan, primary=null → usa roleAfinidade), então passava
+  // batido. Aqui: um não-IGL contra CADA função como Role2 — nenhuma pode lançar exceção.
+  {
+    api.overrideBudget(300);
+    let threw=null;
+    for(const r2 of ["AWPer","Rifler","Entry","Lurker","Support"]){
+      api.resetAll();api.loadByName("NiKo");api.setMode("realista");
+      try{ await api.findCalibration({r2},null); }catch(e){ threw=`${r2} → ${e.message}`; break; }
+    }
+    api.overrideBudget(budgetMs);
+    check(!threw,`Role2 de não-IGL nunca lança (crash de secondaryScore)${threw?": "+threw:""}`);
+  }
   // [22] Coringa: não lança; se achar, o estilo é mesmo Coringa (limiar global NM_COR, não receita).
   {
     api.loadByName("KSCERATO"); api.setMode("ia");
