@@ -2515,19 +2515,30 @@ function guiaStyleCard(id){
   const rec=E.NM_DEF[E.STYLE_KEYS[id]];
   return `<div class="guia-card"><div class="guia-name">${esc(E.STYLE_LABEL(id))}</div>${rec?guiaBars(rec.w):""}</div>`;
 }
-function guiaRoleCard(role){
-  const rp=E.ROLE_PERFIL[role],fit=E.STYLE_ROLE_FIT[role]||{};
-  const comuns=Object.entries(fit).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([id])=>E.STYLE_LABEL(id));
-  return `<div class="guia-card"><div class="guia-name">${esc(role)}</div>${guiaBars(rp.afin)}${comuns.length?`<div class="guia-meta">Estilos comuns: ${comuns.map(esc).join(", ")}</div>`:""}</div>`;
+// distribuição REAL de estilos por função no elenco (avaliado ao vivo). Substitui o STYLE_ROLE_FIT,
+// que o motor não usa mais na classificação — o Guia promete "números de verdade", então mostra o
+// que de fato aparece em cada função, não um peso morto.
+function roleStyleReal(){
+  const dist={};
+  (E.TEAMS||[]).forEach((t,ti)=>{let ps;try{ps=teamPlayers(t,ti);}catch{ps=[];}
+    ps.forEach(p=>{const r=p.isIGL?"IGL":(p.role1||p.combatRole);if(!r)return;
+      const s=STYLE_LABEL(p.playstyle);(dist[r]=dist[r]||{})[s]=(dist[r][s]||0)+1;});});
+  return dist;
+}
+function guiaRoleCard(role,dist){
+  const rp=E.ROLE_PERFIL[role], d=(dist&&dist[role])||{};
+  const comuns=Object.entries(d).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([s,n])=>`${s} (${n})`);
+  return `<div class="guia-card"><div class="guia-name">${esc(role)}</div>${guiaBars(rp.afin)}${comuns.length?`<div class="guia-meta">Estilos no elenco: ${comuns.map(esc).join(", ")}</div>`:""}</div>`;
 }
 function renderGuia(){
   const roles=Object.keys(E.ROLE_PERFIL||{});
   const styles=[...(E.PLAYSTYLE_IDS||[]),"joker"];
+  const dist=roleStyleReal();
   const iglCard=`<div class="guia-card"><div class="guia-name">IGL</div><div class="guia-note">É escolhido à mão, não pelos stats. Herda a função do parceiro de dupla e ganha um bônus por liderança e títulos.</div></div>`;
   return `
     <div class="guia-intro">Como o motor enxerga cada estilo e função: os stats que mais pesam definem cada um — quanto maior a barra, mais aquele atributo conta. São os números de verdade e <b>ao vivo</b>: mudou algo na aba <b>Calibrar</b>, muda aqui também.</div>
     <div class="guia-sec"><div class="guia-sec-h">Estilos</div><div class="guia-grid">${styles.map(guiaStyleCard).join("")}</div></div>
-    <div class="guia-sec"><div class="guia-sec-h">Funções</div><div class="guia-grid">${roles.map(guiaRoleCard).join("")}${iglCard}</div></div>`;
+    <div class="guia-sec"><div class="guia-sec-h">Funções</div><div class="guia-grid">${roles.map(r=>guiaRoleCard(r,dist)).join("")}${iglCard}</div></div>`;
 }
 function montarUI(){
   const app=document.getElementById("app"); app.className="";

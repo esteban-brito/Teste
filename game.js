@@ -359,7 +359,10 @@ function nmOVR(p,role,forcedStyle=null){
   const style=match.id,C=CFG_AVALIACAO;
   let score;
   if(style==="joker"){const jp=jokerProfile(s7),top5=jp.sorted.slice(0,5);score=top5.reduce((a,b)=>a+b,0)/5;}
-  else{const rec=STYLE_RECIPE(style);score=dot(rec.w,s6);}
+  // [20] score = MÉDIA PONDERADA real (normaliza pela soma dos pesos), não o produto-escalar cru.
+  // Assim a escala do OVR fica IMUNE ao drift de Σw: o calibrador pode mexer num peso isolado sem
+  // estourar a escala do score. Receitas padrão somam 1.0 → idêntico ao de antes (bench intacto).
+  else{const rec=STYLE_RECIPE(style),sw=Object.values(rec.w).reduce((a,b)=>a+b,0);score=dot(rec.w,s6)/(sw||1);}
   const base=C.OVR_BASE+(score/100)*C.OVR_SPAN;
   const bonus=Math.max(0,(p.rating||0)-C.RAT_BASE)*C.RAT_K;
   return {style,ovr:clipOVR(base+bonus),statScore:score,score,base,bonus,core:base+bonus,s6,matchScore:match.score,matchMargin:match.margin};

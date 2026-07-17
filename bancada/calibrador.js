@@ -138,7 +138,7 @@ api.overrideBudget(budgetMs);
   {
     const igl=await feas("karrigan",{ovr:22}); // teto do IGL é 21
     check(!igl.threw&&igl.infeasible&&/21/.test(igl.message||""),`IGL ovr22 → impossível ("${String(igl.message||igl.threw||"").slice(0,45)}")`);
-    let iglHtml=""; try{ iglHtml=api.renderCalibResult(igl,{ovr:22}); }catch(e){ iglHtml="ERRO:"+e.message; }
+    let iglHtml; try{ iglHtml=api.renderCalibResult(igl,{ovr:22}); }catch(e){ iglHtml="ERRO:"+e.message; }
     check(/Impossível/.test(iglHtml)&&/21/.test(iglHtml),"a mensagem de impossível RENDERIZA (não cai no genérico)");
     const rr=await feas("ZywOo",{r1:"Entry",r2:"Entry"});
     check(!rr.threw&&!!rr.infeasible,"Role1==Role2 → impossível");
@@ -165,6 +165,15 @@ api.overrideBudget(budgetMs);
     const r=await api.findCalibration({style:inf.style,ovr:alvo},null);
     const ok=r&&r.ok&&api.STYLE_LABEL(r.after.playstyle)===inf.style&&Math.round(r.after.ovr)===alvo;
     check(!!ok,`electroNic {${inf.style}+ovr${alvo}}: fecha estilo E ovr (${r&&r.ok?api.STYLE_LABEL(r.after.playstyle)+"/"+Math.round(r.after.ovr):r&&r.message})`);
+  }
+  // objetivo estrutural de 2 dimensões (função + estilo): não lança e, se ok, fecha AS DUAS
+  // (guarda de regressão pra objetivo combinado — nunca devolve ok com só uma dimensão batida).
+  {
+    api.loadByName("b1t"); api.setMode("ia");
+    const goal={r1:"Rifler",style:"Trader"};
+    let r=null,err=null; try{ r=await api.findCalibration(goal,null); }catch(e){ err=e; }
+    const okOrGraceful=!err&&r&&(!r.ok||(api.rolePairParts(r.after).r1==="Rifler"&&api.STYLE_LABEL(r.after.playstyle)==="Trader"));
+    check(!!okOrGraceful,`b1t {r1:Rifler+Trader}: não lança e, se ok, fecha função E estilo${err?": "+err.message:r&&r.ok?" (ok)":" (sem solução)"}`);
   }
   // [22] Coringa: não lança; se achar, o estilo é mesmo Coringa (limiar global NM_COR, não receita).
   {
