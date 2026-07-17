@@ -1430,6 +1430,11 @@ function styleLeverBank(targetStyleLabel,raw,evalRole,opts){
     Object.keys(s6).sort((a,b)=>(s6[b]||0)-(s6[a]||0)).slice(0,3).forEach(k=>
       levers.push({weight:Math.max(1,(s6[k]||0))*.35,make:d=>makeStyleContraChange(currentId,k,d*.4),label:`SCONTRA.${currentId}.${k}+`}));
   }
+  // alavanca CIRÚRGICA por função: AWPer passivo tende a Closer/Ancora (o "op" alto dele é pick de AWP,
+  // não espaço de Infiltrador). Move SÓ AWPers → colateral contido neles (não bagunça riflers como a
+  // receita global fazia). É o knob certo pra "AWPer passivo → Closer" com o menor colateral possível.
+  if((evalRole==="AWPer")&&(targetId==="clutcher"||targetId==="anchor"))
+    levers.push({weight:120,make:d=>({type:"ovrparam",key:"AWP_LEAN",from:E.CFG_AVALIACAO.AWP_LEAN,to:+Math.max(0,Math.min(.4,E.CFG_AVALIACAO.AWP_LEAN+d*.6)).toFixed(3)}),label:"AWP_LEAN"});
   if(opts?.sensitize)sensitizeLevers(levers,raw,()=>goalMetric(raw,{style:targetStyleLabel}));
   if(memoK)_bankMemo.set(memoK,levers);
   return levers;
