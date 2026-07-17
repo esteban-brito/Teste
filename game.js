@@ -68,6 +68,7 @@ const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22, // ⚙ balanceamento do PRISMA (afini
   IGL_TETO:21,                               // teto do IGL: um degrau abaixo do 22 dos fraggers (o jogo é decidido por eles)
   SUP_FRAG:72,                               // fp acima disso: não é Support role 1, é Lurker de utilidade (frag + util)
   CORINGA_PISO:42,CORINGA_SPREAD:24,         // sub "Coringa": piso alto E sem especialidade dominante (spread baixo) = polivalente
+  AWP_LEAN:0,                                // viés de estilo do AWPer PASSIVO: op alto dele é pick de AWP (Closer/Ancora), não espaço de Infiltrador. 0=desligado, calibrável
   PARADOXO:[["Entry","Support"],["Entry","Lurker"]],PARADOXO_PEN:.85};
 const CFG_QUIMICA={ // ⚙ balanceamento do SINAPSE (química, treinador, pilares de composição)
   TREINADOR_PLACAR:{Campeao:16,Final:14,Top4:13,Top8:12,Grupos:10}, // base por conquista: vencer Major já é respeitado
@@ -345,6 +346,11 @@ function styleMatch(s6,s7,role="Rifler",p=null){
     for(const k in contra){cd+=contra[k]*(s6[k]||0);cw+=contra[k];}
     score-=cw?cd/(100*cw)*.42:0;
     // MODELO NOVO: o playstyle é identidade INDEPENDENTE da função — sem STYLE_ROLE_FIT na classificação.
+    // ÚNICA exceção (calibrável, default 0): o AWPer PASSIVO. A "abertura" dele é pick de AWP segurando
+    // ângulo (traço de Closer/Ancora), não criação de espaço de Infiltrador — o modelo, cego à função,
+    // confundia os dois. Puxa proporcional à passividade (entrada baixa); AWPer agressivo quase não sente.
+    if(role==="AWPer"&&CFG_AVALIACAO.AWP_LEAN){const lean=CFG_AVALIACAO.AWP_LEAN*clamp(1-(s6.ent||0)/50,0,1);
+      if(id==="clutcher")score+=lean; else if(id==="infiltrator")score-=lean;} // só Closer↑ / Infiltrador↓: não mexe no AWP agressivo (Opener/Playmaker)
     scores.push({id,score});}
   scores.sort((a,b)=>b.score-a.score);
   const best=scores[0]||{id:"playmaker",score:0},second=scores[1]?.score||0;
