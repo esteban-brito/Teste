@@ -888,6 +888,24 @@ function rolePair(p){
   const parts=rolePairParts(p);
   return {r1:parts.r1,r2:parts.r2,style:STYLE_LABEL(p.playstyle||"")};
 }
+// [15] alvos DETERMINISTICAMENTE impossíveis (a IA só mexe em pesos, nunca em stats): falha rápido
+// com mensagem clara em vez de gastar a busca inteira. Retorna a mensagem ou null (viável).
+function goalInfeasible(goal,before,isIGL){
+  const C=E.CFG_AVALIACAO;
+  if(!isIGL&&goal.r1&&goal.r2&&goal.r1===goal.r2)return "Função 1 e Função 2 não podem ser a mesma.";
+  if(goal.style==="Baiter")return "Baiter é definido pelos stats (perfil de baixo impacto), não por uma receita — a IA não altera stats.";
+  // jogador preso no hard gate de Baiter/Coringa: styleMatch decide isso ANTES das receitas, então
+  // nenhum peso o tira de lá — só mudar stats (Baiter) ou o limiar NM_COR (Coringa, não via estilo).
+  if(goal.style&&goal.style!==STYLE_LABEL(before.playstyle)){
+    if(before.playstyle==="baiter")return "Este jogador cai no perfil de Baiter (stats de baixo impacto) — mudar o estilo dele exige mudar stats, não pesos.";
+  }
+  if(goal.ovr){
+    const teto=isIGL?C.IGL_TETO:C.OVR_MAX;
+    if(goal.ovr>teto)return `${isIGL?"IGL":"Jogador"} não passa de OVR ${teto}${isIGL?" (teto do IGL)":""}.`;
+    if(goal.ovr<C.OVR_MIN)return `OVR mínimo é ${C.OVR_MIN}.`;
+  }
+  return null;
+}
 function goalMet(player,goal){
   const parts=rolePairParts(player);
   if(goal.r1&&goal.r1!==parts.r1)return false;
@@ -1492,16 +1510,20 @@ function goalMetric(raw,goal){
 function combineLevers(levers,opts){
   const{maxDelta=.22,leverLimit=16,pairLimit=10,tripleLimit=7,comboDepth=2}=opts||{};
   const sorted=levers.slice().sort((a,b)=>b.weight-a.weight);
+  const knob=sorted.map(l=>knobKey(l.make(.1))); // [17] identidade do parâmetro (mesma p/ qualquer delta)
   const deltas=deltasFor(maxDelta);
   const out=[];
   deltas.forEach(delta=>{
     const d=+delta.toFixed(3);
     sorted.slice(0,leverLimit).forEach(lever=>out.push([lever.make(d)]));
     const pl=Math.min(pairLimit,sorted.length);
-    for(let i=0;i<pl;i++)for(let j=i+1;j<pl;j++)out.push([sorted[i].make(d*.85),sorted[j].make(d*.65)]);
+    // [17] não combina 2 alavancas que apontam pro MESMO parâmetro (uma sobrescreveria a outra)
+    for(let i=0;i<pl;i++)for(let j=i+1;j<pl;j++){if(knob[i]===knob[j])continue;out.push([sorted[i].make(d*.85),sorted[j].make(d*.65)]);}
     if(comboDepth>=3&&d>=.09){
       const tl=Math.min(tripleLimit,sorted.length);
-      for(let i=0;i<tl;i++)for(let j=i+1;j<tl;j++)for(let k=j+1;k<tl;k++)out.push([sorted[i].make(d*.7),sorted[j].make(d*.5),sorted[k].make(d*.35)]);
+      for(let i=0;i<tl;i++)for(let j=i+1;j<tl;j++)for(let k=j+1;k<tl;k++){
+        if(knob[i]===knob[j]||knob[i]===knob[k]||knob[j]===knob[k])continue;
+        out.push([sorted[i].make(d*.7),sorted[j].make(d*.5),sorted[k].make(d*.35)]);}
     }
   });
   return dedupeCandidates(out);
@@ -1545,10 +1567,11 @@ function generateRandomRoleCandidates(goal,current,raw,isIGL,strategy,opts){
     const used=new Set(), changes=[];
     for(let j=0;j<len;j++){
       const lever=pickWeighted(rng,levers);
-      if(!lever||used.has(lever.label))continue;
-      used.add(lever.label);
-      const scale=.08+rng()*maxDelta;
-      changes.push(lever.make(+scale.toFixed(3)));
+      if(!lever)continue;
+      const made=lever.make(+(.08+rng()*maxDelta).toFixed(3)), k=knobKey(made); // [17] dedup por PARÂMETRO, não por label
+      if(used.has(k))continue;
+      used.add(k);
+      changes.push(made);
     }
     if(changes.length)out.push(changes);
   }
@@ -1683,6 +1706,8 @@ async function findCalibration(goal,onProgress=null){
   const goalKey=src?`${src.ti}:${src.pi}`:null;
   if(isIGL&&goal.r1&&goal.r1!=="IGL")return {ok:false,message:"IGL nao pode mudar de papel primario via pesos. Altere a role2 (papel de combate).",before,goal};
   if(goalMet(before,goal))return {ok:true,alreadyMet:true,before,after:before,changes:[],goal,goalKey}; // [4] já está no alvo → nenhuma mudança
+  const infeasible=goalInfeasible(goal,before,isIGL); // [15] alvo impossível → falha rápido, sem gastar a busca
+  if(infeasible)return {ok:false,message:infeasible,infeasible:true,before,goal,goalKey};
   const strategy=CALIB_STRATEGIES[calibMode]||CALIB_STRATEGIES.ia;
   const phases=strategy.phases;
   const startedAt=performance.now();
@@ -1692,7 +1717,8 @@ async function findCalibration(goal,onProgress=null){
   const hasRoleGoal=!!(goal.r1||goal.r2);
   let best=null, bestRoleBase=null, usedPhase=-1;
   _bankMemo=new Map(); // [9] sensibilidade medida 1x contra o baseline limpo (fase 0) e reusada em todas as fases + refino
-  const searchStats={tested:0,valid:0,generated:0,pruned:0,truncated:false,initialGap,roleTarget};
+  const testedSigs=new Set(); // [16] assinaturas já avaliadas: fases maiores regeneram os degraus menores; não re-testa idêntico
+  const searchStats={tested:0,valid:0,generated:0,pruned:0,deduped:0,truncated:false,initialGap,roleTarget};
   const outOfBudget=()=>{
     const overTests=searchStats.tested>=(strategy.maxTests||Infinity);
     const overTime=performance.now()-startedAt>(strategy.maxMs||Infinity);
@@ -1713,6 +1739,9 @@ async function findCalibration(goal,onProgress=null){
   const evalOne=(changes,label,phaseIndex)=>{
     if(!changes||!changes.length)return;
     if(outOfBudget()){searchStats.pruned++;return;}
+    const sig=changes.map(changeKey).sort().join("|"); // [16] já testado (em outra fase)? pula o trabalho caro
+    if(testedSigs.has(sig)){searchStats.deduped++;return;}
+    testedSigs.add(sig);
     searchStats.tested++;
     restoreConfig(beforeConfig);
     applyCalibChanges(changes);
@@ -1913,9 +1942,12 @@ function renderCalibResult(result,goal){
     </div>`;
   // caminho "sem ajuste": mesmo cabeçalho, pill âmbar, mensagem clara
   if(!result.ok){
-    const msg=result.message&&!result.message.startsWith("IGL")?esc(result.message):"Nenhum ajuste global de baixo impacto atingiu esse alvo.";
+    // [15] alvo impossível: a mensagem é DELIBERADA e útil (ex.: "IGL não passa de OVR 21"), sempre
+    // mostra. O startsWith("IGL") só existia p/ esconder a nota técnica da role1 do IGL (não-infeasible).
+    const msg=(result.infeasible||(result.message&&!result.message.startsWith("IGL")))?esc(result.message):"Nenhum ajuste global de baixo impacto atingiu esse alvo.";
+    const pillTxt=result.infeasible?"Impossível":"Sem ajuste";
     return `<div class="cr">
-      <div class="cr-head"><span class="cr-kicker">Sugestão da IA</span><span class="cr-pill miss"><span class="cr-dot"></span>Sem ajuste</span></div>
+      <div class="cr-head"><span class="cr-kicker">Sugestão da IA</span><span class="cr-pill miss"><span class="cr-dot"></span>${pillTxt}</span></div>
       <div class="cr-empty">${msg}</div>
     </div>`;
   }
@@ -2483,19 +2515,30 @@ function guiaStyleCard(id){
   const rec=E.NM_DEF[E.STYLE_KEYS[id]];
   return `<div class="guia-card"><div class="guia-name">${esc(E.STYLE_LABEL(id))}</div>${rec?guiaBars(rec.w):""}</div>`;
 }
-function guiaRoleCard(role){
-  const rp=E.ROLE_PERFIL[role],fit=E.STYLE_ROLE_FIT[role]||{};
-  const comuns=Object.entries(fit).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([id])=>E.STYLE_LABEL(id));
-  return `<div class="guia-card"><div class="guia-name">${esc(role)}</div>${guiaBars(rp.afin)}${comuns.length?`<div class="guia-meta">Estilos comuns: ${comuns.map(esc).join(", ")}</div>`:""}</div>`;
+// distribuição REAL de estilos por função no elenco (avaliado ao vivo). Substitui o STYLE_ROLE_FIT,
+// que o motor não usa mais na classificação — o Guia promete "números de verdade", então mostra o
+// que de fato aparece em cada função, não um peso morto.
+function roleStyleReal(){
+  const dist={};
+  (E.TEAMS||[]).forEach((t,ti)=>{let ps;try{ps=teamPlayers(t,ti);}catch{ps=[];}
+    ps.forEach(p=>{const r=p.isIGL?"IGL":(p.role1||p.combatRole);if(!r)return;
+      const s=STYLE_LABEL(p.playstyle);(dist[r]=dist[r]||{})[s]=(dist[r][s]||0)+1;});});
+  return dist;
+}
+function guiaRoleCard(role,dist){
+  const rp=E.ROLE_PERFIL[role], d=(dist&&dist[role])||{};
+  const comuns=Object.entries(d).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([s,n])=>`${s} (${n})`);
+  return `<div class="guia-card"><div class="guia-name">${esc(role)}</div>${guiaBars(rp.afin)}${comuns.length?`<div class="guia-meta">Estilos no elenco: ${comuns.map(esc).join(", ")}</div>`:""}</div>`;
 }
 function renderGuia(){
   const roles=Object.keys(E.ROLE_PERFIL||{});
   const styles=[...(E.PLAYSTYLE_IDS||[]),"joker"];
+  const dist=roleStyleReal();
   const iglCard=`<div class="guia-card"><div class="guia-name">IGL</div><div class="guia-note">É escolhido à mão, não pelos stats. Herda a função do parceiro de dupla e ganha um bônus por liderança e títulos.</div></div>`;
   return `
     <div class="guia-intro">Como o motor enxerga cada estilo e função: os stats que mais pesam definem cada um — quanto maior a barra, mais aquele atributo conta. São os números de verdade e <b>ao vivo</b>: mudou algo na aba <b>Calibrar</b>, muda aqui também.</div>
     <div class="guia-sec"><div class="guia-sec-h">Estilos</div><div class="guia-grid">${styles.map(guiaStyleCard).join("")}</div></div>
-    <div class="guia-sec"><div class="guia-sec-h">Funções</div><div class="guia-grid">${roles.map(guiaRoleCard).join("")}${iglCard}</div></div>`;
+    <div class="guia-sec"><div class="guia-sec-h">Funções</div><div class="guia-grid">${roles.map(r=>guiaRoleCard(r,dist)).join("")}${iglCard}</div></div>`;
 }
 function montarUI(){
   const app=document.getElementById("app"); app.className="";
