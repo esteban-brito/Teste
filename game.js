@@ -342,7 +342,9 @@ function stats7(p){return [p.fp||0,p.en||0,p.tr||0,p.op||0,p.cl||0,p.sn||0,p.ut|
 function badBaiterProfile(p){
   if(p.isIGL)return false; // IGL fraco em stats é sacrifício de função, não egoísmo.
   const above=["fp","en","tr","op","cl","sn","ut"].filter(k=>(p[k]||0)>50).length;
-  return above<=2&&(p.rating||0)<=1.02&&(p.op||0)<=45&&(p.en||0)<=50;
+  // op<=45 pega o baiter que nem abre; o OU cobre o FALSO abridor: joga p/ espaço (op alto) mas
+  // com fogo e trade quase nulos e rating fraco não produz nada — segue sendo baixo impacto.
+  return above<=2&&(p.rating||0)<=1.02&&(p.en||0)<=50&&((p.op||0)<=45||((p.fp||0)<=15&&(p.tr||0)<=20));
 }
 function jokerProfile(s7){
   const sorted=[...s7].sort((a,b)=>b-a),below=s7.filter(v=>v<NM_COR.pisoMin).length;
