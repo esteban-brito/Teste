@@ -64,6 +64,11 @@ const ROLE_PERFIL={
   Support:{afin:{ut:.50,tr:.25,en:.12,fp:.08,op:.05},credito:3}};
 const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22, // ⚙ balanceamento do PRISMA (afinidade/sub) + ZÊNITE (OVR)
   OVR_BASE:8.5,OVR_SPAN:10,RAT_BASE:1.0,RAT_K:8, // OVR = base(receita) + bônus(rating × ratingWeight do estilo)
+  // COERÊNCIA stats×rating: os stats "prometem" um lift (COH_LIFT0 + COH_SLOPE·(rating-1)); o que passa
+  // MUITO disso (além da folga COH_TOLER) é stat vazio — mecânica de elite que o rating não confirma — e
+  // é aparado. Contínuo e global: só morde quem diverge (ex.: 910, cl94/sn92 com rating 1.02). COH_KEEP=0
+  // apara todo o excesso além da folga; >0 deixa passar parte. Calibrável na sessão sandbox.
+  COH_LIFT0:7.0,COH_SLOPE:4,COH_TOLER:1.5,COH_KEEP:0,
   IGL_TITULO:{Campeao:3,Final:2,Top4:1,Top8:0,Grupos:0}, // bônus de OVR do IGL por COLOCAÇÃO (campeão 3 · vice 2 · 3-4º 1); qualquer campeonato, só p/ IGL
   IGL_TETO:21,                               // teto do IGL: um degrau abaixo do 22 dos fraggers (o jogo é decidido por eles)
   SUP_FRAG:72,                               // fp acima disso: não é Support role 1, é Lurker de utilidade (frag + util)
@@ -266,7 +271,7 @@ const NM_DEF={
   Trader:{w:{tr:.50,fogo:.30,ut:.20},ratingWeight:1},
   Playmaker:{w:{fogo:.45,ab:.35,cl:.20},ratingWeight:1},
   Infiltrador:{w:{cl:.46,ab:.34,fogo:.20},ratingWeight:1},
-  Baiter:{w:{tr:.50,cl:.30,fogo:.20},ratingWeight:1},
+  Baiter:{w:{tr:.50,cl:.30,fogo:.20},ovrW:{cl:.40,ut:.35,tr:.25},ratingWeight:1}, // ovrW: nível reflete clutch/utility que um baiter ainda entrega (não é o piso absoluto)
   Closer:{w:{cl:.55,fogo:.45},ratingWeight:1.05},
   Facilitador:{w:{ut:.593,tr:.176,ab:.118,fogo:.113},ovrW:{ut:.50,tr:.35,ent:.10,fogo:.05},ratingWeight:1},
   Cerebral:{w:{ut:.40,ab:.30,cl:.30},ratingWeight:1},
@@ -406,7 +411,11 @@ function nmOVR(p,role,forcedStyle=null){
   // Assim a escala do OVR fica IMUNE ao drift de Σw: o calibrador pode mexer num peso isolado sem
   // estourar a escala do score. Receitas padrão somam 1.0 → idêntico ao de antes (bench intacto).
   else{const rec=STYLE_RECIPE(style),qualityW=rec.ovrW||rec.w,sw=Object.values(qualityW).reduce((a,b)=>a+b,0);score=dot(qualityW,s6)/(sw||1);}
-  const base=C.OVR_BASE+(score/100)*C.OVR_SPAN;
+  const lift=(score/100)*C.OVR_SPAN;
+  // coerência: apara o lift que os stats prometem além do que o rating sustenta (ver COH_* no config).
+  const expLift=clamp(C.COH_LIFT0+C.COH_SLOPE*((p.rating||0)-C.RAT_BASE),0,C.OVR_SPAN);
+  const over=Math.max(0,lift-expLift-C.COH_TOLER);
+  const base=C.OVR_BASE+lift-(1-C.COH_KEEP)*over;
   const rec=style==="joker"?null:STYLE_RECIPE(style);
   const ratingWeight=clamp(+(rec?.ratingWeight??1),.25,2);
   const bonus=Math.max(0,(p.rating||0)-C.RAT_BASE)*C.RAT_K*ratingWeight;
