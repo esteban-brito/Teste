@@ -842,7 +842,9 @@ function buildCalibrationReport(){
   lines.push(`Regressoes de intencao: ${regressions.length}`);
   lines.push("");
   lines.push("=== MUDANCAS FINAIS NO MOTOR ===");
-  if(finalChanges.length)finalChanges.forEach(change=>lines.push(`${change.path}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`));
+  // 6 casas (não 3): a seção FINAIS é o que se aplica no motor. 3 casas perdia empates de faca
+  // (ex.: Boombl4 Ancora=Spacetaker) e a reprodução saía diferente do sandbox.
+  if(finalChanges.length)finalChanges.forEach(change=>lines.push(`${change.path}: ${(+change.from).toFixed(6)} -> ${(+change.to).toFixed(6)}`));
   else lines.push("Sem mudancas pendentes.");
   lines.push("");
   lines.push("=== INTENCOES MONITORADAS ===");
