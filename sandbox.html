@@ -373,6 +373,7 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .cr-sev{font-family:var(--ff);font-weight:800;font-size:var(--fs-md)}
 .cr-sev.ok{color:var(--win)} .cr-sev.mid{color:var(--warn)} .cr-sev.high{color:var(--loss)}
 .cr-ctxt{color:var(--neutral);font-size:var(--fs-base)}
+.cr-soft{color:var(--dim);font-size:var(--fs-s)}
 .cr-fold{border-top:1px solid var(--line2)}
 .cr-fold>summary{cursor:pointer;list-style:none;font-family:var(--ff);font-size:var(--fs-s);font-weight:700;color:var(--dim);padding:8px 0;user-select:none}
 .cr-fold>summary::-webkit-details-marker{display:none}
@@ -381,6 +382,7 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .cr-aff-list{display:flex;flex-direction:column;gap:2px;padding-bottom:8px}
 .cr-aff{display:grid;grid-template-columns:auto minmax(0,1.1fr) minmax(0,1fr) auto;align-items:center;gap:9px;padding:7px 8px;border-radius:var(--radius-sm)}
 .cr-aff.tgt{background:color-mix(in srgb,var(--win) 8%,transparent)}
+.cr-aff.soft{opacity:.72}
 .cr-adot{width:8px;height:8px;border-radius:50%;flex:none}
 .cr-aid{min-width:0;font-size:var(--fs-sm);font-weight:700;color:var(--txt);display:flex;align-items:center;gap:6px;overflow:hidden}
 .cr-atag{font-size:var(--fs-3xs);font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--win);flex:none}
@@ -710,10 +712,15 @@ function diffSnapshots(base,now){
     const marginDamage=Math.max(0,(old.roleMargin||0)-(current.roleMargin||0))/12+
       Math.max(0,(old.styleMargin||0)-(current.styleMargin||0))*4+
       Math.max(0,(old.ovrMargin||0)-(current.ovrMargin||0));
+    // Mudança MATERIAL é o que o usuário de fato verá: role, estilo ou OVR inteiro. Dano de
+    // realidade raro também conta porque altera a plausibilidade do jogador. Margem latente fica
+    // no diff para a IA penalizar, mas NÃO vira “jogador mudou junto” nem recebe dupla punição.
+    const materialChanged=roleChanged||styleChanged||Math.abs(dOvr)>=1||rareWorsened;
+    const softAffected=!materialChanged&&(marginDamage>1e-8||Math.abs(dReality)>1e-8);
     const weight=Math.abs(dOvr)+(roleChanged?2:0)+(styleChanged?1:0)+Math.max(0,dReality)*4+marginDamage;
-    return {...current,old,dOvr,dReality,marginDamage,rareWorsened,roleChanged,styleChanged,weight};
-  }).filter(change=>change&&change.weight>0)
-    .sort((a,b)=>b.weight-a.weight||Math.abs(b.dOvr)-Math.abs(a.dOvr)||a.nome.localeCompare(b.nome));
+    return {...current,old,dOvr,dReality,marginDamage,rareWorsened,roleChanged,styleChanged,materialChanged,softAffected,weight};
+  }).filter(change=>change&&change.weight>1e-9)
+    .sort((a,b)=>(b.materialChanged-a.materialChanged)||b.weight-a.weight||Math.abs(b.dOvr)-Math.abs(a.dOvr)||a.nome.localeCompare(b.nome));
   const teams=now.teams.map(current=>{
     const old=baseTeams.get(current.key);
     if(!old)return null;
@@ -722,23 +729,29 @@ function diffSnapshots(base,now){
     const dEfet=current.efet-old.efet;
     const weight=Math.abs(dEfet)+Math.abs(dBruta)*.5+Math.abs(dQuim)*100*.3;
     return {...current,old,dBruta,dQuim,dEfet,weight};
-  }).filter(change=>change&&change.weight>0)
+  }).filter(change=>change&&change.weight>1e-9)
     .sort((a,b)=>b.weight-a.weight||a.nome.localeCompare(b.nome));
   return {players,teams};
 }
 function summarizeDiff(diff,goalKey=null){
-  const players=diff.players||[], teams=diff.teams||[];
-  const roleChanges=players.filter(player=>player.roleChanged).length;
-  const styleChanges=players.filter(player=>player.styleChanged).length;
-  const realityDamage=players.reduce((sum,player)=>sum+Math.max(0,player.dReality||0),0);
-  const rareWorsened=players.filter(player=>player.rareWorsened).length;
-  const ovrImpact=players.reduce((sum,player)=>sum+Math.abs(player.dOvr||0),0);
-  const targetChanged=goalKey?players.some(player=>player.key===goalKey):false;
-  const collateralPlayers=goalKey?players.filter(player=>player.key!==goalKey).length:players.length;
+  const affected=diff.players||[], teams=diff.teams||[];
+  const material=affected.filter(player=>player.materialChanged??(player.roleChanged||player.styleChanged||Math.abs(player.dOvr||0)>=1||player.rareWorsened));
+  const soft=affected.filter(player=>!material.includes(player));
+  const roleChanges=material.filter(player=>player.roleChanged).length;
+  const styleChanges=material.filter(player=>player.styleChanged).length;
+  const realityDamage=affected.reduce((sum,player)=>sum+Math.max(0,player.dReality||0),0);
+  const rareWorsened=affected.filter(player=>player.rareWorsened).length;
+  const ovrImpact=material.reduce((sum,player)=>sum+Math.abs(player.dOvr||0),0);
+  const targetChanged=goalKey?material.some(player=>player.key===goalKey):false;
+  const collateralPlayers=goalKey?material.filter(player=>player.key!==goalKey).length:material.length;
+  const collateralSoftPlayers=goalKey?soft.filter(player=>player.key!==goalKey).length:soft.length;
   return {
-    players:players.length,
+    players:material.length,
+    affectedPlayers:affected.length,
+    softPlayers:soft.length,
+    collateralSoftPlayers,
     teams:teams.length,
-    total:players.length+teams.length,
+    total:material.length+teams.length,
     roleChanges,
     styleChanges,
     realityDamage,
@@ -756,6 +769,7 @@ function renderAuditMetrics(summary,scope){
   return `<div class="stat-hero ${heroCls}"><div class="v mono${colBump}">${summary.collateralPlayers}</div><div class="l">colateral</div></div>
   <div class="stat-mini">
     <span><b class="mono">${summary.players}/${summary.teams}</b>${esc(scope)}</span>
+    ${summary.softPlayers?`<span><b class="mono">${summary.softPlayers}</b>margens</span>`:""}
     <span><b class="mono">${summary.roleChanges}/${summary.styleChanges}</b>role/playstyle</span>
     <span><b class="mono">${summary.ovrImpact.toFixed(0)}</b>OVR total</span>
     <span class="${rareCls}"><b class="mono">${summary.rareWorsened}</b>raros pioram</span>
@@ -769,9 +783,11 @@ function renderImpactPanel(){
   const report=impactReport();
   const summary=summarizeDiff(report);
   const regressions=sessionRegressions();
-  const changedPlayers=report.players.length;
+  const materialPlayers=report.players.filter(player=>player.materialChanged??(player.roleChanged||player.styleChanged||Math.abs(player.dOvr||0)>=1||player.rareWorsened));
+  const softPlayers=report.players.filter(player=>!materialPlayers.includes(player));
+  const changedPlayers=materialPlayers.length;
   const changedTeams=report.teams.length;
-  const playerRows=report.players.slice(0,7).map(player=>{
+  const playerRows=materialPlayers.slice(0,7).map(player=>{
     const risk=player.rareWorsened?` | realidade ${signedDelta(player.dReality,2)}`:"";
     const meta=[
       player.roleChanged?`${player.old.role} -> ${player.role}`:player.role,
@@ -780,28 +796,32 @@ function renderImpactPanel(){
     const deltaCls=player.dOvr>0?"up":player.dOvr<0?"down":"";
     return `<div class="impact-row"><div class="impact-main"><div class="impact-name">${esc(player.nome)} <span style="color:var(--dim);font-weight:600">${esc(player.team)}</span></div><div class="impact-meta">${esc(meta)} | OVR ${player.old.ovr} -> ${player.ovr} <span class="${deltaCls}">(${signedDelta(player.dOvr)})</span></div></div></div>`;
   }).join("");
+  const softRows=softPlayers.slice(0,7).map(player=>`<div class="impact-row"><div class="impact-main"><div class="impact-name">${esc(player.nome)} <span style="color:var(--dim);font-weight:600">${esc(player.team)}</span></div><div class="impact-meta">margem interna afetada · dano ${(+player.marginDamage||0).toFixed(3)}</div></div></div>`).join("");
   const teamRows=report.teams.slice(0,5).map(team=>{
     const deltaCls=team.dEfet>0?"up":team.dEfet<0?"down":"";
     const meta=`Bruta ${team.old.bruta} -> ${team.bruta} | Quim ${(team.old.quim*100).toFixed(0)}% -> ${(team.quim*100).toFixed(0)}%`;
     return `<div class="impact-row"><div class="impact-main"><div class="impact-name">${esc(team.nome)}</div><div class="impact-meta">${esc(meta)}</div></div><div class="impact-delta ${deltaCls}">Efet ${team.old.efet} -> ${team.efet}</div></div>`;
   }).join("");
   const empty=!changedPlayers&&!changedTeams;
-  // estado vazio: uma linha quieta, sem herói "0" gigante ocupando a coluna
+  // Margens latentes são mostradas à parte, nunca como “jogadores que mudaram”.
   if(empty&&!regressions.length){
-    return `<div class="liveimpact liveimpact-quiet">Impacto acumulado · sem mudanças desde o baseline</div>`;
+    const softNote=softPlayers.length?` · ${softPlayers.length} ${softPlayers.length===1?"margem interna afetada":"margens internas afetadas"}`:"";
+    return `<div class="liveimpact liveimpact-quiet">Impacto acumulado · sem mudanças materiais${softNote}</div>`;
   }
   const regressionRows=regressions.slice(0,5).map(item=>`<div class="impact-row"><div class="impact-main"><div class="impact-name">${esc(item.nome)} <span style="color:var(--warn);font-weight:700">regrediu</span></div><div class="impact-meta">esperado ${esc(intentionExpectedText(item))} · ${esc((item.failed||[]).join(", "))}</div></div></div>`).join("");
   return `<div class="liveimpact">
-    <div class="liveimpact-head"><div class="liveimpact-title">Impacto acumulado</div><div class="liveimpact-count">${changedPlayers+changedTeams} desde o baseline</div></div>
+    <div class="liveimpact-head"><div class="liveimpact-title">Impacto acumulado</div><div class="liveimpact-count">${changedPlayers+changedTeams} mudanças materiais${softPlayers.length?` · ${softPlayers.length} margens`:""}</div></div>
     ${renderAuditMetrics(summary,"jog/times")}
     ${regressions.length?`<div class="impact-section"><h4>Regressões de intenção</h4>${regressionRows}</div>`:""}
     ${empty?"":`
-      <div class="impact-section"><h4>Jogadores</h4>${playerRows||'<div class="impact-empty">Sem jogador alterado.</div>'}</div>
+      <div class="impact-section"><h4>Jogadores com mudança material</h4>${playerRows||'<div class="impact-empty">Sem jogador alterado.</div>'}</div>
       <div class="impact-section"><h4>Times</h4>${teamRows||'<div class="impact-empty">Sem time alterado.</div>'}</div>`}
+    ${softPlayers.length?`<div class="impact-section"><h4>Margens internas afetadas</h4>${softRows}</div>`:""}
   </div>`;
 }
 function changeLine(change){
   if(change.type==="nm")return`NM_DEF.${change.style}.w.${change.axis}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
+  if(change.type==="nmover")return`NM_DEF.${change.style}.ovrW.${change.axis}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
   if(change.type==="rating")return`NM_DEF.${change.style}.ratingWeight: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
   if(change.type==="stylecontra")return`STYLE_CONTRA.${change.styleId}.${change.axis}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
   if(change.type==="contra")return`ROLE_CONTRA.${change.role}.${change.attr}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
@@ -847,9 +867,15 @@ function buildCalibrationReport(){
   });
   else lines.push("Nenhuma aplicacao registrada.");
   lines.push("");
-  lines.push("=== IMPACTO ACUMULADO - JOGADORES ===");
-  if(report.players.length)report.players.forEach(player=>lines.push(`${player.nome} (${player.team}): ${player.old.role} / ${player.old.style} -> ${player.role} / ${player.style}; OVR ${player.old.ovr} -> ${player.ovr}`));
-  else lines.push("Sem jogadores alterados.");
+  const materialPlayers=report.players.filter(player=>player.materialChanged??(player.roleChanged||player.styleChanged||Math.abs(player.dOvr||0)>=1||player.rareWorsened));
+  const softPlayers=report.players.filter(player=>!materialPlayers.includes(player));
+  lines.push("=== IMPACTO ACUMULADO - MUDANCAS MATERIAIS ===");
+  if(materialPlayers.length)materialPlayers.forEach(player=>lines.push(`${player.nome} (${player.team}): ${player.old.role} / ${player.old.style} -> ${player.role} / ${player.style}; OVR ${player.old.ovr} -> ${player.ovr}`));
+  else lines.push("Sem jogadores com mudanca material.");
+  lines.push("");
+  lines.push("=== MARGENS INTERNAS AFETADAS ===");
+  if(softPlayers.length)softPlayers.forEach(player=>lines.push(`${player.nome} (${player.team}): dano de margem ${(player.marginDamage||0).toFixed(3)}; realidade ${signedDelta(player.dReality||0,3)}`));
+  else lines.push("Sem margens internas afetadas.");
   lines.push("");
   lines.push("=== IMPACTO ACUMULADO - TIMES ===");
   if(report.teams.length)report.teams.forEach(team=>lines.push(`${team.nome}: efet ${team.old.efet} -> ${team.efet}; quim ${(team.old.quim*100).toFixed(0)}% -> ${(team.quim*100).toFixed(0)}%`));
@@ -1056,7 +1082,17 @@ function intentionExpectedText(intent){
 
 function configValueRange(path){
   if(path.includes(".ratingWeight"))return 1.75;
-  if(path.startsWith("NM_DEF.")&&path.includes(".w."))return 1;
+  if(path.startsWith("NM_DEF.")&&(path.includes(".w.")||path.includes(".ovrW.")))return 1;
+  const cfgRanges={
+    "CFG_AVALIACAO.RIFLER_GLUE_MAX":15,"CFG_AVALIACAO.RIFLER_GLUE_FLOOR":80,
+    "CFG_AVALIACAO.RIFLER_GLUE_SCALE":2,"CFG_AVALIACAO.RIFLER_GLUE_SPREAD_PEN":1,
+    "CFG_AVALIACAO.RIFLER_GLUE_SPEC_START":80,"CFG_AVALIACAO.RIFLER_GLUE_SPEC_RANGE":60,
+    "CFG_AVALIACAO.FAC_GLUE_MAX":1,"CFG_AVALIACAO.FAC_GLUE_FLOOR":80,
+    "CFG_AVALIACAO.FAC_GLUE_RANGE":40,"CFG_AVALIACAO.FAC_GLUE_SPREAD":40,
+    "CFG_AVALIACAO.FAC_GLUE_SPEC_START":80,"CFG_AVALIACAO.FAC_GLUE_SPEC_RANGE":60,
+    "CFG_AVALIACAO.FAC_GLUE_TRADE_FLOOR":80,"CFG_AVALIACAO.FAC_GLUE_TRADE_RANGE":50
+  };
+  if(cfgRanges[path])return cfgRanges[path];
   if(path.startsWith("STYLE_CONTRA."))return .8;
   if(path.startsWith("ROLE_RULES."))return 4;
   if(path.startsWith("IGL_ROLE_AFIN."))return 2;
@@ -1073,6 +1109,7 @@ function configValueRange(path){
 function changeRangePath(change){
   switch(change.type){
     case "nm": return `NM_DEF.${change.style}.w.${change.axis}`;
+    case "nmover": return `NM_DEF.${change.style}.ovrW.${change.axis}`;
     case "rating": return `NM_DEF.${change.style}.ratingWeight`;
     case "stylecontra": return `STYLE_CONTRA.${change.styleId}.${change.axis}`;
     case "contra": return `ROLE_CONTRA.${change.role}.${change.attr}`;
@@ -1171,15 +1208,20 @@ function resetWorkbench(){
   refresh("all");
   toast("Bancada resetada");
 }
-function normalizeRecipeInPlace(style){
-  const w=E.NM_DEF[style]?.w;if(!w)return;
+function normalizeWeightMapInPlace(w){
+  if(!w)return;
   const keys=Object.keys(w),total=keys.reduce((sum,k)=>sum+Math.max(.01,+w[k]||0),0)||1;
   keys.forEach(k=>w[k]=+(Math.max(.01,+w[k]||0)/total).toFixed(6));
 }
+function normalizeRecipeInPlace(style){normalizeWeightMapInPlace(E.NM_DEF[style]?.w);}
+function normalizeOvrRecipeInPlace(style){normalizeWeightMapInPlace(E.NM_DEF[style]?.ovrW);}
 function applyCalibChanges(changes){
-  const touchedRecipes=new Set();
+  const touchedRecipes=new Set(),touchedOvrRecipes=new Set();
   changes.forEach(change=>{
     if(change.type==="nm"){const w=E.NM_DEF[change.style]?.w;if(w){w[change.axis]=change.to;touchedRecipes.add(change.style);}}
+    else if(change.type==="nmover"){
+      const rec=E.NM_DEF[change.style];if(rec){if(!rec.ovrW)rec.ovrW=clone(rec.w||{});rec.ovrW[change.axis]=change.to;touchedOvrRecipes.add(change.style);}
+    }
     else if(change.type==="rating"){const rec=E.NM_DEF[change.style];if(rec)rec.ratingWeight=change.to;}
     else if(change.type==="cfg"){E.CFG_AVALIACAO[change.key]=change.to;}
     else if(change.type==="ovrparam"){E.CFG_AVALIACAO[change.key]=change.to;}
@@ -1202,10 +1244,12 @@ function applyCalibChanges(changes){
     else setRoleWeight(change.role,change.attr,change.to);
   });
   touchedRecipes.forEach(normalizeRecipeInPlace);
+  touchedOvrRecipes.forEach(normalizeOvrRecipeInPlace);
 }
 function materializeAppliedChanges(changes,baseSnapshot){
   const styles=new Set(changes.filter(c=>c.type==="nm").map(c=>c.style));
-  const other=changes.filter(c=>c.type!=="nm"),nm=[];
+  const ovrStyles=new Set(changes.filter(c=>c.type==="nmover").map(c=>c.style));
+  const other=changes.filter(c=>c.type!=="nm"&&c.type!=="nmover"),nm=[],nmover=[];
   styles.forEach(style=>{
     const before=baseSnapshot?.nm?.[style]?.w||{},after=E.NM_DEF[style]?.w||{};
     new Set([...Object.keys(before),...Object.keys(after)]).forEach(axis=>{
@@ -1213,7 +1257,14 @@ function materializeAppliedChanges(changes,baseSnapshot){
       if(Math.abs(to-from)>1e-9)nm.push({type:"nm",style,axis,from,to});
     });
   });
-  return mergeChanges(other,nm);
+  ovrStyles.forEach(style=>{
+    const before=baseSnapshot?.nm?.[style]?.ovrW||baseSnapshot?.nm?.[style]?.w||{},after=E.NM_DEF[style]?.ovrW||E.NM_DEF[style]?.w||{};
+    new Set([...Object.keys(before),...Object.keys(after)]).forEach(axis=>{
+      const from=+(before[axis]||0),to=+(after[axis]||0);
+      if(Math.abs(to-from)>1e-9)nmover.push({type:"nmover",style,axis,from,to});
+    });
+  });
+  return mergeChanges(other,nm,nmover);
 }
 // identidade do ALVO da mudança (sem o valor). changeKey inclui o "to" (dedup de candidatos
 // idênticos); knobKey identifica só a alavanca (dedup de knob — [16]: evita 2 mudanças no mesmo
@@ -1244,6 +1295,15 @@ function makeNmChange(style,axis,delta){
   const w=E.NM_DEF[style]?.w||{};
   const from=w[axis]||0;
   return {type:"nm",style,axis,from,to:Math.max(.01,+(from+delta).toFixed(3))};
+}
+function makeNmOvrChange(style,axis,delta){
+  const rec=E.NM_DEF[style]||{},w=rec.ovrW||rec.w||{};
+  const from=w[axis]||0;
+  return {type:"nmover",style,axis,from,to:Math.max(.01,+(from+delta).toFixed(3))};
+}
+function makeCfgChange(key,delta,lo,hi){
+  const from=+(E.CFG_AVALIACAO[key]||0),to=Math.max(lo,Math.min(hi,from+delta));
+  return {type:"cfg",key,from,to:+to.toFixed(4)};
 }
 function makeRatingWeightChange(style,delta){
   const from=+(E.NM_DEF[style]?.ratingWeight??1);
@@ -1330,6 +1390,7 @@ function computeAffinityGap(player,target,current){
 function candidateLabel(changes){
   return changes.map(change=>{
     if(change.type==="nm")return`NM.${change.axis.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
+    if(change.type==="nmover")return`NM.${change.style}.OVR.${change.axis.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     if(change.type==="rating")return`NM.${change.style}.RATING ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     if(change.type==="stylecontra")return`SCONTRA.${change.styleId}.${change.axis.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
     if(change.type==="contra")return`${change.role}.CONTRA.${change.attr.toUpperCase()} ${change.from.toFixed(2)}->${change.to.toFixed(2)}`;
@@ -1477,15 +1538,21 @@ function generateOvrCandidates(raw,targetOvr){
   const title=ev.isIGL?(C.IGL_TITULO[ev.colocacao]||0):0, teto=ev.isIGL?C.IGL_TETO:C.OVR_MAX;
   const d=Math.min(targetOvr,teto)-(core+title); // quanto o core precisa mover pro OVR exibido bater o alvo
   if(Math.abs(d)<.35)return [[]]; // já está no alvo
-  const cl=(v,lo,hi)=>Math.max(lo,Math.min(hi,v)), out=[];
-  out.push([{type:"ovrparam",key:"OVR_BASE",from:C.OVR_BASE,to:+cl(C.OVR_BASE+d,0,16).toFixed(2)}]);
-  if(score>5)out.push([{type:"ovrparam",key:"OVR_SPAN",from:C.OVR_SPAN,to:+cl(C.OVR_SPAN+d*100/score,0,20).toFixed(2)}]);
+  const cl=(v,lo,hi)=>Math.max(lo,Math.min(hi,v)), out=[],globals=[];
+  let ratingCandidate=null;const recipeCandidates=[];
+  // Parâmetros globais ficam por último: primeiro tenta alavancas do próprio estilo, que tendem a
+  // produzir muito menos colateral. Continuam disponíveis como fallback quando nada local resolve.
+  globals.push([{type:"ovrparam",key:"OVR_BASE",from:C.OVR_BASE,to:+cl(C.OVR_BASE+d,0,16).toFixed(2)}]);
+  if(score>5)globals.push([{type:"ovrparam",key:"OVR_SPAN",from:C.OVR_SPAN,to:+cl(C.OVR_SPAN+d*100/score,0,20).toFixed(2)}]);
   const rex=(+raw.rating||0)-C.RAT_BASE;
   if(rex>.05){
     const rw=+(st.ratingWeight??E.NM_DEF[E.STYLE_LABEL(ev.playstyle)]?.ratingWeight??1);
-    out.push([{type:"ovrparam",key:"RAT_K",from:C.RAT_K,to:+cl(C.RAT_K+d/(rex*Math.max(.25,rw)),0,25).toFixed(2)}]);
+    globals.push([{type:"ovrparam",key:"RAT_K",from:C.RAT_K,to:+cl(C.RAT_K+d/(rex*Math.max(.25,rw)),0,25).toFixed(2)}]);
     const styleLabel=E.STYLE_LABEL(ev.playstyle), denom=rex*Math.max(.01,C.RAT_K);
-    if(styleLabel!=="Coringa"&&E.NM_DEF[styleLabel])out.push([{type:"rating",style:styleLabel,from:rw,to:+cl(rw+d/denom,.25,2).toFixed(3)}]);
+    if(styleLabel!=="Coringa"&&E.NM_DEF[styleLabel]){
+      ratingCandidate=[{type:"rating",style:styleLabel,from:rw,to:+cl(rw+d/denom,.25,2).toFixed(3)}];
+      out.push(ratingCandidate);
+    }
   }
   // [19] candidato CIRÚRGICO RENORMALIZADO: sobe o eixo forte da receita e desce o fraco em igual
   // medida. Σw preservado → a receita continua somando ~100% (o score = dot(w,s6) não estoura de
@@ -1493,25 +1560,64 @@ function generateOvrCandidates(raw,targetOvr){
   const styleLabel=E.STYLE_LABEL(ev.playstyle), rec=E.NM_DEF[styleLabel];
   const s6=st.s6||nmOVR(raw,ev.combatRole||"Rifler").s6||{};
   if(rec&&styleLabel!=="Coringa"&&C.OVR_SPAN>0){
-    const keys=Object.keys(rec.w);
+    const quality=rec.ovrW||rec.w,kind=rec.ovrW?"nmover":"nm",keys=Object.keys(quality);
     const strong=keys.slice().sort((a,b)=>(s6[b]||0)-(s6[a]||0))[0];
     const weak=keys.slice().sort((a,b)=>(s6[a]||0)-(s6[b]||0))[0];
     const spread=(s6[strong]||0)-(s6[weak]||0);
     if(strong&&weak&&strong!==weak&&spread>5){
-      const base=d*100/C.OVR_SPAN/spread, wS=rec.w[strong], wW=rec.w[weak]; // δ de peso que move o OVR em ~d
+      const base=d*100/C.OVR_SPAN/spread, wS=quality[strong], wW=quality[weak]; // δ que move OVR sem alterar identidade quando há ovrW
       [.8,1,1.25].forEach(m=>{const dw=cl(base*m,-.22,.22);
-        if(Math.abs(dw)>1e-3)out.push([
-          {type:"nm",style:styleLabel,axis:strong,from:wS,to:Math.max(.01,+(wS+dw).toFixed(3))},
-          {type:"nm",style:styleLabel,axis:weak,from:wW,to:Math.max(.01,+(wW-dw).toFixed(3))}]);
+        if(Math.abs(dw)>1e-3){
+          const pair=[
+            {type:kind,style:styleLabel,axis:strong,from:wS,to:Math.max(.01,+(wS+dw).toFixed(3))},
+            {type:kind,style:styleLabel,axis:weak,from:wW,to:Math.max(.01,+(wW-dw).toFixed(3))}
+          ];
+          out.push(pair);recipeCandidates.push(pair);
+        }
       });
     }
   }
-  return dedupeCandidates(out);
+  // OVR local pode exigir duas alavancas pequenas. Combinar ratingWeight do estilo com a receita
+  // de qualidade é muito mais cirúrgico do que mover OVR_BASE/RAT_K para a liga inteira.
+  const combined=[];
+  if(ratingCandidate)recipeCandidates.forEach(pair=>combined.push([...ratingCandidate,...pair]));
+  return dedupeCandidates([...combined,...out,...globals]);
+}
+function generateSemanticContextCandidates(goal,current){
+  const C=E.CFG_AVALIACAO,out=[],roleBundles=[],styleBundles=[];
+  if(goal.r1==="Rifler"&&current.r1!=="Rifler"){
+    roleBundles.push([
+      {type:"cfg",key:"RIFLER_GLUE_MAX",from:C.RIFLER_GLUE_MAX,to:+Math.max(C.RIFLER_GLUE_MAX,7).toFixed(3)},
+      {type:"cfg",key:"RIFLER_GLUE_FLOOR",from:C.RIFLER_GLUE_FLOOR,to:+Math.min(C.RIFLER_GLUE_FLOOR,40).toFixed(3)}
+    ]);
+    roleBundles.push([
+      {type:"cfg",key:"RIFLER_GLUE_MAX",from:C.RIFLER_GLUE_MAX,to:+Math.max(C.RIFLER_GLUE_MAX,10).toFixed(3)},
+      {type:"cfg",key:"RIFLER_GLUE_FLOOR",from:C.RIFLER_GLUE_FLOOR,to:+Math.min(C.RIFLER_GLUE_FLOOR,35).toFixed(3)},
+      {type:"cfg",key:"RIFLER_GLUE_SPEC_RANGE",from:C.RIFLER_GLUE_SPEC_RANGE,to:+Math.max(C.RIFLER_GLUE_SPEC_RANGE,24).toFixed(3)}
+    ]);
+  }
+  if(goal.style==="Facilitador"&&current.style!=="Facilitador"){
+    styleBundles.push([
+      {type:"cfg",key:"FAC_GLUE_MAX",from:C.FAC_GLUE_MAX,to:+Math.max(C.FAC_GLUE_MAX,.35).toFixed(3)},
+      {type:"cfg",key:"FAC_GLUE_FLOOR",from:C.FAC_GLUE_FLOOR,to:+Math.min(C.FAC_GLUE_FLOOR,45).toFixed(3)},
+      {type:"cfg",key:"FAC_GLUE_SPREAD",from:C.FAC_GLUE_SPREAD,to:+Math.max(C.FAC_GLUE_SPREAD,10).toFixed(3)}
+    ]);
+    styleBundles.push([
+      {type:"cfg",key:"FAC_GLUE_MAX",from:C.FAC_GLUE_MAX,to:+Math.max(C.FAC_GLUE_MAX,.5).toFixed(3)},
+      {type:"cfg",key:"FAC_GLUE_FLOOR",from:C.FAC_GLUE_FLOOR,to:+Math.min(C.FAC_GLUE_FLOOR,42).toFixed(3)},
+      {type:"cfg",key:"FAC_GLUE_SPREAD",from:C.FAC_GLUE_SPREAD,to:+Math.max(C.FAC_GLUE_SPREAD,14).toFixed(3)},
+      {type:"cfg",key:"FAC_GLUE_TRADE_FLOOR",from:C.FAC_GLUE_TRADE_FLOOR,to:+Math.min(C.FAC_GLUE_TRADE_FLOOR,28).toFixed(3)}
+    ]);
+  }
+  out.push(...roleBundles,...styleBundles);
+  if(roleBundles.length&&styleBundles.length)roleBundles.forEach(r=>styleBundles.forEach(st=>out.push(mergeChanges(r,st))));
+  return dedupeCandidates(out.map(ch=>mergeChanges(ch)).filter(ch=>ch.length));
 }
 function generateGoalCandidates(goal,current,raw,isIGL,opts){
   const all=[], struct=[]; // struct = sementes de função/estilo, separadas p/ cruzar com OVR (objetivo combinado)
   const ovrCands=goal.ovr?generateOvrCandidates(raw,goal.ovr):[];
   all.push(...ovrCands);
+  struct.push(...generateSemanticContextCandidates(goal,current));
   if(goal.style==="Coringa")struct.push(...generateJokerCandidates(raw));
   else if(goal.style&&current.style==="Coringa")struct.push(...generateUnjokerCandidates(raw));
   const ro=opts?.role||{};
@@ -1632,6 +1738,16 @@ function roleLeverBank(target,current,raw,opts){
       if(E.ROLE_RULES?.Entry?.[rule])levers.push({weight,make:d=>makeRuleChange("Entry",rule,-d*.35),label:`Entry.rule.${rule}.transicao-`});
     });
   }
+  // Alavancas semânticas: em vez de distorcer os pesos de TODOS os Riflers, a IA pode ajustar
+  // o reconhecimento contínuo de generalistas. Isso é especialmente cirúrgico para perfis glue.
+  if(target==="Rifler"){
+    levers.push({weight:105,make:d=>makeCfgChange("RIFLER_GLUE_MAX",d*14,0,15),label:"RIFLER_GLUE_MAX+"});
+    levers.push({weight:90,make:d=>makeCfgChange("RIFLER_GLUE_FLOOR",-d*22,0,80),label:"RIFLER_GLUE_FLOOR-"});
+    levers.push({weight:70,make:d=>makeCfgChange("RIFLER_GLUE_SPEC_RANGE",d*20,1,60),label:"RIFLER_GLUE_SPEC_RANGE+"});
+  }else if(current==="Rifler"){
+    levers.push({weight:35,make:d=>makeCfgChange("RIFLER_GLUE_MAX",-d*5,0,15),label:"RIFLER_GLUE_MAX-"});
+    levers.push({weight:28,make:d=>makeCfgChange("RIFLER_GLUE_FLOOR",d*15,0,80),label:"RIFLER_GLUE_FLOOR+"});
+  }
   // [3-role2] gap de afinidade (sem ctx) de propósito: p/ SENSIBILIDADE é equivalente ao de
   // secondaryScore — o custo de par é constante sob as alavancas, cancela na derivada (Δgap idêntico).
   if(opts?.sensitize)sensitizeLevers(levers,raw,()=>targetGap(raw,target,current,ctx));
@@ -1664,6 +1780,15 @@ function styleLeverBank(targetStyleLabel,raw,evalRole,opts){
   // receita global fazia). É o knob certo pra "AWPer passivo → Closer" com o menor colateral possível.
   if((evalRole==="AWPer")&&(targetId==="clutcher"||targetId==="anchor"))
     levers.push({weight:120,make:d=>({type:"cfg",key:"AWP_LEAN",from:E.CFG_AVALIACAO.AWP_LEAN,to:+Math.max(0,Math.min(.4,E.CFG_AVALIACAO.AWP_LEAN+d*.6)).toFixed(3)}),label:"AWP_LEAN"});
+  if(targetId==="support"){
+    levers.push({weight:135,make:d=>makeCfgChange("FAC_GLUE_MAX",d*.70,0,1),label:"FAC_GLUE_MAX+"});
+    levers.push({weight:105,make:d=>makeCfgChange("FAC_GLUE_FLOOR",-d*18,0,80),label:"FAC_GLUE_FLOOR-"});
+    levers.push({weight:85,make:d=>makeCfgChange("FAC_GLUE_SPREAD",d*14,1,40),label:"FAC_GLUE_SPREAD+"});
+    levers.push({weight:55,make:d=>makeCfgChange("FAC_GLUE_TRADE_FLOOR",-d*12,0,80),label:"FAC_GLUE_TRADE_FLOOR-"});
+  }else if(currentId==="support"){
+    levers.push({weight:35,make:d=>makeCfgChange("FAC_GLUE_MAX",-d*.30,0,1),label:"FAC_GLUE_MAX-"});
+    levers.push({weight:24,make:d=>makeCfgChange("FAC_GLUE_FLOOR",d*12,0,80),label:"FAC_GLUE_FLOOR+"});
+  }
   if(currentId==="joker"){
     levers.push({weight:95,make:d=>({type:"cor",key:"pisoMin",from:E.NM_COR.pisoMin,to:+Math.min(100,E.NM_COR.pisoMin+d*24).toFixed(2)}),label:"Coringa.pisoMin+"});
     levers.push({weight:95,make:d=>({type:"cor",key:"spreadMax",from:E.NM_COR.spreadMax,to:+Math.max(0,E.NM_COR.spreadMax-d*24).toFixed(2)}),label:"Coringa.spreadMax-"});
@@ -1684,11 +1809,13 @@ function ovrLeverBank(raw,targetOvr,opts){
   const d=Math.min(targetOvr,ev.isIGL?C.IGL_TETO:C.OVR_MAX)-(core+title), dir=d>=0?1:-1;
   const levers=[];
   if(rec&&styleLabel!=="Coringa"){
-    const keys=Object.keys(rec.w);
+    // Se o estilo separa identidade (w) de qualidade (ovrW), alvo de OVR mexe SOMENTE em ovrW.
+    // Isso permite melhorar/rebaixar o nível sem empurrar jogadores para outro playstyle.
+    const quality=rec.ovrW||rec.w,keys=Object.keys(quality),maker=rec.ovrW?makeNmOvrChange:makeNmChange;
     keys.slice().sort((a,b)=>(s6[b]||0)-(s6[a]||0)).slice(0,3).forEach(k=>
-      levers.push({weight:110,make:x=>makeNmChange(styleLabel,k,dir*x*.6),label:`NM.${styleLabel}.${k}(surg)`}));
+      levers.push({weight:125,make:x=>maker(styleLabel,k,dir*x*.6),label:`NM.${styleLabel}.OVR.${k}(surg)`}));
     keys.slice().sort((a,b)=>(s6[a]||0)-(s6[b]||0)).slice(0,2).forEach(k=>
-      levers.push({weight:80,make:x=>makeNmChange(styleLabel,k,-dir*x*.4),label:`NM.${styleLabel}.${k}-(surg)`}));
+      levers.push({weight:90,make:x=>maker(styleLabel,k,-dir*x*.4),label:`NM.${styleLabel}.OVR.${k}-(surg)`}));
   }
   levers.push({weight:6,make:x=>({type:"ovrparam",key:"OVR_BASE",from:C.OVR_BASE,to:+Math.max(0,Math.min(16,C.OVR_BASE+dir*x*3)).toFixed(2)}),label:"OVR_BASE"});
   levers.push({weight:14,make:x=>({type:"ovrparam",key:"OVR_SPAN",from:C.OVR_SPAN,to:+Math.max(0,Math.min(20,C.OVR_SPAN+dir*x*3)).toFixed(2)}),label:"OVR_SPAN"});
@@ -1840,14 +1967,14 @@ const CALIB_STRATEGIES={
 // agora o "to" reescalado é capado aqui, então o annealing só produz estados de config válidos.
 function clampChangeTo(change,v){
   const t=change.type;
-  if(t==="nm")return Math.max(.01,v);
+  if(t==="nm"||t==="nmover")return Math.max(.01,v);
   if(t==="rating")return Math.max(.25,Math.min(2,v));
   if(t==="stylecontra")return Math.max(0,Math.min(.8,v));
   if(t==="rule")return Math.max(-2,Math.min(2,v));
   if(t==="igl")return Math.max(-1,Math.min(1,v));
   if(t==="cor")return Math.max(0,Math.min(100,v));
   if(t==="cfg"){
-    const limits={AWP_LEAN:[0,.4]},range=limits[change.key]||[-Infinity,Infinity];
+    const limits={AWP_LEAN:[0,.4],RIFLER_GLUE_MAX:[0,15],RIFLER_GLUE_FLOOR:[0,80],RIFLER_GLUE_SCALE:[0,2],RIFLER_GLUE_SPREAD_PEN:[0,1],RIFLER_GLUE_SPEC_START:[0,80],RIFLER_GLUE_SPEC_RANGE:[1,60],FAC_GLUE_MAX:[0,1],FAC_GLUE_FLOOR:[0,80],FAC_GLUE_RANGE:[1,40],FAC_GLUE_SPREAD:[1,40],FAC_GLUE_SPEC_START:[0,80],FAC_GLUE_SPEC_RANGE:[1,60],FAC_GLUE_TRADE_FLOOR:[0,80],FAC_GLUE_TRADE_RANGE:[1,50]},range=limits[change.key]||[-Infinity,Infinity];
     return Math.max(range[0],Math.min(range[1],v));
   }
   if(t==="ovrparam"){
@@ -1860,20 +1987,21 @@ function scaleChanges(changes,factor){
   return changes.map(c=>({...c,to:+clampChangeTo(c,c.from+(c.to-c.from)*factor).toFixed(3)}));
 }
 function calibrationMetrics(changes,diff,goalKey,extra={}){
-  const changed=diff.players.length+diff.teams.length;
+  const affected=diff.players||[],material=affected.filter(p=>p.materialChanged??(p.roleChanged||p.styleChanged||Math.abs(p.dOvr||0)>=1||p.rareWorsened));
+  const changed=material.length+diff.teams.length;
   const deltaCost=changes.reduce((sum,change)=>sum+Math.abs(change.to-change.from)/Math.max(.05,configValueRange(changeRangePath(change))),0);
-  const roleChanges=diff.players.filter(p=>p.roleChanged).length;
-  const styleChanges=diff.players.filter(p=>p.styleChanged).length;
-  const realityPenalty=diff.players.reduce((sum,p)=>sum+Math.max(0,p.dReality||0),0);
-  const marginDamage=diff.players.reduce((sum,p)=>sum+Math.max(0,p.marginDamage||0),0);
-  const rareWorsened=diff.players.filter(p=>p.rareWorsened).length;
-  const ovrImpact=diff.players.reduce((sum,p)=>sum+Math.abs(p.dOvr||0),0);
-  const targetRoleChanges=goalKey?diff.players.filter(p=>p.key===goalKey&&p.roleChanged).length:0;
+  const roleChanges=material.filter(p=>p.roleChanged).length;
+  const styleChanges=material.filter(p=>p.styleChanged).length;
+  const realityPenalty=affected.reduce((sum,p)=>sum+Math.max(0,p.dReality||0),0);
+  const marginDamage=affected.reduce((sum,p)=>sum+Math.max(0,p.marginDamage||0),0);
+  const rareWorsened=affected.filter(p=>p.rareWorsened).length;
+  const ovrImpact=material.reduce((sum,p)=>sum+Math.abs(p.dOvr||0),0);
+  const targetRoleChanges=goalKey?material.filter(p=>p.key===goalKey&&p.roleChanged).length:0;
   const collateralRoleChanges=roleChanges-targetRoleChanges;
-  const collateralOvrShifts=diff.players.filter(p=>p.key!==goalKey&&Math.abs(p.dOvr||0)>=1).length;
-  const collateralStyleChanges=diff.players.filter(p=>p.key!==goalKey&&p.styleChanged).length;
-  const targetChanged=goalKey?diff.players.some(p=>p.key===goalKey):false;
-  const isolatedTarget=targetChanged&&diff.players.length===1&&diff.teams.length===0?1:0;
+  const collateralOvrShifts=material.filter(p=>p.key!==goalKey&&Math.abs(p.dOvr||0)>=1).length;
+  const collateralStyleChanges=material.filter(p=>p.key!==goalKey&&p.styleChanged).length;
+  const targetChanged=goalKey?material.some(p=>p.key===goalKey):false;
+  const isolatedTarget=targetChanged&&material.length===1?1:0;
   const teamChanges=diff.teams.length;
   const broadCut=changes.reduce((sum,change)=>sum+(!change.type&&change.to<change.from?change.from-change.to:0),0);
   const thinRule=changes.reduce((sum,change)=>sum+(change.type==="igl"||change.type==="rule"?Math.abs(change.to-change.from):0),0);
@@ -2122,10 +2250,13 @@ async function findCalibration(goal,onProgress=null,options={}){
   };
   const runSequentialComposition=async()=>{
     const components=[];
-    if(goal.r1&&!isIGL)components.push({r1:goal.r1});
-    if(goal.r2)components.push({r2:goal.r2});
-    if(goal.style)components.push({style:goal.style});
-    if(goal.ovr)components.push({ovr:goal.ovr});
+    // Só encadeia dimensões ainda NÃO satisfeitas. Incluir estilo/role já atingido transformava um
+    // alvo simples de OVR numa composição desnecessária e podia preferir OVR_BASE global por drift,
+    // mesmo existindo uma solução local do próprio estilo com muito menos colateral.
+    if(goal.r1&&!isIGL&&current.r1!==goal.r1)components.push({r1:goal.r1});
+    if(goal.r2&&current.r2!==goal.r2)components.push({r2:goal.r2});
+    if(goal.style&&current.style!==goal.style)components.push({style:goal.style});
+    if(goal.ovr&&Math.round(before.ovr)!==goal.ovr)components.push({ovr:goal.ovr});
     if(options.skipCombined||components.length<2)return;
     const structural=components.filter(c=>!c.ovr),orders=[components];
     if(structural.length>1)orders.push([...structural].reverse().concat(components.filter(c=>c.ovr)));
@@ -2431,8 +2562,11 @@ async function reformulateStyleFromArchetype(styleLabel,goal={},onProgress=null)
     shortlist.sort((a,b)=>a.distance-b.distance||b.margin-a.margin);
     // Estágio 2: valida receita + contra + contexto no elenco inteiro e em perturbações sintéticas.
     const bases=shortlist.slice(0,36);stats.generated+=bases.length*contraVariants.length*awpValues.length;
+    // O orçamento precisa encerrar os TRÊS loops. Um `break` simples sairia apenas do loop de lean
+    // e ainda percorreria todas as combinações base×contra depois do timeout, podendo travar bench/UI.
+    archetypeSearch:
     for(const base of bases)for(const contra of contraVariants)for(const lean of awpValues){
-      if(performance.now()-started>maxMs)break;
+      if(performance.now()-started>maxMs)break archetypeSearch;
       let changes=mergeChanges(base.changes,contra);
       if(lean!=null)changes=mergeChanges(changes,[{type:"cfg",key:"AWP_LEAN",from:E.CFG_AVALIACAO.AWP_LEAN,to:lean}]);
       restoreConfig(beforeConfig);applyCalibChanges(changes);
@@ -2469,6 +2603,7 @@ function calibChangeRow(change){
   const two=(a,b)=>`<div class="calib-change"><b>${a}</b><span>${change.from.toFixed(2)} → ${change.to.toFixed(2)}</span></div>`;
   const U=s=>String(s).toUpperCase();
   if(change.type==="nm")return two(`NM.${U(change.axis)}`);
+  if(change.type==="nmover")return two(`NM.${esc(change.style)}.OVR.${U(change.axis)}`);
   if(change.type==="rating")return two(`NM.${esc(change.style)}.RATING`);
   if(change.type==="stylecontra")return two(`SCONTRA.${esc(change.styleId)}.${U(change.axis)}`);
   if(change.type==="contra")return two(`${change.role}.CONTRA.${U(change.attr)}`);
@@ -2538,9 +2673,11 @@ function renderCalibResult(result,goal){
   const ovrRow=((goal&&goal.ovr)||bOvr!==aOvr)?(bOvr!==aOvr?drow("OVR",bOvr,aOvr):srow("OVR",aOvr)):"";
   const deltaBlock=`<div class="cr-delta">${roleRow}${styleRow}${ovrRow}</div>`;
   // — custo em palavras + aviso quando alto —
+  const soft=sum.collateralSoftPlayers||0;
   const costTxt=col===0?"só o alvo muda":`${col} ${col===1?"jogador muda junto":"jogadores mudam junto"}`;
-  const costLine=`<div class="cr-cost"><span class="cr-clab">Custo</span><span class="cr-sev ${sevCls}">${sev}</span><span class="cr-ctxt">${costTxt}</span></div>`
-    +(highCost?`<div class="cr-warn">Não recomendado: mexe em ${col} ${col===1?"jogador":"jogadores"} fora do alvo. Esse alvo é distante do natural do jogador — a IA só chega lá com um ajuste global grande.</div>`:"");
+  const softTxt=soft?`<span class="cr-soft">${soft} ${soft===1?"margem interna afetada":"margens internas afetadas"}</span>`:"";
+  const costLine=`<div class="cr-cost"><span class="cr-clab">Custo</span><span class="cr-sev ${sevCls}">${sev}</span><span class="cr-ctxt">${costTxt}</span>${softTxt}</div>`
+    +(highCost?`<div class="cr-warn">Não recomendado: mexe em ${col} ${col===1?"jogador":"jogadores"} fora do alvo. Margens internas são risco latente e não entram nesse total.</div>`:"");
   const ai=result.archetypeInfo;
   const archetypeBlock=ai?`<div class="cr-styledesc"><b>Estilo reaprendido por ${esc(ai.exemplar)}</b> · retenção ${ai.retained}, entradas ${ai.entrants}, saídas ${ai.lost}, estabilidade sintética ${Math.round(ai.synthetic*100)}%, peso de rating ${(+ai.ratingWeight).toFixed(2)}</div>`:"";
   const alternatives=(result.alternatives||[]).slice(0,3);
@@ -2548,16 +2685,22 @@ function renderCalibResult(result,goal){
     const d=alt.diff||{players:[],teams:[]},sumAlt=summarizeDiff(d,alt.targetKey);
     return `<div class="cr-aff"><span class="cr-aid">Alternativa ${i+1}<span class="cr-atm">custo ${(+alt.cost||0).toFixed(1)} · ${sumAlt.collateralPlayers} colateral · margem ${Math.round((alt.goalMargin||0)*100)}%</span></span><button class="btn" type="button" data-calib-alt="${i}">Usar</button></div>`;
   }).join("")}</div></details>`:"";
-  // — jogadores afetados (recolhido) —
-  const rows=diff.players.slice().sort((a,b)=>(b.key===result.targetKey?1:0)-(a.key===result.targetKey?1:0)).slice(0,12).map(p=>{
+  // — mudanças reais e margens latentes ficam SEPARADAS: margem não é “jogador mudou”. —
+  const materialPlayers=diff.players.filter(p=>p.materialChanged??(p.roleChanged||p.styleChanged||Math.abs(p.dOvr||0)>=1||p.rareWorsened));
+  const softPlayers=diff.players.filter(p=>!materialPlayers.includes(p));
+  const renderPlayerRow=(p,softOnly=false)=>{
     const isTgt=p.key===result.targetKey;
     const combat=((p.role||"").split("/").pop()||"").trim();
     const dot=ROLE_COLORS[combat]||"var(--dim)";
-    const chg=[p.roleChanged?`${esc(p.old.role)} → ${esc(p.role)}`:"",p.styleChanged?`${esc(p.old.style)} → ${esc(p.style)}`:""].filter(Boolean).join(" · ")||"ajuste fino";
+    const changes=[p.roleChanged?`${esc(p.old.role)} → ${esc(p.role)}`:"",p.styleChanged?`${esc(p.old.style)} → ${esc(p.style)}`:""].filter(Boolean);
+    const chg=softOnly?`margem ${(+p.marginDamage||0).toFixed(3)}`:(changes.join(" · ")||"OVR/realidade");
     const dov=p.dOvr?`<span class="cr-dov ${p.dOvr>0?"up":"down"}">${signedDelta(p.dOvr)}</span>`:"";
-    return `<div class="cr-aff${isTgt?" tgt":""}"><span class="cr-adot" style="background:${dot}"></span><span class="cr-aid">${esc(p.nome)}${isTgt?'<span class="cr-atag">alvo</span>':""}<span class="cr-atm">${esc(p.team)}</span></span><span class="cr-achg">${chg}</span>${dov}</div>`;
-  }).join("");
-  const affected=`<details class="cr-fold"><summary>Jogadores afetados (${sum.players})</summary><div class="cr-aff-list">${rows}</div></details>`;
+    return `<div class="cr-aff${isTgt?" tgt":""}${softOnly?" soft":""}"><span class="cr-adot" style="background:${dot}"></span><span class="cr-aid">${esc(p.nome)}${isTgt?'<span class="cr-atag">alvo</span>':""}<span class="cr-atm">${esc(p.team)}</span></span><span class="cr-achg">${chg}</span>${dov}</div>`;
+  };
+  const materialRows=materialPlayers.slice().sort((a,b)=>(b.key===result.targetKey?1:0)-(a.key===result.targetKey?1:0)).slice(0,12).map(p=>renderPlayerRow(p,false)).join("");
+  const softRows=softPlayers.slice(0,12).map(p=>renderPlayerRow(p,true)).join("");
+  const affected=`<details class="cr-fold"><summary>Mudanças materiais (${materialPlayers.length})</summary><div class="cr-aff-list">${materialRows||'<div class="impact-empty">Nenhuma mudança material fora do alvo.</div>'}</div></details>`+
+    (softPlayers.length?`<details class="cr-fold"><summary>Margens internas afetadas (${softPlayers.length})</summary><div class="cr-aff-list">${softRows}</div></details>`:"");
   // — técnico (recolhido) —
   const modeLabel=result.strategy?.label||({ia:"IA",realista:"Realista",arquetipo:"Arquétipo"}[calibMode]||calibMode);
   const phaseNote=Number.isInteger(result.phase)?` · fase ${result.phase+1}`:"";
@@ -3139,7 +3282,9 @@ function guiaStyleCard(id){
   if(id==="joker"){const c=E.NM_COR||{};
     return `<div class="guia-card"><div class="guia-name">Coringa</div><div class="guia-note">Não tem receita de stats — é o jogador bom em tudo, sem ponto fraco. Precisa de pelo menos 5 dos 7 stats acima de ${c.pisoMin}.</div></div>`;}
   const rec=E.NM_DEF[E.STYLE_KEYS[id]];
-  return `<div class="guia-card"><div class="guia-name">${esc(E.STYLE_LABEL(id))}</div>${rec?guiaBars(rec.w):""}</div>`;
+  const quality=rec?.ovrW?`<div class="guia-meta"><b>Qualidade / OVR</b></div>${guiaBars(rec.ovrW)}`:"";
+  const identity=rec?.ovrW?'<div class="guia-meta"><b>Identidade</b></div>':"";
+  return `<div class="guia-card"><div class="guia-name">${esc(E.STYLE_LABEL(id))}</div>${rec?identity+guiaBars(rec.w)+quality:""}</div>`;
 }
 // distribuição REAL de estilos por função no elenco (avaliado ao vivo). Substitui o STYLE_ROLE_FIT,
 // que o motor não usa mais na classificação — o Guia promete "números de verdade", então mostra o

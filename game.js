@@ -69,6 +69,12 @@ const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22, // ⚙ balanceamento do PRISMA (afini
   SUP_FRAG:72,                               // fp acima disso: não é Support role 1, é Lurker de utilidade (frag + util)
   CORINGA_PISO:42,CORINGA_SPREAD:24,         // sub "Coringa": piso alto E sem especialidade dominante (spread baixo) = polivalente
   AWP_LEAN:0,                                // viés de estilo do AWPer PASSIVO: op alto dele é pick de AWP (Closer/Ancora), não espaço de Infiltrador. 0=desligado, calibrável
+  // Rifler generalista: bônus SUAVE para perfis equilibrados em fogo/entrada/utility,
+  // reduzido continuamente quando abertura/clutch/AWP revelam uma especialidade dominante.
+  RIFLER_GLUE_MAX:7,RIFLER_GLUE_FLOOR:40,RIFLER_GLUE_SCALE:.60,RIFLER_GLUE_SPREAD_PEN:.10,RIFLER_GLUE_SPEC_START:35,RIFLER_GLUE_SPEC_RANGE:20,
+  // Facilitador "glue": identidade coletiva por equilíbrio fogo/entrada/utility. Trade melhora
+  // a confiança, mas a qualidade final é medida separadamente por ovrW (não é gate rígido).
+  FAC_GLUE_MAX:.35,FAC_GLUE_FLOOR:45,FAC_GLUE_RANGE:10,FAC_GLUE_SPREAD:10,FAC_GLUE_SPEC_START:25,FAC_GLUE_SPEC_RANGE:20,FAC_GLUE_TRADE_FLOOR:30,FAC_GLUE_TRADE_RANGE:15,
   PARADOXO:[["Entry","Support"],["Entry","Lurker"]],PARADOXO_PEN:.85};
 const CFG_QUIMICA={ // ⚙ balanceamento do SINAPSE (química, treinador, pilares de composição)
   TREINADOR_PLACAR:{Campeao:16,Final:14,Top4:13,Top8:12,Grupos:10}, // base por conquista: vencer Major já é respeitado
@@ -188,6 +194,14 @@ function roleRulePenalty(role,p){
   }
   return pen;
 }
+function riflerGeneralistBonus(p){
+  const C=CFG_AVALIACAO,fp=p.fp||0,en=p.en||0,ut=p.ut||0;
+  const mn=Math.min(fp,en,ut),mx=Math.max(fp,en,ut),spread=mx-mn;
+  const base=clamp((mn-C.RIFLER_GLUE_FLOOR)*C.RIFLER_GLUE_SCALE-spread*C.RIFLER_GLUE_SPREAD_PEN,0,C.RIFLER_GLUE_MAX);
+  const specialty=Math.max(p.op||0,p.cl||0,p.sn||0);
+  const antiSpec=clamp(1-(specialty-C.RIFLER_GLUE_SPEC_START)/Math.max(1,C.RIFLER_GLUE_SPEC_RANGE),0,1);
+  return base*antiSpec;
+}
 function roleAfinidade(role,p){
   let score=dot(ROLE_PERFIL[role].afin,p)-dot(ROLE_CONTRA[role]||{},p)-roleRulePenalty(role,p);
   if(p.isIGL)score+=dot(IGL_ROLE_AFIN[role]||{},p);
@@ -205,7 +219,7 @@ function roleAfinidade(role,p){
     score+=.05*Math.min(p.ut||0,p.tr||0);
   }
   if(role==="Rifler"){
-    score+=.065*Math.min(p.fp||0,p.op||0)+.02*Math.min(p.fp||0,p.tr||0);
+    score+=.065*Math.min(p.fp||0,p.op||0)+.02*Math.min(p.fp||0,p.tr||0)+riflerGeneralistBonus(p);
   }
   return score;
 }
@@ -254,7 +268,7 @@ const NM_DEF={
   Infiltrador:{w:{cl:.46,ab:.34,fogo:.20},ratingWeight:1},
   Baiter:{w:{tr:.50,cl:.30,fogo:.20},ratingWeight:1},
   Closer:{w:{cl:.55,fogo:.45},ratingWeight:1},
-  Facilitador:{w:{ut:.50,tr:.30,ab:.20},ratingWeight:1},
+  Facilitador:{w:{ut:.50,tr:.30,ab:.20},ovrW:{ut:.50,tr:.35,ent:.10,fogo:.05},ratingWeight:1},
   Cerebral:{w:{ut:.40,ab:.30,cl:.30},ratingWeight:1},
   Ancora:{w:{cl:.50,ut:.32,tr:.18},ratingWeight:1}};
 // contraindicações por estilo — só eixos do s6 (o antigo sn era inerte: dobrado em fogo, diluía o resto).
@@ -338,6 +352,16 @@ function jokerProfile(s7){
 }
 // Fonte única da competição entre estilos normais. O calibrador usa esta mesma função,
 // evitando que novas regras contextuais (como AWP_LEAN) fiquem invisíveis à sensibilidade.
+function facilitatorGlueBonus(s6,role="Rifler"){
+  const C=CFG_AVALIACAO,trio=[s6.fogo||0,s6.ent||0,s6.ut||0],mn=Math.min(...trio),mx=Math.max(...trio);
+  const floor=clamp((mn-C.FAC_GLUE_FLOOR)/Math.max(1,C.FAC_GLUE_RANGE),0,1);
+  const balance=clamp(1-(mx-mn)/Math.max(1,C.FAC_GLUE_SPREAD),0,1);
+  const specialty=Math.max(s6.ab||0,s6.cl||0);
+  const lowSpec=clamp(1-(specialty-C.FAC_GLUE_SPEC_START)/Math.max(1,C.FAC_GLUE_SPEC_RANGE),0,1);
+  const trade=clamp(((s6.tr||0)-C.FAC_GLUE_TRADE_FLOOR)/Math.max(1,C.FAC_GLUE_TRADE_RANGE),0,1);
+  const roleMul=role==="Rifler"?1:role==="Support"?.8:role==="Entry"?.55:.35;
+  return C.FAC_GLUE_MAX*floor*balance*(.60+.20*lowSpec+.20*trade)*roleMul;
+}
 function styleScoreTable(s6,role="Rifler"){
   const scores=[];
   for(const id of PLAYSTYLE_IDS){
@@ -351,6 +375,7 @@ function styleScoreTable(s6,role="Rifler"){
     // 0 no numerador mas inflava o denominador cw, DILUINDO as penalidades reais. Guarda a invariante.
     for(const k in contra){if(!(k in s6))continue;cd+=(contra[k]||0)*(s6[k]||0);cw+=(contra[k]||0);}
     score-=cw?cd/(100*cw)*.42:0;
+    if(id==="support")score+=facilitatorGlueBonus(s6,role);
     if(role==="AWPer"&&CFG_AVALIACAO.AWP_LEAN){
       const lean=CFG_AVALIACAO.AWP_LEAN*clamp(1-(s6.ent||0)/50,0,1);
       if(id==="clutcher")score+=lean;
@@ -378,7 +403,7 @@ function nmOVR(p,role,forcedStyle=null){
   // [20] score = MÉDIA PONDERADA real (normaliza pela soma dos pesos), não o produto-escalar cru.
   // Assim a escala do OVR fica IMUNE ao drift de Σw: o calibrador pode mexer num peso isolado sem
   // estourar a escala do score. Receitas padrão somam 1.0 → idêntico ao de antes (bench intacto).
-  else{const rec=STYLE_RECIPE(style),sw=Object.values(rec.w).reduce((a,b)=>a+b,0);score=dot(rec.w,s6)/(sw||1);}
+  else{const rec=STYLE_RECIPE(style),qualityW=rec.ovrW||rec.w,sw=Object.values(qualityW).reduce((a,b)=>a+b,0);score=dot(qualityW,s6)/(sw||1);}
   const base=C.OVR_BASE+(score/100)*C.OVR_SPAN;
   const rec=style==="joker"?null:STYLE_RECIPE(style);
   const ratingWeight=clamp(+(rec?.ratingWeight??1),.25,2);
