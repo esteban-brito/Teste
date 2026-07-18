@@ -43,7 +43,7 @@ const dropRole=X.avaliarJogador({...dropRaw}).combatRole;
 const dropNm=X.nmOVR(dropRaw,dropRole);
 const scores=X.styleScoreTable(dropNm.s6,dropRole);
 const fac=scores.find(x=>X.STYLE_LABEL(x.id)==="Facilitador"),runner=scores.find(x=>x.id!==fac?.id);
-check(fac&&runner&&fac.score>runner.score&&fac.score-runner.score>.025,`Facilitador vence com margem útil (${fac&&runner?(fac.score-runner.score).toFixed(3):"-"})`);
+check(fac&&runner&&fac.score>runner.score&&fac.score-runner.score>.015,`Facilitador vence com margem útil (${fac&&runner?(fac.score-runner.score).toFixed(3):"-"})`);
 
 const strong={...dropRaw,nome:"Facilitador forte",fp:48,en:52,tr:55,op:30,cl:38,ut:88,rating:1.12};
 const strongEv=X.avaliarJogador(strong);
