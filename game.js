@@ -108,7 +108,7 @@ const ROLE_CONTRA={
   Lurker:{en:.15,tr:.04,sn:.06},
   Support:{en:.06,sn:.10,fp:.039}
 };
-const IGL_ROLE_AFIN={AWPer:{},Rifler:{},Entry:{cl:.098},Lurker:{},Support:{en:-.068}};
+const IGL_ROLE_AFIN={AWPer:{},Rifler:{},Entry:{cl:.098},Lurker:{},Support:{en:-.093}};
 const ROLE_RULES={
   // Pesos condicionais calibraveis. Comecam em 0 para preservar o motor base;
   // o sandbox pode ativar regras globais quando uma transicao exigir criterio mais fino.
@@ -119,7 +119,7 @@ const ROLE_RULES={
   },
   Entry:{
     entradaSemImpacto:{w:0,en:58,fp:52,tr:42},
-    entradaSemAbertura:{w:0,en:58,op:50}
+    entradaSemAbertura:{w:.372,en:58,op:50}
   },
   Lurker:{
     pressaoAlta:{w:0,en:62,cl:52}
@@ -261,20 +261,20 @@ const NM_AXES=[["fogo","Fogo"],["ent","Entrada"],["ab","Abertura"],["tr","Trade"
 // ratingWeight=1 preserva o motor anterior; o calibrador pode aprender quanto o rating pesa
 // no OVR de cada estilo sem deixar rating decidir a identidade do playstyle.
 const NM_DEF={
-  Opener:{w:{ab:.50,fogo:.40,ent:.10},ratingWeight:1},
-  Spacetaker:{w:{ent:.70,fogo:.15,ab:.15},ratingWeight:1},
+  Opener:{w:{ab:.506,fogo:.379,ent:.115},ratingWeight:1},
+  Spacetaker:{w:{ent:.610,fogo:.093,ab:.093,ut:.204},ratingWeight:1},
   Trader:{w:{tr:.50,fogo:.30,ut:.20},ratingWeight:1},
   Playmaker:{w:{fogo:.45,ab:.35,cl:.20},ratingWeight:1},
   Infiltrador:{w:{cl:.46,ab:.34,fogo:.20},ratingWeight:1},
   Baiter:{w:{tr:.50,cl:.30,fogo:.20},ratingWeight:1},
-  Closer:{w:{cl:.55,fogo:.45},ratingWeight:1},
+  Closer:{w:{cl:.55,fogo:.45},ratingWeight:1.05},
   Facilitador:{w:{ut:.593,tr:.176,ab:.118,fogo:.113},ovrW:{ut:.50,tr:.35,ent:.10,fogo:.05},ratingWeight:1},
   Cerebral:{w:{ut:.40,ab:.30,cl:.30},ratingWeight:1},
   Ancora:{w:{cl:.50,ut:.32,tr:.18},ratingWeight:1}};
 // contraindicações por estilo — só eixos do s6 (o antigo sn era inerte: dobrado em fogo, diluía o resto).
 const STYLE_CONTRA={
   aggressive:{cl:.112,ut:.08},
-  spacetaker:{cl:.08,ut:.05},
+  spacetaker:{cl:.036,ut:.05},
   trader:{ent:.10,ab:.08,cl:.06},
   playmaker:{ut:.06,tr:.04,cl:.05,ent:.012,fogo:.010},
   infiltrator:{ent:.18,tr:.08},
@@ -282,7 +282,7 @@ const STYLE_CONTRA={
   clutcher:{ent:.14,ab:.027,tr:.06},
   support:{fogo:.10,ent:.12},
   cerebral:{ent:.22,fogo:.08},
-  anchor:{ent:.24,ab:.12,fogo:.06}
+  anchor:{ent:.252,ab:.12,fogo:.06}
 };
 const STYLE_ROLE_FIT={
   AWPer:{spacetaker:.06,clutcher:.07,playmaker:.055,infiltrator:.04,baiter:.02,anchor:.02,aggressive:.02},
