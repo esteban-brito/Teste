@@ -30,12 +30,11 @@ function classify(nome){
 
 const txt=fs.readFileSync(reportPath,"utf8").split("\n");
 let fails=0;
-const section=name=>{const i=txt.findIndex(l=>l.includes(name));return i<0?[]:txt.slice(i+1).slice(0,txt.slice(i+1).findIndex(l=>l.startsWith("===")||l.trim()===""&&false)).filter(l=>l.trim());};
 
 // (1) valores dos pesos
 console.log("— VALORES (MUDANCAS FINAIS) —");
 for(const l of txt){
-  const m=l.match(/^([A-Za-z0-9_.\-]+):\s*(-?[\d.]+)\s*->\s*(-?[\d.]+)\s*$/);
+  const m=l.match(/^([A-Za-z0-9_.-]+):\s*(-?[\d.]+)\s*->\s*(-?[\d.]+)\s*$/);
   if(!m)continue;
   const [,p,,to]=m,cur=getByPath(p),target=+to;
   const ok=cur!=null&&Math.abs(cur-target)<5e-4;
