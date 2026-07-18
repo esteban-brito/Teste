@@ -68,7 +68,7 @@ const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22, // ⚙ balanceamento do PRISMA (afini
   IGL_TETO:21,                               // teto do IGL: um degrau abaixo do 22 dos fraggers (o jogo é decidido por eles)
   SUP_FRAG:72,                               // fp acima disso: não é Support role 1, é Lurker de utilidade (frag + util)
   CORINGA_PISO:42,CORINGA_SPREAD:24,         // sub "Coringa": piso alto E sem especialidade dominante (spread baixo) = polivalente
-  AWP_LEAN:0,                                // viés de estilo do AWPer PASSIVO: op alto dele é pick de AWP (Closer/Ancora), não espaço de Infiltrador. 0=desligado, calibrável
+  AWP_LEAN:.152,                             // viés de estilo do AWPer PASSIVO: op alto dele é pick de AWP (Closer/Ancora), não espaço de Infiltrador. 0=desligado, calibrável (sessão sandbox)
   // Rifler generalista: bônus SUAVE para perfis equilibrados em fogo/entrada/utility,
   // reduzido continuamente quando abertura/clutch/AWP revelam uma especialidade dominante.
   RIFLER_GLUE_MAX:7,RIFLER_GLUE_FLOOR:40,RIFLER_GLUE_SCALE:.60,RIFLER_GLUE_SPREAD_PEN:.10,RIFLER_GLUE_SPEC_START:35,RIFLER_GLUE_SPEC_RANGE:20,
@@ -102,18 +102,18 @@ const clipOVR=x=>clamp(Math.round(x),CFG_AVALIACAO.OVR_MIN,CFG_AVALIACAO.OVR_MAX
 const dot=(w,p)=>{let s=0;for(const k in w)s+=w[k]*(p[k]||0);return s;}; // produto-escalar pesos·atributos
 const ROLES_COMBATE=["AWPer","Rifler","Entry","Lurker","Support"];
 const ROLE_CONTRA={
-  AWPer:{en:.08,tr:.04,ut:.04},
-  Rifler:{sn:.18,ut:.04,cl:.05},
+  AWPer:{en:.08,tr:.04,ut:.04,fp:.017},
+  Rifler:{sn:.18,ut:.04,cl:.067},
   Entry:{sn:.08,ut:.02},
   Lurker:{en:.15,tr:.04,sn:.06},
-  Support:{en:.06,sn:.10,fp:.06}
+  Support:{en:.06,sn:.10,fp:.039}
 };
-const IGL_ROLE_AFIN={AWPer:{},Rifler:{},Entry:{},Lurker:{},Support:{}};
+const IGL_ROLE_AFIN={AWPer:{},Rifler:{},Entry:{cl:.098},Lurker:{},Support:{en:-.068}};
 const ROLE_RULES={
   // Pesos condicionais calibraveis. Comecam em 0 para preservar o motor base;
   // o sandbox pode ativar regras globais quando uma transicao exigir criterio mais fino.
   Support:{
-    aggroSemUtil:{w:0,en:56,ut:56,tr:48},
+    aggroSemUtil:{w:.468,en:56,ut:56,tr:48},
     aberturaSemUtil:{w:0,op:54,ut:58},
     fraggerSemSuporte:{w:0,fp:58,ut:55,tr:48}
   },
@@ -268,18 +268,18 @@ const NM_DEF={
   Infiltrador:{w:{cl:.46,ab:.34,fogo:.20},ratingWeight:1},
   Baiter:{w:{tr:.50,cl:.30,fogo:.20},ratingWeight:1},
   Closer:{w:{cl:.55,fogo:.45},ratingWeight:1},
-  Facilitador:{w:{ut:.50,tr:.30,ab:.20},ovrW:{ut:.50,tr:.35,ent:.10,fogo:.05},ratingWeight:1},
+  Facilitador:{w:{ut:.593,tr:.176,ab:.118,fogo:.113},ovrW:{ut:.50,tr:.35,ent:.10,fogo:.05},ratingWeight:1},
   Cerebral:{w:{ut:.40,ab:.30,cl:.30},ratingWeight:1},
   Ancora:{w:{cl:.50,ut:.32,tr:.18},ratingWeight:1}};
 // contraindicações por estilo — só eixos do s6 (o antigo sn era inerte: dobrado em fogo, diluía o resto).
 const STYLE_CONTRA={
-  aggressive:{cl:.14,ut:.08},
+  aggressive:{cl:.112,ut:.08},
   spacetaker:{cl:.08,ut:.05},
   trader:{ent:.10,ab:.08,cl:.06},
-  playmaker:{ut:.06,tr:.04,cl:.05},
+  playmaker:{ut:.06,tr:.04,cl:.05,ent:.012,fogo:.010},
   infiltrator:{ent:.18,tr:.08},
   baiter:{ent:.28,ab:.16,ut:.08},
-  clutcher:{ent:.14,ab:.08,tr:.06},
+  clutcher:{ent:.14,ab:.027,tr:.06},
   support:{fogo:.10,ent:.12},
   cerebral:{ent:.22,fogo:.08},
   anchor:{ent:.24,ab:.12,fogo:.06}
