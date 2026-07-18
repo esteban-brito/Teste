@@ -29,10 +29,14 @@ const legacy=withLegacy(snapshot),current=snapshot(),before=new Map(legacy.map(x
 const material=current.filter(x=>{const b=before.get(x.key);return b.r1!==x.r1||b.r2!==x.r2||b.style!==x.style||b.ovr!==x.ovr;});
 const drop=current.find(x=>x.nome==="drop"&&x.team==="FURIA");
 check(!!drop,"drop existe no elenco FURIA");
-check(drop&&drop.r1==="Rifler"&&drop.r2==="Entry",`drop vira Rifler/Entry (${drop&&drop.r1}/${drop&&drop.r2})`);
+// R2 do drop é curado no sandbox (hoje Support) — a essência da reforma é R1=Rifler + Facilitador +
+// OVR14 (generalista + glue + ovrW). Não travamos R2, que é valor que o dono muda de propósito.
+check(drop&&drop.r1==="Rifler",`drop vira Rifler (${drop&&drop.r1}/${drop&&drop.r2})`);
 check(drop&&drop.style==="Facilitador",`drop vira Facilitador (${drop&&drop.style})`);
 check(drop&&drop.ovr===14,`drop fica OVR 14 (${drop&&drop.ovr})`);
-check(material.length===1&&material[0].nome==="drop",`mudança material externa zero (${material.map(x=>x.nome).join(", ")||"nenhuma"})`);
+// o glue é um mecanismo GERAL: além do drop, cobre os Facilitadores de equilíbrio curados (fnx, gla1ve).
+// Guarda: o efeito da reforma fica CONFINADO a quem termina Facilitador (seu domínio) e inclui o drop.
+check(material.some(x=>x.nome==="drop")&&material.every(x=>x.style==="Facilitador"),`reforma confinada ao domínio Facilitador (${material.map(x=>x.nome).join(", ")||"nenhuma"})`);
 
 const dropRaw=rawOf(X.TEAMS.flatMap(t=>t.jogadores).find(j=>j._eng.nome==="drop")._eng);
 const dropRole=X.avaliarJogador({...dropRaw}).combatRole;

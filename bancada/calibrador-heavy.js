@@ -29,9 +29,11 @@ console.log("— CALIBRADOR: CASOS PESADOS ISOLADOS —");
     check(all,`multiobjetivo permanece solucionável em 3 seeds (${runs.map(r=>r?.ok?"ok":"falha").join(", ")})`);
   }
   {
-    const api=loadCalibrator();api.loadByName("Jame");api.setMode("ia");
+    // ropz (Infiltrador) em vez de Jame: com AWP_LEAN curado o Jame JÁ chega Closer (reformulação vira
+    // no-op/alreadyMet), então não exercitava o mecanismo. ropz→Closer faz trabalho real (recipe+síntese).
+    const api=loadCalibrator();api.loadByName("ropz");api.setMode("ia");
     let r=null,err=null;try{r=await api.reformulateStyleFromArchetype("Closer",{},null);}catch(e){err=e;}
-    check(!err&&r&&r.ok&&api.STYLE_LABEL(r.after.playstyle)==="Closer",`Jame como arquétipo reaprende Closer${err?": "+err.message:r&&r.message?": "+r.message:""}`);
+    check(!err&&r&&r.ok&&api.STYLE_LABEL(r.after.playstyle)==="Closer",`ropz como arquétipo reaprende Closer${err?": "+err.message:r&&r.message?": "+r.message:""}`);
     if(r&&r.ok){
       check((r.archetypeInfo?.synthetic||0)>=.5&&r.archetypeInfo?.lost<=3,`arquétipo valida robustez sintética e preserva Closers (synth ${Math.round((r.archetypeInfo?.synthetic||0)*100)}%, perdidos ${r.archetypeInfo?.lost})`);
       const recipe=r.archetypeInfo?.afterRecipe||{},sum=Object.values(recipe).reduce((a,b)=>a+b,0);
