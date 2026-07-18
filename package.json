@@ -8,7 +8,8 @@
     "serve": "node tools/serve-static.js",
     "test:e2e": "node bancada/e2e-intent.js",
     "test:drop": "node bancada/drop-reform.js",
-    "test:calibrator": "node bancada/calibrador.js && node bancada/calibrador-heavy.js && node bancada/worker-calibrador.js"
+    "test:calibrator": "node bancada/calibrador.js && node bancada/calibrador-heavy.js && node bancada/worker-calibrador.js",
+    "verify-report": "node tools/verify-report.js"
   },
   "devDependencies": {
     "eslint": "^10.6.0",
