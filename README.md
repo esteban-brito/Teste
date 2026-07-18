@@ -34,25 +34,29 @@ da carta continua escolhendo/posicionando normalmente. As cartas usam proporçã
 
 ```
 draft9-0/
-├── index.html          ← página principal do jogo
-├── style.css           ← todos os estilos (tema, cartas, roleta, overlays)
-├── game.js             ← 6 motores + UI (toda a lógica)
-├── elencos.html        ← base de elencos (página standalone)
-├── sandbox.html        ← bancada de tuning dos motores
-├── og-image.png        ← imagem para redes sociais
-├── robots.txt
-├── .gitignore
-├── ADD_TEAM.md         ← documentação: como adicionar um time
-├── AUDITORIA.md        ← auditoria completa dos 6 motores (40 itens)
-├── bancada/            ← suíte de validação dos motores
-│   ├── motor.js        ← carrega motores do game.js sem DOM (Node)
-│   ├── times.js        ← lint de times (IDs, atributos, IGL, país)
-│   ├── realismo.js     ← valida métricas simuladas vs CS real
-│   ├── rating.js       ← valida rating simulado vs HLTV real
-│   ├── roster.js       ← regenera elencos.html a partir dos motores
-│   └── run.js          ← suíte completa (roda as 3 validações)
+├── index.html            ← página principal do jogo
+├── style.css             ← todos os estilos (tema, cartas, roleta, overlays)
+├── game.js               ← 6 motores + UI (toda a lógica)
+├── elencos.html          ← base de elencos (página standalone)
+├── sandbox.html          ← bancada de tuning + calibrador inteligente
+├── calibrator-worker.js  ← Web Worker do calibrador (busca em paralelo)
+├── og-image.png · robots.txt · .gitignore
+├── ADD_TEAM.md           ← documentação: como adicionar um time
+├── package.json · eslint.config.mjs   ← scripts e lint (dev; sem deps de runtime)
+├── .github/workflows/    ← CI: valida (check + lint + bench) e faz deploy no Pages
+├── bancada/              ← suíte de validação dos motores (Node)
+│   ├── motor.js · common.js       ← carregam os motores do game.js sem DOM
+│   ├── run.js                     ← roda a suíte inteira
+│   ├── times.js · realismo.js · rating.js   ← lint de dados + fidelidade
+│   ├── roster.js                  ← regenera elencos.html
+│   ├── snapshot.js + roster-snapshot.json   ← trava a classificação aprovada do elenco
+│   ├── drop-reform.js · auditoria.js        ← guardas estruturais do motor
+│   └── calibrador*.js · worker-calibrador.js · e2e-intent.js   ← testes do calibrador
 └── tools/
-    └── add-team.js     ← adiciona time a partir de texto simples
+    ├── add-team.js            ← adiciona time a partir de texto simples
+    ├── verify-report.js       ← confere se um relatório do sandbox foi aplicado fielmente
+    ├── check-sandbox-*.js     ← checagens de sintaxe/motor
+    └── serve-static.js        ← servidor local estático
 ```
 
 ## Os 6 motores
@@ -210,9 +214,3 @@ Métricas validadas vs CS profissional real (bancada `realismo.js`, N=300+):
 | Clutch 1v1/1v2/1v3 | 50/23.5/8.1% | 44-56/18-28/5-13% |
 | Rating correlação r | 0.81 | ≥0.75 |
 | Rating erro médio | 0.087 | ≤0.12 |
-
-## Auditoria
-
-O arquivo `AUDITORIA.md` documenta a auditoria completa dos 6 motores: 40
-itens verificados, 16 corrigidos, 22 fechados como auditados/ideias futuras,
-1 revertido por decisão de design. Status final: checklist encerrado.
