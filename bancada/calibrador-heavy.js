@@ -13,7 +13,10 @@ console.log("— CALIBRADOR: CASOS PESADOS ISOLADOS —");
 }
 (async()=>{
   {
-    const api=loadCalibrator(),stabilityMs=3000;
+    // 6000ms (não 3000): este é o caso multiobjetivo MAIS pesado (AWPer trocando função E estilo).
+    // A 3000ms fecha numa máquina rápida, mas o runner da CI é mais lento e a mesma janela de tempo
+    // rende menos iterações → falha intermitente. 6000ms já foi provado estável na CI antes.
+    const api=loadCalibrator(),stabilityMs=6000;
     api.overrideBudget(stabilityMs);
     const runs=[];
     for(const seed of [17,7919,15838]){
