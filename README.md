@@ -40,6 +40,7 @@ draft9-0/
 ├── elencos.html          ← base de elencos (página standalone)
 ├── sandbox.html          ← bancada de tuning + calibrador inteligente
 ├── calibrator-worker.js  ← Web Worker do calibrador (busca em paralelo)
+├── fonts.css + fonts/    ← fontes auto-hospedadas (Chakra Petch + Barlow, sem CDN)
 ├── og-image.png · robots.txt · .gitignore
 ├── ADD_TEAM.md           ← documentação: como adicionar um time
 ├── package.json · eslint.config.mjs   ← scripts e lint (dev; sem deps de runtime)
