@@ -838,9 +838,16 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓL
   EXP_KILL:1.45,EXP_OPEN:1.10,EXP_VITIMA:.55,TRADE_CHANCE:.62, // EXP_OPEN: abertura é menos sobre fp puro
   W_OP_KILL:.28,W_EN_VIT:.28,W_TR_KILL:.32, // tipo de kill segue a categoria HLTV: abertura→op, morte de abertura→en (entry), trade→tr (tilt suave: macro-neutro)
   ADR_KILL:95,ADR_VIT:55,ADR_AST:40,ADR_CHIP:14, // dano por evento → alimenta o ADR (fidelidade HLTV)
+  // ASSIST (fiel ao HLTV): cada morte credita ~1 assist a um companheiro do MATADOR (util habilita a
+  // kill: flash/dano). Preso à kill, nos 2 times, elegível vivo OU morto (flasheou/feriu antes de cair).
+  // ASSIST_CHANCE≈razão A/K alvo; peso do assistente = ASSIST_BASE+ASSIST_UT_W·ut (support/IGL ganham
+  // mais); ASSIST_DEAD_W desconta quem já morreu; ASSIST_OPEN_MULT: abertura tem mais flash-assist.
+  ASSIST_CHANCE:.30,ASSIST_OPEN_MULT:1.15,ASSIST_BASE:12,ASSIST_UT_W:.9,ASSIST_DEAD_W:.5,
   FRAG_FP_BASE:35,FRAG_OVR:.018, // distribuição de kills: fp manda; concentra (alguém estoura no mapa, varia pela forma)
   DUELO_BASE:12,DUELO_OVR:4.6,   // skillDuelo: força de combate por OVR (base + inclinação) — quem GANHA o round
   MAPA_SCALE:380,MAPA_CAP:.06,SUB_ABRE:0.72,SUB_SURV:0.34,SUB_INT:40};
+// slots de companheiros (0..4) exceto o matador — candidatos a assist, pré-computado p/ não alocar por kill
+const ASSIST_SLOTS=[[1,2,3,4],[0,2,3,4],[0,1,3,4],[0,1,2,4],[0,1,2,3]];
 
 /* ╔═══════════════════════════════════════════════════════════════════╗
    ║  FALLEnANGELs — rating contextual (estilo HLTV)                     ║
@@ -1039,6 +1046,12 @@ function combateRound(a,b,ctx){
     perd.stats[vi].fa.mortes.push(mo);perd.stats[vi].d++;
     perd.stats[vi].dmg+=rndF()*C.ADR_VIT;               // atirou de volta antes de cair
     if(opening){venc.stats[ki].fa.opK++;perd.stats[vi].fa.opD++;}
+    // ASSIST preso à kill: um companheiro do matador (não ele) habilitou a morte com util/dano.
+    // Ponderado por utility; quem já morreu entra com desconto (flash/dano antes de cair). Ver CFG_SIM.
+    if(rndF()<C.ASSIST_CHANCE*(opening?C.ASSIST_OPEN_MULT:1)){
+      const ai=pick(ASSIST_SLOTS[ki],i=>(C.ASSIST_BASE+C.ASSIST_UT_W*(venc.stats[i].ut||40))*(vivV.includes(i)?1:C.ASSIST_DEAD_W));
+      venc.stats[ai].a++;venc.stats[ai].fa.assists++;venc.stats[ai]._contribRound=true;venc.stats[ai].dmg+=C.ADR_AST+rndF()*30;
+    }
     return vi;
   }
   // ——— FASES DO ROUND: o T tenta plantar; pós-plant o T segura, o CT retoma. Relógio resolve o que não é eliminado.
@@ -1104,9 +1117,6 @@ function combateRound(a,b,ctx){
   // destaque factual: quem do vencedor mais matou neste round (antes de zerar _kRound)
   let mvp=0;for(let i=1;i<5;i++)if((vencT.stats[i]._kRound||0)>(vencT.stats[mvp]._kRound||0))mvp=i;
   const destaque=vencT.stats[mvp].nick;
-  // assistência por UTILIDADE: quem dá utility habilita a kill (crédito do support/IGL → KAST/assist/ADR)
-  if(rndF()<.55&&vivVfinal.length){const ai=pick(vivVfinal,i=>18+(vencT.stats[i].ut||40));
-    vencT.stats[ai].a++;vencT.stats[ai].fa.assists++;vencT.stats[ai]._contribRound=true;vencT.stats[ai].dmg+=C.ADR_AST+rndF()*30;}
   // chip de utilidade pros que participaram sem kill (dano de granada/spray) + multi/KAST do round
   [a,b].forEach((t,lado)=>{const viv=lado===0?vivA:vivB;t.stats.forEach((s,i)=>{
     const kr=s._kRound||0;if(kr>=2)s.fa.multi[kr]=(s.fa.multi[kr]||0)+1;

@@ -7,7 +7,7 @@ const {secondsSince}=require("./common");
 
 // e2e-intent.js é o teste de navegador (Playwright); ele mesmo se PULA com exit 0 onde não há
 // browser (ex.: CI), então mantém o bench verde lá e roda de verdade onde o Chromium existe.
-const SUITES=["times.js","auditoria.js","snapshot.js","drop-reform.js","calibrador.js","calibrador-heavy.js","worker-calibrador.js","realismo.js","rating.js","e2e-intent.js"];
+const SUITES=["times.js","auditoria.js","snapshot.js","drop-reform.js","calibrador.js","calibrador-heavy.js","worker-calibrador.js","realismo.js","assists.js","rating.js","e2e-intent.js"];
 
 function runSuite(file){
   const started=Date.now();
