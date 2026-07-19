@@ -829,13 +829,18 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓL
   // D_DUELO = decisão de UM duelo (bem mais raso que o round; o round é a soma de ~5-9 duelos).
   // pistol é quase cara-ou-coroa (D alto) → o azarão ganha pistol/anti-eco e o 13-0 fica raro.
   D_DUELO:112,D_DUELO_PIST:360,OPEN_SCALE:520,CLUTCH_DUEL:.22,CLUTCH_X:.115,CLUTCH_EXP:1.55,LADO_MAPA_P:.013,
-  SAVE_BASE:.30,SAVE_MEN:.10,CLOSE_MEN:.18, // salvar (eco em desvantagem) e fechar bomb/tempo (vantagem de homem)
+  SAVE_BASE:.30,SAVE_MEN:.10,CLOSE_MEN:.30, // salvar (eco em desvantagem) e fechar bomb/tempo (vantagem de homem) — CLOSE_MEN mais alto = menos kills de limpeza (KPR/round ao real), mesmo vencedor, clutch 1vX intacto
   // ——— BOMBA / RELÓGIO (assimetria real T×CT): o round tem fases, não é só eliminar ———
   // pré-plant: o T tenta plantar (cresce com tempo e vantagem de homem); se o relógio estoura sem plant, o CT vence (default/hold).
   RND_TEMPO:6,PLANT_BASE:.05,PLANT_TEMPO:.05,PLANT_MEN:.11,
   // pós-plant: a bomba tem 40s. T segura ângulos (edge POST_EDGE); CT precisa retomar+defusar antes da detonação.
   PP_TEMPO:3,POST_EDGE:.07,DEFUSE_BASE:.24,DEFUSE_MEN:.22,PLANT_BONUS:800,KILL_REWARD:90,
-  EXP_KILL:1.45,EXP_OPEN:1.10,EXP_VITIMA:.55,TRADE_CHANCE:.62, // EXP_OPEN: abertura é menos sobre fp puro
+  EXP_KILL:1.15,EXP_OPEN:1.10,EXP_VITIMA:.55,TRADE_CHANCE:.56, // EXP_KILL comprime a distribuição de kills; TRADE_CHANCE menor = menos refrag = KPR/round ao real; EXP_OPEN: abertura é menos sobre fp puro
+  // PARTICIPAÇÃO por FUNÇÃO (multiplica fragPeso): baixa/sobe o VOLUME de duelos do papel — mexe em kills
+  // E mortes juntos (o AWPer real joga menos duelos mas ganha), então KPR e DPR caem sem distorcer o K/D.
+  FRAG_ROLE:{AWPer:.74,Lurker:.82,Rifler:.86,Entry:1.05,Support:1.02,IGL:1},
+  ADR_SCALE:.70,      // escala o dano por evento p/ o ADR do mapa cair no real (~79); spread por função preservado
+  KAST_TRADE_P:.45,   // fração dos "traded" que contam KAST (o crédito era generoso demais → KAST ~80% vs ~72% real)
   W_OP_KILL:.28,W_EN_VIT:.28,W_TR_KILL:.32, // tipo de kill segue a categoria HLTV: abertura→op, morte de abertura→en (entry), trade→tr (tilt suave: macro-neutro)
   ADR_KILL:95,ADR_VIT:55,ADR_AST:40,ADR_CHIP:14, // dano por evento → alimenta o ADR (fidelidade HLTV)
   // ASSIST (fiel ao HLTV): cada morte credita ~1 assist a um companheiro do MATADOR (util habilita a
@@ -868,7 +873,7 @@ const faSwingMorte=(meu,ini)=>faWP(meu-1,ini)-faWP(meu,ini);  // <=0
 const FA_ECO={full:{full:1,force:.9,eco:.62,pistol:.55},force:{full:1.18,force:1,eco:.78,pistol:.68},
   eco:{full:1.6,force:1.3,eco:1,pistol:.85},pistol:{full:1.55,force:1.25,eco:.95,pistol:1}};
 const faEco=(mb,vb)=>(FA_ECO[mb]&&FA_ECO[mb][vb])||1;
-const CFG_FA={BASE:.520,W_EK:.385,W_SURV:.160,W_KAST:.240,W_MULTI:.042,W_SWING:.10,PESO_MORTE:.95,PESO_OPEN:.216, // ⚙ balanceamento do FALLEnANGELs (pesos do rating)
+const CFG_FA={BASE:.592,W_EK:.385,W_SURV:.160,W_KAST:.240,W_MULTI:.042,W_SWING:.10,PESO_MORTE:.95,PESO_OPEN:.216, // ⚙ balanceamento do FALLEnANGELs (pesos do rating) — BASE recentra o nível após ADR/KAST/kills irem ao real
   // W_EK menor + BASE maior = tiers comprimidos (topo desce, 19-22 se sobrepõem) sem matar a variação (forma é que oscila)
   // ADR (dano por round) entra como sinal independente das kills: parte do peso saiu de W_EK pra cá,
   // então quem dá muito dano sem converter (ou vice-versa) varia → mais sobreposição entre OVRs (vida).
@@ -969,7 +974,8 @@ const CONV_FUNC={Rifler:1.0,AWPer:1.0,Entry:.98,Lurker:.97,Support:.92,IGL:.90};
 function skillDuelo(j){const a=j._eng||j;const C=CFG_SIM;const ovr=j.ovr??a.ovr??13;const prim=j.primario||a.primario||"Rifler";
   return (C.DUELO_BASE+(ovr-5)*C.DUELO_OVR)*(CONV_FUNC[prim]??.95);}
 function fragPeso(j){const a=j._eng||j;const C=CFG_SIM;const fp=a.fp??60,ovr=j.ovr??a.ovr??13;
-  return (C.FRAG_FP_BASE+fp)*(1+(ovr-13)*C.FRAG_OVR);} // firepower domina o frag; OVR = leve skill
+  const prim=j.primario||a.primario||"Rifler"; // participação por papel: AWPer/Lurker jogam menos duelos (menos volume, K/D intacto)
+  return (C.FRAG_FP_BASE+fp)*(1+(ovr-13)*C.FRAG_OVR)*(C.FRAG_ROLE[prim]||1);} // firepower domina o frag; OVR = leve skill
 
 // prepara um time pro combate: skills (com forma da noite), clutch e acumulador de stats
 // agressão de playstyle derivada do sub-arquétipo: quão na frente o jogador joga o round
@@ -1040,17 +1046,17 @@ function combateRound(a,b,ctx){
     const rec={estadoMeu:vivV.length,estadoInim:vivP.length,buyMatador:buyV,buyVitima:buyP,roundGanho:true};
     venc.stats[ki].fa.kills.push(rec);roundKills.push({team:venc,rec});
     venc.stats[ki].k++;venc.stats[ki]._kRound++;venc.stats[ki]._contribRound=true;
-    venc.stats[ki].dmg+=C.ADR_KILL+rndF()*40;          // dano letal
+    venc.stats[ki].dmg+=C.ADR_SCALE*(C.ADR_KILL+rndF()*40);          // dano letal
     if(trade)venc.stats[ki].tradeK++;                   // refrag = trade kill
     const mo={estadoMeu:vivP.length,estadoInim:vivV.length};
     perd.stats[vi].fa.mortes.push(mo);perd.stats[vi].d++;
-    perd.stats[vi].dmg+=rndF()*C.ADR_VIT;               // atirou de volta antes de cair
+    perd.stats[vi].dmg+=C.ADR_SCALE*rndF()*C.ADR_VIT;               // atirou de volta antes de cair
     if(opening){venc.stats[ki].fa.opK++;perd.stats[vi].fa.opD++;}
     // ASSIST preso à kill: um companheiro do matador (não ele) habilitou a morte com util/dano.
     // Ponderado por utility; quem já morreu entra com desconto (flash/dano antes de cair). Ver CFG_SIM.
     if(rndF()<C.ASSIST_CHANCE*(opening?C.ASSIST_OPEN_MULT:1)){
       const ai=pick(ASSIST_SLOTS[ki],i=>(C.ASSIST_BASE+C.ASSIST_UT_W*(venc.stats[i].ut||40))*(vivV.includes(i)?1:C.ASSIST_DEAD_W));
-      venc.stats[ai].a++;venc.stats[ai].fa.assists++;venc.stats[ai]._contribRound=true;venc.stats[ai].dmg+=C.ADR_AST+rndF()*30;
+      venc.stats[ai].a++;venc.stats[ai].fa.assists++;venc.stats[ai]._contribRound=true;venc.stats[ai].dmg+=C.ADR_SCALE*(C.ADR_AST+rndF()*30);
     }
     return vi;
   }
@@ -1080,7 +1086,7 @@ function combateRound(a,b,ctx){
     if(vPnow.length>0&&vVnow.length>1&&rndF()<C.TRADE_CHANCE){
       const vi2=duelo(perd,vPnow,buyP,venc,vVnow,buyV,false,true);
       mata(aWins?vivA:vivB,vi2);
-      perd.stats[vi]._contribRound=true; // KAST: quem morreu (entry abrindo / support) e foi TROCADO ganha crédito de "traded" — fiel ao "T" do KAST
+      if(rndF()<C.KAST_TRADE_P)perd.stats[vi]._contribRound=true; // KAST: parte de quem morreu e foi TROCADO ganha crédito de "traded" (KAST_TRADE_P amortece p/ ~72% real) — fiel ao "T" do KAST
     }
     if(vivA.length===0||vivB.length===0)break; // eliminação total decide na hora
     // registra a 1ª situação de clutch (1vX): o solitário enfrenta X inimigos. medido/aproveitado depois.
@@ -1121,7 +1127,7 @@ function combateRound(a,b,ctx){
   [a,b].forEach((t,lado)=>{const viv=lado===0?vivA:vivB;t.stats.forEach((s,i)=>{
     const kr=s._kRound||0;if(kr>=2)s.fa.multi[kr]=(s.fa.multi[kr]||0)+1;
     const vivo=viv.includes(i);
-    if(s._contribRound||vivo){s.fa.roundsKAST++;if(kr===0)s.dmg+=rndF()*C.ADR_CHIP;} // participou: chip de dano
+    if(s._contribRound||vivo){s.fa.roundsKAST++;if(kr===0)s.dmg+=C.ADR_SCALE*rndF()*C.ADR_CHIP;} // participou: chip de dano
     s._kRound=0;s._contribRound=false;});});
   let kA=0,kB=0;roundKills.forEach(rk=>{rk.team===a?kA++:kB++;}); // kills por time no round → recompensa econômica
   const clutchWon=clutch?(clutch.aLone?venceA:!venceA):null; // o solitário venceu o round?
@@ -1256,7 +1262,8 @@ function simularMapa(A,B,fA,fB,mapaForcado,leve){
   const totalR=pa+pb;
   const rate=stats=>stats.map(s=>{
     const rating=fallenAngels({...s.fa,totalRounds:totalR,impacto:s.impacto,prim:s.prim,ovr:s.ovr,fp:s.fp,dmg:s.dmg,tradeK:s.tradeK});
-    return {nick:s.nick,k:s.k,d:s.d,a:s.a,rating:+rating.toFixed(2)};});
+    return {nick:s.nick,k:s.k,d:s.d,a:s.a,rating:+rating.toFixed(2),
+      kast:+((s.fa.roundsKAST||0)/totalR).toFixed(3),adr:Math.round((s.dmg||0)/totalR)};});
   return {placar:[pa,pb],vencedorNome:pa>pb?A.nome:B.nome,vencedor:pa>pb?A:B,rounds,
     half1,mapa,
     nomeA:A.nome,nomeB:B.nome,meuA:!!A.meu,meuB:!!B.meu,corA:A.cor,corB:B.cor,
@@ -2226,17 +2233,21 @@ function montarScoreboard(jogo){
   const linha=(s,meu)=>`<div class="ls-row${meu?" mine":""}" data-nick="${esc(s.nick)}">
     <span class="ls-nick">${esc(s.nick)}</span>
     <span class="ls-kd-val"><b>0</b> <s>/</s> 0</span>
+    <span class="ls-kast">–</span>
+    <span class="ls-adr">–</span>
     <span class="ls-rate">–</span></div>`;
   const head=(nome,meu,lado,cor)=>`<div class="ls-head">
     <span class="ls-team-id"><span class="ls-mono" style="background:${esc(cor||"#888")}">${esc(mono(nome))}</span><span class="ls-team">${esc(nome)}</span><span class="ls-side-tag ${lado}">${lado.toUpperCase()}</span></span>
     <span class="ls-col">K–D</span>
+    <span class="ls-col">KAST</span>
+    <span class="ls-col">ADR</span>
     <span class="ls-col">Rating</span></div>`;
   $("lsSideA").className="ls-side"+(jogo.meuA?" mine":"");
   $("lsSideB").className="ls-side"+(jogo.meuB?" mine":"");
   $("lsSideA").innerHTML=head(jogo.nomeA,jogo.meuA,"ct",jogo.corA)+jogo.statsA.map(s=>linha(s,jogo.meuA)).join("");
   $("lsSideB").innerHTML=head(jogo.nomeB,jogo.meuB,"tr",jogo.corB)+jogo.statsB.map(s=>linha(s,jogo.meuB)).join("");
   // cacheia linhas e células uma vez (evita re-query a cada round)
-  const cacheLado=sideId=>[...$(sideId).querySelectorAll(".ls-row")].map(r=>({row:r,kd:r.querySelector(".ls-kd-val"),rate:r.querySelector(".ls-rate")}));
+  const cacheLado=sideId=>[...$(sideId).querySelectorAll(".ls-row")].map(r=>({row:r,kd:r.querySelector(".ls-kd-val"),kast:r.querySelector(".ls-kast"),adr:r.querySelector(".ls-adr"),rate:r.querySelector(".ls-rate")}));
   MP.sb={A:cacheLado("lsSideA"),B:cacheLado("lsSideB")};
 }
 // atualiza o K-D do scoreboard até o round atual e pulsa quem fragou
@@ -2261,11 +2272,13 @@ function finalizarReproducao(jogo,meuGen){
   // scoreboard com os stats finais (K-D completo)
   const ult=jogo.rounds[jogo.rounds.length-1];
   if(ult)atualizarScoreboard(jogo,ult);
-  // rating do mapa: aparece só agora, no fim
-  const preencheRating=(cells,stats)=>{if(!cells)return;
-    stats.forEach((st,idx)=>{const c=cells[idx];if(c&&c.rate){
-      c.rate.textContent=st.rating.toFixed(2);c.rate.className="ls-rate "+(st.rating>=1.15?"r-top":st.rating>=0.95?"r-mid":"r-low");}});};
-  if(MP.sb){preencheRating(MP.sb.A,jogo.statsA);preencheRating(MP.sb.B,jogo.statsB);}
+  // rating + KAST + ADR do mapa: aparecem só agora, no fim (K–D já animou ao vivo)
+  const preencheFinais=(cells,stats)=>{if(!cells)return;
+    stats.forEach((st,idx)=>{const c=cells[idx];if(!c)return;
+      if(c.kast)c.kast.textContent=Math.round((st.kast||0)*100)+"%";
+      if(c.adr)c.adr.textContent=(st.adr!=null?st.adr:"–");
+      if(c.rate){c.rate.textContent=st.rating.toFixed(2);c.rate.className="ls-rate "+(st.rating>=1.15?"r-top":st.rating>=0.95?"r-mid":"r-low");}});};
+  if(MP.sb){preencheFinais(MP.sb.A,jogo.statsA);preencheFinais(MP.sb.B,jogo.statsB);}
   $("matchSkip").hidden=true;$("matchContinue").hidden=false;
   if(MP.onFim){const cb=MP.onFim;MP.onFim=null;cb();} // dispara só uma vez
 }
