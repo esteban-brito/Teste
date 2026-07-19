@@ -63,7 +63,7 @@ const api=loadCalibrator();
 
 // Workers: protocolo cooperativo de partição/cancelamento deve estar presente no artefato real.
 {
-  const workerSrc=fs.readFileSync(path.join(ROOT,"calibrator-worker.js"),"utf8");
+  const workerSrc=fs.readFileSync(path.join(ROOT,"calibrador-worker.js"),"utf8");
   const sandboxSrc=fs.readFileSync(SANDBOX_PATH,"utf8");
   check(workerSrc.includes('job.type==="cancel"'),"worker aceita cancelamento cooperativo");
   check(workerSrc.includes("partitionIndex")&&sandboxSrc.includes("partitionCount:workers.length"),"workers recebem partições distintas do espaço de busca");

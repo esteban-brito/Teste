@@ -77,7 +77,7 @@ export default [
     },
   },
   {
-    files: ["calibrator-worker.js"],
+    files: ["calibrador-worker.js"],
     languageOptions: {
       globals: {
         self: "readonly",

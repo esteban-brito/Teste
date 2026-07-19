@@ -39,7 +39,7 @@ draft9-0/
 ├── game.js               ← 6 motores + UI (toda a lógica)
 ├── elencos.html          ← base de elencos (página standalone)
 ├── sandbox.html          ← bancada de tuning + calibrador inteligente
-├── calibrator-worker.js  ← Web Worker do calibrador (busca em paralelo)
+├── calibrador-worker.js  ← Web Worker do calibrador (busca em paralelo)
 ├── fonts.css + fonts/    ← fontes auto-hospedadas (Chakra Petch + Barlow, sem CDN)
 ├── og-image.png · robots.txt · .gitignore
 ├── ADD_TEAM.md           ← documentação: como adicionar um time
