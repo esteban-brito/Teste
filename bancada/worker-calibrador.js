@@ -21,7 +21,7 @@ global.fetch=async url=>{
   catch(error){return new Response(String(error),{status:404});}
 };
 try{
-  const source=fs.readFileSync(path.join(workerData.root,"calibrator-worker.js"),"utf8");
+  const source=fs.readFileSync(path.join(workerData.root,"calibrador-worker.js"),"utf8");
   new Function("require",source)(require);
   parentPort.on("message",data=>self.onmessage({data}));
   parentPort.postMessage({type:"ready"});

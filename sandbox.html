@@ -2734,7 +2734,7 @@ function renderCalibResult(result,goal){
 }
 // === busca em paralelo via Web Workers (modo IA) ===
 // Cada worker roda o MESMO codigo do calibrador (busca o proprio sandbox.html, sem duplicar
-// logica - ver calibrator-worker.js), numa copia isolada do motor, com uma seed diferente. Isso
+// logica - ver calibrador-worker.js), numa copia isolada do motor, com uma seed diferente. Isso
 // nao pula nada nem aproxima nada: e a mesma busca de sempre, testando N vezes mais candidatos
 // no mesmo tempo de espera porque roda em paralelo nos nucleos disponiveis. Qualquer falha (
 // Worker indisponivel, erro de protocolo, timeout) cai pra busca direta na thread principal -
@@ -2746,7 +2746,7 @@ function ensureCalibWorkers(){
   try{
     const n=Math.max(1,Math.min(8,(typeof navigator!=="undefined"&&navigator.hardwareConcurrency)||4));
     calibWorkers=[];
-    for(let i=0;i<n;i++)calibWorkers.push(new Worker("calibrator-worker.js"));
+    for(let i=0;i<n;i++)calibWorkers.push(new Worker("calibrador-worker.js"));
     return calibWorkers;
   }catch(err){
     console.error("workers indisponiveis, usando busca direta:",err);

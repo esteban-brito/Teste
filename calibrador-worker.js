@@ -1,4 +1,4 @@
-/* calibrator-worker.js
+/* calibrador-worker.js
  * Roda a busca do Calibrador Inteligente fora da thread principal, em paralelo com outros
  * workers iguais a este. NAO duplica a logica do motor/calibrador: busca o proprio
  * sandbox.html (mesma origem) e reaproveita o script dele, exatamente como carregarMotores()

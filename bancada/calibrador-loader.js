@@ -1,7 +1,7 @@
 /* bancada/calibrador-loader.js - carrega o calibrador real de sandbox.html em Node.
    Carrega game.js + o <script> de sandbox.html do mesmo jeito que o navegador faria
    (fetch->new Function na pagina; aqui, leitura de arquivo->new Function), sem duplicar
-   nenhuma logica - mesma tecnica usada por calibrator-worker.js.
+   nenhuma logica - mesma tecnica usada por calibrador-worker.js.
    Cobre 2 regressoes ja corrigidas (deltasFor vazando teto, compareCalibration ignorando
    custo ponderado) e roda uma bateria pequena de buscas ponta-a-ponta pra garantir que
    nunca lanca excecao e que "ok=true" bate o objetivo de verdade.
