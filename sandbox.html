@@ -3002,8 +3002,9 @@ function simMetrics(g){
   return {ct:ctWins/n,plants:plants/n,ots,force,eco,clutches};
 }
 function scoreTable(nome,stats){
-  const rows=(stats||[]).slice().sort((a,b)=>b.rating-a.rating||b.k-a.k).map(s=>`<tr><td>${esc(s.nick)}</td><td class="mono">${s.k}</td><td class="mono">${s.d}</td><td class="mono">${s.a}</td><td class="mono">${s.rating}</td></tr>`).join("");
-  return `<table><thead><tr><th>${esc(nome)}</th><th>K</th><th>D</th><th>A</th><th>FA</th></tr></thead><tbody>${rows}</tbody></table>`;
+  // colunas padronizadas com o placar do jogo: K · D · A · KAST · ADR · Rating
+  const rows=(stats||[]).slice().sort((a,b)=>b.rating-a.rating||b.k-a.k).map(s=>`<tr><td>${esc(s.nick)}</td><td class="mono">${s.k}</td><td class="mono">${s.d}</td><td class="mono">${s.a}</td><td class="mono">${s.kast!=null?Math.round(s.kast*100)+"%":"–"}</td><td class="mono">${s.adr!=null?s.adr:"–"}</td><td class="mono">${s.rating}</td></tr>`).join("");
+  return `<table><thead><tr><th>${esc(nome)}</th><th>K</th><th>D</th><th>A</th><th>KAST</th><th>ADR</th><th>Rating</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 function runMapLab(){
   if(simA===simB){toast("Escolha dois times diferentes");return;}
@@ -3017,7 +3018,12 @@ function runMapLab(){
 function runBatchLab(){
   if(simA===simB){toast("Escolha dois times diferentes");return;}
   const n=Math.max(1,Math.min(500,Math.round(simRuns||80)));
-  const acc={n,wA:0,rounds:0,ctWins:0,plants:0,otMaps:0,otRounds:0,force:0,eco:0,clutches:0,kills:0,ratings:0,ratingsN:0,maps:{}};
+  // função por jogador na MESMA ordem de statsA/statsB (teamPlayers segue teamEngines, como officialTeam)
+  const roleOf=(t,ti)=>{try{return teamPlayers(t,ti).map(p=>p.isIGL?"IGL":(p.role1||p.combatRole||"?"));}catch{return [];}};
+  const rolesA=roleOf(E.TEAMS[simA],simA), rolesB=roleOf(E.TEAMS[simB],simB);
+  const acc={n,wA:0,rounds:0,ctWins:0,plants:0,otMaps:0,otRounds:0,force:0,eco:0,clutches:0,kills:0,assists:0,ratings:0,ratingsN:0,kastW:0,adrW:0,pr:0,maps:{},role:{}};
+  const accSide=(stats,roles,r)=>stats.forEach((s,i)=>{const role=roles[i]||"?";const b=acc.role[role]=acc.role[role]||{k:0,d:0,a:0,r:0,kast:0,adr:0};
+    b.k+=s.k||0;b.d+=s.d||0;b.a+=s.a||0;b.r+=r;b.kast+=(s.kast||0)*r;b.adr+=(s.adr||0)*r;});
   for(let i=0;i<n;i++){
     E.srand((simSeed||1)+i);
     const A=officialTeam(E.TEAMS[simA],simA), B=officialTeam(E.TEAMS[simB],simB);
@@ -3026,14 +3032,28 @@ function runBatchLab(){
     const r=g.totalRounds||1, allStats=[...(g.statsA||[]),...(g.statsB||[])];
     acc.wA+=g.vencedor===A?1:0; acc.rounds+=r; acc.ctWins+=m.ct*r; acc.plants+=m.plants*r;
     acc.otMaps+=r>24?1:0; acc.otRounds+=m.ots; acc.force+=m.force; acc.eco+=m.eco; acc.clutches+=m.clutches;
-    acc.kills+=allStats.reduce((s,p)=>s+(p.k||0),0); acc.ratings+=allStats.reduce((s,p)=>s+(p.rating||0),0); acc.ratingsN+=allStats.length;
+    acc.kills+=allStats.reduce((s,p)=>s+(p.k||0),0); acc.assists+=allStats.reduce((s,p)=>s+(p.a||0),0);
+    acc.ratings+=allStats.reduce((s,p)=>s+(p.rating||0),0); acc.ratingsN+=allStats.length;
+    acc.kastW+=allStats.reduce((s,p)=>s+(p.kast||0)*r,0); acc.adrW+=allStats.reduce((s,p)=>s+(p.adr||0)*r,0); acc.pr+=allStats.length*r;
+    accSide(g.statsA,rolesA,r); accSide(g.statsB,rolesB,r);
     acc.maps[g.mapa]=(acc.maps[g.mapa]||0)+1;
   }
   lastMap=null; lastBatch=acc; renderMatchPanel();
 }
+// valor colorido contra uma faixa real (verde dentro / laranja fora) — mesmo critério da bancada
+function simBand(v,lo,hi,dec,suf){const ok=v>=lo&&v<=hi;return `<b class="mono" style="color:var(--${ok?"win":"warn"})" title="real ${lo}–${hi}">${v.toFixed(dec)}${suf||""}</b>`;}
+// faixas HLTV por função (KPR) — as mesmas de bancada/kda.js
+const SIM_ROLE_KPR={AWPer:[.70,.82],Rifler:[.66,.76],Entry:[.60,.70],Lurker:[.64,.74],Support:[.56,.66],IGL:[.54,.64]};
 function renderBatchPanel(b){
   const mapTxt=Object.entries(b.maps).sort((a,b)=>b[1]-a[1]).map(([m,n])=>`${m} ${Math.round(n/b.n*100)}%`).join(" · ");
   const kpr=b.kills/Math.max(1,b.rounds*10), avgRating=b.ratings/Math.max(1,b.ratingsN);
+  const kast=b.pr?b.kastW/b.pr*100:0, adr=b.pr?b.adrW/b.pr:0, aMap=b.assists/Math.max(1,b.n);
+  const roleRows=["AWPer","Rifler","Entry","Lurker","Support","IGL"].filter(r=>b.role[r]&&b.role[r].r).map(r=>{
+    const x=b.role[r], ref=SIM_ROLE_KPR[r]||[0,9], KPR=x.k/x.r, ok=KPR>=ref[0]&&KPR<=ref[1];
+    // verde = na faixa real; fora fica NEUTRO (num confronto, uma função é 1-2 jogadores específicos —
+    // uma lenda acima da média não é erro), então nada de alarme laranja aqui; ele fica só nos globais.
+    return `<tr><td>${r}</td><td class="mono"${ok?' style="color:var(--win)"':''} title="real ${ref[0]}–${ref[1]}">${KPR.toFixed(2)}</td><td class="mono">${(x.d/x.r).toFixed(2)}</td><td class="mono">${(x.a/x.k||0).toFixed(2)}</td><td class="mono">${Math.round(x.kast/x.r*100)}%</td><td class="mono">${Math.round(x.adr/x.r)}</td></tr>`;
+  }).join("");
   return `<div class="simres">
     <div class="scoreline"><span class="scoreteam">${esc(E.TEAMS[simA].nome)}</span><span class="scoreval">${Math.round(b.wA/b.n*100)}%</span><span class="hint">winrate em ${b.n} mapas · seed ${simSeed}..${simSeed+b.n-1}</span><span class="scoreval">${Math.round((1-b.wA/b.n)*100)}%</span><span class="scoreteam">${esc(E.TEAMS[simB].nome)}</span></div>
     <div class="stat-mini" style="margin-bottom:12px">
@@ -3041,14 +3061,16 @@ function renderBatchPanel(b){
       <span><b class="mono">${Math.round(b.ctWins/b.rounds*100)}%</b>CT win</span>
       <span><b class="mono">${Math.round(b.plants/b.rounds*100)}%</b>plant</span>
       <span><b class="mono">${Math.round(b.otMaps/b.n*100)}%</b>OT mapas</span>
-      <span><b class="mono">${kpr.toFixed(2)}</b>KPR</span>
-      <span><b class="mono">${(b.force/b.n).toFixed(1)}</b>force/mapa</span>
-      <span><b class="mono">${(b.eco/b.n).toFixed(1)}</b>eco/mapa</span>
+      <span>${simBand(kpr,.66,.73,2,"")}KPR</span>
+      <span>${simBand(kast,69,76,0,"%")}KAST</span>
+      <span>${simBand(adr,73,84,0,"")}ADR</span>
+      <span><b class="mono">${aMap.toFixed(1)}</b>assists/mapa</span>
       <span><b class="mono">${(b.clutches/b.n).toFixed(1)}</b>clutch/mapa</span>
       <span><b class="mono">${avgRating.toFixed(2)}</b>rating médio</span>
-      <span><b class="mono">${(b.otRounds/b.n).toFixed(1)}</b>rounds OT</span>
     </div>
-    <div class="hint">Mapas: ${esc(mapTxt||"mapa fixo")}. Use esse lote para comparar antes/depois de pesos, química, economia e playstyles.</div>
+    <div class="hint" style="margin-bottom:7px">Fidelidade por função — <b style="color:var(--win)">verde</b> = KPR na faixa real do CS profissional (a coluna A/K mostra a assinatura de assist):</div>
+    <div class="scoreboards"><table><thead><tr><th>Função</th><th>KPR</th><th>DPR</th><th>A/K</th><th>KAST</th><th>ADR</th></tr></thead><tbody>${roleRows}</tbody></table></div>
+    <div class="hint" style="margin-top:10px">Mapas: ${esc(mapTxt||"mapa fixo")}. Use esse lote para comparar antes/depois de pesos, química, economia e playstyles.</div>
   </div>`;
 }
 function renderMatchPanel(){
