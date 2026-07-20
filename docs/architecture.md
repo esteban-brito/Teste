@@ -13,6 +13,12 @@ O sandbox carrega o texto de `game.js` e avalia a primeira região. O worker e a
 bancada Node repetem esse mecanismo. Portanto, o marcador funciona hoje como
 uma API implícita e frágil.
 
+O IFCS é infraestrutura de validação offline, não parte do runtime. O scorer e o
+contrato de corpus são módulos Node puros em `bancada/`; o extrator Python/Awpy
+transforma demos reais em artefatos auditáveis fora do navegador. Nenhuma dessas
+ferramentas pode ser importada por `game.js` ou virar uma segunda implementação
+das regras do domínio.
+
 ## Pipeline do domínio
 
 ```text
@@ -67,6 +73,8 @@ apps/ui ----------> application ----------> domain
    +--------------> infrastructure            data
 
 tests podem importar qualquer API pública, mas não devem recortar fonte.
+
+extrator offline -> corpus derivado -> scorer IFCS
 ```
 
 - `domain` não importa `ui`, `application` ou `infrastructure`.
@@ -74,6 +82,8 @@ tests podem importar qualquer API pública, mas não devem recortar fonte.
   UI.
 - workers chamam a mesma API pública usada pelo processo principal.
 - renderizadores recebem view models prontos e não recalculam regras de negócio.
+- jogo e UI não importam Awpy, demos, corpus privado ou scorer IFCS.
+- scorer IFCS consome contratos e artefatos explícitos; não lê DOM nem estado global.
 
 ## Estado atual do jogo
 
@@ -100,4 +110,3 @@ snapshots. Testes e artefatos persistentes devem usar o ID cru.
 4. `distribuirRoles` aplica contexto de time e muta avaliações dos jogadores.
 5. O calibrador diferencia mudança material de deterioração de margem interna.
 6. `elencos.html` contém dados gerados e pode divergir da fonte.
-

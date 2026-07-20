@@ -1,5 +1,9 @@
 # Baseline de comportamento
 
+> Retrato histórico de 19 de julho de 2026. A bancada atual possui 16 suítes;
+> consulte `docs/testing.md`. Os números e a contagem abaixo não devem ser
+> reescritos retroativamente para parecerem atuais.
+
 - Commit de origem: `f06662a92dd1c6a35c8ce82d24a206e6061b7068`
 - Branch: `sandbox-test`
 - Data do registro: 2026-07-19

@@ -33,6 +33,28 @@ faixas atuais são guardas de regressão, não uma nota de 0–100.
   específica é registrada em `docs/baseline.md`.
 - A CI usa Node 20. Desenvolvedores em outra versão devem registrar divergências.
 
+O `docs/baseline.md` é um retrato histórico: sua contagem de 13 suítes corresponde
+à captura de 19 de julho de 2026, não à bancada atual. A última validação completa
+registrada, em 20 de julho de 2026, aprovou 16/16 suítes em 195,3 s, incluindo
+45.900 mapas e aproximadamente 939 mil rounds. Isso confirma regressão; não é
+uma nota IFCS oficial.
+
+## Validação do extrator IFCS
+
+O extrator de demos é uma ferramenta Python offline, separada do runtime e da
+validação Node:
+
+```text
+python -m venv .venv-fidelity
+.venv-fidelity/Scripts/python -m pip install -r requirements-fidelity.lock
+.venv-fidelity/Scripts/python tools/extract-fidelity-demo.py --check-environment
+.venv-fidelity/Scripts/python tools/extract-fidelity-demo.py --self-test
+```
+
+O ambiente com Awpy 2.0.2 e o autoteste sintético foram aprovados localmente.
+Isso não prova a extração de uma demo real; essa prova continua obrigatória
+antes de fechar o schema e iniciar a coleta integral.
+
 ## Atualização de snapshot
 
 1. Execute `npm run test:regression` e leia todas as diferenças.
@@ -69,4 +91,7 @@ o balanceamento executável do produto.
 - Integração do torneio sem DOM.
 - Screenshots responsivos e com `prefers-reduced-motion`.
 - Benchmark de desempenho separado dos asserts de realismo.
-- Corpus real versionado e scorer IFCS, sem tuning no mesmo commit.
+- Aprovar e congelar o alvo real do IFCS, sem balanceamento no mesmo commit.
+- Validar o extrator em uma demo real e fechar o schema derivado.
+- Adquirir, auditar e selar o corpus real; então produzir a primeira baseline
+  IFCS sem tuning no mesmo commit.

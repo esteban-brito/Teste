@@ -434,6 +434,17 @@ pesos, thresholds, dados ou RNG.
 
 ## 14. Implementação incremental recomendada
 
+Resumo em 20 de julho de 2026:
+
+| Marco | Estado | O que falta |
+|---|---|---|
+| M0 — metodologia | implementado, revisão aberta | aprovação final de pesos/alvo |
+| M1 — corpus | parcial | alvo congelado, demo real, coleta e auditoria |
+| M2 — scorer | implementado | validar com corpus real |
+| M3 — integração | parcial | primeira baseline real e reprodução na CI |
+| M4 — apresentação | pendente | consumir o JSON oficial no sandbox |
+| M5 — balanceamento | bloqueado | só começa após baseline e hipótese explícita |
+
 ### M0 — metodologia
 
 - este documento;

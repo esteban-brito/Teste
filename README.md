@@ -2,7 +2,7 @@
 
 > **▶ Jogue agora:** <https://esteban-brito.github.io/Teste/>
 
-Jogo de navegador (HTML/CSS/JavaScript, sem dependências nem build) onde você
+Jogo de navegador (HTML/CSS/JavaScript, sem dependências de runtime nem build) onde você
 monta um elenco de Counter-Strike sorteando times históricos, escolhe jogadores
 e um treinador, e tenta a campanha invicta (9-0) em um Major com fase suíça e
 playoffs.
@@ -74,10 +74,13 @@ draft9-0/
 │   ├── roster.js                  ← regenera elencos.html
 │   ├── snapshot.js + roster-snapshot.json   ← trava a classificação aprovada do elenco
 │   ├── drop-reform.js · auditoria.js        ← guardas estruturais do motor
+│   ├── fidelity-score.js · fidelity-corpus.js ← scorer e contrato auditável do IFCS
 │   └── calibrador*.js · worker-calibrador.js · e2e-*.js   ← calibrador e testes de navegador
 └── tools/
     ├── add-team.js            ← adiciona time a partir de texto simples
     ├── verify-report.js       ← confere se um relatório do sandbox foi aplicado fielmente
+    ├── score-fidelity.js · verify-fidelity-corpus.js ← CLIs do IFCS
+    ├── extract-fidelity-demo.py ← extrator científico offline de demos CS2
     ├── check-sandbox-*.js     ← checagens de sintaxe/motor
     └── serve-static.js        ← servidor local estático
 ```
@@ -136,7 +139,12 @@ Na aba **Simular**, o modo de liga distribui os confrontos em round-robin e
 compara combate, lados, plant, pós-plant, economia, pistol, clutches, funções e
 rating com as mesmas faixas dos benchmarks. Intervalos de 95% distinguem
 oscilação de amostra de desvio material; métricas raras sem observações
-suficientes ficam pendentes e não reduzem a nota de fidelidade.
+suficientes ficam pendentes no diagnóstico legado do sandbox.
+
+Esse painel não é a nota científica IFCS. No IFCS, falta de volume no corpus
+real impede publicar a nota; falta de uma saída exigida do simulador recebe zero
+na métrica. Os critérios completos estão em
+[`docs/realism-methodology.md`](docs/realism-methodology.md).
 
 Tudo é comparado contra o **baseline** (estado inicial ao carregar). O painel
 de impacto mostra o que mudou. Nada é salvo nem aplicado ao jogo — é isolado.
@@ -195,9 +203,9 @@ Para regenerar: `node bancada/roster.js`
 node tools/add-team.js caminho/do/time.txt
 
 # 3. Valide:
-node bancada/run.js
+npm run validate
 
-# 4. Commit + push + deploy
+# 4. Faça um commit separado. Push e deploy somente com autorização do responsável.
 ```
 
 O gerador insere os 5 jogadores e o time no `game.js`, regenera a base de
@@ -221,6 +229,7 @@ npm run test:calibrator    # calibrador e workers
 npm run test:benchmark     # realismo + assists + KDA + rating
 npm run test:fidelity      # scorer e contrato do corpus IFCS
 npm run test:all           # todas as 16 suítes
+npm run score:fidelity -- caminho/entrada.json  # calcula um relatório IFCS
 npm run corpus:fidelity -- --template  # modelo do manifesto auditável
 ```
 
@@ -231,11 +240,17 @@ npm run corpus:fidelity -- --template  # modelo do manifesto auditável
 - Respeita `prefers-reduced-motion` (desliga animações pesadas).
 - Overlays marcados como diálogos (`role="dialog"`/`aria-modal`); foco por teclado.
 - Áudio sintetizado via Web Audio (sem arquivos externos); botão de mudo.
-- Sem dependências externas; sem build; sem frameworks.
+- O jogo publicado não tem dependências externas de runtime, build ou framework.
+- Ferramentas de desenvolvimento usam Node; a pesquisa IFCS usa Python/Awpy
+  apenas offline, em ambiente isolado, e não é carregada pelo jogo.
 
-## Fidelidade dos motores
+## Diagnóstico histórico de fidelidade dos motores
 
-Métricas validadas vs CS profissional real (bancada `realismo.js`, N=300+):
+As métricas abaixo são uma referência histórica da bancada `realismo.js`
+(`N=300+`). Elas são guardas de regressão e não constituem uma nota IFCS nem uma
+alegação de “X% realista”. O retrato completo está em
+[`docs/baseline.md`](docs/baseline.md); a metodologia oficial está em
+[`docs/realism-methodology.md`](docs/realism-methodology.md).
 
 | Métrica | Simulado | Real |
 |---|---|---|

@@ -7,6 +7,9 @@ corpus real pronto**. Nenhuma nota IFCS oficial pode ser publicada enquanto as
 demos não forem adquiridas, extraídas, verificadas e auditadas conforme este
 documento e `docs/realism-methodology.md`.
 
+Até 20 de julho de 2026, somente o ambiente e o autoteste sintético do extrator
+foram validados. Nenhuma demo real foi declarada como extraída ou auditada.
+
 Dados reais e alterações de balanceamento nunca pertencem ao mesmo commit.
 
 ## Fontes e limites de confiança
@@ -95,6 +98,14 @@ Antes de baixar dados, registrar:
 - commits exatos das regras Valve e VRS;
 - SHA-256 do conteúdo dessas revisões;
 - versão do parser e hashes do extrator e das opções.
+
+Proposta em análise, ainda **não aprovada nem congelada**: usar a última época
+competitiva homogênea completa, de 29 de outubro de 2025 a 7 de julho de 2026,
+com Ancient, Dust II, Inferno, Mirage, Nuke, Overpass e Train, eventos LAN
+Valve-ranked e ambos os times no top 20 VRS. O corte evita misturar a atualização
+de 8 de julho de 2026, que mudou o map pool e regras relevantes. Enquanto essa
+proposta não for aprovada e registrada com revisões/hashes exatos, o template
+permanece deliberadamente inválido.
 
 O template contém marcadores deliberadamente inválidos:
 
@@ -185,7 +196,7 @@ ciclo de tuning.
 
 Ainda faltam três peças antes de M1 terminar:
 
-1. escolher e congelar a janela real e seus sete mapas com fontes versionadas;
+1. revisar, aprovar e congelar a proposta de janela e mapas com fontes versionadas;
 2. validar o extrator já implementado contra uma primeira demo real e fechar o
    schema das tabelas derivadas;
 3. adquirir o volume completo e executar a auditoria humana sorteada.
