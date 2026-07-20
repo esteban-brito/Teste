@@ -1,15 +1,17 @@
 {
   "schemaVersion": "1.0",
   "methodologyVersion": "1.0",
-  "targetId": "cs2-elite-lan-rating3-2025-10-29_2026-07-07",
+  "targetId": "cs2-elite-lan-rating3-2026-01-22_2026-07-07",
   "status": "frozen",
   "frozenAt": "2026-07-20",
+  "revision": 2,
+  "revisionReason": "A revisão de evidência identificou a troca oficial de Train por Anubis em 2026-01-21; a revisão 1 atravessava duas épocas de mapa e foi corrigida antes da coleta profissional.",
   "approvalBasis": "Responsável delegou a escolha metodológica ao agente em 2026-07-20.",
   "game": "Counter-Strike 2",
   "gameRuleset": "Competitivo MR12 da época declarada, com overtime de torneio",
   "ratingModel": "HLTV Rating 3.0 com ajustes publicados em 2025-10-29",
   "population": {
-    "startDate": "2025-10-29",
+    "startDate": "2026-01-22",
     "endDate": "2026-07-07",
     "lanOnly": true,
     "valveRankedOnly": true,
@@ -18,15 +20,15 @@
   },
   "activeMaps": [
     "de_ancient",
+    "de_anubis",
     "de_dust2",
     "de_inferno",
     "de_mirage",
     "de_nuke",
-    "de_overpass",
-    "de_train"
+    "de_overpass"
   ],
   "epochDecision": {
-    "startReason": "Início da revisão pública do Rating 3.0 usada como referência estatística consistente.",
+    "startReason": "Primeiro dia completo após a Temporada 4, que trocou Train por Anubis e alterou gameplay; início da última época homogênea completa.",
     "endReason": "Último dia completo antes da atualização de 2026-07-08, que trocou Overpass por Cache e reformulou o dano da C4.",
     "crossEpochPoolingAllowed": false
   },
@@ -48,6 +50,11 @@
       "url": "https://github.com/ValveSoftware/counter-strike_regional_standings/blob/050a38d71d4f5f07d2618bb8bedd54268b93bddf/live/2026/standings_global_2026_07_06.md",
       "revision": "050a38d71d4f5f07d2618bb8bedd54268b93bddf",
       "sha256": "6c3acf3f975c1f7831b15844c3260678c20a686c286a8d42a6d8a966151d19d4"
+    },
+    {
+      "id": "valve-season-4-2026-01-21",
+      "url": "https://www.counter-strike.net/newsentry/511855214544814488?l=portuguese",
+      "accessedAt": "2026-07-20"
     },
     {
       "id": "valve-update-2026-07-08",
