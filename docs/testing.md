@@ -14,11 +14,11 @@ limite estatístico exige justificativa de balanceamento separada.
 | `npm run test:regression` | auditoria, snapshot, drop | classificação e invariantes aprovados |
 | `npm run test:calibrator` | basic, heavy, worker | busca, intenção, custo e paralelismo |
 | `npm run test:benchmark` | realismo, assists, KDA, rating | fidelidade estatística dos motores |
-| `npm run test:e2e` | intent, simulation | calibrador e aba Simular no navegador |
-| `npm run test:all` | as 13 suítes acima | validação completa na ordem histórica |
+| `npm run test:e2e` | intent, simulation, game flow | calibrador, aba Simular e jogo principal no navegador |
+| `npm run test:all` | as 14 suítes acima | validação completa na ordem histórica |
 | `npm run bench` | alias de `test:all` | compatibilidade com CI e fluxo legado |
 
-`npm run validate` executa sintaxe, lint e as 13 suítes.
+`npm run validate` executa sintaxe, lint e as 14 suítes.
 
 ## Estado de referência
 
@@ -47,14 +47,20 @@ encerra a suíte com erro. Um E2E pulado não é considerado cobertura.
 protege mapa, lote A × B e amostra round-robin da liga. O contrato inclui
 KAST/ADR/Rating, lados, plant e pós-plant, anti-eco, conversão pós-pistol,
 clutches, força do favorito, métricas por função, diagnóstico de suficiência,
-cobertura dos 17 times, valores inválidos, erros de página e repetibilidade por
-seed.
+cobertura dos 17 times, probabilidades bilaterais, seed automática por execução,
+rolagem, responsividade, valores inválidos e erros de página. O determinismo do
+motor por seed continua sendo um contrato separado, descrito no ADR 0003.
+
+`e2e-game-flow.js` percorre o jogo principal pela interface real: sorteia e
+monta os seis slots, valida força e química, disputa Suíça e playoffs, confere
+placares e ratings, chega à tela final e reinicia a campanha. O teste escolhe
+uma seed vencedora reproduzível para cobrir todas as fases sem alterar o RNG ou
+o balanceamento executável do produto.
 
 ## Próximas camadas
 
 - Unitários de fórmulas e limites após cada motor ser extraído.
 - Golden tests de simulação com seed e sequência completa de eventos.
 - Integração do torneio sem DOM.
-- E2E do fluxo principal: draft, lineup, suíça e playoffs.
 - Screenshots responsivos e com `prefers-reduced-motion`.
 - Benchmark de desempenho separado dos asserts de realismo.
