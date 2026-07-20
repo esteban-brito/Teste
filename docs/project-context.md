@@ -38,16 +38,17 @@ Estado registrado em 20 de julho de 2026:
 - branch de trabalho: `sandbox-test`;
 - `main`: intocável durante a profissionalização;
 - último commit já publicado no remoto:
-  `6148983 test(e2e): protege fluxo completo do jogo`;
-- branch local contém trabalho IFCS ainda não enviado:
-  `756aaf5` (metodologia), `0d04e29` (scorer), `8a9977b` (contrato do corpus),
-  `2716798` (ponto de retomada) e `8c3d330` (prova real do extrator);
+  `8932afd docs(fidelity): registra baseline técnica 96 de 100`;
+- branch local contém três commits de teste ainda não enviados:
+  `d033476` (benchmark determinístico por ID), `f9692a4` (goldens completos do
+  simulador) e `56c005b` (estabilidade do E2E no draft), acompanhados por esta
+  atualização documental;
 - Pages do sandbox: <https://esteban-brito.github.io/Teste/sandbox.html>;
 - o E2E do jogo percorre draft, lineup, Suíça, playoffs, título e reinício;
-- workflow do commit `6148983`: sucesso em validação e deploy;
+- workflow conhecido do commit `6148983`: sucesso em validação e deploy;
 - run do GitHub Actions: `29772373882`;
-- última validação local completa: 16/16 suítes em 183,4 s, com 45.900 mapas
-  e 940.452 rounds nos benchmarks;
+- última validação local completa: 17/17 suítes em 172,5 s, com 45.900 mapas
+  e 939.086 rounds nos benchmarks;
 - nenhuma mudança IFCS alterou motor, dados, configuração, RNG ou balanceamento;
 - o alvo IFCS de 22/01/2026 a 07/07/2026 está congelado com fontes e hashes; a
   revisão 2 corrige a troca oficial de Train por Anubis antes da coleta;
@@ -258,11 +259,15 @@ limite de CI.
 - `6148983`: E2E completo do jogo principal, publicado e aprovado na CI;
 - `756aaf5`: metodologia IFCS 0–100;
 - `0d04e29`: scorer puro e contratos matemáticos do IFCS;
-- `8a9977b`: contrato auditável do corpus e extrator Awpy offline.
+- `8a9977b`: contrato auditável do corpus e extrator Awpy offline;
+- `8932afd`: baseline técnica preliminar de 96/100 publicada;
+- `d033476`: benchmark determinístico, bilateral e identificado pelos 85 IDs;
+- `f9692a4`: golden completo do simulador por seed;
+- `56c005b`: E2E do draft aguarda o tipo correto de card.
 
 Nenhum desses últimos ajustes mudou as fórmulas de balanceamento do jogo. Os
-commits IFCS e sua atualização documental permanecem locais até autorização
-explícita de push.
+três commits de teste posteriores a `8932afd` e este registro documental
+permanecem locais até autorização explícita de push.
 
 ## 7. Sistema de testes, CI e deploy
 
@@ -272,13 +277,13 @@ explícita de push.
 npm run check             sintaxe e contrato de carregamento do sandbox
 npm run lint              lint de jogo, sandbox, worker, bancada e ferramentas
 npm run test:data         integridade dos dados
-npm run test:regression   auditoria, snapshot e guardas históricas
+npm run test:regression   auditoria, snapshot, guardas históricas e golden por seed
 npm run test:calibrator   calibrador, casos pesados e workers
 npm run test:benchmark    realismo, assists, KDA e rating
 npm run test:fidelity     contratos e scorer IFCS de fidelidade
 npm run corpus:fidelity   selo e verificação do manifesto real IFCS
 npm run test:e2e          jogo, calibrador e aba Simular no Chromium
-npm run test:all          todas as 16 suítes
+npm run test:all          todas as 17 suítes
 npm run validate          check + lint + todas as suítes
 ```
 
@@ -412,7 +417,7 @@ scorer, contrato do corpus e prova do extrator estão implementados; coleta
 profissional auditada e primeira baseline IFCS estão pendentes.
 
 - manter documentação, snapshot e grupos de teste atualizados;
-- adicionar golden tests por seed antes de mover o simulador;
+- manter os goldens completos por seed antes e durante a movimentação do simulador;
 - manter o E2E concluído do fluxo principal: draft, lineup, Suíça e playoffs;
 - separar benchmark de desempenho do benchmark de realismo.
 - concluir o IFCS por etapas: adquirir/auditar o corpus profissional e gerar a
@@ -459,7 +464,7 @@ Aceitação: mesmas químicas e forças para fixtures representativas e snapshot
 **Risco:** arriscado.
 
 - injetar adapter do Mulberry32 sem mudar consumo;
-- capturar golden tests de eventos completos;
+- preservar os golden tests já capturados de eventos completos;
 - separar forma, combate, economia, mapa e rating em commits distintos;
 - medir desempenho sem alterar a distribuição estatística.
 
@@ -790,7 +795,8 @@ Ordem que maximiza segurança e prepara o novo modo:
 2. E2E mínimo do jogo principal completo (**concluído em 20 de julho de 2026**);
 3. metodologia IFCS, scorer e contrato de corpus sem balanceamento
    (**implementados; alvo e prova real concluídos, falta o corpus auditado**);
-4. criar golden tests de avaliação e simulação com seed;
+4. criar golden tests de avaliação e simulação com seed
+   (**simulação concluída; avaliação continua coberta por snapshot e benchmark**);
 5. aceitar/revisar ADR 0002 e ADR 0004;
 6. extrair uma API pura `evaluatePlayer(rawPlayer, config)` com adapter legado;
 7. escrever ADR 0005 para Carreira de Jogador e responder as decisões abertas;
@@ -808,7 +814,8 @@ da progressão na mesma revisão.
 - sandbox, Node e worker dependem de loaders frágeis por texto;
 - estado global mistura domínio, aplicação e efeitos;
 - não existe ainda persistência versionada adequada para uma carreira;
-- faltam goldens completos do simulador por seed;
+- goldens completos do simulador por seed existem; qualquer mudança deliberada
+  exige explicação estatística antes da atualização do fixture;
 - o scorer e o contrato de corpus IFCS existem; o alvo de 22/01/2026 a
   07/07/2026 está congelado e o extrator foi provado com uma demo real, mas
   ainda faltam adquirir, extrair e auditar os dados profissionais antes da nota;

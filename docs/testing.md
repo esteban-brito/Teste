@@ -15,15 +15,15 @@ faixas atuais são guardas de regressão, não uma nota de 0–100.
 | Comando | Suítes | Finalidade |
 |---|---|---|
 | `npm run test:data` | `times.js` | integridade de jogadores, times e derivados |
-| `npm run test:regression` | auditoria, snapshot, drop | classificação e invariantes aprovados |
+| `npm run test:regression` | auditoria, snapshot, drop, golden do simulador | classificação, invariantes e resultados completos por seed |
 | `npm run test:calibrator` | basic, heavy, worker | busca, intenção, custo e paralelismo |
 | `npm run test:benchmark` | realismo, assists, KDA, rating | fidelidade estatística dos motores |
 | `npm run test:fidelity` | scorer e corpus IFCS | matemática, cobertura, caps, proveniência e auditoria |
 | `npm run test:e2e` | intent, simulation, game flow | calibrador, aba Simular e jogo principal no navegador |
-| `npm run test:all` | as 16 suítes acima | validação completa na ordem histórica |
+| `npm run test:all` | as 17 suítes acima | validação completa na ordem histórica |
 | `npm run bench` | alias de `test:all` | compatibilidade com CI e fluxo legado |
 
-`npm run validate` executa sintaxe, lint e as 16 suítes.
+`npm run validate` executa sintaxe, lint e as 17 suítes.
 
 ## Estado de referência
 
@@ -35,8 +35,8 @@ faixas atuais são guardas de regressão, não uma nota de 0–100.
 
 O `docs/baseline.md` é um retrato histórico: sua contagem de 13 suítes corresponde
 à captura de 19 de julho de 2026, não à bancada atual. A última validação completa
-registrada, em 20 de julho de 2026, aprovou 16/16 suítes em 183,4 s, incluindo
-45.900 mapas e 940.452 rounds. Isso confirma regressão; não é
+registrada, em 20 de julho de 2026, aprovou 17/17 suítes em 172,5 s, incluindo
+45.900 mapas e 939.086 rounds. Isso confirma regressão; não é
 uma nota IFCS oficial.
 
 ## Validação do extrator IFCS
@@ -76,6 +76,21 @@ aprovadas e resultado arredondado 96/100.
 5. Execute novamente regressão e benchmark.
 6. Não misture a atualização com movimentação de arquivos ou formatação.
 
+## Golden do simulador
+
+`npm run test:golden` reconstrói três cenários em motores novos e compara mapa,
+placar, todos os rounds, economia, plant, clutch, destaques e estatísticas dos
+dez jogadores com `bancada/simulation-golden.json`. A cobertura inclui uma
+série melhor de três, prorrogação repetida e paridade entre os modos completo e
+leve. Os jogadores são identificados pelo ID cru, não apenas pelo nick.
+
+O golden é um teste de caracterização: ele prova que uma refatoração preservou
+o comportamento observável e o consumo do Mulberry32. Ele não afirma que o
+balanceamento congelado é ideal. Uma mudança deliberada de balanceamento deve
+ser comparada estatisticamente em commit separado antes de executar
+`npm run golden:update`; nunca se atualiza o fixture apenas para esconder uma
+regressão.
+
 ## E2E obrigatório
 
 Playwright é uma dependência de desenvolvimento e Chromium é instalado
@@ -99,7 +114,6 @@ o balanceamento executável do produto.
 ## Próximas camadas
 
 - Unitários de fórmulas e limites após cada motor ser extraído.
-- Golden tests de simulação com seed e sequência completa de eventos.
 - Integração do torneio sem DOM.
 - Screenshots responsivos e com `prefers-reduced-motion`.
 - Benchmark de desempenho separado dos asserts de realismo.
