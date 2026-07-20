@@ -1,6 +1,6 @@
 /* bancada/e2e-simulation.js — contrato de navegador da aba Simular.
-   Protege placar, confronto, amostra determinística da liga, métricas profissionais,
-   fidelidade por função e repetibilidade por seed. Não altera nem recalibra o motor. */
+   Protege placar, confronto bilateral, amostra da liga, métricas profissionais,
+   seed automática, rolagem e responsividade. Não altera nem recalibra o motor. */
 const http=require("http");
 const path=require("path");
 const {spawn}=require("child_process");
@@ -31,7 +31,7 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
   try{
     await waitServer(port);
     browser=await chromium.launch({headless:true});
-    const page=await browser.newPage();
+    const page=await browser.newPage({viewport:{width:1440,height:700}});
     const errors=[];
     page.on("pageerror",error=>errors.push(String(error.message||error)));
     page.on("console",message=>{
@@ -48,7 +48,6 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     await page.selectOption("#simA","0");
     await page.selectOption("#simB","1");
     await page.selectOption("#simMap","Mirage");
-    await page.fill("#simSeed","2026");
     await page.click("#runMapBtn");
     await page.waitForSelector("#matchout .scoreboards table",{timeout:10000});
 
@@ -65,6 +64,9 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     check(map.headers.every(headers=>JSON.stringify(headers.slice(1))===JSON.stringify(expectedPlayerColumns)),"colunas K/D/A/KAST/ADR/Rating estão padronizadas");
     check(validMapValues,"KAST, ADR e Rating estão preenchidos com valores válidos");
     check(!/NaN|undefined|Infinity/.test(map.text),"placar do mapa não contém valores inválidos");
+    const mapSeed=await page.evaluate(()=>window.__e2e.simulation().seed);
+    const hasSeedControl=await page.locator("#simSeed").count();
+    check(Number.isInteger(mapSeed)&&mapSeed>0&&!hasSeedControl,"mapa usa seed automática sem expor controle manual");
 
     await page.fill("#simRuns","12");
     await page.click("#runBatchBtn");
@@ -74,28 +76,31 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       const table=out.querySelector(".scoreboards table");
       return {
         text:out.textContent,
-        normalized:out.innerText.replace(/\s+/g," ").trim(),
-        macro:[...out.querySelectorAll(".stat-mini span")].map(node=>node.textContent.trim()),
+        core:[...out.querySelectorAll(".sim-core-item")].map(node=>node.textContent.replace(/\s+/g," ").trim()),
+        sides:[...out.querySelectorAll(".sim-side")].map(node=>({name:node.querySelector(".sim-side-name")?.textContent.trim(),pct:Number(node.querySelector(".sim-side-pct")?.textContent.replace("%",""))})),
         headers:table?[...table.querySelectorAll("thead th")].map(cell=>cell.textContent.trim()):[],
         rows:table?[...table.querySelectorAll("tbody tr")].map(row=>[...row.cells].map(cell=>cell.textContent.trim())):[],
         bands:[...out.querySelectorAll('[title^="real "]')].map(node=>({title:node.title,style:node.getAttribute("style")||""})),
         groups:out.querySelectorAll(".fidelity-group").length,
-        breakdowns:out.querySelectorAll(".sim-breakdowns .sim-data-panel").length
+        breakdowns:out.querySelectorAll(".sim-breakdowns .sim-data-panel").length,
+        details:[...out.querySelectorAll("details.sim-details")].map(node=>node.open)
       };
     });
-    const macroText=firstBatch.macro.join(" ");
+    const coreText=firstBatch.core.join(" ");
     const expectedRoleColumns=["Função","KPR","DPR","A/K","KAST","ADR"];
-    check(["KPR","KAST","ADR","assists/mapa"].every(label=>macroText.includes(label)),"lote mostra fidelidade macro e assists/mapa");
+    check(["KPR","KAST","ADR","CT win","Plant"].every(label=>coreText.includes(label)),"resumo mantém somente os cinco indicadores centrais");
+    check(firstBatch.sides.length===2&&firstBatch.sides.every(side=>side.name&&Number.isFinite(side.pct))&&firstBatch.sides.reduce((sum,side)=>sum+side.pct,0)===100,"confronto identifica os dois times e porcentagens complementares");
     check(JSON.stringify(firstBatch.headers)===JSON.stringify(expectedRoleColumns),"breakdown possui colunas por função esperadas");
     check(firstBatch.rows.length===6,"breakdown cobre as 6 funções do confronto");
     check(firstBatch.bands.length>=9&&firstBatch.bands.every(band=>band.title.startsWith("real ")),"faixas reais aparecem nas métricas globais e por função");
-    check(firstBatch.groups===4&&firstBatch.breakdowns===2,"layout agrupa métricas e equilibra os dois painéis de detalhe");
+    check(firstBatch.groups===4&&firstBatch.breakdowns===2&&firstBatch.details.length===2&&firstBatch.details.every(open=>!open),"detalhes completos permanecem disponíveis e fechados por padrão");
     check(!/NaN|undefined|Infinity/.test(firstBatch.text),"lote não contém valores inválidos");
+    const firstSeed=await page.evaluate(()=>window.__e2e.simulation().seed);
 
     await page.click("#runBatchBtn");
     await page.waitForSelector("#matchout .fidelity-score",{timeout:15000});
-    const secondBatch=await page.$eval("#matchout",node=>node.innerText.replace(/\s+/g," ").trim());
-    check(secondBatch===firstBatch.normalized,"mesma seed e quantidade reproduzem o mesmo lote");
+    const secondSeed=await page.evaluate(()=>window.__e2e.simulation().seed);
+    check(Number.isInteger(firstSeed)&&firstSeed>0&&Number.isInteger(secondSeed)&&secondSeed>0&&secondSeed!==firstSeed,"cada clique em rodar lote gera uma nova seed");
 
     await page.selectOption("#simScope","league");
     const leagueControls=await page.evaluate(()=>({
@@ -106,30 +111,37 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       batchLabel:document.getElementById("runBatchBtn").textContent.trim()
     }));
     check(leagueControls.teams&&leagueControls.mapDisabled&&leagueControls.mapHidden&&leagueControls.batchAccent&&leagueControls.batchLabel==="Rodar amostra","modo liga exibe somente a ação primária relevante");
-    await page.fill("#simRuns","36");
-    await page.fill("#simSeed","3107");
+    await page.fill("#simRuns","80");
     await page.click("#runBatchBtn");
-    await page.waitForSelector('#matchout [data-metric="postplant"]',{timeout:20000});
+    await page.waitForSelector('#matchout [data-metric="postplant"]',{state:"attached",timeout:20000});
     const league=await page.evaluate(()=>{
       const out=document.getElementById("matchout");
       return {
         text:out.textContent,
-        normalized:out.innerText.replace(/\s+/g," ").trim(),
         metrics:[...out.querySelectorAll("[data-metric]")].map(node=>({key:node.dataset.metric,state:node.className})),
         deltaRows:out.querySelectorAll(".player-delta tbody tr").length
       };
     });
     const proMetrics=["kpr","ct","plant","postplant","antieco","pistol","clutch1","clutch2","clutch3","kast","adr","ak","apr","ratingR","ratingMae","fav03","fav16"];
-    check(/Amostra da liga · 17\/17 times/.test(league.text),"amostra determinística cobre os 17 times");
+    check(/Amostra da liga · 17\/17 times/.test(league.text),"amostra da liga cobre os 17 times");
     check(proMetrics.every(key=>league.metrics.some(metric=>metric.key===key)),"painel cobre combate, lados, economia, clutches, rating e favoritos");
     check(league.metrics.every(metric=>/\b(ok|out|low)\b/.test(metric.state)),"cada métrica recebe diagnóstico ou amostra insuficiente");
     check(league.deltaRows===8,"painel mostra os 8 maiores desvios individuais de rating");
     check(/Fidelidade profissional\s+\d+\/\d+/.test(league.text)&&!/NaN|undefined|Infinity/.test(league.text),"nota de fidelidade da liga contém apenas valores válidos");
 
+    const leagueSeed=await page.evaluate(()=>window.__e2e.simulation().seed);
     await page.click("#runBatchBtn");
-    await page.waitForSelector('#matchout [data-metric="postplant"]',{timeout:20000});
-    const leagueAgain=await page.$eval("#matchout",node=>node.innerText.replace(/\s+/g," ").trim());
-    check(leagueAgain===league.normalized,"amostra da liga é integralmente reproduzível pela seed");
+    await page.waitForSelector('#matchout [data-metric="postplant"]',{state:"attached",timeout:20000});
+    const leagueSeedAgain=await page.evaluate(()=>window.__e2e.simulation().seed);
+    check(leagueSeedAgain!==leagueSeed,"nova amostra da liga também recebe seed automática");
+
+    await page.$eval("details.sim-details",node=>{node.open=true;});
+    await page.evaluate(()=>window.scrollTo(0,0));
+    await page.locator(".sim-core").hover();
+    await page.mouse.wheel(0,600);
+    await page.waitForTimeout(100);
+    const scroll=await page.evaluate(()=>({windowY:window.scrollY,bodyOverflow:getComputedStyle(document.body).overflowY,canvasOverflow:getComputedStyle(document.querySelector(".canvas-body")).overflowY}));
+    check(scroll.windowY>0&&scroll.bodyOverflow!=="hidden"&&scroll.canvasOverflow!=="auto","rolagem do mouse move a página sem criar scroll aninhado no canvas");
     await page.setViewportSize({width:390,height:844});
     const mobileLayout=await page.evaluate(()=>({
       metricColumns:getComputedStyle(document.querySelector(".fidelity-grid")).gridTemplateColumns.trim().split(/\s+/).length,
@@ -139,7 +151,7 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     check(mobileLayout.metricColumns===1&&mobileLayout.tableColumns===1&&mobileLayout.noOverflow,"layout mobile empilha métricas e tabelas sem overflow horizontal");
     check(errors.length===0,`sem page-error no fluxo${errors.length?": "+errors[0]:""}`);
 
-    console.log(failures?`✗ ${failures} checagem(ns) e2e falharam`:"✓ aba Simular preserva placar, fidelidade e seed");
+    console.log(failures?`✗ ${failures} checagem(ns) e2e falharam`:"✓ aba Simular preserva placar, fidelidade, seed automática e rolagem");
     return done(failures?1:0);
   }catch(error){
     console.log("  ✗ e2e abortou: "+(error.message||error));
