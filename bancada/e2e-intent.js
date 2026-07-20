@@ -7,19 +7,13 @@
    Não depende de forçar sinteticamente o ramo de recusa (isso seria não-determinístico); valida a
    GARANTIA ponta-a-ponta ("zero regressões após o caminho paralelo"), que é o que a auditoria pediu.
 
-   Pula com exit 0 se playwright/chromium não estiver disponível (ex.: CI sem navegador), então
-   `npm run bench` continua verde onde não há browser e roda o teste onde há. */
+   Playwright e Chromium são dependências obrigatórias. Falta de infraestrutura é falha: um E2E
+   pulado não comprova o contrato que esta suíte protege. */
 const http=require("http");
 const path=require("path");
 const {spawn}=require("child_process");
+const pw=require("playwright");
 const {okMark}=require("./common");
-
-function loadPlaywright(){
-  for(const id of ["playwright","/opt/node22/lib/node_modules/playwright"]){
-    try{return require(id);}catch{/* tenta o próximo */}
-  }
-  return null;
-}
 
 function waitServer(port,tries=50){
   return new Promise((resolve,reject)=>{
@@ -36,9 +30,6 @@ function check(ok,label){ console.log(`  ${okMark(!!ok)} ${label}`); if(!ok)fail
 
 (async()=>{
   console.log("— E2E: INTENÇÕES NO CAMINHO PARALELO (navegador) —");
-  const pw=loadPlaywright();
-  if(!pw){ console.log("  · pulado (playwright indisponível neste ambiente)"); console.log("✓ e2e de intenções pulado"); return; }
-
   const port=5100+Math.floor(Math.random()*400);
   const server=spawn(process.execPath,[path.join(__dirname,"..","tools","serve-static.js")],
     {env:{...process.env,PORT:String(port)},stdio:"ignore"});
@@ -47,8 +38,7 @@ function check(ok,label){ console.log(`  ${okMark(!!ok)} ${label}`); if(!ok)fail
 
   try{
     await waitServer(port);
-    try{ browser=await pw.chromium.launch({headless:true}); }
-    catch(err){ console.log("  · pulado (chromium não lançou: "+(err.message||err)+")"); console.log("✓ e2e de intenções pulado"); return done(0); }
+    browser=await pw.chromium.launch({headless:true});
 
     const page=await browser.newPage();
     const errors=[];

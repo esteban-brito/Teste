@@ -2,19 +2,25 @@
   "name": "sandbox",
   "private": true,
   "scripts": {
-    "bench": "node bancada/run.js",
+    "bench": "node bancada/run.js --group all",
     "check": "node --check game.js && node tools/check-sandbox-engine.js && node tools/check-sandbox-syntax.js",
     "lint": "eslint game.js sandbox.html calibrador-worker.js bancada/*.js tools/*.js",
     "serve": "node tools/serve-static.js",
-    "test:e2e": "node bancada/e2e-intent.js",
+    "test:data": "node bancada/run.js --group data",
+    "test:regression": "node bancada/run.js --group regression",
+    "test:benchmark": "node bancada/run.js --group benchmark",
+    "test:e2e": "node bancada/run.js --group e2e",
     "test:drop": "node bancada/drop-reform.js",
-    "test:calibrator": "node bancada/calibrador.js && node bancada/calibrador-heavy.js && node bancada/worker-calibrador.js",
+    "test:calibrator": "node bancada/run.js --group calibrator",
+    "test:all": "node bancada/run.js --group all",
+    "validate": "npm run check && npm run lint && npm run test:all",
     "verify-report": "node tools/verify-report.js",
     "snapshot:update": "node bancada/snapshot.js --update"
   },
   "devDependencies": {
-    "eslint": "^10.6.0",
     "@eslint/js": "^10.0.1",
-    "eslint-plugin-html": "^8.1.4"
+    "eslint": "^10.6.0",
+    "eslint-plugin-html": "^8.1.4",
+    "playwright": "^1.61.1"
   }
 }
