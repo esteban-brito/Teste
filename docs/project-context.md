@@ -20,6 +20,7 @@ Este documento não substitui as fontes especializadas:
 - `docs/formulas/`: roles, playstyles, OVR e química;
 - `docs/testing.md`: estratégia e comandos de teste;
 - `docs/realism-methodology.md`: IFCS, corpus real e nota de fidelidade 0–100;
+- `docs/fidelity-corpus.md`: contrato operacional de coleta e auditoria do corpus;
 - `docs/adr/`: decisões arquiteturais;
 - `docs/baseline.md`: baseline estatístico e estrutural;
 - `docs/glossary.md`: vocabulário do domínio.
@@ -248,8 +249,9 @@ npm run test:regression   auditoria, snapshot e guardas históricas
 npm run test:calibrator   calibrador, casos pesados e workers
 npm run test:benchmark    realismo, assists, KDA e rating
 npm run test:fidelity     contratos e scorer IFCS de fidelidade
+npm run corpus:fidelity   selo e verificação do manifesto real IFCS
 npm run test:e2e          jogo, calibrador e aba Simular no Chromium
-npm run test:all          todas as 15 suítes
+npm run test:all          todas as 16 suítes
 npm run validate          check + lint + todas as suítes
 ```
 
@@ -775,7 +777,8 @@ da progressão na mesma revisão.
 - estado global mistura domínio, aplicação e efeitos;
 - não existe ainda persistência versionada adequada para uma carreira;
 - faltam goldens completos do simulador por seed;
-- o IFCS está especificado, mas corpus real auditado e scorer ainda não existem;
+- o scorer e o contrato de corpus IFCS existem; faltam adquirir, extrair e
+  auditar os dados reais antes da primeira nota;
 - configurações ainda vivem próximas de dados e implementação;
 - `elencos.html` pode divergir se não for regenerado;
 - alterações no RNG produzem regressões amplas e difíceis de diagnosticar;

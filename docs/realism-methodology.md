@@ -447,6 +447,12 @@ pesos, thresholds, dados ou RNG.
 - auditoria de placares e eventos;
 - splits por evento congelados.
 
+Estado: o schema, o selo SHA-256, a seleção determinística da auditoria e as
+travas de publicação estão implementados em `bancada/fidelity-corpus.js`. O
+extrator Awpy está implementado e validado apenas com dados sintéticos; faltam
+uma prova com demo real, a aquisição integral e a auditoria humana. Portanto M1
+ainda não está concluído.
+
 ### M2 — scorer puro
 
 - funções de distância, bootstrap e agregação;

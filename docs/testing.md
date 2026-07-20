@@ -18,12 +18,12 @@ faixas atuais são guardas de regressão, não uma nota de 0–100.
 | `npm run test:regression` | auditoria, snapshot, drop | classificação e invariantes aprovados |
 | `npm run test:calibrator` | basic, heavy, worker | busca, intenção, custo e paralelismo |
 | `npm run test:benchmark` | realismo, assists, KDA, rating | fidelidade estatística dos motores |
-| `npm run test:fidelity` | scorer IFCS | contratos matemáticos, cobertura, caps e proveniência |
+| `npm run test:fidelity` | scorer e corpus IFCS | matemática, cobertura, caps, proveniência e auditoria |
 | `npm run test:e2e` | intent, simulation, game flow | calibrador, aba Simular e jogo principal no navegador |
-| `npm run test:all` | as 15 suítes acima | validação completa na ordem histórica |
+| `npm run test:all` | as 16 suítes acima | validação completa na ordem histórica |
 | `npm run bench` | alias de `test:all` | compatibilidade com CI e fluxo legado |
 
-`npm run validate` executa sintaxe, lint e as 15 suítes.
+`npm run validate` executa sintaxe, lint e as 16 suítes.
 
 ## Estado de referência
 

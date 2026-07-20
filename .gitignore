@@ -8,11 +8,19 @@ Thumbs.db
 # Node (caso ferramentas de build/teste sejam usadas)
 node_modules/
 npm-debug.log*
+.venv-fidelity/
+__pycache__/
+*.pyc
 
 # Temporários / scratch
 *.tmp
 /tmp/
 scratchpad/
+
+# Corpus IFCS: manifestos podem ser versionados; demos e derivados são externos
+/fidelity-corpus/raw/
+/fidelity-corpus/processed/
+/fidelity-corpus/private-audit/
 
 # Backups
 *.bak*

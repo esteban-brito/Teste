@@ -17,6 +17,7 @@
     "validate": "npm run check && npm run lint && npm run test:all",
     "verify-report": "node tools/verify-report.js",
     "score:fidelity": "node tools/score-fidelity.js",
+    "corpus:fidelity": "node tools/verify-fidelity-corpus.js",
     "snapshot:update": "node bancada/snapshot.js --update"
   },
   "devDependencies": {
