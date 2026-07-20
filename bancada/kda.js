@@ -3,20 +3,17 @@
    Referências reais (por round, elite): KPR global ~0.68-0.72 · KAST ~70-73% · ADR ~76-82;
    fraggers (AWPer/Rifler/Lurker) fragam mais que support/IGL; AWPer/estrela dá mais dano que support. */
 const {X,T}=require("./motor");
-const {mean,inRange,printCheck,pickOpponent}=require("./common");
+const {mean,inRange,printCheck,scheduledMatch}=require("./common");
 
 const N=+(process.env.N||120);
 const MAPS=9;
 if(X.srand)X.srand(7788);
 
-const roleByNick={};
-for(const team of T)team.jogadores.forEach(j=>{roleByNick[j._eng.nick]=j._eng.primario;});
-
 const byRole={}; // role -> {k,d,r,kast,adr}
 let K=0,R=0,KA=0,AD=0;
-function acc(stats,rounds){
-  stats.forEach(s=>{
-    const role=roleByNick[s.nick]||"?";
+function acc(stats,rounds,team){
+  stats.forEach((s,index)=>{
+    const role=team.jogadores[index]?._eng.primario||"?";
     const b=byRole[role]=byRole[role]||{k:0,d:0,r:0,kast:0,adr:0};
     b.k+=s.k;b.d+=s.d;b.r+=rounds;b.kast+=(s.kast||0)*rounds;b.adr+=(s.adr||0)*rounds;
     K+=s.k;R+=rounds;KA+=(s.kast||0)*rounds;AD+=(s.adr||0)*rounds;
@@ -24,11 +21,11 @@ function acc(stats,rounds){
 }
 for(let c=0;c<N;c++){
   X.sortearFormaCampanha(T);
-  for(const team of T){
+  for(const [teamIndex] of T.entries()){
     for(let m=0;m<MAPS;m++){
-      const opp=pickOpponent(T,team);
-      const g=X.simularMapa(team,opp,X.forcaDoDia(team.ef,team.quim),X.forcaDoDia(opp.ef,opp.quim));
-      acc(g.statsA,g.totalRounds);acc(g.statsB,g.totalRounds);
+      const {a,b}=scheduledMatch(T,teamIndex,c*MAPS+m);
+      const g=X.simularMapa(a,b,X.forcaDoDia(a.ef,a.quim),X.forcaDoDia(b.ef,b.quim));
+      acc(g.statsA,g.totalRounds,a);acc(g.statsB,g.totalRounds,b);
     }
   }
 }

@@ -6,7 +6,7 @@ const {X}=require("./motor");
 const {ROOT,mean}=require("./common");
 
 const ROSTER_PATH=path.join(ROOT,"elencos.html");
-const DATA_RE=/const DATA=\[.*?\];\n/s;
+const DATA_RE=/const DATA=\[.*?\];\r?\n/s;
 
 function firstDefined(object,...keys){
   for(const key of keys){

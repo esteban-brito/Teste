@@ -36,11 +36,15 @@ function printCheck(ok,name,value,range){
   console.log(`  ${okMark(ok)} ${name.padEnd(26)} ${String(value).padStart(6)}   [${range}]`);
 }
 
-function pickOpponent(teams,self){
+function scheduledMatch(teams,selfIndex,roundIndex){
   if(teams.length<2)throw new Error("simulacao precisa de ao menos 2 times");
-  let opponent=self;
-  while(opponent===self)opponent=teams[Math.floor(Math.random()*teams.length)];
-  return opponent;
+  if(!Number.isInteger(selfIndex)||selfIndex<0||selfIndex>=teams.length)throw new Error("indice de time invalido");
+  const cycle=teams.length-1;
+  const normalized=((roundIndex%cycle)+cycle)%cycle;
+  const opponentIndex=(selfIndex+1+normalized)%teams.length;
+  const team=teams[selfIndex],opponent=teams[opponentIndex];
+  const swap=((roundIndex+selfIndex)&1)===1;
+  return {team,opponent,a:swap?opponent:team,b:swap?team:opponent};
 }
 
 function teamNameFor(teams,player){
@@ -52,5 +56,5 @@ module.exports={
   ROOT,ATTRS,DISPLAY_ATTRS,COLOCACOES,
   mean,pct,inRange,signed,secondsSince,compactStats,
   countBy,sortedCountEntries,
-  okMark,printCheck,pickOpponent,teamNameFor
+  okMark,printCheck,scheduledMatch,teamNameFor
 };

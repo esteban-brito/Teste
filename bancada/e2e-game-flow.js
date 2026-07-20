@@ -22,20 +22,20 @@ function waitServer(port,tries=50){
 let failures=0;
 function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failures++;}
 
-async function revealDraw(page){
+async function revealDraw(page,candidateSelector,candidateLabel){
   for(let attempt=0;attempt<12;attempt++){
     await page.click("#rollbtn");
     await page.waitForFunction(()=>document.getElementById("track").children.length>40,{timeout:3000});
     await page.$eval("#track",track=>track.dispatchEvent(new TransitionEvent("transitionend",{bubbles:true,propertyName:"transform"})));
     await page.waitForSelector("#picks [data-pick]",{state:"attached",timeout:3000});
-    if(await page.locator("#picks .card[data-pick]:not(.taken):not(.dup)").count())return;
+    if(await page.locator(candidateSelector).count())return;
     await page.click("#respinbtn");
   }
-  throw new Error("não foi possível sortear um jogador disponível");
+  throw new Error(`não foi possível sortear ${candidateLabel} disponível`);
 }
 
 async function draftPlayer(page,slot){
-  await revealDraw(page);
+  await revealDraw(page,"#picks .card[data-pick]:not(.taken):not(.dup)","um jogador");
   const pickId=await page.$$eval("#picks .card[data-pick]:not(.taken):not(.dup)",cards=>{
     const ordered=[...cards].sort((a,b)=>Number(b.querySelector(".ovr")?.textContent)-Number(a.querySelector(".ovr")?.textContent));
     return ordered[0]?.dataset.pick||null;
@@ -47,7 +47,7 @@ async function draftPlayer(page,slot){
 }
 
 async function draftCoach(page){
-  await revealDraw(page);
+  await revealDraw(page,"#picks .coachcard[data-pick]:not(.taken)","um treinador");
   await page.locator("#picks .coachcard[data-pick]:not(.taken)").click();
   await page.locator('#lineupCoach [data-slot="coach"].avail').click();
   await page.waitForFunction(()=>document.getElementById("cnt").textContent==="6/6");
