@@ -205,25 +205,48 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .scoreboards th:first-child,.scoreboards td:first-child{text-align:left}
 .scoreboards th{color:var(--dim);font-size:var(--fs-2xs);letter-spacing:.14em;text-transform:uppercase;background:var(--panel-soft)}
 .scoreboards td{color:var(--neutral)}
-.fidelity-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:14px 0 8px}
-.fidelity-score{font-family:var(--ff);font-size:var(--fs-lg);font-weight:800;color:var(--txt)}
-.fidelity-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-bottom:12px}
-.fidelity-card{padding:10px 11px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-soft)}
-.fidelity-card.ok{border-color:color-mix(in srgb,var(--win) 40%,var(--line))}
-.fidelity-card.out{border-color:color-mix(in srgb,var(--warn) 55%,var(--line))}
-.fidelity-card.low{opacity:.68}
-.fidelity-label{font-size:var(--fs-xs);color:var(--dim);margin-bottom:5px}
-.fidelity-value{font-family:var(--ff);font-size:var(--fs-lg);font-weight:800;color:var(--txt)}
+.sim-run-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:16px 0 8px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.sim-run-title{font-family:var(--ff);font-size:var(--fs-lg);font-weight:800;color:var(--txt)}
+.sim-run-meta{font-size:var(--fs-s);color:var(--dim);margin-top:3px}
+.sim-winrate{font-family:var(--ff);font-size:var(--fs-2xl);font-weight:800;color:var(--accent);text-align:right;line-height:1}
+.sim-winrate small{display:block;margin-top:5px;font-size:var(--fs-2xs);letter-spacing:.13em;text-transform:uppercase;color:var(--dim)}
+.fidelity-head{display:grid;grid-template-columns:minmax(150px,auto) minmax(220px,1fr);align-items:center;gap:22px;padding:16px;margin:14px 0 12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-soft);position:relative;overflow:hidden}
+.fidelity-head::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--accent)}
+.fidelity-score{font-family:var(--ff);font-size:var(--fs-xl);font-weight:800;color:var(--txt);line-height:1.1}
+.fidelity-score span{color:var(--accent)}
+.fidelity-sub{font-size:var(--fs-s);color:var(--dim);margin-top:6px}
+.fidelity-progress{height:6px;border-radius:var(--radius-pill);background:var(--line2);overflow:hidden}
+.fidelity-progress span{display:block;height:100%;border-radius:inherit;background:var(--accent)}
+.fidelity-progress-label{display:flex;justify-content:space-between;gap:10px;margin-top:7px;font-size:var(--fs-xs);color:var(--dim)}
+.fidelity-alerts{padding:12px 14px;margin-bottom:14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-soft);color:var(--neutral);font-size:var(--fs-s);line-height:1.45}
+.fidelity-alerts b{color:var(--txt)}
+.fidelity-alerts ul{margin:6px 0 0 17px;color:var(--warn)}
+.fidelity-alerts li+li{margin-top:3px}
+.fidelity-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.fidelity-group{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-soft);overflow:hidden}
+.fidelity-group-title{padding:9px 12px;border-bottom:1px solid var(--line);font-family:var(--ff);font-size:var(--fs-xs);font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--neutral);background:color-mix(in srgb,var(--panel) 55%,var(--panel-soft))}
+.fidelity-card{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;min-height:54px;padding:8px 12px;border-bottom:1px solid var(--line2);position:relative}
+.fidelity-card:last-child{border-bottom:0}
+.fidelity-card::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:2px;background:var(--line)}
+.fidelity-card.ok::before{background:var(--win)}
+.fidelity-card.out::before{background:var(--warn)}
+.fidelity-card.low{opacity:.62}
+.fidelity-label{font-size:var(--fs-sm);font-weight:700;color:var(--neutral)}
+.fidelity-meta{font-size:var(--fs-2xs);color:var(--dim);line-height:1.35;margin-top:2px}
+.fidelity-value{font-family:var(--ff);font-size:var(--fs-md);font-weight:800;color:var(--txt);text-align:right;font-variant-numeric:tabular-nums}
 .fidelity-card.ok .fidelity-value{color:var(--win)}
 .fidelity-card.out .fidelity-value{color:var(--warn)}
-.fidelity-meta{font-size:var(--fs-2xs);color:var(--dim);line-height:1.35;margin-top:4px}
-.fidelity-alerts{padding:10px 12px;margin-bottom:12px;border-radius:var(--radius);background:var(--panel-soft);color:var(--neutral);font-size:var(--fs-s);line-height:1.55}
-.fidelity-alerts b{color:var(--txt)}
-.player-delta{margin-top:12px;overflow:auto}
-.player-delta table{width:100%;border-collapse:collapse;font-size:var(--fs-sm)}
-.player-delta th,.player-delta td{padding:6px 8px;border-bottom:1px solid var(--line2);text-align:right}
-.player-delta th:first-child,.player-delta td:first-child{text-align:left}
-.player-delta th{color:var(--dim);font-size:var(--fs-2xs);letter-spacing:.12em;text-transform:uppercase}
+.sim-section-tag{display:flex;align-items:center;gap:9px;margin:16px 0 7px;font-family:var(--ff);font-size:var(--fs-xs);font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:var(--neutral)}
+.sim-section-tag::before{content:"";width:5px;height:5px;border-radius:1px;background:var(--accent)}
+.sim-section-tag::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,var(--line),transparent)}
+.sim-breakdowns{align-items:start}
+.sim-data-panel{min-width:0;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-soft);overflow:auto}
+.sim-data-title{position:sticky;left:0;padding:9px 10px;border-bottom:1px solid var(--line);font-family:var(--ff);font-size:var(--fs-xs);font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--neutral)}
+.sim-data-panel table{background:transparent}
+.sim-data-panel th,.sim-data-panel td{padding:8px 10px}
+.sim-data-panel tbody tr:last-child td{border-bottom:0}
+.player-delta{margin:0}
+.sim-footnote{padding-top:10px;margin-top:12px;border-top:1px solid var(--line);font-size:var(--fs-s);color:var(--dim)}
 #matchout{margin-top:10px}
 
 /* ============================================================
@@ -518,6 +541,9 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
   .cr-drow{grid-template-columns:52px minmax(0,1fr) 14px minmax(0,1fr)}
   .pctx-ovr{width:44px;height:44px;font-size:var(--fs-xl)}
   .pctx-nm{font-size:var(--fs-lg)}
+  .fidelity-grid{grid-template-columns:1fr}
+  .fidelity-head{grid-template-columns:1fr;gap:14px}
+  .sim-run-head{align-items:flex-start}
 }
 </style>
 </head>
@@ -3093,7 +3119,7 @@ function runBatchLab(){
   lastMap=null;lastBatch=acc;renderMatchPanel();
 }
 function simCIText(ci,dec=1,suf=""){return ci?`IC95% ${ci[0].toFixed(dec)}${suf}–${ci[1].toFixed(dec)}${suf}`:"IC95% requer 2+ mapas";}
-function simMetricCard(metric){const eligible=metric.eligible!==false,ok=eligible&&metric.value>=metric.band[0]&&metric.value<=metric.band[1],cls=eligible?(ok?"ok":"out"):"low",value=Number.isFinite(metric.value)?metric.value.toFixed(metric.dec??1)+(metric.suf||""):"—";return `<div class="fidelity-card ${cls}" data-metric="${metric.key}"><div class="fidelity-label">${metric.label}</div><div class="fidelity-value" title="real ${metric.band[0]}–${metric.band[1]}">${value}</div><div class="fidelity-meta">${eligible?`real ${metric.band[0]}–${metric.band[1]}${metric.suf||""}`:`amostra insuficiente (${metric.sample||0})`}${metric.note?`<br>${metric.note}`:""}</div></div>`;}
+function simMetricCard(metric){const eligible=metric.eligible!==false,ok=eligible&&metric.value>=metric.band[0]&&metric.value<=metric.band[1],cls=eligible?(ok?"ok":"out"):"low",value=Number.isFinite(metric.value)?metric.value.toFixed(metric.dec??1)+(metric.suf||""):"—",meta=eligible?`Referência ${metric.band[0]}–${metric.band[1]}${metric.suf||""}`:`Amostra insuficiente · ${metric.sample||0} evento(s)`;return `<div class="fidelity-card ${cls}" data-metric="${metric.key}"><div><div class="fidelity-label">${metric.label}</div><div class="fidelity-meta">${meta}${metric.note?` · ${metric.note}`:""}</div></div><div class="fidelity-value" title="real ${metric.band[0]}–${metric.band[1]}">${value}</div></div>`;}
 function renderBatchPanel(b){
   const mapTxt=Object.entries(b.maps).sort((a,c)=>c[1]-a[1]).map(([m,n])=>`${m} ${Math.round(n/b.n*100)}%`).join(" · "),kpr=b.kills/Math.max(1,b.rounds*10),kast=b.pr?b.kastW/b.pr*100:0,adr=b.pr?b.adrW/b.pr:0,ak=b.kills?b.assists/b.kills:0,apr=b.assists/Math.max(1,b.pr);
   const playerRows=Object.values(b.players).filter(p=>p.n&&p.real).map(p=>({...p,avg:p.sim/p.n,delta:p.sim/p.n-p.real})),ratingPoints=playerRows.map(p=>[p.real,p.avg]),ratingR=simCorrelation(ratingPoints),ratingMae=simMean(playerRows.map(p=>Math.abs(p.delta)));
@@ -3119,20 +3145,27 @@ function renderBatchPanel(b){
     {key:"fav16",label:"Favorito · gap 16+",value:100*b.gaps["16+"].w/Math.max(1,b.gaps["16+"].n),band:SIM_REAL_BANDS.favorite16,suf:"%",eligible:b.gaps["16+"].n>=8,sample:b.gaps["16+"].n}
   );
   const eligible=metrics.filter(m=>m.eligible!==false),outside=eligible.filter(m=>m.value<m.band[0]||m.value>m.band[1]),passed=eligible.length-outside.length,low=metrics.length-eligible.length;
-  const alerts=outside.length?outside.map(m=>{const edge=m.value<m.band[0]?m.band[0]:m.band[1],delta=Math.abs(m.value-edge);return `${m.label}: ${m.value.toFixed(m.dec??1)}${m.suf||""} (${delta.toFixed(m.dec??1)}${m.suf||""} além da faixa)`;}).join(" · "):"Todas as métricas com amostra suficiente estão dentro das faixas configuradas.";
+  const alerts=outside.map(m=>{const edge=m.value<m.band[0]?m.band[0]:m.band[1],delta=Math.abs(m.value-edge);return `${m.label}: ${m.value.toFixed(m.dec??1)}${m.suf||""} · desvio de ${delta.toFixed(m.dec??1)}${m.suf||""}`;});
   const roleRows=["AWPer","Rifler","Entry","Lurker","Support","IGL"].filter(r=>b.role[r]&&b.role[r].r).map(r=>{const x=b.role[r],ref=SIM_ROLE_KPR[r],v=x.k/x.r,ok=v>=ref[0]&&v<=ref[1];return `<tr><td>${r}</td><td class="mono"${ok?' style="color:var(--win)"':''} title="real ${ref[0]}–${ref[1]}">${v.toFixed(2)}</td><td class="mono">${(x.d/x.r).toFixed(2)}</td><td class="mono">${(x.a/x.k||0).toFixed(2)}</td><td class="mono">${Math.round(x.kast/x.r*100)}%</td><td class="mono">${Math.round(x.adr/x.r)}</td></tr>`;}).join("");
   const deltaRows=playerRows.sort((a,c)=>Math.abs(c.delta)-Math.abs(a.delta)).slice(0,8).map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.role)}</td><td class="mono">${p.real.toFixed(2)}</td><td class="mono">${p.avg.toFixed(2)}</td><td class="mono" style="color:var(--${Math.abs(p.delta)>.12?"warn":"neutral"})">${p.delta>=0?"+":""}${p.delta.toFixed(2)}</td><td class="mono">${p.n}</td></tr>`).join("");
-  const header=b.scope==="league"?`Amostra da liga · ${Object.keys(b.teams).length}/${E.TEAMS.length} times`:`${esc(E.TEAMS[simA].nome)} × ${esc(E.TEAMS[simB].nome)}`,winCI=simWilson(b.wA,b.n);
+  const header=b.scope==="league"?`Amostra da liga · ${Object.keys(b.teams).length}/${E.TEAMS.length} times`:`${esc(E.TEAMS[simA].nome)} × ${esc(E.TEAMS[simB].nome)}`,winCI=simWilson(b.wA,b.n),scorePct=eligible.length?Math.round(passed/eligible.length*100):0;
+  const groups=[
+    ["Combate e produção",["kpr","kast","adr","ak","apr"]],
+    ["Rounds, objetivo e economia",["ct","plant","postplant","antieco","pistol"]],
+    ["Clutches",["clutch1","clutch2","clutch3"]],
+    ["Rating e força relativa",["ratingR","ratingMae","fav03","fav16"]]
+  ].map(([title,keys])=>{const items=keys.map(key=>metrics.find(m=>m.key===key)).filter(Boolean);return items.length?`<section class="fidelity-group"><div class="fidelity-group-title">${title}</div>${items.map(simMetricCard).join("")}</section>`:"";}).join("");
+  const diagnosis=alerts.length?`<ul>${alerts.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:`<div style="margin-top:4px;color:var(--win)">Todas as métricas com amostra suficiente estão dentro das faixas configuradas.</div>`;
   return `<div class="simres">
-    <div class="scoreline"><span class="scoreteam">${header}</span>${b.scope==="match"?`<span class="scoreval">${Math.round(b.wA/b.n*100)}%</span>`:""}<span class="hint">${b.n} mapas · seed ${simSeed}..${simSeed+b.n-1}${b.scope==="match"?` · ${simCIText(winCI,1,"%")}`:" · pares determinísticos"}</span></div>
+    <div class="sim-run-head"><div><div class="sim-run-title">${header}</div><div class="sim-run-meta">${b.n} mapas · seed ${simSeed}–${simSeed+b.n-1}${b.scope==="match"?` · ${simCIText(winCI,1,"%")}`:" · pares determinísticos"}</div></div>${b.scope==="match"?`<div class="sim-winrate">${Math.round(b.wA/b.n*100)}%<small>vitórias do time A</small></div>`:""}</div>
     <div class="stat-mini" style="margin-bottom:12px"><span><b class="mono">${(b.rounds/b.n).toFixed(1)}</b>rounds/mapa</span><span><b class="mono">${Math.round(b.ctWins/b.rounds*100)}%</b>CT win</span><span><b class="mono">${Math.round(b.plants/b.rounds*100)}%</b>plant</span><span><b class="mono">${Math.round(b.otMaps/b.n*100)}%</b>OT mapas</span><span><b class="mono">${kpr.toFixed(3)}</b>KPR</span><span><b class="mono">${Math.round(kast)}%</b>KAST</span><span><b class="mono">${adr.toFixed(1)}</b>ADR</span><span><b class="mono">${(b.assists/b.n).toFixed(1)}</b>assists/mapa</span></div>
-    <div class="fidelity-head"><div><div class="fidelity-score">Fidelidade profissional: ${passed}/${eligible.length}</div><div class="hint">${low} métrica(s) aguardando amostra; elas não reduzem a nota.</div></div><div class="hint">Faixas de referência usadas pelos benchmarks do projeto</div></div>
-    <div class="fidelity-alerts"><b>Diagnóstico:</b> ${esc(alerts)}</div>
-    <div class="fidelity-grid">${metrics.map(simMetricCard).join("")}</div>
-    <div class="hint" style="margin-bottom:7px">Fidelidade por função — verde = KPR na faixa real da função. Fora da faixa permanece neutro porque confrontos isolados refletem os jogadores escolhidos.</div>
-    <div class="scoreboards"><table><thead><tr><th>Função</th><th>KPR</th><th>DPR</th><th>A/K</th><th>KAST</th><th>ADR</th></tr></thead><tbody>${roleRows}</tbody></table></div>
-    <div class="player-delta"><div class="hint" style="margin-bottom:5px">Maiores desvios entre rating de referência e rating simulado</div><table><thead><tr><th>Jogador</th><th>Função</th><th>Real</th><th>Sim</th><th>Δ</th><th>Mapas</th></tr></thead><tbody>${deltaRows}</tbody></table></div>
-    <div class="hint" style="margin-top:10px">Mapas: ${esc(mapTxt||"mapa fixo")}. O diagnóstico mede desvios; não altera pesos, química, economia ou playstyles.</div>
+    <div class="fidelity-head"><div><div class="fidelity-score">Fidelidade profissional <span>${passed}/${eligible.length}</span></div><div class="fidelity-sub">${low?`${low} métrica(s) aguardando amostra e fora da nota.`:"Todas as métricas possuem amostra suficiente."}</div></div><div><div class="fidelity-progress"><span style="width:${scorePct}%"></span></div><div class="fidelity-progress-label"><span>Compatibilidade com as faixas</span><b class="mono">${scorePct}%</b></div></div></div>
+    <div class="fidelity-alerts"><b>Diagnóstico da amostra</b>${diagnosis}</div>
+    <div class="sim-section-tag">Indicadores profissionais</div>
+    <div class="fidelity-grid">${groups}</div>
+    <div class="sim-section-tag">Leitura por função e jogador</div>
+    <div class="scoreboards sim-breakdowns"><div class="sim-data-panel"><div class="sim-data-title">Assinatura das funções</div><table><thead><tr><th>Função</th><th>KPR</th><th>DPR</th><th>A/K</th><th>KAST</th><th>ADR</th></tr></thead><tbody>${roleRows}</tbody></table></div><div class="sim-data-panel player-delta"><div class="sim-data-title">Maiores desvios de rating</div><table><thead><tr><th>Jogador</th><th>Função</th><th>Real</th><th>Sim</th><th>Δ</th><th>Mapas</th></tr></thead><tbody>${deltaRows}</tbody></table></div></div>
+    <div class="sim-footnote">Mapas: ${esc(mapTxt||"mapa fixo")}. Verde indica aderência à faixa profissional; laranja indica desvio. O diagnóstico não altera pesos, química, economia ou playstyles.</div>
   </div>`;
 }
 function renderMatchPanel(){
@@ -3438,7 +3471,7 @@ function renderCanvasMode(){
     wireTeamMode();
   }else if(centerMode==="simular"){
     body.innerHTML=`<div class="card panel-secondary">
-      <div class="hint" style="margin-bottom:10px">Confronto audita dois times. Amostra da liga mede fidelidade global com pares reproduzíveis, sem séries ou veto.</div>
+      <div class="hint" style="margin-bottom:10px">Confronto audita dois times. Amostra da liga mede fidelidade global com pares reproduzíveis.</div>
       <div class="simgrid"><div class="simfield"><label>Escopo</label><select id="simScope"><option value="match"${simScope==="match"?" selected":""}>Confronto A × B</option><option value="league"${simScope==="league"?" selected":""}>Amostra da liga</option></select></div><div class="simfield sim-team-field"><label>Time A</label><select id="simA"></select></div><div class="simfield sim-team-field"><label>Time B</label><select id="simB"></select></div><div class="simfield"><label>Mapa</label><select id="simMap"><option value="auto">Pool automático</option></select></div><div class="simfield"><label>Seed</label><input type="number" id="simSeed" value="${simSeed}" step="1"></div><div class="simfield"><label>Qtd</label><input type="number" id="simRuns" value="${simRuns}" min="1" max="500" step="10"></div></div>
       <div class="row2"><button class="btn" id="runBatchBtn">Rodar lote</button><button class="btn accent" id="runMapBtn">Rodar mapa</button></div>
       <div id="matchout"></div>
@@ -3459,7 +3492,7 @@ function wireSimulador(){
   const fillTeamSel=(id,val)=>{const s=document.getElementById(id);E.TEAMS.forEach((t,i)=>{const o=document.createElement("option");o.value=i;o.textContent=t.nome+" · "+t.camp;if(i===val)o.selected=true;s.appendChild(o);});return s;};
   const sa=fillTeamSel("simA",simA), sb=fillTeamSel("simB",simB), sm=document.getElementById("simMap"), ss=document.getElementById("simScope"), mapBtn=document.getElementById("runMapBtn"), batchBtn=document.getElementById("runBatchBtn");
   E.MAPAS_POOL.forEach(m=>{const o=document.createElement("option");o.value=m;o.textContent=m+(E.MAPA_LADO[m]?` (${E.MAPA_LADO[m]>0?"CT":"TR"} ${Math.abs(E.MAPA_LADO[m])})`:"");if(m===simMap)o.selected=true;sm.appendChild(o);});
-  const syncScope=()=>{const league=simScope==="league";document.querySelectorAll(".sim-team-field").forEach(x=>x.style.display=league?"none":"flex");mapBtn.disabled=league;mapBtn.title=league?"Disponível apenas no modo confronto":"";batchBtn.textContent=league?"Rodar amostra":"Rodar lote";};
+  const syncScope=()=>{const league=simScope==="league";document.querySelectorAll(".sim-team-field").forEach(x=>x.style.display=league?"none":"flex");mapBtn.disabled=league;mapBtn.hidden=league;mapBtn.title=league?"Disponível apenas no modo confronto":"";batchBtn.textContent=league?"Rodar amostra":"Rodar lote";batchBtn.classList.toggle("accent",league);};
   ss.onchange=()=>{simScope=ss.value;lastMap=null;lastBatch=null;syncScope();renderMatchPanel();};
   sa.onchange=()=>{simA=+sa.value;lastMap=null;lastBatch=null;renderMatchPanel();};
   sb.onchange=()=>{simB=+sb.value;lastMap=null;lastBatch=null;renderMatchPanel();};
