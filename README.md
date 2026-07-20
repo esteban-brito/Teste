@@ -18,6 +18,8 @@ O mapa técnico e as regras para mudanças estão em:
   de profissionalização e visão do modo Carreira de Jogador;
 - [`docs/architecture.md`](docs/architecture.md): fluxo de dados e fronteiras;
 - [`docs/testing.md`](docs/testing.md): 14 suítes e comandos por camada;
+- [`docs/realism-methodology.md`](docs/realism-methodology.md): metodologia IFCS
+  para medir fidelidade ao CS profissional em escala de 0 a 100;
 - [`docs/formulas/`](docs/formulas/): roles, playstyles, OVR e química;
 - [`docs/adr/`](docs/adr/): decisões arquiteturais registradas.
 

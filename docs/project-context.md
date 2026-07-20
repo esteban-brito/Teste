@@ -19,6 +19,7 @@ Este documento não substitui as fontes especializadas:
 - `docs/architecture.md`: arquitetura e dependências permitidas;
 - `docs/formulas/`: roles, playstyles, OVR e química;
 - `docs/testing.md`: estratégia e comandos de teste;
+- `docs/realism-methodology.md`: IFCS, corpus real e nota de fidelidade 0–100;
 - `docs/adr/`: decisões arquiteturais;
 - `docs/baseline.md`: baseline estatístico e estrutural;
 - `docs/glossary.md`: vocabulário do domínio.
@@ -380,6 +381,8 @@ recalculam regra de negócio. Worker e processo principal importam a mesma API.
 - adicionar golden tests por seed antes de mover o simulador;
 - manter o E2E concluído do fluxo principal: draft, lineup, Suíça e playoffs;
 - separar benchmark de desempenho do benchmark de realismo.
+- implementar o IFCS por etapas: corpus auditado, scorer puro e primeiro
+  baseline sem tuning no mesmo commit.
 
 Aceitação: nenhuma classificação, estatística ou sequência aprovada muda.
 
@@ -751,13 +754,14 @@ Ordem que maximiza segurança e prepara o novo modo:
 
 1. confirmar `sandbox-test`, status limpo e CI verde;
 2. E2E mínimo do jogo principal completo (**concluído em 20 de julho de 2026**);
-3. criar golden tests de avaliação e simulação com seed;
-4. aceitar/revisar ADR 0002 e ADR 0004;
-5. extrair uma API pura `evaluatePlayer(rawPlayer, config)` com adapter legado;
-6. escrever ADR 0005 para Carreira de Jogador e responder as decisões abertas;
-7. definir schema de save e testes de round-trip;
-8. prototipar apenas o criador do jogador como fatia vertical isolada;
-9. validar com o responsável antes de iniciar temporada, mercado ou progressão.
+3. revisar a metodologia IFCS e implementar corpus/scorer sem balanceamento;
+4. criar golden tests de avaliação e simulação com seed;
+5. aceitar/revisar ADR 0002 e ADR 0004;
+6. extrair uma API pura `evaluatePlayer(rawPlayer, config)` com adapter legado;
+7. escrever ADR 0005 para Carreira de Jogador e responder as decisões abertas;
+8. definir schema de save e testes de round-trip;
+9. prototipar apenas o criador do jogador como fatia vertical isolada;
+10. validar com o responsável antes de iniciar temporada, mercado ou progressão.
 
 Cada item deve ser um commit pequeno ou uma sequência curta de commits com uma
 responsabilidade. Não combinar extração do motor, criador visual e balanceamento
@@ -770,6 +774,7 @@ da progressão na mesma revisão.
 - estado global mistura domínio, aplicação e efeitos;
 - não existe ainda persistência versionada adequada para uma carreira;
 - faltam goldens completos do simulador por seed;
+- o IFCS está especificado, mas corpus real auditado e scorer ainda não existem;
 - configurações ainda vivem próximas de dados e implementação;
 - `elencos.html` pode divergir se não for regenerado;
 - alterações no RNG produzem regressões amplas e difíceis de diagnosticar;

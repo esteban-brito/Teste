@@ -6,6 +6,10 @@ Os testes protegem comportamento, não a organização interna. Uma extração d
 módulo deve manter snapshots, seeds, métricas e contratos públicos. Alteração de
 limite estatístico exige justificativa de balanceamento separada.
 
+A futura nota consolidada de realismo segue o IFCS definido em
+`docs/realism-methodology.md`. Até o corpus real auditado e o scorer puro serem
+implementados, as faixas atuais são guardas de regressão, não uma nota de 0–100.
+
 ## Grupos atuais
 
 | Comando | Suítes | Finalidade |
@@ -64,3 +68,4 @@ o balanceamento executável do produto.
 - Integração do torneio sem DOM.
 - Screenshots responsivos e com `prefers-reduced-motion`.
 - Benchmark de desempenho separado dos asserts de realismo.
+- Corpus real versionado e scorer IFCS, sem tuning no mesmo commit.
