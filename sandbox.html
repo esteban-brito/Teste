@@ -205,6 +205,25 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .scoreboards th:first-child,.scoreboards td:first-child{text-align:left}
 .scoreboards th{color:var(--dim);font-size:var(--fs-2xs);letter-spacing:.14em;text-transform:uppercase;background:var(--panel-soft)}
 .scoreboards td{color:var(--neutral)}
+.fidelity-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:14px 0 8px}
+.fidelity-score{font-family:var(--ff);font-size:var(--fs-lg);font-weight:800;color:var(--txt)}
+.fidelity-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-bottom:12px}
+.fidelity-card{padding:10px 11px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-soft)}
+.fidelity-card.ok{border-color:color-mix(in srgb,var(--win) 40%,var(--line))}
+.fidelity-card.out{border-color:color-mix(in srgb,var(--warn) 55%,var(--line))}
+.fidelity-card.low{opacity:.68}
+.fidelity-label{font-size:var(--fs-xs);color:var(--dim);margin-bottom:5px}
+.fidelity-value{font-family:var(--ff);font-size:var(--fs-lg);font-weight:800;color:var(--txt)}
+.fidelity-card.ok .fidelity-value{color:var(--win)}
+.fidelity-card.out .fidelity-value{color:var(--warn)}
+.fidelity-meta{font-size:var(--fs-2xs);color:var(--dim);line-height:1.35;margin-top:4px}
+.fidelity-alerts{padding:10px 12px;margin-bottom:12px;border-radius:var(--radius);background:var(--panel-soft);color:var(--neutral);font-size:var(--fs-s);line-height:1.55}
+.fidelity-alerts b{color:var(--txt)}
+.player-delta{margin-top:12px;overflow:auto}
+.player-delta table{width:100%;border-collapse:collapse;font-size:var(--fs-sm)}
+.player-delta th,.player-delta td{padding:6px 8px;border-bottom:1px solid var(--line2);text-align:right}
+.player-delta th:first-child,.player-delta td:first-child{text-align:left}
+.player-delta th{color:var(--dim);font-size:var(--fs-2xs);letter-spacing:.12em;text-transform:uppercase}
 #matchout{margin-top:10px}
 
 /* ============================================================
@@ -530,7 +549,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 const clone=o=>JSON.parse(JSON.stringify(o));
 
 let E=null, DEF=null, POOLRAW=[], loadedIdx=null, poolBySlot=new Map();
-let teamIdx=0, simA=0, simB=1, simSeed=2026, simRuns=80, simMap="auto", lastMap=null, lastBatch=null, baseline=null;
+let teamIdx=0, simA=0, simB=1, simSeed=2026, simRuns=80, simMap="auto", simScope="match", lastMap=null, lastBatch=null, baseline=null;
 // estrutura nova: uma ferramenta por vez no canvas central (segmented control), jogador fixado no topo
 let centerMode="calibrar"; // calibrar | time | simular | editar | relatorio
 let calibTargetRole="", calibTargetRole2="", calibTargetStyle="", calibTargetOvr="", calibMode="ia", calibLast=null, calibRunning=false, calibBuilding=false;
@@ -2993,13 +3012,20 @@ function officialTeam(t,ti){
 }
 function simMetrics(g){
   const rounds=g.rounds||[], n=rounds.length||1;
-  const ctWins=rounds.filter(r=>(r.venceA&&r.ladoA==="CT")||(!r.venceA&&r.ladoB==="CT")).length;
-  const plants=rounds.filter(r=>r.plantado).length;
-  const ots=Math.max(0,n-24);
-  const force=rounds.filter(r=>r.buyA==="force"||r.buyB==="force").length;
-  const eco=rounds.filter(r=>r.buyA==="eco"||r.buyB==="eco").length;
-  const clutches=rounds.filter(r=>r.clutchX).length;
-  return {ct:ctWins/n,plants:plants/n,ots,force,eco,clutches};
+  const out={ctWins:0,plantsN:0,plantTWins:0,ots:Math.max(0,n-24),force:0,eco:0,pistN:0,pistConv:0,aeN:0,aeW:0,clutches:0,clutch:{}};
+  for(let players=1;players<=5;players++)out.clutch[players]={n:0,w:0};
+  rounds.forEach((round,index)=>{
+    const ctA=round.ladoA==="CT";
+    if(ctA===round.venceA)out.ctWins++;
+    if(round.plantado){out.plantsN++;if((!ctA)===round.venceA)out.plantTWins++;}
+    if(round.buyA==="force"||round.buyB==="force")out.force++;
+    if(round.buyA==="eco"||round.buyB==="eco")out.eco++;
+    if(round.r===1||round.r===13){const next=rounds[index+1];if(next){out.pistN++;if(round.venceA===next.venceA)out.pistConv++;}}
+    const fullVsEco=(round.buyA==="full"&&round.buyB==="eco")||(round.buyA==="eco"&&round.buyB==="full");
+    if(fullVsEco){out.aeN++;if((round.buyA==="full")===round.venceA)out.aeW++;}
+    if(round.clutchX){out.clutches++;const c=out.clutch[round.clutchX];if(c){c.n++;if(round.clutchWon)c.w++;}}
+  });
+  return {...out,ct:out.ctWins/n,plants:out.plantsN/n};
 }
 function scoreTable(nome,stats){
   // colunas padronizadas com o placar do jogo: K · D · A · KAST · ADR · Rating
@@ -3007,6 +3033,7 @@ function scoreTable(nome,stats){
   return `<table><thead><tr><th>${esc(nome)}</th><th>K</th><th>D</th><th>A</th><th>KAST</th><th>ADR</th><th>Rating</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 function runMapLab(){
+  if(simScope!=="match"){toast("Mapa único está disponível no modo confronto");return;}
   if(simA===simB){toast("Escolha dois times diferentes");return;}
   E.srand(simSeed||1);
   const A=officialTeam(E.TEAMS[simA],simA), B=officialTeam(E.TEAMS[simB],simB);
@@ -3015,62 +3042,97 @@ function runMapLab(){
   lastBatch=null;
   renderMatchPanel();
 }
-function runBatchLab(){
-  if(simA===simB){toast("Escolha dois times diferentes");return;}
-  const n=Math.max(1,Math.min(500,Math.round(simRuns||80)));
-  // função por jogador na MESMA ordem de statsA/statsB (teamPlayers segue teamEngines, como officialTeam)
-  const roleOf=(t,ti)=>{try{return teamPlayers(t,ti).map(p=>p.isIGL?"IGL":(p.role1||p.combatRole||"?"));}catch{return [];}};
-  const rolesA=roleOf(E.TEAMS[simA],simA), rolesB=roleOf(E.TEAMS[simB],simB);
-  const acc={n,wA:0,rounds:0,ctWins:0,plants:0,otMaps:0,otRounds:0,force:0,eco:0,clutches:0,kills:0,assists:0,ratings:0,ratingsN:0,kastW:0,adrW:0,pr:0,maps:{},role:{}};
-  const accSide=(stats,roles,r)=>stats.forEach((s,i)=>{const role=roles[i]||"?";const b=acc.role[role]=acc.role[role]||{k:0,d:0,a:0,r:0,kast:0,adr:0};
-    b.k+=s.k||0;b.d+=s.d||0;b.a+=s.a||0;b.r+=r;b.kast+=(s.kast||0)*r;b.adr+=(s.adr||0)*r;});
-  for(let i=0;i<n;i++){
-    E.srand((simSeed||1)+i);
-    const A=officialTeam(E.TEAMS[simA],simA), B=officialTeam(E.TEAMS[simB],simB);
-    const fA=E.forcaDoDia(A.forca.efetiva,A.forca.quimica), fB=E.forcaDoDia(B.forca.efetiva,B.forca.quimica);
-    const g=E.simularMapa(A,B,fA,fB,simMap==="auto"?null:simMap,false), m=simMetrics(g);
-    const r=g.totalRounds||1, allStats=[...(g.statsA||[]),...(g.statsB||[])];
-    acc.wA+=g.vencedor===A?1:0; acc.rounds+=r; acc.ctWins+=m.ct*r; acc.plants+=m.plants*r;
-    acc.otMaps+=r>24?1:0; acc.otRounds+=m.ots; acc.force+=m.force; acc.eco+=m.eco; acc.clutches+=m.clutches;
-    acc.kills+=allStats.reduce((s,p)=>s+(p.k||0),0); acc.assists+=allStats.reduce((s,p)=>s+(p.a||0),0);
-    acc.ratings+=allStats.reduce((s,p)=>s+(p.rating||0),0); acc.ratingsN+=allStats.length;
-    acc.kastW+=allStats.reduce((s,p)=>s+(p.kast||0)*r,0); acc.adrW+=allStats.reduce((s,p)=>s+(p.adr||0)*r,0); acc.pr+=allStats.length*r;
-    accSide(g.statsA,rolesA,r); accSide(g.statsB,rolesB,r);
-    acc.maps[g.mapa]=(acc.maps[g.mapa]||0)+1;
-  }
-  lastMap=null; lastBatch=acc; renderMatchPanel();
-}
-// valor colorido contra uma faixa real (verde dentro / laranja fora) — mesmo critério da bancada
-function simBand(v,lo,hi,dec,suf){const ok=v>=lo&&v<=hi;return `<b class="mono" style="color:var(--${ok?"win":"warn"})" title="real ${lo}–${hi}">${v.toFixed(dec)}${suf||""}</b>`;}
-// faixas HLTV por função (KPR) — as mesmas de bancada/kda.js
 const SIM_ROLE_KPR={AWPer:[.70,.82],Rifler:[.66,.76],Entry:[.60,.70],Lurker:[.64,.74],Support:[.56,.66],IGL:[.54,.64]};
+const SIM_REAL_BANDS={
+  kpr:[.66,.78],ct:[47,54],plant:[46,60],postPlant:[56,72],antiEco:[70,90],pistol:[60,84],
+  clutch1:[44,56],clutch2:[18,28],clutch3:[5,13],favorite03:[50,58],favorite16:[82,93],
+  kast:[69,76],adr:[73,84],ak:[.22,.38],apr:[.14,.28],ratingR:[.75,1],ratingMae:[0,.12]
+};
+const SIM_GAP_BUCKETS={"0-3":[0,3],"4-8":[4,8],"9-15":[9,15],"16+":[16,99]};
+function simLeaguePairs(){
+  // Round-robin com bye: qualquer janela de rodadas distribui a exposição entre os times,
+  // evitando o viés de percorrer todos os adversários de um time antes do próximo.
+  const slots=[...E.TEAMS.map((_,i)=>i),null],pairs=[];
+  for(let round=0;round<slots.length-1;round++){
+    for(let i=0;i<slots.length/2;i++){const a=slots[i],b=slots[slots.length-1-i];if(a!=null&&b!=null)pairs.push([a,b]);}
+    slots.splice(1,0,slots.pop());
+  }
+  return pairs;
+}
+function simMean(xs){return xs.length?xs.reduce((s,x)=>s+x,0)/xs.length:0;}
+function simMeanCI(xs){if(xs.length<2)return null;const avg=simMean(xs),variance=xs.reduce((s,x)=>s+(x-avg)**2,0)/(xs.length-1),margin=1.96*Math.sqrt(variance/xs.length);return [avg-margin,avg+margin];}
+function simWilson(w,n){if(!n)return null;const z=1.96,p=w/n,d=1+z*z/n,c=(p+z*z/(2*n))/d,m=z*Math.sqrt((p*(1-p)+z*z/(4*n))/n)/d;return [100*(c-m),100*(c+m)];}
+function simCorrelation(points){if(points.length<2)return 0;const ax=simMean(points.map(p=>p[0])),ay=simMean(points.map(p=>p[1]));let num=0,dx=0,dy=0;points.forEach(([x,y])=>{num+=(x-ax)*(y-ay);dx+=(x-ax)**2;dy+=(y-ay)**2;});return dx&&dy?num/Math.sqrt(dx*dy):0;}
+function simGapBucket(diff){return Object.entries(SIM_GAP_BUCKETS).find(([,range])=>diff>=range[0]&&diff<=range[1])?.[0];}
+function simRolePlayers(t,ti){try{return teamPlayers(t,ti).map(p=>({name:p.nome||p.nick||"?",role:p.isIGL?"IGL":(p.role1||p.combatRole||"?"),rating:+p.rating||0}));}catch{return [];}}
+function newSimAcc(n,scope){const clutch={},gaps={};for(let x=1;x<=5;x++)clutch[x]={n:0,w:0};Object.keys(SIM_GAP_BUCKETS).forEach(k=>gaps[k]={n:0,w:0});return {n,scope,wA:0,rounds:0,ctWins:0,plants:0,plantTWins:0,otMaps:0,otRounds:0,force:0,eco:0,pistN:0,pistConv:0,aeN:0,aeW:0,clutches:0,clutch,gaps,kills:0,assists:0,ratings:0,ratingsN:0,kastW:0,adrW:0,pr:0,maps:{},role:{},players:{},teams:{},samples:{rounds:[],kpr:[],kast:[],adr:[],ct:[],plant:[]}};}
+function accSimSide(acc,stats,players,rounds,teamIndex){
+  (stats||[]).forEach((s,i)=>{const p=players[i]||{name:s.nick||"?",role:"?",rating:0},role=p.role,b=acc.role[role]=acc.role[role]||{k:0,d:0,a:0,r:0,kast:0,adr:0};
+    b.k+=s.k||0;b.d+=s.d||0;b.a+=s.a||0;b.r+=rounds;b.kast+=(s.kast||0)*rounds;b.adr+=(s.adr||0)*rounds;
+    const key=`${teamIndex}:${i}`,q=acc.players[key]=acc.players[key]||{name:p.name,role,real:p.rating,sim:0,n:0};q.sim+=+s.rating||0;q.n++;
+  });
+}
+function runBatchLab(){
+  if(simScope==="match"&&simA===simB){toast("Escolha dois times diferentes");return;}
+  const n=Math.max(1,Math.min(500,Math.round(simRuns||80))),seed=Math.trunc(simSeed||1),pairs=simLeaguePairs(),acc=newSimAcc(n,simScope);
+  for(let i=0;i<n;i++){
+    let ai=simA,bi=simB;
+    if(simScope==="league"){const pair=pairs[(Math.abs(seed)+i)%pairs.length],swap=((Math.abs(seed)+i)%2)===1;ai=pair[swap?1:0];bi=pair[swap?0:1];}
+    E.srand(seed+i);
+    const A=officialTeam(E.TEAMS[ai],ai),B=officialTeam(E.TEAMS[bi],bi),playersA=simRolePlayers(E.TEAMS[ai],ai),playersB=simRolePlayers(E.TEAMS[bi],bi);
+    const fA=E.forcaDoDia(A.forca.efetiva,A.forca.quimica),fB=E.forcaDoDia(B.forca.efetiva,B.forca.quimica);
+    const g=E.simularMapa(A,B,fA,fB,simMap==="auto"?null:simMap,false),m=simMetrics(g),r=g.totalRounds||1,allStats=[...(g.statsA||[]),...(g.statsB||[])];
+    const mapKills=allStats.reduce((s,p)=>s+(p.k||0),0),mapAssists=allStats.reduce((s,p)=>s+(p.a||0),0),mapKast=allStats.reduce((s,p)=>s+(p.kast||0),0)/Math.max(1,allStats.length)*100,mapAdr=allStats.reduce((s,p)=>s+(p.adr||0),0)/Math.max(1,allStats.length);
+    acc.wA+=g.vencedor===A?1:0;acc.rounds+=r;acc.ctWins+=m.ctWins;acc.plants+=m.plantsN;acc.plantTWins+=m.plantTWins;acc.otMaps+=r>24?1:0;acc.otRounds+=m.ots;acc.force+=m.force;acc.eco+=m.eco;acc.pistN+=m.pistN;acc.pistConv+=m.pistConv;acc.aeN+=m.aeN;acc.aeW+=m.aeW;acc.clutches+=m.clutches;
+    for(let x=1;x<=5;x++){acc.clutch[x].n+=m.clutch[x].n;acc.clutch[x].w+=m.clutch[x].w;}
+    acc.kills+=mapKills;acc.assists+=mapAssists;acc.ratings+=allStats.reduce((s,p)=>s+(+p.rating||0),0);acc.ratingsN+=allStats.length;acc.kastW+=mapKast/100*allStats.length*r;acc.adrW+=mapAdr*allStats.length*r;acc.pr+=allStats.length*r;
+    acc.samples.rounds.push(r);acc.samples.kpr.push(mapKills/Math.max(1,r*10));acc.samples.kast.push(mapKast);acc.samples.adr.push(mapAdr);acc.samples.ct.push(m.ct*100);acc.samples.plant.push(m.plants*100);
+    accSimSide(acc,g.statsA,playersA,r,ai);accSimSide(acc,g.statsB,playersB,r,bi);acc.maps[g.mapa]=(acc.maps[g.mapa]||0)+1;acc.teams[ai]=1;acc.teams[bi]=1;
+    const bucket=simGapBucket(Math.abs(A.forca.efetiva-B.forca.efetiva));if(bucket){acc.gaps[bucket].n++;if((A.forca.efetiva>=B.forca.efetiva)===(g.vencedor===A))acc.gaps[bucket].w++;}
+  }
+  lastMap=null;lastBatch=acc;renderMatchPanel();
+}
+function simCIText(ci,dec=1,suf=""){return ci?`IC95% ${ci[0].toFixed(dec)}${suf}–${ci[1].toFixed(dec)}${suf}`:"IC95% requer 2+ mapas";}
+function simMetricCard(metric){const eligible=metric.eligible!==false,ok=eligible&&metric.value>=metric.band[0]&&metric.value<=metric.band[1],cls=eligible?(ok?"ok":"out"):"low",value=Number.isFinite(metric.value)?metric.value.toFixed(metric.dec??1)+(metric.suf||""):"—";return `<div class="fidelity-card ${cls}" data-metric="${metric.key}"><div class="fidelity-label">${metric.label}</div><div class="fidelity-value" title="real ${metric.band[0]}–${metric.band[1]}">${value}</div><div class="fidelity-meta">${eligible?`real ${metric.band[0]}–${metric.band[1]}${metric.suf||""}`:`amostra insuficiente (${metric.sample||0})`}${metric.note?`<br>${metric.note}`:""}</div></div>`;}
 function renderBatchPanel(b){
-  const mapTxt=Object.entries(b.maps).sort((a,b)=>b[1]-a[1]).map(([m,n])=>`${m} ${Math.round(n/b.n*100)}%`).join(" · ");
-  const kpr=b.kills/Math.max(1,b.rounds*10), avgRating=b.ratings/Math.max(1,b.ratingsN);
-  const kast=b.pr?b.kastW/b.pr*100:0, adr=b.pr?b.adrW/b.pr:0, aMap=b.assists/Math.max(1,b.n);
-  const roleRows=["AWPer","Rifler","Entry","Lurker","Support","IGL"].filter(r=>b.role[r]&&b.role[r].r).map(r=>{
-    const x=b.role[r], ref=SIM_ROLE_KPR[r]||[0,9], KPR=x.k/x.r, ok=KPR>=ref[0]&&KPR<=ref[1];
-    // verde = na faixa real; fora fica NEUTRO (num confronto, uma função é 1-2 jogadores específicos —
-    // uma lenda acima da média não é erro), então nada de alarme laranja aqui; ele fica só nos globais.
-    return `<tr><td>${r}</td><td class="mono"${ok?' style="color:var(--win)"':''} title="real ${ref[0]}–${ref[1]}">${KPR.toFixed(2)}</td><td class="mono">${(x.d/x.r).toFixed(2)}</td><td class="mono">${(x.a/x.k||0).toFixed(2)}</td><td class="mono">${Math.round(x.kast/x.r*100)}%</td><td class="mono">${Math.round(x.adr/x.r)}</td></tr>`;
-  }).join("");
+  const mapTxt=Object.entries(b.maps).sort((a,c)=>c[1]-a[1]).map(([m,n])=>`${m} ${Math.round(n/b.n*100)}%`).join(" · "),kpr=b.kills/Math.max(1,b.rounds*10),kast=b.pr?b.kastW/b.pr*100:0,adr=b.pr?b.adrW/b.pr:0,ak=b.kills?b.assists/b.kills:0,apr=b.assists/Math.max(1,b.pr);
+  const playerRows=Object.values(b.players).filter(p=>p.n&&p.real).map(p=>({...p,avg:p.sim/p.n,delta:p.sim/p.n-p.real})),ratingPoints=playerRows.map(p=>[p.real,p.avg]),ratingR=simCorrelation(ratingPoints),ratingMae=simMean(playerRows.map(p=>Math.abs(p.delta)));
+  const metrics=[
+    {key:"kpr",label:"Kills por round",value:kpr,band:SIM_REAL_BANDS.kpr,dec:3,note:simCIText(simMeanCI(b.samples.kpr),3)},
+    {key:"ct",label:"CT round win",value:100*b.ctWins/b.rounds,band:SIM_REAL_BANDS.ct,suf:"%",note:simCIText(simWilson(b.ctWins,b.rounds),1,"%")},
+    {key:"plant",label:"Rounds com plant",value:100*b.plants/b.rounds,band:SIM_REAL_BANDS.plant,suf:"%",note:simCIText(simWilson(b.plants,b.rounds),1,"%")},
+    {key:"postplant",label:"Vitória T pós-plant",value:100*b.plantTWins/Math.max(1,b.plants),band:SIM_REAL_BANDS.postPlant,suf:"%",eligible:b.plants>=10,sample:b.plants},
+    {key:"antieco",label:"Conversão anti-eco",value:100*b.aeW/Math.max(1,b.aeN),band:SIM_REAL_BANDS.antiEco,suf:"%",eligible:b.aeN>=10,sample:b.aeN},
+    {key:"pistol",label:"Conversão pós-pistol",value:100*b.pistConv/Math.max(1,b.pistN),band:SIM_REAL_BANDS.pistol,suf:"%",eligible:b.pistN>=10,sample:b.pistN},
+    {key:"clutch1",label:"Clutch 1v1",value:100*b.clutch[1].w/Math.max(1,b.clutch[1].n),band:SIM_REAL_BANDS.clutch1,suf:"%",eligible:b.clutch[1].n>=8,sample:b.clutch[1].n},
+    {key:"clutch2",label:"Clutch 1v2",value:100*b.clutch[2].w/Math.max(1,b.clutch[2].n),band:SIM_REAL_BANDS.clutch2,suf:"%",eligible:b.clutch[2].n>=8,sample:b.clutch[2].n},
+    {key:"clutch3",label:"Clutch 1v3",value:100*b.clutch[3].w/Math.max(1,b.clutch[3].n),band:SIM_REAL_BANDS.clutch3,suf:"%",eligible:b.clutch[3].n>=5,sample:b.clutch[3].n},
+    {key:"kast",label:"KAST",value:kast,band:SIM_REAL_BANDS.kast,suf:"%",note:simCIText(simMeanCI(b.samples.kast),1,"%")},
+    {key:"adr",label:"ADR",value:adr,band:SIM_REAL_BANDS.adr,dec:1,note:simCIText(simMeanCI(b.samples.adr),1)},
+    {key:"ak",label:"Assistências / kill",value:ak,band:SIM_REAL_BANDS.ak,dec:3},
+    {key:"apr",label:"Assistências / player-round",value:apr,band:SIM_REAL_BANDS.apr,dec:3},
+    {key:"ratingR",label:"Correlação rating real × sim",value:ratingR,band:SIM_REAL_BANDS.ratingR,dec:3,eligible:playerRows.length>=10,sample:playerRows.length},
+    {key:"ratingMae",label:"Erro médio do rating",value:ratingMae,band:SIM_REAL_BANDS.ratingMae,dec:3,eligible:playerRows.length>=10,sample:playerRows.length}
+  ];
+  if(b.scope==="league")metrics.push(
+    {key:"fav03",label:"Favorito · gap 0–3",value:100*b.gaps["0-3"].w/Math.max(1,b.gaps["0-3"].n),band:SIM_REAL_BANDS.favorite03,suf:"%",eligible:b.gaps["0-3"].n>=8,sample:b.gaps["0-3"].n},
+    {key:"fav16",label:"Favorito · gap 16+",value:100*b.gaps["16+"].w/Math.max(1,b.gaps["16+"].n),band:SIM_REAL_BANDS.favorite16,suf:"%",eligible:b.gaps["16+"].n>=8,sample:b.gaps["16+"].n}
+  );
+  const eligible=metrics.filter(m=>m.eligible!==false),outside=eligible.filter(m=>m.value<m.band[0]||m.value>m.band[1]),passed=eligible.length-outside.length,low=metrics.length-eligible.length;
+  const alerts=outside.length?outside.map(m=>{const edge=m.value<m.band[0]?m.band[0]:m.band[1],delta=Math.abs(m.value-edge);return `${m.label}: ${m.value.toFixed(m.dec??1)}${m.suf||""} (${delta.toFixed(m.dec??1)}${m.suf||""} além da faixa)`;}).join(" · "):"Todas as métricas com amostra suficiente estão dentro das faixas configuradas.";
+  const roleRows=["AWPer","Rifler","Entry","Lurker","Support","IGL"].filter(r=>b.role[r]&&b.role[r].r).map(r=>{const x=b.role[r],ref=SIM_ROLE_KPR[r],v=x.k/x.r,ok=v>=ref[0]&&v<=ref[1];return `<tr><td>${r}</td><td class="mono"${ok?' style="color:var(--win)"':''} title="real ${ref[0]}–${ref[1]}">${v.toFixed(2)}</td><td class="mono">${(x.d/x.r).toFixed(2)}</td><td class="mono">${(x.a/x.k||0).toFixed(2)}</td><td class="mono">${Math.round(x.kast/x.r*100)}%</td><td class="mono">${Math.round(x.adr/x.r)}</td></tr>`;}).join("");
+  const deltaRows=playerRows.sort((a,c)=>Math.abs(c.delta)-Math.abs(a.delta)).slice(0,8).map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.role)}</td><td class="mono">${p.real.toFixed(2)}</td><td class="mono">${p.avg.toFixed(2)}</td><td class="mono" style="color:var(--${Math.abs(p.delta)>.12?"warn":"neutral"})">${p.delta>=0?"+":""}${p.delta.toFixed(2)}</td><td class="mono">${p.n}</td></tr>`).join("");
+  const header=b.scope==="league"?`Amostra da liga · ${Object.keys(b.teams).length}/${E.TEAMS.length} times`:`${esc(E.TEAMS[simA].nome)} × ${esc(E.TEAMS[simB].nome)}`,winCI=simWilson(b.wA,b.n);
   return `<div class="simres">
-    <div class="scoreline"><span class="scoreteam">${esc(E.TEAMS[simA].nome)}</span><span class="scoreval">${Math.round(b.wA/b.n*100)}%</span><span class="hint">winrate em ${b.n} mapas · seed ${simSeed}..${simSeed+b.n-1}</span><span class="scoreval">${Math.round((1-b.wA/b.n)*100)}%</span><span class="scoreteam">${esc(E.TEAMS[simB].nome)}</span></div>
-    <div class="stat-mini" style="margin-bottom:12px">
-      <span><b class="mono">${(b.rounds/b.n).toFixed(1)}</b>rounds/mapa</span>
-      <span><b class="mono">${Math.round(b.ctWins/b.rounds*100)}%</b>CT win</span>
-      <span><b class="mono">${Math.round(b.plants/b.rounds*100)}%</b>plant</span>
-      <span><b class="mono">${Math.round(b.otMaps/b.n*100)}%</b>OT mapas</span>
-      <span>${simBand(kpr,.66,.73,2,"")}KPR</span>
-      <span>${simBand(kast,69,76,0,"%")}KAST</span>
-      <span>${simBand(adr,73,84,0,"")}ADR</span>
-      <span><b class="mono">${aMap.toFixed(1)}</b>assists/mapa</span>
-      <span><b class="mono">${(b.clutches/b.n).toFixed(1)}</b>clutch/mapa</span>
-      <span><b class="mono">${avgRating.toFixed(2)}</b>rating médio</span>
-    </div>
-    <div class="hint" style="margin-bottom:7px">Fidelidade por função — <b style="color:var(--win)">verde</b> = KPR na faixa real do CS profissional (a coluna A/K mostra a assinatura de assist):</div>
+    <div class="scoreline"><span class="scoreteam">${header}</span>${b.scope==="match"?`<span class="scoreval">${Math.round(b.wA/b.n*100)}%</span>`:""}<span class="hint">${b.n} mapas · seed ${simSeed}..${simSeed+b.n-1}${b.scope==="match"?` · ${simCIText(winCI,1,"%")}`:" · pares determinísticos"}</span></div>
+    <div class="stat-mini" style="margin-bottom:12px"><span><b class="mono">${(b.rounds/b.n).toFixed(1)}</b>rounds/mapa</span><span><b class="mono">${Math.round(b.ctWins/b.rounds*100)}%</b>CT win</span><span><b class="mono">${Math.round(b.plants/b.rounds*100)}%</b>plant</span><span><b class="mono">${Math.round(b.otMaps/b.n*100)}%</b>OT mapas</span><span><b class="mono">${kpr.toFixed(3)}</b>KPR</span><span><b class="mono">${Math.round(kast)}%</b>KAST</span><span><b class="mono">${adr.toFixed(1)}</b>ADR</span><span><b class="mono">${(b.assists/b.n).toFixed(1)}</b>assists/mapa</span></div>
+    <div class="fidelity-head"><div><div class="fidelity-score">Fidelidade profissional: ${passed}/${eligible.length}</div><div class="hint">${low} métrica(s) aguardando amostra; elas não reduzem a nota.</div></div><div class="hint">Faixas de referência usadas pelos benchmarks do projeto</div></div>
+    <div class="fidelity-alerts"><b>Diagnóstico:</b> ${esc(alerts)}</div>
+    <div class="fidelity-grid">${metrics.map(simMetricCard).join("")}</div>
+    <div class="hint" style="margin-bottom:7px">Fidelidade por função — verde = KPR na faixa real da função. Fora da faixa permanece neutro porque confrontos isolados refletem os jogadores escolhidos.</div>
     <div class="scoreboards"><table><thead><tr><th>Função</th><th>KPR</th><th>DPR</th><th>A/K</th><th>KAST</th><th>ADR</th></tr></thead><tbody>${roleRows}</tbody></table></div>
-    <div class="hint" style="margin-top:10px">Mapas: ${esc(mapTxt||"mapa fixo")}. Use esse lote para comparar antes/depois de pesos, química, economia e playstyles.</div>
+    <div class="player-delta"><div class="hint" style="margin-bottom:5px">Maiores desvios entre rating de referência e rating simulado</div><table><thead><tr><th>Jogador</th><th>Função</th><th>Real</th><th>Sim</th><th>Δ</th><th>Mapas</th></tr></thead><tbody>${deltaRows}</tbody></table></div>
+    <div class="hint" style="margin-top:10px">Mapas: ${esc(mapTxt||"mapa fixo")}. O diagnóstico mede desvios; não altera pesos, química, economia ou playstyles.</div>
   </div>`;
 }
 function renderMatchPanel(){
@@ -3376,7 +3438,8 @@ function renderCanvasMode(){
     wireTeamMode();
   }else if(centerMode==="simular"){
     body.innerHTML=`<div class="card panel-secondary">
-      <div class="simgrid"><div class="simfield"><label>Time A</label><select id="simA"></select></div><div class="simfield"><label>Time B</label><select id="simB"></select></div><div class="simfield"><label>Mapa</label><select id="simMap"><option value="auto">Auto veto</option></select></div><div class="simfield"><label>Seed</label><input type="number" id="simSeed" value="${simSeed}" step="1"></div><div class="simfield"><label>Qtd</label><input type="number" id="simRuns" value="${simRuns}" min="1" max="500" step="10"></div></div>
+      <div class="hint" style="margin-bottom:10px">Confronto audita dois times. Amostra da liga mede fidelidade global com pares reproduzíveis, sem séries ou veto.</div>
+      <div class="simgrid"><div class="simfield"><label>Escopo</label><select id="simScope"><option value="match"${simScope==="match"?" selected":""}>Confronto A × B</option><option value="league"${simScope==="league"?" selected":""}>Amostra da liga</option></select></div><div class="simfield sim-team-field"><label>Time A</label><select id="simA"></select></div><div class="simfield sim-team-field"><label>Time B</label><select id="simB"></select></div><div class="simfield"><label>Mapa</label><select id="simMap"><option value="auto">Pool automático</option></select></div><div class="simfield"><label>Seed</label><input type="number" id="simSeed" value="${simSeed}" step="1"></div><div class="simfield"><label>Qtd</label><input type="number" id="simRuns" value="${simRuns}" min="1" max="500" step="10"></div></div>
       <div class="row2"><button class="btn" id="runBatchBtn">Rodar lote</button><button class="btn accent" id="runMapBtn">Rodar mapa</button></div>
       <div id="matchout"></div>
     </div>`;
@@ -3394,15 +3457,18 @@ function renderCanvasMode(){
 }
 function wireSimulador(){
   const fillTeamSel=(id,val)=>{const s=document.getElementById(id);E.TEAMS.forEach((t,i)=>{const o=document.createElement("option");o.value=i;o.textContent=t.nome+" · "+t.camp;if(i===val)o.selected=true;s.appendChild(o);});return s;};
-  const sa=fillTeamSel("simA",simA), sb=fillTeamSel("simB",simB), sm=document.getElementById("simMap");
+  const sa=fillTeamSel("simA",simA), sb=fillTeamSel("simB",simB), sm=document.getElementById("simMap"), ss=document.getElementById("simScope"), mapBtn=document.getElementById("runMapBtn"), batchBtn=document.getElementById("runBatchBtn");
   E.MAPAS_POOL.forEach(m=>{const o=document.createElement("option");o.value=m;o.textContent=m+(E.MAPA_LADO[m]?` (${E.MAPA_LADO[m]>0?"CT":"TR"} ${Math.abs(E.MAPA_LADO[m])})`:"");if(m===simMap)o.selected=true;sm.appendChild(o);});
+  const syncScope=()=>{const league=simScope==="league";document.querySelectorAll(".sim-team-field").forEach(x=>x.style.display=league?"none":"flex");mapBtn.disabled=league;mapBtn.title=league?"Disponível apenas no modo confronto":"";batchBtn.textContent=league?"Rodar amostra":"Rodar lote";};
+  ss.onchange=()=>{simScope=ss.value;lastMap=null;lastBatch=null;syncScope();renderMatchPanel();};
   sa.onchange=()=>{simA=+sa.value;lastMap=null;lastBatch=null;renderMatchPanel();};
   sb.onchange=()=>{simB=+sb.value;lastMap=null;lastBatch=null;renderMatchPanel();};
   sm.onchange=()=>{simMap=sm.value;lastMap=null;lastBatch=null;renderMatchPanel();};
   document.getElementById("simSeed").oninput=e=>{simSeed=+e.target.value||1;lastMap=null;lastBatch=null;renderMatchPanel();};
   document.getElementById("simRuns").oninput=e=>{simRuns=Math.max(1,Math.min(500,+e.target.value||80));lastBatch=null;renderMatchPanel();};
-  document.getElementById("runBatchBtn").onclick=runBatchLab;
-  document.getElementById("runMapBtn").onclick=runMapLab;
+  batchBtn.onclick=runBatchLab;
+  mapBtn.onclick=runMapLab;
+  syncScope();
   renderMatchPanel();
 }
 

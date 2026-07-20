@@ -125,7 +125,13 @@ O `sandbox.html` é um laboratório independente que carrega os motores do
 - **Atributos de um jogador** (sliders) e ver o efeito no OVR, função e playstyle
 - **Pesos dos motores** (curva, afinidade, química, simulação, rating)
 - **Receitas dos 10 playstyles** universais + Coringa
-- **Simulação de mapa** ou lote de mapas com os valores editados
+- **Simulação de mapa**, lote A × B ou amostra determinística da liga com os valores editados
+
+Na aba **Simular**, o modo de liga distribui os confrontos em round-robin e
+compara combate, lados, plant, pós-plant, economia, pistol, clutches, funções e
+rating com as mesmas faixas dos benchmarks. Intervalos de 95% distinguem
+oscilação de amostra de desvio material; métricas raras sem observações
+suficientes ficam pendentes e não reduzem a nota de fidelidade.
 
 Tudo é comparado contra o **baseline** (estado inicial ao carregar). O painel
 de impacto mostra o que mudou. Nada é salvo nem aplicado ao jogo — é isolado.

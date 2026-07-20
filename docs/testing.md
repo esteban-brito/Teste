@@ -44,8 +44,11 @@ explicitamente na CI. Ausência da biblioteca, do browser ou falha de lançament
 encerra a suíte com erro. Um E2E pulado não é considerado cobertura.
 
 `e2e-intent.js` protege o caminho paralelo do calibrador. `e2e-simulation.js`
-protege mapa e lote da aba Simular, incluindo KAST/ADR/Rating, métricas por
-função, valores inválidos, erros de página e repetibilidade por seed.
+protege mapa, lote A × B e amostra round-robin da liga. O contrato inclui
+KAST/ADR/Rating, lados, plant e pós-plant, anti-eco, conversão pós-pistol,
+clutches, força do favorito, métricas por função, diagnóstico de suficiência,
+cobertura dos 17 times, valores inválidos, erros de página e repetibilidade por
+seed.
 
 ## Próximas camadas
 
