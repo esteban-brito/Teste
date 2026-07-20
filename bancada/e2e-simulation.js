@@ -1,5 +1,5 @@
 /* bancada/e2e-simulation.js — contrato de navegador da aba Simular.
-   Protege a modernização de f06662a: placar K/D/A/KAST/ADR/Rating, métricas macro,
+   Protege placar, confronto, amostra determinística da liga, métricas profissionais,
    fidelidade por função e repetibilidade por seed. Não altera nem recalibra o motor. */
 const http=require("http");
 const path=require("path");
@@ -93,6 +93,38 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     await page.waitForFunction(()=>document.querySelector("#matchout")?.textContent.includes("Fidelidade por função"),{timeout:15000});
     const secondBatch=await page.$eval("#matchout",node=>node.innerText.replace(/\s+/g," ").trim());
     check(secondBatch===firstBatch.normalized,"mesma seed e quantidade reproduzem o mesmo lote");
+
+    await page.selectOption("#simScope","league");
+    const leagueControls=await page.evaluate(()=>({
+      teams:[...document.querySelectorAll(".sim-team-field")].every(node=>getComputedStyle(node).display==="none"),
+      mapDisabled:document.getElementById("runMapBtn").disabled,
+      batchLabel:document.getElementById("runBatchBtn").textContent.trim()
+    }));
+    check(leagueControls.teams&&leagueControls.mapDisabled&&leagueControls.batchLabel==="Rodar amostra","modo liga oculta confronto e impede mapa isolado");
+    await page.fill("#simRuns","36");
+    await page.fill("#simSeed","3107");
+    await page.click("#runBatchBtn");
+    await page.waitForSelector('#matchout [data-metric="postplant"]',{timeout:20000});
+    const league=await page.evaluate(()=>{
+      const out=document.getElementById("matchout");
+      return {
+        text:out.textContent,
+        normalized:out.innerText.replace(/\s+/g," ").trim(),
+        metrics:[...out.querySelectorAll("[data-metric]")].map(node=>({key:node.dataset.metric,state:node.className})),
+        deltaRows:out.querySelectorAll(".player-delta tbody tr").length
+      };
+    });
+    const proMetrics=["kpr","ct","plant","postplant","antieco","pistol","clutch1","clutch2","clutch3","kast","adr","ak","apr","ratingR","ratingMae","fav03","fav16"];
+    check(/Amostra da liga · 17\/17 times/.test(league.text),"amostra determinística cobre os 17 times");
+    check(proMetrics.every(key=>league.metrics.some(metric=>metric.key===key)),"painel cobre combate, lados, economia, clutches, rating e favoritos");
+    check(league.metrics.every(metric=>/\b(ok|out|low)\b/.test(metric.state)),"cada métrica recebe diagnóstico ou amostra insuficiente");
+    check(league.deltaRows===8,"painel mostra os 8 maiores desvios individuais de rating");
+    check(/Fidelidade profissional: \d+\/\d+/.test(league.text)&&!/NaN|undefined|Infinity/.test(league.text),"nota de fidelidade da liga contém apenas valores válidos");
+
+    await page.click("#runBatchBtn");
+    await page.waitForSelector('#matchout [data-metric="postplant"]',{timeout:20000});
+    const leagueAgain=await page.$eval("#matchout",node=>node.innerText.replace(/\s+/g," ").trim());
+    check(leagueAgain===league.normalized,"amostra da liga é integralmente reproduzível pela seed");
     check(errors.length===0,`sem page-error no fluxo${errors.length?": "+errors[0]:""}`);
 
     console.log(failures?`✗ ${failures} checagem(ns) e2e falharam`:"✓ aba Simular preserva placar, fidelidade e seed");
