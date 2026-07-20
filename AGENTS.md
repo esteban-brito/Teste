@@ -53,7 +53,7 @@ npm run test:benchmark    # se tocar em avaliação, química ou simulação
 npm run test:e2e          # se tocar em interface do calibrador
 ```
 
-`npm run test:all` e `npm run bench` executam as mesmas 12 suítes, na ordem
+`npm run test:all` e `npm run bench` executam as mesmas 13 suítes, na ordem
 histórica. O benchmark completo é demorado; não reduza amostras ou limites para
 obter um resultado verde.
 
@@ -88,4 +88,3 @@ obter um resultado verde.
 - Para RNG e simulador, compare resultados completos usando seeds fixas.
 - Se um teste estatístico mudar, registre amostra, resultado anterior, resultado
   novo e justificativa antes de aceitar a diferença.
-

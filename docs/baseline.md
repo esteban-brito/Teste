@@ -73,6 +73,5 @@ tests determinísticos antes de aceitar qualquer extração.
 
 - `npm run check`: aprovado.
 - `npm run lint`: deve usar dependências locais instaladas por `npm ci`.
-- `npm run bench`: 12 suítes; aprovado no baseline.
-- E2E: pode ser pulado quando Playwright não está instalado; o skip não comprova
-  execução em navegador.
+- `npm run bench`: 13 suítes; aprovado no baseline.
+- E2E: duas suítes obrigatórias, executadas com Playwright e Chromium reais.

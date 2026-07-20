@@ -5,15 +5,14 @@ const {execFileSync}=require("child_process");
 const path=require("path");
 const {secondsSince}=require("./common");
 
-// e2e-intent.js é o teste de navegador (Playwright); ele mesmo se PULA com exit 0 onde não há
-// browser. A ausência do navegador ainda é permitida por compatibilidade e está registrada como
-// dívida técnica em docs/testing.md.
+// Os E2E usam Playwright/Chromium reais. A dependência e o browser são obrigatórios: ausência
+// de infraestrutura deve falhar de forma visível, nunca converter falta de cobertura em sucesso.
 const SUITE_GROUPS={
   data:["times.js"],
   regression:["auditoria.js","snapshot.js","drop-reform.js"],
   calibrator:["calibrador.js","calibrador-heavy.js","worker-calibrador.js"],
   benchmark:["realismo.js","assists.js","kda.js","rating.js"],
-  e2e:["e2e-intent.js"]
+  e2e:["e2e-intent.js","e2e-simulation.js"]
 };
 SUITE_GROUPS.all=[
   ...SUITE_GROUPS.data,

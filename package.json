@@ -9,7 +9,7 @@
     "test:data": "node bancada/run.js --group data",
     "test:regression": "node bancada/run.js --group regression",
     "test:benchmark": "node bancada/run.js --group benchmark",
-    "test:e2e": "node bancada/e2e-intent.js",
+    "test:e2e": "node bancada/run.js --group e2e",
     "test:drop": "node bancada/drop-reform.js",
     "test:calibrator": "node bancada/run.js --group calibrator",
     "test:all": "node bancada/run.js --group all",
@@ -18,8 +18,9 @@
     "snapshot:update": "node bancada/snapshot.js --update"
   },
   "devDependencies": {
-    "eslint": "^10.6.0",
     "@eslint/js": "^10.0.1",
-    "eslint-plugin-html": "^8.1.4"
+    "eslint": "^10.6.0",
+    "eslint-plugin-html": "^8.1.4",
+    "playwright": "^1.61.1"
   }
 }

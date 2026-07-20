@@ -14,11 +14,11 @@ limite estatístico exige justificativa de balanceamento separada.
 | `npm run test:regression` | auditoria, snapshot, drop | classificação e invariantes aprovados |
 | `npm run test:calibrator` | basic, heavy, worker | busca, intenção, custo e paralelismo |
 | `npm run test:benchmark` | realismo, assists, KDA, rating | fidelidade estatística dos motores |
-| `npm run test:e2e` | intent | fluxo do calibrador no navegador |
-| `npm run test:all` | as 12 suítes acima | validação completa na ordem histórica |
+| `npm run test:e2e` | intent, simulation | calibrador e aba Simular no navegador |
+| `npm run test:all` | as 13 suítes acima | validação completa na ordem histórica |
 | `npm run bench` | alias de `test:all` | compatibilidade com CI e fluxo legado |
 
-`npm run validate` executa sintaxe, lint e as 12 suítes.
+`npm run validate` executa sintaxe, lint e as 13 suítes.
 
 ## Estado de referência
 
@@ -37,12 +37,15 @@ limite estatístico exige justificativa de balanceamento separada.
 5. Execute novamente regressão e benchmark.
 6. Não misture a atualização com movimentação de arquivos ou formatação.
 
-## E2E e dívida conhecida
+## E2E obrigatório
 
-`bancada/e2e-intent.js` tenta localizar Playwright e atualmente retorna sucesso
-com um aviso quando ele não está disponível. Isso preserva o fluxo legado, mas
-não significa que o navegador foi testado. A etapa de CI profissionalizada deve
-instalar Chromium e tornar o E2E obrigatório no job correspondente.
+Playwright é uma dependência de desenvolvimento e Chromium é instalado
+explicitamente na CI. Ausência da biblioteca, do browser ou falha de lançamento
+encerra a suíte com erro. Um E2E pulado não é considerado cobertura.
+
+`e2e-intent.js` protege o caminho paralelo do calibrador. `e2e-simulation.js`
+protege mapa e lote da aba Simular, incluindo KAST/ADR/Rating, métricas por
+função, valores inválidos, erros de página e repetibilidade por seed.
 
 ## Próximas camadas
 
@@ -52,4 +55,3 @@ instalar Chromium e tornar o E2E obrigatório no job correspondente.
 - E2E do fluxo principal: draft, lineup, suíça e playoffs.
 - Screenshots responsivos e com `prefers-reduced-motion`.
 - Benchmark de desempenho separado dos asserts de realismo.
-
