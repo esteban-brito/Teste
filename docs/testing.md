@@ -47,8 +47,9 @@ encerra a suíte com erro. Um E2E pulado não é considerado cobertura.
 protege mapa, lote A × B e amostra round-robin da liga. O contrato inclui
 KAST/ADR/Rating, lados, plant e pós-plant, anti-eco, conversão pós-pistol,
 clutches, força do favorito, métricas por função, diagnóstico de suficiência,
-cobertura dos 17 times, valores inválidos, erros de página e repetibilidade por
-seed.
+cobertura dos 17 times, probabilidades bilaterais, seed automática por execução,
+rolagem, responsividade, valores inválidos e erros de página. O determinismo do
+motor por seed continua sendo um contrato separado, descrito no ADR 0003.
 
 ## Próximas camadas
 

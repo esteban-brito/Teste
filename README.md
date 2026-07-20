@@ -14,6 +14,8 @@ playoffs.
 O mapa técnico e as regras para mudanças estão em:
 
 - [`AGENTS.md`](AGENTS.md): invariantes, branch, validação e disciplina de commits;
+- [`docs/project-context.md`](docs/project-context.md): ponto de retomada, roadmap
+  de profissionalização e visão do modo Carreira de Jogador;
 - [`docs/architecture.md`](docs/architecture.md): fluxo de dados e fronteiras;
 - [`docs/testing.md`](docs/testing.md): 13 suítes e comandos por camada;
 - [`docs/formulas/`](docs/formulas/): roles, playstyles, OVR e química;
@@ -125,7 +127,7 @@ O `sandbox.html` é um laboratório independente que carrega os motores do
 - **Atributos de um jogador** (sliders) e ver o efeito no OVR, função e playstyle
 - **Pesos dos motores** (curva, afinidade, química, simulação, rating)
 - **Receitas dos 10 playstyles** universais + Coringa
-- **Simulação de mapa**, lote A × B ou amostra determinística da liga com os valores editados
+- **Simulação de mapa**, lote A × B ou amostra round-robin da liga com os valores editados
 
 Na aba **Simular**, o modo de liga distribui os confrontos em round-robin e
 compara combate, lados, plant, pós-plant, economia, pistol, clutches, funções e
