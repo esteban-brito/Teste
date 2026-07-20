@@ -454,11 +454,18 @@ pesos, thresholds, dados ou RNG.
 - teste de monotonicidade: aproximar o sim do real nunca piora a métrica;
 - saída JSON determinística para seeds e corpus fixos.
 
+Estado: implementado em `bancada/fidelity-score.js`, com contrato sintético em
+`bancada/fidelity-score.test.js`. Isso valida a fórmula, mas não conclui M1 nem
+autoriza uma nota oficial sem corpus real auditado.
+
 ### M3 — benchmark integrado
 
 - comando `npm run test:fidelity` separado do benchmark de desempenho;
 - execução rápida para diagnóstico e completa para release;
 - primeira nota baseline sem qualquer tuning no mesmo commit.
+
+Estado: o comando e a CLI somente leitura `npm run score:fidelity` existem; a
+primeira baseline permanece pendente do corpus M1.
 
 ### M4 — apresentação
 

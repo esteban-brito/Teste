@@ -247,8 +247,9 @@ npm run test:data         integridade dos dados
 npm run test:regression   auditoria, snapshot e guardas históricas
 npm run test:calibrator   calibrador, casos pesados e workers
 npm run test:benchmark    realismo, assists, KDA e rating
+npm run test:fidelity     contratos e scorer IFCS de fidelidade
 npm run test:e2e          jogo, calibrador e aba Simular no Chromium
-npm run test:all          todas as 14 suítes
+npm run test:all          todas as 15 suítes
 npm run validate          check + lint + todas as suítes
 ```
 

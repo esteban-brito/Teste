@@ -17,7 +17,7 @@ O mapa técnico e as regras para mudanças estão em:
 - [`docs/project-context.md`](docs/project-context.md): ponto de retomada, roadmap
   de profissionalização e visão do modo Carreira de Jogador;
 - [`docs/architecture.md`](docs/architecture.md): fluxo de dados e fronteiras;
-- [`docs/testing.md`](docs/testing.md): 14 suítes e comandos por camada;
+- [`docs/testing.md`](docs/testing.md): 15 suítes e comandos por camada;
 - [`docs/realism-methodology.md`](docs/realism-methodology.md): metodologia IFCS
   para medir fidelidade ao CS profissional em escala de 0 a 100;
 - [`docs/formulas/`](docs/formulas/): roles, playstyles, OVR e química;
@@ -211,14 +211,14 @@ A pasta `bancada/` contém uma suíte de validação que roda no Node.js:
 | `times.js` | IDs únicos, atributos 0–100, ≥1 IGL, país do treinador, ≥16 times |
 | `realismo.js` | KPR, CT-win, plant, clutch 1vX, anti-eco, conversão pós-pistol vs CS real |
 | `rating.js` | Correlação r≥0.75 e erro médio≤0.12 vs rating HLTV real |
-| `run.js` | Roda as 14 suítes; aceita grupos de dados, regressão, calibrador, benchmark e E2E |
+| `run.js` | Roda as 15 suítes; aceita grupos de dados, regressão, calibrador, benchmark, fidelidade e E2E |
 
 ```bash
 npm run test:data          # integridade dos dados
 npm run test:regression    # auditoria + snapshot + guardas históricas
 npm run test:calibrator    # calibrador e workers
 npm run test:benchmark     # realismo + assists + KDA + rating
-npm run test:all           # todas as 14 suítes
+npm run test:all           # todas as 15 suítes
 ```
 
 ## Acessibilidade, mobile e desempenho

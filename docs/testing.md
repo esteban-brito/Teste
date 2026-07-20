@@ -7,8 +7,8 @@ módulo deve manter snapshots, seeds, métricas e contratos públicos. Alteraç�
 limite estatístico exige justificativa de balanceamento separada.
 
 A futura nota consolidada de realismo segue o IFCS definido em
-`docs/realism-methodology.md`. Até o corpus real auditado e o scorer puro serem
-implementados, as faixas atuais são guardas de regressão, não uma nota de 0–100.
+`docs/realism-methodology.md`. Até o corpus real auditado ser implementado, as
+faixas atuais são guardas de regressão, não uma nota de 0–100.
 
 ## Grupos atuais
 
@@ -18,11 +18,12 @@ implementados, as faixas atuais são guardas de regressão, não uma nota de 0�
 | `npm run test:regression` | auditoria, snapshot, drop | classificação e invariantes aprovados |
 | `npm run test:calibrator` | basic, heavy, worker | busca, intenção, custo e paralelismo |
 | `npm run test:benchmark` | realismo, assists, KDA, rating | fidelidade estatística dos motores |
+| `npm run test:fidelity` | scorer IFCS | contratos matemáticos, cobertura, caps e proveniência |
 | `npm run test:e2e` | intent, simulation, game flow | calibrador, aba Simular e jogo principal no navegador |
-| `npm run test:all` | as 14 suítes acima | validação completa na ordem histórica |
+| `npm run test:all` | as 15 suítes acima | validação completa na ordem histórica |
 | `npm run bench` | alias de `test:all` | compatibilidade com CI e fluxo legado |
 
-`npm run validate` executa sintaxe, lint e as 14 suítes.
+`npm run validate` executa sintaxe, lint e as 15 suítes.
 
 ## Estado de referência
 
