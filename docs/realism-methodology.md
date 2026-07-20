@@ -1,11 +1,11 @@
 # IFCS — metodologia de fidelidade ao Counter-Strike
 
-**Versão da metodologia:** 1.0-proposta
+**Versão da metodologia:** 1.0
 
 **Data:** 20 de julho de 2026
 
-**Status:** especificação normativa para implementação; ainda não existe uma
-nota IFCS oficial do jogo.
+**Status:** especificação normativa congelada para a primeira baseline; ainda
+não existe uma nota IFCS oficial do jogo.
 
 ## 1. Objetivo
 
@@ -438,8 +438,8 @@ Resumo em 20 de julho de 2026:
 
 | Marco | Estado | O que falta |
 |---|---|---|
-| M0 — metodologia | implementado, revisão aberta | aprovação final de pesos/alvo |
-| M1 — corpus | parcial | alvo congelado, demo real, coleta e auditoria |
+| M0 — metodologia | concluído | — |
+| M1 — corpus | parcial | coleta profissional integral e auditoria |
 | M2 — scorer | implementado | validar com corpus real |
 | M3 — integração | parcial | primeira baseline real e reprodução na CI |
 | M4 — apresentação | pendente | consumir o JSON oficial no sandbox |
@@ -458,11 +458,14 @@ Resumo em 20 de julho de 2026:
 - auditoria de placares e eventos;
 - splits por evento congelados.
 
-Estado: o schema, o selo SHA-256, a seleção determinística da auditoria e as
-travas de publicação estão implementados em `bancada/fidelity-corpus.js`. O
-extrator Awpy está implementado e validado apenas com dados sintéticos; faltam
-uma prova com demo real, a aquisição integral e a auditoria humana. Portanto M1
-ainda não está concluído.
+Estado: o alvo está congelado em `docs/fidelity-target.json`. O schema, o selo
+SHA-256, a seleção determinística da auditoria e as travas de publicação estão
+implementados em `bancada/fidelity-corpus.js`. O extrator Awpy passou no
+autoteste e em duas extrações independentes da mesma demo CS2 real, declarada em
+`fidelity-corpus/parser-proof.json`. Como essa demo FACEIT acadêmica não pertence
+à população profissional definida, ela prova o pipeline, mas não conta no
+corpus. Faltam a aquisição profissional integral e a auditoria humana; portanto
+M1 ainda não está concluído.
 
 ### M2 — scorer puro
 

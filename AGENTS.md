@@ -37,6 +37,7 @@ como balanceamento e acompanhados de comparação estatística.
 - `bancada/roster-snapshot.json`: classificação aprovada de cada ID de jogador.
 - `bancada/fidelity-score.js`: matemática e agregação do IFCS.
 - `bancada/fidelity-corpus.js`: schema, proveniência, auditoria e travas do corpus IFCS.
+- `docs/fidelity-target.json`: população e época congeladas para a primeira medição.
 - `docs/realism-methodology.md` e `docs/fidelity-corpus.md`: protocolo científico
   e operacional do IFCS; não substituem os contratos executáveis acima.
 - `elencos.html`: artefato gerado; não editar os dados embutidos manualmente.

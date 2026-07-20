@@ -40,15 +40,18 @@ Estado registrado em 20 de julho de 2026:
 - último commit já publicado no remoto:
   `6148983 test(e2e): protege fluxo completo do jogo`;
 - branch local contém trabalho IFCS ainda não enviado:
-  `756aaf5` (metodologia), `0d04e29` (scorer), `8a9977b` (corpus/extrator)
-  e a atualização documental deste ponto de retomada;
+  `756aaf5` (metodologia), `0d04e29` (scorer), `8a9977b` (contrato do corpus),
+  `2716798` (ponto de retomada) e `8c3d330` (prova real do extrator);
 - Pages do sandbox: <https://esteban-brito.github.io/Teste/sandbox.html>;
 - o E2E do jogo percorre draft, lineup, Suíça, playoffs, título e reinício;
 - workflow do commit `6148983`: sucesso em validação e deploy;
 - run do GitHub Actions: `29772373882`;
-- última validação local completa: 16/16 suítes em 195,3 s, com 45.900 mapas
-  e aproximadamente 939 mil rounds nos benchmarks;
+- última validação local completa: 16/16 suítes em 183,4 s, com 45.900 mapas
+  e 940.452 rounds nos benchmarks;
 - nenhuma mudança IFCS alterou motor, dados, configuração, RNG ou balanceamento;
+- o alvo IFCS de 29/10/2025 a 07/07/2026 está congelado com fontes e hashes;
+- o extrator reproduziu duas vezes uma demo CS2 real; a prova FACEIT acadêmica
+  valida o pipeline, mas não pertence ao corpus profissional;
 - ainda não existe corpus real auditado nem nota IFCS oficial.
 
 Para retomar em uma sessão nova:
@@ -108,7 +111,8 @@ assinaturas por função.
 - `bancada/fidelity-score.js` calcula a nota IFCS a partir de artefatos explícitos.
 - `bancada/fidelity-corpus.js` valida proveniência, cobertura e auditoria do corpus.
 - `tools/extract-fidelity-demo.py` extrai demos reais offline com Awpy; não faz
-  parte do jogo e ainda precisa ser provado contra uma demo real.
+  parte do jogo e passou em uma prova repetida documentada, ainda separada do
+  corpus profissional.
 
 ### Pipeline de domínio
 
@@ -398,15 +402,16 @@ recalculam regra de negócio. Worker e processo principal importam a mesma API.
 
 ### Etapa P0 — preservar o baseline
 
-**Status:** parcialmente concluída e segura. E2E, metodologia, scorer e contrato
-do corpus estão implementados; corpus real e primeira baseline IFCS estão pendentes.
+**Status:** parcialmente concluída e segura. E2E, metodologia, alvo congelado,
+scorer, contrato do corpus e prova do extrator estão implementados; coleta
+profissional auditada e primeira baseline IFCS estão pendentes.
 
 - manter documentação, snapshot e grupos de teste atualizados;
 - adicionar golden tests por seed antes de mover o simulador;
 - manter o E2E concluído do fluxo principal: draft, lineup, Suíça e playoffs;
 - separar benchmark de desempenho do benchmark de realismo.
-- concluir o IFCS por etapas: aprovar alvo, provar o extrator em demo real,
-  adquirir/auditar o corpus e gerar a primeira baseline sem tuning no mesmo commit.
+- concluir o IFCS por etapas: adquirir/auditar o corpus profissional e gerar a
+  primeira baseline sem tuning no mesmo commit.
 
 Aceitação: nenhuma classificação, estatística ou sequência aprovada muda.
 
@@ -779,7 +784,7 @@ Ordem que maximiza segurança e prepara o novo modo:
 1. confirmar `sandbox-test`, status limpo e CI verde;
 2. E2E mínimo do jogo principal completo (**concluído em 20 de julho de 2026**);
 3. metodologia IFCS, scorer e contrato de corpus sem balanceamento
-   (**implementados; faltam alvo aprovado, demo real e corpus auditado**);
+   (**implementados; alvo e prova real concluídos, falta o corpus auditado**);
 4. criar golden tests de avaliação e simulação com seed;
 5. aceitar/revisar ADR 0002 e ADR 0004;
 6. extrair uma API pura `evaluatePlayer(rawPlayer, config)` com adapter legado;
@@ -799,9 +804,9 @@ da progressão na mesma revisão.
 - estado global mistura domínio, aplicação e efeitos;
 - não existe ainda persistência versionada adequada para uma carreira;
 - faltam goldens completos do simulador por seed;
-- o scorer e o contrato de corpus IFCS existem; faltam adquirir, extrair e
-  auditar os dados reais antes da primeira nota; o alvo de 29/10/2025 a
-  07/07/2026 é apenas uma proposta, ainda não congelada;
+- o scorer e o contrato de corpus IFCS existem; o alvo de 29/10/2025 a
+  07/07/2026 está congelado e o extrator foi provado com uma demo real, mas
+  ainda faltam adquirir, extrair e auditar os dados profissionais antes da nota;
 - configurações ainda vivem próximas de dados e implementação;
 - `elencos.html` pode divergir se não for regenerado;
 - alterações no RNG produzem regressões amplas e difíceis de diagnosticar;

@@ -7,8 +7,13 @@ corpus real pronto**. Nenhuma nota IFCS oficial pode ser publicada enquanto as
 demos não forem adquiridas, extraídas, verificadas e auditadas conforme este
 documento e `docs/realism-methodology.md`.
 
-Até 20 de julho de 2026, somente o ambiente e o autoteste sintético do extrator
-foram validados. Nenhuma demo real foi declarada como extraída ou auditada.
+Em 20 de julho de 2026, o ambiente, o autoteste sintético e a extração repetida
+de uma demo CS2 real foram validados. A prova está declarada em
+`fidelity-corpus/parser-proof.json`: o mesmo arquivo produziu exatamente o mesmo
+mapa, placar, total de rounds e dez jogadores em duas pastas novas. Essa demo é
+de uma base acadêmica de partidas FACEIT e serve **somente como prova técnica do
+parser**; ela não satisfaz os filtros LAN, Valve-ranked e top 20, não integra o
+corpus de referência e não autoriza uma nota IFCS.
 
 Dados reais e alterações de balanceamento nunca pertencem ao mesmo commit.
 
@@ -99,13 +104,12 @@ Antes de baixar dados, registrar:
 - SHA-256 do conteúdo dessas revisões;
 - versão do parser e hashes do extrator e das opções.
 
-Proposta em análise, ainda **não aprovada nem congelada**: usar a última época
-competitiva homogênea completa, de 29 de outubro de 2025 a 7 de julho de 2026,
-com Ancient, Dust II, Inferno, Mirage, Nuke, Overpass e Train, eventos LAN
-Valve-ranked e ambos os times no top 20 VRS. O corte evita misturar a atualização
-de 8 de julho de 2026, que mudou o map pool e regras relevantes. Enquanto essa
-proposta não for aprovada e registrada com revisões/hashes exatos, o template
-permanece deliberadamente inválido.
+O alvo foi congelado em `docs/fidelity-target.json`: última época competitiva
+homogênea completa, de 29 de outubro de 2025 a 7 de julho de 2026, com Ancient,
+Dust II, Inferno, Mirage, Nuke, Overpass e Train, eventos LAN Valve-ranked e
+ambos os times no top 20 VRS. O corte evita misturar a atualização de 8 de julho
+de 2026, que mudou o map pool e regras relevantes. O registro contém as revisões
+Git e os hashes das regras Valve e do VRS usados na decisão.
 
 O template contém marcadores deliberadamente inválidos:
 
@@ -194,12 +198,13 @@ ciclo de tuning.
 
 ## Próxima implementação
 
-Ainda faltam três peças antes de M1 terminar:
+O alvo e a prova técnica do extrator estão concluídos. Antes de M1 terminar,
+ainda é necessário:
 
-1. revisar, aprovar e congelar a proposta de janela e mapas com fontes versionadas;
-2. validar o extrator já implementado contra uma primeira demo real e fechar o
-   schema das tabelas derivadas;
-3. adquirir o volume completo e executar a auditoria humana sorteada.
+1. catalogar e adquirir o volume profissional completo sem contornar controles
+   de acesso;
+2. executar a extração integral com os hashes congelados;
+3. realizar a auditoria humana sorteada e selar os splits por evento e o holdout.
 
 O contrato atual prepara essas etapas sem inventar dados e sem tocar nos motores
 do jogo.

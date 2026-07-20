@@ -19,6 +19,8 @@ O mapa técnico e as regras para mudanças estão em:
 - [`docs/architecture.md`](docs/architecture.md): fluxo de dados e fronteiras;
 - [`docs/testing.md`](docs/testing.md): 16 suítes e comandos por camada;
 - [`docs/fidelity-corpus.md`](docs/fidelity-corpus.md): coleta e auditoria do corpus IFCS;
+- [`docs/fidelity-target.json`](docs/fidelity-target.json): alvo histórico
+  congelado, com janela, população, fontes e hashes;
 - [`docs/realism-methodology.md`](docs/realism-methodology.md): metodologia IFCS
   para medir fidelidade ao CS profissional em escala de 0 a 100;
 - [`docs/formulas/`](docs/formulas/): roles, playstyles, OVR e química;
@@ -232,6 +234,10 @@ npm run test:all           # todas as 16 suítes
 npm run score:fidelity -- caminho/entrada.json  # calcula um relatório IFCS
 npm run corpus:fidelity -- --template  # modelo do manifesto auditável
 ```
+
+O extrator já passou por uma prova repetida com uma demo CS2 real, registrada em
+`fidelity-corpus/parser-proof.json`. Essa entrada acadêmica valida o pipeline,
+mas não conta como partida profissional e ainda não permite publicar a nota.
 
 ## Acessibilidade, mobile e desempenho
 

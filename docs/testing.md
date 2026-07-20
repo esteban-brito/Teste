@@ -35,8 +35,8 @@ faixas atuais são guardas de regressão, não uma nota de 0–100.
 
 O `docs/baseline.md` é um retrato histórico: sua contagem de 13 suítes corresponde
 à captura de 19 de julho de 2026, não à bancada atual. A última validação completa
-registrada, em 20 de julho de 2026, aprovou 16/16 suítes em 195,3 s, incluindo
-45.900 mapas e aproximadamente 939 mil rounds. Isso confirma regressão; não é
+registrada, em 20 de julho de 2026, aprovou 16/16 suítes em 183,4 s, incluindo
+45.900 mapas e 940.452 rounds. Isso confirma regressão; não é
 uma nota IFCS oficial.
 
 ## Validação do extrator IFCS
@@ -51,9 +51,12 @@ python -m venv .venv-fidelity
 .venv-fidelity/Scripts/python tools/extract-fidelity-demo.py --self-test
 ```
 
-O ambiente com Awpy 2.0.2 e o autoteste sintético foram aprovados localmente.
-Isso não prova a extração de uma demo real; essa prova continua obrigatória
-antes de fechar o schema e iniciar a coleta integral.
+O ambiente com Awpy 2.0.2 e o autoteste sintético foram aprovados localmente. O
+extrator também processou duas vezes a mesma demo CS2 real em destinos novos e
+reproduziu mapa, placar, rounds e dez jogadores. A entrada e os resultados
+esperados estão selados em `fidelity-corpus/parser-proof.json`. Essa demo FACEIT
+acadêmica prova o pipeline, mas não substitui a coleta nem a auditoria do corpus
+profissional exigido para a nota.
 
 ## Atualização de snapshot
 
@@ -91,7 +94,5 @@ o balanceamento executável do produto.
 - Integração do torneio sem DOM.
 - Screenshots responsivos e com `prefers-reduced-motion`.
 - Benchmark de desempenho separado dos asserts de realismo.
-- Aprovar e congelar o alvo real do IFCS, sem balanceamento no mesmo commit.
-- Validar o extrator em uma demo real e fechar o schema derivado.
 - Adquirir, auditar e selar o corpus real; então produzir a primeira baseline
   IFCS sem tuning no mesmo commit.
