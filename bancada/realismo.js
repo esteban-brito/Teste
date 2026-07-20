@@ -1,7 +1,7 @@
 /* bancada/realismo.js - macro do simulador vs numeros do CS profissional real.
    Mede KPR, lados, plant, economia, clutches e forca do favorito. */
 const {X,T}=require("./motor");
-const {pct,inRange,printCheck,pickOpponent}=require("./common");
+const {pct,inRange,printCheck,scheduledMatch}=require("./common");
 
 const N=+(process.env.N||300);
 const MAPS=9;
@@ -74,7 +74,7 @@ function recordGame(stats,team,opponent,game){
   const bucket=bucketFor(diff);
   if(!bucket)return;
 
-  const favoriteWon=(team.ef>=opponent.ef)===(game.vencedorNome===team.nome);
+  const favoriteWon=(team.ef>=opponent.ef)===(game.vencedor===team);
   const loserScore=Math.min(...game.placar);
   stats.gaps[bucket].n++;
   if(favoriteWon)stats.gaps[bucket].w++;
@@ -85,14 +85,14 @@ function simulate(){
   const stats=initStats();
   for(let campaign=0;campaign<N;campaign++){
     X.sortearFormaCampanha(T);
-    for(const team of T){
+    for(const [teamIndex,team] of T.entries()){
       for(let map=0;map<MAPS;map++){
-        const opponent=pickOpponent(T,team);
+        const {opponent,a,b}=scheduledMatch(T,teamIndex,campaign*MAPS+map);
         const game=X.simularMapa(
-          team,
-          opponent,
-          X.forcaDoDia(team.ef,team.quim),
-          X.forcaDoDia(opponent.ef,opponent.quim)
+          a,
+          b,
+          X.forcaDoDia(a.ef,a.quim),
+          X.forcaDoDia(b.ef,b.quim)
         );
         recordGame(stats,team,opponent,game);
       }
