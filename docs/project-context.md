@@ -246,8 +246,8 @@ npm run test:data         integridade dos dados
 npm run test:regression   auditoria, snapshot e guardas históricas
 npm run test:calibrator   calibrador, casos pesados e workers
 npm run test:benchmark    realismo, assists, KDA e rating
-npm run test:e2e          calibrador e aba Simular no Chromium
-npm run test:all          todas as 13 suítes
+npm run test:e2e          jogo, calibrador e aba Simular no Chromium
+npm run test:all          todas as 14 suítes
 npm run validate          check + lint + todas as suítes
 ```
 
@@ -267,6 +267,7 @@ acelerar um resultado verde.
 - correlação e erro do rating;
 - placar, bilateralidade, seed automática, suficiência, scroll e responsividade
   da aba Simular;
+- draft, lineup, Suíça, playoffs, tela final e reinício do jogo principal;
 - erros de página e valores inválidos.
 
 ### CI e Pages
@@ -377,7 +378,7 @@ recalculam regra de negócio. Worker e processo principal importam a mesma API.
 
 - manter documentação, snapshot e grupos de teste atualizados;
 - adicionar golden tests por seed antes de mover o simulador;
-- criar E2E do fluxo principal: draft, lineup, suíça e playoffs;
+- manter o E2E concluído do fluxo principal: draft, lineup, Suíça e playoffs;
 - separar benchmark de desempenho do benchmark de realismo.
 
 Aceitação: nenhuma classificação, estatística ou sequência aprovada muda.
@@ -718,7 +719,7 @@ deles. Não criar árvore vazia nem mover o repositório inteiro antes do protó
 Também não é necessário esperar toda a profissionalização terminar. O melhor
 ponto é depois de existir:
 
-1. contrato E2E do fluxo principal;
+1. contrato E2E do fluxo principal (**cumprido**);
 2. API estável e testada para avaliar um jogador a partir de atributos crus;
 3. adapter de RNG injetável ou pelo menos goldens suficientes;
 4. contrato versionado de persistência.
@@ -749,7 +750,7 @@ Não presumir respostas sem conversar:
 Ordem que maximiza segurança e prepara o novo modo:
 
 1. confirmar `sandbox-test`, status limpo e CI verde;
-2. criar E2E mínimo do jogo principal completo;
+2. E2E mínimo do jogo principal completo (**concluído em 20 de julho de 2026**);
 3. criar golden tests de avaliação e simulação com seed;
 4. aceitar/revisar ADR 0002 e ADR 0004;
 5. extrair uma API pura `evaluatePlayer(rawPlayer, config)` com adapter legado;
@@ -768,7 +769,6 @@ da progressão na mesma revisão.
 - sandbox, Node e worker dependem de loaders frágeis por texto;
 - estado global mistura domínio, aplicação e efeitos;
 - não existe ainda persistência versionada adequada para uma carreira;
-- o jogo principal não possui E2E completo;
 - faltam goldens completos do simulador por seed;
 - configurações ainda vivem próximas de dados e implementação;
 - `elencos.html` pode divergir se não for regenerado;

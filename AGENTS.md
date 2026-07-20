@@ -52,10 +52,10 @@ npm run test:data
 npm run test:regression
 npm run test:calibrator   # se tocar no sandbox/calibrador/worker
 npm run test:benchmark    # se tocar em avaliação, química ou simulação
-npm run test:e2e          # se tocar em interface do calibrador
+npm run test:e2e          # se tocar no jogo ou na interface do calibrador
 ```
 
-`npm run test:all` e `npm run bench` executam as mesmas 13 suítes, na ordem
+`npm run test:all` e `npm run bench` executam as mesmas 14 suítes, na ordem
 histórica. O benchmark completo é demorado; não reduza amostras ou limites para
 obter um resultado verde.
 
