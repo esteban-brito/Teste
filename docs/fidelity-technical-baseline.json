@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "resultType": "technical-preliminary-not-ifcs",
+  "measuredAt": "2026-07-20",
+  "gameCommit": "6d80c00",
+  "protocol": {
+    "source": "sandbox league diagnostic",
+    "independentBatches": 8,
+    "mapsPerBatch": 500,
+    "totalSimulatedMaps": 4000,
+    "indicatorsPerBatch": 17,
+    "referenceType": "published professional ranges used by the legacy benchmark"
+  },
+  "result": {
+    "passedIndicatorEvaluations": 131,
+    "totalIndicatorEvaluations": 136,
+    "rawPercent": 96.3235294118,
+    "roundedScore0To100": 96,
+    "batchPassedCounts": [16, 16, 16, 17, 16, 17, 17, 16]
+  },
+  "stability": {
+    "alwaysPassedIndicators": 15,
+    "favoriteGap0To3PassedBatches": 4,
+    "favoriteGap16PlusPassedBatches": 7
+  },
+  "limitations": [
+    "Não é uma execução do scorer IFCS.",
+    "Mede presença dentro de faixas, não distância contínua até um corpus auditado.",
+    "Não possui holdout profissional bloqueado nem intervalo de confiança IFCS.",
+    "Não autoriza balanceamento; serve para orientar a próxima coleta e baseline."
+  ]
+}

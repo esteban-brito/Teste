@@ -62,6 +62,11 @@ O piloto profissional FURIA 8–13 Falcons também foi executado duas vezes. O
 placar, os 21 rounds, os dez jogadores e os hashes das 21 tabelas derivadas
 coincidiram entre as execuções.
 
+O diagnóstico legado pode produzir uma nota técnica preliminar de aderência às
+faixas, mas ela deve sempre ser rotulada como `not-ifcs`. A captura atual está
+em `docs/fidelity-technical-baseline.json`: 4.000 mapas, 131/136 avaliações
+aprovadas e resultado arredondado 96/100.
+
 ## Atualização de snapshot
 
 1. Execute `npm run test:regression` e leia todas as diferenças.

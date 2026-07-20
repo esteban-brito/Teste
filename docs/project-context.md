@@ -55,6 +55,8 @@ Estado registrado em 20 de julho de 2026:
   valida o pipeline, mas não pertence ao corpus profissional;
 - o primeiro mapa profissional elegível foi extraído duas vezes: FURIA 8–13
   Falcons no IEM Cologne Major 2026; o corpus está em 1/800 mapas e 1/6 eventos;
+- o diagnóstico técnico preliminar marcou 96/100 em 4.000 mapas simulados
+  (131/136 avaliações dentro das faixas); não é a nota IFCS oficial;
 - ainda não existe corpus real auditado nem nota IFCS oficial.
 
 Para retomar em uma sessão nova:

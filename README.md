@@ -241,6 +241,11 @@ mas não conta como partida profissional e ainda não permite publicar a nota.
 O primeiro mapa profissional elegível está selado no manifesto parcial
 `fidelity-corpus/manifest.json`; ainda são necessários 800 mapas auditados.
 
+O diagnóstico técnico mais recente obteve **96/100** em 4.000 mapas simulados:
+131 de 136 avaliações de indicadores ficaram dentro das faixas profissionais.
+Esse valor está registrado em `docs/fidelity-technical-baseline.json` e **não é
+a nota IFCS oficial**, que continua bloqueada até o corpus e o holdout completos.
+
 ## Acessibilidade, mobile e desempenho
 
 - **Responsivo**: 6 colunas no PC, 3 no celular; suporta o notch/barra do iPhone
