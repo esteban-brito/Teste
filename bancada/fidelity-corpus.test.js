@@ -15,7 +15,7 @@ const vrsUrl="https://github.com/ValveSoftware/counter-strike_regional_standings
 const maps=["de_ancient","de_anubis","de_dust2","de_inferno","de_mirage","de_nuke","de_train"];
 
 function buildManifest(mapTotal=805){
-  const parserOptions={tickrate:128,infernoDuration:7.03125,smokeDuration:20,events:[...C.PARSER_REQUIRED_EVENTS],playerProps:[],otherProps:[]};
+  const parserOptions={tickrate:128,infernoDuration:7.03125,smokeDuration:20,events:[...C.PARSER_REQUIRED_EVENTS],playerProps:[...C.PARSER_REQUIRED_PLAYER_PROPS],otherProps:[]};
   const splits=["calibration","calibration","calibration","calibration","validation","audit"];
   const events=splits.map((split,index)=>({
     id:`event-${index+1}`,name:`Event ${index+1}`,startDate:`2026-0${index+1}-01`,endDate:`2026-0${index+1}-28`,
@@ -128,6 +128,15 @@ check("evento mínimo do extrator não pode ser removido",()=>{
   });
   const report=C.validateCorpusManifest(manifest);
   assert.ok(report.errors.some(issue=>issue.code==="parser.required-event"));
+});
+
+check("nome canônico do time precisa ser extraído dos ticks",()=>{
+  const manifest=reseal(buildManifest(),copy=>{
+    copy.parser.options.playerProps=[];
+    copy.parser.optionsSha256=C.sha256(C.canonicalJson(copy.parser.options));
+  });
+  const report=C.validateCorpusManifest(manifest);
+  assert.ok(report.errors.some(issue=>issue.code==="parser.required-player-prop"));
 });
 
 check("partida fora do top 20 é rejeitada",()=>{

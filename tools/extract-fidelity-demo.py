@@ -38,7 +38,7 @@ DEFAULT_OPTIONS: dict[str, Any] = {
         "inferno_startburn",
         "inferno_expire",
     ],
-    "playerProps": [],
+    "playerProps": ["team_clan_name"],
     "otherProps": [],
 }
 REQUIRED_EVENTS = {
@@ -173,20 +173,36 @@ def verify_demo(root: Path, map_entry: dict[str, Any]) -> Path:
 
 
 def winner_scores(demo: Any, expected_teams: list[str]) -> dict[str, int]:
-    side_by_round: dict[tuple[int, str], set[str]] = {}
-    rows = demo.ticks.select(["round_num", "side", "team_name"]).unique().to_dicts()
+    counts_by_round_side: dict[tuple[int, str], dict[str, int]] = {}
+    rows = demo.ticks.select(["round_num", "side", "team_clan_name"]).drop_nulls().to_dicts()
     for row in rows:
-        team = row.get("team_name")
+        team = row.get("team_clan_name")
         if team in expected_teams:
-            side_by_round.setdefault((row["round_num"], row["side"]), set()).add(team)
+            key = (row["round_num"], row["side"])
+            counts = counts_by_round_side.setdefault(key, {})
+            counts[team] = counts.get(team, 0) + 1
+
+    side_by_round: dict[tuple[int, str], str] = {}
+    for key, counts in counts_by_round_side.items():
+        ranked = sorted(counts.items(), key=lambda item: (-item[1], item[0]))
+        if not ranked or (len(ranked) > 1 and ranked[0][1] == ranked[1][1]):
+            raise ValueError(f"round {key[0]}: lado {key[1]} não possui time dominante")
+        if ranked[0][1] * 2 <= sum(counts.values()):
+            raise ValueError(f"round {key[0]}: lado {key[1]} não possui maioria de time")
+        side_by_round[key] = ranked[0][0]
+
     scores = {team: 0 for team in expected_teams}
     for round_row in demo.rounds.select(["round_num", "winner"]).to_dicts():
-        candidates = side_by_round.get((round_row["round_num"], round_row["winner"]), set())
-        if len(candidates) != 1:
+        round_num = round_row["round_num"]
+        winner_side = round_row["winner"]
+        winner_team = side_by_round.get((round_num, winner_side))
+        ct_team = side_by_round.get((round_num, "ct"))
+        t_team = side_by_round.get((round_num, "t"))
+        if not winner_team or not ct_team or not t_team or ct_team == t_team:
             raise ValueError(
-                f"round {round_row['round_num']}: lado vencedor não resolve para um time"
+                f"round {round_num}: lados não resolvem para dois times distintos"
             )
-        scores[next(iter(candidates))] += 1
+        scores[winner_team] += 1
     return scores
 
 
@@ -310,7 +326,7 @@ def parse_args() -> argparse.Namespace:
 
 def self_test() -> dict[str, Any]:
     _, polars, version = load_environment()
-    expected_options_hash = "43d13095490cdb06433e718d85b8ef4199693ce2b91055823472ed7286224f48"
+    expected_options_hash = "1f67eae99d2ad0d9c8527d1dc34d381d07367b7f805710a839085a2a2a709570"
     if options_sha256(DEFAULT_OPTIONS) != expected_options_hash:
         raise AssertionError("hash canônico das opções divergiu do contrato Node/Python")
     if canonical_json({"duration": 20.0}) != '{"duration":20}':
@@ -319,9 +335,12 @@ def self_test() -> dict[str, Any]:
     class SyntheticDemo:
         ticks = polars.DataFrame(
             {
-                "round_num": [1, 1, 2, 2],
-                "side": ["ct", "t", "ct", "t"],
-                "team_name": ["Alpha", "Beta", "Beta", "Alpha"],
+                "round_num": [1, 1, 1, 1, 2, 2, 2, 2, 2, 2],
+                "side": ["ct", "ct", "t", "t", "ct", "ct", "ct", "t", "t", "t"],
+                "team_clan_name": [
+                    "Alpha", "Alpha", "Beta", "Beta",
+                    "Beta", "Beta", "Alpha", "Alpha", "Alpha", "Beta",
+                ],
             }
         )
         rounds = polars.DataFrame({"round_num": [1, 2], "winner": ["ct", "ct"]})

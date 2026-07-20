@@ -22,6 +22,7 @@ const ROLE_PLAYER_ROUND_MINIMUM=10000;
 const PARSER_REQUIRED_EVENTS=Object.freeze([
   "round_freeze_end","round_officially_ended","player_hurt","player_death","bomb_planted"
 ]);
+const PARSER_REQUIRED_PLAYER_PROPS=Object.freeze(["team_clan_name"]);
 
 const finite=value=>typeof value==="number"&&Number.isFinite(value);
 const nonNegativeInteger=value=>Number.isInteger(value)&&value>=0;
@@ -167,6 +168,11 @@ function validateCorpusManifest(manifest){
   if(Array.isArray(parserOptions.events)){
     PARSER_REQUIRED_EVENTS.forEach(event=>{
       if(!parserOptions.events.includes(event))error("parser.required-event",`evento obrigatório ausente: ${event}`,"$.parser.options.events");
+    });
+  }
+  if(Array.isArray(parserOptions.playerProps)){
+    PARSER_REQUIRED_PLAYER_PROPS.forEach(prop=>{
+      if(!parserOptions.playerProps.includes(prop))error("parser.required-player-prop",`propriedade obrigatória ausente: ${prop}`,"$.parser.options.playerProps");
     });
   }
 
@@ -363,7 +369,7 @@ function validateCorpusManifest(manifest){
 
 function corpusTemplate(){
   const hash="0".repeat(64),commit="0".repeat(40);
-  const options={tickrate:128,infernoDuration:7.03125,smokeDuration:20,events:[...PARSER_REQUIRED_EVENTS,"player_spawn","item_pickup","bomb_defused","bomb_exploded"],playerProps:[],otherProps:[]};
+  const options={tickrate:128,infernoDuration:7.03125,smokeDuration:20,events:[...PARSER_REQUIRED_EVENTS,"player_spawn","item_pickup","bomb_defused","bomb_exploded"],playerProps:[...PARSER_REQUIRED_PLAYER_PROPS],otherProps:[]};
   return sealManifest({
     schemaVersion:CORPUS_SCHEMA_VERSION,
     target:{
@@ -385,7 +391,7 @@ function corpusTemplate(){
 }
 
 module.exports={
-  CORPUS_SCHEMA_VERSION,SPLITS,EXCLUSION_CODES,RARE_MINIMUMS,ROLES,ROLE_PLAYER_ROUND_MINIMUM,PARSER_REQUIRED_EVENTS,
+  CORPUS_SCHEMA_VERSION,SPLITS,EXCLUSION_CODES,RARE_MINIMUMS,ROLES,ROLE_PLAYER_ROUND_MINIMUM,PARSER_REQUIRED_EVENTS,PARSER_REQUIRED_PLAYER_PROPS,
   canonicalJson,sha256,manifestSha256,sealManifest,
   validateCorpusManifest,corpusTemplate,safeRelativePath,
   isPossibleMr12Score,selectAuditMapIds
