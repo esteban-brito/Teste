@@ -57,3 +57,31 @@
 - **Anti-rematch:** tentativa de evitar repetição de confrontos, com fallback
   quando não há pareamento perfeito.
 
+## Testes e fidelidade
+
+- **E2E (end-to-end):** teste automatizado que usa o jogo pelo navegador como
+  uma pessoa usaria, cobrindo o fluxo inteiro entre a tela inicial e o resultado.
+- **IFCS:** Índice de Fidelidade ao Counter-Strike; protocolo de 0 a 100 que
+  compara o simulador com um corpus real, com incerteza, cobertura e travas.
+- **Alvo (`target`):** definição congelada do Counter-Strike que será imitado:
+  versão, período, nível competitivo, mapas e regras.
+- **Corpus:** conjunto de demos reais e dados derivados usado como referência.
+- **Manifesto:** arquivo auditável que registra origem, hashes, exclusões,
+  versões, splits e resultados verificados do corpus.
+- **SHA-256:** impressão digital criptográfica usada para detectar qualquer
+  alteração em uma demo, regra, extrator ou manifesto.
+- **Cobertura:** parcela do peso total do IFCS sustentada por métricas válidas.
+- **Wasserstein-1:** distância entre duas distribuições; no IFCS, mede quanto a
+  distribuição simulada precisaria “se mover” para coincidir com a real.
+- **Brier Skill Score:** comparação da qualidade de probabilidades previstas
+  contra uma referência; premia calibração, não confiança excessiva.
+- **Bootstrap / IC95%:** reamostragem usada para estimar a incerteza; o IC95%
+  informa uma faixa plausível para a nota, não uma garantia absoluta.
+- **Calibração, validação e auditoria:** três splits separados: ajustar, medir e
+  conferir generalização. O holdout de auditoria não pode orientar tuning.
+- **Holdout:** parte bloqueada do corpus, escondida da equipe de tuning até a
+  avaliação final.
+- **Nota provisória:** diagnóstico incompleto, que não pode ser divulgado como
+  medida científica oficial.
+- **Nota oficial:** resultado reproduzível que cumpriu corpus, auditoria,
+  cobertura, precisão e proveniência exigidos pela metodologia.

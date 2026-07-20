@@ -12,6 +12,7 @@ const SUITE_GROUPS={
   regression:["auditoria.js","snapshot.js","drop-reform.js"],
   calibrator:["calibrador.js","calibrador-heavy.js","worker-calibrador.js"],
   benchmark:["realismo.js","assists.js","kda.js","rating.js"],
+  fidelity:["fidelity-score.test.js","fidelity-corpus.test.js"],
   e2e:["e2e-intent.js","e2e-simulation.js","e2e-game-flow.js"]
 };
 SUITE_GROUPS.all=[
@@ -19,6 +20,7 @@ SUITE_GROUPS.all=[
   ...SUITE_GROUPS.regression,
   ...SUITE_GROUPS.calibrator,
   ...SUITE_GROUPS.benchmark,
+  ...SUITE_GROUPS.fidelity,
   ...SUITE_GROUPS.e2e
 ];
 

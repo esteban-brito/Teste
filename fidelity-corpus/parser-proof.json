@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "1.0",
+  "purpose": "technical-parser-proof-not-corpus",
+  "declaredSha256": "ab0b7289d35424f3afddd4968952bce5870db51a3dad55d610bf6fcd2172f0e6",
+  "parser": {
+    "name": "awpy",
+    "version": "2.0.2",
+    "backend": "demoparser2",
+    "scriptSha256": "d9e3c2f17277a46f2af7e5356803fcb18d35aefbc8af0d8e8e4996525abcfe68",
+    "optionsSha256": "1f67eae99d2ad0d9c8527d1dc34d381d07367b7f805710a839085a2a2a709570",
+    "options": {
+      "tickrate": 128,
+      "infernoDuration": 7.03125,
+      "smokeDuration": 20,
+      "events": [
+        "round_freeze_end",
+        "round_officially_ended",
+        "player_spawn",
+        "player_given_c4",
+        "bomb_pickup",
+        "item_pickup",
+        "player_hurt",
+        "player_death",
+        "bomb_dropped",
+        "bomb_planted",
+        "bomb_defused",
+        "bomb_exploded",
+        "flashbang_detonate",
+        "hegrenade_detonate",
+        "smokegrenade_detonate",
+        "smokegrenade_expired",
+        "inferno_startburn",
+        "inferno_expire"
+      ],
+      "playerProps": [
+        "team_clan_name"
+      ],
+      "otherProps": []
+    }
+  },
+  "matches": [
+    {
+      "id": "x-ego-faceit-1-215846ba",
+      "teams": [
+        {
+          "name": "team_dea"
+        },
+        {
+          "name": "team_slaxz-"
+        }
+      ],
+      "maps": [
+        {
+          "id": "x-ego-1-215846ba-mirage",
+          "status": "valid",
+          "mapName": "de_mirage",
+          "officialScore": {
+            "teamA": 6,
+            "teamB": 13
+          },
+          "demo": {
+            "sourceUrl": "https://huggingface.co/datasets/wangyz1999/X-EGO-CS/resolve/main/demo/1-215846ba-8d07-473b-b862-9a2921326bb8-1-1.dem",
+            "acquiredAt": "2026-07-20",
+            "sha256": "405e9cc88b1091631125a7b54a6ae63176e8573c3ffc97ec1cdd56bbcdebe7ab",
+            "bytes": 339399701,
+            "format": "dem",
+            "localPath": "raw/x-ego-1-215846ba.dem"
+          },
+          "parsed": {
+            "demoSha256": "405e9cc88b1091631125a7b54a6ae63176e8573c3ffc97ec1cdd56bbcdebe7ab",
+            "parserVersion": "2.0.2",
+            "mapName": "de_mirage",
+            "teamA": "team_dea",
+            "teamB": "team_slaxz-",
+            "teamAScore": 6,
+            "teamBScore": 13,
+            "roundCount": 19,
+            "playerCount": 10
+          }
+        }
+      ]
+    }
+  ]
+}

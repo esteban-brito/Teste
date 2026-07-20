@@ -6,6 +6,10 @@ Os testes protegem comportamento, não a organização interna. Uma extração d
 módulo deve manter snapshots, seeds, métricas e contratos públicos. Alteração de
 limite estatístico exige justificativa de balanceamento separada.
 
+A futura nota consolidada de realismo segue o IFCS definido em
+`docs/realism-methodology.md`. Até o corpus real auditado ser implementado, as
+faixas atuais são guardas de regressão, não uma nota de 0–100.
+
 ## Grupos atuais
 
 | Comando | Suítes | Finalidade |
@@ -14,11 +18,12 @@ limite estatístico exige justificativa de balanceamento separada.
 | `npm run test:regression` | auditoria, snapshot, drop | classificação e invariantes aprovados |
 | `npm run test:calibrator` | basic, heavy, worker | busca, intenção, custo e paralelismo |
 | `npm run test:benchmark` | realismo, assists, KDA, rating | fidelidade estatística dos motores |
+| `npm run test:fidelity` | scorer e corpus IFCS | matemática, cobertura, caps, proveniência e auditoria |
 | `npm run test:e2e` | intent, simulation, game flow | calibrador, aba Simular e jogo principal no navegador |
-| `npm run test:all` | as 14 suítes acima | validação completa na ordem histórica |
+| `npm run test:all` | as 16 suítes acima | validação completa na ordem histórica |
 | `npm run bench` | alias de `test:all` | compatibilidade com CI e fluxo legado |
 
-`npm run validate` executa sintaxe, lint e as 14 suítes.
+`npm run validate` executa sintaxe, lint e as 16 suítes.
 
 ## Estado de referência
 
@@ -27,6 +32,40 @@ limite estatístico exige justificativa de balanceamento separada.
 - Os benchmarks usam amostragem; limites são os contratos, e uma execução
   específica é registrada em `docs/baseline.md`.
 - A CI usa Node 20. Desenvolvedores em outra versão devem registrar divergências.
+
+O `docs/baseline.md` é um retrato histórico: sua contagem de 13 suítes corresponde
+à captura de 19 de julho de 2026, não à bancada atual. A última validação completa
+registrada, em 20 de julho de 2026, aprovou 16/16 suítes em 183,4 s, incluindo
+45.900 mapas e 940.452 rounds. Isso confirma regressão; não é
+uma nota IFCS oficial.
+
+## Validação do extrator IFCS
+
+O extrator de demos é uma ferramenta Python offline, separada do runtime e da
+validação Node:
+
+```text
+python -m venv .venv-fidelity
+.venv-fidelity/Scripts/python -m pip install -r requirements-fidelity.lock
+.venv-fidelity/Scripts/python tools/extract-fidelity-demo.py --check-environment
+.venv-fidelity/Scripts/python tools/extract-fidelity-demo.py --self-test
+```
+
+O ambiente com Awpy 2.0.2 e o autoteste sintético foram aprovados localmente. O
+extrator também processou duas vezes a mesma demo CS2 real em destinos novos e
+reproduziu mapa, placar, rounds e dez jogadores. A entrada e os resultados
+esperados estão selados em `fidelity-corpus/parser-proof.json`. Essa demo FACEIT
+acadêmica prova o pipeline, mas não substitui a coleta nem a auditoria do corpus
+profissional exigido para a nota.
+
+O piloto profissional FURIA 8–13 Falcons também foi executado duas vezes. O
+placar, os 21 rounds, os dez jogadores e os hashes das 21 tabelas derivadas
+coincidiram entre as execuções.
+
+O diagnóstico legado pode produzir uma nota técnica preliminar de aderência às
+faixas, mas ela deve sempre ser rotulada como `not-ifcs`. A captura atual está
+em `docs/fidelity-technical-baseline.json`: 4.000 mapas, 131/136 avaliações
+aprovadas e resultado arredondado 96/100.
 
 ## Atualização de snapshot
 
@@ -64,3 +103,5 @@ o balanceamento executável do produto.
 - Integração do torneio sem DOM.
 - Screenshots responsivos e com `prefers-reduced-motion`.
 - Benchmark de desempenho separado dos asserts de realismo.
+- Adquirir, auditar e selar o corpus real; então produzir a primeira baseline
+  IFCS sem tuning no mesmo commit.

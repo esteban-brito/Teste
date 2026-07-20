@@ -9,12 +9,15 @@
     "test:data": "node bancada/run.js --group data",
     "test:regression": "node bancada/run.js --group regression",
     "test:benchmark": "node bancada/run.js --group benchmark",
+    "test:fidelity": "node bancada/run.js --group fidelity",
     "test:e2e": "node bancada/run.js --group e2e",
     "test:drop": "node bancada/drop-reform.js",
     "test:calibrator": "node bancada/run.js --group calibrator",
     "test:all": "node bancada/run.js --group all",
     "validate": "npm run check && npm run lint && npm run test:all",
     "verify-report": "node tools/verify-report.js",
+    "score:fidelity": "node tools/score-fidelity.js",
+    "corpus:fidelity": "node tools/verify-fidelity-corpus.js",
     "snapshot:update": "node bancada/snapshot.js --update"
   },
   "devDependencies": {

@@ -19,6 +19,8 @@ Este documento não substitui as fontes especializadas:
 - `docs/architecture.md`: arquitetura e dependências permitidas;
 - `docs/formulas/`: roles, playstyles, OVR e química;
 - `docs/testing.md`: estratégia e comandos de teste;
+- `docs/realism-methodology.md`: IFCS, corpus real e nota de fidelidade 0–100;
+- `docs/fidelity-corpus.md`: contrato operacional de coleta e auditoria do corpus;
 - `docs/adr/`: decisões arquiteturais;
 - `docs/baseline.md`: baseline estatístico e estrutural;
 - `docs/glossary.md`: vocabulário do domínio.
@@ -35,13 +37,27 @@ Estado registrado em 20 de julho de 2026:
 - repositório: `esteban-brito/Teste`;
 - branch de trabalho: `sandbox-test`;
 - `main`: intocável durante a profissionalização;
-- baseline de implementação imediatamente anterior a este documento:
-  `437abc7 fix(sandbox): simplifica simulador e corrige fluxo`;
+- último commit já publicado no remoto:
+  `6148983 test(e2e): protege fluxo completo do jogo`;
+- branch local contém trabalho IFCS ainda não enviado:
+  `756aaf5` (metodologia), `0d04e29` (scorer), `8a9977b` (contrato do corpus),
+  `2716798` (ponto de retomada) e `8c3d330` (prova real do extrator);
 - Pages do sandbox: <https://esteban-brito.github.io/Teste/sandbox.html>;
-- workflow do commit `437abc7`: sucesso em validação e deploy;
-- run do GitHub Actions: `29718040927`;
-- árvore estava limpa e sincronizada com `origin/sandbox-test` antes da criação
-  deste documento.
+- o E2E do jogo percorre draft, lineup, Suíça, playoffs, título e reinício;
+- workflow do commit `6148983`: sucesso em validação e deploy;
+- run do GitHub Actions: `29772373882`;
+- última validação local completa: 16/16 suítes em 183,4 s, com 45.900 mapas
+  e 940.452 rounds nos benchmarks;
+- nenhuma mudança IFCS alterou motor, dados, configuração, RNG ou balanceamento;
+- o alvo IFCS de 22/01/2026 a 07/07/2026 está congelado com fontes e hashes; a
+  revisão 2 corrige a troca oficial de Train por Anubis antes da coleta;
+- o extrator reproduziu duas vezes uma demo CS2 real; a prova FACEIT acadêmica
+  valida o pipeline, mas não pertence ao corpus profissional;
+- o primeiro mapa profissional elegível foi extraído duas vezes: FURIA 8–13
+  Falcons no IEM Cologne Major 2026; o corpus está em 1/800 mapas e 1/6 eventos;
+- o diagnóstico técnico preliminar marcou 96/100 em 4.000 mapas simulados
+  (131/136 avaliações dentro das faixas); não é a nota IFCS oficial;
+- ainda não existe corpus real auditado nem nota IFCS oficial.
 
 Para retomar em uma sessão nova:
 
@@ -49,7 +65,7 @@ Para retomar em uma sessão nova:
 cd C:\Users\esteb\Desktop\Teste
 git switch sandbox-test
 git status -sb
-git pull --ff-only
+# use git pull --ff-only somente se o status estiver limpo e não houver commits locais
 npm ci
 npm run check
 ```
@@ -96,7 +112,12 @@ assinaturas por função.
 - `sandbox.html` é a bancada visual de tuning, auditoria e calibração.
 - `calibrador-worker.js` paraleliza a busca do calibrador.
 - `elencos.html` é um artefato gerado a partir dos dados e motores.
-- `bancada/` executa caracterização, regressão, benchmark e E2E.
+- `bancada/` executa caracterização, regressão, benchmark, IFCS e E2E.
+- `bancada/fidelity-score.js` calcula a nota IFCS a partir de artefatos explícitos.
+- `bancada/fidelity-corpus.js` valida proveniência, cobertura e auditoria do corpus.
+- `tools/extract-fidelity-demo.py` extrai demos reais offline com Awpy; não faz
+  parte do jogo e passou em uma prova repetida documentada, ainda separada do
+  corpus profissional.
 
 ### Pipeline de domínio
 
@@ -212,7 +233,8 @@ A modernização mais recente concentrou-se no sandbox. O estado publicado inclu
 - resumo minimalista com KPR, KAST, ADR, CT win e plant;
 - indicadores completos e tabelas avançadas em detalhes recolhidos;
 - suficiência mínima maior para eventos raros, rating e força do favorito;
-- métricas sem amostra confiável não reduzem a nota de fidelidade;
+- métricas sem amostra confiável ficam pendentes no diagnóstico legado do
+  sandbox; isso não é a nota IFCS, cujo corpus insuficiente bloqueia publicação;
 - rolagem pelo documento corrigida; o canvas não cria scroll aninhado;
 - layout desktop e mobile sem overflow horizontal;
 - times oficiais preparados uma vez por lote, sem reconstrução por mapa.
@@ -232,8 +254,15 @@ limite de CI.
 - `db9b7bb`: alinhamento visual com o restante do jogo;
 - `437abc7`: bilateralidade, seed automática, scroll, hierarquia visual,
   suficiência estatística e otimização do lote.
+- `c2be541`: contexto de profissionalização e visão do modo Carreira;
+- `6148983`: E2E completo do jogo principal, publicado e aprovado na CI;
+- `756aaf5`: metodologia IFCS 0–100;
+- `0d04e29`: scorer puro e contratos matemáticos do IFCS;
+- `8a9977b`: contrato auditável do corpus e extrator Awpy offline.
 
-Nenhum desses últimos ajustes mudou as fórmulas de balanceamento do jogo.
+Nenhum desses últimos ajustes mudou as fórmulas de balanceamento do jogo. Os
+commits IFCS e sua atualização documental permanecem locais até autorização
+explícita de push.
 
 ## 7. Sistema de testes, CI e deploy
 
@@ -246,8 +275,10 @@ npm run test:data         integridade dos dados
 npm run test:regression   auditoria, snapshot e guardas históricas
 npm run test:calibrator   calibrador, casos pesados e workers
 npm run test:benchmark    realismo, assists, KDA e rating
+npm run test:fidelity     contratos e scorer IFCS de fidelidade
+npm run corpus:fidelity   selo e verificação do manifesto real IFCS
 npm run test:e2e          jogo, calibrador e aba Simular no Chromium
-npm run test:all          todas as 14 suítes
+npm run test:all          todas as 16 suítes
 npm run validate          check + lint + todas as suítes
 ```
 
@@ -268,6 +299,8 @@ acelerar um resultado verde.
 - placar, bilateralidade, seed automática, suficiência, scroll e responsividade
   da aba Simular;
 - draft, lineup, Suíça, playoffs, tela final e reinício do jogo principal;
+- matemática, monotonicidade, incerteza, cobertura e caps do scorer IFCS;
+- schema, hashes, mínimos, splits, auditoria determinística e holdout do corpus;
 - erros de página e valores inválidos.
 
 ### CI e Pages
@@ -374,12 +407,16 @@ recalculam regra de negócio. Worker e processo principal importam a mesma API.
 
 ### Etapa P0 — preservar o baseline
 
-**Status:** parcialmente concluída e segura.
+**Status:** parcialmente concluída e segura. E2E, metodologia, alvo congelado,
+scorer, contrato do corpus e prova do extrator estão implementados; coleta
+profissional auditada e primeira baseline IFCS estão pendentes.
 
 - manter documentação, snapshot e grupos de teste atualizados;
 - adicionar golden tests por seed antes de mover o simulador;
 - manter o E2E concluído do fluxo principal: draft, lineup, Suíça e playoffs;
 - separar benchmark de desempenho do benchmark de realismo.
+- concluir o IFCS por etapas: adquirir/auditar o corpus profissional e gerar a
+  primeira baseline sem tuning no mesmo commit.
 
 Aceitação: nenhuma classificação, estatística ou sequência aprovada muda.
 
@@ -751,13 +788,15 @@ Ordem que maximiza segurança e prepara o novo modo:
 
 1. confirmar `sandbox-test`, status limpo e CI verde;
 2. E2E mínimo do jogo principal completo (**concluído em 20 de julho de 2026**);
-3. criar golden tests de avaliação e simulação com seed;
-4. aceitar/revisar ADR 0002 e ADR 0004;
-5. extrair uma API pura `evaluatePlayer(rawPlayer, config)` com adapter legado;
-6. escrever ADR 0005 para Carreira de Jogador e responder as decisões abertas;
-7. definir schema de save e testes de round-trip;
-8. prototipar apenas o criador do jogador como fatia vertical isolada;
-9. validar com o responsável antes de iniciar temporada, mercado ou progressão.
+3. metodologia IFCS, scorer e contrato de corpus sem balanceamento
+   (**implementados; alvo e prova real concluídos, falta o corpus auditado**);
+4. criar golden tests de avaliação e simulação com seed;
+5. aceitar/revisar ADR 0002 e ADR 0004;
+6. extrair uma API pura `evaluatePlayer(rawPlayer, config)` com adapter legado;
+7. escrever ADR 0005 para Carreira de Jogador e responder as decisões abertas;
+8. definir schema de save e testes de round-trip;
+9. prototipar apenas o criador do jogador como fatia vertical isolada;
+10. validar com o responsável antes de iniciar temporada, mercado ou progressão.
 
 Cada item deve ser um commit pequeno ou uma sequência curta de commits com uma
 responsabilidade. Não combinar extração do motor, criador visual e balanceamento
@@ -770,6 +809,9 @@ da progressão na mesma revisão.
 - estado global mistura domínio, aplicação e efeitos;
 - não existe ainda persistência versionada adequada para uma carreira;
 - faltam goldens completos do simulador por seed;
+- o scorer e o contrato de corpus IFCS existem; o alvo de 22/01/2026 a
+  07/07/2026 está congelado e o extrator foi provado com uma demo real, mas
+  ainda faltam adquirir, extrair e auditar os dados profissionais antes da nota;
 - configurações ainda vivem próximas de dados e implementação;
 - `elencos.html` pode divergir se não for regenerado;
 - alterações no RNG produzem regressões amplas e difíceis de diagnosticar;
@@ -802,6 +844,8 @@ da progressão na mesma revisão.
 - não proponha reescrita completa;
 - não altere balanceamento para facilitar refatoração ou teste;
 - não reduza benchmark para ganhar tempo;
+- não chame o diagnóstico legado do sandbox de nota IFCS;
+- não publique nota IFCS sem corpus real auditado, cobertura e intervalo;
 - não atualize snapshot para esconder regressão;
 - não persista derivados como fonte de verdade da carreira;
 - não crie um segundo conjunto de fórmulas para o jogador criado;

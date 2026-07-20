@@ -35,6 +35,11 @@ como balanceamento e acompanhados de comparação estatística.
 - `game.js`, depois do marcador: aplicação, estado e interface do jogo.
 - `sandbox.html`: interface e algoritmo do calibrador.
 - `bancada/roster-snapshot.json`: classificação aprovada de cada ID de jogador.
+- `bancada/fidelity-score.js`: matemática e agregação do IFCS.
+- `bancada/fidelity-corpus.js`: schema, proveniência, auditoria e travas do corpus IFCS.
+- `docs/fidelity-target.json`: população e época congeladas para a primeira medição.
+- `docs/realism-methodology.md` e `docs/fidelity-corpus.md`: protocolo científico
+  e operacional do IFCS; não substituem os contratos executáveis acima.
 - `elencos.html`: artefato gerado; não editar os dados embutidos manualmente.
 
 Essa disposição é legado. O destino arquitetural está em
@@ -52,10 +57,11 @@ npm run test:data
 npm run test:regression
 npm run test:calibrator   # se tocar no sandbox/calibrador/worker
 npm run test:benchmark    # se tocar em avaliação, química ou simulação
+npm run test:fidelity     # se tocar no scorer, corpus ou metodologia IFCS
 npm run test:e2e          # se tocar no jogo ou na interface do calibrador
 ```
 
-`npm run test:all` e `npm run bench` executam as mesmas 14 suítes, na ordem
+`npm run test:all` e `npm run bench` executam as mesmas 16 suítes, na ordem
 histórica. O benchmark completo é demorado; não reduza amostras ou limites para
 obter um resultado verde.
 
@@ -67,6 +73,10 @@ obter um resultado verde.
 - O snapshot deve cobrir todos os IDs de `ATRIBUTOS`; cobertura parcial é erro.
 - `elencos.html` é regenerado por `bancada/roster.js` enquanto a arquitetura
   legada existir.
+- Demos `.dem`, saídas `processed/`, material `private-audit/`, credenciais e
+  cookies nunca entram no Git.
+- O extrator IFCS usa `.venv-fidelity` isolada e `requirements-fidelity.lock`.
+  A validação Node não instala Awpy nem substitui a prova com uma demo real.
 - Não edite `package-lock.json` à mão.
 
 ## Convenções para código novo

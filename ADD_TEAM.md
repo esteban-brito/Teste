@@ -32,14 +32,15 @@ Ele insere os 5 jogadores e o time no `game.js` (âncoras `//@jogadores` e `//@t
 regenera a Base de Elencos (`elencos.html`) e roda o **lint**, que imprime o resumo com os OVRs
 computados de cada time — use isso pra revisar se os overalls/funções ficaram como esperado.
 
-## 3. Valide e publique
+## 3. Valide e prepare a publicação
 
 ```
-node bancada/run.js      # lint + realismo + rating (gate de não-regressão)
+npm run validate         # sintaxe + lint + todas as 16 suítes
 ```
 
-Depois: commit → push da branch → merge do PR (deploy). O time aparece automaticamente
-**na roleta do jogo** e **na Base de Elencos**.
+Depois, faça um commit exclusivo para o novo time. Push, PR, merge e deploy só
+acontecem com autorização explícita do responsável. Quando publicado, o time
+aparece automaticamente **na roleta do jogo** e **na Base de Elencos**.
 
 ## Ferramentas do terreno
 
@@ -48,7 +49,7 @@ Depois: commit → push da branch → merge do PR (deploy). O time aparece autom
 | `tools/add-team.js` | cola texto → insere no game.js + regenera elencos + lint |
 | `bancada/roster.js` | regenera o `const DATA` do elencos.html a partir dos motores (fonte única) |
 | `bancada/times.js`  | lint: atributos 0–100, IDs únicos, ≥1 IGL, país do treinador, invariante do Major, resumo por time |
-| `bancada/run.js`    | suíte completa (times + realismo + rating) |
+| `bancada/run.js`    | orquestra as 16 suítes de dados, regressão, calibrador, benchmark, IFCS e E2E |
 
 ## Invariantes garantidos
 

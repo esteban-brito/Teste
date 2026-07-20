@@ -1,0 +1,179 @@
+{
+  "schemaVersion": "1.0",
+  "target": {
+    "id": "cs2-elite-lan-rating3-2026-01-22_2026-07-07",
+    "game": "Counter-Strike 2",
+    "startDate": "2026-01-22",
+    "endDate": "2026-07-07",
+    "lanOnly": true,
+    "valveRankedOnly": true,
+    "teamRankMax": 20,
+    "activeMaps": [
+      "de_ancient",
+      "de_anubis",
+      "de_dust2",
+      "de_inferno",
+      "de_mirage",
+      "de_nuke",
+      "de_overpass"
+    ],
+    "specSha256": "c3b32ec2ba35761584edf8c25e540ba3e0690b31c09da43a2fbe8a6229238d04",
+    "sources": [
+      {
+        "id": "valve-major-rules",
+        "url": "https://github.com/ValveSoftware/counter-strike_rules_and_regs/blob/8594dc0cc8f8cd9ea9564af46e453fc673246cbd/major-supplemental-rulebook.md",
+        "revision": "8594dc0cc8f8cd9ea9564af46e453fc673246cbd",
+        "sha256": "6bcbef90a81eb20cc1be0e728a2a4b32ded06c63874b907c8b2d3f799150f3b0"
+      },
+      {
+        "id": "valve-vrs-global-2026-06-01",
+        "url": "https://github.com/ValveSoftware/counter-strike_regional_standings/blob/050a38d71d4f5f07d2618bb8bedd54268b93bddf/live/2026/standings_global_2026_06_01.md",
+        "revision": "050a38d71d4f5f07d2618bb8bedd54268b93bddf",
+        "sha256": "7019273cc888feda2637cdaf9dbb1231e8e06fa05727206e42414b536bdb045e"
+      }
+    ]
+  },
+  "parser": {
+    "name": "awpy",
+    "version": "2.0.2",
+    "backend": "demoparser2",
+    "scriptSha256": "d9e3c2f17277a46f2af7e5356803fcb18d35aefbc8af0d8e8e4996525abcfe68",
+    "optionsSha256": "1f67eae99d2ad0d9c8527d1dc34d381d07367b7f805710a839085a2a2a709570",
+    "options": {
+      "tickrate": 128,
+      "infernoDuration": 7.03125,
+      "smokeDuration": 20,
+      "events": [
+        "round_freeze_end",
+        "round_officially_ended",
+        "player_spawn",
+        "player_given_c4",
+        "bomb_pickup",
+        "item_pickup",
+        "player_hurt",
+        "player_death",
+        "bomb_dropped",
+        "bomb_planted",
+        "bomb_defused",
+        "bomb_exploded",
+        "flashbang_detonate",
+        "hegrenade_detonate",
+        "smokegrenade_detonate",
+        "smokegrenade_expired",
+        "inferno_startburn",
+        "inferno_expire"
+      ],
+      "playerProps": [
+        "team_clan_name"
+      ],
+      "otherProps": []
+    }
+  },
+  "splitPolicy": {
+    "primaryUnit": "event",
+    "secondaryUnit": "match",
+    "seed": 20260720,
+    "ratios": {
+      "calibration": 0.6,
+      "validation": 0.2,
+      "audit": 0.2
+    }
+  },
+  "events": [
+    {
+      "id": "iem-cologne-major-2026-stage-3",
+      "name": "IEM Cologne Major 2026 Stage 3",
+      "startDate": "2026-06-11",
+      "endDate": "2026-06-21",
+      "lan": true,
+      "valveRanked": true,
+      "split": "calibration",
+      "sourceUrl": "https://www.hltv.org/events/8301/iem-cologne-major-2026",
+      "rulesUrl": "https://github.com/ValveSoftware/counter-strike_rules_and_regs/blob/8594dc0cc8f8cd9ea9564af46e453fc673246cbd/major-supplemental-rulebook.md",
+      "rulesSha256": "6bcbef90a81eb20cc1be0e728a2a4b32ded06c63874b907c8b2d3f799150f3b0"
+    }
+  ],
+  "matches": [
+    {
+      "id": "hltv-2395002-furia-falcons",
+      "eventId": "iem-cologne-major-2026-stage-3",
+      "date": "2026-06-21",
+      "bestOf": 5,
+      "officialUrl": "https://www.hltv.org/matches/2395002/furia-vs-falcons-iem-cologne-major-2026",
+      "teams": [
+        {
+          "name": "FURIA",
+          "vrsRank": 11,
+          "vrsPublicationDate": "2026-06-01",
+          "vrsSourceUrl": "https://github.com/ValveSoftware/counter-strike_regional_standings/blob/050a38d71d4f5f07d2618bb8bedd54268b93bddf/live/2026/standings_global_2026_06_01.md"
+        },
+        {
+          "name": "Falcons",
+          "demoTeamName": "Team Falcons",
+          "vrsRank": 3,
+          "vrsPublicationDate": "2026-06-01",
+          "vrsSourceUrl": "https://github.com/ValveSoftware/counter-strike_regional_standings/blob/050a38d71d4f5f07d2618bb8bedd54268b93bddf/live/2026/standings_global_2026_06_01.md"
+        }
+      ],
+      "maps": [
+        {
+          "id": "hltv-2395002-m1-mirage",
+          "mapName": "de_mirage",
+          "status": "valid",
+          "officialScore": {
+            "teamA": 8,
+            "teamB": 13
+          },
+          "demo": {
+            "sourceUrl": "https://videoscdn-cs.rlin.dev/demos/hltv-2395002-m1-furia-vs-falcons-m1-mirage.dem",
+            "acquiredAt": "2026-07-20",
+            "sha256": "04f26f0f092f24fd13e7939dc56e72a3783a61872500b97b09810ed5a2363697",
+            "bytes": 438520684,
+            "format": "dem",
+            "localPath": "raw/iem-cologne-2026-furia-falcons-m1-mirage.dem"
+          },
+          "parsed": {
+            "demoSha256": "04f26f0f092f24fd13e7939dc56e72a3783a61872500b97b09810ed5a2363697",
+            "parserVersion": "2.0.2",
+            "mapName": "de_mirage",
+            "teamA": "FURIA",
+            "teamB": "Falcons",
+            "teamAScore": 8,
+            "teamBScore": 13,
+            "roundCount": 21,
+            "playerCount": 10
+          }
+        }
+      ]
+    }
+  ],
+  "metricOpportunities": {
+    "clutch1v1": 0,
+    "clutch1v2": 0,
+    "clutch1v3": 0,
+    "antiEco": 0,
+    "forceBuy": 0,
+    "postPlant": 0,
+    "rolePlayerRounds": {
+      "AWPer": 0,
+      "Rifler": 0,
+      "Entry": 0,
+      "Lurker": 0,
+      "Support": 0,
+      "IGL": 0
+    }
+  },
+  "audit": {
+    "selectionSeed": 20260720,
+    "selectedMapIds": [],
+    "checks": []
+  },
+  "auditHoldout": {
+    "locked": false,
+    "lockId": "pilot-no-holdout",
+    "privateManifestSha256": "82c55fcf440ec5d80dcc65534b6d3af399706c9891e2e24db2d513ca6a85cdb4",
+    "accessPolicy": "Piloto de aquisição; holdout será criado somente após o catálogo de eventos ser congelado.",
+    "openedAt": null
+  },
+  "declaredSha256": "c681e03abeb3c7164e419b7ae72073ad37e5abbcd0a4a99e6ca4e82e4b54533c"
+}

@@ -1,0 +1,4 @@
+# Ambiente isolado do extrator IFCS; não é dependência do jogo no navegador.
+# PyPI: Python >=3.11,<3.14; wheel 2.0.2 SHA-256
+# 5c77ca9dafd647c396eac0746cf4a49413eb21a3ca51a93463e43464d0bce9a4
+awpy==2.0.2
