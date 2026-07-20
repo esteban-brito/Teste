@@ -93,14 +93,14 @@ function fixedMapScenario({id,seed,aIndex,bIndex,map,expectedScore}){
 }
 
 function campaignSeriesScenario(){
-  const id="campaign-best-of-three",seed=12,aIndex=4,bIndex=9;
+  const id="campaign-best-of-three",seed=9,aIndex=4,bIndex=9;
   const X=loadEngines(),teams=buildCombatTeams(X);
   X.srand(seed);
   X.sortearFormaCampanha(teams);
   const a=combatTeam(X,teams,aIndex,true),b=combatTeam(X,teams,bIndex);
   const result=X.simularSerie(a,b,()=>X.forcaDoDia(a.ef,a.quim),()=>X.forcaDoDia(b.ef,b.quim),3,false);
   assert.equal(result.placarSerie.join(","),"1,2",`${id}: ancora da serie mudou antes de atualizar o fixture`);
-  assert.equal(result.mapas.map(map=>map.mapa).join(","),"Inferno,Train,Anubis",`${id}: sequencia de mapas mudou antes de atualizar o fixture`);
+  assert.equal(result.mapas.map(map=>map.mapa).join(","),"Nuke,Anubis,Train",`${id}: sequencia de mapas mudou antes de atualizar o fixture`);
   return {
     id,kind:"campaign-series",seed,
     input:{...projectInput(a,b,aIndex,bIndex),bestOf:3,campaignForm:true},
@@ -118,8 +118,8 @@ function buildCurrent(){
     schemaVersion:SCHEMA_VERSION,
     rngContract:"mulberry32-v1",
     scenarios:[
-      fixedMapScenario({id:"economy-and-clutches",seed:1,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[6,13]}),
-      fixedMapScenario({id:"repeated-overtime",seed:57,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[19,16]}),
+      fixedMapScenario({id:"economy-and-clutches",seed:1,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[4,13]}),
+      fixedMapScenario({id:"repeated-overtime",seed:8,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[19,17]}),
       campaignSeriesScenario()
     ]
   };
@@ -171,6 +171,30 @@ function competitiveCore(map){
   };
 }
 
+function numericPlayerCore(map){
+  const copy=plain(map);
+  copy.rounds.forEach(round=>{delete round.highlight;});
+  for(const side of ["a","b"])copy.players[side].forEach(player=>{delete player.nick;});
+  return copy;
+}
+
+function validateNameInvariance(){
+  const X=loadEngines();
+  const raw=X.ATRIBUTOS.find(player=>(player.id||player.nome)==="s1mple");
+  const original=X.avaliarJogador({...raw});
+  const renamed=X.avaliarJogador({...raw,nome:"Jogador sem curadoria",nick:"Jogador sem curadoria"});
+  const identity=player=>({role1:player.role1,role2:player.role2,playstyle:player.playstyle,ovr:player.ovr,estrela:player.estrela});
+  assert.deepEqual(plain(identity(renamed)),plain(identity(original)),"nome alterou a avaliacao calculada");
+
+  const teams=buildCombatTeams(X),a=combatTeam(X,teams,0,true),b=combatTeam(X,teams,1);
+  const renamedA={...a,jogadores:a.jogadores.map((card,index)=>index?card:{...card,_eng:{...card._eng,nick:"Jogador sem curadoria"}})};
+  const run=team=>{
+    X.srand(20260720);
+    return numericPlayerCore(projectMap(X.simularMapa(team,b,a.ef,b.ef,"Nuke",false),team,b));
+  };
+  assert.deepEqual(run(renamedA),run(a),"nome alterou combate, placar ou estatisticas");
+}
+
 function validateLightParity(){
   const run=light=>{
     const X=loadEngines(),teams=buildCombatTeams(X),a=combatTeam(X,teams,0,true),b=combatTeam(X,teams,1);
@@ -211,6 +235,7 @@ console.log("— GOLDEN DO SIMULADOR (seed + timeline completa) —");
 const current=buildCurrent();
 validateCurrent(current);
 validateLightParity();
+validateNameInvariance();
 assert.deepEqual(buildCurrent(),current,"mesmos inputs e seeds nao repetiram o resultado");
 
 if(process.argv.includes("--update")){
@@ -231,4 +256,5 @@ if(difference){
 console.log(`  ${okMark(true)} 3 cenarios identicos ao aprovado`);
 console.log(`  ${okMark(true)} repeticao deterministica em motor novo`);
 console.log(`  ${okMark(true)} modo leve preserva placar e timeline`);
+console.log(`  ${okMark(true)} nomes nao alteram avaliacao nem resultado esportivo`);
 console.log(`${okMark(true)} contrato Mulberry32 protegido por resultados observaveis`);

@@ -5,8 +5,11 @@ const {mean,scheduledMatch,signed,okMark}=require("./common");
 
 const N=+(process.env.N||400);
 const MAPS=9;
-const MIN_CORRELATION=.75;
-const MAX_MAE=.12;
+const MIN_CORRELATION=.90;
+const MAX_MAE=.065;
+const MIN_SLOPE=.85;
+const MAX_SLOPE=1.15;
+const MAX_PLAYER_ERROR=.20;
 
 if(X.srand)X.srand(1337);
 
@@ -80,6 +83,7 @@ const realMean=mean(points.map(point=>point.real)),simMean=mean(points.map(point
 const realVariance=mean(points.map(point=>(point.real-realMean)**2));
 const slope=realVariance?mean(points.map(point=>(point.real-realMean)*(point.sim-simMean)))/realVariance:0;
 const largest=[...points].sort((a,b)=>Math.abs(b.sim-b.real)-Math.abs(a.sim-a.real)).slice(0,5);
+const largestError=Math.abs(largest[0]?.sim-largest[0]?.real||0);
 const expectedPlayers=X.ATRIBUTOS.length;
 
 console.log(`— RATING real×sim (${points.length} jogadores · N=${N}) —`);
@@ -97,9 +101,12 @@ largest.forEach(point=>console.log(`    ${(point.nick+" / "+point.team).padEnd(2
 const okCoverage=points.length===expectedPlayers&&points.every(point=>point.id);
 const okR=r>=MIN_CORRELATION;
 const okM=mae<=MAX_MAE;
+const okSlope=slope>=MIN_SLOPE&&slope<=MAX_SLOPE;
+const okPlayer=largestError<=MAX_PLAYER_ERROR;
 console.log(`  ${okMark(okCoverage)} cobertura por ID = ${points.length}/${expectedPlayers}`);
 console.log(`  ${okMark(okR)} correlação r = ${r.toFixed(3)}   [≥${MIN_CORRELATION}]`);
 console.log(`  ${okMark(okM)} erro médio  = ${mae.toFixed(3)}   [≤${MAX_MAE}]`);
-console.log(okR&&okM?"✓ rating fiel ao real":"✗ rating degradou");
-console.log(`  - inclinacao real->sim = ${slope.toFixed(3)}   [diagnostico de compressao]`);
-process.exitCode=okCoverage&&okR&&okM?0:1;
+console.log(`  ${okMark(okSlope)} inclinação real→sim = ${slope.toFixed(3)}   [${MIN_SLOPE}–${MAX_SLOPE}]`);
+console.log(`  ${okMark(okPlayer)} maior erro individual = ${largestError.toFixed(3)}   [≤${MAX_PLAYER_ERROR}]`);
+console.log(okR&&okM&&okSlope&&okPlayer?"✓ rating fiel ao real":"✗ rating degradou");
+process.exitCode=okCoverage&&okR&&okM&&okSlope&&okPlayer?0:1;

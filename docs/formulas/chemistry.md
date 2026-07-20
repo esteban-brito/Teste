@@ -36,7 +36,8 @@ Conflitos:
 - três ou mais Playmaker/Baiter: -15%;
 - pace médio abaixo de -0,15: -10%;
 - dois ou mais Infiltradores: -10%;
-- três ou mais estrelas: -15%.
+- três ou mais estrelas: -15%. Estrela é uma classificação calculada por
+  `rating >= CFG_NIVEL.ESTRELA_MIN` (atualmente 1,30), nunca por nome.
 
 Coach pode acrescentar bônus ou reduzir conflitos. Coringa divide pela metade
 somente as penalidades de playstyle.
@@ -84,4 +85,3 @@ O arredondamento `floor(x + 0.4)` é deliberado e faz parte do contrato.
 - alertas mantêm ordem estável porque a UI atual os interpreta;
 - duas coberturas secundárias equivalem a um primário para pilares;
 - química e força permanecem idênticas em extrações estruturais.
-

@@ -18,6 +18,7 @@ O mapa técnico e as regras para mudanças estão em:
   de profissionalização e visão do modo Carreira de Jogador;
 - [`docs/architecture.md`](docs/architecture.md): fluxo de dados e fronteiras;
 - [`docs/testing.md`](docs/testing.md): 17 suítes e comandos por camada;
+- [`docs/rating-balance-2026-07-20.md`](docs/rating-balance-2026-07-20.md): auditoria sem curadoria e comparação antes/depois;
 - [`docs/fidelity-corpus.md`](docs/fidelity-corpus.md): coleta e auditoria do corpus IFCS;
 - [`docs/fidelity-target.json`](docs/fidelity-target.json): alvo histórico
   congelado, com janela, população, fontes e hashes;
@@ -105,7 +106,7 @@ atributos crus
     ├── SINAPSE ────── lê o elenco: cobertura de pilares, saturação, egos,
     │                  treinador → química (50–100%) e força efetiva.
     │
-    ├── MARÉ ────────── "humor competitivo": tier × OVR × firepower → forma
+    ├── MARÉ ────────── "humor competitivo": rating × OVR × perfil → forma
     │                  da noite/campanha. Motor de variância do roguelike.
     │
     ├── PÓLVORA ────── combate round a round: duelos, vantagem de homem,

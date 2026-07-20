@@ -35,8 +35,8 @@ faixas atuais são guardas de regressão, não uma nota de 0–100.
 
 O `docs/baseline.md` é um retrato histórico: sua contagem de 13 suítes corresponde
 à captura de 19 de julho de 2026, não à bancada atual. A última validação completa
-registrada, em 20 de julho de 2026, aprovou 17/17 suítes em 172,5 s, incluindo
-45.900 mapas e 939.086 rounds. Isso confirma regressão; não é
+registrada, em 20 de julho de 2026, aprovou 17/17 suítes em 173,7 s, incluindo
+45.900 mapas e 941.838 rounds. Isso confirma regressão; não é
 uma nota IFCS oficial.
 
 ## Validação do extrator IFCS

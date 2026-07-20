@@ -20,6 +20,7 @@ Este documento não substitui as fontes especializadas:
 - `docs/formulas/`: roles, playstyles, OVR e química;
 - `docs/testing.md`: estratégia e comandos de teste;
 - `docs/realism-methodology.md`: IFCS, corpus real e nota de fidelidade 0–100;
+- `docs/rating-balance-2026-07-20.md`: auditoria do rating e comparação controlada;
 - `docs/fidelity-corpus.md`: contrato operacional de coleta e auditoria do corpus;
 - `docs/adr/`: decisões arquiteturais;
 - `docs/baseline.md`: baseline estatístico e estrutural;
@@ -39,16 +40,17 @@ Estado registrado em 20 de julho de 2026:
 - `main`: intocável durante a profissionalização;
 - último commit já publicado no remoto:
   `8932afd docs(fidelity): registra baseline técnica 96 de 100`;
-- branch local contém três commits de teste ainda não enviados:
+- branch local contém cinco commits de infraestrutura/documentação ainda não enviados:
   `d033476` (benchmark determinístico por ID), `f9692a4` (goldens completos do
-  simulador) e `56c005b` (estabilidade do E2E no draft), acompanhados por esta
-  atualização documental;
+  simulador), `56c005b` (estabilidade do E2E no draft) e `96f61d5` (atualização
+  documental), `4103e52` (gerador compatível com CRLF), além do balanceamento
+  de rating documentado nesta retomada;
 - Pages do sandbox: <https://esteban-brito.github.io/Teste/sandbox.html>;
 - o E2E do jogo percorre draft, lineup, Suíça, playoffs, título e reinício;
 - workflow conhecido do commit `6148983`: sucesso em validação e deploy;
 - run do GitHub Actions: `29772373882`;
-- última validação local completa: 17/17 suítes em 172,5 s, com 45.900 mapas
-  e 939.086 rounds nos benchmarks;
+- última validação local completa: 17/17 suítes em 173,7 s, com 45.900 mapas
+  e 941.838 rounds nos benchmarks;
 - nenhuma mudança IFCS alterou motor, dados, configuração, RNG ou balanceamento;
 - o alvo IFCS de 22/01/2026 a 07/07/2026 está congelado com fontes e hashes; a
   revisão 2 corrige a troca oficial de Train por Anubis antes da coleta;
@@ -263,11 +265,15 @@ limite de CI.
 - `8932afd`: baseline técnica preliminar de 96/100 publicada;
 - `d033476`: benchmark determinístico, bilateral e identificado pelos 85 IDs;
 - `f9692a4`: golden completo do simulador por seed;
-- `56c005b`: E2E do draft aguarda o tipo correto de card.
+- `56c005b`: E2E do draft aguarda o tipo correto de card;
+- `4103e52`: gerador de elencos volta a aceitar o arquivo CRLF;
+- balanceamento atual: remove tiers por nome e reduz a compressão do rating
+  com critérios numéricos, comparação controlada e guardas mais rígidas.
 
-Nenhum desses últimos ajustes mudou as fórmulas de balanceamento do jogo. Os
-três commits de teste posteriores a `8932afd` e este registro documental
-permanecem locais até autorização explícita de push.
+Os commits anteriores a esta etapa não mudaram as fórmulas de balanceamento. A
+mudança atual é deliberadamente de balanceamento e está registrada em documento
+próprio. Todo o trabalho posterior a `8932afd` permanece local até autorização
+explícita de push.
 
 ## 7. Sistema de testes, CI e deploy
 
