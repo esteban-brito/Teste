@@ -464,8 +464,9 @@ implementados em `bancada/fidelity-corpus.js`. O extrator Awpy passou no
 autoteste e em duas extrações independentes da mesma demo CS2 real, declarada em
 `fidelity-corpus/parser-proof.json`. Como essa demo FACEIT acadêmica não pertence
 à população profissional definida, ela prova o pipeline, mas não conta no
-corpus. Faltam a aquisição profissional integral e a auditoria humana; portanto
-M1 ainda não está concluído.
+corpus. Um primeiro mapa profissional elegível e reproduzido por hash está em
+`fidelity-corpus/manifest.json`; faltam a aquisição integral e a auditoria
+humana, portanto M1 ainda não está concluído.
 
 ### M2 — scorer puro
 

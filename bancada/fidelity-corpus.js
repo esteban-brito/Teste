@@ -228,8 +228,14 @@ function validateCorpusManifest(manifest){
       if(!positiveInteger(team?.vrsRank)||team.vrsRank>20)error("team.rank","time fora do top 20 VRS",`${teamLocation}.vrsRank`);
       if(!isDate(team?.vrsPublicationDate)||team.vrsPublicationDate>match.date)error("team.rank-date","publicação VRS deve existir até a data da partida",`${teamLocation}.vrsPublicationDate`);
       if(!isHttps(team?.vrsSourceUrl))error("team.rank-source","fonte VRS ausente",`${teamLocation}.vrsSourceUrl`);
+      if(team?.demoTeamName!=null&&(typeof team.demoTeamName!=="string"||!team.demoTeamName.trim())){
+        error("team.demo-name","demoTeamName precisa ser uma string não vazia",`${teamLocation}.demoTeamName`);
+      }
     });
     if(teams.length===2&&teams[0]?.name===teams[1]?.name)error("match.same-team","times da partida devem ser distintos",`${location}.teams`);
+    if(teams.length===2&&(teams[0]?.demoTeamName||teams[0]?.name)===(teams[1]?.demoTeamName||teams[1]?.name)){
+      error("match.same-demo-team","nomes internos da demo devem identificar dois times distintos",`${location}.teams`);
+    }
 
     const maps=Array.isArray(match?.maps)?match.maps:[];
     if(!maps.length)error("match.maps","partida sem mapas",`${location}.maps`);

@@ -238,6 +238,8 @@ npm run corpus:fidelity -- --template  # modelo do manifesto auditável
 O extrator já passou por uma prova repetida com uma demo CS2 real, registrada em
 `fidelity-corpus/parser-proof.json`. Essa entrada acadêmica valida o pipeline,
 mas não conta como partida profissional e ainda não permite publicar a nota.
+O primeiro mapa profissional elegível está selado no manifesto parcial
+`fidelity-corpus/manifest.json`; ainda são necessários 800 mapas auditados.
 
 ## Acessibilidade, mobile e desempenho
 

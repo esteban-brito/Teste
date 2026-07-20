@@ -1,12 +1,12 @@
 {
   "schemaVersion": "1.0",
   "purpose": "technical-parser-proof-not-corpus",
-  "declaredSha256": "63452816a65b541baebf9402bbf73092e9a46087be3fa4141c7417a9a2840d60",
+  "declaredSha256": "ab0b7289d35424f3afddd4968952bce5870db51a3dad55d610bf6fcd2172f0e6",
   "parser": {
     "name": "awpy",
     "version": "2.0.2",
     "backend": "demoparser2",
-    "scriptSha256": "3c241ff44162450801ac616e9ae04e77acb443aab10cc01ef348d248defc5b06",
+    "scriptSha256": "d9e3c2f17277a46f2af7e5356803fcb18d35aefbc8af0d8e8e4996525abcfe68",
     "optionsSha256": "1f67eae99d2ad0d9c8527d1dc34d381d07367b7f805710a839085a2a2a709570",
     "options": {
       "tickrate": 128,

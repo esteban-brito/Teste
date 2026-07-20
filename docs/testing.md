@@ -58,6 +58,10 @@ esperados estão selados em `fidelity-corpus/parser-proof.json`. Essa demo FACEI
 acadêmica prova o pipeline, mas não substitui a coleta nem a auditoria do corpus
 profissional exigido para a nota.
 
+O piloto profissional FURIA 8–13 Falcons também foi executado duas vezes. O
+placar, os 21 rounds, os dez jogadores e os hashes das 21 tabelas derivadas
+coincidiram entre as execuções.
+
 ## Atualização de snapshot
 
 1. Execute `npm run test:regression` e leia todas as diferenças.

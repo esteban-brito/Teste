@@ -139,6 +139,14 @@ check("nome canônico do time precisa ser extraído dos ticks",()=>{
   assert.ok(report.errors.some(issue=>issue.code==="parser.required-player-prop"));
 });
 
+check("alias interno da demo preserva o nome canônico do time",()=>{
+  const manifest=reseal(buildManifest(70),copy=>{
+    copy.matches[0].teams[1].demoTeamName="Beta Internal";
+  });
+  const report=C.validateCorpusManifest(manifest);
+  assert.equal(report.valid,true,JSON.stringify(report.errors));
+});
+
 check("partida fora do top 20 é rejeitada",()=>{
   const manifest=reseal(buildManifest(),copy=>copy.matches[0].teams[0].vrsRank=21);
   const report=C.validateCorpusManifest(manifest);

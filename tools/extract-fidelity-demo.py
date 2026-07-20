@@ -172,12 +172,15 @@ def verify_demo(root: Path, map_entry: dict[str, Any]) -> Path:
     return file
 
 
-def winner_scores(demo: Any, expected_teams: list[str]) -> dict[str, int]:
+def winner_scores(demo: Any, teams: list[dict[str, str]]) -> dict[str, int]:
+    aliases = {team.get("demoTeamName", team["name"]): team["name"] for team in teams}
+    if len(aliases) != len(teams):
+        raise ValueError("demoTeamName precisa identificar os dois times sem ambiguidade")
     counts_by_round_side: dict[tuple[int, str], dict[str, int]] = {}
     rows = demo.ticks.select(["round_num", "side", "team_clan_name"]).drop_nulls().to_dicts()
     for row in rows:
-        team = row.get("team_clan_name")
-        if team in expected_teams:
+        team = aliases.get(row.get("team_clan_name"))
+        if team:
             key = (row["round_num"], row["side"])
             counts = counts_by_round_side.setdefault(key, {})
             counts[team] = counts.get(team, 0) + 1
@@ -191,7 +194,7 @@ def winner_scores(demo: Any, expected_teams: list[str]) -> dict[str, int]:
             raise ValueError(f"round {key[0]}: lado {key[1]} não possui maioria de time")
         side_by_round[key] = ranked[0][0]
 
-    scores = {team: 0 for team in expected_teams}
+    scores = {team["name"]: 0 for team in teams}
     for round_row in demo.rounds.select(["round_num", "winner"]).to_dicts():
         round_num = round_row["round_num"]
         winner_side = round_row["winner"]
@@ -249,7 +252,9 @@ def extract(manifest_file: Path, map_id: str, output_relative: str) -> dict[str,
         demo.rounds.write_parquet(rounds_file)
         tables["rounds"] = table_record(rounds_file, demo.rounds.height, demo.rounds.columns, temporary)
 
-        player_rounds = demo.player_round_totals
+        # A agregação do Awpy não promete ordem de linhas; ordená-la torna o
+        # Parquet reproduzível por hash sem alterar nenhum valor observado.
+        player_rounds = demo.player_round_totals.sort(["steamid", "side", "name", "n_rounds"])
         player_rounds_file = temporary / "player-round-totals.parquet"
         player_rounds.write_parquet(player_rounds_file)
         tables["playerRoundTotals"] = table_record(
@@ -267,7 +272,7 @@ def extract(manifest_file: Path, map_id: str, output_relative: str) -> dict[str,
             )
 
         expected_teams = [team["name"] for team in match["teams"]]
-        scores = winner_scores(demo, expected_teams)
+        scores = winner_scores(demo, match["teams"])
         steam_ids = {
             value
             for value in demo.ticks.get_column("steamid").drop_nulls().unique().to_list()
@@ -338,14 +343,17 @@ def self_test() -> dict[str, Any]:
                 "round_num": [1, 1, 1, 1, 2, 2, 2, 2, 2, 2],
                 "side": ["ct", "ct", "t", "t", "ct", "ct", "ct", "t", "t", "t"],
                 "team_clan_name": [
-                    "Alpha", "Alpha", "Beta", "Beta",
-                    "Beta", "Beta", "Alpha", "Alpha", "Alpha", "Beta",
+                    "Alpha", "Alpha", "Beta Internal", "Beta Internal",
+                    "Beta Internal", "Beta Internal", "Alpha", "Alpha", "Alpha", "Beta Internal",
                 ],
             }
         )
         rounds = polars.DataFrame({"round_num": [1, 2], "winner": ["ct", "ct"]})
 
-    scores = winner_scores(SyntheticDemo(), ["Alpha", "Beta"])
+    scores = winner_scores(
+        SyntheticDemo(),
+        [{"name": "Alpha"}, {"name": "Beta", "demoTeamName": "Beta Internal"}],
+    )
     if scores != {"Alpha": 1, "Beta": 1}:
         raise AssertionError(f"resolução lado→time incorreta: {scores}")
     return {"ok": True, "awpy": version, "polars": polars.__version__, "scores": scores}

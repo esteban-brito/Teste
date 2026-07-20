@@ -15,6 +15,13 @@ de uma base acadêmica de partidas FACEIT e serve **somente como prova técnica 
 parser**; ela não satisfaz os filtros LAN, Valve-ranked e top 20, não integra o
 corpus de referência e não autoriza uma nota IFCS.
 
+O primeiro mapa profissional elegível já integra o manifesto parcial
+`fidelity-corpus/manifest.json`: FURIA 8–13 Falcons, Mirage, final LAN do IEM
+Cologne Major 2026, com os times em 11º e 3º no VRS de 1º de junho. A demo foi
+extraída duas vezes; resultado semântico e 21 tabelas derivadas coincidiram por
+hash. O manifesto é estruturalmente válido, mas permanece deliberadamente
+`officialReady=false` com 1/800 mapas e 1/6 eventos.
+
 Dados reais e alterações de balanceamento nunca pertencem ao mesmo commit.
 
 ## Fontes e limites de confiança
@@ -105,11 +112,13 @@ Antes de baixar dados, registrar:
 - versão do parser e hashes do extrator e das opções.
 
 O alvo foi congelado em `docs/fidelity-target.json`: última época competitiva
-homogênea completa, de 29 de outubro de 2025 a 7 de julho de 2026, com Ancient,
-Dust II, Inferno, Mirage, Nuke, Overpass e Train, eventos LAN Valve-ranked e
-ambos os times no top 20 VRS. O corte evita misturar a atualização de 8 de julho
-de 2026, que mudou o map pool e regras relevantes. O registro contém as revisões
-Git e os hashes das regras Valve e do VRS usados na decisão.
+homogênea completa, de 22 de janeiro a 7 de julho de 2026, com Ancient, Anubis,
+Dust II, Inferno, Mirage, Nuke e Overpass, eventos LAN Valve-ranked e ambos os
+times no top 20 VRS. A revisão de evidência corrigiu o primeiro registro, que
+atravessava a troca oficial de Train por Anubis em 21 de janeiro. O corte final
+também evita misturar a atualização de 8 de julho de 2026, que trocou Overpass
+por Cache e alterou regras relevantes. O registro preserva o motivo da correção,
+as revisões Git e os hashes das regras Valve e do VRS usados na decisão.
 
 O template contém marcadores deliberadamente inválidos:
 

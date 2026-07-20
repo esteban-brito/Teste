@@ -49,9 +49,12 @@ Estado registrado em 20 de julho de 2026:
 - última validação local completa: 16/16 suítes em 183,4 s, com 45.900 mapas
   e 940.452 rounds nos benchmarks;
 - nenhuma mudança IFCS alterou motor, dados, configuração, RNG ou balanceamento;
-- o alvo IFCS de 29/10/2025 a 07/07/2026 está congelado com fontes e hashes;
+- o alvo IFCS de 22/01/2026 a 07/07/2026 está congelado com fontes e hashes; a
+  revisão 2 corrige a troca oficial de Train por Anubis antes da coleta;
 - o extrator reproduziu duas vezes uma demo CS2 real; a prova FACEIT acadêmica
   valida o pipeline, mas não pertence ao corpus profissional;
+- o primeiro mapa profissional elegível foi extraído duas vezes: FURIA 8–13
+  Falcons no IEM Cologne Major 2026; o corpus está em 1/800 mapas e 1/6 eventos;
 - ainda não existe corpus real auditado nem nota IFCS oficial.
 
 Para retomar em uma sessão nova:
@@ -804,7 +807,7 @@ da progressão na mesma revisão.
 - estado global mistura domínio, aplicação e efeitos;
 - não existe ainda persistência versionada adequada para uma carreira;
 - faltam goldens completos do simulador por seed;
-- o scorer e o contrato de corpus IFCS existem; o alvo de 29/10/2025 a
+- o scorer e o contrato de corpus IFCS existem; o alvo de 22/01/2026 a
   07/07/2026 está congelado e o extrator foi provado com uma demo real, mas
   ainda faltam adquirir, extrair e auditar os dados profissionais antes da nota;
 - configurações ainda vivem próximas de dados e implementação;
