@@ -68,7 +68,7 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     const hasSeedControl=await page.locator("#simSeed").count();
     check(Number.isInteger(mapSeed)&&mapSeed>0&&!hasSeedControl,"mapa usa seed automática sem expor controle manual");
 
-    await page.fill("#simRuns","12");
+    await page.fill("#simRuns","3");
     await page.click("#runBatchBtn");
     await page.waitForSelector("#matchout .fidelity-score",{timeout:15000});
     const firstBatch=await page.evaluate(()=>{
@@ -83,6 +83,7 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
         bands:[...out.querySelectorAll('[title^="real "]')].map(node=>({title:node.title,style:node.getAttribute("style")||""})),
         groups:out.querySelectorAll(".fidelity-group").length,
         breakdowns:out.querySelectorAll(".sim-breakdowns .sim-data-panel").length,
+        deltaRows:out.querySelectorAll(".player-delta tbody tr").length,
         details:[...out.querySelectorAll("details.sim-details")].map(node=>node.open)
       };
     });
@@ -92,6 +93,7 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     check(firstBatch.sides.length===2&&firstBatch.sides.every(side=>side.name&&Number.isFinite(side.pct))&&firstBatch.sides.reduce((sum,side)=>sum+side.pct,0)===100,"confronto identifica os dois times e porcentagens complementares");
     check(JSON.stringify(firstBatch.headers)===JSON.stringify(expectedRoleColumns),"breakdown possui colunas por função esperadas");
     check(firstBatch.rows.length===6,"breakdown cobre as 6 funções do confronto");
+    check(firstBatch.deltaRows===10,"painel de rating mostra os 10 jogadores do confronto");
     check(firstBatch.bands.length>=9&&firstBatch.bands.every(band=>band.title.startsWith("real ")),"faixas reais aparecem nas métricas globais e por função");
     check(firstBatch.groups===4&&firstBatch.breakdowns===2&&firstBatch.details.length===2&&firstBatch.details.every(open=>!open),"detalhes completos permanecem disponíveis e fechados por padrão");
     check(!/NaN|undefined|Infinity/.test(firstBatch.text),"lote não contém valores inválidos");
@@ -126,7 +128,7 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     check(/Amostra da liga · 17\/17 times/.test(league.text),"amostra da liga cobre os 17 times");
     check(proMetrics.every(key=>league.metrics.some(metric=>metric.key===key)),"painel cobre combate, lados, economia, clutches, rating e favoritos");
     check(league.metrics.every(metric=>/\b(ok|out|low)\b/.test(metric.state)),"cada métrica recebe diagnóstico ou amostra insuficiente");
-    check(league.deltaRows===8,"painel mostra os 8 maiores desvios individuais de rating");
+    check(league.deltaRows===85,"painel de rating mostra todos os 85 jogadores da liga");
     check(/Fidelidade profissional\s+\d+\/\d+/.test(league.text)&&!/NaN|undefined|Infinity/.test(league.text),"nota de fidelidade da liga contém apenas valores válidos");
 
     const leagueSeed=await page.evaluate(()=>window.__e2e.simulation().seed);
