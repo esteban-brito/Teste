@@ -59,6 +59,20 @@
 
 ## Testes e fidelidade
 
+- **Expectativa de longo prazo:** agregação de muitos mapas para estimar o valor
+  médio ao qual o confronto converge; não representa uma temporada real.
+- **Modo campanha:** futura sequência competitiva curta, com contrato próprio de
+  adversários, mapas, lados, forma e seed; não é sinônimo de lote de 491 mapas.
+- **Desvio-padrão:** dispersão dos resultados de mapa para mapa; não mede a
+  precisão da média.
+- **Percentil:** posição na distribuição observada; P5 e P95 delimitam a região
+  que contém aproximadamente os 90% centrais da amostra.
+- **Intervalo de confiança:** faixa de incerteza da estimativa de uma média ou
+  proporção; não é a faixa esperada de resultados individuais.
+- **Erro assinado:** `simulado - real`, preservando a direção do viés.
+- **Erro absoluto:** tamanho do erro sem considerar direção.
+- **Inversão de hierarquia:** quando a ordem simulada de dois jogadores troca em
+  relação à referência; deve ser avaliada por frequência, tamanho e contexto.
 - **E2E (end-to-end):** teste automatizado que usa o jogo pelo navegador como
   uma pessoa usaria, cobrindo o fluxo inteiro entre a tela inicial e o resultado.
 - **IFCS:** Índice de Fidelidade ao Counter-Strike; protocolo de 0 a 100 que

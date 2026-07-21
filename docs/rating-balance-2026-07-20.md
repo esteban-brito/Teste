@@ -95,3 +95,23 @@ de diagnóstico, nunca no motor.
 - invariância a nome: aprovada;
 - sintaxe, contrato do sandbox e lint: aprovados.
 - validação integral: 17/17 suítes em 173,7 s, com 45.900 mapas e 941.838 rounds.
+
+## Estado posterior e limites desta recalibração
+
+O commit `626b7ed` publicou esta recalibração. O commit `d7b3200` alterou apenas
+a apresentação do sandbox para listar todos os jogadores simulados; não mudou
+rating, pesos, RNG ou resultados.
+
+Esta etapa corrigiu a compressão e endureceu correlação, MAE, inclinação e erro
+máximo. Ela ainda não protege completamente:
+
+- percentis e caudas individuais;
+- correlação de ranking e preservação de top players;
+- inversões de hierarquia dentro de cada time;
+- distribuição mapa a mapa apresentada ao usuário;
+- possível viés específico de sobrevivência por role e playstyle.
+
+A sequência aprovada está em `docs/next-steps.md`: primeiro auditoria individual,
+depois variância no sandbox, contrato do modo campanha e auditoria de
+AWPer/sobrevivência. Novo balanceamento só será executado se essa auditoria
+comprovar um problema material, sempre sem curadoria por nome.
