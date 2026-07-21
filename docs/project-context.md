@@ -70,6 +70,9 @@ Estado registrado em 21 de julho de 2026:
 - os ADRs 0004 e 0005 foram aceitos. `tools/add-team.js` agora projeta uma nova
   adição nos módulos e em `game.js` pela mesma operação, preserva quebras de
   linha, valida paridade e restaura fontes/`elencos.html` em caso de falha;
+- P2 começou pela função pura `rolePairReality`, extraída para `src/domain` e
+  comparada exatamente em 11.319 cenários. A auditoria rápida já consome o novo
+  módulo por dependência explícita; jogo, sandbox e simulador ainda usam o legado;
 - `game.js` continua sendo a fonte de verdade executável e os módulos ainda são
   cópias transitórias. Não remover os blocos legados nem migrar navegador,
   sandbox, worker ou gerador sem a próxima prova de paridade;
@@ -355,6 +358,8 @@ atualização de snapshot ou fixture golden.
 - `2a20c0e` e `263b179`: aceitam módulos ES nativos e definem a projeção legada
   transitória dos dados;
 - `e4653d7`: torna novas adições de time sincronizadas, validadas e reversíveis.
+- `f57f05a` e `ace9f23`: extraem `rolePairReality` com paridade exaustiva e
+  migram a análise de pares da auditoria para o módulo público.
 
 O balanceamento deliberado está documentado em
 `docs/rating-balance-2026-07-20.md`. A mudança posterior de tabela foi apenas de
@@ -539,6 +544,10 @@ Aceitação: snapshot e artefato gerado idênticos.
 ### Etapa P2 — módulos ES de avaliação
 
 **Risco:** moderado.
+
+**Status:** iniciada. ADR 0004 aceito; `rolePairReality` é a primeira função pura
+extraída e possui um consumidor Node migrado. O restante de PRISMA/ZÊNITE ainda
+permanece em `game.js`.
 
 - aceitar ou revisar ADR 0004;
 - extrair primeiro funções puras de roles, secundário, playstyles e OVR;
@@ -904,14 +913,15 @@ A fonte canônica da sequência é `docs/next-steps.md`. Ordem resumida:
 9. preparar Carreira de Jogador sobre APIs estáveis, RNG contratado e save
    versionado.
 
-O próximo passo estrutural concreto é caracterizar a menor API pública de
-avaliação e extrair uma única fronteira pura do PRISMA para `src/domain`, mantendo
-adapter legado e paridade dos 85 jogadores. `game.js` permanece fonte executável
-para consumidores clássicos; a projeção do ADR 0005 impede divergência em novas
-adições. R2 pode avançar separadamente quando priorizada. Antes de congelar
-thresholds de cauda ou ranking, revisar a baseline atual. Cada etapa deve ser um
-commit pequeno ou uma sequência curta com responsabilidade verificável; não
-misturar auditoria, interface, refatoração e balanceamento.
+O próximo passo estrutural concreto é caracterizar e extrair `secondaryScore`,
+que depende somente dos scores recebidos e de `rolePairReality`. Não puxar
+`afinidades`, tabelas de role ou distribuição contextual no mesmo commit.
+`game.js` permanece fonte executável para consumidores clássicos; a projeção do
+ADR 0005 impede divergência em novas adições. R2 pode avançar separadamente
+quando priorizada. Antes de congelar thresholds de cauda ou ranking, revisar a
+baseline atual. Cada etapa deve ser um commit pequeno ou uma sequência curta com
+responsabilidade verificável; não misturar auditoria, interface, refatoração e
+balanceamento.
 
 ## 14. Dívidas e riscos conhecidos
 
