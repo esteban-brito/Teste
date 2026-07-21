@@ -3,8 +3,9 @@
 Este arquivo orienta pessoas e agentes de IA que trabalham neste repositório.
 Comece por `docs/project-context.md`, que registra o ponto de retomada, roadmap
 de profissionalização e a visão do modo Carreira de Jogador. Leia também
-`docs/architecture.md`, `docs/testing.md` e `docs/glossary.md` antes de alterar
-os motores.
+`docs/next-steps.md`, que registra a sequência aprovada para fidelidade individual,
+laboratório e balanceamento. Leia ainda `docs/architecture.md`, `docs/testing.md`
+e `docs/glossary.md` antes de alterar os motores.
 
 ## Escopo e branch
 

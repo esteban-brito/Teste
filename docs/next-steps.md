@@ -1,0 +1,361 @@
+# Plano de retomada — fidelidade individual e evolução do laboratório
+
+> Fonte canônica dos próximos passos aprovada em 21 de julho de 2026.
+> Este documento registra o raciocínio que deve sobreviver entre sessões. Ele
+> não autoriza balanceamento imediato e não substitui `AGENTS.md`.
+
+## 1. Estado publicado na origem deste plano
+
+- branch de trabalho: `sandbox-test`;
+- `main`: intocável;
+- commit publicado: `d7b3200 feat(sandbox): mostra todos os desvios de rating`;
+- Pages: <https://esteban-brito.github.io/Teste/sandbox.html>;
+- GitHub Actions: execução `29790112282`, validação e deploy aprovados;
+- commit anterior de balanceamento:
+  `626b7ed balance(sim): remove curadoria e descomprime ratings`;
+- última validação integral registrada: 17/17 suítes, 45.900 mapas e 941.838
+  rounds;
+- corpus IFCS: 1/800 mapas profissionais e 1/6 eventos; ainda não existe nota
+  IFCS oficial.
+
+## 2. Diretriz do responsável
+
+O projeto deve buscar realismo e fidelidade ao Counter-Strike profissional por
+meio de fórmulas gerais, dados, estatística e comportamento emergente. Não usar:
+
+- bônus, penalidades ou exceções por nick;
+- tiers manuais de jogadores;
+- tratamento específico por ID, time ou época para forçar um resultado;
+- ajuste visual que esconda uma distorção do motor;
+- atualização de snapshot ou golden para silenciar uma regressão.
+
+É aceitável que um jogador supere ou fique abaixo de seu rating histórico em um
+confronto. O que precisa ser protegido é a distribuição plausível, a hierarquia
+em amostras adequadas e a ausência de viés sistemático.
+
+## 3. Diagnóstico que originou o trabalho
+
+O responsável observou no sandbox que, em lotes de 491 mapas, os ratings de
+jogadores como s1mple, electroNic e 910 convergiam repetidamente para valores
+parecidos, mesmo ao atualizar a página. Também observou confrontos em que a
+probabilidade coletiva favorecia fortemente um time, mas a leitura individual
+parecia incompatível com a expectativa.
+
+O veredito técnico foi:
+
+- a aleatoriedade por mapa funcionava;
+- médias de 491 mapas quase constantes eram matematicamente esperadas, pois o
+  erro-padrão cai aproximadamente com `1/sqrt(n)`;
+- a apresentação da variância no sandbox era insuficiente;
+- os ratings históricos extremos estavam excessivamente comprimidos;
+- a validação era boa no agregado, mas fraca para proteger indivíduos.
+
+## 4. Trabalho já concluído — não repetir
+
+### Caracterização e auditoria
+
+- golden completo do simulador por seed, cobrindo rounds, economia, objetivos,
+  clutches, destaques e os dez jogadores;
+- auditoria determinística, bilateral e identificada pelos 85 IDs crus;
+- adversários determinísticos e agenda mais balanceada;
+- invariância a nome: trocar somente o nick não muda resultados numéricos;
+- E2E completo do jogo e da aba Simular.
+
+### Balanceamento já publicado
+
+- remoção de `TIER_LENDA` e `TIER_STAR` baseados em nomes;
+- substituição por critérios numéricos derivados do rating observado;
+- redução da compressão entre ratings baixos e extremos;
+- correlação real×sim de 0,853 para 0,946;
+- MAE de 0,071 para 0,052;
+- inclinação real→sim de 0,706 para 0,998;
+- maior erro individual de 0,30 para 0,18;
+- métricas macro preservadas dentro das faixas aprovadas.
+
+### Interface já publicada
+
+- a tabela de desvios não corta mais nos oito primeiros;
+- confronto A × B mostra os dez jogadores simulados;
+- auditoria da liga mostra os 85 jogadores quando todos participaram;
+- jogadores com amostra pequena não são escondidos;
+- a coluna `Mapas` informa o tamanho individual da amostra;
+- a ordenação permanece por desvio absoluto decrescente;
+- nenhum cálculo de rating foi alterado por essa mudança visual.
+
+## 5. Lacunas atuais
+
+O benchmark ainda protege principalmente média, correlação, inclinação, MAE e
+erro máximo. Isso não basta para detectar todos os problemas possíveis:
+
+- caudas ruins podem coexistir com uma média boa;
+- a ordem dos jogadores dentro de um time pode se inverter sistematicamente;
+- top players podem perder hierarquia sem romper o MAE global;
+- média não mostra a oscilação de mapa para mapa;
+- o sandbox não separa desvio-padrão, percentis e incerteza da média;
+- o lote longo representa expectativa, não uma campanha competitiva curta;
+- o possível excesso de sobrevivência de certos perfis de AWPer ainda não foi
+  isolado por decomposição de componentes;
+- o corpus profissional ainda é insuficiente para validar essas distribuições
+  como uma nota científica oficial.
+
+## 6. Sequência obrigatória dos próximos trabalhos
+
+### Etapa R1 — auditoria individual aprofundada, sem balanceamento
+
+Objetivo: tornar a bancada capaz de reprovar uma mudança que pareça boa no
+agregado, mas distorça jogadores ou funções.
+
+Adicionar, por ID cru:
+
+- erro assinado e absoluto;
+- média, mediana e desvio-padrão do rating por mapa;
+- P5, P25, P75 e P95;
+- intervalo de confiança da média;
+- erro P90, P95 e máximo entre os 85 jogadores;
+- viés por role, faixa de rating e força do adversário;
+- correlação de ranking global;
+- preservação de top players;
+- inversões de pares dentro de cada time e tamanho dessas inversões.
+
+Os thresholds novos não devem ser inventados antes de medir o baseline atual.
+Primeiro produzir uma caracterização, revisar a distribuição e só então congelar
+guardas justificadas em um commit separado.
+
+Aceitação:
+
+- todos os 85 IDs cobertos;
+- mesma agenda, lados e seeds em comparações pareadas;
+- relatório reproduzível;
+- nenhuma alteração em `CFG_*`, fórmulas ou RNG;
+- teste sintético prova que a auditoria detecta hierarquia individual degradada
+  mesmo quando a média global permanece aceitável.
+
+### Etapa R2 — variância individual no sandbox
+
+Objetivo: mostrar o que a média de 491 mapas esconde.
+
+Para cada jogador, exibir ou disponibilizar:
+
+- média e mediana;
+- desvio-padrão;
+- P5 e P95;
+- intervalo de confiança da média;
+- rating histórico, delta e mapas;
+- aviso de amostra pequena.
+
+Não confundir conceitos:
+
+- desvio-padrão mede oscilação entre mapas;
+- percentis descrevem a distribuição observada;
+- intervalo de confiança mede a precisão da média;
+- delta mede distância da referência histórica.
+
+Usabilidade planejada:
+
+- busca por jogador;
+- filtros por time, role e suficiência;
+- ordenação por qualquer métrica;
+- comparação lado a lado;
+- exportação CSV ou JSON;
+- todos os jogadores continuam acessíveis, sem curadoria visual.
+
+Aceitação:
+
+- confronto mostra dez jogadores mesmo com lote pequeno;
+- liga mostra todos os jogadores que participaram;
+- resultados numéricos da simulação não mudam;
+- E2E cobre colunas, filtros, ordenação, amostra pequena e mobile;
+- nenhuma nova chamada ao RNG.
+
+### Etapa R3 — separar expectativa de campanha
+
+Objetivo: responder duas perguntas diferentes sem misturá-las.
+
+**Expectativa de longo prazo:** o lote atual, com centenas de mapas, usado para
+convergência e balanceamento. Deve deixar claro que estabilidade entre execuções
+é esperada.
+
+**Campanha:** sequência curta e competitivamente plausível, usada para mostrar
+o que uma pessoa pode vivenciar no jogo. Antes de implementar, decidir se a
+unidade será Major, série de confrontos ou temporada curta. Essa decisão de
+produto permanece aberta.
+
+O modo campanha deve definir explicitamente:
+
+- estrutura e quantidade de partidas;
+- adversários, mapas e lados;
+- se e como a forma persiste entre partidas;
+- unidade do resultado: campanha, série ou mapa;
+- distribuição entre muitas campanhas repetidas;
+- relação com o Major já existente.
+
+Aceitação:
+
+- rótulos e explicações não permitem interpretar 491 mapas como uma temporada;
+- expectativa preserva o comportamento atual;
+- campanha possui contrato determinístico por seed;
+- goldens próprios antes de qualquer otimização ou balanceamento;
+- nenhuma duplicação paralela dos motores.
+
+### Etapa R4 — auditoria de AWPer, sobrevivência e playstyle
+
+Objetivo: verificar, sem presumir culpa, se algum perfil recebe rating alto por
+produzir ou por ser excessivamente recompensado por sobreviver.
+
+Medir por role e perfil numérico:
+
+- KPR, DPR, ADR, KAST e rating;
+- frequência de sobrevivência;
+- relação produção/sobrevivência;
+- impacto em vitória e derrota;
+- CT e TR separados;
+- adversários fortes e fracos;
+- contribuição dos componentes disponíveis do rating final;
+- distribuição, não apenas média.
+
+Não usar jogadores citados pelo responsável como alvo de regra. Eles servem
+somente como casos de reprodução e leitura humana.
+
+Aceitação:
+
+- relatório determina se o viés existe, onde nasce e quais perfis afeta;
+- conclusão distingue problema do simulador, problema do rating e simples
+  consequência da composição/confronto;
+- nenhuma mudança de balanceamento no commit da auditoria.
+
+### Etapa R5 — balanceamento condicional
+
+Só executar se R4 comprovar um problema material.
+
+Regras:
+
+- um commit exclusivo de balanceamento;
+- nenhuma condição por nome, ID, time ou época;
+- alterar uma família de parâmetros por vez;
+- usar as mesmas seeds e agenda antes/depois;
+- preservar consumo de RNG sempre que possível;
+- medir todos os 85 jogadores, roles, caudas e métricas macro;
+- não corrigir AWPer degradando riflers, supports ou IGLs;
+- não melhorar médias escondendo erro nas caudas.
+
+Aceitação:
+
+- melhora do problema-alvo com efeito geral explicável;
+- correlação, MAE, inclinação, erro máximo, ranking e caudas aprovados;
+- métricas de rounds, economia, lados, objetivos e clutches preservadas;
+- comparação estatística documentada antes de atualizar qualquer golden.
+
+### Etapa R6 — validação e publicação do balanceamento
+
+1. executar os goldens antigos e explicar cada diferença;
+2. executar a comparação pareada antes/depois;
+3. revisar maiores beneficiados, prejudicados e inversões de ranking;
+4. testar confrontos equilibrados e muito desequilibrados;
+5. testar lados invertidos;
+6. rodar `npm run validate` sem reduzir amostra ou limites;
+7. atualizar golden somente quando a mudança for intencional e explicada;
+8. atualizar documentação no mesmo ciclo;
+9. manter commits de teste, balanceamento e documentação com responsabilidades
+   distinguíveis;
+10. push e deploy somente com autorização explícita.
+
+## 7. Etapas posteriores de profissionalização
+
+### P1 — laboratório como ferramenta de investigação
+
+Depois de R1–R3, aprimorar busca, filtros, comparações, exportação, explicações
+estatísticas e acessibilidade sem ocultar jogadores.
+
+### P2 — modularização por paridade
+
+- aceitar ou revisar ADRs 0002 e 0004;
+- extrair primeiro APIs puras de avaliação;
+- depois química, RNG, simulação e rating em etapas separadas;
+- manter adapter legado enquanto sandbox, Node e worker migram;
+- remover `new Function` e recortes de `<script>` somente após consumidores
+  usarem a mesma API pública;
+- nenhuma refatoração pode alterar resultados aprovados por seed.
+
+### P3 — otimização medida
+
+- criar benchmark de desempenho separado do realismo;
+- medir antes de otimizar;
+- evitar reconstrução repetida de times e agregações;
+- avaliar worker para lotes grandes;
+- manter a página responsiva com 85 jogadores;
+- provar paridade de outputs e RNG.
+
+### P4 — responsividade e acessibilidade
+
+- tabela longa utilizável em desktop e celular;
+- cabeçalhos, foco, teclado, contraste e leitores de tela;
+- ausência de overflow horizontal;
+- respeito a `prefers-reduced-motion`;
+- screenshots e E2E responsivos.
+
+### P5 — corpus profissional e nota IFCS
+
+- completar no mínimo 800 mapas e 6 eventos conforme o alvo congelado;
+- auditar proveniência, hashes e extração;
+- preservar splits de calibração, validação e holdout;
+- não usar holdout para tuning;
+- calcular cobertura e intervalo de confiança;
+- reproduzir a execução;
+- só então publicar a primeira nota IFCS oficial.
+
+O diagnóstico técnico de 96/100 continua rotulado como `not-ifcs`.
+
+### P6 — Carreira de Jogador
+
+Somente após uma API estável de avaliação, contrato de RNG e save versionado:
+
+- fechar decisões abertas e escrever ADR 0005;
+- definir schema e migrações;
+- criar jogador a partir de atributos crus;
+- recalcular derivados pelos mesmos motores;
+- entregar primeiro criador + save;
+- depois temporada curta, treino e histórico;
+- manter progressão separada do balanceamento do combate.
+
+## 8. Ordem prática aprovada
+
+1. R1 — auditoria individual aprofundada;
+2. R2 — variância individual no sandbox;
+3. R3 — contrato e modo campanha;
+4. R4 — auditoria específica de AWPer/sobrevivência;
+5. R5/R6 — balancear apenas se houver evidência e validar integralmente;
+6. P1 — usabilidade completa do laboratório;
+7. P2 — modularização por paridade;
+8. P3/P4 — otimização e acessibilidade;
+9. P5 — corpus e nota IFCS oficial;
+10. P6 — preparação e implementação incremental da carreira.
+
+## 9. Próxima ação concreta ao retomar
+
+Começar por **R1 — auditoria individual aprofundada**, sem editar o motor.
+
+Primeiro passo operacional:
+
+1. confirmar `sandbox-test`, `git status` e sincronização com o remoto;
+2. rodar `npm ci` e `npm run check`;
+3. ler `AGENTS.md`, `docs/project-context.md`, `docs/architecture.md`,
+   `docs/testing.md`, `docs/glossary.md` e este documento;
+4. caracterizar as distribuições atuais por ID usando a agenda determinística;
+5. apresentar baseline e proposta de thresholds antes de congelar novos asserts;
+6. não tocar em `CFG_*`, receitas, pesos, thresholds atuais ou RNG nessa etapa.
+
+## 10. Decisões ainda abertas
+
+- definição exata do modo campanha: Major, séries ou temporada curta;
+- métricas individuais que aparecerão por padrão ou em detalhes;
+- formato inicial de exportação: CSV, JSON ou ambos;
+- thresholds de cauda e ranking, que dependem da baseline de R1;
+- necessidade de novo balanceamento de sobrevivência, dependente da auditoria R4;
+- todas as decisões de produto da Carreira listadas em
+  `docs/project-context.md`.
+
+## 11. Regra de parada
+
+Se uma etapa revelar que o problema presumido não existe, registrar a evidência
+e não criar uma correção. O objetivo é fidelidade mensurável, não produzir uma
+mudança a qualquer custo.

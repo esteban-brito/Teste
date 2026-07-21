@@ -110,3 +110,20 @@ snapshots. Testes e artefatos persistentes devem usar o ID cru.
 4. `distribuirRoles` aplica contexto de time e muta avaliações dos jogadores.
 5. O calibrador diferencia mudança material de deterioração de margem interna.
 6. `elencos.html` contém dados gerados e pode divergir da fonte.
+
+## Próxima evolução do laboratório
+
+O plano aprovado está em `docs/next-steps.md`. A ordem arquitetural é primeiro
+fortalecer a auditoria individual sem tocar no motor, depois apresentar variância
+no sandbox e somente então definir um modo campanha separado da expectativa de
+longo prazo.
+
+Essas duas leituras não devem virar motores paralelos:
+
+- **expectativa:** agrega muitos mapas para medir convergência;
+- **campanha:** coordena uma sequência competitiva curta usando os mesmos motores.
+
+Busca, filtros, percentis e intervalos pertencem à interface/aplicação. Cálculo
+estatístico reutilizável deve receber dados explícitos e não depender do DOM.
+Uma futura extração precisa preservar IDs, agenda, lados, seeds e resultados
+aprovados antes de remover os loaders legados.

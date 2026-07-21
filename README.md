@@ -16,6 +16,8 @@ O mapa técnico e as regras para mudanças estão em:
 - [`AGENTS.md`](AGENTS.md): invariantes, branch, validação e disciplina de commits;
 - [`docs/project-context.md`](docs/project-context.md): ponto de retomada, roadmap
   de profissionalização e visão do modo Carreira de Jogador;
+- [`docs/next-steps.md`](docs/next-steps.md): sequência aprovada para auditoria
+  individual, variância, modo campanha, balanceamento condicional e retomada;
 - [`docs/architecture.md`](docs/architecture.md): fluxo de dados e fronteiras;
 - [`docs/testing.md`](docs/testing.md): 17 suítes e comandos por camada;
 - [`docs/rating-balance-2026-07-20.md`](docs/rating-balance-2026-07-20.md): auditoria sem curadoria e comparação antes/depois;
@@ -144,6 +146,12 @@ rating com as mesmas faixas dos benchmarks. Intervalos de 95% distinguem
 oscilação de amostra de desvio material; métricas raras sem observações
 suficientes ficam pendentes no diagnóstico legado do sandbox.
 
+O painel de desvios mostra todos os jogadores que participaram: dez no confronto
+A × B e até os 85 na amostra da liga. Ele mantém rating histórico, média
+simulada, delta e quantidade de mapas, ordenados por desvio absoluto. Média,
+mediana, desvio-padrão, percentis e intervalo individual ainda pertencem à
+próxima etapa documentada em [`docs/next-steps.md`](docs/next-steps.md).
+
 Esse painel não é a nota científica IFCS. No IFCS, falta de volume no corpus
 real impede publicar a nota; falta de uma saída exigida do simulador recebe zero
 na métrica. Os critérios completos estão em
@@ -222,7 +230,7 @@ A pasta `bancada/` contém uma suíte de validação que roda no Node.js:
 |---|---|
 | `times.js` | IDs únicos, atributos 0–100, ≥1 IGL, país do treinador, ≥16 times |
 | `realismo.js` | KPR, CT-win, plant, clutch 1vX, anti-eco, conversão pós-pistol vs CS real |
-| `rating.js` | Correlação r≥0.75 e erro médio≤0.12 vs rating HLTV real |
+| `rating.js` | 85 IDs; correlação r≥0.90, MAE≤0.065, inclinação 0.85–1.15 e erro individual máximo≤0.20 |
 | `run.js` | Roda as 17 suítes; aceita grupos de dados, regressão, calibrador, benchmark, fidelidade e E2E |
 
 ```bash
@@ -231,7 +239,9 @@ npm run test:regression    # auditoria + snapshot + guardas históricas + golden
 npm run test:calibrator    # calibrador e workers
 npm run test:benchmark     # realismo + assists + KDA + rating
 npm run test:fidelity      # scorer e contrato do corpus IFCS
+npm run test:e2e           # calibrador, aba Simular e jogo principal no navegador
 npm run test:all           # todas as 17 suítes
+npm run validate           # check + lint + todas as 17 suítes
 npm run score:fidelity -- caminho/entrada.json  # calcula um relatório IFCS
 npm run corpus:fidelity -- --template  # modelo do manifesto auditável
 ```
@@ -277,3 +287,8 @@ alegação de “X% realista”. O retrato completo está em
 | Clutch 1v1/1v2/1v3 | 50/23.5/8.1% | 44-56/18-28/5-13% |
 | Rating correlação r | 0.81 | ≥0.75 |
 | Rating erro médio | 0.087 | ≤0.12 |
+
+Essas duas linhas pertencem ao baseline histórico de 19 de julho de 2026. Após
+a recalibração publicada em `626b7ed`, a execução controlada obteve correlação
+0,946, MAE 0,052, inclinação 0,998 e maior erro individual 0,18. Consulte
+[`docs/rating-balance-2026-07-20.md`](docs/rating-balance-2026-07-20.md).

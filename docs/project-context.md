@@ -16,6 +16,8 @@ As decisões estão classificadas assim:
 Este documento não substitui as fontes especializadas:
 
 - `AGENTS.md`: regras de trabalho, branch, invariantes e validação;
+- `docs/next-steps.md`: sequência aprovada de auditoria individual, variância,
+  campanha, balanceamento condicional e retomada;
 - `docs/architecture.md`: arquitetura e dependências permitidas;
 - `docs/formulas/`: roles, playstyles, OVR e química;
 - `docs/testing.md`: estratégia e comandos de teste;
@@ -32,23 +34,20 @@ roadmap for concluída.
 
 ## 2. Ponto exato de retomada
 
-Estado registrado em 20 de julho de 2026:
+Estado registrado em 21 de julho de 2026:
 
 - produto: **draft9-0**, jogo estático de navegador sobre Counter-Strike;
 - repositório: `esteban-brito/Teste`;
 - branch de trabalho: `sandbox-test`;
 - `main`: intocável durante a profissionalização;
-- último commit já publicado no remoto:
-  `8932afd docs(fidelity): registra baseline técnica 96 de 100`;
-- branch local contém cinco commits de infraestrutura/documentação ainda não enviados:
-  `d033476` (benchmark determinístico por ID), `f9692a4` (goldens completos do
-  simulador), `56c005b` (estabilidade do E2E no draft) e `96f61d5` (atualização
-  documental), `4103e52` (gerador compatível com CRLF), além do balanceamento
-  de rating documentado nesta retomada;
+- último commit publicado no remoto:
+  `d7b3200 feat(sandbox): mostra todos os desvios de rating`;
+- branch local e `origin/sandbox-test` estavam sincronizadas e limpas antes da
+  atualização documental desta retomada;
 - Pages do sandbox: <https://esteban-brito.github.io/Teste/sandbox.html>;
 - o E2E do jogo percorre draft, lineup, Suíça, playoffs, título e reinício;
-- workflow conhecido do commit `6148983`: sucesso em validação e deploy;
-- run do GitHub Actions: `29772373882`;
+- workflow do commit `d7b3200`: sucesso em validação e deploy;
+- run do GitHub Actions: `29790112282`;
 - última validação local completa: 17/17 suítes em 173,7 s, com 45.900 mapas
   e 941.838 rounds nos benchmarks;
 - nenhuma mudança IFCS alterou motor, dados, configuração, RNG ou balanceamento;
@@ -61,6 +60,8 @@ Estado registrado em 20 de julho de 2026:
 - o diagnóstico técnico preliminar marcou 96/100 em 4.000 mapas simulados
   (131/136 avaliações dentro das faixas); não é a nota IFCS oficial;
 - ainda não existe corpus real auditado nem nota IFCS oficial.
+- o próximo trabalho concreto aprovado é R1, auditoria individual aprofundada,
+  sem alterar balanceamento; o plano completo está em `docs/next-steps.md`.
 
 Para retomar em uma sessão nova:
 
@@ -73,8 +74,10 @@ npm ci
 npm run check
 ```
 
-Antes de alterar motor, simulador ou calibrador, leia `AGENTS.md` e execute a
-camada de testes correspondente. Nunca comece reescrevendo o projeto.
+Antes de alterar motor, simulador ou calibrador, leia `AGENTS.md`, este arquivo,
+`docs/next-steps.md`, `docs/architecture.md`, `docs/testing.md` e
+`docs/glossary.md`. Execute a camada de testes correspondente. Nunca comece
+reescrevendo o projeto.
 
 ## 3. Visão atual do produto
 
@@ -235,12 +238,21 @@ A modernização mais recente concentrou-se no sandbox. O estado publicado inclu
 - intervalo de confiança de 95% para o lado A;
 - resumo minimalista com KPR, KAST, ADR, CT win e plant;
 - indicadores completos e tabelas avançadas em detalhes recolhidos;
+- tabela de rating sem corte arbitrário: dez jogadores no confronto e 85 na
+  amostra completa da liga;
+- jogadores com amostra pequena permanecem visíveis, acompanhados da quantidade
+  individual de mapas;
 - suficiência mínima maior para eventos raros, rating e força do favorito;
 - métricas sem amostra confiável ficam pendentes no diagnóstico legado do
   sandbox; isso não é a nota IFCS, cujo corpus insuficiente bloqueia publicação;
 - rolagem pelo documento corrigida; o canvas não cria scroll aninhado;
 - layout desktop e mobile sem overflow horizontal;
 - times oficiais preparados uma vez por lote, sem reconstrução por mapa.
+
+Ainda não estão implementados no painel individual: mediana, desvio-padrão,
+percentis, intervalo de confiança por jogador, filtros e exportação. Também não
+existe um modo campanha separado do lote de expectativa. Esses itens pertencem
+a R1–R3 de `docs/next-steps.md` e não autorizam balanceamento incidental.
 
 Medição local observada após a otimização: lote de 80 mapas em aproximadamente
 70 ms na máquina de desenvolvimento. Isso é uma referência operacional, não um
@@ -267,13 +279,14 @@ limite de CI.
 - `f9692a4`: golden completo do simulador por seed;
 - `56c005b`: E2E do draft aguarda o tipo correto de card;
 - `4103e52`: gerador de elencos volta a aceitar o arquivo CRLF;
-- balanceamento atual: remove tiers por nome e reduz a compressão do rating
-  com critérios numéricos, comparação controlada e guardas mais rígidas.
+- `626b7ed`: remove tiers por nome, reduz a compressão do rating com critérios
+  numéricos e endurece as guardas individuais;
+- `d7b3200`: lista todos os jogadores simulados no painel de desvios de rating.
 
-Os commits anteriores a esta etapa não mudaram as fórmulas de balanceamento. A
-mudança atual é deliberadamente de balanceamento e está registrada em documento
-próprio. Todo o trabalho posterior a `8932afd` permanece local até autorização
-explícita de push.
+O balanceamento deliberado está documentado em
+`docs/rating-balance-2026-07-20.md`. A mudança posterior de tabela foi apenas de
+interface e teste E2E. Ambos os commits estão publicados; qualquer trabalho novo
+continua sujeito à autorização explícita de push.
 
 ## 7. Sistema de testes, CI e deploy
 
@@ -795,24 +808,24 @@ Não presumir respostas sem conversar:
 
 ## 13. Primeiro conjunto de trabalho recomendado ao retomar
 
-Ordem que maximiza segurança e prepara o novo modo:
+A fonte canônica da sequência é `docs/next-steps.md`. Ordem resumida:
 
-1. confirmar `sandbox-test`, status limpo e CI verde;
-2. E2E mínimo do jogo principal completo (**concluído em 20 de julho de 2026**);
-3. metodologia IFCS, scorer e contrato de corpus sem balanceamento
-   (**implementados; alvo e prova real concluídos, falta o corpus auditado**);
-4. criar golden tests de avaliação e simulação com seed
-   (**simulação concluída; avaliação continua coberta por snapshot e benchmark**);
-5. aceitar/revisar ADR 0002 e ADR 0004;
-6. extrair uma API pura `evaluatePlayer(rawPlayer, config)` com adapter legado;
-7. escrever ADR 0005 para Carreira de Jogador e responder as decisões abertas;
-8. definir schema de save e testes de round-trip;
-9. prototipar apenas o criador do jogador como fatia vertical isolada;
-10. validar com o responsável antes de iniciar temporada, mercado ou progressão.
+1. R1: ampliar a auditoria individual com distribuição, caudas e hierarquia,
+   sem tocar no motor;
+2. R2: mostrar média, mediana, desvio-padrão, percentis e incerteza no sandbox;
+3. R3: definir e implementar campanha separada da expectativa de muitos mapas;
+4. R4: auditar AWPer, sobrevivência e playstyle por critérios numéricos;
+5. R5/R6: balancear somente se houver evidência e validar integralmente;
+6. aprimorar usabilidade do laboratório;
+7. retomar modularização por paridade, otimização e acessibilidade;
+8. completar corpus e primeira nota IFCS oficial;
+9. preparar Carreira de Jogador sobre APIs estáveis, RNG contratado e save
+   versionado.
 
-Cada item deve ser um commit pequeno ou uma sequência curta de commits com uma
-responsabilidade. Não combinar extração do motor, criador visual e balanceamento
-da progressão na mesma revisão.
+O próximo passo concreto é R1. Antes de congelar thresholds de cauda ou ranking,
+medir e revisar a baseline atual. Cada etapa deve ser um commit pequeno ou uma
+sequência curta com responsabilidade verificável; não misturar auditoria,
+interface, refatoração e balanceamento.
 
 ## 14. Dívidas e riscos conhecidos
 

@@ -105,6 +105,11 @@ cobertura dos 17 times, probabilidades bilaterais, seed automática por execuç�
 rolagem, responsividade, valores inválidos e erros de página. O determinismo do
 motor por seed continua sendo um contrato separado, descrito no ADR 0003.
 
+O painel individual também possui contrato explícito: mostra os dez jogadores
+de um confronto mesmo com lote abaixo do mínimo estatístico e mostra os 85 IDs
+na amostra completa da liga. A quantidade de mapas permanece visível para que
+uma linha com pouca amostra não pareça tão confiável quanto uma média longa.
+
 `e2e-game-flow.js` percorre o jogo principal pela interface real: sorteia e
 monta os seis slots, valida força e química, disputa Suíça e playoffs, confere
 placares e ratings, chega à tela final e reinicia a campanha. O teste escolhe
@@ -113,6 +118,10 @@ o balanceamento executável do produto.
 
 ## Próximas camadas
 
+- Auditoria individual de caudas, percentis, ranking global, top players e
+  inversões dentro de cada time, conforme `docs/next-steps.md`.
+- E2E das futuras colunas de variância, filtros, ordenação, busca e amostra pequena.
+- Golden próprio do modo campanha depois de seu contrato de produto ser definido.
 - Unitários de fórmulas e limites após cada motor ser extraído.
 - Integração do torneio sem DOM.
 - Screenshots responsivos e com `prefers-reduced-motion`.
