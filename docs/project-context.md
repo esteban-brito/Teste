@@ -60,13 +60,18 @@ Estado registrado em 21 de julho de 2026:
 - o diagnóstico técnico preliminar marcou 96/100 em 4.000 mapas simulados
   (131/136 avaliações dentro das faixas); não é a nota IFCS oficial;
 - ainda não existe corpus real auditado nem nota IFCS oficial;
-- R1, a auditoria individual aprofundada, foi implementada localmente em
-  `bancada/auditoria.js`, sem alteração de motor ou balanceamento; a mudança
-  ainda depende de revisão e commit antes de ser considerada publicada;
-- o próximo fechamento obrigatório é aceitar e versionar R1 isoladamente. R2
-  continua sendo a integração das estatísticas individuais no sandbox; a trilha
-  estrutural P1 começa pela extração paritária de dados crus. Não combinar as
-  duas trilhas na mesma mudança.
+- R1, a auditoria individual aprofundada, está versionada localmente no commit
+  `b97b3d7`, sem alteração de motor ou balanceamento, mas ainda não foi publicada;
+- o ADR 0002 foi aceito e a trilha estrutural P1 começou: `ATRIBUTOS`,
+  `TIMES_DEF` e `PAISES_MAP` possuem cópias de migração em `src/data`, protegidas
+  por paridade integral no `npm run check`;
+- `bancada/times.js` e `bancada/snapshot.js` já consomem os novos módulos para
+  dados crus; o snapshot deixou de manter um `new Function` próprio;
+- `game.js` continua sendo a fonte de verdade executável e os módulos ainda são
+  cópias transitórias. Não remover os blocos legados nem migrar navegador,
+  sandbox, worker ou gerador sem a próxima prova de paridade;
+- R2 continua sendo uma trilha científica/visual separada. Não combinar R2,
+  modularização estrutural e balanceamento na mesma mudança.
 
 Para retomar em uma sessão nova:
 
@@ -265,9 +270,9 @@ limite de CI.
 
 ### Baseline individual profunda — R1
 
-**Status:** implementada localmente em `bancada/auditoria.js`, ainda não
-publicada. A saída rápida histórica foi preservada sem argumentos. O modo novo é
-explícito e não participa da regressão rápida por padrão:
+**Status:** versionada localmente no commit `b97b3d7`, ainda não publicada. A
+saída rápida histórica foi preservada sem argumentos. O modo novo é explícito e
+não participa da regressão rápida por padrão:
 
 ```powershell
 node bancada/auditoria.js
@@ -338,6 +343,12 @@ atualização de snapshot ou fixture golden.
 - `626b7ed`: remove tiers por nome, reduz a compressão do rating com critérios
   numéricos e endurece as guardas individuais;
 - `d7b3200`: lista todos os jogadores simulados no painel de desvios de rating.
+- `b97b3d7`: auditoria individual profunda e determinística de R1;
+- `06d2785`: aceita e detalha a fronteira entre dados crus e derivados;
+- `5806a3d`, `8b9794b` e `5fbaf01`: extraem jogadores, elencos e países sob
+  testes de paridade integral;
+- `9fffde4` e `acb1a48`: migram o lint de elenco e o snapshot para os módulos de
+  dados; o segundo remove o `new Function` próprio do snapshot.
 
 O balanceamento deliberado está documentado em
 `docs/rating-balance-2026-07-20.md`. A mudança posterior de tabela foi apenas de
@@ -869,25 +880,27 @@ Não presumir respostas sem conversar:
 
 A fonte canônica da sequência é `docs/next-steps.md`. Ordem resumida:
 
-1. fechar R1: revisar e versionar isoladamente a auditoria individual profunda
-   já implementada localmente, sem tocar no motor;
+1. R1 concluída localmente: auditoria individual profunda versionada sem tocar
+   no motor ou balanceamento; publicação continua dependendo de pedido explícito;
 2. R2: mostrar média, mediana, desvio-padrão, percentis e incerteza no sandbox,
    consumindo os conceitos validados em R1 sem duplicar fórmulas;
 3. R3: definir e implementar campanha separada da expectativa de muitos mapas;
 4. R4: auditar AWPer, sobrevivência e playstyle por critérios numéricos;
 5. R5/R6: balancear somente se houver evidência e validar integralmente;
 6. aprimorar usabilidade do laboratório;
-7. retomar modularização por paridade, otimização e acessibilidade;
+7. continuar P1 já iniciada: migrar consumidores Node de baixo risco e definir
+   a geração do legado antes de trocar a fonte editável;
 8. completar corpus e primeira nota IFCS oficial;
 9. preparar Carreira de Jogador sobre APIs estáveis, RNG contratado e save
    versionado.
 
-O próximo passo concreto é revisar e versionar R1. Depois disso, escolher
-explicitamente entre continuar a trilha científica/visual em R2 ou iniciar a
-trilha estrutural P1 pela extração paritária de dados crus. Antes de congelar
-thresholds de cauda ou ranking, revisar a baseline atual. Cada etapa deve ser um
-commit pequeno ou uma sequência curta com responsabilidade verificável; não
-misturar auditoria, interface, refatoração e balanceamento.
+O próximo passo estrutural concreto é definir como os módulos de `src/data`
+geram ou alimentam os blocos legados antes de migrar `tools/add-team.js`. Até
+essa estratégia existir, `game.js` permanece fonte editável e as travas impedem
+divergência silenciosa. R2 pode avançar separadamente quando priorizada. Antes
+de congelar thresholds de cauda ou ranking, revisar a baseline atual. Cada etapa
+deve ser um commit pequeno ou uma sequência curta com responsabilidade
+verificável; não misturar auditoria, interface, refatoração e balanceamento.
 
 ## 14. Dívidas e riscos conhecidos
 
