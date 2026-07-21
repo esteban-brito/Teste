@@ -8,7 +8,7 @@ const {ROOT}=require("./common");
 const GAME_PATH=path.join(ROOT,"game.js");
 const UI_MARKER="// === UI START ===";
 const EXPORTS=[
-  "TEAMS","POOL","ATRIBUTOS","TIMES_DEF",
+  "TEAMS","POOL","ATRIBUTOS","TIMES_DEF","PAISES_MAP",
   "forcaTime","simularMapa","simularSerie","forcaDoDia","sortearFormaCampanha",
   "avaliarJogador","aplicarAvaliacaoContextual","distribuirRoles","quimicaComposicao","fallenAngels",
   "afinidades","roleAfinidade","rolePairReality","roleStyleReality","STYLE_LABEL","styleScoreTable","nmOVR",
