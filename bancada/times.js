@@ -1,11 +1,11 @@
 /* bancada/times.js - lint de elenco: valida dados, IDs, times e OVRs. */
+const path=require("node:path");
+const {pathToFileURL}=require("node:url");
 const {X}=require("./motor");
-const {ATTRS,COLOCACOES,mean}=require("./common");
+const {ROOT,ATTRS,COLOCACOES,mean}=require("./common");
 
-const A=X.ATRIBUTOS;
 const POOL=X.POOL;
 const TEAMS=X.TEAMS;
-const DEF=X.TIMES_DEF;
 
 let errors=0;
 let warnings=0;
@@ -24,17 +24,17 @@ function playerId(player){
   return player.id||player.nome;
 }
 
-function validateUniqueIds(){
+function validateUniqueIds(players){
   const seen=new Set();
-  A.forEach(player=>{
+  players.forEach(player=>{
     const id=playerId(player);
     if(seen.has(id))err(`ID duplicado no ATRIBUTOS: "${id}" (use um id: explícito)`);
     seen.add(id);
   });
 }
 
-function validatePlayers(){
-  A.forEach(player=>{
+function validatePlayers(players){
+  players.forEach(player=>{
     const id=playerId(player);
     ATTRS.forEach(attr=>{
       const value=player[attr];
@@ -84,8 +84,8 @@ function validateComputedTeams(){
   });
 }
 
-function printSummary(){
-  console.log(`\n── ${TEAMS.length} times · ${A.length} jogadores ──`);
+function printSummary(players){
+  console.log(`\n── ${TEAMS.length} times · ${players.length} jogadores ──`);
   [...TEAMS]
     .map(team=>({team,avg:mean(team.jogadores.map(player=>player._eng.ovr))}))
     .sort((a,b)=>b.avg-a.avg)
@@ -97,13 +97,29 @@ function printSummary(){
     });
 }
 
-console.log("── LINT DE TIMES ──");
-validateUniqueIds();
-validatePlayers();
-DEF.forEach(validateTeamDef);
-validateComputedTeams();
-if(TEAMS.length<16)err(`só ${TEAMS.length} times — o Major precisa de ≥16 (15 NPC + você)`);
+function dataModuleUrl(filename){
+  return pathToFileURL(path.join(ROOT,"src","data",filename)).href;
+}
 
-printSummary();
-console.log(`\n${errors?`✗ ${errors} erro(s)`:"✓ sem erros"}${warnings?` · ${warnings} aviso(s)`:""}`);
-process.exit(errors?1:0);
+async function main(){
+  const [{ATRIBUTOS},{TIMES_DEF}]=await Promise.all([
+    import(dataModuleUrl("players.mjs")),
+    import(dataModuleUrl("teams.mjs"))
+  ]);
+
+  console.log("── LINT DE TIMES ──");
+  validateUniqueIds(ATRIBUTOS);
+  validatePlayers(ATRIBUTOS);
+  TIMES_DEF.forEach(validateTeamDef);
+  validateComputedTeams();
+  if(TEAMS.length<16)err(`só ${TEAMS.length} times — o Major precisa de ≥16 (15 NPC + você)`);
+
+  printSummary(ATRIBUTOS);
+  console.log(`\n${errors?`✗ ${errors} erro(s)`:"✓ sem erros"}${warnings?` · ${warnings} aviso(s)`:""}`);
+  process.exitCode=errors?1:0;
+}
+
+main().catch(error=>{
+  console.error(error);
+  process.exitCode=1;
+});
