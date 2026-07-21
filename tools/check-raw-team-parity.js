@@ -18,24 +18,24 @@ function moduleUrl(filename){
 }
 
 async function main(){
-  const [{RAW_TEAMS},{RAW_PLAYERS}]=await Promise.all([
+  const [{TIMES_DEF:rawTeams},{ATRIBUTOS:rawPlayers}]=await Promise.all([
     import(moduleUrl("teams.mjs")),
     import(moduleUrl("players.mjs"))
   ]);
   const legacyTeams=plain(X.TIMES_DEF);
-  const playerIds=new Set(RAW_PLAYERS.map(player=>player.id||player.nome));
+  const playerIds=new Set(rawPlayers.map(player=>player.id||player.nome));
 
-  assert.equal(RAW_TEAMS.length,EXPECTED_TEAM_COUNT,"quantidade de elencos crus mudou");
-  assert.deepEqual(RAW_TEAMS,legacyTeams,"src/data/teams.mjs divergiu de game.js");
+  assert.equal(rawTeams.length,EXPECTED_TEAM_COUNT,"quantidade de elencos crus mudou");
+  assert.deepEqual(rawTeams,legacyTeams,"src/data/teams.mjs divergiu de game.js");
 
-  RAW_TEAMS.forEach((team,index)=>{
+  rawTeams.forEach((team,index)=>{
     assert.equal(team.jogadores.length,PLAYERS_PER_TEAM,`t${index} precisa ter cinco jogadores`);
     assert.equal(new Set(team.jogadores).size,PLAYERS_PER_TEAM,`t${index} repete jogador`);
     team.jogadores.forEach(playerId=>assert.ok(playerIds.has(playerId),`t${index} referencia ID ausente: ${playerId}`));
     DERIVED_FIELDS.forEach(field=>assert.equal(Object.hasOwn(team,field),false,`t${index} contém campo derivado ${field}`));
   });
 
-  console.log(`raw team parity: ok (${RAW_TEAMS.length} elencos)`);
+  console.log(`raw team parity: ok (${rawTeams.length} elencos)`);
 }
 
 main().catch(error=>{

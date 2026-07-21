@@ -1,7 +1,7 @@
 /* Cópia de migração das definições cruas de elencos.
    Enquanto game.js ainda for consumidor, tools/check-raw-team-parity.js
    impede divergência integral entre as duas representações. */
-export const RAW_TEAMS=[
+export const TIMES_DEF=[
   {nome:"NAVI",cor:"#ffd400",coach:"B1ad3",camp:"Stockholm Major 2021",colocacao:"Campeao",jogadores:["s1mple","electroNic","b1t","Perfecto","Boombl4"]},
   {nome:"Outsiders",cor:"#39d3ff",coach:"dastan",camp:"Rio Major 2022",colocacao:"Campeao",jogadores:["Jame","FL1T","fame","n0rb3r7","Qikert"]},
   {nome:"FURIA",cor:"#00e676",coach:"guerri",camp:"Rio Major 2022",colocacao:"Top4",jogadores:["KSCERATO","yuurih","saffee","arT","drop"]},

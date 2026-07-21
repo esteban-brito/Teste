@@ -1,7 +1,7 @@
 /* Cópia de migração dos dados crus de jogadores.
    Enquanto game.js ainda for consumidor, tools/check-raw-player-parity.js
    impede divergência integral entre as duas representações. */
-export const RAW_PLAYERS=[
+export const ATRIBUTOS=[
   {nome:"s1mple",fp:100,en:25,tr:30,op:93,cl:24,sn:87,ut:50,rating:1.47,colocacao:"Campeao",isIGL:false},
   {nome:"electroNic",fp:96,en:58,tr:24,op:96,cl:62,sn:0,ut:75,rating:1.28,colocacao:"Campeao",isIGL:false},
   {nome:"b1t",fp:84,en:9,tr:10,op:72,cl:55,sn:4,ut:66,rating:1.27,colocacao:"Campeao",isIGL:false},

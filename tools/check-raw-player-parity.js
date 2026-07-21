@@ -21,19 +21,19 @@ function resolvedId(player){
 
 async function main(){
   const moduleUrl=pathToFileURL(path.join(__dirname,"..","src","data","players.mjs")).href;
-  const {RAW_PLAYERS}=await import(moduleUrl);
+  const {ATRIBUTOS:rawPlayers}=await import(moduleUrl);
   const legacyPlayers=plain(X.ATRIBUTOS);
 
-  assert.equal(RAW_PLAYERS.length,EXPECTED_PLAYER_COUNT,"quantidade de jogadores crus mudou");
-  assert.deepEqual(RAW_PLAYERS,legacyPlayers,"src/data/players.mjs divergiu de game.js");
+  assert.equal(rawPlayers.length,EXPECTED_PLAYER_COUNT,"quantidade de jogadores crus mudou");
+  assert.deepEqual(rawPlayers,legacyPlayers,"src/data/players.mjs divergiu de game.js");
 
-  const ids=RAW_PLAYERS.map(resolvedId);
+  const ids=rawPlayers.map(resolvedId);
   assert.equal(new Set(ids).size,ids.length,"IDs crus resolvidos precisam ser únicos");
-  RAW_PLAYERS.forEach(player=>DERIVED_FIELDS.forEach(field=>{
+  rawPlayers.forEach(player=>DERIVED_FIELDS.forEach(field=>{
     assert.equal(Object.hasOwn(player,field),false,`${resolvedId(player)} contém campo derivado ${field}`);
   }));
 
-  console.log(`raw player parity: ok (${RAW_PLAYERS.length} registros)`);
+  console.log(`raw player parity: ok (${rawPlayers.length} registros)`);
 }
 
 main().catch(error=>{
