@@ -1,6 +1,8 @@
 /* bancada/auditoria.js - relatorio curto de classificacao e auditoria profunda do simulador.
    Uso: node bancada/auditoria.js
         node bancada/auditoria.js --deep [--format human|json] [--cycles 8] */
+const path=require("node:path");
+const {pathToFileURL}=require("node:url");
 const {X,T}=require("./motor");
 const {compactStats,countBy,sortedCountEntries,teamNameFor}=require("./common");
 
@@ -55,8 +57,8 @@ function pairText(player){
   return `${player.primario}/${player.secundario||player.combatRole||"-"}`;
 }
 
-function pairReality(player){
-  return X.rolePairReality?X.rolePairReality(player.primario,player.secundario||player.combatRole,player):{cost:0,label:"natural",reasons:[]};
+function pairReality(player,rolePairReality=X.rolePairReality){
+  return rolePairReality?rolePairReality(player.primario,player.secundario||player.combatRole,player):{cost:0,label:"natural",reasons:[]};
 }
 
 function styleReality(player){
@@ -70,10 +72,10 @@ function printRolePairs(players){
     .forEach(([pair,total])=>console.log(`  ${String(total).padStart(2)} ${pair}`));
 }
 
-function printRarePairs(players){
+function printRarePairs(players,rolePairReality){
   console.log("\n-- Pares raros por contexto --");
   players
-    .map(player=>({player,real:pairReality(player)}))
+    .map(player=>({player,real:pairReality(player,rolePairReality)}))
     .filter(row=>row.real.cost>=.35)
     .sort((a,b)=>b.real.cost-a.real.cost||a.player.nick.localeCompare(b.player.nick))
     .slice(0,18)
@@ -97,14 +99,14 @@ function printRareStyles(players){
     });
 }
 
-function runQuickAudit(){
+function runQuickAudit(rolePairReality=X.rolePairReality){
   const players=Object.values(X.POOL);
   console.log("AUDITORIA PRISMA");
   console.log(`${players.length} jogadores`);
   printCount("Roles",countBy(players,player=>player.primario));
   printCount("Playstyles",countBy(players,player=>player.playstyle),PLAYSTYLE_ORDER);
   printRolePairs(players);
-  printRarePairs(players);
+  printRarePairs(players,rolePairReality);
   printRareStyles(players);
   printLowMargins(players);
   printStylePlayers(players,"baiter");
@@ -594,21 +596,24 @@ function parseArguments(args){
   return {mode:"deep",format,cycles};
 }
 
-function main(args=process.argv.slice(2)){
+async function main(args=process.argv.slice(2)){
   const options=parseArguments(args);
   if(options.mode==="help")return usage();
-  if(options.mode==="quick")return runQuickAudit();
+  if(options.mode==="quick"){
+    const moduleUrl=pathToFileURL(path.join(__dirname,"..","src","domain","evaluation","role-pair-reality.mjs")).href;
+    const {rolePairReality}=await import(moduleUrl);
+    return runQuickAudit(rolePairReality);
+  }
   const report=buildDeepAudit(options.cycles);
   if(options.format==="json")console.log(JSON.stringify(report,null,2));
   else printDeepAudit(report);
 }
 
 if(require.main===module){
-  try{main();}
-  catch(error){
+  main().catch(error=>{
     console.error(`auditoria: ${error.message}`);
     process.exitCode=1;
-  }
+  });
 }
 
 module.exports={buildDeepAudit,parseArguments,runQuickAudit};
