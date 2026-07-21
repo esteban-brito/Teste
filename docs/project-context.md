@@ -67,6 +67,9 @@ Estado registrado em 21 de julho de 2026:
   por paridade integral no `npm run check`;
 - `bancada/times.js` e `bancada/snapshot.js` já consomem os novos módulos para
   dados crus; o snapshot deixou de manter um `new Function` próprio;
+- os ADRs 0004 e 0005 foram aceitos. `tools/add-team.js` agora projeta uma nova
+  adição nos módulos e em `game.js` pela mesma operação, preserva quebras de
+  linha, valida paridade e restaura fontes/`elencos.html` em caso de falha;
 - `game.js` continua sendo a fonte de verdade executável e os módulos ainda são
   cópias transitórias. Não remover os blocos legados nem migrar navegador,
   sandbox, worker ou gerador sem a próxima prova de paridade;
@@ -349,6 +352,9 @@ atualização de snapshot ou fixture golden.
   testes de paridade integral;
 - `9fffde4` e `acb1a48`: migram o lint de elenco e o snapshot para os módulos de
   dados; o segundo remove o `new Function` próprio do snapshot.
+- `2a20c0e` e `263b179`: aceitam módulos ES nativos e definem a projeção legada
+  transitória dos dados;
+- `e4653d7`: torna novas adições de time sincronizadas, validadas e reversíveis.
 
 O balanceamento deliberado está documentado em
 `docs/rating-balance-2026-07-20.md`. A mudança posterior de tabela foi apenas de
@@ -517,6 +523,10 @@ Aceitação: nenhuma classificação, estatística ou sequência aprovada muda.
 ### Etapa P1 — contratos e dados crus
 
 **Risco:** seguro a moderado.
+
+**Status:** em andamento. ADR 0002 aceito; jogadores, elencos e países extraídos
+sob paridade; lint, snapshot e `add-team` já usam a nova fronteira. Os blocos de
+`game.js` continuam necessários para consumidores clássicos.
 
 - aceitar ou revisar ADR 0002;
 - extrair dados crus sem extrair fórmulas no mesmo commit;
@@ -888,19 +898,20 @@ A fonte canônica da sequência é `docs/next-steps.md`. Ordem resumida:
 4. R4: auditar AWPer, sobrevivência e playstyle por critérios numéricos;
 5. R5/R6: balancear somente se houver evidência e validar integralmente;
 6. aprimorar usabilidade do laboratório;
-7. continuar P1 já iniciada: migrar consumidores Node de baixo risco e definir
-   a geração do legado antes de trocar a fonte editável;
+7. continuar a modularização por paridade: P1 possui dados e projeção legada;
+   P2 deve começar por uma única fronteira pura do PRISMA;
 8. completar corpus e primeira nota IFCS oficial;
 9. preparar Carreira de Jogador sobre APIs estáveis, RNG contratado e save
    versionado.
 
-O próximo passo estrutural concreto é definir como os módulos de `src/data`
-geram ou alimentam os blocos legados antes de migrar `tools/add-team.js`. Até
-essa estratégia existir, `game.js` permanece fonte editável e as travas impedem
-divergência silenciosa. R2 pode avançar separadamente quando priorizada. Antes
-de congelar thresholds de cauda ou ranking, revisar a baseline atual. Cada etapa
-deve ser um commit pequeno ou uma sequência curta com responsabilidade
-verificável; não misturar auditoria, interface, refatoração e balanceamento.
+O próximo passo estrutural concreto é caracterizar a menor API pública de
+avaliação e extrair uma única fronteira pura do PRISMA para `src/domain`, mantendo
+adapter legado e paridade dos 85 jogadores. `game.js` permanece fonte executável
+para consumidores clássicos; a projeção do ADR 0005 impede divergência em novas
+adições. R2 pode avançar separadamente quando priorizada. Antes de congelar
+thresholds de cauda ou ranking, revisar a baseline atual. Cada etapa deve ser um
+commit pequeno ou uma sequência curta com responsabilidade verificável; não
+misturar auditoria, interface, refatoração e balanceamento.
 
 ## 14. Dívidas e riscos conhecidos
 
