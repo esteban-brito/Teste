@@ -59,9 +59,14 @@ Estado registrado em 21 de julho de 2026:
   Falcons no IEM Cologne Major 2026; o corpus está em 1/800 mapas e 1/6 eventos;
 - o diagnóstico técnico preliminar marcou 96/100 em 4.000 mapas simulados
   (131/136 avaliações dentro das faixas); não é a nota IFCS oficial;
-- ainda não existe corpus real auditado nem nota IFCS oficial.
-- o próximo trabalho concreto aprovado é R1, auditoria individual aprofundada,
-  sem alterar balanceamento; o plano completo está em `docs/next-steps.md`.
+- ainda não existe corpus real auditado nem nota IFCS oficial;
+- R1, a auditoria individual aprofundada, foi implementada localmente em
+  `bancada/auditoria.js`, sem alteração de motor ou balanceamento; a mudança
+  ainda depende de revisão e commit antes de ser considerada publicada;
+- o próximo fechamento obrigatório é aceitar e versionar R1 isoladamente. R2
+  continua sendo a integração das estatísticas individuais no sandbox; a trilha
+  estrutural P1 começa pela extração paritária de dados crus. Não combinar as
+  duas trilhas na mesma mudança.
 
 Para retomar em uma sessão nova:
 
@@ -258,6 +263,57 @@ Medição local observada após a otimização: lote de 80 mapas em aproximadame
 70 ms na máquina de desenvolvimento. Isso é uma referência operacional, não um
 limite de CI.
 
+### Baseline individual profunda — R1
+
+**Status:** implementada localmente em `bancada/auditoria.js`, ainda não
+publicada. A saída rápida histórica foi preservada sem argumentos. O modo novo é
+explícito e não participa da regressão rápida por padrão:
+
+```powershell
+node bancada/auditoria.js
+node bancada/auditoria.js --deep
+node bancada/auditoria.js --deep --format json
+```
+
+O protocolo padrão da auditoria profunda é:
+
+- round-robin completo entre 17 elencos, com 136 confrontos por ciclo;
+- oito ciclos, totalizando 1.088 mapas e 22.446 rounds na baseline registrada;
+- 85/85 IDs crus, 128 mapas e os 16 elencos adversários por jogador;
+- 16 exposições por jogador em cada um dos oito mapas canônicos;
+- 64 exposições como lado A e 64 como lado B por jogador;
+- troca de lados nos ciclos ímpares e rotação de mapa por confronto/ciclo;
+- Mulberry32 reinicializado por confronto com seed derivada de uma base fixa;
+- identificação por índice + ID do elenco, porque `Spirit` e `FURIA` possuem
+  formações históricas distintas com o mesmo nome;
+- verificação interna de cobertura, igualdade de exposição e preservação das
+  classificações e atributos;
+- relatório humano resumido e JSON determinístico com detalhamento por ID,
+  time, mapa, role, playstyle, OVR e quartil de força do adversário.
+
+Resultados descritivos da primeira execução aceita localmente:
+
+| Medida | Resultado |
+|---|---:|
+| Pearson entre rating real e simulado | 0,943 |
+| Spearman entre rating real e simulado | 0,923 |
+| erro absoluto médio do rating | 0,053 |
+| preservação do top 1 interno do elenco | 54,3% |
+| sobreposição do top 3 interno do elenco | 79,6% |
+| inversões internas de ordem | 11/167 |
+
+Esses números são uma caracterização, não critérios de aprovação. O relatório
+declara `diagnosticOnly: true` e não contém thresholds de passa/falha. Deltas,
+caudas, inversões ou diferenças entre grupos não autorizam ajuste de pesos,
+atributos ou fórmulas. Qualquer hipótese de balanceamento continua dependendo
+do protocolo separado de `docs/next-steps.md`, comparação estatística e commit
+próprio.
+
+O JSON completo foi comparado entre duas execuções independentes e permaneceu
+idêntico. No estado local após R1 passaram `npm run check`, `npm run lint`,
+`npm run test:data`, `npm run test:regression` e `npm run test:benchmark`, sem
+atualização de snapshot ou fixture golden.
+
 ### Commits que contam a história recente
 
 - `f06662a`: modernização inicial da aba Simular;
@@ -304,6 +360,9 @@ npm run corpus:fidelity   selo e verificação do manifesto real IFCS
 npm run test:e2e          jogo, calibrador e aba Simular no Chromium
 npm run test:all          todas as 17 suítes
 npm run validate          check + lint + todas as suítes
+node bancada/auditoria.js auditoria rápida histórica de classificação
+node bancada/auditoria.js --deep --format json
+                           baseline individual determinística detalhada
 ```
 
 O benchmark completo é deliberadamente demorado. Não reduzir amostras para
@@ -810,9 +869,10 @@ Não presumir respostas sem conversar:
 
 A fonte canônica da sequência é `docs/next-steps.md`. Ordem resumida:
 
-1. R1: ampliar a auditoria individual com distribuição, caudas e hierarquia,
-   sem tocar no motor;
-2. R2: mostrar média, mediana, desvio-padrão, percentis e incerteza no sandbox;
+1. fechar R1: revisar e versionar isoladamente a auditoria individual profunda
+   já implementada localmente, sem tocar no motor;
+2. R2: mostrar média, mediana, desvio-padrão, percentis e incerteza no sandbox,
+   consumindo os conceitos validados em R1 sem duplicar fórmulas;
 3. R3: definir e implementar campanha separada da expectativa de muitos mapas;
 4. R4: auditar AWPer, sobrevivência e playstyle por critérios numéricos;
 5. R5/R6: balancear somente se houver evidência e validar integralmente;
@@ -822,10 +882,12 @@ A fonte canônica da sequência é `docs/next-steps.md`. Ordem resumida:
 9. preparar Carreira de Jogador sobre APIs estáveis, RNG contratado e save
    versionado.
 
-O próximo passo concreto é R1. Antes de congelar thresholds de cauda ou ranking,
-medir e revisar a baseline atual. Cada etapa deve ser um commit pequeno ou uma
-sequência curta com responsabilidade verificável; não misturar auditoria,
-interface, refatoração e balanceamento.
+O próximo passo concreto é revisar e versionar R1. Depois disso, escolher
+explicitamente entre continuar a trilha científica/visual em R2 ou iniciar a
+trilha estrutural P1 pela extração paritária de dados crus. Antes de congelar
+thresholds de cauda ou ranking, revisar a baseline atual. Cada etapa deve ser um
+commit pequeno ou uma sequência curta com responsabilidade verificável; não
+misturar auditoria, interface, refatoração e balanceamento.
 
 ## 14. Dívidas e riscos conhecidos
 
