@@ -16,6 +16,9 @@ const {execFileSync}=require("child_process");
 const {ROOT,ATTRS}=require("../bancada/common");
 
 const GAME=path.join(ROOT,"game.js");
+const PLAYERS_MODULE=path.join(ROOT,"src","data","players.mjs");
+const TEAMS_MODULE=path.join(ROOT,"src","data","teams.mjs");
+const ROSTER_OUTPUT=path.join(ROOT,"elencos.html");
 const PLAYER_ANCHOR="  //@jogadores";
 const TEAM_ANCHOR="  //@times";
 const FALLBACK_COLORS=["#5b8cff","#ff8a3d","#c86bff","#00c2a8","#ff5aa8","#7bd23c","#f0c020","#33c0ff","#ff6a5a","#9aa7b8"];
@@ -180,26 +183,72 @@ function teamLine(time,keys){
   return `  {nome:${quote(time.nome)},cor:${quote(time.cor)},${coach}camp:${quote(time.camp)},colocacao:${quote(time.colocacao)},jogadores:[${keys.map(quote).join(",")}]},`;
 }
 
-function inject(game,time,players,keys){
-  if(!game.includes(PLAYER_ANCHOR)||!game.includes(TEAM_ANCHOR)){
-    throw new Error("âncoras //@jogadores / //@times não encontradas no game.js");
-  }
+function injectAtAnchor(source,anchor,content,sourceName){
+  if(!source.includes(anchor))throw new Error(`âncora ${anchor.trim()} não encontrada em ${sourceName}`);
+  const newline=source.includes("\r\n")?"\r\n":"\n";
+  const normalizedContent=content.replace(/\r?\n/g,newline);
+  return source.replace(anchor,`${normalizedContent}${newline}${anchor}`);
+}
+
+function projectSources(sources,time,players,keys){
   const playersBlock=players.map(player=>playerLine(player,time)).join("\n");
   const teamBlock=teamLine(time,keys);
-  return game
-    .replace(PLAYER_ANCHOR,`  // ——— ${time.nome} · ${time.camp} (${time.colocacao}) ———\n${playersBlock}\n${PLAYER_ANCHOR}`)
-    .replace(TEAM_ANCHOR,`${teamBlock}\n${TEAM_ANCHOR}`);
+  const playerProjection=`  // ——— ${time.nome} · ${time.camp} (${time.colocacao}) ———\n${playersBlock}`;
+  const gameWithPlayers=injectAtAnchor(sources.game,PLAYER_ANCHOR,playerProjection,"game.js");
+  return {
+    game:injectAtAnchor(gameWithPlayers,TEAM_ANCHOR,teamBlock,"game.js"),
+    players:injectAtAnchor(sources.players,PLAYER_ANCHOR,playerProjection,"src/data/players.mjs"),
+    teams:injectAtAnchor(sources.teams,TEAM_ANCHOR,teamBlock,"src/data/teams.mjs"),
+    fragments:{players:playerProjection,team:teamBlock}
+  };
 }
 
 function runPostChecks(){
   execFileSync(process.execPath,["--check",GAME],{stdio:"inherit"});
+  [
+    "check-raw-player-parity.js",
+    "check-raw-team-parity.js",
+    "check-raw-country-parity.js"
+  ].forEach(filename=>{
+    execFileSync(process.execPath,[path.join(ROOT,"tools",filename)],{stdio:"inherit"});
+  });
+  execFileSync(process.execPath,[path.join(ROOT,"bancada","times.js")],{stdio:"inherit"});
   execFileSync(process.execPath,[path.join(ROOT,"bancada","roster.js")],{stdio:"inherit"});
-  console.log("");
+}
+
+function transactionalWrite(entries,validate,protectedPaths=[]){
+  const paths=[...new Set([...entries.map(entry=>entry.path),...protectedPaths])];
+  const originals=paths.map(filePath=>({
+    path:filePath,
+    existed:fs.existsSync(filePath),
+    content:fs.existsSync(filePath)?fs.readFileSync(filePath):null
+  }));
   try{
-    execFileSync(process.execPath,[path.join(ROOT,"bancada","times.js")],{stdio:"inherit"});
-  }catch{
-    // O lint ja imprime o motivo; mantemos a execucao para mostrar avisos do parser.
+    entries.forEach(entry=>fs.writeFileSync(entry.path,entry.content));
+    validate();
+  }catch(error){
+    const restoreErrors=[];
+    originals.forEach(original=>{
+      try{
+        if(original.existed)fs.writeFileSync(original.path,original.content);
+        else if(fs.existsSync(original.path))fs.rmSync(original.path);
+      }catch(restoreError){
+        restoreErrors.push(`${original.path}: ${restoreError.message}`);
+      }
+    });
+    if(restoreErrors.length){
+      throw new Error(`${error.message}\nrollback incompleto:\n${restoreErrors.join("\n")}`,{cause:error});
+    }
+    throw new Error(`${error.message}\nfontes e artefato restaurados`,{cause:error});
   }
+}
+
+function applyProjection(projected){
+  transactionalWrite([
+    {path:PLAYERS_MODULE,content:projected.players},
+    {path:TEAMS_MODULE,content:projected.teams},
+    {path:GAME,content:projected.game}
+  ],runPostChecks,[ROSTER_OUTPUT]);
 }
 
 function readInput(inputPath){
@@ -231,10 +280,14 @@ function main(){
   const warnings=[];
   validateInput(time,jogadores,warnings);
 
-  let game=fs.readFileSync(GAME,"utf8");
-  const keys=assignPlayerKeys(jogadores,time.nome,game,warnings);
-  chooseColor(time,game,warnings);
-  game=inject(game,time,jogadores,keys);
+  const sources={
+    game:fs.readFileSync(GAME,"utf8"),
+    players:fs.readFileSync(PLAYERS_MODULE,"utf8"),
+    teams:fs.readFileSync(TEAMS_MODULE,"utf8")
+  };
+  const keys=assignPlayerKeys(jogadores,time.nome,sources.players,warnings);
+  chooseColor(time,sources.teams,warnings);
+  const projected=projectSources(sources,time,jogadores,keys);
 
   if(dryRun){
     console.log(`✓ dry-run: ${time.nome} parseado com ${jogadores.length} jogadores; nenhum arquivo alterado.`);
@@ -242,12 +295,14 @@ function main(){
     return;
   }
 
-  fs.writeFileSync(GAME,game);
-
-  runPostChecks();
+  applyProjection(projected);
 
   printWarnings(warnings);
   console.log(`\n✓ ${time.nome} adicionado. Revise o resumo acima; depois: bancadas + smoke + deploy.`);
 }
 
-main();
+if(require.main===module)main();
+
+module.exports={
+  assignPlayerKeys,chooseColor,parse,projectSources,transactionalWrite,validateInput
+};
