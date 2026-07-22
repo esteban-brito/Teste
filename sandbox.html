@@ -264,46 +264,82 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .sim-details[open] summary::after{content:"−"}
 .sim-details summary span{margin-left:auto;font-family:var(--fb);font-size:var(--fs-xs);font-weight:600;color:var(--dim)}
 .sim-details-body{padding:0 12px 12px;border-top:1px solid var(--line)}
-.sim-breakdowns{align-items:start}
+.sim-breakdowns{grid-template-columns:1fr;align-items:start;gap:12px}
 .sim-data-panel{min-width:0;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-soft);overflow:auto}
 .sim-data-title{position:sticky;left:0;padding:9px 10px;border-bottom:1px solid var(--line);font-family:var(--ff);font-size:var(--fs-xs);font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--neutral)}
 .sim-data-panel table{background:transparent}
 .sim-data-panel th,.sim-data-panel td{padding:8px 10px}
 .sim-data-panel tbody tr:last-child td{border-bottom:0}
-.player-delta{overflow:hidden}
+.player-delta{overflow:hidden;margin:0}
 .player-delta>.sim-data-title{display:flex;align-items:center;gap:8px}
-.player-delta table{min-width:1080px}
-.player-table-scroll{overflow-x:auto}
-.player-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:8px;padding:10px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--panel) 45%,var(--panel-soft))}
+.player-table-scroll{position:relative;overflow-x:auto;scrollbar-gutter:stable}
+.player-controls{display:grid;grid-template-columns:minmax(210px,1.6fr) repeat(5,minmax(112px,1fr)) auto;align-items:end;gap:8px;padding:10px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--panel) 45%,var(--panel-soft))}
 .player-filter{display:flex;flex-direction:column;gap:4px;min-width:0}
-.player-filter:first-child{grid-column:span 2}
 .player-filter span{font-size:var(--fs-2xs);font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
 .player-filter input,.player-filter select{width:100%;min-width:0}
-.player-filter-action{align-self:end;white-space:nowrap}
+.player-filter-actions{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.player-filter-action{white-space:nowrap}
 .player-view-count{margin-left:auto;font-family:var(--fb);font-size:var(--fs-xs);font-weight:600;letter-spacing:0;text-transform:none;color:var(--dim)}
-.player-compare-check{display:flex;align-items:center;gap:5px;margin-top:5px;width:max-content;font-size:var(--fs-2xs);font-weight:700;color:var(--neutral);cursor:pointer}
+.player-compare-check{display:flex;align-items:center;justify-content:center;width:22px;height:22px;flex:none;border:1px solid var(--line);border-radius:var(--radius-xs);background:var(--panel);cursor:pointer}
 .player-compare-check input{width:auto;margin:0}
-.player-comparison{padding:10px;border-bottom:1px solid var(--line)}
+.player-comparison{padding:10px;border-bottom:1px solid var(--line);transition:background .18s var(--ease)}
+.player-comparison.is-empty{padding-block:7px;background:color-mix(in srgb,var(--panel) 35%,transparent)}
+.player-comparison.is-empty .player-comparison-head{margin:0}
+.player-comparison.is-empty .player-comparison-body{display:none}
 .player-comparison-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;font-family:var(--ff);font-size:var(--fs-xs);font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--neutral)}
 .player-comparison-head span{font-family:var(--fb);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;color:var(--dim)}
 .player-comparison-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.player-compare-card{padding:9px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--panel-soft)}
-.player-compare-name{font-family:var(--ff);font-weight:800;color:var(--txt)}
-.player-compare-meta{margin-top:2px;font-size:var(--fs-2xs);color:var(--dim)}
+.player-compare-card{padding:12px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--panel-soft)}
+.player-compare-name{font-family:var(--ff);font-size:var(--fs-md);font-weight:800;color:var(--txt)}
+.player-compare-meta{margin-top:2px;font-size:var(--fs-xs);color:var(--dim)}
+.player-compare-card .rating-viz{margin-top:10px;padding:8px;border:1px solid var(--line2);border-radius:var(--radius-xs);background:var(--panel)}
 .player-compare-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:8px}
-.player-compare-metrics span{font-size:var(--fs-2xs);color:var(--dim)}
+.player-compare-metrics span{font-size:var(--fs-xs);color:var(--dim)}
 .player-compare-metrics b{display:block;margin-top:2px;font-family:var(--ff);font-size:var(--fs-sm);color:var(--neutral);font-variant-numeric:tabular-nums}
 .player-compare-empty{padding:7px 0;font-size:var(--fs-s);color:var(--dim)}
-.player-cell{min-width:128px}
-.player-cell strong{display:block;color:var(--txt)}
+.player-variance-table{width:100%;min-width:1000px;table-layout:fixed;font-size:var(--fs-sm)}
+.player-variance-table th,.player-variance-table td{vertical-align:middle}
+.player-variance-table th{position:sticky;top:0;z-index:4}
+.player-variance-table th:nth-child(1),.player-variance-table td:nth-child(1){width:132px;position:sticky;left:0}
+.player-variance-table th:nth-child(2),.player-variance-table td:nth-child(2){width:130px;position:sticky;left:132px}
+.player-variance-table th:nth-child(3),.player-variance-table td:nth-child(3){width:65px;position:sticky;left:262px;box-shadow:10px 0 16px -16px rgba(0,0,0,.95)}
+.player-variance-table th:nth-child(-n+3){z-index:6;background:var(--panel)}
+.player-variance-table td:nth-child(-n+3){z-index:2;background:var(--panel-soft)}
+.player-variance-table th:nth-child(4),.player-variance-table th:nth-child(5),.player-variance-table th:nth-child(6),.player-variance-table th:nth-child(8),.player-variance-table th:nth-child(10){width:58px}
+.player-variance-table th:nth-child(7){width:300px}
+.player-variance-table th:nth-child(9){width:90px}
+.player-variance-table tbody tr:hover td{background:color-mix(in srgb,var(--cyan) 5%,var(--panel-soft))}
+.player-name-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.player-cell strong{display:block;color:var(--txt);font-size:var(--fs-base)}
 .player-cell span,.team-cell span{display:block;margin-top:2px;font-size:var(--fs-2xs);color:var(--dim)}
-.team-cell{min-width:120px}
+.team-cell{min-width:0}
+.role-pill{display:inline-flex;padding:2px 7px;border:1px solid var(--line);border-radius:var(--radius-pill);font-size:var(--fs-xs);font-weight:700;color:var(--neutral);white-space:nowrap}
 .sample-cell{min-width:92px}
 .sample-status{display:block;width:max-content;margin-top:4px;padding:2px 6px;border:1px solid color-mix(in srgb,var(--win) 35%,var(--line));border-radius:var(--radius-pill);font-size:var(--fs-2xs);font-weight:700;color:var(--win);white-space:nowrap}
 .sample-status.low{border-color:color-mix(in srgb,var(--warn) 45%,var(--line));color:var(--warn)}
 .reference-note{display:block;margin-top:2px;font-size:var(--fs-2xs);color:var(--dim);white-space:nowrap}
+.player-dist-legend{display:flex;align-items:center;gap:13px;flex-wrap:wrap;padding:8px 10px;border-bottom:1px solid var(--line);font-size:var(--fs-xs);color:var(--dim)}
+.player-dist-legend b{color:var(--neutral);font-weight:700}
+.dist-legend-key{display:inline-flex;align-items:center;gap:5px}
+.dist-legend-swatch{position:relative;width:22px;height:8px;border-radius:3px;background:color-mix(in srgb,var(--cyan) 28%,var(--line2));border:1px solid color-mix(in srgb,var(--cyan) 55%,var(--line))}
+.dist-legend-swatch.mean{width:8px;height:8px;border-radius:50%;background:var(--accent);border-color:var(--accent)}
+.dist-legend-swatch.historical{width:2px;height:11px;border:0;border-radius:0;background:var(--gold)}
+.rating-viz{min-width:0;text-align:left}
+.rating-track{position:relative;height:18px;margin:1px 2px 5px}
+.rating-axis,.rating-whisker,.rating-tail,.rating-band,.rating-median,.rating-historical,.rating-mean{position:absolute;display:block}
+.rating-axis{left:0;right:0;top:8px;height:1px;background:var(--line)}
+.rating-whisker{left:var(--r-min);width:calc(var(--r-max) - var(--r-min));top:7px;height:3px;border-radius:var(--radius-pill);background:var(--faint)}
+.rating-tail{left:var(--r-p05);width:calc(var(--r-p95) - var(--r-p05));top:6px;height:5px;border-radius:var(--radius-pill);background:var(--neutral)}
+.rating-band{left:var(--r-p10);width:calc(var(--r-p90) - var(--r-p10));top:4px;height:9px;border:1px solid color-mix(in srgb,var(--cyan) 62%,var(--line));border-radius:3px;background:color-mix(in srgb,var(--cyan) 30%,var(--panel))}
+.rating-median,.rating-historical{top:2px;bottom:2px;width:2px;transform:translateX(-1px)}
+.rating-median{left:var(--r-median);background:var(--txt-hi)}
+.rating-historical{left:var(--r-historical);background:var(--gold)}
+.rating-mean{left:var(--r-mean);top:5px;width:8px;height:8px;transform:translateX(-4px);border:2px solid var(--panel-soft);border-radius:50%;background:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.rating-viz-main,.rating-viz-meta{display:flex;justify-content:space-between;gap:8px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.rating-viz-main{font-family:var(--ff);font-size:var(--fs-xs);color:var(--neutral)}
+.rating-viz-meta{margin-top:2px;font-size:var(--fs-2xs);color:var(--dim)}
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .player-delta abbr{text-decoration:none;border:0;cursor:help}
-.player-delta{margin:0}
 .sim-footnote{padding-top:10px;margin-top:12px;border-top:1px solid var(--line);font-size:var(--fs-s);color:var(--dim)}
 #matchout{margin-top:10px}
 
@@ -609,8 +645,24 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
   .player-controls{grid-template-columns:1fr 1fr}
   .player-filter:first-child{grid-column:1/-1}
   .player-filter:nth-child(6){grid-column:1/-1}
+  .player-filter-actions{grid-column:1/-1}
+  .player-filter-actions .btn{flex:1}
   .player-comparison-grid{grid-template-columns:1fr}
   .player-compare-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .player-dist-legend{gap:8px}
+  .player-table-scroll{overflow:visible;padding:8px;background:var(--panel)}
+  .player-variance-table{display:block;min-width:0}
+  .player-variance-table thead{display:none}
+  .player-variance-table tbody{display:grid;gap:8px}
+  .player-variance-table tbody tr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:10px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--panel-soft)}
+  .player-variance-table tbody td{position:static!important;display:block;width:auto!important;padding:3px!important;border:0!important;box-shadow:none!important;background:transparent!important;text-align:left!important}
+  .player-variance-table tbody td[data-label]::before{content:attr(data-label);display:block;margin-bottom:3px;font-family:var(--fb);font-size:var(--fs-2xs);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+  .player-variance-table .player-cell{grid-column:1/3}
+  .player-variance-table .role-cell{grid-column:3;grid-row:1;text-align:right!important}
+  .player-variance-table .team-cell{grid-column:1/-1}
+  .player-variance-table .distribution-cell{grid-column:1/-1;padding:8px!important;border-top:1px solid var(--line2)!important;border-bottom:1px solid var(--line2)!important}
+  .player-variance-table .player-empty{display:block}
+  .player-variance-table .player-empty td{display:block!important}
 }
 </style>
 </head>
@@ -3287,34 +3339,45 @@ function downloadSimPlayerCsv(){
   document.body.appendChild(a);a.click();window.URL.revokeObjectURL(a.href);a.remove();
   toast(`${rows.length} jogador${rows.length===1?"":"es"} exportado${rows.length===1?"":"s"}`);
 }
-function simPlayerRowHtml(player){
+function simPlayerChartScale(rows){
+  const values=rows.flatMap(player=>[player.distribution.min,player.distribution.max,player.historical,player.real]).filter(Number.isFinite);
+  if(!values.length)return [0,2];
+  let lower=Math.min(...values),upper=Math.max(...values);
+  if(lower===upper){lower-=.5;upper+=.5;}
+  const padding=Math.max(.04,(upper-lower)*.04);
+  return [Math.max(0,lower-padding),upper+padding];
+}
+function simRatingPosition(value,scale){return `${Math.max(0,Math.min(100,(value-scale[0])/Math.max(.000001,scale[1]-scale[0])*100)).toFixed(3)}%`;}
+function simPlayerDistributionVisual(player,scale){
+  const stats=player.distribution,range=player.recurringRange,style=`--r-min:${simRatingPosition(stats.min,scale)};--r-p05:${simRatingPosition(stats.p05,scale)};--r-p10:${simRatingPosition(range.lower,scale)};--r-median:${simRatingPosition(stats.median,scale)};--r-mean:${simRatingPosition(stats.mean,scale)};--r-p90:${simRatingPosition(range.upper,scale)};--r-p95:${simRatingPosition(stats.p95,scale)};--r-max:${simRatingPosition(stats.max,scale)};--r-historical:${simRatingPosition(player.historical,scale)}`;
+  const label=`${player.name}: mínimo ${stats.min.toFixed(2)}, P10 ${range.lower.toFixed(2)}, mediana ${stats.median.toFixed(2)}, média ${stats.mean.toFixed(2)}, P90 ${range.upper.toFixed(2)}, máximo ${stats.max.toFixed(2)}, histórico ${player.historical.toFixed(2)}`;
+  return `<div class="rating-viz" role="img" aria-label="${esc(label)}" style="${style}"><div class="rating-track"><span class="rating-axis"></span><span class="rating-whisker"></span><span class="rating-tail"></span><span class="rating-band"></span><span class="rating-historical"></span><span class="rating-median"></span><span class="rating-mean"></span></div><div class="rating-viz-main"><span>80% ${range.lower.toFixed(2)}–${range.upper.toFixed(2)}</span><span>Med. ${stats.median.toFixed(2)}</span></div><div class="rating-viz-meta"><span>Ext. ${stats.min.toFixed(2)}–${stats.max.toFixed(2)}</span><span>P5–P95 ${stats.p05.toFixed(2)}–${stats.p95.toFixed(2)}</span></div></div>`;
+}
+function simPlayerRowHtml(player,scale){
   const stats=player.distribution,ci=player.meanCI,edited=Math.abs(player.real-player.historical)>1e-9;
   return `<tr data-player-id="${esc(player.id)}" data-sufficient="${player.sufficient}">
-    <td class="player-cell"><strong>${esc(player.name)}</strong><span>${esc(player.id)}</span><label class="player-compare-check"><input type="checkbox" data-compare-player="${esc(player.id)}"${simPlayerView.compare.includes(String(player.id))?" checked":""} aria-label="Comparar ${esc(player.name)}"><span>Comparar</span></label></td>
+    <td class="player-cell"><div class="player-name-row"><strong>${esc(player.name)}</strong><label class="player-compare-check"><input type="checkbox" data-compare-player="${esc(player.id)}"${simPlayerView.compare.includes(String(player.id))?" checked":""} aria-label="Comparar ${esc(player.name)}"><span class="sr-only">Comparar</span></label></div><span>${esc(player.id)}</span></td>
     <td class="team-cell">${esc(player.teamName)}<span>${esc(player.teamCampaign)}</span></td>
-    <td>${esc(player.role)}</td>
-    <td class="mono" data-value="${player.historical}">${player.historical.toFixed(2)}${edited?`<span class="reference-note">ref. atual ${player.real.toFixed(2)}</span>`:""}</td>
-    <td class="mono" data-value="${stats.mean}">${stats.mean.toFixed(2)}</td>
-    <td class="mono" data-value="${stats.median}">${stats.median.toFixed(2)}</td>
-    <td class="mono" data-value="${stats.stdDev}">${stats.stdDev.toFixed(3)}</td>
-    <td class="mono" data-value="${stats.p05}">${stats.p05.toFixed(2)}</td>
-    <td class="mono" data-value="${stats.p95}">${stats.p95.toFixed(2)}</td>
-    <td class="mono">${stats.min.toFixed(2)}–${stats.max.toFixed(2)}</td>
-    <td class="mono">${player.recurringRange.lower.toFixed(2)}–${player.recurringRange.upper.toFixed(2)}</td>
-    <td class="mono" data-value="${ci?ci[1]-ci[0]:""}">${ci?`${ci[0].toFixed(2)}–${ci[1].toFixed(2)}`:"—"}</td>
-    <td class="mono" data-value="${player.historicalDelta}" style="color:var(--${Math.abs(player.historicalDelta)>.12?"warn":"neutral"})">${player.historicalDelta>=0?"+":""}${player.historicalDelta.toFixed(2)}</td>
-    <td class="mono sample-cell" data-value="${player.n}">${player.n}<span class="sample-status${player.sufficient?"":" low"}">${player.sufficient?"Suficiente":`Pequena · mín. ${player.minimumMaps}`}</span></td>
+    <td class="role-cell"><span class="role-pill">${esc(player.role)}</span></td>
+    <td class="mono historical-cell" data-label="Histórico" data-stat="historical" data-value="${player.historical}">${player.historical.toFixed(2)}${edited?`<span class="reference-note">ref. ${player.real.toFixed(2)}</span>`:""}</td>
+    <td class="mono mean-cell" data-label="Média" data-stat="mean" data-value="${stats.mean}">${stats.mean.toFixed(2)}</td>
+    <td class="mono delta-cell" data-label="Δ histórico" data-stat="delta" data-value="${player.historicalDelta}" style="color:var(--${Math.abs(player.historicalDelta)>.12?"warn":"neutral"})">${player.historicalDelta>=0?"+":""}${player.historicalDelta.toFixed(2)}</td>
+    <td class="distribution-cell" data-min="${stats.min}" data-p10="${player.recurringRange.lower}" data-p90="${player.recurringRange.upper}" data-max="${stats.max}">${simPlayerDistributionVisual(player,scale)}</td>
+    <td class="mono std-cell" data-label="DP" data-stat="stdDev" data-value="${stats.stdDev}">${stats.stdDev.toFixed(3)}</td>
+    <td class="mono ci-cell" data-label="IC95%" data-stat="ciWidth" data-value="${ci?ci[1]-ci[0]:""}">${ci?`${ci[0].toFixed(2)}–${ci[1].toFixed(2)}`:"—"}</td>
+    <td class="mono sample-cell" data-label="Mapas" data-stat="maps" data-value="${player.n}">${player.n}<span class="sample-status${player.sufficient?"":" low"}">${player.sufficient?"Suficiente":`Pequena · mín. ${player.minimumMaps}`}</span></td>
   </tr>`;
 }
-function simPlayerTableRowsHtml(rows){
-  return rows.map(simPlayerRowHtml).join("")||`<tr class="player-empty"><td colspan="14" style="text-align:left;color:var(--dim)">Nenhum jogador corresponde aos filtros.</td></tr>`;
+function simPlayerTableRowsHtml(rows,scale){
+  return rows.map(player=>simPlayerRowHtml(player,scale)).join("")||`<tr class="player-empty"><td colspan="10" style="text-align:left;color:var(--dim)">Nenhum jogador corresponde aos filtros.</td></tr>`;
 }
 function simPlayerComparisonBody(allRows){
   const selected=simPlayerView.compare.map(id=>allRows.find(player=>String(player.id)===id)).filter(Boolean);
-  if(!selected.length)return `<div class="player-compare-empty">Selecione até dois jogadores na tabela para comparar suas distribuições.</div>`;
+  if(!selected.length)return "";
+  const scale=simPlayerChartScale(allRows);
   return `<div class="player-comparison-grid">${selected.map(player=>{
     const stats=player.distribution,ci=player.meanCI;
-    return `<article class="player-compare-card" data-compare-card="${esc(player.id)}"><div class="player-compare-name">${esc(player.name)}</div><div class="player-compare-meta">${esc(player.teamName)} · ${esc(player.teamCampaign)} · ${esc(player.role)}</div><div class="player-compare-metrics">
+    return `<article class="player-compare-card" data-compare-card="${esc(player.id)}"><div class="player-compare-name">${esc(player.name)}</div><div class="player-compare-meta">${esc(player.teamName)} · ${esc(player.teamCampaign)} · ${esc(player.role)}</div>${simPlayerDistributionVisual(player,scale)}<div class="player-compare-metrics">
       <span>Histórico<b>${player.historical.toFixed(2)}</b></span><span>Média<b>${stats.mean.toFixed(2)}</b></span><span>Mediana<b>${stats.median.toFixed(2)}</b></span><span>DP<b>${stats.stdDev.toFixed(3)}</b></span>
       <span>P5–P95<b>${stats.p05.toFixed(2)}–${stats.p95.toFixed(2)}</b></span><span>Extremos<b>${stats.min.toFixed(2)}–${stats.max.toFixed(2)}</b></span><span>Faixa recorrente<b>${player.recurringRange.lower.toFixed(2)}–${player.recurringRange.upper.toFixed(2)}</b></span><span>IC95%<b>${ci?`${ci[0].toFixed(2)}–${ci[1].toFixed(2)}`:"—"}</b></span><span>Δ histórico<b>${player.historicalDelta>=0?"+":""}${player.historicalDelta.toFixed(2)}</b></span><span>Mapas<b>${player.n}</b></span>
     </div></article>`;
@@ -3325,7 +3388,7 @@ function simPlayerPanelHtml(allRows){
     .sort((a,b)=>a[1].localeCompare(b[1],"pt-BR",{numeric:true,sensitivity:"base"}));
   if(simPlayerView.team!=="all"&&!availableTeams.some(([value])=>value===simPlayerView.team))simPlayerView.team="all";
   const availableRoles=[...new Set(allRows.map(player=>player.role))].sort((a,b)=>a.localeCompare(b));
-  const visible=simPlayerViewRows(allRows);
+  const visible=simPlayerViewRows(allRows),scale=simPlayerChartScale(allRows);
   const option=(value,label,current)=>`<option value="${esc(value)}"${value===current?" selected":""}>${esc(label)}</option>`;
   return `<div class="sim-data-title"><span>Distribuições de rating</span><span class="player-view-count">${visible.length} / ${allRows.length} participantes</span></div>
     <div class="player-controls" aria-label="Filtros dos jogadores">
@@ -3339,22 +3402,23 @@ function simPlayerPanelHtml(allRows){
         ["ciWidth","Largura do IC95%"],["delta","Δ histórico"],["maps","Mapas"]
       ].map(([value,label])=>option(value,label,simPlayerView.sort)).join("")}</select></label>
       <label class="player-filter"><span>Direção</span><select id="simPlayerDirection">${option("desc","Decrescente",simPlayerView.direction)}${option("asc","Crescente",simPlayerView.direction)}</select></label>
-      <button type="button" class="btn player-filter-action" id="simPlayerExport"${visible.length?"":" disabled"}>Exportar CSV</button>
-      <button type="button" class="btn player-filter-action" id="simPlayerReset">Limpar filtros</button>
+      <div class="player-filter-actions"><button type="button" class="btn player-filter-action" id="simPlayerExport"${visible.length?"":" disabled"}>Exportar CSV</button><button type="button" class="btn player-filter-action" id="simPlayerReset">Limpar filtros</button></div>
     </div>
-    <div class="player-comparison"><div class="player-comparison-head">Comparação <span>${simPlayerView.compare.length} / 2 selecionados</span></div><div class="player-comparison-body">${simPlayerComparisonBody(allRows)}</div></div>
-    <div class="player-table-scroll"><table class="player-variance-table"><thead><tr><th>Jogador</th><th>Time</th><th>Função</th><th>Hist.</th><th>Média</th><th>Mediana</th><th><abbr title="Desvio-padrão entre mapas">DP</abbr></th><th>P5</th><th>P95</th><th><abbr title="Menor e maior rating observados, mesmo quando ocorreram uma única vez">Mín.–Máx.</abbr></th><th><abbr title="P10–P90: faixa central de 80% dos mapas, desconsiderando os 10% menores e os 10% maiores">Faixa 80%</abbr></th><th><abbr title="Intervalo de confiança de 95% da média">IC95%</abbr></th><th>Δ hist.</th><th>Mapas</th></tr></thead><tbody>${simPlayerTableRowsHtml(visible)}</tbody></table></div>`;
+    <div class="player-comparison${simPlayerView.compare.length?"":" is-empty"}"><div class="player-comparison-head">Comparação <span>${simPlayerView.compare.length?`${simPlayerView.compare.length} / 2 selecionados`:"Selecione até dois jogadores na tabela"}</span></div><div class="player-comparison-body">${simPlayerComparisonBody(allRows)}</div></div>
+    <div class="player-dist-legend" aria-label="Legenda da distribuição"><b>Distribuição por mapa</b><span class="dist-legend-key"><i class="dist-legend-swatch"></i>80% recorrente</span><span class="dist-legend-key"><i class="dist-legend-swatch mean"></i>Média</span><span class="dist-legend-key"><i class="dist-legend-swatch historical"></i>Histórico</span><span>Traço branco: mediana</span></div>
+    <div class="player-table-scroll"><table class="player-variance-table"><thead><tr><th>Jogador</th><th>Time</th><th>Função</th><th>Hist.</th><th>Média</th><th>Δ hist.</th><th>Distribuição</th><th><abbr title="Desvio-padrão entre mapas">DP</abbr></th><th><abbr title="Intervalo de confiança de 95% da média">IC95%</abbr></th><th>Mapas</th></tr></thead><tbody>${simPlayerTableRowsHtml(visible,scale)}</tbody></table></div>`;
 }
 function refreshSimPlayerView(){
   if(!lastBatch)return;
   const panel=document.querySelector("#matchout .player-delta");
   if(!panel)return;
-  const allRows=simPlayerDistributionRows(lastBatch),visible=simPlayerViewRows(allRows);
-  const tbody=panel.querySelector(".player-variance-table tbody"),count=panel.querySelector(".player-view-count"),comparison=panel.querySelector(".player-comparison-body"),comparisonCount=panel.querySelector(".player-comparison-head span"),exportButton=panel.querySelector("#simPlayerExport");
-  if(tbody)tbody.innerHTML=simPlayerTableRowsHtml(visible);
+  const allRows=simPlayerDistributionRows(lastBatch),visible=simPlayerViewRows(allRows),scale=simPlayerChartScale(allRows);
+  const tbody=panel.querySelector(".player-variance-table tbody"),count=panel.querySelector(".player-view-count"),comparisonPanel=panel.querySelector(".player-comparison"),comparison=panel.querySelector(".player-comparison-body"),comparisonCount=panel.querySelector(".player-comparison-head span"),exportButton=panel.querySelector("#simPlayerExport");
+  if(tbody)tbody.innerHTML=simPlayerTableRowsHtml(visible,scale);
   if(count)count.textContent=`${visible.length} / ${allRows.length} participantes`;
   if(comparison)comparison.innerHTML=simPlayerComparisonBody(allRows);
-  if(comparisonCount)comparisonCount.textContent=`${simPlayerView.compare.length} / 2 selecionados`;
+  if(comparisonCount)comparisonCount.textContent=simPlayerView.compare.length?`${simPlayerView.compare.length} / 2 selecionados`:"Selecione até dois jogadores na tabela";
+  if(comparisonPanel)comparisonPanel.classList.toggle("is-empty",!simPlayerView.compare.length);
   if(exportButton)exportButton.disabled=!visible.length;
 }
 function simCampaignMapOrder(seed){

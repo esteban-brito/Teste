@@ -76,16 +76,16 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     const singleMapVariance=await page.evaluate(()=>({
       headers:[...document.querySelectorAll(".player-variance-table thead th")].map(cell=>cell.textContent.trim()),
       rows:[...document.querySelectorAll(".player-variance-table tbody tr")].map(row=>({
-        cells:[...row.cells].map(cell=>cell.textContent.replace(/\s+/g," ").trim()),
-        values:[...row.querySelectorAll("td[data-value]")].map(cell=>cell.dataset.value),
+        stats:Object.fromEntries([...row.querySelectorAll("td[data-stat]")].map(cell=>[cell.dataset.stat,cell.dataset.value])),
+        range:{...row.querySelector(".distribution-cell")?.dataset},
+        distributionLabel:row.querySelector(".rating-viz")?.getAttribute("aria-label")||"",
         sufficient:row.dataset.sufficient
       }))
     }));
-    const expectedVarianceColumns=["Jogador","Time","Função","Hist.","Média","Mediana","DP","P5","P95","Mín.–Máx.","Faixa 80%","IC95%","Δ hist.","Mapas"];
+    const expectedVarianceColumns=["Jogador","Time","Função","Hist.","Média","Δ hist.","Distribuição","DP","IC95%","Mapas"];
     const validSingleMap=singleMapVariance.rows.every(row=>{
-      const [historical,average,median,stdDev,p05,p95]=row.values.map(Number);
-      const collapsed=`${average.toFixed(2)}–${average.toFixed(2)}`;
-      return [historical,average,median,stdDev,p05,p95].every(Number.isFinite)&&average===median&&average===p05&&average===p95&&stdDev===0&&row.cells[9]===collapsed&&row.cells[10]===collapsed&&row.cells[11]==="—"&&row.sufficient==="false";
+      const historical=Number(row.stats.historical),average=Number(row.stats.mean),stdDev=Number(row.stats.stdDev),range=[row.range.min,row.range.p10,row.range.p90,row.range.max].map(Number);
+      return [historical,average,stdDev,...range].every(Number.isFinite)&&range.every(value=>value===average)&&stdDev===0&&row.stats.ciWidth===""&&/mediana|média/.test(row.distributionLabel)&&row.sufficient==="false";
     });
     check(JSON.stringify(singleMapVariance.headers)===JSON.stringify(expectedVarianceColumns),"painel individual separa histórico, tendência, dispersão e incerteza");
     check(singleMapVariance.rows.length===10&&validSingleMap,"um mapa mantém 10 jogadores, estatísticas degeneradas válidas e aviso de amostra pequena");
@@ -105,7 +105,9 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
         bands:[...out.querySelectorAll('[title^="real "]')].map(node=>({title:node.title,style:node.getAttribute("style")||""})),
         groups:out.querySelectorAll(".fidelity-group").length,
         breakdowns:out.querySelectorAll(".sim-breakdowns .sim-data-panel").length,
+        breakdownColumns:getComputedStyle(out.querySelector(".sim-breakdowns")).gridTemplateColumns.trim().split(/\s+/).length,
         deltaRows:out.querySelectorAll(".player-delta tbody tr").length,
+        distributionVisuals:out.querySelectorAll(".player-variance-table .rating-viz").length,
         varianceRows:[...out.querySelectorAll(".player-variance-table tbody tr")].map(row=>({
           values:[...row.querySelectorAll("td[data-value]")].map(cell=>cell.dataset.value),
           sufficient:row.dataset.sufficient
@@ -121,6 +123,7 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     check(JSON.stringify(firstBatch.headers)===JSON.stringify(expectedRoleColumns),"breakdown possui colunas por função esperadas");
     check(firstBatch.rows.length===6,"breakdown cobre as 6 funções do confronto");
     check(firstBatch.deltaRows===10,"painel de rating mostra os 10 jogadores do confronto");
+    check(firstBatch.breakdownColumns===1&&firstBatch.distributionVisuals===10,"funções e distribuições usam a largura completa com uma visualização por jogador");
     check(firstBatch.varianceRows.length===10&&firstBatch.varianceRows.every(row=>row.sufficient==="false"&&row.values.every(value=>value===""||Number.isFinite(Number(value)))),"lote curto expõe distribuições válidas sem esconder amostras pequenas");
     check(firstBatch.samplePlayers.length===10&&firstBatch.samplePlayers.every(player=>player.id&&player.maps===3&&player.samples===3),"lote preserva uma amostra por mapa para cada jogador");
     check(firstBatch.bands.length>=9&&firstBatch.bands.every(band=>band.title.startsWith("real ")),"faixas reais aparecem nas métricas globais e por função");
@@ -152,7 +155,7 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
         metrics:[...out.querySelectorAll("[data-metric]")].map(node=>({key:node.dataset.metric,state:node.className})),
         deltaRows:out.querySelectorAll(".player-delta tbody tr").length,
         insufficientRows:out.querySelectorAll('.player-variance-table tbody tr[data-sufficient="false"]').length,
-        ranges:[...out.querySelectorAll('.player-variance-table tbody tr[data-player-id]')].map(row=>[row.cells[9].textContent,row.cells[10].textContent].map(text=>text.split("–").map(Number))),
+        ranges:[...out.querySelectorAll('.player-variance-table .distribution-cell')].map(cell=>[cell.dataset.min,cell.dataset.p10,cell.dataset.p90,cell.dataset.max].map(Number)),
         samplePlayers:window.__e2e.simulation().players
       };
     });
@@ -162,11 +165,17 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     check(league.metrics.every(metric=>/\b(ok|out|low)\b/.test(metric.state)),"cada métrica recebe diagnóstico ou amostra insuficiente");
     check(league.deltaRows===85,"painel de rating mostra todos os 85 jogadores da liga");
     check(league.insufficientRows===0,"amostra padrão da liga identifica corretamente a suficiência individual");
-    check(league.ranges.length===85&&league.ranges.every(([[minimum,maximum],[p10,p90]])=>[minimum,p10,p90,maximum].every(Number.isFinite)&&minimum<=p10&&p10<=p90&&p90<=maximum),"extremos e faixa recorrente P10–P90 permanecem ordenados para os 85 jogadores");
+    check(league.ranges.length===85&&league.ranges.every(([minimum,p10,p90,maximum])=>[minimum,p10,p90,maximum].every(Number.isFinite)&&minimum<=p10&&p10<=p90&&p90<=maximum),"extremos e faixa recorrente P10–P90 permanecem ordenados para os 85 jogadores");
     check(league.samplePlayers.length===85&&league.samplePlayers.every(player=>player.id&&player.maps===player.samples&&player.maps>=8&&player.maps<=11),"liga preserva as distribuições dos 85 jogadores sem perder exposições");
     check(/Fidelidade profissional\s+\d+\/\d+/.test(league.text)&&!/NaN|undefined|Infinity/.test(league.text),"nota de fidelidade da liga contém apenas valores válidos");
 
     await page.locator("details.sim-details").nth(1).evaluate(node=>{node.open=true;});
+    const diagnosticLayout=await page.evaluate(()=>{
+      const scroller=document.querySelector(".player-table-scroll"),table=document.querySelector(".player-variance-table"),header=table.querySelector("th"),identity=[...table.querySelectorAll("tbody tr:first-child td")].slice(0,3);
+      return {fullWidth:getComputedStyle(document.querySelector(".sim-breakdowns")).gridTemplateColumns.trim().split(/\s+/).length===1,noHorizontalScroll:scroller.scrollWidth<=scroller.clientWidth+1,stickyHeader:getComputedStyle(header).position==="sticky",stickyIdentity:identity.every(cell=>getComputedStyle(cell).position==="sticky")};
+    });
+    check(diagnosticLayout.fullWidth&&diagnosticLayout.noHorizontalScroll&&diagnosticLayout.stickyHeader&&diagnosticLayout.stickyIdentity,`diagnóstico usa largura integral sem scroll horizontal e mantém cabeçalho/identidade fixos${diagnosticLayout.fullWidth&&diagnosticLayout.noHorizontalScroll&&diagnosticLayout.stickyHeader&&diagnosticLayout.stickyIdentity?"":` (${JSON.stringify(diagnosticLayout)})`}`);
+    check(await page.locator(".player-comparison.is-empty .player-comparison-body").evaluate(node=>getComputedStyle(node).display)==="none","comparação vazia permanece recolhida");
     const firstPlayerId="s1mple";
     await page.fill("#simPlayerSearch",firstPlayerId);
     let visiblePlayers=await page.locator('.player-variance-table tbody tr[data-player-id]').count();
@@ -202,7 +211,7 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     const compareBoxes=page.locator('[data-compare-player]');
     await compareBoxes.nth(0).check();
     await compareBoxes.nth(1).check();
-    check(await page.locator("[data-compare-card]").count()===2,"comparação apresenta dois jogadores lado a lado");
+    check(await page.locator("[data-compare-card]").count()===2&&await page.locator("[data-compare-card] .rating-viz").count()===2&&!await page.locator(".player-comparison").evaluate(node=>node.classList.contains("is-empty")),"comparação apresenta dois jogadores lado a lado com distribuição visual");
     await compareBoxes.nth(2).click();
     check(await page.locator("[data-compare-card]").count()===2&&!await compareBoxes.nth(2).isChecked(),"comparação bloqueia um terceiro jogador sem perder a seleção válida");
 
@@ -231,9 +240,10 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       metricColumns:getComputedStyle(document.querySelector(".fidelity-grid")).gridTemplateColumns.trim().split(/\s+/).length,
       tableColumns:getComputedStyle(document.querySelector(".sim-breakdowns")).gridTemplateColumns.trim().split(/\s+/).length,
       controlColumns:getComputedStyle(document.querySelector(".player-controls")).gridTemplateColumns.trim().split(/\s+/).length,
+      cardRows:[...document.querySelectorAll(".player-variance-table tbody tr[data-player-id]")].every(row=>getComputedStyle(row).display==="grid"),
       noOverflow:document.documentElement.scrollWidth<=document.documentElement.clientWidth
     }));
-    check(mobileLayout.metricColumns===1&&mobileLayout.tableColumns===1&&mobileLayout.controlColumns<=2&&mobileLayout.noOverflow,"layout mobile empilha métricas, filtros e tabelas sem overflow horizontal");
+    check(mobileLayout.metricColumns===1&&mobileLayout.tableColumns===1&&mobileLayout.controlColumns<=2&&mobileLayout.cardRows&&mobileLayout.noOverflow,"layout mobile transforma jogadores em cards sem overflow horizontal");
 
     await page.setViewportSize({width:1440,height:700});
     await page.selectOption("#simScope","campaign");
