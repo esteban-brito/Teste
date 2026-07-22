@@ -120,8 +120,11 @@ respeito aos filtros, escaping e neutralização de fórmulas.
 
 O contrato visual exige um gráfico acessível por jogador, painéis em largura
 integral, tabela desktop sem rolagem horizontal, cabeçalho e três colunas de
-identidade fixos, comparação vazia recolhida e cards mobile sem overflow. Os
-gráficos preservam os valores numéricos e seus rótulos para leitores de tela.
+identidade fixos, coluna explícita de comparação, legenda completa, escala comum,
+ajuda recolhida e ausência de badges repetidos quando toda a amostra é suficiente.
+Os filtros se reorganizam em três colunas na largura intermediária e os jogadores
+viram cards no celular, sempre sem overflow da página. Os gráficos preservam os
+valores numéricos e seus rótulos para leitores de tela.
 
 O mesmo E2E protege a campanha curta: controles próprios, término no segundo
 mapa vencido, dois ou três mapas sem repetição, orientação alternada, dez
