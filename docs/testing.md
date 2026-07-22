@@ -118,6 +118,11 @@ ordenação numérica, comparação de dois jogadores e reset entre amostras. O
 download CSV é lido pelo teste para verificar BOM, nome rastreável, schema,
 respeito aos filtros, escaping e neutralização de fórmulas.
 
+O contrato visual exige um gráfico acessível por jogador, painéis em largura
+integral, tabela desktop sem rolagem horizontal, cabeçalho e três colunas de
+identidade fixos, comparação vazia recolhida e cards mobile sem overflow. Os
+gráficos preservam os valores numéricos e seus rótulos para leitores de tela.
+
 O mesmo E2E protege a campanha curta: controles próprios, término no segundo
 mapa vencido, dois ou três mapas sem repetição, orientação alternada, dez
 jogadores, uma amostra por mapa e ausência de apresentação como fidelidade. A

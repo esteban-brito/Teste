@@ -280,11 +280,19 @@ R2 acrescentou ao painel individual, sem alterar a simulação:
 - comparação de até dois jogadores;
 - exportação CSV do conjunto visível, com seed, contexto, BOM, schema estável,
   escaping e neutralização de fórmulas;
-- composição responsiva validada em desktop e celular.
+- distribuição visual em escala comum, preservando faixa P10–P90, P5–P95,
+  extremos, média, mediana e referência histórica sem esconder os números;
+- painéis empilhados em largura integral no desktop, identidade e cabeçalho fixos,
+  comparação recolhida quando vazia e jogadores convertidos em cards no celular;
+- composição responsiva validada em desktop e celular, sem overflow horizontal.
 
 A matemática descritiva compartilhada vive em
 `src/domain/statistics/sample-summary.mjs`, recebe amostras explícitas e não
 depende do DOM. A auditoria R1 e o sandbox consomem o mesmo contrato.
+
+O redesenho visual de julho de 2026 preservou a auditoria profunda exatamente em
+SHA-256 `d9faccb428073b8191640c1a78830340b58f30d1ebdbeb91f60d0d43160bee8d` e
+2.273.746 bytes. A validação integral posterior aprovou 17/17 suítes em 227,4 s.
 
 R3 começou com uma campanha curta MD3 separada do lote de expectativa: dois
 times, mapas sem repetição, orientação alternada, forma mantida na série,
@@ -402,7 +410,9 @@ profunda R1 foi executada duas vezes após R2 e preservou exatamente SHA-256
 - `7109ed5`: exporta o diagnóstico visível em CSV seguro e rastreável.
 - `ebc485e`: adiciona extremos e faixa recorrente P10–P90;
 - `12c1342`: compartilha a acumulação por mapa sem alterar os lotes existentes;
-- `f84d7c1`: inicia R3 com a campanha curta MD3 e golden por seed.
+- `f84d7c1`: inicia R3 com a campanha curta MD3 e golden por seed;
+- `8d0b501`: transforma as distribuições individuais em uma leitura visual,
+  responsiva e sem rolagem horizontal no desktop.
 
 O balanceamento deliberado está documentado em
 `docs/rating-balance-2026-07-20.md`. A mudança posterior de tabela foi apenas de

@@ -165,6 +165,10 @@ Usabilidade entregue:
 - ordenação por qualquer métrica;
 - comparação lado a lado;
 - exportação CSV segura e rastreável do conjunto filtrado;
+- painel visual em escala comum para comparar P10–P90, P5–P95, extremos, média,
+  mediana e referência histórica;
+- largura integral e cabeçalho/identidade fixos no desktop;
+- comparação vazia recolhida e linhas convertidas em cards no celular;
 - todos os jogadores continuam acessíveis, sem curadoria visual.
 
 Aceitação:
@@ -172,7 +176,8 @@ Aceitação:
 - confronto mostra dez jogadores mesmo com lote pequeno;
 - liga mostra todos os jogadores que participaram;
 - resultados numéricos da simulação não mudam;
-- E2E cobre colunas, filtros, ordenação, amostra pequena e mobile;
+- E2E cobre visualizações, colunas, filtros, ordenação, comparação recolhida,
+  amostra pequena, ausência de overflow e cards mobile;
 - nenhuma nova chamada ao RNG.
 
 Evidência registrada:
@@ -184,8 +189,12 @@ Evidência registrada:
   `d9faccb428073b8191640c1a78830340b58f30d1ebdbeb91f60d0d43160bee8d` e
   2.273.746 bytes;
 - E2E cobre dez jogadores, 85 jogadores, amostra pequena, filtros, ordenação,
-  comparação, download CSV, segurança do CSV, rolagem e layout mobile;
-- `npm run validate` aprovado em 17/17 suítes e 201,8 s.
+  comparação, visual por jogador, download CSV, segurança do CSV, rolagem,
+  identidade fixa no desktop e layout mobile;
+- redesenho visual preserva a auditoria profunda em SHA-256
+  `d9faccb428073b8191640c1a78830340b58f30d1ebdbeb91f60d0d43160bee8d` e
+  2.273.746 bytes;
+- `npm run validate` aprovado após o redesenho em 17/17 suítes e 227,4 s.
 
 ### Etapa R3 — separar expectativa de campanha
 
@@ -306,7 +315,8 @@ Aceitação:
 
 Depois de R1–R3, aprofundar explicações estatísticas, navegação por teclado,
 leitores de tela e, se houver demanda, formatos adicionais de exportação, sem
-ocultar jogadores. Busca, filtros, comparação e CSV já foram entregues em R2.
+ocultar jogadores. Busca, filtros, comparação, CSV e a primeira visualização
+acessível das distribuições já foram entregues em R2.
 
 ### P2 — modularização por paridade
 
