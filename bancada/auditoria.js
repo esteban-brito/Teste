@@ -61,9 +61,9 @@ function pairReality(player,rolePairReality=X.rolePairReality){
   return rolePairReality?rolePairReality(player.primario,player.secundario||player.combatRole,player):{cost:0,label:"natural",reasons:[]};
 }
 
-function styleReality(player){
+function styleReality(player,roleStyleReality=X.roleStyleReality){
   const role=player.primario==="IGL"?(player.combatRole||player.secundario):player.primario;
-  return X.roleStyleReality?X.roleStyleReality(role,player.playstyle,player):{cost:0,label:"natural",reasons:[]};
+  return roleStyleReality?roleStyleReality(role,player.playstyle,player):{cost:0,label:"natural",reasons:[]};
 }
 
 function printRolePairs(players){
@@ -85,10 +85,10 @@ function printRarePairs(players,rolePairReality){
     });
 }
 
-function printRareStyles(players){
+function printRareStyles(players,roleStyleReality){
   console.log("\n-- Role/playstyle raros por contexto --");
   players
-    .map(player=>({player,real:styleReality(player)}))
+    .map(player=>({player,real:styleReality(player,roleStyleReality)}))
     .filter(row=>row.real.cost>=.28)
     .sort((a,b)=>b.real.cost-a.real.cost||a.player.nick.localeCompare(b.player.nick))
     .slice(0,18)
@@ -99,7 +99,7 @@ function printRareStyles(players){
     });
 }
 
-function runQuickAudit(rolePairReality=X.rolePairReality){
+function runQuickAudit(rolePairReality=X.rolePairReality,roleStyleReality=X.roleStyleReality){
   const players=Object.values(X.POOL);
   console.log("AUDITORIA PRISMA");
   console.log(`${players.length} jogadores`);
@@ -107,7 +107,7 @@ function runQuickAudit(rolePairReality=X.rolePairReality){
   printCount("Playstyles",countBy(players,player=>player.playstyle),PLAYSTYLE_ORDER);
   printRolePairs(players);
   printRarePairs(players,rolePairReality);
-  printRareStyles(players);
+  printRareStyles(players,roleStyleReality);
   printLowMargins(players);
   printStylePlayers(players,"baiter");
   printStylePlayers(players,"support");
@@ -600,9 +600,11 @@ async function main(args=process.argv.slice(2)){
   const options=parseArguments(args);
   if(options.mode==="help")return usage();
   if(options.mode==="quick"){
-    const moduleUrl=pathToFileURL(path.join(__dirname,"..","src","domain","evaluation","role-pair-reality.mjs")).href;
-    const {rolePairReality}=await import(moduleUrl);
-    return runQuickAudit(rolePairReality);
+    const evaluationPath=path.join(__dirname,"..","src","domain","evaluation");
+    const pairModuleUrl=pathToFileURL(path.join(evaluationPath,"role-pair-reality.mjs")).href;
+    const styleModuleUrl=pathToFileURL(path.join(evaluationPath,"role-style-reality.mjs")).href;
+    const [{rolePairReality},{roleStyleReality}]=await Promise.all([import(pairModuleUrl),import(styleModuleUrl)]);
+    return runQuickAudit(rolePairReality,roleStyleReality);
   }
   const report=buildDeepAudit(options.cycles);
   if(options.format==="json")console.log(JSON.stringify(report,null,2));
