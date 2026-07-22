@@ -272,6 +272,19 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .player-filter input,.player-filter select{width:100%;min-width:0}
 .player-filter-reset{align-self:end;white-space:nowrap}
 .player-view-count{margin-left:auto;font-family:var(--fb);font-size:var(--fs-xs);font-weight:600;letter-spacing:0;text-transform:none;color:var(--dim)}
+.player-compare-check{display:flex;align-items:center;gap:5px;margin-top:5px;width:max-content;font-size:var(--fs-2xs);font-weight:700;color:var(--neutral);cursor:pointer}
+.player-compare-check input{width:auto;margin:0}
+.player-comparison{padding:10px;border-bottom:1px solid var(--line)}
+.player-comparison-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;font-family:var(--ff);font-size:var(--fs-xs);font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--neutral)}
+.player-comparison-head span{font-family:var(--fb);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;color:var(--dim)}
+.player-comparison-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.player-compare-card{padding:9px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--panel-soft)}
+.player-compare-name{font-family:var(--ff);font-weight:800;color:var(--txt)}
+.player-compare-meta{margin-top:2px;font-size:var(--fs-2xs);color:var(--dim)}
+.player-compare-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:8px}
+.player-compare-metrics span{font-size:var(--fs-2xs);color:var(--dim)}
+.player-compare-metrics b{display:block;margin-top:2px;font-family:var(--ff);font-size:var(--fs-sm);color:var(--neutral);font-variant-numeric:tabular-nums}
+.player-compare-empty{padding:7px 0;font-size:var(--fs-s);color:var(--dim)}
 .player-cell{min-width:128px}
 .player-cell strong{display:block;color:var(--txt)}
 .player-cell span,.team-cell span{display:block;margin-top:2px;font-size:var(--fs-2xs);color:var(--dim)}
@@ -585,6 +598,8 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
   .sim-run-head{align-items:flex-start}
   .player-controls{grid-template-columns:1fr 1fr}
   .player-filter:first-child{grid-column:1/-1}
+  .player-comparison-grid{grid-template-columns:1fr}
+  .player-compare-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 </style>
 </head>
@@ -617,7 +632,7 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 
 let E=null, SampleStatistics=null, DEF=null, POOLRAW=[], loadedIdx=null, poolBySlot=new Map();
 let teamIdx=0, simA=0, simB=1, simSeed=0, simSeedCounter=0, simRuns=80, simMap="auto", simScope="match", lastMap=null, lastBatch=null, baseline=null;
-let simPlayerView={query:"",team:"all",role:"all",sufficiency:"all",sort:"absDelta",direction:"desc"};
+let simPlayerView={query:"",team:"all",role:"all",sufficiency:"all",sort:"absDelta",direction:"desc",compare:[]};
 // estrutura nova: uma ferramenta por vez no canvas central (segmented control), jogador fixado no topo
 let centerMode="calibrar"; // calibrar | time | simular | editar | relatorio
 let calibTargetRole="", calibTargetRole2="", calibTargetStyle="", calibTargetOvr="", calibMode="ia", calibLast=null, calibRunning=false, calibBuilding=false;
@@ -3224,7 +3239,7 @@ function simPlayerViewRows(allRows){
 function simPlayerRowHtml(player){
   const stats=player.distribution,ci=player.meanCI,edited=Math.abs(player.real-player.historical)>1e-9;
   return `<tr data-player-id="${esc(player.id)}" data-sufficient="${player.sufficient}">
-    <td class="player-cell"><strong>${esc(player.name)}</strong><span>${esc(player.id)}</span></td>
+    <td class="player-cell"><strong>${esc(player.name)}</strong><span>${esc(player.id)}</span><label class="player-compare-check"><input type="checkbox" data-compare-player="${esc(player.id)}"${simPlayerView.compare.includes(String(player.id))?" checked":""} aria-label="Comparar ${esc(player.name)}"><span>Comparar</span></label></td>
     <td class="team-cell">${esc(player.teamName)}<span>${esc(player.teamCampaign)}</span></td>
     <td>${esc(player.role)}</td>
     <td class="mono" data-value="${player.historical}">${player.historical.toFixed(2)}${edited?`<span class="reference-note">ref. atual ${player.real.toFixed(2)}</span>`:""}</td>
@@ -3240,6 +3255,17 @@ function simPlayerRowHtml(player){
 }
 function simPlayerTableRowsHtml(rows){
   return rows.map(simPlayerRowHtml).join("")||`<tr class="player-empty"><td colspan="12" style="text-align:left;color:var(--dim)">Nenhum jogador corresponde aos filtros.</td></tr>`;
+}
+function simPlayerComparisonBody(allRows){
+  const selected=simPlayerView.compare.map(id=>allRows.find(player=>String(player.id)===id)).filter(Boolean);
+  if(!selected.length)return `<div class="player-compare-empty">Selecione até dois jogadores na tabela para comparar suas distribuições.</div>`;
+  return `<div class="player-comparison-grid">${selected.map(player=>{
+    const stats=player.distribution,ci=player.meanCI;
+    return `<article class="player-compare-card" data-compare-card="${esc(player.id)}"><div class="player-compare-name">${esc(player.name)}</div><div class="player-compare-meta">${esc(player.teamName)} · ${esc(player.teamCampaign)} · ${esc(player.role)}</div><div class="player-compare-metrics">
+      <span>Histórico<b>${player.historical.toFixed(2)}</b></span><span>Média<b>${stats.mean.toFixed(2)}</b></span><span>Mediana<b>${stats.median.toFixed(2)}</b></span><span>DP<b>${stats.stdDev.toFixed(3)}</b></span>
+      <span>P5–P95<b>${stats.p05.toFixed(2)}–${stats.p95.toFixed(2)}</b></span><span>IC95%<b>${ci?`${ci[0].toFixed(2)}–${ci[1].toFixed(2)}`:"—"}</b></span><span>Δ histórico<b>${player.historicalDelta>=0?"+":""}${player.historicalDelta.toFixed(2)}</b></span><span>Mapas<b>${player.n}</b></span>
+    </div></article>`;
+  }).join("")}</div>`;
 }
 function simPlayerPanelHtml(allRows){
   const availableTeams=[...new Map(allRows.map(player=>[String(player.teamIndex),`${player.teamName} · ${player.teamCampaign}`])).entries()]
@@ -3262,6 +3288,7 @@ function simPlayerPanelHtml(allRows){
       <label class="player-filter"><span>Direção</span><select id="simPlayerDirection">${option("desc","Decrescente",simPlayerView.direction)}${option("asc","Crescente",simPlayerView.direction)}</select></label>
       <button type="button" class="btn player-filter-reset" id="simPlayerReset">Limpar filtros</button>
     </div>
+    <div class="player-comparison"><div class="player-comparison-head">Comparação <span>${simPlayerView.compare.length} / 2 selecionados</span></div><div class="player-comparison-body">${simPlayerComparisonBody(allRows)}</div></div>
     <div class="player-table-scroll"><table class="player-variance-table"><thead><tr><th>Jogador</th><th>Time</th><th>Função</th><th>Hist.</th><th>Média</th><th>Mediana</th><th><abbr title="Desvio-padrão entre mapas">DP</abbr></th><th>P5</th><th>P95</th><th><abbr title="Intervalo de confiança de 95% da média">IC95%</abbr></th><th>Δ hist.</th><th>Mapas</th></tr></thead><tbody>${simPlayerTableRowsHtml(visible)}</tbody></table></div>`;
 }
 function refreshSimPlayerView(){
@@ -3269,9 +3296,11 @@ function refreshSimPlayerView(){
   const panel=document.querySelector("#matchout .player-delta");
   if(!panel)return;
   const allRows=simPlayerDistributionRows(lastBatch),visible=simPlayerViewRows(allRows);
-  const tbody=panel.querySelector(".player-variance-table tbody"),count=panel.querySelector(".player-view-count");
+  const tbody=panel.querySelector(".player-variance-table tbody"),count=panel.querySelector(".player-view-count"),comparison=panel.querySelector(".player-comparison-body"),comparisonCount=panel.querySelector(".player-comparison-head span");
   if(tbody)tbody.innerHTML=simPlayerTableRowsHtml(visible);
   if(count)count.textContent=`${visible.length} / ${allRows.length} participantes`;
+  if(comparison)comparison.innerHTML=simPlayerComparisonBody(allRows);
+  if(comparisonCount)comparisonCount.textContent=`${simPlayerView.compare.length} / 2 selecionados`;
 }
 function runBatchLab(){
   if(simScope==="match"&&simA===simB){toast("Escolha dois times diferentes");return;}
@@ -3293,7 +3322,7 @@ function runBatchLab(){
     accSimSide(acc,g.statsA,playersA,r,ai);accSimSide(acc,g.statsB,playersB,r,bi);acc.maps[g.mapa]=(acc.maps[g.mapa]||0)+1;acc.teams[ai]=1;acc.teams[bi]=1;
     const bucket=simGapBucket(Math.abs(A.forca.efetiva-B.forca.efetiva));if(bucket){acc.gaps[bucket].n++;if((A.forca.efetiva>=B.forca.efetiva)===(g.vencedor===A))acc.gaps[bucket].w++;}
   }
-  lastMap=null;lastBatch=acc;renderMatchPanel();
+  simPlayerView.compare=[];lastMap=null;lastBatch=acc;renderMatchPanel();
 }
 function simCIText(ci,dec=1,suf=""){return ci?`IC95% ${ci[0].toFixed(dec)}${suf}–${ci[1].toFixed(dec)}${suf}`:"IC95% requer 2+ mapas";}
 function simMetricCard(metric){const eligible=metric.eligible!==false,ok=eligible&&metric.value>=metric.band[0]&&metric.value<=metric.band[1],cls=eligible?(ok?"ok":"out"):"low",value=Number.isFinite(metric.value)?metric.value.toFixed(metric.dec??1)+(metric.suf||""):"—",meta=eligible?`Referência ${metric.band[0]}–${metric.band[1]}${metric.suf||""}`:`Amostra insuficiente · ${metric.sample||0} evento(s)`;return `<div class="fidelity-card ${cls}" data-metric="${metric.key}"><div><div class="fidelity-label">${metric.label}</div><div class="fidelity-meta">${meta}${metric.note?` · ${metric.note}`:""}</div></div><div class="fidelity-value" title="real ${metric.band[0]}–${metric.band[1]}">${value}</div></div>`;}
@@ -3682,6 +3711,15 @@ function wireSimulador(){
     refreshSimPlayerView();
   });
   out.addEventListener("change",event=>{
+    const compareId=event.target.dataset.comparePlayer;
+    if(compareId){
+      if(event.target.checked){
+        if(simPlayerView.compare.length>=2){event.target.checked=false;toast("Compare no máximo dois jogadores");return;}
+        if(!simPlayerView.compare.includes(compareId))simPlayerView.compare.push(compareId);
+      }else simPlayerView.compare=simPlayerView.compare.filter(id=>id!==compareId);
+      refreshSimPlayerView();
+      return;
+    }
     const keys={simPlayerTeam:"team",simPlayerRole:"role",simPlayerSufficiency:"sufficiency",simPlayerSort:"sort",simPlayerDirection:"direction"},key=keys[event.target.id];
     if(!key)return;
     simPlayerView[key]=event.target.value;
@@ -3689,7 +3727,7 @@ function wireSimulador(){
   });
   out.addEventListener("click",event=>{
     if(!event.target.closest("#simPlayerReset")||!lastBatch)return;
-    simPlayerView={query:"",team:"all",role:"all",sufficiency:"all",sort:"absDelta",direction:"desc"};
+    simPlayerView={query:"",team:"all",role:"all",sufficiency:"all",sort:"absDelta",direction:"desc",compare:[]};
     const panel=out.querySelector(".player-delta");
     if(panel)panel.innerHTML=simPlayerPanelHtml(simPlayerDistributionRows(lastBatch));
   });

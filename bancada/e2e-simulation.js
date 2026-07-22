@@ -162,7 +162,7 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     check(/Fidelidade profissional\s+\d+\/\d+/.test(league.text)&&!/NaN|undefined|Infinity/.test(league.text),"nota de fidelidade da liga contém apenas valores válidos");
 
     await page.locator("details.sim-details").nth(1).evaluate(node=>{node.open=true;});
-    const firstPlayerId=await page.locator('.player-variance-table tbody tr[data-player-id]').first().getAttribute("data-player-id");
+    const firstPlayerId="s1mple";
     await page.fill("#simPlayerSearch",firstPlayerId);
     let visiblePlayers=await page.locator('.player-variance-table tbody tr[data-player-id]').count();
     check(visiblePlayers===1&&await page.locator('.player-variance-table tbody tr[data-player-id]').first().getAttribute("data-player-id")===firstPlayerId,"busca por ID encontra exatamente o jogador solicitado");
@@ -188,20 +188,33 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     const orderedMeans=await page.locator('.player-variance-table tbody tr[data-player-id] td:nth-child(5)').evaluateAll(cells=>cells.map(cell=>Number(cell.dataset.value)));
     check(orderedMeans.every((value,index)=>index===0||orderedMeans[index-1]<=value),"ordenação crescente por média é estável e numérica");
     await page.click("#simPlayerReset");
+    const compareBoxes=page.locator('[data-compare-player]');
+    await compareBoxes.nth(0).check();
+    await compareBoxes.nth(1).check();
+    check(await page.locator("[data-compare-card]").count()===2,"comparação apresenta dois jogadores lado a lado");
+    await compareBoxes.nth(2).click();
+    check(await page.locator("[data-compare-card]").count()===2&&!await compareBoxes.nth(2).isChecked(),"comparação bloqueia um terceiro jogador sem perder a seleção válida");
 
     const leagueSeed=await page.evaluate(()=>window.__e2e.simulation().seed);
     await page.click("#runBatchBtn");
     await page.waitForSelector('#matchout [data-metric="postplant"]',{state:"attached",timeout:20000});
     const leagueSeedAgain=await page.evaluate(()=>window.__e2e.simulation().seed);
     check(leagueSeedAgain!==leagueSeed,"nova amostra da liga também recebe seed automática");
+    check(await page.locator("[data-compare-card]").count()===0,"nova amostra limpa a comparação anterior");
 
-    await page.$eval("details.sim-details",node=>{node.open=true;});
+    await page.$$eval("details.sim-details",nodes=>nodes.forEach(node=>{node.open=true;}));
     await page.evaluate(()=>window.scrollTo(0,0));
-    await page.locator(".sim-core").hover();
+    await page.waitForFunction(()=>window.scrollY===0);
+    const canvasPoint=await page.$eval(".canvas-body",node=>{
+      const rect=node.getBoundingClientRect(),x=Math.min(window.innerWidth-10,Math.max(10,rect.left+Math.min(200,rect.width/2))),y=Math.min(window.innerHeight-10,Math.max(10,rect.top+20));
+      return {x,y,inside:Boolean(document.elementFromPoint(x,y)?.closest(".canvas-body"))};
+    });
+    await page.mouse.move(canvasPoint.x,canvasPoint.y);
+    const scrollBefore=await page.evaluate(()=>window.scrollY);
     await page.mouse.wheel(0,600);
-    await page.waitForTimeout(100);
-    const scroll=await page.evaluate(()=>({windowY:window.scrollY,bodyOverflow:getComputedStyle(document.body).overflowY,canvasOverflow:getComputedStyle(document.querySelector(".canvas-body")).overflowY}));
-    check(scroll.windowY>0&&scroll.bodyOverflow!=="hidden"&&scroll.canvasOverflow!=="auto","rolagem do mouse move a página sem criar scroll aninhado no canvas");
+    await page.waitForTimeout(200);
+    const scroll=await page.evaluate(()=>({windowY:window.scrollY,bodyOverflow:getComputedStyle(document.body).overflowY,canvasOverflow:getComputedStyle(document.querySelector(".canvas-body")).overflowY,scrollHeight:document.documentElement.scrollHeight,clientHeight:document.documentElement.clientHeight}));
+    check(canvasPoint.inside&&scroll.windowY>scrollBefore&&scroll.bodyOverflow!=="hidden"&&scroll.canvasOverflow!=="auto",`rolagem do mouse sobre o canvas move a página sem criar scroll aninhado${scroll.windowY>scrollBefore?"":` (windowY=${scroll.windowY}, antes=${scrollBefore}, height=${scroll.scrollHeight}/${scroll.clientHeight}, body=${scroll.bodyOverflow}, canvas=${scroll.canvasOverflow})`}`);
     await page.setViewportSize({width:390,height:844});
     const mobileLayout=await page.evaluate(()=>({
       metricColumns:getComputedStyle(document.querySelector(".fidelity-grid")).gridTemplateColumns.trim().split(/\s+/).length,
