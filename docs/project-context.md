@@ -282,17 +282,22 @@ R2 acrescentou ao painel individual, sem alterar a simulação:
   escaping e neutralização de fórmulas;
 - distribuição visual em escala comum, preservando faixa P10–P90, P5–P95,
   extremos, média, mediana e referência histórica sem esconder os números;
+- legenda completa, coluna explícita de comparação e ajuda estatística recolhível;
+- resumo superior descrito como aderência às faixas, sem aparentar nota IFCS;
 - painéis empilhados em largura integral no desktop, identidade e cabeçalho fixos,
   comparação recolhida quando vazia e jogadores convertidos em cards no celular;
-- composição responsiva validada em desktop e celular, sem overflow horizontal.
+- composição responsiva validada em desktop, tablet e celular, sem overflow
+  horizontal da página.
 
 A matemática descritiva compartilhada vive em
 `src/domain/statistics/sample-summary.mjs`, recebe amostras explícitas e não
 depende do DOM. A auditoria R1 e o sandbox consomem o mesmo contrato.
 
-O redesenho visual de julho de 2026 preservou a auditoria profunda exatamente em
-SHA-256 `d9faccb428073b8191640c1a78830340b58f30d1ebdbeb91f60d0d43160bee8d` e
-2.273.746 bytes. A validação integral posterior aprovou 17/17 suítes em 227,4 s.
+O redesenho visual e seu refinamento final de julho de 2026 preservaram a
+auditoria profunda exatamente em SHA-256
+`d9faccb428073b8191640c1a78830340b58f30d1ebdbeb91f60d0d43160bee8d` e
+2.273.746 bytes. A validação integral mais recente aprovou 17/17 suítes em
+180,3 s.
 
 R3 começou com uma campanha curta MD3 separada do lote de expectativa: dois
 times, mapas sem repetição, orientação alternada, forma mantida na série,
@@ -412,12 +417,14 @@ profunda R1 foi executada duas vezes após R2 e preservou exatamente SHA-256
 - `12c1342`: compartilha a acumulação por mapa sem alterar os lotes existentes;
 - `f84d7c1`: inicia R3 com a campanha curta MD3 e golden por seed;
 - `8d0b501`: transforma as distribuições individuais em uma leitura visual,
-  responsiva e sem rolagem horizontal no desktop.
+  responsiva e sem rolagem horizontal no desktop;
+- `54168b2`: conclui o refinamento de hierarquia, ações, legenda, comparação,
+  ajuda e responsividade intermediária.
 
 O balanceamento deliberado está documentado em
-`docs/rating-balance-2026-07-20.md`. A mudança posterior de tabela foi apenas de
-interface e teste E2E. Ambos os commits estão publicados; qualquer trabalho novo
-continua sujeito à autorização explícita de push.
+`docs/rating-balance-2026-07-20.md`. As mudanças posteriores de tabela foram
+apenas de interface e teste E2E; qualquer trabalho novo continua sujeito à
+autorização explícita de push.
 
 ## 7. Sistema de testes, CI e deploy
 
