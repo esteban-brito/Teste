@@ -91,8 +91,8 @@ erro máximo. Isso não basta para detectar todos os problemas possíveis:
 - caudas ruins podem coexistir com uma média boa;
 - a ordem dos jogadores dentro de um time pode se inverter sistematicamente;
 - top players podem perder hierarquia sem romper o MAE global;
-- média não mostra a oscilação de mapa para mapa;
-- o sandbox não separa desvio-padrão, percentis e incerteza da média;
+- a interface agora mostra a oscilação de mapa para mapa, mas a campanha curta
+  ainda não possui contrato próprio;
 - o lote longo representa expectativa, não uma campanha competitiva curta;
 - o possível excesso de sobrevivência de certos perfis de AWPer ainda não foi
   isolado por decomposição de componentes;
@@ -136,6 +136,9 @@ Aceitação:
 
 ### Etapa R2 — variância individual no sandbox
 
+**Status:** concluída no ciclo iniciado após `69ce197`, sem alteração de motor,
+dados, configuração, RNG, snapshot ou golden.
+
 Objetivo: mostrar o que a média de 491 mapas esconde.
 
 Para cada jogador, exibir ou disponibilizar:
@@ -154,13 +157,13 @@ Não confundir conceitos:
 - intervalo de confiança mede a precisão da média;
 - delta mede distância da referência histórica.
 
-Usabilidade planejada:
+Usabilidade entregue:
 
 - busca por jogador;
 - filtros por time, role e suficiência;
 - ordenação por qualquer métrica;
 - comparação lado a lado;
-- exportação CSV ou JSON;
+- exportação CSV segura e rastreável do conjunto filtrado;
 - todos os jogadores continuam acessíveis, sem curadoria visual.
 
 Aceitação:
@@ -170,6 +173,18 @@ Aceitação:
 - resultados numéricos da simulação não mudam;
 - E2E cobre colunas, filtros, ordenação, amostra pequena e mobile;
 - nenhuma nova chamada ao RNG.
+
+Evidência registrada:
+
+- matemática compartilhada com R1 em
+  `src/domain/statistics/sample-summary.mjs`, coberta por 5.464 amostras de
+  paridade;
+- auditoria profunda reproduzida duas vezes com SHA-256
+  `d9faccb428073b8191640c1a78830340b58f30d1ebdbeb91f60d0d43160bee8d` e
+  2.273.746 bytes;
+- E2E cobre dez jogadores, 85 jogadores, amostra pequena, filtros, ordenação,
+  comparação, download CSV, segurança do CSV, rolagem e layout mobile;
+- `npm run validate` aprovado em 17/17 suítes e 201,8 s.
 
 ### Etapa R3 — separar expectativa de campanha
 
@@ -267,8 +282,9 @@ Aceitação:
 
 ### P1 — laboratório como ferramenta de investigação
 
-Depois de R1–R3, aprimorar busca, filtros, comparações, exportação, explicações
-estatísticas e acessibilidade sem ocultar jogadores.
+Depois de R1–R3, aprofundar explicações estatísticas, navegação por teclado,
+leitores de tela e, se houver demanda, formatos adicionais de exportação, sem
+ocultar jogadores. Busca, filtros, comparação e CSV já foram entregues em R2.
 
 ### P2 — modularização por paridade
 
@@ -336,10 +352,10 @@ Somente após uma API estável de avaliação, contrato de RNG e save versionado
 
 ## 9. Próxima ação concreta ao retomar
 
-R1 está concluída. A próxima etapa funcional é **R2 — variância individual no
-sandbox**. Na trilha estrutural P2, `rolePairReality`, `secondaryScore` e
+R1 e R2 estão concluídas. A próxima etapa funcional é **R3 — separar expectativa
+de campanha**. Na trilha estrutural P2, `rolePairReality`, `secondaryScore` e
 `roleStyleReality` já foram extraídas por paridade; a próxima fronteira pura do
-PRISMA deve ser caracterizada antes de qualquer nova extração. Não misturar R2 e
+PRISMA deve ser caracterizada antes de qualquer nova extração. Não misturar R3 e
 P2 na mesma mudança.
 
 Primeiro passo operacional:
@@ -348,7 +364,7 @@ Primeiro passo operacional:
 2. rodar `npm ci` e `npm run check`;
 3. ler `AGENTS.md`, `docs/project-context.md`, `docs/architecture.md`,
    `docs/testing.md`, `docs/glossary.md` e este documento;
-4. escolher explicitamente entre a trilha funcional R2 e a trilha estrutural P2;
+4. escolher explicitamente entre a trilha funcional R3 e a trilha estrutural P2;
 5. preservar a baseline e apresentar evidência antes de congelar novos asserts;
 6. não tocar em `CFG_*`, receitas, pesos, thresholds atuais ou RNG incidentalmente.
 
@@ -356,7 +372,7 @@ Primeiro passo operacional:
 
 - definição exata do modo campanha: Major, séries ou temporada curta;
 - métricas individuais que aparecerão por padrão ou em detalhes;
-- formato inicial de exportação: CSV, JSON ou ambos;
+- necessidade futura de exportação JSON além do CSV já entregue;
 - thresholds de cauda e ranking, que dependem da baseline de R1;
 - necessidade de novo balanceamento de sobrevivência, dependente da auditoria R4;
 - todas as decisões de produto da Carreira listadas em

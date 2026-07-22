@@ -25,6 +25,10 @@ faixas atuais são guardas de regressão, não uma nota de 0–100.
 
 `npm run validate` executa sintaxe, lint e as 17 suítes.
 
+O `npm run check` também compara o módulo estatístico compartilhado com as
+fórmulas legadas em 5.464 amostras determinísticas, incluindo vazios, extremos,
+quantis, imutabilidade da entrada e intervalo de confiança.
+
 ## Estado de referência
 
 - A aplicação possui 17 times e 85 cards de jogador.
@@ -108,7 +112,11 @@ motor por seed continua sendo um contrato separado, descrito no ADR 0003.
 O painel individual também possui contrato explícito: mostra os dez jogadores
 de um confronto mesmo com lote abaixo do mínimo estatístico e mostra os 85 IDs
 na amostra completa da liga. A quantidade de mapas permanece visível para que
-uma linha com pouca amostra não pareça tão confiável quanto uma média longa.
+uma linha com pouca amostra não pareça tão confiável quanto uma média longa. O
+E2E valida média, mediana, desvio-padrão, P5, P95, IC95%, busca, filtros,
+ordenação numérica, comparação de dois jogadores e reset entre amostras. O
+download CSV é lido pelo teste para verificar BOM, nome rastreável, schema,
+respeito aos filtros, escaping e neutralização de fórmulas.
 
 `e2e-game-flow.js` percorre o jogo principal pela interface real: sorteia e
 monta os seis slots, valida força e química, disputa Suíça e playoffs, confere
@@ -118,9 +126,8 @@ o balanceamento executável do produto.
 
 ## Próximas camadas
 
-- Auditoria individual de caudas, percentis, ranking global, top players e
-  inversões dentro de cada time, conforme `docs/next-steps.md`.
-- E2E das futuras colunas de variância, filtros, ordenação, busca e amostra pequena.
+- Guardas justificadas de caudas, ranking e inversões somente depois de revisar
+  a caracterização produzida por R1; R1 e R2 permanecem diagnósticas.
 - Golden próprio do modo campanha depois de seu contrato de produto ser definido.
 - Unitários de fórmulas e limites após cada motor ser extraído.
 - Integração do torneio sem DOM.
