@@ -146,6 +146,7 @@ Para cada jogador, exibir ou disponibilizar:
 - média e mediana;
 - desvio-padrão;
 - P5 e P95;
+- extremos absolutos e faixa recorrente P10–P90;
 - intervalo de confiança da média;
 - rating histórico, delta e mapas;
 - aviso de amostra pequena.
@@ -188,6 +189,10 @@ Evidência registrada:
 
 ### Etapa R3 — separar expectativa de campanha
 
+**Status:** em andamento. O primeiro recorte executável é uma MD3 independente
+entre dois times escolhidos; a distribuição entre muitas campanhas permanece
+para a próxima fatia.
+
 Objetivo: responder duas perguntas diferentes sem misturá-las.
 
 **Expectativa de longo prazo:** o lote atual, com centenas de mapas, usado para
@@ -195,9 +200,20 @@ convergência e balanceamento. Deve deixar claro que estabilidade entre execuç�
 é esperada.
 
 **Campanha:** sequência curta e competitivamente plausível, usada para mostrar
-o que uma pessoa pode vivenciar no jogo. Antes de implementar, decidir se a
-unidade será Major, série de confrontos ou temporada curta. Essa decisão de
-produto permanece aberta.
+o que uma pessoa pode vivenciar no jogo. A unidade inicial foi fechada como uma
+série MD3 isolada, menor e mais auditável que um Major ou temporada.
+
+Contrato implementado da primeira fatia:
+
+- dois times escolhidos pelo usuário e primeiro a dois mapas;
+- dois ou três mapas únicos, derivados deterministicamente da seed;
+- orientação dos times alternada entre mapas;
+- forma de cada time sorteada uma vez e mantida durante a série;
+- placar da série e placares de cada mapa;
+- diagnóstico individual disponível, sempre marcado como amostra pequena;
+- golden próprio em `bancada/campaign-golden.json`;
+- separação visual explícita: a MD3 não se apresenta como expectativa ou nota
+  de fidelidade e não altera o Major do jogo principal.
 
 O modo campanha deve definir explicitamente:
 
@@ -215,6 +231,12 @@ Aceitação:
 - campanha possui contrato determinístico por seed;
 - goldens próprios antes de qualquer otimização ou balanceamento;
 - nenhuma duplicação paralela dos motores.
+
+Ainda falta em R3:
+
+- repetir muitas campanhas e mostrar a distribuição de 2–0/2–1 e vencedores;
+- decidir se haverá histórico persistente de séries no laboratório;
+- avaliar uma evolução posterior para temporada curta sem acoplar o Major atual.
 
 ### Etapa R4 — auditoria de AWPer, sobrevivência e playstyle
 
@@ -352,8 +374,9 @@ Somente após uma API estável de avaliação, contrato de RNG e save versionado
 
 ## 9. Próxima ação concreta ao retomar
 
-R1 e R2 estão concluídas. A próxima etapa funcional é **R3 — separar expectativa
-de campanha**. Na trilha estrutural P2, `rolePairReality`, `secondaryScore` e
+R1 e R2 estão concluídas e R3 começou pela MD3 isolada. A próxima fatia
+funcional é **distribuição entre muitas campanhas MD3**. Na trilha estrutural P2,
+`rolePairReality`, `secondaryScore` e
 `roleStyleReality` já foram extraídas por paridade; a próxima fronteira pura do
 PRISMA deve ser caracterizada antes de qualquer nova extração. Não misturar R3 e
 P2 na mesma mudança.
@@ -370,7 +393,7 @@ Primeiro passo operacional:
 
 ## 10. Decisões ainda abertas
 
-- definição exata do modo campanha: Major, séries ou temporada curta;
+- eventual evolução da MD3 isolada para uma temporada curta;
 - métricas individuais que aparecerão por padrão ou em detalhes;
 - necessidade futura de exportação JSON além do CSV já entregue;
 - thresholds de cauda e ranking, que dependem da baseline de R1;

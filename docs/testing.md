@@ -113,10 +113,15 @@ O painel individual também possui contrato explícito: mostra os dez jogadores
 de um confronto mesmo com lote abaixo do mínimo estatístico e mostra os 85 IDs
 na amostra completa da liga. A quantidade de mapas permanece visível para que
 uma linha com pouca amostra não pareça tão confiável quanto uma média longa. O
-E2E valida média, mediana, desvio-padrão, P5, P95, IC95%, busca, filtros,
+E2E valida média, mediana, desvio-padrão, P5, P95, extremos, P10–P90, IC95%, busca, filtros,
 ordenação numérica, comparação de dois jogadores e reset entre amostras. O
 download CSV é lido pelo teste para verificar BOM, nome rastreável, schema,
 respeito aos filtros, escaping e neutralização de fórmulas.
+
+O mesmo E2E protege a campanha curta: controles próprios, término no segundo
+mapa vencido, dois ou três mapas sem repetição, orientação alternada, dez
+jogadores, uma amostra por mapa e ausência de apresentação como fidelidade. A
+seed `424242` deve reproduzir integralmente `bancada/campaign-golden.json`.
 
 `e2e-game-flow.js` percorre o jogo principal pela interface real: sorteia e
 monta os seis slots, valida força e química, disputa Suíça e playoffs, confere
@@ -128,7 +133,7 @@ o balanceamento executável do produto.
 
 - Guardas justificadas de caudas, ranking e inversões somente depois de revisar
   a caracterização produzida por R1; R1 e R2 permanecem diagnósticas.
-- Golden próprio do modo campanha depois de seu contrato de produto ser definido.
+- Distribuição de resultados entre muitas campanhas MD3 e seu contrato de teste.
 - Unitários de fórmulas e limites após cada motor ser extraído.
 - Integração do torneio sem DOM.
 - Screenshots responsivos e com `prefers-reduced-motion`.
