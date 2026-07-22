@@ -671,7 +671,7 @@ async function carregarMotores(){
 }
 async function carregarEstatisticas(){
   SampleStatistics=await import("./src/domain/statistics/sample-summary.mjs");
-  ["describeSample","meanConfidenceInterval"].forEach(name=>{
+  ["describeSample","percentileRange","meanConfidenceInterval"].forEach(name=>{
     if(typeof SampleStatistics[name]!=="function")throw new Error(`estatística ausente: ${name}`);
   });
 }
@@ -3201,6 +3201,7 @@ function simPlayerDistributionRows(batch){
       historical,
       historicalDelta:average-historical,
       distribution:SampleStatistics.describeSample(player.ratings),
+      recurringRange:SampleStatistics.percentileRange(player.ratings,.1,.9),
       meanCI:SampleStatistics.meanConfidenceInterval(player.ratings),
       sufficient:player.n>=minimumMaps,
       minimumMaps
@@ -3213,7 +3214,7 @@ function simPlayerSortValue(player,key){
   return ({
     name:player.name,team:`${player.teamName} ${player.teamCampaign}`,role:player.role,
     historical:player.historical,mean:stats.mean,median:stats.median,stdDev:stats.stdDev,
-    p05:stats.p05,p95:stats.p95,ciWidth:player.meanCI?player.meanCI[1]-player.meanCI[0]:null,
+    p05:stats.p05,p95:stats.p95,min:stats.min,p10:player.recurringRange?.lower,p90:player.recurringRange?.upper,max:stats.max,ciWidth:player.meanCI?player.meanCI[1]-player.meanCI[0]:null,
     delta:player.historicalDelta,absDelta:Math.abs(player.historicalDelta),maps:player.n
   })[key];
 }
@@ -3245,11 +3246,11 @@ function simCsvCell(value){
 }
 function simCsvNumber(value,digits=6){return Number.isFinite(value)?Number(value.toFixed(digits)):null;}
 function simPlayerCsv(batch,rows){
-  const header=["seed","scope","batch_maps","player_id","player_name","team","campaign","role","historical_rating","current_reference_rating","simulated_mean","median","std_dev","p05","p95","ci95_lower","ci95_upper","historical_delta","player_maps","sample_status","minimum_maps"];
+  const header=["seed","scope","batch_maps","player_id","player_name","team","campaign","role","historical_rating","current_reference_rating","simulated_mean","median","std_dev","p05","p95","minimum","p10","p90","maximum","ci95_lower","ci95_upper","historical_delta","player_maps","sample_status","minimum_maps"];
   const data=rows.map(player=>{
     const stats=player.distribution,ci=player.meanCI;
     return [batch.seed,batch.scope,batch.n,player.id,player.name,player.teamName,player.teamCampaign,player.role,
-      simCsvNumber(player.historical),simCsvNumber(player.real),simCsvNumber(stats.mean),simCsvNumber(stats.median),simCsvNumber(stats.stdDev),simCsvNumber(stats.p05),simCsvNumber(stats.p95),
+      simCsvNumber(player.historical),simCsvNumber(player.real),simCsvNumber(stats.mean),simCsvNumber(stats.median),simCsvNumber(stats.stdDev),simCsvNumber(stats.p05),simCsvNumber(stats.p95),simCsvNumber(stats.min),simCsvNumber(player.recurringRange?.lower),simCsvNumber(player.recurringRange?.upper),simCsvNumber(stats.max),
       ci?simCsvNumber(ci[0]):null,ci?simCsvNumber(ci[1]):null,simCsvNumber(player.historicalDelta),player.n,player.sufficient?"sufficient":"small",player.minimumMaps];
   });
   return [header,...data].map(row=>row.map(simCsvCell).join(",")).join("\r\n")+"\r\n";
@@ -3275,13 +3276,15 @@ function simPlayerRowHtml(player){
     <td class="mono" data-value="${stats.stdDev}">${stats.stdDev.toFixed(3)}</td>
     <td class="mono" data-value="${stats.p05}">${stats.p05.toFixed(2)}</td>
     <td class="mono" data-value="${stats.p95}">${stats.p95.toFixed(2)}</td>
+    <td class="mono">${stats.min.toFixed(2)}–${stats.max.toFixed(2)}</td>
+    <td class="mono">${player.recurringRange.lower.toFixed(2)}–${player.recurringRange.upper.toFixed(2)}</td>
     <td class="mono" data-value="${ci?ci[1]-ci[0]:""}">${ci?`${ci[0].toFixed(2)}–${ci[1].toFixed(2)}`:"—"}</td>
     <td class="mono" data-value="${player.historicalDelta}" style="color:var(--${Math.abs(player.historicalDelta)>.12?"warn":"neutral"})">${player.historicalDelta>=0?"+":""}${player.historicalDelta.toFixed(2)}</td>
     <td class="mono sample-cell" data-value="${player.n}">${player.n}<span class="sample-status${player.sufficient?"":" low"}">${player.sufficient?"Suficiente":`Pequena · mín. ${player.minimumMaps}`}</span></td>
   </tr>`;
 }
 function simPlayerTableRowsHtml(rows){
-  return rows.map(simPlayerRowHtml).join("")||`<tr class="player-empty"><td colspan="12" style="text-align:left;color:var(--dim)">Nenhum jogador corresponde aos filtros.</td></tr>`;
+  return rows.map(simPlayerRowHtml).join("")||`<tr class="player-empty"><td colspan="14" style="text-align:left;color:var(--dim)">Nenhum jogador corresponde aos filtros.</td></tr>`;
 }
 function simPlayerComparisonBody(allRows){
   const selected=simPlayerView.compare.map(id=>allRows.find(player=>String(player.id)===id)).filter(Boolean);
@@ -3290,7 +3293,7 @@ function simPlayerComparisonBody(allRows){
     const stats=player.distribution,ci=player.meanCI;
     return `<article class="player-compare-card" data-compare-card="${esc(player.id)}"><div class="player-compare-name">${esc(player.name)}</div><div class="player-compare-meta">${esc(player.teamName)} · ${esc(player.teamCampaign)} · ${esc(player.role)}</div><div class="player-compare-metrics">
       <span>Histórico<b>${player.historical.toFixed(2)}</b></span><span>Média<b>${stats.mean.toFixed(2)}</b></span><span>Mediana<b>${stats.median.toFixed(2)}</b></span><span>DP<b>${stats.stdDev.toFixed(3)}</b></span>
-      <span>P5–P95<b>${stats.p05.toFixed(2)}–${stats.p95.toFixed(2)}</b></span><span>IC95%<b>${ci?`${ci[0].toFixed(2)}–${ci[1].toFixed(2)}`:"—"}</b></span><span>Δ histórico<b>${player.historicalDelta>=0?"+":""}${player.historicalDelta.toFixed(2)}</b></span><span>Mapas<b>${player.n}</b></span>
+      <span>P5–P95<b>${stats.p05.toFixed(2)}–${stats.p95.toFixed(2)}</b></span><span>Extremos<b>${stats.min.toFixed(2)}–${stats.max.toFixed(2)}</b></span><span>Faixa recorrente<b>${player.recurringRange.lower.toFixed(2)}–${player.recurringRange.upper.toFixed(2)}</b></span><span>IC95%<b>${ci?`${ci[0].toFixed(2)}–${ci[1].toFixed(2)}`:"—"}</b></span><span>Δ histórico<b>${player.historicalDelta>=0?"+":""}${player.historicalDelta.toFixed(2)}</b></span><span>Mapas<b>${player.n}</b></span>
     </div></article>`;
   }).join("")}</div>`;
 }
@@ -3309,7 +3312,7 @@ function simPlayerPanelHtml(allRows){
       <label class="player-filter"><span>Amostra</span><select id="simPlayerSufficiency">${option("all","Todas",simPlayerView.sufficiency)}${option("enough","Suficiente",simPlayerView.sufficiency)}${option("small","Pequena",simPlayerView.sufficiency)}</select></label>
       <label class="player-filter"><span>Ordenar</span><select id="simPlayerSort">${[
         ["absDelta","|Δ histórico|"],["name","Jogador"],["team","Time"],["role","Função"],["historical","Histórico"],
-        ["mean","Média"],["median","Mediana"],["stdDev","Desvio-padrão"],["p05","P5"],["p95","P95"],
+        ["mean","Média"],["median","Mediana"],["stdDev","Desvio-padrão"],["p05","P5"],["p95","P95"],["min","Mínimo"],["p10","P10 recorrente"],["p90","P90 recorrente"],["max","Máximo"],
         ["ciWidth","Largura do IC95%"],["delta","Δ histórico"],["maps","Mapas"]
       ].map(([value,label])=>option(value,label,simPlayerView.sort)).join("")}</select></label>
       <label class="player-filter"><span>Direção</span><select id="simPlayerDirection">${option("desc","Decrescente",simPlayerView.direction)}${option("asc","Crescente",simPlayerView.direction)}</select></label>
@@ -3317,7 +3320,7 @@ function simPlayerPanelHtml(allRows){
       <button type="button" class="btn player-filter-action" id="simPlayerReset">Limpar filtros</button>
     </div>
     <div class="player-comparison"><div class="player-comparison-head">Comparação <span>${simPlayerView.compare.length} / 2 selecionados</span></div><div class="player-comparison-body">${simPlayerComparisonBody(allRows)}</div></div>
-    <div class="player-table-scroll"><table class="player-variance-table"><thead><tr><th>Jogador</th><th>Time</th><th>Função</th><th>Hist.</th><th>Média</th><th>Mediana</th><th><abbr title="Desvio-padrão entre mapas">DP</abbr></th><th>P5</th><th>P95</th><th><abbr title="Intervalo de confiança de 95% da média">IC95%</abbr></th><th>Δ hist.</th><th>Mapas</th></tr></thead><tbody>${simPlayerTableRowsHtml(visible)}</tbody></table></div>`;
+    <div class="player-table-scroll"><table class="player-variance-table"><thead><tr><th>Jogador</th><th>Time</th><th>Função</th><th>Hist.</th><th>Média</th><th>Mediana</th><th><abbr title="Desvio-padrão entre mapas">DP</abbr></th><th>P5</th><th>P95</th><th><abbr title="Menor e maior rating observados, mesmo quando ocorreram uma única vez">Mín.–Máx.</abbr></th><th><abbr title="P10–P90: faixa central de 80% dos mapas, desconsiderando os 10% menores e os 10% maiores">Faixa 80%</abbr></th><th><abbr title="Intervalo de confiança de 95% da média">IC95%</abbr></th><th>Δ hist.</th><th>Mapas</th></tr></thead><tbody>${simPlayerTableRowsHtml(visible)}</tbody></table></div>`;
 }
 function refreshSimPlayerView(){
   if(!lastBatch)return;

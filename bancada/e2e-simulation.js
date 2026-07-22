@@ -80,10 +80,11 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
         sufficient:row.dataset.sufficient
       }))
     }));
-    const expectedVarianceColumns=["Jogador","Time","Função","Hist.","Média","Mediana","DP","P5","P95","IC95%","Δ hist.","Mapas"];
+    const expectedVarianceColumns=["Jogador","Time","Função","Hist.","Média","Mediana","DP","P5","P95","Mín.–Máx.","Faixa 80%","IC95%","Δ hist.","Mapas"];
     const validSingleMap=singleMapVariance.rows.every(row=>{
       const [historical,average,median,stdDev,p05,p95]=row.values.map(Number);
-      return [historical,average,median,stdDev,p05,p95].every(Number.isFinite)&&average===median&&average===p05&&average===p95&&stdDev===0&&row.cells[9]==="—"&&row.sufficient==="false";
+      const collapsed=`${average.toFixed(2)}–${average.toFixed(2)}`;
+      return [historical,average,median,stdDev,p05,p95].every(Number.isFinite)&&average===median&&average===p05&&average===p95&&stdDev===0&&row.cells[9]===collapsed&&row.cells[10]===collapsed&&row.cells[11]==="—"&&row.sufficient==="false";
     });
     check(JSON.stringify(singleMapVariance.headers)===JSON.stringify(expectedVarianceColumns),"painel individual separa histórico, tendência, dispersão e incerteza");
     check(singleMapVariance.rows.length===10&&validSingleMap,"um mapa mantém 10 jogadores, estatísticas degeneradas válidas e aviso de amostra pequena");
@@ -150,6 +151,7 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
         metrics:[...out.querySelectorAll("[data-metric]")].map(node=>({key:node.dataset.metric,state:node.className})),
         deltaRows:out.querySelectorAll(".player-delta tbody tr").length,
         insufficientRows:out.querySelectorAll('.player-variance-table tbody tr[data-sufficient="false"]').length,
+        ranges:[...out.querySelectorAll('.player-variance-table tbody tr[data-player-id]')].map(row=>[row.cells[9].textContent,row.cells[10].textContent].map(text=>text.split("–").map(Number))),
         samplePlayers:window.__e2e.simulation().players
       };
     });
@@ -159,6 +161,7 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     check(league.metrics.every(metric=>/\b(ok|out|low)\b/.test(metric.state)),"cada métrica recebe diagnóstico ou amostra insuficiente");
     check(league.deltaRows===85,"painel de rating mostra todos os 85 jogadores da liga");
     check(league.insufficientRows===0,"amostra padrão da liga identifica corretamente a suficiência individual");
+    check(league.ranges.length===85&&league.ranges.every(([[minimum,maximum],[p10,p90]])=>[minimum,p10,p90,maximum].every(Number.isFinite)&&minimum<=p10&&p10<=p90&&p90<=maximum),"extremos e faixa recorrente P10–P90 permanecem ordenados para os 85 jogadores");
     check(league.samplePlayers.length===85&&league.samplePlayers.every(player=>player.id&&player.maps===player.samples&&player.maps>=8&&player.maps<=11),"liga preserva as distribuições dos 85 jogadores sem perder exposições");
     check(/Fidelidade profissional\s+\d+\/\d+/.test(league.text)&&!/NaN|undefined|Infinity/.test(league.text),"nota de fidelidade da liga contém apenas valores válidos");
 
@@ -182,7 +185,7 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     check(roleCells.length>0&&roleCells.every(role=>role.trim()==="AWPer"),"filtro de função mantém somente a função escolhida");
     const [csvDownload]=await Promise.all([page.waitForEvent("download"),page.click("#simPlayerExport")]);
     const csv=fs.readFileSync(await csvDownload.path(),"utf8"),csvLines=csv.trim().split(/\r?\n/);
-    check(csv.charCodeAt(0)===0xfeff&&/^sandbox-player-ratings-league-seed--?\d+\.csv$/.test(csvDownload.suggestedFilename())&&csvLines[0].includes("historical_rating,current_reference_rating,simulated_mean"),"CSV inclui BOM, nome rastreável e schema estável");
+    check(csv.charCodeAt(0)===0xfeff&&/^sandbox-player-ratings-league-seed--?\d+\.csv$/.test(csvDownload.suggestedFilename())&&csvLines[0].includes("historical_rating,current_reference_rating,simulated_mean")&&csvLines[0].includes("minimum,p10,p90,maximum"),"CSV inclui BOM, nome rastreável e schema estável");
     check(csvLines.length===roleCells.length+1&&csvLines.slice(1).every(line=>line.includes(",AWPer,")),"CSV exporta exatamente os jogadores visíveis após os filtros");
     const csvSafety=await page.evaluate(()=>[window.simCsvCell("=2+2"),window.simCsvCell('nome, "apelido"')]);
     check(csvSafety[0]==="'=2+2"&&csvSafety[1]==='"nome, ""apelido"""',"CSV neutraliza fórmulas e escapa campos compostos");

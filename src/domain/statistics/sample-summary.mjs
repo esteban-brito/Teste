@@ -47,6 +47,18 @@ export function describeSample(values){
   };
 }
 
+export function percentileRange(values,lowerProbability=.1,upperProbability=1-lowerProbability){
+  const sorted=finiteSorted(values);
+  if(!finite(lowerProbability)||!finite(upperProbability)||lowerProbability<0||upperProbability>1||lowerProbability>upperProbability){
+    throw new RangeError("percentis devem formar um intervalo válido entre 0 e 1");
+  }
+  if(!sorted.length)return null;
+  return {
+    lower:rounded(quantileSorted(sorted,lowerProbability)),
+    upper:rounded(quantileSorted(sorted,upperProbability))
+  };
+}
+
 export function meanConfidenceInterval(values,z=1.96){
   const sorted=finiteSorted(values);
   if(sorted.length<2)return null;
