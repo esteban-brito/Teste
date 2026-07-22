@@ -206,6 +206,10 @@ Evidência registrada:
 entre dois times escolhidos; a distribuição entre muitas campanhas permanece
 para a próxima fatia.
 
+**Decisão de retomada em 22/07/2026:** congelar o design aprovado do sandbox e
+fazer da repetição de muitas MD3 a próxima mudança funcional. Não misturar essa
+entrega com novo polimento visual, modularização ou balanceamento.
+
 Objetivo: responder duas perguntas diferentes sem misturá-las.
 
 **Expectativa de longo prazo:** o lote atual, com centenas de mapas, usado para
@@ -236,6 +240,15 @@ O modo campanha deve definir explicitamente:
 - unidade do resultado: campanha, série ou mapa;
 - distribuição entre muitas campanhas repetidas;
 - relação com o Major já existente.
+
+Saída mínima da próxima fatia:
+
+- controle explícito da quantidade de campanhas, incluindo 100 e 500;
+- vitórias de série por time e frequências de `2–0`, `2–1`, `1–2` e `0–2`;
+- quantidade média de mapas por série e frequência de cada mapa;
+- separação inequívoca entre estatística por mapa e por campanha;
+- leitura de consistência individual entre séries sem esconder participantes;
+- seed reproduzível, golden dedicado e E2E de desktop, tablet e celular.
 
 Aceitação:
 
