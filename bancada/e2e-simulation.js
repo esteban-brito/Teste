@@ -2,6 +2,7 @@
    Protege placar, confronto bilateral, amostra da liga, métricas profissionais,
    seed automática, rolagem e responsividade. Não altera nem recalibra o motor. */
 const http=require("http");
+const fs=require("fs");
 const path=require("path");
 const {spawn}=require("child_process");
 const {chromium}=require("playwright");
@@ -179,6 +180,12 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     await page.selectOption("#simPlayerRole","AWPer");
     const roleCells=await page.locator('.player-variance-table tbody tr[data-player-id] td:nth-child(3)').allTextContents();
     check(roleCells.length>0&&roleCells.every(role=>role.trim()==="AWPer"),"filtro de função mantém somente a função escolhida");
+    const [csvDownload]=await Promise.all([page.waitForEvent("download"),page.click("#simPlayerExport")]);
+    const csv=fs.readFileSync(await csvDownload.path(),"utf8"),csvLines=csv.trim().split(/\r?\n/);
+    check(csv.charCodeAt(0)===0xfeff&&/^sandbox-player-ratings-league-seed--?\d+\.csv$/.test(csvDownload.suggestedFilename())&&csvLines[0].includes("historical_rating,current_reference_rating,simulated_mean"),"CSV inclui BOM, nome rastreável e schema estável");
+    check(csvLines.length===roleCells.length+1&&csvLines.slice(1).every(line=>line.includes(",AWPer,")),"CSV exporta exatamente os jogadores visíveis após os filtros");
+    const csvSafety=await page.evaluate(()=>[window.simCsvCell("=2+2"),window.simCsvCell('nome, "apelido"')]);
+    check(csvSafety[0]==="'=2+2"&&csvSafety[1]==='"nome, ""apelido"""',"CSV neutraliza fórmulas e escapa campos compostos");
     await page.click("#simPlayerReset");
     await page.selectOption("#simPlayerSufficiency","small");
     check(await page.locator('.player-variance-table tbody tr[data-player-id]').count()===0,"filtro de amostra pequena respeita a suficiência da liga");

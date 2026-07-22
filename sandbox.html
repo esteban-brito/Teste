@@ -263,6 +263,7 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .sim-data-panel th,.sim-data-panel td{padding:8px 10px}
 .sim-data-panel tbody tr:last-child td{border-bottom:0}
 .player-delta{overflow:hidden}
+.player-delta>.sim-data-title{display:flex;align-items:center;gap:8px}
 .player-delta table{min-width:1080px}
 .player-table-scroll{overflow-x:auto}
 .player-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:8px;padding:10px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--panel) 45%,var(--panel-soft))}
@@ -270,7 +271,7 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .player-filter:first-child{grid-column:span 2}
 .player-filter span{font-size:var(--fs-2xs);font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
 .player-filter input,.player-filter select{width:100%;min-width:0}
-.player-filter-reset{align-self:end;white-space:nowrap}
+.player-filter-action{align-self:end;white-space:nowrap}
 .player-view-count{margin-left:auto;font-family:var(--fb);font-size:var(--fs-xs);font-weight:600;letter-spacing:0;text-transform:none;color:var(--dim)}
 .player-compare-check{display:flex;align-items:center;gap:5px;margin-top:5px;width:max-content;font-size:var(--fs-2xs);font-weight:700;color:var(--neutral);cursor:pointer}
 .player-compare-check input{width:auto;margin:0}
@@ -598,6 +599,7 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
   .sim-run-head{align-items:flex-start}
   .player-controls{grid-template-columns:1fr 1fr}
   .player-filter:first-child{grid-column:1/-1}
+  .player-filter:nth-child(6){grid-column:1/-1}
   .player-comparison-grid{grid-template-columns:1fr}
   .player-compare-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
@@ -3236,6 +3238,31 @@ function simPlayerViewRows(allRows){
     return comparison*direction||String(a.id).localeCompare(String(b.id),"pt-BR",{numeric:true,sensitivity:"base"});
   });
 }
+function simCsvCell(value){
+  if(value==null)return "";
+  const raw=String(value),safe=typeof value==="string"&&/^[=+\-@\t\r]/.test(raw)?`'${raw}`:raw;
+  return /[",\r\n]/.test(safe)?`"${safe.replace(/"/g,'""')}"`:safe;
+}
+function simCsvNumber(value,digits=6){return Number.isFinite(value)?Number(value.toFixed(digits)):null;}
+function simPlayerCsv(batch,rows){
+  const header=["seed","scope","batch_maps","player_id","player_name","team","campaign","role","historical_rating","current_reference_rating","simulated_mean","median","std_dev","p05","p95","ci95_lower","ci95_upper","historical_delta","player_maps","sample_status","minimum_maps"];
+  const data=rows.map(player=>{
+    const stats=player.distribution,ci=player.meanCI;
+    return [batch.seed,batch.scope,batch.n,player.id,player.name,player.teamName,player.teamCampaign,player.role,
+      simCsvNumber(player.historical),simCsvNumber(player.real),simCsvNumber(stats.mean),simCsvNumber(stats.median),simCsvNumber(stats.stdDev),simCsvNumber(stats.p05),simCsvNumber(stats.p95),
+      ci?simCsvNumber(ci[0]):null,ci?simCsvNumber(ci[1]):null,simCsvNumber(player.historicalDelta),player.n,player.sufficient?"sufficient":"small",player.minimumMaps];
+  });
+  return [header,...data].map(row=>row.map(simCsvCell).join(",")).join("\r\n")+"\r\n";
+}
+function downloadSimPlayerCsv(){
+  if(!lastBatch)return;
+  const rows=simPlayerViewRows(simPlayerDistributionRows(lastBatch));
+  if(!rows.length){toast("Nenhum jogador visível para exportar");return;}
+  const blob=new window.Blob(["\ufeff",simPlayerCsv(lastBatch,rows)],{type:"text/csv;charset=utf-8"}),a=document.createElement("a"),scope=String(lastBatch.scope).replace(/[^a-z0-9_-]+/gi,"-");
+  a.href=window.URL.createObjectURL(blob);a.download=`sandbox-player-ratings-${scope}-seed-${lastBatch.seed}.csv`;
+  document.body.appendChild(a);a.click();window.URL.revokeObjectURL(a.href);a.remove();
+  toast(`${rows.length} jogador${rows.length===1?"":"es"} exportado${rows.length===1?"":"s"}`);
+}
 function simPlayerRowHtml(player){
   const stats=player.distribution,ci=player.meanCI,edited=Math.abs(player.real-player.historical)>1e-9;
   return `<tr data-player-id="${esc(player.id)}" data-sufficient="${player.sufficient}">
@@ -3286,7 +3313,8 @@ function simPlayerPanelHtml(allRows){
         ["ciWidth","Largura do IC95%"],["delta","Δ histórico"],["maps","Mapas"]
       ].map(([value,label])=>option(value,label,simPlayerView.sort)).join("")}</select></label>
       <label class="player-filter"><span>Direção</span><select id="simPlayerDirection">${option("desc","Decrescente",simPlayerView.direction)}${option("asc","Crescente",simPlayerView.direction)}</select></label>
-      <button type="button" class="btn player-filter-reset" id="simPlayerReset">Limpar filtros</button>
+      <button type="button" class="btn player-filter-action" id="simPlayerExport"${visible.length?"":" disabled"}>Exportar CSV</button>
+      <button type="button" class="btn player-filter-action" id="simPlayerReset">Limpar filtros</button>
     </div>
     <div class="player-comparison"><div class="player-comparison-head">Comparação <span>${simPlayerView.compare.length} / 2 selecionados</span></div><div class="player-comparison-body">${simPlayerComparisonBody(allRows)}</div></div>
     <div class="player-table-scroll"><table class="player-variance-table"><thead><tr><th>Jogador</th><th>Time</th><th>Função</th><th>Hist.</th><th>Média</th><th>Mediana</th><th><abbr title="Desvio-padrão entre mapas">DP</abbr></th><th>P5</th><th>P95</th><th><abbr title="Intervalo de confiança de 95% da média">IC95%</abbr></th><th>Δ hist.</th><th>Mapas</th></tr></thead><tbody>${simPlayerTableRowsHtml(visible)}</tbody></table></div>`;
@@ -3296,11 +3324,12 @@ function refreshSimPlayerView(){
   const panel=document.querySelector("#matchout .player-delta");
   if(!panel)return;
   const allRows=simPlayerDistributionRows(lastBatch),visible=simPlayerViewRows(allRows);
-  const tbody=panel.querySelector(".player-variance-table tbody"),count=panel.querySelector(".player-view-count"),comparison=panel.querySelector(".player-comparison-body"),comparisonCount=panel.querySelector(".player-comparison-head span");
+  const tbody=panel.querySelector(".player-variance-table tbody"),count=panel.querySelector(".player-view-count"),comparison=panel.querySelector(".player-comparison-body"),comparisonCount=panel.querySelector(".player-comparison-head span"),exportButton=panel.querySelector("#simPlayerExport");
   if(tbody)tbody.innerHTML=simPlayerTableRowsHtml(visible);
   if(count)count.textContent=`${visible.length} / ${allRows.length} participantes`;
   if(comparison)comparison.innerHTML=simPlayerComparisonBody(allRows);
   if(comparisonCount)comparisonCount.textContent=`${simPlayerView.compare.length} / 2 selecionados`;
+  if(exportButton)exportButton.disabled=!visible.length;
 }
 function runBatchLab(){
   if(simScope==="match"&&simA===simB){toast("Escolha dois times diferentes");return;}
@@ -3726,6 +3755,7 @@ function wireSimulador(){
     refreshSimPlayerView();
   });
   out.addEventListener("click",event=>{
+    if(event.target.closest("#simPlayerExport")){downloadSimPlayerCsv();return;}
     if(!event.target.closest("#simPlayerReset")||!lastBatch)return;
     simPlayerView={query:"",team:"all",role:"all",sufficiency:"all",sort:"absDelta",direction:"desc",compare:[]};
     const panel=out.querySelector(".player-delta");
