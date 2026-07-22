@@ -68,6 +68,25 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     const hasSeedControl=await page.locator("#simSeed").count();
     check(Number.isInteger(mapSeed)&&mapSeed>0&&!hasSeedControl,"mapa usa seed automática sem expor controle manual");
 
+    await page.fill("#simRuns","1");
+    await page.click("#runBatchBtn");
+    await page.waitForSelector("#matchout .player-variance-table",{state:"attached",timeout:15000});
+    const singleMapVariance=await page.evaluate(()=>({
+      headers:[...document.querySelectorAll(".player-variance-table thead th")].map(cell=>cell.textContent.trim()),
+      rows:[...document.querySelectorAll(".player-variance-table tbody tr")].map(row=>({
+        cells:[...row.cells].map(cell=>cell.textContent.replace(/\s+/g," ").trim()),
+        values:[...row.querySelectorAll("td[data-value]")].map(cell=>cell.dataset.value),
+        sufficient:row.dataset.sufficient
+      }))
+    }));
+    const expectedVarianceColumns=["Jogador","Time","Função","Hist.","Média","Mediana","DP","P5","P95","IC95%","Δ hist.","Mapas"];
+    const validSingleMap=singleMapVariance.rows.every(row=>{
+      const [historical,average,median,stdDev,p05,p95]=row.values.map(Number);
+      return [historical,average,median,stdDev,p05,p95].every(Number.isFinite)&&average===median&&average===p05&&average===p95&&stdDev===0&&row.cells[9]==="—"&&row.sufficient==="false";
+    });
+    check(JSON.stringify(singleMapVariance.headers)===JSON.stringify(expectedVarianceColumns),"painel individual separa histórico, tendência, dispersão e incerteza");
+    check(singleMapVariance.rows.length===10&&validSingleMap,"um mapa mantém 10 jogadores, estatísticas degeneradas válidas e aviso de amostra pequena");
+
     await page.fill("#simRuns","3");
     await page.click("#runBatchBtn");
     await page.waitForSelector("#matchout .fidelity-score",{timeout:15000});
@@ -84,6 +103,10 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
         groups:out.querySelectorAll(".fidelity-group").length,
         breakdowns:out.querySelectorAll(".sim-breakdowns .sim-data-panel").length,
         deltaRows:out.querySelectorAll(".player-delta tbody tr").length,
+        varianceRows:[...out.querySelectorAll(".player-variance-table tbody tr")].map(row=>({
+          values:[...row.querySelectorAll("td[data-value]")].map(cell=>cell.dataset.value),
+          sufficient:row.dataset.sufficient
+        })),
         details:[...out.querySelectorAll("details.sim-details")].map(node=>node.open),
         samplePlayers:window.__e2e.simulation().players
       };
@@ -95,6 +118,7 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     check(JSON.stringify(firstBatch.headers)===JSON.stringify(expectedRoleColumns),"breakdown possui colunas por função esperadas");
     check(firstBatch.rows.length===6,"breakdown cobre as 6 funções do confronto");
     check(firstBatch.deltaRows===10,"painel de rating mostra os 10 jogadores do confronto");
+    check(firstBatch.varianceRows.length===10&&firstBatch.varianceRows.every(row=>row.sufficient==="false"&&row.values.every(value=>value===""||Number.isFinite(Number(value)))),"lote curto expõe distribuições válidas sem esconder amostras pequenas");
     check(firstBatch.samplePlayers.length===10&&firstBatch.samplePlayers.every(player=>player.id&&player.maps===3&&player.samples===3),"lote preserva uma amostra por mapa para cada jogador");
     check(firstBatch.bands.length>=9&&firstBatch.bands.every(band=>band.title.startsWith("real ")),"faixas reais aparecem nas métricas globais e por função");
     check(firstBatch.groups===4&&firstBatch.breakdowns===2&&firstBatch.details.length===2&&firstBatch.details.every(open=>!open),"detalhes completos permanecem disponíveis e fechados por padrão");
@@ -124,6 +148,7 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
         text:out.textContent,
         metrics:[...out.querySelectorAll("[data-metric]")].map(node=>({key:node.dataset.metric,state:node.className})),
         deltaRows:out.querySelectorAll(".player-delta tbody tr").length,
+        insufficientRows:out.querySelectorAll('.player-variance-table tbody tr[data-sufficient="false"]').length,
         samplePlayers:window.__e2e.simulation().players
       };
     });
@@ -132,6 +157,7 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     check(proMetrics.every(key=>league.metrics.some(metric=>metric.key===key)),"painel cobre combate, lados, economia, clutches, rating e favoritos");
     check(league.metrics.every(metric=>/\b(ok|out|low)\b/.test(metric.state)),"cada métrica recebe diagnóstico ou amostra insuficiente");
     check(league.deltaRows===85,"painel de rating mostra todos os 85 jogadores da liga");
+    check(league.insufficientRows===0,"amostra padrão da liga identifica corretamente a suficiência individual");
     check(league.samplePlayers.length===85&&league.samplePlayers.every(player=>player.id&&player.maps===player.samples&&player.maps>=8&&player.maps<=11),"liga preserva as distribuições dos 85 jogadores sem perder exposições");
     check(/Fidelidade profissional\s+\d+\/\d+/.test(league.text)&&!/NaN|undefined|Infinity/.test(league.text),"nota de fidelidade da liga contém apenas valores válidos");
 
