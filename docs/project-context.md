@@ -34,7 +34,7 @@ roadmap for concluída.
 
 ## 2. Ponto exato de retomada
 
-Estado registrado em 21 de julho de 2026:
+Estado registrado em 22 de julho de 2026:
 
 - produto: **draft9-0**, jogo estático de navegador sobre Counter-Strike;
 - repositório: `esteban-brito/Teste`;
@@ -70,9 +70,10 @@ Estado registrado em 21 de julho de 2026:
 - os ADRs 0004 e 0005 foram aceitos. `tools/add-team.js` agora projeta uma nova
   adição nos módulos e em `game.js` pela mesma operação, preserva quebras de
   linha, valida paridade e restaura fontes/`elencos.html` em caso de falha;
-- P2 começou pela função pura `rolePairReality`, extraída para `src/domain` e
-  comparada exatamente em 11.319 cenários. A auditoria rápida já consome o novo
-  módulo por dependência explícita; jogo, sandbox e simulador ainda usam o legado;
+- P2 começou pelas funções puras `rolePairReality` e `secondaryScore`, extraídas
+  para `src/domain` e comparadas exatamente em 11.319 e 724.416 cenários,
+  respectivamente. A auditoria rápida já consome `rolePairReality` por
+  dependência explícita; jogo, sandbox e simulador ainda usam o legado;
 - `game.js` continua sendo a fonte de verdade executável e os módulos ainda são
   cópias transitórias. Não remover os blocos legados nem migrar navegador,
   sandbox, worker ou gerador sem a próxima prova de paridade;
@@ -545,9 +546,9 @@ Aceitação: snapshot e artefato gerado idênticos.
 
 **Risco:** moderado.
 
-**Status:** iniciada. ADR 0004 aceito; `rolePairReality` é a primeira função pura
-extraída e possui um consumidor Node migrado. O restante de PRISMA/ZÊNITE ainda
-permanece em `game.js`.
+**Status:** iniciada. ADR 0004 aceito; `rolePairReality` e `secondaryScore` são as
+primeiras funções puras extraídas. `rolePairReality` possui um consumidor Node
+migrado; o restante de PRISMA/ZÊNITE ainda permanece em `game.js`.
 
 - aceitar ou revisar ADR 0004;
 - extrair primeiro funções puras de roles, secundário, playstyles e OVR;
@@ -913,9 +914,9 @@ A fonte canônica da sequência é `docs/next-steps.md`. Ordem resumida:
 9. preparar Carreira de Jogador sobre APIs estáveis, RNG contratado e save
    versionado.
 
-O próximo passo estrutural concreto é caracterizar e extrair `secondaryScore`,
-que depende somente dos scores recebidos e de `rolePairReality`. Não puxar
-`afinidades`, tabelas de role ou distribuição contextual no mesmo commit.
+`secondaryScore` já foi caracterizada e extraída sem puxar `afinidades`, tabelas
+de role ou distribuição contextual. Antes da próxima extração estrutural,
+caracterizar uma única nova fronteira pura do PRISMA e manter a mudança isolada.
 `game.js` permanece fonte executável para consumidores clássicos; a projeção do
 ADR 0005 impede divergência em novas adições. R2 pode avançar separadamente
 quando priorizada. Antes de congelar thresholds de cauda ou ranking, revisar a

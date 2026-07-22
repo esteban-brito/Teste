@@ -102,6 +102,9 @@ erro máximo. Isso não basta para detectar todos os problemas possíveis:
 
 ### Etapa R1 — auditoria individual aprofundada, sem balanceamento
 
+**Status:** concluída localmente em `b97b3d7`, com relatório determinístico e
+diagnóstico sem thresholds de aprovação. A publicação depende de pedido explícito.
+
 Objetivo: tornar a bancada capaz de reprovar uma mudança que pareça boa no
 agregado, mas distorça jogadores ou funções.
 
@@ -332,7 +335,10 @@ Somente após uma API estável de avaliação, contrato de RNG e save versionado
 
 ## 9. Próxima ação concreta ao retomar
 
-Começar por **R1 — auditoria individual aprofundada**, sem editar o motor.
+R1 está concluída. A próxima etapa funcional é **R2 — variância individual no
+sandbox**. Na trilha estrutural P2, `rolePairReality` e `secondaryScore` já foram
+extraídas por paridade; a próxima fronteira pura do PRISMA deve ser caracterizada
+antes de qualquer nova extração. Não misturar R2 e P2 na mesma mudança.
 
 Primeiro passo operacional:
 
@@ -340,9 +346,9 @@ Primeiro passo operacional:
 2. rodar `npm ci` e `npm run check`;
 3. ler `AGENTS.md`, `docs/project-context.md`, `docs/architecture.md`,
    `docs/testing.md`, `docs/glossary.md` e este documento;
-4. caracterizar as distribuições atuais por ID usando a agenda determinística;
-5. apresentar baseline e proposta de thresholds antes de congelar novos asserts;
-6. não tocar em `CFG_*`, receitas, pesos, thresholds atuais ou RNG nessa etapa.
+4. escolher explicitamente entre a trilha funcional R2 e a trilha estrutural P2;
+5. preservar a baseline e apresentar evidência antes de congelar novos asserts;
+6. não tocar em `CFG_*`, receitas, pesos, thresholds atuais ou RNG incidentalmente.
 
 ## 10. Decisões ainda abertas
 

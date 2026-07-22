@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "bench": "node bancada/run.js --group all",
-    "check": "node --check game.js && node tools/check-sandbox-engine.js && node tools/check-sandbox-syntax.js && node tools/check-raw-player-parity.js && node tools/check-raw-team-parity.js && node tools/check-raw-country-parity.js && node tools/check-add-team-sync.js && node tools/check-role-pair-reality-parity.js",
+    "check": "node --check game.js && node tools/check-sandbox-engine.js && node tools/check-sandbox-syntax.js && node tools/check-raw-player-parity.js && node tools/check-raw-team-parity.js && node tools/check-raw-country-parity.js && node tools/check-add-team-sync.js && node tools/check-role-pair-reality-parity.js && node tools/check-secondary-score-parity.js",
     "lint": "eslint game.js sandbox.html calibrador-worker.js bancada/*.js tools/*.js src/**/*.mjs",
     "serve": "node tools/serve-static.js",
     "test:data": "node bancada/run.js --group data",
