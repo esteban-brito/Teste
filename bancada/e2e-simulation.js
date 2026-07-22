@@ -161,6 +161,34 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     check(league.samplePlayers.length===85&&league.samplePlayers.every(player=>player.id&&player.maps===player.samples&&player.maps>=8&&player.maps<=11),"liga preserva as distribuições dos 85 jogadores sem perder exposições");
     check(/Fidelidade profissional\s+\d+\/\d+/.test(league.text)&&!/NaN|undefined|Infinity/.test(league.text),"nota de fidelidade da liga contém apenas valores válidos");
 
+    await page.locator("details.sim-details").nth(1).evaluate(node=>{node.open=true;});
+    const firstPlayerId=await page.locator('.player-variance-table tbody tr[data-player-id]').first().getAttribute("data-player-id");
+    await page.fill("#simPlayerSearch",firstPlayerId);
+    let visiblePlayers=await page.locator('.player-variance-table tbody tr[data-player-id]').count();
+    check(visiblePlayers===1&&await page.locator('.player-variance-table tbody tr[data-player-id]').first().getAttribute("data-player-id")===firstPlayerId,"busca por ID encontra exatamente o jogador solicitado");
+    await page.fill("#simPlayerSearch","jogador-que-nao-existe");
+    check(await page.locator('.player-variance-table tbody tr[data-player-id]').count()===0&&await page.locator(".player-empty").count()===1,"busca vazia informa ausência sem remover dados da amostra");
+    await page.click("#simPlayerReset");
+    check(await page.locator('.player-variance-table tbody tr[data-player-id]').count()===85,"limpar filtros restaura os 85 participantes");
+
+    const firstTeamValue=await page.$eval("#simPlayerTeam",select=>select.options[1]?.value);
+    await page.selectOption("#simPlayerTeam",firstTeamValue);
+    visiblePlayers=await page.locator('.player-variance-table tbody tr[data-player-id]').count();
+    check(visiblePlayers===5,"filtro de time isola os cinco jogadores da escalação histórica");
+    await page.click("#simPlayerReset");
+    await page.selectOption("#simPlayerRole","AWPer");
+    const roleCells=await page.locator('.player-variance-table tbody tr[data-player-id] td:nth-child(3)').allTextContents();
+    check(roleCells.length>0&&roleCells.every(role=>role.trim()==="AWPer"),"filtro de função mantém somente a função escolhida");
+    await page.click("#simPlayerReset");
+    await page.selectOption("#simPlayerSufficiency","small");
+    check(await page.locator('.player-variance-table tbody tr[data-player-id]').count()===0,"filtro de amostra pequena respeita a suficiência da liga");
+    await page.click("#simPlayerReset");
+    await page.selectOption("#simPlayerSort","mean");
+    await page.selectOption("#simPlayerDirection","asc");
+    const orderedMeans=await page.locator('.player-variance-table tbody tr[data-player-id] td:nth-child(5)').evaluateAll(cells=>cells.map(cell=>Number(cell.dataset.value)));
+    check(orderedMeans.every((value,index)=>index===0||orderedMeans[index-1]<=value),"ordenação crescente por média é estável e numérica");
+    await page.click("#simPlayerReset");
+
     const leagueSeed=await page.evaluate(()=>window.__e2e.simulation().seed);
     await page.click("#runBatchBtn");
     await page.waitForSelector('#matchout [data-metric="postplant"]',{state:"attached",timeout:20000});
@@ -178,9 +206,10 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     const mobileLayout=await page.evaluate(()=>({
       metricColumns:getComputedStyle(document.querySelector(".fidelity-grid")).gridTemplateColumns.trim().split(/\s+/).length,
       tableColumns:getComputedStyle(document.querySelector(".sim-breakdowns")).gridTemplateColumns.trim().split(/\s+/).length,
+      controlColumns:getComputedStyle(document.querySelector(".player-controls")).gridTemplateColumns.trim().split(/\s+/).length,
       noOverflow:document.documentElement.scrollWidth<=document.documentElement.clientWidth
     }));
-    check(mobileLayout.metricColumns===1&&mobileLayout.tableColumns===1&&mobileLayout.noOverflow,"layout mobile empilha métricas e tabelas sem overflow horizontal");
+    check(mobileLayout.metricColumns===1&&mobileLayout.tableColumns===1&&mobileLayout.controlColumns<=2&&mobileLayout.noOverflow,"layout mobile empilha métricas, filtros e tabelas sem overflow horizontal");
     check(errors.length===0,`sem page-error no fluxo${errors.length?": "+errors[0]:""}`);
 
     console.log(failures?`✗ ${failures} checagem(ns) e2e falharam`:"✓ aba Simular preserva placar, fidelidade, seed automática e rolagem");
