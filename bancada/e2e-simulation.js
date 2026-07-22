@@ -7,6 +7,7 @@ const path=require("path");
 const {spawn}=require("child_process");
 const {chromium}=require("playwright");
 const {okMark}=require("./common");
+const CAMPAIGN_GOLDEN=require("./campaign-golden.json");
 
 function waitServer(port,tries=50){
   return new Promise((resolve,reject)=>{
@@ -233,9 +234,38 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       noOverflow:document.documentElement.scrollWidth<=document.documentElement.clientWidth
     }));
     check(mobileLayout.metricColumns===1&&mobileLayout.tableColumns===1&&mobileLayout.controlColumns<=2&&mobileLayout.noOverflow,"layout mobile empilha métricas, filtros e tabelas sem overflow horizontal");
+
+    await page.setViewportSize({width:1440,height:700});
+    await page.selectOption("#simScope","campaign");
+    const campaignControls=await page.evaluate(()=>(
+      {teams:[...document.querySelectorAll(".sim-team-field")].every(node=>getComputedStyle(node).display!=="none"),mapHidden:getComputedStyle(document.querySelector(".sim-map-field")).display==="none",runsHidden:getComputedStyle(document.querySelector(".sim-runs-field")).display==="none",button:document.getElementById("runBatchBtn").textContent.trim()}
+    ));
+    check(campaignControls.teams&&campaignControls.mapHidden&&campaignControls.runsHidden&&campaignControls.button==="Jogar MD3","campanha curta apresenta somente as decisões relevantes da MD3");
+    await page.selectOption("#simA","0");
+    await page.selectOption("#simB","1");
+    await page.click("#runBatchBtn");
+    await page.waitForSelector(".sim-campaign-score",{timeout:15000});
+    const campaign=await page.evaluate(()=>({state:window.__e2e.simulation(),mapCards:document.querySelectorAll(".sim-campaign-map").length,fidelityScore:document.querySelectorAll(".fidelity-score").length,details:document.querySelectorAll("details.sim-details").length,text:document.getElementById("matchout").textContent}));
+    const series=campaign.state.campaign,seriesMaps=series?.maps||[],orientations=seriesMaps.map(map=>map.orientation);
+    check(campaign.state.scope==="campaign"&&series?.format==="MD3"&&seriesMaps.length>=2&&seriesMaps.length<=3&&series.winsA+series.winsB===seriesMaps.length&&Math.max(series.winsA,series.winsB)===2,"campanha encerra a MD3 exatamente quando um time vence dois mapas");
+    check(new Set(seriesMaps.map(map=>map.map)).size===seriesMaps.length&&orientations.every((value,index)=>index===0||value!==orientations[index-1]),"campanha usa mapas sem repetição e alterna a orientação dos times");
+    check(campaign.mapCards===seriesMaps.length&&campaign.state.maps===seriesMaps.length&&campaign.state.players.length===10&&campaign.state.players.every(player=>player.maps===seriesMaps.length&&player.samples===seriesMaps.length),"campanha preserva placares e uma amostra individual por mapa");
+    check(campaign.fidelityScore===0&&campaign.details===1&&/não mede expectativa de longo prazo/.test(campaign.text)&&!/NaN|undefined|Infinity/.test(campaign.text),"campanha não se apresenta como benchmark de expectativa ou fidelidade");
+    const goldenPage=await browser.newPage({viewport:{width:1280,height:720}});
+    await goldenPage.goto(`http://127.0.0.1:${port}/sandbox.html?e2e=1&e2eSeed=${CAMPAIGN_GOLDEN.seed}`,{waitUntil:"load",timeout:20000});
+    await goldenPage.waitForFunction(()=>window.__e2e&&window.__e2e.ready,{timeout:20000});
+    await goldenPage.click('#modebar button[data-mode="simular"]');
+    await goldenPage.selectOption("#simScope","campaign");
+    await goldenPage.selectOption("#simA","0");
+    await goldenPage.selectOption("#simB","1");
+    await goldenPage.click("#runBatchBtn");
+    await goldenPage.waitForSelector(".sim-campaign-score",{timeout:15000});
+    const goldenCampaign=await goldenPage.evaluate(()=>{const state=window.__e2e.simulation();return {seed:state.seed,scope:state.scope,maps:state.maps,campaign:state.campaign};});
+    await goldenPage.close();
+    check(JSON.stringify(goldenCampaign)===JSON.stringify(CAMPAIGN_GOLDEN),"campanha MD3 preserva o golden completo por seed fixa");
     check(errors.length===0,`sem page-error no fluxo${errors.length?": "+errors[0]:""}`);
 
-    console.log(failures?`✗ ${failures} checagem(ns) e2e falharam`:"✓ aba Simular preserva placar, fidelidade, seed automática e rolagem");
+    console.log(failures?`✗ ${failures} checagem(ns) e2e falharam`:"✓ aba Simular preserva expectativa e separa a campanha curta");
     return done(failures?1:0);
   }catch(error){
     console.log("  ✗ e2e abortou: "+(error.message||error));

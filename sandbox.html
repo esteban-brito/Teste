@@ -208,6 +208,14 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .sim-run-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:16px 0 8px;padding-bottom:12px;border-bottom:1px solid var(--line)}
 .sim-run-title{font-family:var(--ff);font-size:var(--fs-lg);font-weight:800;color:var(--txt)}
 .sim-run-meta{font-size:var(--fs-s);color:var(--dim);margin-top:3px}
+.sim-campaign-score{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:14px;margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-soft)}
+.sim-campaign-team{font-family:var(--ff);font-size:var(--fs-md);font-weight:800;color:var(--txt)}
+.sim-campaign-team:last-child{text-align:right}
+.sim-campaign-result{font-family:var(--ff);font-size:var(--fs-2xl);font-weight:900;color:var(--cyan)}
+.sim-campaign-maps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:8px}
+.sim-campaign-map{padding:8px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--panel-soft);font-size:var(--fs-xs);color:var(--dim)}
+.sim-campaign-map b{display:block;margin-top:3px;font-family:var(--ff);font-size:var(--fs-md);color:var(--neutral)}
+.sim-campaign-note{margin-top:8px;padding:9px 10px;border-left:3px solid var(--cyan);background:var(--panel-soft);font-size:var(--fs-xs);color:var(--neutral)}
 .sim-matchup{display:grid;grid-template-columns:minmax(150px,1fr) minmax(180px,1.4fr) minmax(150px,1fr);align-items:center;gap:18px;margin:16px 0 12px;padding:16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-soft)}
 .sim-side{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:9px;min-width:0}
 .sim-side.right{grid-template-columns:auto minmax(0,1fr) auto;text-align:right}
@@ -597,6 +605,7 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
   .sim-core{grid-template-columns:repeat(2,minmax(0,1fr))}
   .sim-core-item:last-child{grid-column:1/-1}
   .sim-run-head{align-items:flex-start}
+  .sim-campaign-maps{grid-template-columns:1fr}
   .player-controls{grid-template-columns:1fr 1fr}
   .player-filter:first-child{grid-column:1/-1}
   .player-filter:nth-child(6){grid-column:1/-1}
@@ -3124,6 +3133,10 @@ function scoreTable(nome,stats){
   return `<table><thead><tr><th>${esc(nome)}</th><th>K</th><th>D</th><th>A</th><th>KAST</th><th>ADR</th><th>Rating</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 function createSimulationSeed(){
+  if(typeof location!=="undefined"&&/[?&]e2e(?:=|&|$)/.test(location.search)){
+    const forced=new globalThis.URLSearchParams(location.search).get("e2eSeed");
+    if(forced&&/^\d+$/.test(forced)){simSeedCounter=(simSeedCounter+1)>>>0;simSeed=(Number(forced)+simSeedCounter-1)>>>0||1;return simSeed;}
+  }
   let seed=0;
   if(typeof globalThis.crypto?.getRandomValues==="function"){
     const values=new Uint32Array(1);globalThis.crypto.getRandomValues(values);seed=values[0]>>>0;
@@ -3344,7 +3357,29 @@ function refreshSimPlayerView(){
   if(comparisonCount)comparisonCount.textContent=`${simPlayerView.compare.length} / 2 selecionados`;
   if(exportButton)exportButton.disabled=!visible.length;
 }
+function simCampaignMapOrder(seed){
+  const pool=E.MAPAS_POOL.slice(),start=Math.abs(seed)%pool.length;
+  return Array.from({length:Math.min(3,pool.length)},(_,index)=>pool[(start+index)%pool.length]);
+}
+function runCampaignLab(){
+  if(simA===simB){toast("Escolha dois times diferentes");return;}
+  const seed=createSimulationSeed(),acc=newSimAcc(0,"campaign",seed),prepared={};
+  [simA,simB].forEach(ti=>{const team=officialTeam(E.TEAMS[ti],ti);prepared[ti]={team,players:simRolePlayers(E.TEAMS[ti],ti,team)};});
+  E.srand(seed);
+  const form={[simA]:E.forcaDoDia(prepared[simA].team.forca.efetiva,prepared[simA].team.forca.quimica),[simB]:E.forcaDoDia(prepared[simB].team.forca.efetiva,prepared[simB].team.forca.quimica)},wins={[simA]:0,[simB]:0},maps=[];
+  const plannedMaps=simCampaignMapOrder(seed);
+  for(let mapIndex=0;mapIndex<plannedMaps.length&&wins[simA]<2&&wins[simB]<2;mapIndex++){
+    const swap=((seed+mapIndex)&1)===1,ai=swap?simB:simA,bi=swap?simA:simB,A=prepared[ai].team,B=prepared[bi].team;
+    E.srand((seed+Math.imul(mapIndex+1,0x9e3779b9))>>>0||mapIndex+1);
+    const g=E.simularMapa(A,B,form[ai],form[bi],plannedMaps[mapIndex],false),winnerIndex=g.vencedor===A?ai:bi,scoreA=swap?g.placar[1]:g.placar[0],scoreB=swap?g.placar[0]:g.placar[1];
+    wins[winnerIndex]++;acc.n++;accSimGame(acc,g,prepared[ai].players,prepared[bi].players,ai,bi,A,B);
+    maps.push({map:g.mapa,scoreA,scoreB,winnerIndex,orientation:swap?"B-A":"A-B"});
+  }
+  acc.campaign={format:"MD3",winsA:wins[simA],winsB:wins[simB],winnerIndex:wins[simA]===2?simA:simB,maps,formPersistence:"series"};
+  simPlayerView.compare=[];lastMap=null;lastBatch=acc;renderMatchPanel();
+}
 function runBatchLab(){
+  if(simScope==="campaign"){runCampaignLab();return;}
   if(simScope==="match"&&simA===simB){toast("Escolha dois times diferentes");return;}
   const n=Math.max(1,Math.min(500,Math.round(simRuns||80))),seed=createSimulationSeed(),pairs=simLeaguePairs(),acc=newSimAcc(n,simScope,seed);
   const teamIds=simScope==="league"?E.TEAMS.map((_,i)=>i):[simA,simB],prepared={};
@@ -3390,7 +3425,7 @@ function renderBatchPanel(b){
   const alerts=outside.map(m=>{const edge=m.value<m.band[0]?m.band[0]:m.band[1],delta=Math.abs(m.value-edge);return `${m.label}: ${m.value.toFixed(m.dec??1)}${m.suf||""} · desvio de ${delta.toFixed(m.dec??1)}${m.suf||""}`;});
   const roleRows=["AWPer","Rifler","Entry","Lurker","Support","IGL"].filter(r=>b.role[r]&&b.role[r].r).map(r=>{const x=b.role[r],ref=SIM_ROLE_KPR[r],v=x.k/x.r,ok=v>=ref[0]&&v<=ref[1];return `<tr><td>${r}</td><td class="mono"${ok?' style="color:var(--win)"':''} title="real ${ref[0]}–${ref[1]}">${v.toFixed(2)}</td><td class="mono">${(x.d/x.r).toFixed(2)}</td><td class="mono">${(x.a/x.k||0).toFixed(2)}</td><td class="mono">${Math.round(x.kast/x.r*100)}%</td><td class="mono">${Math.round(x.adr/x.r)}</td></tr>`;}).join("");
   const playerPanel=simPlayerPanelHtml(allPlayerRows);
-  const header=`Amostra da liga · ${Object.keys(b.teams).length}/${E.TEAMS.length} times`,winCI=simWilson(b.wA,b.n),winPctA=Math.round(b.wA/b.n*100),winPctB=100-winPctA,teamA=E.TEAMS[simA],teamB=E.TEAMS[simB];
+  const campaignMode=b.scope==="campaign",header=`Amostra da liga · ${Object.keys(b.teams).length}/${E.TEAMS.length} times`,winCI=simWilson(b.wA,b.n),winPctA=Math.round(b.wA/b.n*100),winPctB=100-winPctA,teamA=E.TEAMS[simA],teamB=E.TEAMS[simB];
   const groups=[
     ["Combate e produção",["kpr","kast","adr","ak","apr"]],
     ["Rounds, objetivo e economia",["ct","plant","postplant","antieco","pistol"]],
@@ -3399,20 +3434,26 @@ function renderBatchPanel(b){
   ].map(([title,keys])=>{const items=keys.map(key=>metrics.find(m=>m.key===key)).filter(Boolean);return items.length?`<section class="fidelity-group"><div class="fidelity-group-title">${title}</div>${items.map(simMetricCard).join("")}</section>`:"";}).join("");
   const diagnosis=alerts.length?`<div class="fidelity-alerts"><b>Desvios com amostra suficiente</b><ul>${alerts.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:"";
   const coreItems=[["KPR",kpr.toFixed(3)],["KAST",`${Math.round(kast)}%`],["ADR",adr.toFixed(1)],["CT win",`${Math.round(b.ctWins/b.rounds*100)}%`],["Plant",`${Math.round(b.plants/b.rounds*100)}%`]].map(([label,value])=>`<div class="sim-core-item"><div class="sim-core-value">${value}</div><div class="sim-core-label">${label}</div></div>`).join("");
-  const runHead=b.scope==="match"?`<div class="sim-matchup" aria-label="${esc(teamA.nome)} ${winPctA}%, ${esc(teamB.nome)} ${winPctB}%"><div class="sim-side" style="--team-color:${esc(teamA.cor)}"><span class="sim-side-dot"></span><span class="sim-side-name">${esc(teamA.nome)}</span><span class="sim-side-pct">${winPctA}%</span></div><div class="sim-probability" style="--color-a:${esc(teamA.cor)};--color-b:${esc(teamB.cor)}"><div class="sim-probability-bar"><span style="width:${winPctA}%"></span><span style="width:${winPctB}%"></span></div><div class="sim-probability-meta">${b.n} mapas · ${simCIText(winCI,1,"%")} do lado A</div></div><div class="sim-side right" style="--team-color:${esc(teamB.cor)}"><span class="sim-side-pct">${winPctB}%</span><span class="sim-side-name">${esc(teamB.nome)}</span><span class="sim-side-dot"></span></div></div>`:`<div class="sim-run-head"><div><div class="sim-run-title">${header}</div><div class="sim-run-meta">${b.n} mapas · ${(b.rounds/b.n).toFixed(1)} rounds/mapa · pares distribuídos em round-robin</div></div></div>`;
+  let runHead;
+  if(b.scope==="match")runHead=`<div class="sim-matchup" aria-label="${esc(teamA.nome)} ${winPctA}%, ${esc(teamB.nome)} ${winPctB}%"><div class="sim-side" style="--team-color:${esc(teamA.cor)}"><span class="sim-side-dot"></span><span class="sim-side-name">${esc(teamA.nome)}</span><span class="sim-side-pct">${winPctA}%</span></div><div class="sim-probability" style="--color-a:${esc(teamA.cor)};--color-b:${esc(teamB.cor)}"><div class="sim-probability-bar"><span style="width:${winPctA}%"></span><span style="width:${winPctB}%"></span></div><div class="sim-probability-meta">${b.n} mapas · ${simCIText(winCI,1,"%")} do lado A</div></div><div class="sim-side right" style="--team-color:${esc(teamB.cor)}"><span class="sim-side-pct">${winPctB}%</span><span class="sim-side-name">${esc(teamB.nome)}</span><span class="sim-side-dot"></span></div></div>`;
+  else if(campaignMode){
+    const c=b.campaign,mapCards=c.maps.map((map,index)=>`<div class="sim-campaign-map">Mapa ${index+1} · ${esc(map.map)}<b>${esc(teamA.nome)} ${map.scoreA}–${map.scoreB} ${esc(teamB.nome)}</b></div>`).join("");
+    runHead=`<div class="sim-run-head"><div><div class="sim-run-title">Campanha curta · MD3</div><div class="sim-run-meta">Primeiro a dois mapas · ${b.n} mapa(s) disputado(s)</div></div></div><div class="sim-campaign-score" aria-label="${esc(teamA.nome)} ${c.winsA}, ${esc(teamB.nome)} ${c.winsB}"><div class="sim-campaign-team">${esc(teamA.nome)}</div><div class="sim-campaign-result">${c.winsA}–${c.winsB}</div><div class="sim-campaign-team">${esc(teamB.nome)}</div></div><div class="sim-campaign-maps">${mapCards}</div><div class="sim-campaign-note">Série independente do Major principal. Mapas não se repetem, a orientação alterna e a forma de cada time é sorteada uma vez e mantida durante toda a MD3.</div>`;
+  }else runHead=`<div class="sim-run-head"><div><div class="sim-run-title">${header}</div><div class="sim-run-meta">${b.n} mapas · ${(b.rounds/b.n).toFixed(1)} rounds/mapa · pares distribuídos em round-robin</div></div></div>`;
+  const fidelitySummary=campaignMode?`<div class="sim-campaign-note">Esta MD3 mostra uma experiência competitiva curta. Ela não mede expectativa de longo prazo nem substitui a amostra da liga.</div>`:`<div class="fidelity-head"><div class="fidelity-score">Fidelidade profissional <span>${passed}/${eligible.length}</span></div><div class="fidelity-sub">${low?`${low} métrica(s) ainda sem amostra confiável.`:"Amostra suficiente em todos os indicadores."}</div></div>${diagnosis}`;
+  const indicatorDetails=campaignMode?"":`<details class="sim-details"><summary>Indicadores profissionais <span>${metrics.length} métricas</span></summary><div class="sim-details-body"><div class="sim-section-tag">Faixas do CS profissional</div><div class="fidelity-grid">${groups}</div><div class="sim-footnote">Mapas: ${esc(mapTxt||"mapa fixo")}. Verde indica aderência; laranja indica desvio com amostra suficiente.</div></div></details>`;
   return `<div class="simres">
     ${runHead}
     <div class="sim-core">${coreItems}</div>
-    <div class="fidelity-head"><div class="fidelity-score">Fidelidade profissional <span>${passed}/${eligible.length}</span></div><div class="fidelity-sub">${low?`${low} métrica(s) ainda sem amostra confiável.`:"Amostra suficiente em todos os indicadores."}</div></div>
-    ${diagnosis}
-    <details class="sim-details"><summary>Indicadores profissionais <span>${metrics.length} métricas</span></summary><div class="sim-details-body"><div class="sim-section-tag">Faixas do CS profissional</div><div class="fidelity-grid">${groups}</div><div class="sim-footnote">Mapas: ${esc(mapTxt||"mapa fixo")}. Verde indica aderência; laranja indica desvio com amostra suficiente.</div></div></details>
-    <details class="sim-details"><summary>Funções e jogadores <span>diagnóstico avançado</span></summary><div class="sim-details-body"><div class="sim-section-tag">Leitura por função e jogador</div><div class="scoreboards sim-breakdowns"><div class="sim-data-panel"><div class="sim-data-title">Assinatura das funções</div><table><thead><tr><th>Função</th><th>KPR</th><th>DPR</th><th>A/K</th><th>KAST</th><th>ADR</th></tr></thead><tbody>${roleRows}</tbody></table></div><div class="sim-data-panel player-delta">${playerPanel}</div></div><div class="sim-footnote">Média, mediana, DP e P5–P95 descrevem o rating por mapa; IC95% mede a precisão da média e requer 2+ mapas. Todos os participantes permanecem acessíveis; filtros alteram somente a visualização. O diagnóstico é somente leitura e não altera pesos, química, economia ou playstyles.</div></div></details>
+    ${fidelitySummary}
+    ${indicatorDetails}
+    <details class="sim-details"><summary>Funções e jogadores <span>diagnóstico avançado</span></summary><div class="sim-details-body"><div class="sim-section-tag">Leitura por função e jogador</div><div class="scoreboards sim-breakdowns"><div class="sim-data-panel"><div class="sim-data-title">Assinatura das funções</div><table><thead><tr><th>Função</th><th>KPR</th><th>DPR</th><th>A/K</th><th>KAST</th><th>ADR</th></tr></thead><tbody>${roleRows}</tbody></table></div><div class="sim-data-panel player-delta">${playerPanel}</div></div><div class="sim-footnote">Mín.–Máx. registra os extremos absolutos; Faixa 80% mostra P10–P90, removendo os 10% menores e maiores. Média, mediana, DP e P5–P95 descrevem o rating por mapa; IC95% mede a precisão da média e requer 2+ mapas. Todos os participantes permanecem acessíveis; filtros alteram somente a visualização. O diagnóstico é somente leitura e não altera pesos, química, economia ou playstyles.</div></div></details>
   </div>`;
 }
 function renderMatchPanel(){
   const box=document.getElementById("matchout"); if(!box)return;
   if(lastBatch){box.innerHTML=renderBatchPanel(lastBatch);return;}
-  if(!lastMap){box.innerHTML=`<div class="hint">${simScope==="league"?"Rode uma amostra para medir a fidelidade global da liga.":"Rode um mapa ou lote para comparar os dois times com o motor real."}</div>`;return;}
+  if(!lastMap){box.innerHTML=`<div class="hint">${simScope==="league"?"Rode uma amostra para medir a fidelidade global da liga.":simScope==="campaign"?"Jogue uma MD3 curta para observar uma experiência competitiva, separada da expectativa estatística.":"Rode um mapa ou lote para comparar os dois times com o motor real."}</div>`;return;}
   const g=lastMap, m=simMetrics(g), pa=g.placar[0], pb=g.placar[1];
   box.innerHTML=`<div class="simres">
     <div class="scoreline"><span class="scoreteam">${esc(g.nomeA)}</span><span class="scoreval">${pa}</span><span class="hint">${esc(g.mapa)} · ${g.half1?g.half1.join("-"):""}</span><span class="scoreval">${pb}</span><span class="scoreteam">${esc(g.nomeB)}</span></div>
@@ -3712,8 +3753,8 @@ function renderCanvasMode(){
     wireTeamMode();
   }else if(centerMode==="simular"){
     body.innerHTML=`<div class="card panel-secondary">
-      <div class="hint" style="margin-bottom:10px">Compare dois times ou audite a fidelidade estatística de toda a liga.</div>
-      <div class="simgrid"><div class="simfield"><label>Modo</label><select id="simScope"><option value="match"${simScope==="match"?" selected":""}>Confronto A × B</option><option value="league"${simScope==="league"?" selected":""}>Amostra da liga</option></select></div><div class="simfield sim-team-field"><label>Time A</label><select id="simA"></select></div><div class="simfield sim-team-field"><label>Time B</label><select id="simB"></select></div><div class="simfield"><label>Mapa</label><select id="simMap"><option value="auto">Mapa aleatório</option></select></div><div class="simfield"><label>Mapas</label><input type="number" id="simRuns" value="${simRuns}" min="1" max="500" step="10"></div></div>
+      <div class="hint" style="margin-bottom:10px">Compare times, jogue uma MD3 curta ou audite a fidelidade estatística de toda a liga.</div>
+      <div class="simgrid"><div class="simfield"><label>Modo</label><select id="simScope"><option value="match"${simScope==="match"?" selected":""}>Confronto A × B</option><option value="league"${simScope==="league"?" selected":""}>Amostra da liga</option><option value="campaign"${simScope==="campaign"?" selected":""}>Campanha curta · MD3</option></select></div><div class="simfield sim-team-field"><label>Time A</label><select id="simA"></select></div><div class="simfield sim-team-field"><label>Time B</label><select id="simB"></select></div><div class="simfield sim-map-field"><label>Mapa</label><select id="simMap"><option value="auto">Mapa aleatório</option></select></div><div class="simfield sim-runs-field"><label>Mapas</label><input type="number" id="simRuns" value="${simRuns}" min="1" max="500" step="10"></div></div>
       <div class="row2"><button class="btn" id="runBatchBtn">Rodar lote</button><button class="btn accent" id="runMapBtn">Rodar mapa</button></div>
       <div id="matchout"></div>
     </div>`;
@@ -3733,7 +3774,7 @@ function wireSimulador(){
   const fillTeamSel=(id,val)=>{const s=document.getElementById(id);E.TEAMS.forEach((t,i)=>{const o=document.createElement("option");o.value=i;o.textContent=t.nome+" · "+t.camp;if(i===val)o.selected=true;s.appendChild(o);});return s;};
   const sa=fillTeamSel("simA",simA), sb=fillTeamSel("simB",simB), sm=document.getElementById("simMap"), ss=document.getElementById("simScope"), mapBtn=document.getElementById("runMapBtn"), batchBtn=document.getElementById("runBatchBtn"),out=document.getElementById("matchout");
   E.MAPAS_POOL.forEach(m=>{const o=document.createElement("option");o.value=m;o.textContent=m+(E.MAPA_LADO[m]?` (${E.MAPA_LADO[m]>0?"CT":"TR"} ${Math.abs(E.MAPA_LADO[m])})`:"");if(m===simMap)o.selected=true;sm.appendChild(o);});
-  const syncScope=()=>{const league=simScope==="league";document.querySelectorAll(".sim-team-field").forEach(x=>x.style.display=league?"none":"flex");mapBtn.disabled=league;mapBtn.hidden=league;mapBtn.title=league?"Disponível apenas no modo confronto":"";batchBtn.textContent=league?"Rodar amostra":"Rodar lote";batchBtn.classList.toggle("accent",league);};
+  const syncScope=()=>{const league=simScope==="league",campaign=simScope==="campaign",match=simScope==="match";document.querySelectorAll(".sim-team-field").forEach(x=>x.style.display=league?"none":"flex");document.querySelectorAll(".sim-map-field,.sim-runs-field").forEach(x=>x.style.display=campaign?"none":"flex");mapBtn.disabled=!match;mapBtn.hidden=!match;mapBtn.title=match?"":"Disponível apenas no modo confronto";batchBtn.textContent=league?"Rodar amostra":campaign?"Jogar MD3":"Rodar lote";batchBtn.classList.toggle("accent",!match);};
   ss.onchange=()=>{simScope=ss.value;lastMap=null;lastBatch=null;syncScope();renderMatchPanel();};
   sa.onchange=()=>{simA=+sa.value;lastMap=null;lastBatch=null;renderMatchPanel();};
   sb.onchange=()=>{simB=+sb.value;lastMap=null;lastBatch=null;renderMatchPanel();};
@@ -3797,7 +3838,8 @@ if(typeof window!=="undefined"&&typeof location!=="undefined"&&/[?&]e2e(?:=|&|$)
       seed:lastBatch?.seed||lastMap?.labSeed||0,
       scope:lastBatch?.scope||simScope,
       maps:lastBatch?.n||(lastMap?1:0),
-      players:Object.values(lastBatch?.players||{}).map(player=>({id:player.id,maps:player.n,samples:player.ratings.length}))
+      players:Object.values(lastBatch?.players||{}).map(player=>({id:player.id,maps:player.n,samples:player.ratings.length})),
+      campaign:lastBatch?.campaign?{...lastBatch.campaign,maps:lastBatch.campaign.maps.map(map=>({...map}))}:null
     })
   };
 }
