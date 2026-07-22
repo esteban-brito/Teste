@@ -52,7 +52,7 @@ function generatedSamples(){
 
 async function main(){
   const moduleUrl=pathToFileURL(path.join(ROOT,"src","domain","statistics","sample-summary.mjs")).href;
-  const {describeSample,meanConfidenceInterval}=await import(moduleUrl);
+  const {describeSample,percentileRange,meanConfidenceInterval}=await import(moduleUrl);
   const samples=generatedSamples();
 
   samples.forEach((sample,index)=>{
@@ -65,6 +65,10 @@ async function main(){
   assert.equal(meanConfidenceInterval([2]),null,"IC unitário deve ser indisponível");
   assert.deepEqual(meanConfidenceInterval([1,1]),[1,1],"IC constante deve colapsar na média");
   assert.deepEqual(meanConfidenceInterval([1,3]),[.04,3.96],"IC deve usar desvio amostral e z=1.96");
+  assert.equal(percentileRange([]),null,"faixa vazia deve ser indisponível");
+  assert.deepEqual(percentileRange([2]),{lower:2,upper:2},"faixa unitária deve colapsar no valor");
+  assert.deepEqual(percentileRange(Array.from({length:100},(_,index)=>index+1)),{lower:10.9,upper:90.1},"P10–P90 deve delimitar os 80% centrais");
+  assert.throws(()=>percentileRange([1,2],.9,.1),/intervalo válido/,"percentis invertidos devem falhar claramente");
   assert.throws(()=>describeSample(null),/array/,"entrada inválida deve falhar claramente");
   assert.throws(()=>meanConfidenceInterval([1,2],0),/positivo/,"z inválido deve falhar claramente");
 

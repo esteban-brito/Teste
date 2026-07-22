@@ -120,13 +120,18 @@ snapshots. Testes e artefatos persistentes devem usar o ID cru.
 ## Próxima evolução do laboratório
 
 O plano aprovado está em `docs/next-steps.md`. A auditoria individual R1 e a
-apresentação de variância R2 estão concluídas sem tocar no motor. A próxima etapa
-funcional é definir um modo campanha separado da expectativa de longo prazo.
+apresentação de variância R2 estão concluídas sem tocar no motor. R3 começou com
+uma MD3 isolada, orquestrada pelo sandbox sobre os mesmos motores de mapa.
 
 Essas duas leituras não devem virar motores paralelos:
 
 - **expectativa:** agrega muitos mapas para medir convergência;
 - **campanha:** coordena uma sequência competitiva curta usando os mesmos motores.
+
+O contrato inicial da campanha deriva três mapas únicos da seed, alterna a
+orientação dos times, mantém uma força de forma por série e encerra no segundo
+mapa vencido. `bancada/campaign-golden.json` protege a orquestração observável;
+o golden completo do simulador continua protegendo os mapas internamente.
 
 Busca, filtros, comparação e exportação pertencem à interface/aplicação.
 Percentis e intervalos são calculados pelo módulo estatístico puro a partir das

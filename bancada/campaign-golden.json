@@ -1,0 +1,28 @@
+{
+  "seed": 424242,
+  "scope": "campaign",
+  "maps": 2,
+  "campaign": {
+    "format": "MD3",
+    "winsA": 0,
+    "winsB": 2,
+    "winnerIndex": 1,
+    "maps": [
+      {
+        "map": "Nuke",
+        "scoreA": 6,
+        "scoreB": 13,
+        "winnerIndex": 1,
+        "orientation": "A-B"
+      },
+      {
+        "map": "Ancient",
+        "scoreA": 5,
+        "scoreB": 13,
+        "winnerIndex": 1,
+        "orientation": "B-A"
+      }
+    ],
+    "formPersistence": "series"
+  }
+}

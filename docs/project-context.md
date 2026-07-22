@@ -272,6 +272,8 @@ R2 acrescentou ao painel individual, sem alterar a simulação:
 
 - amostras de rating preservadas por ID estável e mapa;
 - média, mediana, desvio-padrão, P5, P95 e IC95% da média;
+- extremos absolutos e faixa recorrente P10–P90, que retira os 10% mapas mais
+  baixos e os 10% mais altos da leitura central;
 - referência histórica, referência atual, delta, mapas e aviso de suficiência;
 - busca por nome/ID, filtros por time, função e suficiência;
 - ordenação numérica por todas as métricas relevantes;
@@ -282,9 +284,12 @@ R2 acrescentou ao painel individual, sem alterar a simulação:
 
 A matemática descritiva compartilhada vive em
 `src/domain/statistics/sample-summary.mjs`, recebe amostras explícitas e não
-depende do DOM. A auditoria R1 e o sandbox consomem o mesmo contrato. Ainda não
-existe um modo campanha separado do lote de expectativa; esse é o objetivo de
-R3 e não autoriza balanceamento incidental.
+depende do DOM. A auditoria R1 e o sandbox consomem o mesmo contrato.
+
+R3 começou com uma campanha curta MD3 separada do lote de expectativa: dois
+times, mapas sem repetição, orientação alternada, forma mantida na série,
+placares por mapa e golden por seed. Essa primeira fatia é independente do Major
+principal e ainda não inclui repetição de muitas campanhas ou histórico.
 
 Medição local observada após a otimização: lote de 80 mapas em aproximadamente
 70 ms na máquina de desenvolvimento. Isso é uma referência operacional, não um
@@ -395,6 +400,9 @@ profunda R1 foi executada duas vezes após R2 e preservou exatamente SHA-256
   distribuições e adicionam busca, filtros e ordenação;
 - `50c8d21`: adiciona comparação lado a lado de até dois jogadores;
 - `7109ed5`: exporta o diagnóstico visível em CSV seguro e rastreável.
+- `ebc485e`: adiciona extremos e faixa recorrente P10–P90;
+- `12c1342`: compartilha a acumulação por mapa sem alterar os lotes existentes;
+- `f84d7c1`: inicia R3 com a campanha curta MD3 e golden por seed.
 
 O balanceamento deliberado está documentado em
 `docs/rating-balance-2026-07-20.md`. A mudança posterior de tabela foi apenas de
@@ -939,8 +947,8 @@ A fonte canônica da sequência é `docs/next-steps.md`. Ordem resumida:
    balanceamento;
 2. R2 concluída: distribuições, diagnóstico, comparação e CSV individual no
    sandbox, usando matemática compartilhada com R1;
-3. R3 é a próxima etapa funcional: definir e implementar campanha separada da
-   expectativa de muitos mapas;
+3. R3 em andamento: a MD3 isolada já está implementada; a próxima fatia deve
+   comparar a distribuição entre muitas campanhas;
 4. R4: auditar AWPer, sobrevivência e playstyle por critérios numéricos;
 5. R5/R6: balancear somente se houver evidência e validar integralmente;
 6. aprimorar usabilidade do laboratório;
@@ -955,8 +963,8 @@ puxar `afinidades`, distribuição contextual ou classificação completa. Antes
 próxima extração estrutural, caracterizar uma única nova fronteira pura do PRISMA
 e manter a mudança isolada.
 `game.js` permanece fonte executável para consumidores clássicos; a projeção do
-ADR 0005 impede divergência em novas adições. R3 deve começar pelo contrato de
-produto, separada da trilha estrutural. Antes de congelar thresholds de cauda ou
+ADR 0005 impede divergência em novas adições. A próxima fatia de R3 deve ampliar
+o contrato MD3 sem misturar a trilha estrutural. Antes de congelar thresholds de cauda ou
 ranking, revisar a baseline atual. Cada etapa deve ser um commit pequeno ou uma
 sequência curta com responsabilidade verificável; não misturar auditoria,
 interface, refatoração e balanceamento.

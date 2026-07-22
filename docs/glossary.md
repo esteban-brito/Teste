@@ -61,12 +61,15 @@
 
 - **Expectativa de longo prazo:** agregação de muitos mapas para estimar o valor
   médio ao qual o confronto converge; não representa uma temporada real.
-- **Modo campanha:** futura sequência competitiva curta, com contrato próprio de
-  adversários, mapas, lados, forma e seed; não é sinônimo de lote de 491 mapas.
+- **Modo campanha:** sequência competitiva curta separada da expectativa. O
+  primeiro recorte é uma MD3 isolada com mapas únicos, orientação alternada e
+  forma mantida durante a série; não é sinônimo de lote de 491 mapas.
 - **Desvio-padrão:** dispersão dos resultados de mapa para mapa; não mede a
   precisão da média.
 - **Percentil:** posição na distribuição observada; P5 e P95 delimitam a região
   que contém aproximadamente os 90% centrais da amostra.
+- **Faixa 80% / P10–P90:** intervalo que retira os 10% resultados menores e os
+  10% maiores; representa a região recorrente sem esconder mínimo e máximo.
 - **Intervalo de confiança:** faixa de incerteza da estimativa de uma média ou
   proporção; não é a faixa esperada de resultados individuais.
 - **Erro assinado:** `simulado - real`, preservando a direção do viés.
