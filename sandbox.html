@@ -594,7 +594,7 @@ const tierVar=o=>o>=22?"--t22":o>=21?"--t21":o>=18?"--t18":o>=15?"--t15":"--t14"
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const clone=o=>JSON.parse(JSON.stringify(o));
 
-let E=null, DEF=null, POOLRAW=[], loadedIdx=null, poolBySlot=new Map();
+let E=null, SampleStatistics=null, DEF=null, POOLRAW=[], loadedIdx=null, poolBySlot=new Map();
 let teamIdx=0, simA=0, simB=1, simSeed=0, simSeedCounter=0, simRuns=80, simMap="auto", simScope="match", lastMap=null, lastBatch=null, baseline=null;
 // estrutura nova: uma ferramenta por vez no canvas central (segmented control), jogador fixado no topo
 let centerMode="calibrar"; // calibrar | time | simular | editar | relatorio
@@ -629,6 +629,12 @@ async function carregarMotores(){
     poolBySlot.set(`${ti}:${pi}`,idx);
     POOLRAW.push({...e,time:t.nome,ti,pi,isIGL:!!e.isIGL,colocacao:e.colocacao||"Campeao"});
   }));
+}
+async function carregarEstatisticas(){
+  SampleStatistics=await import("./src/domain/statistics/sample-summary.mjs");
+  ["describeSample","meanConfidenceInterval"].forEach(name=>{
+    if(typeof SampleStatistics[name]!=="function")throw new Error(`estatística ausente: ${name}`);
+  });
 }
 // o jogador carregado (loadedIdx) entra no varrimento com os stats EDITADOS no laboratório, não os originais
 function playerAt(i){ if(i===loadedIdx){const p=POOLRAW[i];return {...p,fp:state.fp,en:state.en,tr:state.tr,op:state.op,cl:state.cl,sn:state.sn,ut:state.ut,rating:state.rating,isIGL:state.isIGL,colocacao:state.colocacao};} return POOLRAW[i]; }
@@ -3119,13 +3125,43 @@ function simMeanCI(xs){if(xs.length<2)return null;const avg=simMean(xs),variance
 function simWilson(w,n){if(!n)return null;const z=1.96,p=w/n,d=1+z*z/n,c=(p+z*z/(2*n))/d,m=z*Math.sqrt((p*(1-p)+z*z/(4*n))/n)/d;return [100*(c-m),100*(c+m)];}
 function simCorrelation(points){if(points.length<2)return 0;const ax=simMean(points.map(p=>p[0])),ay=simMean(points.map(p=>p[1]));let num=0,dx=0,dy=0;points.forEach(([x,y])=>{num+=(x-ax)*(y-ay);dx+=(x-ax)**2;dy+=(y-ay)**2;});return dx&&dy?num/Math.sqrt(dx*dy):0;}
 function simGapBucket(diff){return Object.entries(SIM_GAP_BUCKETS).find(([,range])=>diff>=range[0]&&diff<=range[1])?.[0];}
-function simRolePlayers(t,ti,preparedTeam=null){try{return (preparedTeam?.jogadores||teamPlayers(t,ti)).map(p=>({name:p.nome||p.nick||"?",role:p.isIGL?"IGL":(p.role1||p.combatRole||"?"),rating:+p.rating||0}));}catch{return [];}}
+function simRolePlayers(t,ti,preparedTeam=null){
+  try{
+    return (preparedTeam?.jogadores||teamPlayers(t,ti)).map((player,playerIndex)=>{
+      const source=t.jogadores?.[playerIndex]?._eng||t.jogadores?.[playerIndex]||player;
+      return {
+        key:`${ti}:${playerIndex}`,
+        id:source.id||source.nome||player.id||player.nome||player.nick||`${ti}:${playerIndex}`,
+        name:player.nome||player.nick||source.nome||"?",
+        teamIndex:ti,
+        teamName:t.nome,
+        teamCampaign:t.camp||"",
+        role:player.isIGL?"IGL":(player.role1||player.combatRole||"?"),
+        historicalRating:+source.rating||0,
+        rating:+player.rating||0
+      };
+    });
+  }catch{return [];}
+}
 function newSimAcc(n,scope,seed){const clutch={},gaps={};for(let x=1;x<=5;x++)clutch[x]={n:0,w:0};Object.keys(SIM_GAP_BUCKETS).forEach(k=>gaps[k]={n:0,w:0});return {n,scope,seed,wA:0,rounds:0,ctWins:0,plants:0,plantTWins:0,otMaps:0,otRounds:0,force:0,eco:0,pistN:0,pistConv:0,aeN:0,aeW:0,clutches:0,clutch,gaps,kills:0,assists:0,ratings:0,ratingsN:0,kastW:0,adrW:0,pr:0,maps:{},role:{},players:{},teams:{},samples:{rounds:[],kpr:[],kast:[],adr:[],ct:[],plant:[]}};}
 function accSimSide(acc,stats,players,rounds,teamIndex){
   (stats||[]).forEach((s,i)=>{const p=players[i]||{name:s.nick||"?",role:"?",rating:0},role=p.role,b=acc.role[role]=acc.role[role]||{k:0,d:0,a:0,r:0,kast:0,adr:0};
     b.k+=s.k||0;b.d+=s.d||0;b.a+=s.a||0;b.r+=rounds;b.kast+=(s.kast||0)*rounds;b.adr+=(s.adr||0)*rounds;
-    const key=`${teamIndex}:${i}`,q=acc.players[key]=acc.players[key]||{name:p.name,role,real:p.rating,sim:0,n:0};q.sim+=+s.rating||0;q.n++;
+    const key=p.key||`${teamIndex}:${i}`,q=acc.players[key]=acc.players[key]||{id:p.id||key,name:p.name,teamIndex,teamName:p.teamName||"",teamCampaign:p.teamCampaign||"",role,historical:p.historicalRating||0,real:p.rating,sim:0,n:0,ratings:[]},rating=+s.rating||0;
+    q.sim+=rating;q.n++;q.ratings.push(rating);
   });
+}
+function simPlayerDistributionRows(batch){
+  const minimumMaps=batch.scope==="league"?5:10;
+  return Object.values(batch.players).filter(player=>player.n&&player.real).map(player=>({
+    ...player,
+    avg:player.sim/player.n,
+    delta:player.sim/player.n-player.real,
+    distribution:SampleStatistics.describeSample(player.ratings),
+    meanCI:SampleStatistics.meanConfidenceInterval(player.ratings),
+    sufficient:player.n>=minimumMaps,
+    minimumMaps
+  }));
 }
 function runBatchLab(){
   if(simScope==="match"&&simA===simB){toast("Escolha dois times diferentes");return;}
@@ -3153,7 +3189,7 @@ function simCIText(ci,dec=1,suf=""){return ci?`IC95% ${ci[0].toFixed(dec)}${suf}
 function simMetricCard(metric){const eligible=metric.eligible!==false,ok=eligible&&metric.value>=metric.band[0]&&metric.value<=metric.band[1],cls=eligible?(ok?"ok":"out"):"low",value=Number.isFinite(metric.value)?metric.value.toFixed(metric.dec??1)+(metric.suf||""):"—",meta=eligible?`Referência ${metric.band[0]}–${metric.band[1]}${metric.suf||""}`:`Amostra insuficiente · ${metric.sample||0} evento(s)`;return `<div class="fidelity-card ${cls}" data-metric="${metric.key}"><div><div class="fidelity-label">${metric.label}</div><div class="fidelity-meta">${meta}${metric.note?` · ${metric.note}`:""}</div></div><div class="fidelity-value" title="real ${metric.band[0]}–${metric.band[1]}">${value}</div></div>`;}
 function renderBatchPanel(b){
   const mapTxt=Object.entries(b.maps).sort((a,c)=>c[1]-a[1]).map(([m,n])=>`${m} ${Math.round(n/b.n*100)}%`).join(" · "),kpr=b.kills/Math.max(1,b.rounds*10),kast=b.pr?b.kastW/b.pr*100:0,adr=b.pr?b.adrW/b.pr:0,ak=b.kills?b.assists/b.kills:0,apr=b.assists/Math.max(1,b.pr);
-  const minPlayerMaps=b.scope==="league"?5:10,allPlayerRows=Object.values(b.players).filter(p=>p.n&&p.real).map(p=>({...p,avg:p.sim/p.n,delta:p.sim/p.n-p.real})),playerRows=allPlayerRows.filter(p=>p.n>=minPlayerMaps),ratingPoints=playerRows.map(p=>[p.real,p.avg]),ratingR=simCorrelation(ratingPoints),ratingMae=simMean(playerRows.map(p=>Math.abs(p.delta))),minRatingPlayers=b.scope==="league"?30:10;
+  const minPlayerMaps=b.scope==="league"?5:10,allPlayerRows=simPlayerDistributionRows(b),playerRows=allPlayerRows.filter(p=>p.n>=minPlayerMaps),ratingPoints=playerRows.map(p=>[p.real,p.avg]),ratingR=simCorrelation(ratingPoints),ratingMae=simMean(playerRows.map(p=>Math.abs(p.delta))),minRatingPlayers=b.scope==="league"?30:10;
   const metrics=[
     {key:"kpr",label:"Kills por round",value:kpr,band:SIM_REAL_BANDS.kpr,dec:3,note:simCIText(simMeanCI(b.samples.kpr),3)},
     {key:"ct",label:"CT round win",value:100*b.ctWins/b.rounds,band:SIM_REAL_BANDS.ct,suf:"%",note:simCIText(simWilson(b.ctWins,b.rounds),1,"%")},
@@ -3558,14 +3594,15 @@ if(typeof window!=="undefined"&&typeof location!=="undefined"&&/[?&]e2e(?:=|&|$)
     simulation:()=>({
       seed:lastBatch?.seed||lastMap?.labSeed||0,
       scope:lastBatch?.scope||simScope,
-      maps:lastBatch?.n||(lastMap?1:0)
+      maps:lastBatch?.n||(lastMap?1:0),
+      players:Object.values(lastBatch?.players||{}).map(player=>({id:player.id,maps:player.n,samples:player.ratings.length}))
     })
   };
 }
 
 (async()=>{
   try{
-    await carregarMotores();
+    await Promise.all([carregarMotores(),carregarEstatisticas()]);
     const sel=document.getElementById("loadSel");
     POOLRAW.forEach((p,i)=>{const o=document.createElement("option");o.value=i;o.textContent=p.nome+" — "+p.time;sel.appendChild(o);});
     sel.onchange=()=>{if(sel.value==="")return;const p=POOLRAW[+sel.value];

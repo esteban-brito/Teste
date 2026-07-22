@@ -84,7 +84,8 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
         groups:out.querySelectorAll(".fidelity-group").length,
         breakdowns:out.querySelectorAll(".sim-breakdowns .sim-data-panel").length,
         deltaRows:out.querySelectorAll(".player-delta tbody tr").length,
-        details:[...out.querySelectorAll("details.sim-details")].map(node=>node.open)
+        details:[...out.querySelectorAll("details.sim-details")].map(node=>node.open),
+        samplePlayers:window.__e2e.simulation().players
       };
     });
     const coreText=firstBatch.core.join(" ");
@@ -94,6 +95,7 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     check(JSON.stringify(firstBatch.headers)===JSON.stringify(expectedRoleColumns),"breakdown possui colunas por função esperadas");
     check(firstBatch.rows.length===6,"breakdown cobre as 6 funções do confronto");
     check(firstBatch.deltaRows===10,"painel de rating mostra os 10 jogadores do confronto");
+    check(firstBatch.samplePlayers.length===10&&firstBatch.samplePlayers.every(player=>player.id&&player.maps===3&&player.samples===3),"lote preserva uma amostra por mapa para cada jogador");
     check(firstBatch.bands.length>=9&&firstBatch.bands.every(band=>band.title.startsWith("real ")),"faixas reais aparecem nas métricas globais e por função");
     check(firstBatch.groups===4&&firstBatch.breakdowns===2&&firstBatch.details.length===2&&firstBatch.details.every(open=>!open),"detalhes completos permanecem disponíveis e fechados por padrão");
     check(!/NaN|undefined|Infinity/.test(firstBatch.text),"lote não contém valores inválidos");
@@ -121,7 +123,8 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       return {
         text:out.textContent,
         metrics:[...out.querySelectorAll("[data-metric]")].map(node=>({key:node.dataset.metric,state:node.className})),
-        deltaRows:out.querySelectorAll(".player-delta tbody tr").length
+        deltaRows:out.querySelectorAll(".player-delta tbody tr").length,
+        samplePlayers:window.__e2e.simulation().players
       };
     });
     const proMetrics=["kpr","ct","plant","postplant","antieco","pistol","clutch1","clutch2","clutch3","kast","adr","ak","apr","ratingR","ratingMae","fav03","fav16"];
@@ -129,6 +132,7 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     check(proMetrics.every(key=>league.metrics.some(metric=>metric.key===key)),"painel cobre combate, lados, economia, clutches, rating e favoritos");
     check(league.metrics.every(metric=>/\b(ok|out|low)\b/.test(metric.state)),"cada métrica recebe diagnóstico ou amostra insuficiente");
     check(league.deltaRows===85,"painel de rating mostra todos os 85 jogadores da liga");
+    check(league.samplePlayers.length===85&&league.samplePlayers.every(player=>player.id&&player.maps===player.samples&&player.maps>=8&&player.maps<=11),"liga preserva as distribuições dos 85 jogadores sem perder exposições");
     check(/Fidelidade profissional\s+\d+\/\d+/.test(league.text)&&!/NaN|undefined|Infinity/.test(league.text),"nota de fidelidade da liga contém apenas valores válidos");
 
     const leagueSeed=await page.evaluate(()=>window.__e2e.simulation().seed);
