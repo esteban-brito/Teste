@@ -19,6 +19,12 @@ transforma demos reais em artefatos auditáveis fora do navegador. Nenhuma dessa
 ferramentas pode ser importada por `game.js` ou virar uma segunda implementação
 das regras do domínio.
 
+A estatística descritiva de amostras vive em
+`src/domain/statistics/sample-summary.mjs`. O módulo não conhece DOM, sandbox ou
+auditoria: recebe arrays explícitos e fornece média, quantis, dispersão e IC95%.
+O sandbox carrega essa API por módulo ES e a auditoria profunda a importa no
+caminho Node, evitando duas fórmulas para o mesmo conceito.
+
 ## Pipeline do domínio
 
 ```text
@@ -113,17 +119,16 @@ snapshots. Testes e artefatos persistentes devem usar o ID cru.
 
 ## Próxima evolução do laboratório
 
-O plano aprovado está em `docs/next-steps.md`. A ordem arquitetural é primeiro
-fortalecer a auditoria individual sem tocar no motor, depois apresentar variância
-no sandbox e somente então definir um modo campanha separado da expectativa de
-longo prazo.
+O plano aprovado está em `docs/next-steps.md`. A auditoria individual R1 e a
+apresentação de variância R2 estão concluídas sem tocar no motor. A próxima etapa
+funcional é definir um modo campanha separado da expectativa de longo prazo.
 
 Essas duas leituras não devem virar motores paralelos:
 
 - **expectativa:** agrega muitos mapas para medir convergência;
 - **campanha:** coordena uma sequência competitiva curta usando os mesmos motores.
 
-Busca, filtros, percentis e intervalos pertencem à interface/aplicação. Cálculo
-estatístico reutilizável deve receber dados explícitos e não depender do DOM.
-Uma futura extração precisa preservar IDs, agenda, lados, seeds e resultados
-aprovados antes de remover os loaders legados.
+Busca, filtros, comparação e exportação pertencem à interface/aplicação.
+Percentis e intervalos são calculados pelo módulo estatístico puro a partir das
+amostras preservadas pela aplicação. Uma futura extração precisa preservar IDs,
+agenda, lados, seeds e resultados aprovados antes de remover os loaders legados.

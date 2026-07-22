@@ -262,6 +262,39 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .sim-data-panel table{background:transparent}
 .sim-data-panel th,.sim-data-panel td{padding:8px 10px}
 .sim-data-panel tbody tr:last-child td{border-bottom:0}
+.player-delta{overflow:hidden}
+.player-delta>.sim-data-title{display:flex;align-items:center;gap:8px}
+.player-delta table{min-width:1080px}
+.player-table-scroll{overflow-x:auto}
+.player-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:8px;padding:10px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--panel) 45%,var(--panel-soft))}
+.player-filter{display:flex;flex-direction:column;gap:4px;min-width:0}
+.player-filter:first-child{grid-column:span 2}
+.player-filter span{font-size:var(--fs-2xs);font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.player-filter input,.player-filter select{width:100%;min-width:0}
+.player-filter-action{align-self:end;white-space:nowrap}
+.player-view-count{margin-left:auto;font-family:var(--fb);font-size:var(--fs-xs);font-weight:600;letter-spacing:0;text-transform:none;color:var(--dim)}
+.player-compare-check{display:flex;align-items:center;gap:5px;margin-top:5px;width:max-content;font-size:var(--fs-2xs);font-weight:700;color:var(--neutral);cursor:pointer}
+.player-compare-check input{width:auto;margin:0}
+.player-comparison{padding:10px;border-bottom:1px solid var(--line)}
+.player-comparison-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;font-family:var(--ff);font-size:var(--fs-xs);font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--neutral)}
+.player-comparison-head span{font-family:var(--fb);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;color:var(--dim)}
+.player-comparison-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.player-compare-card{padding:9px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--panel-soft)}
+.player-compare-name{font-family:var(--ff);font-weight:800;color:var(--txt)}
+.player-compare-meta{margin-top:2px;font-size:var(--fs-2xs);color:var(--dim)}
+.player-compare-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:8px}
+.player-compare-metrics span{font-size:var(--fs-2xs);color:var(--dim)}
+.player-compare-metrics b{display:block;margin-top:2px;font-family:var(--ff);font-size:var(--fs-sm);color:var(--neutral);font-variant-numeric:tabular-nums}
+.player-compare-empty{padding:7px 0;font-size:var(--fs-s);color:var(--dim)}
+.player-cell{min-width:128px}
+.player-cell strong{display:block;color:var(--txt)}
+.player-cell span,.team-cell span{display:block;margin-top:2px;font-size:var(--fs-2xs);color:var(--dim)}
+.team-cell{min-width:120px}
+.sample-cell{min-width:92px}
+.sample-status{display:block;width:max-content;margin-top:4px;padding:2px 6px;border:1px solid color-mix(in srgb,var(--win) 35%,var(--line));border-radius:var(--radius-pill);font-size:var(--fs-2xs);font-weight:700;color:var(--win);white-space:nowrap}
+.sample-status.low{border-color:color-mix(in srgb,var(--warn) 45%,var(--line));color:var(--warn)}
+.reference-note{display:block;margin-top:2px;font-size:var(--fs-2xs);color:var(--dim);white-space:nowrap}
+.player-delta abbr{text-decoration:none;border:0;cursor:help}
 .player-delta{margin:0}
 .sim-footnote{padding-top:10px;margin-top:12px;border-top:1px solid var(--line);font-size:var(--fs-s);color:var(--dim)}
 #matchout{margin-top:10px}
@@ -564,6 +597,11 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
   .sim-core{grid-template-columns:repeat(2,minmax(0,1fr))}
   .sim-core-item:last-child{grid-column:1/-1}
   .sim-run-head{align-items:flex-start}
+  .player-controls{grid-template-columns:1fr 1fr}
+  .player-filter:first-child{grid-column:1/-1}
+  .player-filter:nth-child(6){grid-column:1/-1}
+  .player-comparison-grid{grid-template-columns:1fr}
+  .player-compare-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 </style>
 </head>
@@ -594,8 +632,9 @@ const tierVar=o=>o>=22?"--t22":o>=21?"--t21":o>=18?"--t18":o>=15?"--t15":"--t14"
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const clone=o=>JSON.parse(JSON.stringify(o));
 
-let E=null, DEF=null, POOLRAW=[], loadedIdx=null, poolBySlot=new Map();
+let E=null, SampleStatistics=null, DEF=null, POOLRAW=[], loadedIdx=null, poolBySlot=new Map();
 let teamIdx=0, simA=0, simB=1, simSeed=0, simSeedCounter=0, simRuns=80, simMap="auto", simScope="match", lastMap=null, lastBatch=null, baseline=null;
+let simPlayerView={query:"",team:"all",role:"all",sufficiency:"all",sort:"absDelta",direction:"desc",compare:[]};
 // estrutura nova: uma ferramenta por vez no canvas central (segmented control), jogador fixado no topo
 let centerMode="calibrar"; // calibrar | time | simular | editar | relatorio
 let calibTargetRole="", calibTargetRole2="", calibTargetStyle="", calibTargetOvr="", calibMode="ia", calibLast=null, calibRunning=false, calibBuilding=false;
@@ -629,6 +668,12 @@ async function carregarMotores(){
     poolBySlot.set(`${ti}:${pi}`,idx);
     POOLRAW.push({...e,time:t.nome,ti,pi,isIGL:!!e.isIGL,colocacao:e.colocacao||"Campeao"});
   }));
+}
+async function carregarEstatisticas(){
+  SampleStatistics=await import("./src/domain/statistics/sample-summary.mjs");
+  ["describeSample","meanConfidenceInterval"].forEach(name=>{
+    if(typeof SampleStatistics[name]!=="function")throw new Error(`estatística ausente: ${name}`);
+  });
 }
 // o jogador carregado (loadedIdx) entra no varrimento com os stats EDITADOS no laboratório, não os originais
 function playerAt(i){ if(i===loadedIdx){const p=POOLRAW[i];return {...p,fp:state.fp,en:state.en,tr:state.tr,op:state.op,cl:state.cl,sn:state.sn,ut:state.ut,rating:state.rating,isIGL:state.isIGL,colocacao:state.colocacao};} return POOLRAW[i]; }
@@ -3119,13 +3164,172 @@ function simMeanCI(xs){if(xs.length<2)return null;const avg=simMean(xs),variance
 function simWilson(w,n){if(!n)return null;const z=1.96,p=w/n,d=1+z*z/n,c=(p+z*z/(2*n))/d,m=z*Math.sqrt((p*(1-p)+z*z/(4*n))/n)/d;return [100*(c-m),100*(c+m)];}
 function simCorrelation(points){if(points.length<2)return 0;const ax=simMean(points.map(p=>p[0])),ay=simMean(points.map(p=>p[1]));let num=0,dx=0,dy=0;points.forEach(([x,y])=>{num+=(x-ax)*(y-ay);dx+=(x-ax)**2;dy+=(y-ay)**2;});return dx&&dy?num/Math.sqrt(dx*dy):0;}
 function simGapBucket(diff){return Object.entries(SIM_GAP_BUCKETS).find(([,range])=>diff>=range[0]&&diff<=range[1])?.[0];}
-function simRolePlayers(t,ti,preparedTeam=null){try{return (preparedTeam?.jogadores||teamPlayers(t,ti)).map(p=>({name:p.nome||p.nick||"?",role:p.isIGL?"IGL":(p.role1||p.combatRole||"?"),rating:+p.rating||0}));}catch{return [];}}
+function simRolePlayers(t,ti,preparedTeam=null){
+  try{
+    return (preparedTeam?.jogadores||teamPlayers(t,ti)).map((player,playerIndex)=>{
+      const source=t.jogadores?.[playerIndex]?._eng||t.jogadores?.[playerIndex]||player;
+      return {
+        key:`${ti}:${playerIndex}`,
+        id:source.id||source.nome||player.id||player.nome||player.nick||`${ti}:${playerIndex}`,
+        name:player.nome||player.nick||source.nome||"?",
+        teamIndex:ti,
+        teamName:t.nome,
+        teamCampaign:t.camp||"",
+        role:player.isIGL?"IGL":(player.role1||player.combatRole||"?"),
+        historicalRating:+source.rating||0,
+        rating:+player.rating||0
+      };
+    });
+  }catch{return [];}
+}
 function newSimAcc(n,scope,seed){const clutch={},gaps={};for(let x=1;x<=5;x++)clutch[x]={n:0,w:0};Object.keys(SIM_GAP_BUCKETS).forEach(k=>gaps[k]={n:0,w:0});return {n,scope,seed,wA:0,rounds:0,ctWins:0,plants:0,plantTWins:0,otMaps:0,otRounds:0,force:0,eco:0,pistN:0,pistConv:0,aeN:0,aeW:0,clutches:0,clutch,gaps,kills:0,assists:0,ratings:0,ratingsN:0,kastW:0,adrW:0,pr:0,maps:{},role:{},players:{},teams:{},samples:{rounds:[],kpr:[],kast:[],adr:[],ct:[],plant:[]}};}
 function accSimSide(acc,stats,players,rounds,teamIndex){
   (stats||[]).forEach((s,i)=>{const p=players[i]||{name:s.nick||"?",role:"?",rating:0},role=p.role,b=acc.role[role]=acc.role[role]||{k:0,d:0,a:0,r:0,kast:0,adr:0};
     b.k+=s.k||0;b.d+=s.d||0;b.a+=s.a||0;b.r+=rounds;b.kast+=(s.kast||0)*rounds;b.adr+=(s.adr||0)*rounds;
-    const key=`${teamIndex}:${i}`,q=acc.players[key]=acc.players[key]||{name:p.name,role,real:p.rating,sim:0,n:0};q.sim+=+s.rating||0;q.n++;
+    const key=p.key||`${teamIndex}:${i}`,q=acc.players[key]=acc.players[key]||{id:p.id||key,name:p.name,teamIndex,teamName:p.teamName||"",teamCampaign:p.teamCampaign||"",role,historical:p.historicalRating||0,real:p.rating,sim:0,n:0,ratings:[]},rating=+s.rating||0;
+    q.sim+=rating;q.n++;q.ratings.push(rating);
   });
+}
+function simPlayerDistributionRows(batch){
+  const minimumMaps=batch.scope==="league"?5:10;
+  return Object.values(batch.players).filter(player=>player.n&&player.real).map(player=>{
+    const average=player.sim/player.n,historical=player.historical||player.real;
+    return {
+      ...player,
+      avg:average,
+      delta:average-player.real,
+      historical,
+      historicalDelta:average-historical,
+      distribution:SampleStatistics.describeSample(player.ratings),
+      meanCI:SampleStatistics.meanConfidenceInterval(player.ratings),
+      sufficient:player.n>=minimumMaps,
+      minimumMaps
+    };
+  });
+}
+function simSearchText(value){return String(value??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();}
+function simPlayerSortValue(player,key){
+  const stats=player.distribution;
+  return ({
+    name:player.name,team:`${player.teamName} ${player.teamCampaign}`,role:player.role,
+    historical:player.historical,mean:stats.mean,median:stats.median,stdDev:stats.stdDev,
+    p05:stats.p05,p95:stats.p95,ciWidth:player.meanCI?player.meanCI[1]-player.meanCI[0]:null,
+    delta:player.historicalDelta,absDelta:Math.abs(player.historicalDelta),maps:player.n
+  })[key];
+}
+function simPlayerViewRows(allRows){
+  const query=simSearchText(simPlayerView.query);
+  const filtered=allRows.filter(player=>{
+    if(query&&!simSearchText(`${player.name} ${player.id}`).includes(query))return false;
+    if(simPlayerView.team!=="all"&&String(player.teamIndex)!==simPlayerView.team)return false;
+    if(simPlayerView.role!=="all"&&player.role!==simPlayerView.role)return false;
+    if(simPlayerView.sufficiency==="enough"&&!player.sufficient)return false;
+    if(simPlayerView.sufficiency==="small"&&player.sufficient)return false;
+    return true;
+  });
+  const direction=simPlayerView.direction==="asc"?1:-1;
+  return filtered.slice().sort((a,b)=>{
+    const av=simPlayerSortValue(a,simPlayerView.sort),bv=simPlayerSortValue(b,simPlayerView.sort);
+    if(av==null&&bv!=null)return 1;
+    if(av!=null&&bv==null)return -1;
+    const comparison=typeof av==="string"||typeof bv==="string"
+      ?String(av).localeCompare(String(bv),"pt-BR",{numeric:true,sensitivity:"base"})
+      :av-bv;
+    return comparison*direction||String(a.id).localeCompare(String(b.id),"pt-BR",{numeric:true,sensitivity:"base"});
+  });
+}
+function simCsvCell(value){
+  if(value==null)return "";
+  const raw=String(value),safe=typeof value==="string"&&/^[=+\-@\t\r]/.test(raw)?`'${raw}`:raw;
+  return /[",\r\n]/.test(safe)?`"${safe.replace(/"/g,'""')}"`:safe;
+}
+function simCsvNumber(value,digits=6){return Number.isFinite(value)?Number(value.toFixed(digits)):null;}
+function simPlayerCsv(batch,rows){
+  const header=["seed","scope","batch_maps","player_id","player_name","team","campaign","role","historical_rating","current_reference_rating","simulated_mean","median","std_dev","p05","p95","ci95_lower","ci95_upper","historical_delta","player_maps","sample_status","minimum_maps"];
+  const data=rows.map(player=>{
+    const stats=player.distribution,ci=player.meanCI;
+    return [batch.seed,batch.scope,batch.n,player.id,player.name,player.teamName,player.teamCampaign,player.role,
+      simCsvNumber(player.historical),simCsvNumber(player.real),simCsvNumber(stats.mean),simCsvNumber(stats.median),simCsvNumber(stats.stdDev),simCsvNumber(stats.p05),simCsvNumber(stats.p95),
+      ci?simCsvNumber(ci[0]):null,ci?simCsvNumber(ci[1]):null,simCsvNumber(player.historicalDelta),player.n,player.sufficient?"sufficient":"small",player.minimumMaps];
+  });
+  return [header,...data].map(row=>row.map(simCsvCell).join(",")).join("\r\n")+"\r\n";
+}
+function downloadSimPlayerCsv(){
+  if(!lastBatch)return;
+  const rows=simPlayerViewRows(simPlayerDistributionRows(lastBatch));
+  if(!rows.length){toast("Nenhum jogador visível para exportar");return;}
+  const blob=new window.Blob(["\ufeff",simPlayerCsv(lastBatch,rows)],{type:"text/csv;charset=utf-8"}),a=document.createElement("a"),scope=String(lastBatch.scope).replace(/[^a-z0-9_-]+/gi,"-");
+  a.href=window.URL.createObjectURL(blob);a.download=`sandbox-player-ratings-${scope}-seed-${lastBatch.seed}.csv`;
+  document.body.appendChild(a);a.click();window.URL.revokeObjectURL(a.href);a.remove();
+  toast(`${rows.length} jogador${rows.length===1?"":"es"} exportado${rows.length===1?"":"s"}`);
+}
+function simPlayerRowHtml(player){
+  const stats=player.distribution,ci=player.meanCI,edited=Math.abs(player.real-player.historical)>1e-9;
+  return `<tr data-player-id="${esc(player.id)}" data-sufficient="${player.sufficient}">
+    <td class="player-cell"><strong>${esc(player.name)}</strong><span>${esc(player.id)}</span><label class="player-compare-check"><input type="checkbox" data-compare-player="${esc(player.id)}"${simPlayerView.compare.includes(String(player.id))?" checked":""} aria-label="Comparar ${esc(player.name)}"><span>Comparar</span></label></td>
+    <td class="team-cell">${esc(player.teamName)}<span>${esc(player.teamCampaign)}</span></td>
+    <td>${esc(player.role)}</td>
+    <td class="mono" data-value="${player.historical}">${player.historical.toFixed(2)}${edited?`<span class="reference-note">ref. atual ${player.real.toFixed(2)}</span>`:""}</td>
+    <td class="mono" data-value="${stats.mean}">${stats.mean.toFixed(2)}</td>
+    <td class="mono" data-value="${stats.median}">${stats.median.toFixed(2)}</td>
+    <td class="mono" data-value="${stats.stdDev}">${stats.stdDev.toFixed(3)}</td>
+    <td class="mono" data-value="${stats.p05}">${stats.p05.toFixed(2)}</td>
+    <td class="mono" data-value="${stats.p95}">${stats.p95.toFixed(2)}</td>
+    <td class="mono" data-value="${ci?ci[1]-ci[0]:""}">${ci?`${ci[0].toFixed(2)}–${ci[1].toFixed(2)}`:"—"}</td>
+    <td class="mono" data-value="${player.historicalDelta}" style="color:var(--${Math.abs(player.historicalDelta)>.12?"warn":"neutral"})">${player.historicalDelta>=0?"+":""}${player.historicalDelta.toFixed(2)}</td>
+    <td class="mono sample-cell" data-value="${player.n}">${player.n}<span class="sample-status${player.sufficient?"":" low"}">${player.sufficient?"Suficiente":`Pequena · mín. ${player.minimumMaps}`}</span></td>
+  </tr>`;
+}
+function simPlayerTableRowsHtml(rows){
+  return rows.map(simPlayerRowHtml).join("")||`<tr class="player-empty"><td colspan="12" style="text-align:left;color:var(--dim)">Nenhum jogador corresponde aos filtros.</td></tr>`;
+}
+function simPlayerComparisonBody(allRows){
+  const selected=simPlayerView.compare.map(id=>allRows.find(player=>String(player.id)===id)).filter(Boolean);
+  if(!selected.length)return `<div class="player-compare-empty">Selecione até dois jogadores na tabela para comparar suas distribuições.</div>`;
+  return `<div class="player-comparison-grid">${selected.map(player=>{
+    const stats=player.distribution,ci=player.meanCI;
+    return `<article class="player-compare-card" data-compare-card="${esc(player.id)}"><div class="player-compare-name">${esc(player.name)}</div><div class="player-compare-meta">${esc(player.teamName)} · ${esc(player.teamCampaign)} · ${esc(player.role)}</div><div class="player-compare-metrics">
+      <span>Histórico<b>${player.historical.toFixed(2)}</b></span><span>Média<b>${stats.mean.toFixed(2)}</b></span><span>Mediana<b>${stats.median.toFixed(2)}</b></span><span>DP<b>${stats.stdDev.toFixed(3)}</b></span>
+      <span>P5–P95<b>${stats.p05.toFixed(2)}–${stats.p95.toFixed(2)}</b></span><span>IC95%<b>${ci?`${ci[0].toFixed(2)}–${ci[1].toFixed(2)}`:"—"}</b></span><span>Δ histórico<b>${player.historicalDelta>=0?"+":""}${player.historicalDelta.toFixed(2)}</b></span><span>Mapas<b>${player.n}</b></span>
+    </div></article>`;
+  }).join("")}</div>`;
+}
+function simPlayerPanelHtml(allRows){
+  const availableTeams=[...new Map(allRows.map(player=>[String(player.teamIndex),`${player.teamName} · ${player.teamCampaign}`])).entries()]
+    .sort((a,b)=>a[1].localeCompare(b[1],"pt-BR",{numeric:true,sensitivity:"base"}));
+  if(simPlayerView.team!=="all"&&!availableTeams.some(([value])=>value===simPlayerView.team))simPlayerView.team="all";
+  const availableRoles=[...new Set(allRows.map(player=>player.role))].sort((a,b)=>a.localeCompare(b));
+  const visible=simPlayerViewRows(allRows);
+  const option=(value,label,current)=>`<option value="${esc(value)}"${value===current?" selected":""}>${esc(label)}</option>`;
+  return `<div class="sim-data-title"><span>Distribuições de rating</span><span class="player-view-count">${visible.length} / ${allRows.length} participantes</span></div>
+    <div class="player-controls" aria-label="Filtros dos jogadores">
+      <label class="player-filter"><span>Buscar jogador</span><input id="simPlayerSearch" type="search" value="${esc(simPlayerView.query)}" placeholder="Nome ou ID" autocomplete="off"></label>
+      <label class="player-filter"><span>Time</span><select id="simPlayerTeam">${option("all","Todos",simPlayerView.team)}${availableTeams.map(([value,label])=>option(value,label,simPlayerView.team)).join("")}</select></label>
+      <label class="player-filter"><span>Função</span><select id="simPlayerRole">${option("all","Todas",simPlayerView.role)}${availableRoles.map(role=>option(role,role,simPlayerView.role)).join("")}</select></label>
+      <label class="player-filter"><span>Amostra</span><select id="simPlayerSufficiency">${option("all","Todas",simPlayerView.sufficiency)}${option("enough","Suficiente",simPlayerView.sufficiency)}${option("small","Pequena",simPlayerView.sufficiency)}</select></label>
+      <label class="player-filter"><span>Ordenar</span><select id="simPlayerSort">${[
+        ["absDelta","|Δ histórico|"],["name","Jogador"],["team","Time"],["role","Função"],["historical","Histórico"],
+        ["mean","Média"],["median","Mediana"],["stdDev","Desvio-padrão"],["p05","P5"],["p95","P95"],
+        ["ciWidth","Largura do IC95%"],["delta","Δ histórico"],["maps","Mapas"]
+      ].map(([value,label])=>option(value,label,simPlayerView.sort)).join("")}</select></label>
+      <label class="player-filter"><span>Direção</span><select id="simPlayerDirection">${option("desc","Decrescente",simPlayerView.direction)}${option("asc","Crescente",simPlayerView.direction)}</select></label>
+      <button type="button" class="btn player-filter-action" id="simPlayerExport"${visible.length?"":" disabled"}>Exportar CSV</button>
+      <button type="button" class="btn player-filter-action" id="simPlayerReset">Limpar filtros</button>
+    </div>
+    <div class="player-comparison"><div class="player-comparison-head">Comparação <span>${simPlayerView.compare.length} / 2 selecionados</span></div><div class="player-comparison-body">${simPlayerComparisonBody(allRows)}</div></div>
+    <div class="player-table-scroll"><table class="player-variance-table"><thead><tr><th>Jogador</th><th>Time</th><th>Função</th><th>Hist.</th><th>Média</th><th>Mediana</th><th><abbr title="Desvio-padrão entre mapas">DP</abbr></th><th>P5</th><th>P95</th><th><abbr title="Intervalo de confiança de 95% da média">IC95%</abbr></th><th>Δ hist.</th><th>Mapas</th></tr></thead><tbody>${simPlayerTableRowsHtml(visible)}</tbody></table></div>`;
+}
+function refreshSimPlayerView(){
+  if(!lastBatch)return;
+  const panel=document.querySelector("#matchout .player-delta");
+  if(!panel)return;
+  const allRows=simPlayerDistributionRows(lastBatch),visible=simPlayerViewRows(allRows);
+  const tbody=panel.querySelector(".player-variance-table tbody"),count=panel.querySelector(".player-view-count"),comparison=panel.querySelector(".player-comparison-body"),comparisonCount=panel.querySelector(".player-comparison-head span"),exportButton=panel.querySelector("#simPlayerExport");
+  if(tbody)tbody.innerHTML=simPlayerTableRowsHtml(visible);
+  if(count)count.textContent=`${visible.length} / ${allRows.length} participantes`;
+  if(comparison)comparison.innerHTML=simPlayerComparisonBody(allRows);
+  if(comparisonCount)comparisonCount.textContent=`${simPlayerView.compare.length} / 2 selecionados`;
+  if(exportButton)exportButton.disabled=!visible.length;
 }
 function runBatchLab(){
   if(simScope==="match"&&simA===simB){toast("Escolha dois times diferentes");return;}
@@ -3147,13 +3351,13 @@ function runBatchLab(){
     accSimSide(acc,g.statsA,playersA,r,ai);accSimSide(acc,g.statsB,playersB,r,bi);acc.maps[g.mapa]=(acc.maps[g.mapa]||0)+1;acc.teams[ai]=1;acc.teams[bi]=1;
     const bucket=simGapBucket(Math.abs(A.forca.efetiva-B.forca.efetiva));if(bucket){acc.gaps[bucket].n++;if((A.forca.efetiva>=B.forca.efetiva)===(g.vencedor===A))acc.gaps[bucket].w++;}
   }
-  lastMap=null;lastBatch=acc;renderMatchPanel();
+  simPlayerView.compare=[];lastMap=null;lastBatch=acc;renderMatchPanel();
 }
 function simCIText(ci,dec=1,suf=""){return ci?`IC95% ${ci[0].toFixed(dec)}${suf}–${ci[1].toFixed(dec)}${suf}`:"IC95% requer 2+ mapas";}
 function simMetricCard(metric){const eligible=metric.eligible!==false,ok=eligible&&metric.value>=metric.band[0]&&metric.value<=metric.band[1],cls=eligible?(ok?"ok":"out"):"low",value=Number.isFinite(metric.value)?metric.value.toFixed(metric.dec??1)+(metric.suf||""):"—",meta=eligible?`Referência ${metric.band[0]}–${metric.band[1]}${metric.suf||""}`:`Amostra insuficiente · ${metric.sample||0} evento(s)`;return `<div class="fidelity-card ${cls}" data-metric="${metric.key}"><div><div class="fidelity-label">${metric.label}</div><div class="fidelity-meta">${meta}${metric.note?` · ${metric.note}`:""}</div></div><div class="fidelity-value" title="real ${metric.band[0]}–${metric.band[1]}">${value}</div></div>`;}
 function renderBatchPanel(b){
   const mapTxt=Object.entries(b.maps).sort((a,c)=>c[1]-a[1]).map(([m,n])=>`${m} ${Math.round(n/b.n*100)}%`).join(" · "),kpr=b.kills/Math.max(1,b.rounds*10),kast=b.pr?b.kastW/b.pr*100:0,adr=b.pr?b.adrW/b.pr:0,ak=b.kills?b.assists/b.kills:0,apr=b.assists/Math.max(1,b.pr);
-  const minPlayerMaps=b.scope==="league"?5:10,allPlayerRows=Object.values(b.players).filter(p=>p.n&&p.real).map(p=>({...p,avg:p.sim/p.n,delta:p.sim/p.n-p.real})),playerRows=allPlayerRows.filter(p=>p.n>=minPlayerMaps),ratingPoints=playerRows.map(p=>[p.real,p.avg]),ratingR=simCorrelation(ratingPoints),ratingMae=simMean(playerRows.map(p=>Math.abs(p.delta))),minRatingPlayers=b.scope==="league"?30:10;
+  const minPlayerMaps=b.scope==="league"?5:10,allPlayerRows=simPlayerDistributionRows(b),playerRows=allPlayerRows.filter(p=>p.n>=minPlayerMaps),ratingPoints=playerRows.map(p=>[p.real,p.avg]),ratingR=simCorrelation(ratingPoints),ratingMae=simMean(playerRows.map(p=>Math.abs(p.delta))),minRatingPlayers=b.scope==="league"?30:10;
   const metrics=[
     {key:"kpr",label:"Kills por round",value:kpr,band:SIM_REAL_BANDS.kpr,dec:3,note:simCIText(simMeanCI(b.samples.kpr),3)},
     {key:"ct",label:"CT round win",value:100*b.ctWins/b.rounds,band:SIM_REAL_BANDS.ct,suf:"%",note:simCIText(simWilson(b.ctWins,b.rounds),1,"%")},
@@ -3178,7 +3382,7 @@ function renderBatchPanel(b){
   const eligible=metrics.filter(m=>m.eligible!==false),outside=eligible.filter(m=>m.value<m.band[0]||m.value>m.band[1]),passed=eligible.length-outside.length,low=metrics.length-eligible.length;
   const alerts=outside.map(m=>{const edge=m.value<m.band[0]?m.band[0]:m.band[1],delta=Math.abs(m.value-edge);return `${m.label}: ${m.value.toFixed(m.dec??1)}${m.suf||""} · desvio de ${delta.toFixed(m.dec??1)}${m.suf||""}`;});
   const roleRows=["AWPer","Rifler","Entry","Lurker","Support","IGL"].filter(r=>b.role[r]&&b.role[r].r).map(r=>{const x=b.role[r],ref=SIM_ROLE_KPR[r],v=x.k/x.r,ok=v>=ref[0]&&v<=ref[1];return `<tr><td>${r}</td><td class="mono"${ok?' style="color:var(--win)"':''} title="real ${ref[0]}–${ref[1]}">${v.toFixed(2)}</td><td class="mono">${(x.d/x.r).toFixed(2)}</td><td class="mono">${(x.a/x.k||0).toFixed(2)}</td><td class="mono">${Math.round(x.kast/x.r*100)}%</td><td class="mono">${Math.round(x.adr/x.r)}</td></tr>`;}).join("");
-  const deltaRows=allPlayerRows.sort((a,c)=>Math.abs(c.delta)-Math.abs(a.delta)).map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.role)}</td><td class="mono">${p.real.toFixed(2)}</td><td class="mono">${p.avg.toFixed(2)}</td><td class="mono" style="color:var(--${Math.abs(p.delta)>.12?"warn":"neutral"})">${p.delta>=0?"+":""}${p.delta.toFixed(2)}</td><td class="mono">${p.n}</td></tr>`).join("")||`<tr><td colspan="6" style="text-align:left;color:var(--dim)">Nenhum jogador foi simulado.</td></tr>`;
+  const playerPanel=simPlayerPanelHtml(allPlayerRows);
   const header=`Amostra da liga · ${Object.keys(b.teams).length}/${E.TEAMS.length} times`,winCI=simWilson(b.wA,b.n),winPctA=Math.round(b.wA/b.n*100),winPctB=100-winPctA,teamA=E.TEAMS[simA],teamB=E.TEAMS[simB];
   const groups=[
     ["Combate e produção",["kpr","kast","adr","ak","apr"]],
@@ -3195,7 +3399,7 @@ function renderBatchPanel(b){
     <div class="fidelity-head"><div class="fidelity-score">Fidelidade profissional <span>${passed}/${eligible.length}</span></div><div class="fidelity-sub">${low?`${low} métrica(s) ainda sem amostra confiável.`:"Amostra suficiente em todos os indicadores."}</div></div>
     ${diagnosis}
     <details class="sim-details"><summary>Indicadores profissionais <span>${metrics.length} métricas</span></summary><div class="sim-details-body"><div class="sim-section-tag">Faixas do CS profissional</div><div class="fidelity-grid">${groups}</div><div class="sim-footnote">Mapas: ${esc(mapTxt||"mapa fixo")}. Verde indica aderência; laranja indica desvio com amostra suficiente.</div></div></details>
-    <details class="sim-details"><summary>Funções e jogadores <span>diagnóstico avançado</span></summary><div class="sim-details-body"><div class="sim-section-tag">Leitura por função e jogador</div><div class="scoreboards sim-breakdowns"><div class="sim-data-panel"><div class="sim-data-title">Assinatura das funções</div><table><thead><tr><th>Função</th><th>KPR</th><th>DPR</th><th>A/K</th><th>KAST</th><th>ADR</th></tr></thead><tbody>${roleRows}</tbody></table></div><div class="sim-data-panel player-delta"><div class="sim-data-title">Desvios de rating · ${allPlayerRows.length} jogadores</div><table><thead><tr><th>Jogador</th><th>Função</th><th>Real</th><th>Sim</th><th>Δ</th><th>Mapas</th></tr></thead><tbody>${deltaRows}</tbody></table></div></div><div class="sim-footnote">Todos os jogadores simulados aparecem em ordem decrescente de desvio absoluto; a coluna Mapas informa o tamanho individual da amostra. O diagnóstico é somente leitura e não altera pesos, química, economia ou playstyles.</div></div></details>
+    <details class="sim-details"><summary>Funções e jogadores <span>diagnóstico avançado</span></summary><div class="sim-details-body"><div class="sim-section-tag">Leitura por função e jogador</div><div class="scoreboards sim-breakdowns"><div class="sim-data-panel"><div class="sim-data-title">Assinatura das funções</div><table><thead><tr><th>Função</th><th>KPR</th><th>DPR</th><th>A/K</th><th>KAST</th><th>ADR</th></tr></thead><tbody>${roleRows}</tbody></table></div><div class="sim-data-panel player-delta">${playerPanel}</div></div><div class="sim-footnote">Média, mediana, DP e P5–P95 descrevem o rating por mapa; IC95% mede a precisão da média e requer 2+ mapas. Todos os participantes permanecem acessíveis; filtros alteram somente a visualização. O diagnóstico é somente leitura e não altera pesos, química, economia ou playstyles.</div></div></details>
   </div>`;
 }
 function renderMatchPanel(){
@@ -3520,7 +3724,7 @@ function renderCanvasMode(){
 }
 function wireSimulador(){
   const fillTeamSel=(id,val)=>{const s=document.getElementById(id);E.TEAMS.forEach((t,i)=>{const o=document.createElement("option");o.value=i;o.textContent=t.nome+" · "+t.camp;if(i===val)o.selected=true;s.appendChild(o);});return s;};
-  const sa=fillTeamSel("simA",simA), sb=fillTeamSel("simB",simB), sm=document.getElementById("simMap"), ss=document.getElementById("simScope"), mapBtn=document.getElementById("runMapBtn"), batchBtn=document.getElementById("runBatchBtn");
+  const sa=fillTeamSel("simA",simA), sb=fillTeamSel("simB",simB), sm=document.getElementById("simMap"), ss=document.getElementById("simScope"), mapBtn=document.getElementById("runMapBtn"), batchBtn=document.getElementById("runBatchBtn"),out=document.getElementById("matchout");
   E.MAPAS_POOL.forEach(m=>{const o=document.createElement("option");o.value=m;o.textContent=m+(E.MAPA_LADO[m]?` (${E.MAPA_LADO[m]>0?"CT":"TR"} ${Math.abs(E.MAPA_LADO[m])})`:"");if(m===simMap)o.selected=true;sm.appendChild(o);});
   const syncScope=()=>{const league=simScope==="league";document.querySelectorAll(".sim-team-field").forEach(x=>x.style.display=league?"none":"flex");mapBtn.disabled=league;mapBtn.hidden=league;mapBtn.title=league?"Disponível apenas no modo confronto":"";batchBtn.textContent=league?"Rodar amostra":"Rodar lote";batchBtn.classList.toggle("accent",league);};
   ss.onchange=()=>{simScope=ss.value;lastMap=null;lastBatch=null;syncScope();renderMatchPanel();};
@@ -3530,6 +3734,33 @@ function wireSimulador(){
   document.getElementById("simRuns").oninput=e=>{simRuns=Math.max(1,Math.min(500,+e.target.value||80));lastBatch=null;renderMatchPanel();};
   batchBtn.onclick=runBatchLab;
   mapBtn.onclick=runMapLab;
+  out.addEventListener("input",event=>{
+    if(event.target.id!=="simPlayerSearch")return;
+    simPlayerView.query=event.target.value;
+    refreshSimPlayerView();
+  });
+  out.addEventListener("change",event=>{
+    const compareId=event.target.dataset.comparePlayer;
+    if(compareId){
+      if(event.target.checked){
+        if(simPlayerView.compare.length>=2){event.target.checked=false;toast("Compare no máximo dois jogadores");return;}
+        if(!simPlayerView.compare.includes(compareId))simPlayerView.compare.push(compareId);
+      }else simPlayerView.compare=simPlayerView.compare.filter(id=>id!==compareId);
+      refreshSimPlayerView();
+      return;
+    }
+    const keys={simPlayerTeam:"team",simPlayerRole:"role",simPlayerSufficiency:"sufficiency",simPlayerSort:"sort",simPlayerDirection:"direction"},key=keys[event.target.id];
+    if(!key)return;
+    simPlayerView[key]=event.target.value;
+    refreshSimPlayerView();
+  });
+  out.addEventListener("click",event=>{
+    if(event.target.closest("#simPlayerExport")){downloadSimPlayerCsv();return;}
+    if(!event.target.closest("#simPlayerReset")||!lastBatch)return;
+    simPlayerView={query:"",team:"all",role:"all",sufficiency:"all",sort:"absDelta",direction:"desc",compare:[]};
+    const panel=out.querySelector(".player-delta");
+    if(panel)panel.innerHTML=simPlayerPanelHtml(simPlayerDistributionRows(lastBatch));
+  });
   syncScope();
   renderMatchPanel();
 }
@@ -3558,14 +3789,15 @@ if(typeof window!=="undefined"&&typeof location!=="undefined"&&/[?&]e2e(?:=|&|$)
     simulation:()=>({
       seed:lastBatch?.seed||lastMap?.labSeed||0,
       scope:lastBatch?.scope||simScope,
-      maps:lastBatch?.n||(lastMap?1:0)
+      maps:lastBatch?.n||(lastMap?1:0),
+      players:Object.values(lastBatch?.players||{}).map(player=>({id:player.id,maps:player.n,samples:player.ratings.length}))
     })
   };
 }
 
 (async()=>{
   try{
-    await carregarMotores();
+    await Promise.all([carregarMotores(),carregarEstatisticas()]);
     const sel=document.getElementById("loadSel");
     POOLRAW.forEach((p,i)=>{const o=document.createElement("option");o.value=i;o.textContent=p.nome+" — "+p.time;sel.appendChild(o);});
     sel.onchange=()=>{if(sel.value==="")return;const p=POOLRAW[+sel.value];

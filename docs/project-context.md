@@ -40,14 +40,14 @@ Estado registrado em 22 de julho de 2026:
 - repositório: `esteban-brito/Teste`;
 - branch de trabalho: `sandbox-test`;
 - `main`: intocável durante a profissionalização;
-- último commit publicado no remoto:
-  `d7b3200 feat(sandbox): mostra todos os desvios de rating`;
+- base remota usada no início do ciclo R2:
+  `69ce197 docs(context): record prisma style extraction`;
 - branch local e `origin/sandbox-test` estavam sincronizadas e limpas antes da
   atualização documental desta retomada;
 - Pages do sandbox: <https://esteban-brito.github.io/Teste/sandbox.html>;
 - o E2E do jogo percorre draft, lineup, Suíça, playoffs, título e reinício;
-- workflow do commit `d7b3200`: sucesso em validação e deploy;
-- run do GitHub Actions: `29790112282`;
+- workflow do commit `69ce197`: sucesso em validação e deploy;
+- run do GitHub Actions: `29944917615`;
 - última validação local completa: 17/17 suítes em 173,7 s, com 45.900 mapas
   e 941.838 rounds nos benchmarks;
 - nenhuma mudança IFCS alterou motor, dados, configuração, RNG ou balanceamento;
@@ -60,8 +60,8 @@ Estado registrado em 22 de julho de 2026:
 - o diagnóstico técnico preliminar marcou 96/100 em 4.000 mapas simulados
   (131/136 avaliações dentro das faixas); não é a nota IFCS oficial;
 - ainda não existe corpus real auditado nem nota IFCS oficial;
-- R1, a auditoria individual aprofundada, está versionada localmente no commit
-  `b97b3d7`, sem alteração de motor ou balanceamento, mas ainda não foi publicada;
+- R1, a auditoria individual aprofundada, está publicada no commit `b97b3d7`,
+  sem alteração de motor ou balanceamento;
 - o ADR 0002 foi aceito e a trilha estrutural P1 começou: `ATRIBUTOS`,
   `TIMES_DEF` e `PAISES_MAP` possuem cópias de migração em `src/data`, protegidas
   por paridade integral no `npm run check`;
@@ -78,8 +78,9 @@ Estado registrado em 22 de julho de 2026:
 - `game.js` continua sendo a fonte de verdade executável e os módulos ainda são
   cópias transitórias. Não remover os blocos legados nem migrar navegador,
   sandbox, worker ou gerador sem a próxima prova de paridade;
-- R2 continua sendo uma trilha científica/visual separada. Não combinar R2,
-  modularização estrutural e balanceamento na mesma mudança.
+- R2 foi concluída como trilha científica/visual separada, sem mudança no motor,
+  RNG ou balanceamento. Não combinar a próxima etapa funcional, modularização
+  estrutural e balanceamento na mesma mudança.
 
 Para retomar em uma sessão nova:
 
@@ -267,10 +268,23 @@ A modernização mais recente concentrou-se no sandbox. O estado publicado inclu
 - layout desktop e mobile sem overflow horizontal;
 - times oficiais preparados uma vez por lote, sem reconstrução por mapa.
 
-Ainda não estão implementados no painel individual: mediana, desvio-padrão,
-percentis, intervalo de confiança por jogador, filtros e exportação. Também não
-existe um modo campanha separado do lote de expectativa. Esses itens pertencem
-a R1–R3 de `docs/next-steps.md` e não autorizam balanceamento incidental.
+R2 acrescentou ao painel individual, sem alterar a simulação:
+
+- amostras de rating preservadas por ID estável e mapa;
+- média, mediana, desvio-padrão, P5, P95 e IC95% da média;
+- referência histórica, referência atual, delta, mapas e aviso de suficiência;
+- busca por nome/ID, filtros por time, função e suficiência;
+- ordenação numérica por todas as métricas relevantes;
+- comparação de até dois jogadores;
+- exportação CSV do conjunto visível, com seed, contexto, BOM, schema estável,
+  escaping e neutralização de fórmulas;
+- composição responsiva validada em desktop e celular.
+
+A matemática descritiva compartilhada vive em
+`src/domain/statistics/sample-summary.mjs`, recebe amostras explícitas e não
+depende do DOM. A auditoria R1 e o sandbox consomem o mesmo contrato. Ainda não
+existe um modo campanha separado do lote de expectativa; esse é o objetivo de
+R3 e não autoriza balanceamento incidental.
 
 Medição local observada após a otimização: lote de 80 mapas em aproximadamente
 70 ms na máquina de desenvolvimento. Isso é uma referência operacional, não um
@@ -278,9 +292,9 @@ limite de CI.
 
 ### Baseline individual profunda — R1
 
-**Status:** versionada localmente no commit `b97b3d7`, ainda não publicada. A
-saída rápida histórica foi preservada sem argumentos. O modo novo é explícito e
-não participa da regressão rápida por padrão:
+**Status:** publicada no commit `b97b3d7`. A saída rápida histórica foi
+preservada sem argumentos. O modo novo é explícito e não participa da regressão
+rápida por padrão:
 
 ```powershell
 node bancada/auditoria.js
@@ -327,6 +341,16 @@ idêntico. No estado local após R1 passaram `npm run check`, `npm run lint`,
 `npm run test:data`, `npm run test:regression` e `npm run test:benchmark`, sem
 atualização de snapshot ou fixture golden.
 
+### Variância individual no sandbox — R2
+
+**Status:** concluída em uma sequência de commits de responsabilidade única,
+sem tocar em `game.js`, `CFG_*`, dados, ordem do RNG, snapshots ou goldens.
+
+A extração estatística foi protegida por 5.464 amostras de paridade. A auditoria
+profunda R1 foi executada duas vezes após R2 e preservou exatamente SHA-256
+`d9faccb428073b8191640c1a78830340b58f30d1ebdbeb91f60d0d43160bee8d` e
+2.273.746 bytes. A validação integral aprovou 17/17 suítes em 201,8 s.
+
 ### Commits que contam a história recente
 
 - `f06662a`: modernização inicial da aba Simular;
@@ -366,6 +390,11 @@ atualização de snapshot ou fixture golden.
   consumidores clássicos.
 - `9f090d8` e `8333faf`: extraem `roleStyleReality` com paridade exaustiva e
   migram a análise de estilos da auditoria para o módulo público.
+- `da40f28`: extrai a matemática estatística descritiva com prova de paridade;
+- `9933785`, `ddc3fa7` e `625af93`: preservam amostras individuais, apresentam
+  distribuições e adicionam busca, filtros e ordenação;
+- `50c8d21`: adiciona comparação lado a lado de até dois jogadores;
+- `7109ed5`: exporta o diagnóstico visível em CSV seguro e rastreável.
 
 O balanceamento deliberado está documentado em
 `docs/rating-balance-2026-07-20.md`. A mudança posterior de tabela foi apenas de
@@ -906,11 +935,12 @@ Não presumir respostas sem conversar:
 
 A fonte canônica da sequência é `docs/next-steps.md`. Ordem resumida:
 
-1. R1 concluída localmente: auditoria individual profunda versionada sem tocar
-   no motor ou balanceamento; publicação continua dependendo de pedido explícito;
-2. R2: mostrar média, mediana, desvio-padrão, percentis e incerteza no sandbox,
-   consumindo os conceitos validados em R1 sem duplicar fórmulas;
-3. R3: definir e implementar campanha separada da expectativa de muitos mapas;
+1. R1 concluída: auditoria individual profunda sem tocar no motor ou
+   balanceamento;
+2. R2 concluída: distribuições, diagnóstico, comparação e CSV individual no
+   sandbox, usando matemática compartilhada com R1;
+3. R3 é a próxima etapa funcional: definir e implementar campanha separada da
+   expectativa de muitos mapas;
 4. R4: auditar AWPer, sobrevivência e playstyle por critérios numéricos;
 5. R5/R6: balancear somente se houver evidência e validar integralmente;
 6. aprimorar usabilidade do laboratório;
@@ -925,11 +955,11 @@ puxar `afinidades`, distribuição contextual ou classificação completa. Antes
 próxima extração estrutural, caracterizar uma única nova fronteira pura do PRISMA
 e manter a mudança isolada.
 `game.js` permanece fonte executável para consumidores clássicos; a projeção do
-ADR 0005 impede divergência em novas adições. R2 pode avançar separadamente
-quando priorizada. Antes de congelar thresholds de cauda ou ranking, revisar a
-baseline atual. Cada etapa deve ser um commit pequeno ou uma sequência curta com
-responsabilidade verificável; não misturar auditoria, interface, refatoração e
-balanceamento.
+ADR 0005 impede divergência em novas adições. R3 deve começar pelo contrato de
+produto, separada da trilha estrutural. Antes de congelar thresholds de cauda ou
+ranking, revisar a baseline atual. Cada etapa deve ser um commit pequeno ou uma
+sequência curta com responsabilidade verificável; não misturar auditoria,
+interface, refatoração e balanceamento.
 
 ## 14. Dívidas e riscos conhecidos
 

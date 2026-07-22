@@ -2,6 +2,7 @@
    Protege placar, confronto bilateral, amostra da liga, métricas profissionais,
    seed automática, rolagem e responsividade. Não altera nem recalibra o motor. */
 const http=require("http");
+const fs=require("fs");
 const path=require("path");
 const {spawn}=require("child_process");
 const {chromium}=require("playwright");
@@ -68,6 +69,25 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     const hasSeedControl=await page.locator("#simSeed").count();
     check(Number.isInteger(mapSeed)&&mapSeed>0&&!hasSeedControl,"mapa usa seed automática sem expor controle manual");
 
+    await page.fill("#simRuns","1");
+    await page.click("#runBatchBtn");
+    await page.waitForSelector("#matchout .player-variance-table",{state:"attached",timeout:15000});
+    const singleMapVariance=await page.evaluate(()=>({
+      headers:[...document.querySelectorAll(".player-variance-table thead th")].map(cell=>cell.textContent.trim()),
+      rows:[...document.querySelectorAll(".player-variance-table tbody tr")].map(row=>({
+        cells:[...row.cells].map(cell=>cell.textContent.replace(/\s+/g," ").trim()),
+        values:[...row.querySelectorAll("td[data-value]")].map(cell=>cell.dataset.value),
+        sufficient:row.dataset.sufficient
+      }))
+    }));
+    const expectedVarianceColumns=["Jogador","Time","Função","Hist.","Média","Mediana","DP","P5","P95","IC95%","Δ hist.","Mapas"];
+    const validSingleMap=singleMapVariance.rows.every(row=>{
+      const [historical,average,median,stdDev,p05,p95]=row.values.map(Number);
+      return [historical,average,median,stdDev,p05,p95].every(Number.isFinite)&&average===median&&average===p05&&average===p95&&stdDev===0&&row.cells[9]==="—"&&row.sufficient==="false";
+    });
+    check(JSON.stringify(singleMapVariance.headers)===JSON.stringify(expectedVarianceColumns),"painel individual separa histórico, tendência, dispersão e incerteza");
+    check(singleMapVariance.rows.length===10&&validSingleMap,"um mapa mantém 10 jogadores, estatísticas degeneradas válidas e aviso de amostra pequena");
+
     await page.fill("#simRuns","3");
     await page.click("#runBatchBtn");
     await page.waitForSelector("#matchout .fidelity-score",{timeout:15000});
@@ -84,7 +104,12 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
         groups:out.querySelectorAll(".fidelity-group").length,
         breakdowns:out.querySelectorAll(".sim-breakdowns .sim-data-panel").length,
         deltaRows:out.querySelectorAll(".player-delta tbody tr").length,
-        details:[...out.querySelectorAll("details.sim-details")].map(node=>node.open)
+        varianceRows:[...out.querySelectorAll(".player-variance-table tbody tr")].map(row=>({
+          values:[...row.querySelectorAll("td[data-value]")].map(cell=>cell.dataset.value),
+          sufficient:row.dataset.sufficient
+        })),
+        details:[...out.querySelectorAll("details.sim-details")].map(node=>node.open),
+        samplePlayers:window.__e2e.simulation().players
       };
     });
     const coreText=firstBatch.core.join(" ");
@@ -94,6 +119,8 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     check(JSON.stringify(firstBatch.headers)===JSON.stringify(expectedRoleColumns),"breakdown possui colunas por função esperadas");
     check(firstBatch.rows.length===6,"breakdown cobre as 6 funções do confronto");
     check(firstBatch.deltaRows===10,"painel de rating mostra os 10 jogadores do confronto");
+    check(firstBatch.varianceRows.length===10&&firstBatch.varianceRows.every(row=>row.sufficient==="false"&&row.values.every(value=>value===""||Number.isFinite(Number(value)))),"lote curto expõe distribuições válidas sem esconder amostras pequenas");
+    check(firstBatch.samplePlayers.length===10&&firstBatch.samplePlayers.every(player=>player.id&&player.maps===3&&player.samples===3),"lote preserva uma amostra por mapa para cada jogador");
     check(firstBatch.bands.length>=9&&firstBatch.bands.every(band=>band.title.startsWith("real ")),"faixas reais aparecem nas métricas globais e por função");
     check(firstBatch.groups===4&&firstBatch.breakdowns===2&&firstBatch.details.length===2&&firstBatch.details.every(open=>!open),"detalhes completos permanecem disponíveis e fechados por padrão");
     check(!/NaN|undefined|Infinity/.test(firstBatch.text),"lote não contém valores inválidos");
@@ -121,7 +148,9 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       return {
         text:out.textContent,
         metrics:[...out.querySelectorAll("[data-metric]")].map(node=>({key:node.dataset.metric,state:node.className})),
-        deltaRows:out.querySelectorAll(".player-delta tbody tr").length
+        deltaRows:out.querySelectorAll(".player-delta tbody tr").length,
+        insufficientRows:out.querySelectorAll('.player-variance-table tbody tr[data-sufficient="false"]').length,
+        samplePlayers:window.__e2e.simulation().players
       };
     });
     const proMetrics=["kpr","ct","plant","postplant","antieco","pistol","clutch1","clutch2","clutch3","kast","adr","ak","apr","ratingR","ratingMae","fav03","fav16"];
@@ -129,28 +158,78 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     check(proMetrics.every(key=>league.metrics.some(metric=>metric.key===key)),"painel cobre combate, lados, economia, clutches, rating e favoritos");
     check(league.metrics.every(metric=>/\b(ok|out|low)\b/.test(metric.state)),"cada métrica recebe diagnóstico ou amostra insuficiente");
     check(league.deltaRows===85,"painel de rating mostra todos os 85 jogadores da liga");
+    check(league.insufficientRows===0,"amostra padrão da liga identifica corretamente a suficiência individual");
+    check(league.samplePlayers.length===85&&league.samplePlayers.every(player=>player.id&&player.maps===player.samples&&player.maps>=8&&player.maps<=11),"liga preserva as distribuições dos 85 jogadores sem perder exposições");
     check(/Fidelidade profissional\s+\d+\/\d+/.test(league.text)&&!/NaN|undefined|Infinity/.test(league.text),"nota de fidelidade da liga contém apenas valores válidos");
+
+    await page.locator("details.sim-details").nth(1).evaluate(node=>{node.open=true;});
+    const firstPlayerId="s1mple";
+    await page.fill("#simPlayerSearch",firstPlayerId);
+    let visiblePlayers=await page.locator('.player-variance-table tbody tr[data-player-id]').count();
+    check(visiblePlayers===1&&await page.locator('.player-variance-table tbody tr[data-player-id]').first().getAttribute("data-player-id")===firstPlayerId,"busca por ID encontra exatamente o jogador solicitado");
+    await page.fill("#simPlayerSearch","jogador-que-nao-existe");
+    check(await page.locator('.player-variance-table tbody tr[data-player-id]').count()===0&&await page.locator(".player-empty").count()===1,"busca vazia informa ausência sem remover dados da amostra");
+    await page.click("#simPlayerReset");
+    check(await page.locator('.player-variance-table tbody tr[data-player-id]').count()===85,"limpar filtros restaura os 85 participantes");
+
+    const firstTeamValue=await page.$eval("#simPlayerTeam",select=>select.options[1]?.value);
+    await page.selectOption("#simPlayerTeam",firstTeamValue);
+    visiblePlayers=await page.locator('.player-variance-table tbody tr[data-player-id]').count();
+    check(visiblePlayers===5,"filtro de time isola os cinco jogadores da escalação histórica");
+    await page.click("#simPlayerReset");
+    await page.selectOption("#simPlayerRole","AWPer");
+    const roleCells=await page.locator('.player-variance-table tbody tr[data-player-id] td:nth-child(3)').allTextContents();
+    check(roleCells.length>0&&roleCells.every(role=>role.trim()==="AWPer"),"filtro de função mantém somente a função escolhida");
+    const [csvDownload]=await Promise.all([page.waitForEvent("download"),page.click("#simPlayerExport")]);
+    const csv=fs.readFileSync(await csvDownload.path(),"utf8"),csvLines=csv.trim().split(/\r?\n/);
+    check(csv.charCodeAt(0)===0xfeff&&/^sandbox-player-ratings-league-seed--?\d+\.csv$/.test(csvDownload.suggestedFilename())&&csvLines[0].includes("historical_rating,current_reference_rating,simulated_mean"),"CSV inclui BOM, nome rastreável e schema estável");
+    check(csvLines.length===roleCells.length+1&&csvLines.slice(1).every(line=>line.includes(",AWPer,")),"CSV exporta exatamente os jogadores visíveis após os filtros");
+    const csvSafety=await page.evaluate(()=>[window.simCsvCell("=2+2"),window.simCsvCell('nome, "apelido"')]);
+    check(csvSafety[0]==="'=2+2"&&csvSafety[1]==='"nome, ""apelido"""',"CSV neutraliza fórmulas e escapa campos compostos");
+    await page.click("#simPlayerReset");
+    await page.selectOption("#simPlayerSufficiency","small");
+    check(await page.locator('.player-variance-table tbody tr[data-player-id]').count()===0,"filtro de amostra pequena respeita a suficiência da liga");
+    await page.click("#simPlayerReset");
+    await page.selectOption("#simPlayerSort","mean");
+    await page.selectOption("#simPlayerDirection","asc");
+    const orderedMeans=await page.locator('.player-variance-table tbody tr[data-player-id] td:nth-child(5)').evaluateAll(cells=>cells.map(cell=>Number(cell.dataset.value)));
+    check(orderedMeans.every((value,index)=>index===0||orderedMeans[index-1]<=value),"ordenação crescente por média é estável e numérica");
+    await page.click("#simPlayerReset");
+    const compareBoxes=page.locator('[data-compare-player]');
+    await compareBoxes.nth(0).check();
+    await compareBoxes.nth(1).check();
+    check(await page.locator("[data-compare-card]").count()===2,"comparação apresenta dois jogadores lado a lado");
+    await compareBoxes.nth(2).click();
+    check(await page.locator("[data-compare-card]").count()===2&&!await compareBoxes.nth(2).isChecked(),"comparação bloqueia um terceiro jogador sem perder a seleção válida");
 
     const leagueSeed=await page.evaluate(()=>window.__e2e.simulation().seed);
     await page.click("#runBatchBtn");
     await page.waitForSelector('#matchout [data-metric="postplant"]',{state:"attached",timeout:20000});
     const leagueSeedAgain=await page.evaluate(()=>window.__e2e.simulation().seed);
     check(leagueSeedAgain!==leagueSeed,"nova amostra da liga também recebe seed automática");
+    check(await page.locator("[data-compare-card]").count()===0,"nova amostra limpa a comparação anterior");
 
-    await page.$eval("details.sim-details",node=>{node.open=true;});
+    await page.$$eval("details.sim-details",nodes=>nodes.forEach(node=>{node.open=true;}));
     await page.evaluate(()=>window.scrollTo(0,0));
-    await page.locator(".sim-core").hover();
+    await page.waitForFunction(()=>window.scrollY===0);
+    const canvasPoint=await page.$eval(".canvas-body",node=>{
+      const rect=node.getBoundingClientRect(),x=Math.min(window.innerWidth-10,Math.max(10,rect.left+Math.min(200,rect.width/2))),y=Math.min(window.innerHeight-10,Math.max(10,rect.top+20));
+      return {x,y,inside:Boolean(document.elementFromPoint(x,y)?.closest(".canvas-body"))};
+    });
+    await page.mouse.move(canvasPoint.x,canvasPoint.y);
+    const scrollBefore=await page.evaluate(()=>window.scrollY);
     await page.mouse.wheel(0,600);
-    await page.waitForTimeout(100);
-    const scroll=await page.evaluate(()=>({windowY:window.scrollY,bodyOverflow:getComputedStyle(document.body).overflowY,canvasOverflow:getComputedStyle(document.querySelector(".canvas-body")).overflowY}));
-    check(scroll.windowY>0&&scroll.bodyOverflow!=="hidden"&&scroll.canvasOverflow!=="auto","rolagem do mouse move a página sem criar scroll aninhado no canvas");
+    await page.waitForTimeout(200);
+    const scroll=await page.evaluate(()=>({windowY:window.scrollY,bodyOverflow:getComputedStyle(document.body).overflowY,canvasOverflow:getComputedStyle(document.querySelector(".canvas-body")).overflowY,scrollHeight:document.documentElement.scrollHeight,clientHeight:document.documentElement.clientHeight}));
+    check(canvasPoint.inside&&scroll.windowY>scrollBefore&&scroll.bodyOverflow!=="hidden"&&scroll.canvasOverflow!=="auto",`rolagem do mouse sobre o canvas move a página sem criar scroll aninhado${scroll.windowY>scrollBefore?"":` (windowY=${scroll.windowY}, antes=${scrollBefore}, height=${scroll.scrollHeight}/${scroll.clientHeight}, body=${scroll.bodyOverflow}, canvas=${scroll.canvasOverflow})`}`);
     await page.setViewportSize({width:390,height:844});
     const mobileLayout=await page.evaluate(()=>({
       metricColumns:getComputedStyle(document.querySelector(".fidelity-grid")).gridTemplateColumns.trim().split(/\s+/).length,
       tableColumns:getComputedStyle(document.querySelector(".sim-breakdowns")).gridTemplateColumns.trim().split(/\s+/).length,
+      controlColumns:getComputedStyle(document.querySelector(".player-controls")).gridTemplateColumns.trim().split(/\s+/).length,
       noOverflow:document.documentElement.scrollWidth<=document.documentElement.clientWidth
     }));
-    check(mobileLayout.metricColumns===1&&mobileLayout.tableColumns===1&&mobileLayout.noOverflow,"layout mobile empilha métricas e tabelas sem overflow horizontal");
+    check(mobileLayout.metricColumns===1&&mobileLayout.tableColumns===1&&mobileLayout.controlColumns<=2&&mobileLayout.noOverflow,"layout mobile empilha métricas, filtros e tabelas sem overflow horizontal");
     check(errors.length===0,`sem page-error no fluxo${errors.length?": "+errors[0]:""}`);
 
     console.log(failures?`✗ ${failures} checagem(ns) e2e falharam`:"✓ aba Simular preserva placar, fidelidade, seed automática e rolagem");

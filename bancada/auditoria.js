@@ -11,6 +11,20 @@ const DEFAULT_DEEP_CYCLES=8;
 const DEEP_BASE_SEED=0x51f15e1d;
 const MAPS=["Mirage","Inferno","Nuke","Ancient","Anubis","Dust2","Train","Overpass"];
 const QUARTILES=["Q1","Q2","Q3","Q4"];
+let statisticsPromise=null,sum,mean,quantile,rounded,describe;
+
+function loadSampleStatistics(){
+  if(!statisticsPromise){
+    const moduleUrl=pathToFileURL(path.join(__dirname,"..","src","domain","statistics","sample-summary.mjs")).href;
+    statisticsPromise=import(moduleUrl).then(statistics=>{
+      ({sum,mean,rounded}=statistics);
+      quantile=statistics.quantileSorted;
+      describe=statistics.describeSample;
+      return statistics;
+    });
+  }
+  return statisticsPromise;
+}
 
 const PLAYSTYLE_ORDER=[
   "spacetaker","infiltrator","playmaker","aggressive","support",
@@ -115,45 +129,6 @@ function runQuickAudit(rolePairReality=X.rolePairReality,roleStyleReality=X.role
 
 function compareText(a,b){
   return a<b?-1:a>b?1:0;
-}
-
-function sum(values){
-  return values.reduce((total,value)=>total+value,0);
-}
-
-function mean(values){
-  return values.length?sum(values)/values.length:0;
-}
-
-function quantile(sortedValues,p){
-  if(!sortedValues.length)return 0;
-  const position=(sortedValues.length-1)*p;
-  const lower=Math.floor(position),upper=Math.ceil(position);
-  if(lower===upper)return sortedValues[lower];
-  return sortedValues[lower]+(sortedValues[upper]-sortedValues[lower])*(position-lower);
-}
-
-function rounded(value,digits=6){
-  return Number.isFinite(value)?+value.toFixed(digits):null;
-}
-
-function describe(values){
-  const sorted=values.filter(Number.isFinite).slice().sort((a,b)=>a-b);
-  if(!sorted.length)return {n:0,mean:null,median:null,stdDev:null,p05:null,p25:null,p75:null,p95:null,min:null,max:null};
-  const average=mean(sorted);
-  const variance=sorted.length>1?sum(sorted.map(value=>(value-average)**2))/(sorted.length-1):0;
-  return {
-    n:sorted.length,
-    mean:rounded(average),
-    median:rounded(quantile(sorted,.5)),
-    stdDev:rounded(Math.sqrt(variance)),
-    p05:rounded(quantile(sorted,.05)),
-    p25:rounded(quantile(sorted,.25)),
-    p75:rounded(quantile(sorted,.75)),
-    p95:rounded(quantile(sorted,.95)),
-    min:rounded(sorted[0]),
-    max:rounded(sorted[sorted.length-1])
-  };
 }
 
 function pearson(points){
@@ -430,7 +405,7 @@ function buildTeamReports(players,teamAccumulators){
   });
 }
 
-function buildDeepAudit(cycles=DEFAULT_DEEP_CYCLES){
+function buildDeepAuditSync(cycles=DEFAULT_DEEP_CYCLES){
   if(!Number.isInteger(cycles)||cycles<=0||cycles%MAPS.length!==0){
     throw new Error(`--cycles deve ser multiplo positivo de ${MAPS.length}`);
   }
@@ -534,6 +509,11 @@ function buildDeepAudit(cycles=DEFAULT_DEEP_CYCLES){
   };
 }
 
+async function buildDeepAudit(cycles=DEFAULT_DEEP_CYCLES){
+  await loadSampleStatistics();
+  return buildDeepAuditSync(cycles);
+}
+
 function printMetricLine(name,stats){
   console.log(`  ${name.padEnd(8)} media ${stats.mean.toFixed(3).padStart(7)} · mediana ${stats.median.toFixed(3).padStart(7)} · p05 ${stats.p05.toFixed(3).padStart(7)} · p95 ${stats.p95.toFixed(3).padStart(7)}`);
 }
@@ -606,7 +586,7 @@ async function main(args=process.argv.slice(2)){
     const [{rolePairReality},{roleStyleReality}]=await Promise.all([import(pairModuleUrl),import(styleModuleUrl)]);
     return runQuickAudit(rolePairReality,roleStyleReality);
   }
-  const report=buildDeepAudit(options.cycles);
+  const report=await buildDeepAudit(options.cycles);
   if(options.format==="json")console.log(JSON.stringify(report,null,2));
   else printDeepAudit(report);
 }
