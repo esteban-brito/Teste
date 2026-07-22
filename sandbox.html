@@ -3190,6 +3190,16 @@ function accSimSide(acc,stats,players,rounds,teamIndex){
     q.sim+=rating;q.n++;q.ratings.push(rating);
   });
 }
+function accSimGame(acc,g,playersA,playersB,ai,bi,A,B){
+  const m=simMetrics(g),r=g.totalRounds||1,allStats=[...(g.statsA||[]),...(g.statsB||[])];
+  const mapKills=allStats.reduce((s,p)=>s+(p.k||0),0),mapAssists=allStats.reduce((s,p)=>s+(p.a||0),0),mapKast=allStats.reduce((s,p)=>s+(p.kast||0),0)/Math.max(1,allStats.length)*100,mapAdr=allStats.reduce((s,p)=>s+(p.adr||0),0)/Math.max(1,allStats.length);
+  acc.wA+=g.vencedor===A?1:0;acc.rounds+=r;acc.ctWins+=m.ctWins;acc.plants+=m.plantsN;acc.plantTWins+=m.plantTWins;acc.otMaps+=r>24?1:0;acc.otRounds+=m.ots;acc.force+=m.force;acc.eco+=m.eco;acc.pistN+=m.pistN;acc.pistConv+=m.pistConv;acc.aeN+=m.aeN;acc.aeW+=m.aeW;acc.clutches+=m.clutches;
+  for(let x=1;x<=5;x++){acc.clutch[x].n+=m.clutch[x].n;acc.clutch[x].w+=m.clutch[x].w;}
+  acc.kills+=mapKills;acc.assists+=mapAssists;acc.ratings+=allStats.reduce((s,p)=>s+(+p.rating||0),0);acc.ratingsN+=allStats.length;acc.kastW+=mapKast/100*allStats.length*r;acc.adrW+=mapAdr*allStats.length*r;acc.pr+=allStats.length*r;
+  acc.samples.rounds.push(r);acc.samples.kpr.push(mapKills/Math.max(1,r*10));acc.samples.kast.push(mapKast);acc.samples.adr.push(mapAdr);acc.samples.ct.push(m.ct*100);acc.samples.plant.push(m.plants*100);
+  accSimSide(acc,g.statsA,playersA,r,ai);accSimSide(acc,g.statsB,playersB,r,bi);acc.maps[g.mapa]=(acc.maps[g.mapa]||0)+1;acc.teams[ai]=1;acc.teams[bi]=1;
+  const bucket=simGapBucket(Math.abs(A.forca.efetiva-B.forca.efetiva));if(bucket){acc.gaps[bucket].n++;if((A.forca.efetiva>=B.forca.efetiva)===(g.vencedor===A))acc.gaps[bucket].w++;}
+}
 function simPlayerDistributionRows(batch){
   const minimumMaps=batch.scope==="league"?5:10;
   return Object.values(batch.players).filter(player=>player.n&&player.real).map(player=>{
@@ -3345,14 +3355,8 @@ function runBatchLab(){
     E.srand(seed+i);
     const A=prepared[ai].team,B=prepared[bi].team,playersA=prepared[ai].players,playersB=prepared[bi].players;
     const fA=E.forcaDoDia(A.forca.efetiva,A.forca.quimica),fB=E.forcaDoDia(B.forca.efetiva,B.forca.quimica);
-    const g=E.simularMapa(A,B,fA,fB,simMap==="auto"?null:simMap,false),m=simMetrics(g),r=g.totalRounds||1,allStats=[...(g.statsA||[]),...(g.statsB||[])];
-    const mapKills=allStats.reduce((s,p)=>s+(p.k||0),0),mapAssists=allStats.reduce((s,p)=>s+(p.a||0),0),mapKast=allStats.reduce((s,p)=>s+(p.kast||0),0)/Math.max(1,allStats.length)*100,mapAdr=allStats.reduce((s,p)=>s+(p.adr||0),0)/Math.max(1,allStats.length);
-    acc.wA+=g.vencedor===A?1:0;acc.rounds+=r;acc.ctWins+=m.ctWins;acc.plants+=m.plantsN;acc.plantTWins+=m.plantTWins;acc.otMaps+=r>24?1:0;acc.otRounds+=m.ots;acc.force+=m.force;acc.eco+=m.eco;acc.pistN+=m.pistN;acc.pistConv+=m.pistConv;acc.aeN+=m.aeN;acc.aeW+=m.aeW;acc.clutches+=m.clutches;
-    for(let x=1;x<=5;x++){acc.clutch[x].n+=m.clutch[x].n;acc.clutch[x].w+=m.clutch[x].w;}
-    acc.kills+=mapKills;acc.assists+=mapAssists;acc.ratings+=allStats.reduce((s,p)=>s+(+p.rating||0),0);acc.ratingsN+=allStats.length;acc.kastW+=mapKast/100*allStats.length*r;acc.adrW+=mapAdr*allStats.length*r;acc.pr+=allStats.length*r;
-    acc.samples.rounds.push(r);acc.samples.kpr.push(mapKills/Math.max(1,r*10));acc.samples.kast.push(mapKast);acc.samples.adr.push(mapAdr);acc.samples.ct.push(m.ct*100);acc.samples.plant.push(m.plants*100);
-    accSimSide(acc,g.statsA,playersA,r,ai);accSimSide(acc,g.statsB,playersB,r,bi);acc.maps[g.mapa]=(acc.maps[g.mapa]||0)+1;acc.teams[ai]=1;acc.teams[bi]=1;
-    const bucket=simGapBucket(Math.abs(A.forca.efetiva-B.forca.efetiva));if(bucket){acc.gaps[bucket].n++;if((A.forca.efetiva>=B.forca.efetiva)===(g.vencedor===A))acc.gaps[bucket].w++;}
+    const g=E.simularMapa(A,B,fA,fB,simMap==="auto"?null:simMap,false);
+    accSimGame(acc,g,playersA,playersB,ai,bi,A,B);
   }
   simPlayerView.compare=[];lastMap=null;lastBatch=acc;renderMatchPanel();
 }
