@@ -1,6 +1,7 @@
 # Plano de retomada — fidelidade individual e evolução do laboratório
 
-> Fonte canônica dos próximos passos aprovada em 21 de julho de 2026.
+> Fonte canônica dos próximos passos aprovada em 21 de julho de 2026 e
+> sincronizada com o estado publicado em 22 de julho de 2026.
 > Este documento registra o raciocínio que deve sobreviver entre sessões. Ele
 > não autoriza balanceamento imediato e não substitui `AGENTS.md`.
 
@@ -8,9 +9,9 @@
 
 - branch de trabalho: `sandbox-test`;
 - `main`: intocável;
-- commit publicado: `d7b3200 feat(sandbox): mostra todos os desvios de rating`;
+- commit publicado: `69ce197 docs(context): record prisma style extraction`;
 - Pages: <https://esteban-brito.github.io/Teste/sandbox.html>;
-- GitHub Actions: execução `29790112282`, validação e deploy aprovados;
+- GitHub Actions: execução `29944917615`, validação e deploy aprovados;
 - commit anterior de balanceamento:
   `626b7ed balance(sim): remove curadoria e descomprime ratings`;
 - última validação integral registrada: 17/17 suítes, 45.900 mapas e 941.838
@@ -102,8 +103,8 @@ erro máximo. Isso não basta para detectar todos os problemas possíveis:
 
 ### Etapa R1 — auditoria individual aprofundada, sem balanceamento
 
-**Status:** concluída localmente em `b97b3d7`, com relatório determinístico e
-diagnóstico sem thresholds de aprovação. A publicação depende de pedido explícito.
+**Status:** concluída e publicada em `b97b3d7`, com relatório determinístico e
+diagnóstico sem thresholds de aprovação.
 
 Objetivo: tornar a bancada capaz de reprovar uma mudança que pareça boa no
 agregado, mas distorça jogadores ou funções.

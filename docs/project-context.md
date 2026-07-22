@@ -41,13 +41,13 @@ Estado registrado em 22 de julho de 2026:
 - branch de trabalho: `sandbox-test`;
 - `main`: intocável durante a profissionalização;
 - último commit publicado no remoto:
-  `d7b3200 feat(sandbox): mostra todos os desvios de rating`;
+  `69ce197 docs(context): record prisma style extraction`;
 - branch local e `origin/sandbox-test` estavam sincronizadas e limpas antes da
   atualização documental desta retomada;
 - Pages do sandbox: <https://esteban-brito.github.io/Teste/sandbox.html>;
 - o E2E do jogo percorre draft, lineup, Suíça, playoffs, título e reinício;
-- workflow do commit `d7b3200`: sucesso em validação e deploy;
-- run do GitHub Actions: `29790112282`;
+- workflow do commit `69ce197`: sucesso em validação e deploy;
+- run do GitHub Actions: `29944917615`;
 - última validação local completa: 17/17 suítes em 173,7 s, com 45.900 mapas
   e 941.838 rounds nos benchmarks;
 - nenhuma mudança IFCS alterou motor, dados, configuração, RNG ou balanceamento;
@@ -60,8 +60,8 @@ Estado registrado em 22 de julho de 2026:
 - o diagnóstico técnico preliminar marcou 96/100 em 4.000 mapas simulados
   (131/136 avaliações dentro das faixas); não é a nota IFCS oficial;
 - ainda não existe corpus real auditado nem nota IFCS oficial;
-- R1, a auditoria individual aprofundada, está versionada localmente no commit
-  `b97b3d7`, sem alteração de motor ou balanceamento, mas ainda não foi publicada;
+- R1, a auditoria individual aprofundada, está publicada no commit `b97b3d7`,
+  sem alteração de motor ou balanceamento;
 - o ADR 0002 foi aceito e a trilha estrutural P1 começou: `ATRIBUTOS`,
   `TIMES_DEF` e `PAISES_MAP` possuem cópias de migração em `src/data`, protegidas
   por paridade integral no `npm run check`;
@@ -278,9 +278,9 @@ limite de CI.
 
 ### Baseline individual profunda — R1
 
-**Status:** versionada localmente no commit `b97b3d7`, ainda não publicada. A
-saída rápida histórica foi preservada sem argumentos. O modo novo é explícito e
-não participa da regressão rápida por padrão:
+**Status:** publicada no commit `b97b3d7`. A saída rápida histórica foi
+preservada sem argumentos. O modo novo é explícito e não participa da regressão
+rápida por padrão:
 
 ```powershell
 node bancada/auditoria.js
