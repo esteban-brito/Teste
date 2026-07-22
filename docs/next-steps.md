@@ -336,9 +336,10 @@ Somente após uma API estável de avaliação, contrato de RNG e save versionado
 ## 9. Próxima ação concreta ao retomar
 
 R1 está concluída. A próxima etapa funcional é **R2 — variância individual no
-sandbox**. Na trilha estrutural P2, `rolePairReality` e `secondaryScore` já foram
-extraídas por paridade; a próxima fronteira pura do PRISMA deve ser caracterizada
-antes de qualquer nova extração. Não misturar R2 e P2 na mesma mudança.
+sandbox**. Na trilha estrutural P2, `rolePairReality`, `secondaryScore` e
+`roleStyleReality` já foram extraídas por paridade; a próxima fronteira pura do
+PRISMA deve ser caracterizada antes de qualquer nova extração. Não misturar R2 e
+P2 na mesma mudança.
 
 Primeiro passo operacional:
 

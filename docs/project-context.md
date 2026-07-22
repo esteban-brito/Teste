@@ -70,10 +70,11 @@ Estado registrado em 22 de julho de 2026:
 - os ADRs 0004 e 0005 foram aceitos. `tools/add-team.js` agora projeta uma nova
   adição nos módulos e em `game.js` pela mesma operação, preserva quebras de
   linha, valida paridade e restaura fontes/`elencos.html` em caso de falha;
-- P2 começou pelas funções puras `rolePairReality` e `secondaryScore`, extraídas
-  para `src/domain` e comparadas exatamente em 11.319 e 724.416 cenários,
-  respectivamente. A auditoria rápida já consome `rolePairReality` por
-  dependência explícita; jogo, sandbox e simulador ainda usam o legado;
+- P2 começou pelas funções puras `rolePairReality`, `secondaryScore` e
+  `roleStyleReality`, extraídas para `src/domain` e comparadas exatamente em
+  11.319, 724.416 e 37.800 cenários, respectivamente. A auditoria rápida já
+  consome as duas regras de realidade por dependência explícita; jogo, sandbox e
+  simulador ainda usam o legado;
 - `game.js` continua sendo a fonte de verdade executável e os módulos ainda são
   cópias transitórias. Não remover os blocos legados nem migrar navegador,
   sandbox, worker ou gerador sem a próxima prova de paridade;
@@ -361,6 +362,10 @@ atualização de snapshot ou fixture golden.
 - `e4653d7`: torna novas adições de time sincronizadas, validadas e reversíveis.
 - `f57f05a` e `ace9f23`: extraem `rolePairReality` com paridade exaustiva e
   migram a análise de pares da auditoria para o módulo público.
+- `d8b8480`: extrai `secondaryScore` com paridade exaustiva, sem migrar os
+  consumidores clássicos.
+- `9f090d8` e `8333faf`: extraem `roleStyleReality` com paridade exaustiva e
+  migram a análise de estilos da auditoria para o módulo público.
 
 O balanceamento deliberado está documentado em
 `docs/rating-balance-2026-07-20.md`. A mudança posterior de tabela foi apenas de
@@ -546,9 +551,10 @@ Aceitação: snapshot e artefato gerado idênticos.
 
 **Risco:** moderado.
 
-**Status:** iniciada. ADR 0004 aceito; `rolePairReality` e `secondaryScore` são as
-primeiras funções puras extraídas. `rolePairReality` possui um consumidor Node
-migrado; o restante de PRISMA/ZÊNITE ainda permanece em `game.js`.
+**Status:** iniciada. ADR 0004 aceito; `rolePairReality`, `secondaryScore` e
+`roleStyleReality` são as primeiras funções puras extraídas. As duas regras de
+realidade possuem um consumidor Node migrado; o restante de PRISMA/ZÊNITE ainda
+permanece em `game.js`.
 
 - aceitar ou revisar ADR 0004;
 - extrair primeiro funções puras de roles, secundário, playstyles e OVR;
@@ -914,9 +920,10 @@ A fonte canônica da sequência é `docs/next-steps.md`. Ordem resumida:
 9. preparar Carreira de Jogador sobre APIs estáveis, RNG contratado e save
    versionado.
 
-`secondaryScore` já foi caracterizada e extraída sem puxar `afinidades`, tabelas
-de role ou distribuição contextual. Antes da próxima extração estrutural,
-caracterizar uma única nova fronteira pura do PRISMA e manter a mudança isolada.
+`secondaryScore` e `roleStyleReality` já foram caracterizadas e extraídas sem
+puxar `afinidades`, distribuição contextual ou classificação completa. Antes da
+próxima extração estrutural, caracterizar uma única nova fronteira pura do PRISMA
+e manter a mudança isolada.
 `game.js` permanece fonte executável para consumidores clássicos; a projeção do
 ADR 0005 impede divergência em novas adições. R2 pode avançar separadamente
 quando priorizada. Antes de congelar thresholds de cauda ou ranking, revisar a
