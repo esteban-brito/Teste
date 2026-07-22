@@ -40,15 +40,14 @@ Estado registrado em 22 de julho de 2026:
 - repositório: `esteban-brito/Teste`;
 - branch de trabalho: `sandbox-test`;
 - `main`: intocável durante a profissionalização;
-- base remota usada no início do ciclo R2:
-  `69ce197 docs(context): record prisma style extraction`;
-- branch local e `origin/sandbox-test` estavam sincronizadas e limpas antes da
-  atualização documental desta retomada;
+- último estado funcional publicado antes deste registro:
+  `c3e2355 docs(sandbox): record diagnostic polish`;
+- branch local e `origin/sandbox-test` sincronizadas e limpas após a publicação;
 - Pages do sandbox: <https://esteban-brito.github.io/Teste/sandbox.html>;
 - o E2E do jogo percorre draft, lineup, Suíça, playoffs, título e reinício;
-- workflow do commit `69ce197`: sucesso em validação e deploy;
-- run do GitHub Actions: `29944917615`;
-- última validação local completa: 17/17 suítes em 173,7 s, com 45.900 mapas
+- workflow do commit `c3e2355`: sucesso em validação e deploy;
+- run do GitHub Actions: `29955558168`;
+- última validação local completa: 17/17 suítes em 180,3 s, com 45.900 mapas
   e 941.838 rounds nos benchmarks;
 - nenhuma mudança IFCS alterou motor, dados, configuração, RNG ou balanceamento;
 - o alvo IFCS de 22/01/2026 a 07/07/2026 está congelado com fontes e hashes; a
@@ -80,7 +79,40 @@ Estado registrado em 22 de julho de 2026:
   sandbox, worker ou gerador sem a próxima prova de paridade;
 - R2 foi concluída como trilha científica/visual separada, sem mudança no motor,
   RNG ou balanceamento. Não combinar a próxima etapa funcional, modularização
-  estrutural e balanceamento na mesma mudança.
+  estrutural e balanceamento na mesma mudança;
+- R3 já possui uma MD3 isolada e determinística. A decisão de produto para a
+  próxima retomada é congelar o design atual e implementar a distribuição entre
+  muitas campanhas MD3, sem novo polimento visual ou balanceamento incidental.
+
+### Decisão imediata para a próxima sessão
+
+**Próxima implementação recomendada e aprovada:** repetir muitas MD3 entre dois
+times e resumir a distribuição das séries. A primeira entrega deve permitir uma
+quantidade explícita de campanhas, como 100 ou 500, e mostrar:
+
+- porcentagem de séries vencidas por cada time;
+- frequências de `2–0`, `2–1`, `1–2` e `0–2`;
+- quantidade média de mapas por série;
+- frequência dos mapas e desempenho dos times por mapa;
+- consistência individual ao longo das séries, sem confundir mapa e campanha;
+- seed e contrato determinístico protegidos por golden e E2E.
+
+Depois dessa entrega, a ordem recomendada é: auditar AWPers, sobrevivência,
+Entry, Support/IGL, playstyles e força do adversário; balancear somente desvios
+repetidos e comprovados; continuar a modularização em commits separados;
+completar o corpus e a nota IFCS oficial; só então avançar gradualmente no modo
+Carreira de Jogador. Não balancear a partir de um único lote: o benchmark atual
+permanece saudável, com correlação real × simulado de aproximadamente `0,946`,
+erro médio `0,052` e maior erro individual `0,178`.
+
+### Preferências de comunicação do responsável
+
+- responder em português, com precisão, objetividade e linguagem profissional;
+- assumir que o responsável não é programador e explicar termos novos em
+  linguagem simples;
+- priorizar resultado visível e decisão prática, evitando detalhes internos que
+  não ajudem a entender ou testar o produto;
+- economizar tokens sem omitir riscos, estado de validação ou próximos passos.
 
 Para retomar em uma sessão nova:
 
