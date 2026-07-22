@@ -34,7 +34,7 @@ roadmap for concluída.
 
 ## 2. Ponto exato de retomada
 
-Estado registrado em 21 de julho de 2026:
+Estado registrado em 22 de julho de 2026:
 
 - produto: **draft9-0**, jogo estático de navegador sobre Counter-Strike;
 - repositório: `esteban-brito/Teste`;
@@ -59,9 +59,27 @@ Estado registrado em 21 de julho de 2026:
   Falcons no IEM Cologne Major 2026; o corpus está em 1/800 mapas e 1/6 eventos;
 - o diagnóstico técnico preliminar marcou 96/100 em 4.000 mapas simulados
   (131/136 avaliações dentro das faixas); não é a nota IFCS oficial;
-- ainda não existe corpus real auditado nem nota IFCS oficial.
-- o próximo trabalho concreto aprovado é R1, auditoria individual aprofundada,
-  sem alterar balanceamento; o plano completo está em `docs/next-steps.md`.
+- ainda não existe corpus real auditado nem nota IFCS oficial;
+- R1, a auditoria individual aprofundada, está versionada localmente no commit
+  `b97b3d7`, sem alteração de motor ou balanceamento, mas ainda não foi publicada;
+- o ADR 0002 foi aceito e a trilha estrutural P1 começou: `ATRIBUTOS`,
+  `TIMES_DEF` e `PAISES_MAP` possuem cópias de migração em `src/data`, protegidas
+  por paridade integral no `npm run check`;
+- `bancada/times.js` e `bancada/snapshot.js` já consomem os novos módulos para
+  dados crus; o snapshot deixou de manter um `new Function` próprio;
+- os ADRs 0004 e 0005 foram aceitos. `tools/add-team.js` agora projeta uma nova
+  adição nos módulos e em `game.js` pela mesma operação, preserva quebras de
+  linha, valida paridade e restaura fontes/`elencos.html` em caso de falha;
+- P2 começou pelas funções puras `rolePairReality`, `secondaryScore` e
+  `roleStyleReality`, extraídas para `src/domain` e comparadas exatamente em
+  11.319, 724.416 e 37.800 cenários, respectivamente. A auditoria rápida já
+  consome as duas regras de realidade por dependência explícita; jogo, sandbox e
+  simulador ainda usam o legado;
+- `game.js` continua sendo a fonte de verdade executável e os módulos ainda são
+  cópias transitórias. Não remover os blocos legados nem migrar navegador,
+  sandbox, worker ou gerador sem a próxima prova de paridade;
+- R2 continua sendo uma trilha científica/visual separada. Não combinar R2,
+  modularização estrutural e balanceamento na mesma mudança.
 
 Para retomar em uma sessão nova:
 
@@ -258,6 +276,57 @@ Medição local observada após a otimização: lote de 80 mapas em aproximadame
 70 ms na máquina de desenvolvimento. Isso é uma referência operacional, não um
 limite de CI.
 
+### Baseline individual profunda — R1
+
+**Status:** versionada localmente no commit `b97b3d7`, ainda não publicada. A
+saída rápida histórica foi preservada sem argumentos. O modo novo é explícito e
+não participa da regressão rápida por padrão:
+
+```powershell
+node bancada/auditoria.js
+node bancada/auditoria.js --deep
+node bancada/auditoria.js --deep --format json
+```
+
+O protocolo padrão da auditoria profunda é:
+
+- round-robin completo entre 17 elencos, com 136 confrontos por ciclo;
+- oito ciclos, totalizando 1.088 mapas e 22.446 rounds na baseline registrada;
+- 85/85 IDs crus, 128 mapas e os 16 elencos adversários por jogador;
+- 16 exposições por jogador em cada um dos oito mapas canônicos;
+- 64 exposições como lado A e 64 como lado B por jogador;
+- troca de lados nos ciclos ímpares e rotação de mapa por confronto/ciclo;
+- Mulberry32 reinicializado por confronto com seed derivada de uma base fixa;
+- identificação por índice + ID do elenco, porque `Spirit` e `FURIA` possuem
+  formações históricas distintas com o mesmo nome;
+- verificação interna de cobertura, igualdade de exposição e preservação das
+  classificações e atributos;
+- relatório humano resumido e JSON determinístico com detalhamento por ID,
+  time, mapa, role, playstyle, OVR e quartil de força do adversário.
+
+Resultados descritivos da primeira execução aceita localmente:
+
+| Medida | Resultado |
+|---|---:|
+| Pearson entre rating real e simulado | 0,943 |
+| Spearman entre rating real e simulado | 0,923 |
+| erro absoluto médio do rating | 0,053 |
+| preservação do top 1 interno do elenco | 54,3% |
+| sobreposição do top 3 interno do elenco | 79,6% |
+| inversões internas de ordem | 11/167 |
+
+Esses números são uma caracterização, não critérios de aprovação. O relatório
+declara `diagnosticOnly: true` e não contém thresholds de passa/falha. Deltas,
+caudas, inversões ou diferenças entre grupos não autorizam ajuste de pesos,
+atributos ou fórmulas. Qualquer hipótese de balanceamento continua dependendo
+do protocolo separado de `docs/next-steps.md`, comparação estatística e commit
+próprio.
+
+O JSON completo foi comparado entre duas execuções independentes e permaneceu
+idêntico. No estado local após R1 passaram `npm run check`, `npm run lint`,
+`npm run test:data`, `npm run test:regression` e `npm run test:benchmark`, sem
+atualização de snapshot ou fixture golden.
+
 ### Commits que contam a história recente
 
 - `f06662a`: modernização inicial da aba Simular;
@@ -282,6 +351,21 @@ limite de CI.
 - `626b7ed`: remove tiers por nome, reduz a compressão do rating com critérios
   numéricos e endurece as guardas individuais;
 - `d7b3200`: lista todos os jogadores simulados no painel de desvios de rating.
+- `b97b3d7`: auditoria individual profunda e determinística de R1;
+- `06d2785`: aceita e detalha a fronteira entre dados crus e derivados;
+- `5806a3d`, `8b9794b` e `5fbaf01`: extraem jogadores, elencos e países sob
+  testes de paridade integral;
+- `9fffde4` e `acb1a48`: migram o lint de elenco e o snapshot para os módulos de
+  dados; o segundo remove o `new Function` próprio do snapshot.
+- `2a20c0e` e `263b179`: aceitam módulos ES nativos e definem a projeção legada
+  transitória dos dados;
+- `e4653d7`: torna novas adições de time sincronizadas, validadas e reversíveis.
+- `f57f05a` e `ace9f23`: extraem `rolePairReality` com paridade exaustiva e
+  migram a análise de pares da auditoria para o módulo público.
+- `d8b8480`: extrai `secondaryScore` com paridade exaustiva, sem migrar os
+  consumidores clássicos.
+- `9f090d8` e `8333faf`: extraem `roleStyleReality` com paridade exaustiva e
+  migram a análise de estilos da auditoria para o módulo público.
 
 O balanceamento deliberado está documentado em
 `docs/rating-balance-2026-07-20.md`. A mudança posterior de tabela foi apenas de
@@ -304,6 +388,9 @@ npm run corpus:fidelity   selo e verificação do manifesto real IFCS
 npm run test:e2e          jogo, calibrador e aba Simular no Chromium
 npm run test:all          todas as 17 suítes
 npm run validate          check + lint + todas as suítes
+node bancada/auditoria.js auditoria rápida histórica de classificação
+node bancada/auditoria.js --deep --format json
+                           baseline individual determinística detalhada
 ```
 
 O benchmark completo é deliberadamente demorado. Não reduzir amostras para
@@ -448,6 +535,10 @@ Aceitação: nenhuma classificação, estatística ou sequência aprovada muda.
 
 **Risco:** seguro a moderado.
 
+**Status:** em andamento. ADR 0002 aceito; jogadores, elencos e países extraídos
+sob paridade; lint, snapshot e `add-team` já usam a nova fronteira. Os blocos de
+`game.js` continuam necessários para consumidores clássicos.
+
 - aceitar ou revisar ADR 0002;
 - extrair dados crus sem extrair fórmulas no mesmo commit;
 - tornar IDs explícitos obrigatórios para persistência;
@@ -459,6 +550,11 @@ Aceitação: snapshot e artefato gerado idênticos.
 ### Etapa P2 — módulos ES de avaliação
 
 **Risco:** moderado.
+
+**Status:** iniciada. ADR 0004 aceito; `rolePairReality`, `secondaryScore` e
+`roleStyleReality` são as primeiras funções puras extraídas. As duas regras de
+realidade possuem um consumidor Node migrado; o restante de PRISMA/ZÊNITE ainda
+permanece em `game.js`.
 
 - aceitar ou revisar ADR 0004;
 - extrair primeiro funções puras de roles, secundário, playstyles e OVR;
@@ -810,22 +906,30 @@ Não presumir respostas sem conversar:
 
 A fonte canônica da sequência é `docs/next-steps.md`. Ordem resumida:
 
-1. R1: ampliar a auditoria individual com distribuição, caudas e hierarquia,
-   sem tocar no motor;
-2. R2: mostrar média, mediana, desvio-padrão, percentis e incerteza no sandbox;
+1. R1 concluída localmente: auditoria individual profunda versionada sem tocar
+   no motor ou balanceamento; publicação continua dependendo de pedido explícito;
+2. R2: mostrar média, mediana, desvio-padrão, percentis e incerteza no sandbox,
+   consumindo os conceitos validados em R1 sem duplicar fórmulas;
 3. R3: definir e implementar campanha separada da expectativa de muitos mapas;
 4. R4: auditar AWPer, sobrevivência e playstyle por critérios numéricos;
 5. R5/R6: balancear somente se houver evidência e validar integralmente;
 6. aprimorar usabilidade do laboratório;
-7. retomar modularização por paridade, otimização e acessibilidade;
+7. continuar a modularização por paridade: P1 possui dados e projeção legada;
+   P2 deve começar por uma única fronteira pura do PRISMA;
 8. completar corpus e primeira nota IFCS oficial;
 9. preparar Carreira de Jogador sobre APIs estáveis, RNG contratado e save
    versionado.
 
-O próximo passo concreto é R1. Antes de congelar thresholds de cauda ou ranking,
-medir e revisar a baseline atual. Cada etapa deve ser um commit pequeno ou uma
-sequência curta com responsabilidade verificável; não misturar auditoria,
-interface, refatoração e balanceamento.
+`secondaryScore` e `roleStyleReality` já foram caracterizadas e extraídas sem
+puxar `afinidades`, distribuição contextual ou classificação completa. Antes da
+próxima extração estrutural, caracterizar uma única nova fronteira pura do PRISMA
+e manter a mudança isolada.
+`game.js` permanece fonte executável para consumidores clássicos; a projeção do
+ADR 0005 impede divergência em novas adições. R2 pode avançar separadamente
+quando priorizada. Antes de congelar thresholds de cauda ou ranking, revisar a
+baseline atual. Cada etapa deve ser um commit pequeno ou uma sequência curta com
+responsabilidade verificável; não misturar auditoria, interface, refatoração e
+balanceamento.
 
 ## 14. Dívidas e riscos conhecidos
 
