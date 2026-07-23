@@ -358,7 +358,10 @@ contextual de trade sem inflar a taxa global; detalhes em
 `docs/r5-trade-balance-2026-07-23.md`. R5.7b concluiu a assistência contextual
 por utilidade disponível, com APR global estável e separação maior dos
 facilitadores; detalhes em `docs/r5-assist-balance-2026-07-23.md`. R5.8, a
-decomposição do rating após os eventos, é a próxima subetapa.
+decomposição do rating após os eventos, também foi concluída. O prior atual já
+estava no ótimo de calibração e o candidato piorou a validação, portanto nenhum
+peso foi alterado; detalhes em `docs/r5-rating-audit-2026-07-23.md`. R6 é a
+próxima etapa.
 
 Regras:
 

@@ -162,11 +162,16 @@ seleção ponderada do assistente. Evidência em
 
 ### R5.8 — rating após os eventos
 
-- medir cada componente de `fallenAngels` separadamente;
-- reportar quanto da fidelidade vem do prior histórico e quanto vem dos eventos;
-- ajustar pesos apenas na parcela de calibração do corpus;
-- revisar no conjunto de validação sem usar o holdout de release;
-- tratar erro de atributo de jogador como correção de dados separada.
+**Concluída sem mudança de balanceamento.** As onze parcelas foram medidas em
+61.200 mapas-alvo. O prior atual `0,450` ficou praticamente igual ao ótimo de
+calibração `0,455`; o candidato piorou MAE/RMSE na validação e foi rejeitado. O
+holdout de auditoria permaneceu selado. Evidência em
+`docs/r5-rating-audit-2026-07-23.md`.
+
+- os eventos sem prior preservaram correlação `0,875` com a referência;
+- o conjunto completo preservou correlação `0,956` e MAE `0,0486`;
+- nenhum peso, clamp ou arredondamento foi alterado;
+- erro de atributo ou de distribuição de combate permanece trabalho separado.
 
 ## Critérios de parada
 
