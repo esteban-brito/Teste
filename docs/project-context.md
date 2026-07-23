@@ -102,15 +102,38 @@ Atualização operacional de 23 de julho de 2026:
 - R5.4 extraiu `combatProfile` e as parcelas somáveis de `fallenAngels` com
   golden idêntico e delta zero em 1.088 mapas/10.880 player-maps. A role ativa
   do IGL não mudou; detalhes em `docs/r5-structural-extraction-2026-07-23.md`.
+- por decisão do responsável, o corpus IFCS completo de 800 mapas não é
+  pré-requisito operacional deste ciclo. Ele permanece opcional para futura
+  certificação; o produto não alegará nota IFCS oficial sem esse corpus;
+- R5.5 ativou a função de combate secundária já classificada dos IGLs, sem criar
+  multiplicadores. A comparação pareada teve deltas globais imateriais e o
+  benchmark melhorou correlação/MAE do rating; evidência em
+  `docs/r5-effective-role-balance-2026-07-23.md`.
+- a parcela de exposição da R5.6 substituiu a seleção genérica da vítima por
+  volume residual e contexto contínuo de função, atributos, lado e fase. Entry
+  passou a liderar as mortes de abertura por pequena margem sem deslocamento
+  material global; evidência em `docs/r5-exposure-balance-2026-07-23.md`.
+- o candidato separado de save acrescentou valor abstrato dos sobreviventes à
+  decisão coletiva existente. Save de AWPer subiu cerca de 10% em termos
+  relativos, enquanto save e produção globais ficaram estáveis; evidência em
+  `docs/r5-save-balance-2026-07-23.md`.
+- R5.7a condicionou a oportunidade de refrag à prontidão dos vivos e à
+  possibilidade de troca da vítima. Entry e Support passaram a ser trocados com
+  maior frequência sem inflar trades globais; evidência em
+  `docs/r5-trade-balance-2026-07-23.md`.
+- R5.7b condicionou a oportunidade de assistência à utilidade disponível dos
+  quatro companheiros elegíveis. APR global permaneceu estável e a separação
+  entre facilitadores e finalizadores aumentou sem bônus direto por função ou
+  KAST; evidência em `docs/r5-assist-balance-2026-07-23.md`.
 
 ### Decisão imediata para a próxima sessão
 
-**Próximo gate científico:** R5.3 deve completar alvos empíricos auditáveis para
-exposição, save, trade, assistência e KAST. O corpus oficial ainda é insuficiente
-(1/800 mapas e 1/6 eventos), portanto tuning tático por role não pode ser
-inventado. A fronteira estrutural R5.4 já está concluída; R5.5 não deve ser
-ativada antes desse gate. A distribuição entre muitas MD3 continua aberta em
-R3, mas não deve ser misturada ao ciclo R5/R6.
+**Próxima subetapa:** decompor o rating pós-eventos na R5.8 e medir o peso do
+prior histórico contra a produção simulada. Trade, assistência e composição
+factual do KAST estão concluídos. O corpus
+oficial segue insuficiente (1/800 mapas e 1/6 eventos), portanto nenhuma nota
+IFCS será publicada. A distribuição entre muitas MD3 continua aberta em R3 e não
+deve ser misturada ao ciclo R5/R6.
 
 ### Preferências de comunicação do responsável
 

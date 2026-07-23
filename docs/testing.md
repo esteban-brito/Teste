@@ -37,6 +37,30 @@ As fronteiras puras R5.4 também fazem parte de `npm run check`: `combatProfile`
 comparação pareada de desenvolvimento devem continuar exatamente idênticos em
 qualquer refatoração dessas fronteiras.
 
+Depois de R5.5, a paridade de `combatProfile` também exige explicitamente que
+IGL use a função de combate classificada e que não-IGL preserve a primária. Os
+goldens Node e do laboratório foram atualizados somente após documentar as
+timelines alteradas em `docs/r5-effective-role-balance-2026-07-23.md`.
+
+R5.6 acrescentou `exposureProfile` ao mesmo gate: 175 perfis reais, wrappers e
+fallbacks devem produzir pesos positivos, finitos e idênticos entre o adapter
+legado e o módulo puro. O teste também prova que a função efetiva diferencia
+IGL/Entry de IGL/AWPer no primeiro contato.
+
+O candidato de save acrescentou `preservationValue`: 174 entradas reais,
+wrappers e fallbacks devem produzir o mesmo valor finito e não negativo no
+módulo e no adapter. Esse contrato não autoriza interpretar o valor como arma ou
+inventário individual.
+
+R5.7a acrescentou `tradeContextProfile`: 174 entradas devem preservar por
+paridade os sinais finitos de prontidão e possibilidade de troca. O teste não
+credita trade ou KAST; essa decisão continua pertencendo ao evento do round.
+
+R5.7b acrescentou `assistContextProfile`: 174 entradas reais, wrappers e
+fallbacks devem preservar por paridade o sinal finito de utilidade. O teste não
+decide a assistência nem concede KAST; apenas protege a fronteira pura usada
+pelo evento.
+
 ## Estado de referência
 
 - A aplicação possui 17 times e 85 cards de jogador.

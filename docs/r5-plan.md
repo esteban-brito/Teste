@@ -89,8 +89,10 @@ tetos de desempenho.
 
 ### R5.3 — alvos empíricos
 
-**Próximo gate científico.** O corpus oficial ainda é insuficiente; nenhuma
-faixa tática por role será inventada a partir do print ou do benchmark simulado.
+**Gate operacional ajustado pelo responsável.** O corpus IFCS completo não será
+adquirido neste ciclo e permanece uma trilha futura opcional. R5 pode usar
+evidência direcionada, regras já classificadas e comparações pareadas, sem
+inventar faixas por role nem alegar uma nota IFCS oficial.
 
 - usar a população congelada em `docs/fidelity-target.json` para dinâmica CS2;
 - rotular roles por protocolo anterior ao resultado, sem escolher jogadores que
@@ -117,6 +119,10 @@ Em commit estrutural e com golden idêntico:
 
 ### R5.5 — função de combate efetiva
 
+**Concluída.** IGL preserva liderança, química e sistema, mas usa AWPer, Entry,
+Rifler ou Support já classificado nas decisões de combate. Nenhum multiplicador
+novo foi criado. Evidência em `docs/r5-effective-role-balance-2026-07-23.md`.
+
 - IGL permanece liderança para sistema e química;
 - decisões de combate de IGL usam seu papel secundário/efetivo;
 - demais jogadores preservam sua função de combate;
@@ -124,23 +130,35 @@ Em commit estrutural e com golden idêntico:
 
 ### R5.6 — exposição e save
 
-Exposição será derivada de função efetiva, atributos `en`, `op`, `sn`, `cl`,
-`ut`, agressividade, lado e fase do round. Entry assume mais primeiro contato;
-AWPer e Lurker não recebem um bônus direto de sobrevivência: a sobrevivência
-deve emergir da seleção de contatos e das decisões do round.
+**Concluída.** A vítima agora é escolhida por
+volume residual de contato e um perfil contínuo derivado de função efetiva,
+atributos `en`, `op`, `sn`, `cl`, `ut`, agressividade, lado e fase do round.
+Entry assume mais primeiro contato; AWPer e Lurker não recebem bônus direto de
+sobrevivência. Evidência em `docs/r5-exposure-balance-2026-07-23.md`.
 
-Save será um candidato separado. Sem inventário individual, pode considerar
-somente compra do time, vantagem numérica, objetivo e valor abstrato dos
-sobreviventes. O relatório não afirmará que uma arma específica foi preservada.
+O candidato separado de save preserva as regras existentes de compra do time,
+vantagem numérica e objetivo, acrescentando somente o valor abstrato e
+zero-centrado dos sobreviventes. Evidência em
+`docs/r5-save-balance-2026-07-23.md`. Sem inventário individual, o relatório não
+afirma que uma arma específica foi preservada.
 
 ### R5.7 — trade, assistência e KAST
 
-- condicionar a oportunidade de trade ao contexto e à prontidão coletiva;
-- usar `tr` para selecionar o refragger;
-- usar utilidade e contexto para assistência;
-- avaliar Entry por APR, sem transformar A/K no alvo principal;
-- manter KAST como união factual de kill, assist, survival e trade;
-- nunca aplicar crédito direto de KAST por role.
+**Concluída.** Prontidão dos
+companheiros vivos e possibilidade de troca da vítima agora deslocam a chance
+do refrag de forma zero-centrada. Evidência em
+`docs/r5-trade-balance-2026-07-23.md`.
+
+A oportunidade de assistência agora considera a utilidade disponível dos
+companheiros elegíveis, preservando o desconto histórico de quem já morreu e a
+seleção ponderada do assistente. Evidência em
+`docs/r5-assist-balance-2026-07-23.md`.
+
+- `tr` continua selecionando o refragger;
+- utilidade disponível contextualiza a assistência;
+- Entry foi avaliado por APR, sem transformar A/K no alvo principal;
+- KAST permanece a união factual de kill, assist, survival e trade;
+- nenhum crédito direto de KAST foi aplicado por role.
 
 ### R5.8 — rating após os eventos
 

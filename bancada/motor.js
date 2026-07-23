@@ -10,7 +10,7 @@ const UI_MARKER="// === UI START ===";
 const EXPORTS=[
   "TEAMS","POOL","ATRIBUTOS","TIMES_DEF","PAISES_MAP",
   "forcaTime","simularMapa","simularSerie","forcaDoDia","formaDoDia","sortearFormaCampanha",
-  "avaliarJogador","aplicarAvaliacaoContextual","distribuirRoles","quimicaComposicao","combatProfile","fallenAngelsComponents","fallenAngels",
+  "avaliarJogador","aplicarAvaliacaoContextual","distribuirRoles","quimicaComposicao","combatProfile","exposureProfile","preservationValue","tradeContextProfile","assistContextProfile","fallenAngelsComponents","fallenAngels",
   "afinidades","roleAfinidade","rolePairReality","secondaryScore","roleStyleReality","STYLE_LABEL","styleScoreTable","nmOVR",
   "CFG_AVALIACAO","NM_DEF"
 ];

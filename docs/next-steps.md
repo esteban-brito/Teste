@@ -344,10 +344,21 @@ em `docs/r5-plan.md`. A captura de desenvolvimento cobre 1.088 mapas e 10.880
 player-maps; baseline contra baseline deve produzir deltas e IC95% exatamente
 zero antes de qualquer candidato. R5.2 removeu isoladamente os pisos/tetos duros
 de forma e rating, sem novo ponto de RNG e sem tuning tático; a evidência está em
-`docs/r5-tail-balance-2026-07-23.md`. O próximo gate é R5.3: completar alvos
-empíricos auditáveis antes de alterar comportamento por função. R5.4 também foi
-concluída como extração estrutural de paridade exata, sem ativar ainda a função
-secundária do IGL; evidência em `docs/r5-structural-extraction-2026-07-23.md`.
+`docs/r5-tail-balance-2026-07-23.md`. O responsável decidiu que o corpus IFCS de
+800 mapas não será pré-requisito deste ciclo; certificação oficial permanece
+futura e nenhuma faixa por role será inventada. R5.4 foi concluída por paridade
+exata e R5.5 ativou a função secundária já classificada dos IGLs sem criar pesos.
+Evidências em `docs/r5-structural-extraction-2026-07-23.md` e
+`docs/r5-effective-role-balance-2026-07-23.md`. A etapa de exposição da R5.6
+também foi concluída: contato agora depende de atributos, função efetiva, lado
+e fase, com evidência em `docs/r5-exposure-balance-2026-07-23.md`. O candidato
+separado de save também foi concluído, zero-centrado e sem alegar inventário;
+evidência em `docs/r5-save-balance-2026-07-23.md`. R5.7a concluiu a oportunidade
+contextual de trade sem inflar a taxa global; detalhes em
+`docs/r5-trade-balance-2026-07-23.md`. R5.7b concluiu a assistência contextual
+por utilidade disponível, com APR global estável e separação maior dos
+facilitadores; detalhes em `docs/r5-assist-balance-2026-07-23.md`. R5.8, a
+decomposição do rating após os eventos, é a próxima subetapa.
 
 Regras:
 

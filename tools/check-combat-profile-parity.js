@@ -30,6 +30,13 @@ async function main(){
     if(player!=null)assert.equal(JSON.stringify(player),before,`perfil ${index} foi alterado`);
   });
 
+  assert.equal(combatProfile({primario:"IGL",secundario:"Entry"}).activeCombatRole,"Entry",
+    "IGL/Entry não ativou a função secundária no combate");
+  assert.equal(combatProfile({primario:"IGL",combatRole:"AWPer",secundario:"Support"}).activeCombatRole,"AWPer",
+    "combatRole classificada não prevaleceu para IGL");
+  assert.equal(combatProfile({primario:"Lurker",secundario:"Entry"}).activeCombatRole,"Lurker",
+    "não-IGL abandonou a função primária");
+
   console.log(`combat profile parity: ok (${synthetic.length} comparações)`);
 }
 
