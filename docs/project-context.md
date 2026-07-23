@@ -329,6 +329,19 @@ O refinamento de desempenho acima foi concluído em 23 de julho de 2026.
 Desvio-padrão e IC95% permanecem na comparação, na descrição acessível da
 distribuição e no CSV, mas não ocupam colunas da tabela principal.
 
+O editor de atributos também passou a ter um contrato explícito de sessão:
+
+- controles editam um rascunho com prévia ao vivo;
+- `Aplicar ao laboratório` guarda valores pelo ID cru do jogador e os propaga
+  para Time, Simular e Calibrar;
+- rascunhos e aplicações de vários jogadores sobrevivem à troca de seleção;
+- descarte, restauração individual e reset global possuem ações separadas;
+- relatório e JSON exportado registram valor original, editado e diferença;
+- nomes completos, valor numérico antes do slider e largura limitada substituem
+  siglas e trilhos que ocupavam todo o canvas;
+- nenhuma aplicação escreve em `game.js`, `src/data` ou no navegador após
+  recarregar a página.
+
 A matemática descritiva compartilhada vive em
 `src/domain/statistics/sample-summary.mjs`, recebe amostras explícitas e não
 depende do DOM. A auditoria R1 e o sandbox consomem o mesmo contrato.

@@ -96,6 +96,17 @@ O veredito técnico foi:
 - a mudança acumula saídas já produzidas por cada mapa e não altera motor,
   fórmulas, RNG, balanceamento, snapshot ou golden;
 
+### Editor de atributos concluído em 23 de julho de 2026
+
+- cada jogador mantém rascunho e versão aplicada separados pelo ID cru;
+- `Aplicar ao laboratório` torna a edição visível em Time, Simular e Calibrar;
+- trocar de jogador não perde rascunhos nem aplicações anteriores;
+- descarte, restauração individual, reset global, relatório e exportação JSON
+  possuem contratos explícitos;
+- a interface usa nomes completos, número antes do slider e trilhos limitados;
+- aplicações valem apenas na sessão e não modificam dados ou motores do
+  repositório.
+
 ## 5. Lacunas atuais
 
 O benchmark ainda protege principalmente média, correlação, inclinação, MAE e

@@ -593,17 +593,32 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 /* ============================================================
    EDITOR DE JOGADOR (modo "Editar")
    ============================================================ */
-.editor-head{padding:10px 12px;border-radius:var(--radius-sm);display:flex;align-items:center;gap:12px;background:var(--panel);margin-bottom:10px}
-.editor-fields{padding:0}
+.editor-head{padding:14px;border:1px solid var(--line);border-radius:var(--radius);display:flex;align-items:center;gap:14px;background:var(--panel);margin-bottom:12px}
 .editor-meta{flex:1;min-width:0}
-.editor-name{width:100%;font-size:var(--fs-md);font-family:var(--ff);font-weight:700;background:var(--panel-soft);color:var(--txt);border:none;border-radius:var(--radius-sm)}
-.editor-options{display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap}
-.editor-options select{font-size:var(--fs-sm);padding:5px 7px}
-.field-c{display:grid;grid-template-columns:30px minmax(0,1fr) 48px;align-items:center;gap:8px;margin-bottom:7px}
-.field-c label{font-size:var(--fs-s);font-weight:700;color:var(--dim);text-align:right;letter-spacing:.06em;font-family:var(--ff)}
-.field-c input[type=range]{width:100%;accent-color:var(--accent);height:5px}
-.field-c .num{width:44px;text-align:center;font-family:var(--ff);font-variant-numeric:tabular-nums;
-  background:var(--panel-soft);border:none;border-radius:var(--radius-sm);color:var(--txt);padding:6px 4px;font-size:var(--fs-sm);
+.editor-kicker{font-size:var(--fs-2xs);font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.editor-name{margin-top:2px;font-family:var(--ff);font-size:var(--fs-xl);font-weight:800;color:var(--txt)}
+.editor-team{margin-top:3px;font-size:var(--fs-s);color:var(--dim)}
+.editor-state{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border:1px solid var(--line);border-radius:var(--radius-pill);font-size:var(--fs-xs);font-weight:700;color:var(--dim);white-space:nowrap}
+.editor-state::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--dim)}
+.editor-state.draft{border-color:color-mix(in srgb,var(--warn) 55%,var(--line));color:var(--warn)}
+.editor-state.draft::before{background:var(--warn)}
+.editor-state.applied{border-color:color-mix(in srgb,var(--win) 50%,var(--line));color:var(--win)}
+.editor-state.applied::before{background:var(--win)}
+.editor-scope{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:14px;padding:10px 12px;border-left:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 4%,var(--panel-soft));font-size:var(--fs-s);color:var(--dim)}
+.editor-scope b{color:var(--neutral)}
+.editor-count{font-family:var(--ff);font-size:var(--fs-xs);font-weight:700;color:var(--neutral);white-space:nowrap}
+.editor-options{display:flex;gap:10px;margin-bottom:12px;align-items:end;flex-wrap:wrap}
+.editor-option{display:flex;flex-direction:column;gap:4px;min-width:170px;font-size:var(--fs-xs);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.editor-option .chk{min-height:34px;padding:7px 9px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--panel-soft);color:var(--neutral);font-size:var(--fs-sm);letter-spacing:0;text-transform:none}
+.editor-option select{min-height:34px;font-size:var(--fs-sm);padding:5px 7px}
+.editor-fields{display:grid;gap:7px;max-width:920px;padding:0}
+.field-c{display:grid;grid-template-columns:minmax(170px,220px) 68px minmax(220px,520px);align-items:center;justify-content:start;gap:10px;padding:8px 10px;border:1px solid var(--line2);border-radius:var(--radius-sm);background:color-mix(in srgb,var(--panel) 58%,var(--panel-soft))}
+.field-copy{min-width:0}
+.field-c label{display:block;font-family:var(--ff);font-size:var(--fs-s);font-weight:800;letter-spacing:.055em;color:var(--neutral)}
+.field-help{display:block;margin-top:2px;font-size:var(--fs-2xs);line-height:1.25;color:var(--dim)}
+.field-c input[type=range]{width:100%;max-width:520px;accent-color:var(--accent);height:5px}
+.field-c .num{width:68px;text-align:center;font-family:var(--ff);font-variant-numeric:tabular-nums;
+  background:var(--panel-soft);border:1px solid var(--line);border-radius:var(--radius-sm);color:var(--txt);padding:7px 5px;font-size:var(--fs-sm);
   outline:none;transition:box-shadow .14s}
 .field-c .num:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .ovr-badge{width:52px;height:52px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;
@@ -611,6 +626,8 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
   box-shadow:inset 0 0 0 2px rgba(255,255,255,.22)}
 @keyframes valueBump{0%{transform:scale(1)}45%{transform:scale(1.14)}100%{transform:scale(1)}}
 .bump{animation:valueBump .32s var(--ease)}
+.editor-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.editor-actions .editor-session-note{margin-left:auto;font-size:var(--fs-xs);color:var(--dim)}
 .result-compact{margin-top:2px}
 .editor-diag{justify-content:flex-start;margin-top:12px;padding-top:12px;border-top:1px solid var(--panel-soft)}
 
@@ -652,7 +669,14 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
   .wrap{padding:10px}
   .shell{grid-template-columns:1fr}
   .lcard-players{grid-template-columns:repeat(auto-fill,minmax(108px,1fr))}
-  .field-c{grid-template-columns:28px minmax(0,1fr) 46px}
+  .editor-head{display:grid;grid-template-columns:52px minmax(0,1fr);align-items:start}
+  .editor-state{grid-column:1/-1;margin-left:0;width:max-content}
+  .editor-scope{flex-direction:column;gap:6px}
+  .field-c{grid-template-columns:minmax(0,1fr) 64px;padding:9px}
+  .field-c input[type=range]{grid-column:1/-1;max-width:none}
+  .field-c .num{width:64px}
+  .editor-actions .btn{flex:1 1 140px}
+  .editor-actions .editor-session-note{width:100%;margin-left:0}
   .calib-target{grid-template-columns:1fr}
   .cr-drow{grid-template-columns:52px minmax(0,1fr) 14px minmax(0,1fr)}
   .pctx-ovr{width:44px;height:44px;font-size:var(--fs-xl)}
@@ -716,14 +740,24 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 
 <script>
 const ROLES=["AWPer","Rifler","Entry","Lurker","Support"];
-const STATS=[["fp","FP"],["en","EN"],["tr","TR"],["op","OP"],["cl","CL"],["sn","SN"],["ut","UT"]];
-const STAT_FULL={fp:"Firepower",en:"Entrada",tr:"Trade",op:"Abertura",cl:"Clutch",sn:"AWP",ut:"Utilitário"};
+const STATS=[["fp","FIREPOWER"],["en","ENTRADA"],["tr","TRADE"],["op","ABERTURA"],["cl","CLUTCH"],["sn","AWP / SNIPER"],["ut","UTILITÁRIO"]];
+const STAT_FULL=Object.fromEntries(STATS);
+const STAT_HELP={
+  fp:"Poder de fogo e volume de eliminações.",
+  en:"Agressividade e capacidade de criar espaço.",
+  tr:"Capacidade de responder com eliminações de troca.",
+  op:"Impacto nos primeiros duelos do round.",
+  cl:"Eficiência em situações decisivas e sob pressão.",
+  sn:"Proficiência e volume de jogo com AWP.",
+  ut:"Impacto de granadas, assists e suporte coletivo."
+};
 const COLOC=["Campeao","Final","Top4","Top8","Grupos"];
+const COLOC_LABEL={Campeao:"Campeão",Final:"Finalista",Top4:"Top 4",Top8:"Top 8",Grupos:"Fase de grupos"};
 const tierVar=o=>o>=22?"--t22":o>=21?"--t21":o>=18?"--t18":o>=15?"--t15":"--t14";
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const clone=o=>JSON.parse(JSON.stringify(o));
 
-let E=null, SampleStatistics=null, DEF=null, POOLRAW=[], loadedIdx=null, poolBySlot=new Map();
+let E=null, SampleStatistics=null, DEF=null, POOLRAW=[], loadedIdx=null, poolBySlot=new Map(), playerOverrides=new Map(), editorDrafts=new Map();
 let teamIdx=0, simA=0, simB=1, simSeed=0, simSeedCounter=0, simRuns=80, simMap="auto", simScope="match", lastMap=null, lastBatch=null, baseline=null;
 let simPlayerView={query:"",team:"all",role:"all",sufficiency:"all",sort:"absDelta",direction:"desc",compare:[]};
 // estrutura nova: uma ferramenta por vez no canvas central (segmented control), jogador fixado no topo
@@ -766,12 +800,25 @@ async function carregarEstatisticas(){
     if(typeof SampleStatistics[name]!=="function")throw new Error(`estatística ausente: ${name}`);
   });
 }
-// o jogador carregado (loadedIdx) entra no varrimento com os stats EDITADOS no laboratório, não os originais
-function playerAt(i){ if(i===loadedIdx){const p=POOLRAW[i];return {...p,fp:state.fp,en:state.en,tr:state.tr,op:state.op,cl:state.cl,sn:state.sn,ut:state.ut,rating:state.rating,isIGL:state.isIGL,colocacao:state.colocacao};} return POOLRAW[i]; }
-function teamEngines(t,ti){
+const EDITOR_FIELDS=[...STATS.map(([key])=>key),"rating","isIGL","colocacao"];
+function editorValues(source){return Object.fromEntries(EDITOR_FIELDS.map(key=>[key,key==="isIGL"?!!source?.[key]:source?.[key]]));}
+function editorFieldDiff(before,after){
+  return EDITOR_FIELDS.filter(key=>before?.[key]!==after?.[key]).map(key=>({key,from:before?.[key],to:after?.[key]}));
+}
+function playerAt(i){
+  const original=POOLRAW[i],override=playerOverrides.get(i);
+  return original&&override?{...original,...override}:original;
+}
+function editorDraftRaw(i=loadedIdx){
+  const applied=playerAt(i);if(!applied)return null;
+  const draft=editorDrafts.get(i)||(i===loadedIdx?editorValues(state):null);
+  return draft?{...applied,...draft}:applied;
+}
+function editorPlayerAt(i){return i===loadedIdx?editorDraftRaw(i):playerAt(i);}
+function teamEngines(t,ti,resolvePlayer=playerAt){
   const js=t.jogadores.map((j,pi)=>{
     const poolIdx=poolBySlot.get(`${ti}:${pi}`);
-    const base=poolIdx===undefined?j._eng:playerAt(poolIdx);
+    const base=poolIdx===undefined?j._eng:resolvePlayer(poolIdx);
     return Object.assign({},base,E.avaliarJogador(base));
   });
   E.distribuirRoles(js);
@@ -798,11 +845,11 @@ function evaluatePlayer(p,eng=null){
   const evaluated=eng?{...eng}:E.aplicarAvaliacaoContextual(source);
   return {...source,...evaluated,isIGL:!!evaluated.isIGL};
 }
-function teamPlayers(t,ti){
-  const engs=teamEngines(t,ti);
+function teamPlayers(t,ti,resolvePlayer=playerAt){
+  const engs=teamEngines(t,ti,resolvePlayer);
   return engs.map((eng,pi)=>{
     const poolIdx=poolBySlot.get(`${ti}:${pi}`);
-    const raw=poolIdx===undefined?eng:playerAt(poolIdx);
+    const raw=poolIdx===undefined?eng:resolvePlayer(poolIdx);
     return evaluatePlayer(raw,eng);
   });
 }
@@ -1032,7 +1079,7 @@ function changeLine(change){
   return`ROLE_PERFIL.${change.role}.afin.${change.attr}: ${change.from.toFixed(3)} -> ${change.to.toFixed(3)}`;
 }
 function buildCalibrationReport(){
-  const session=ensureCalibSession(), report=impactReport(), summary=summarizeDiff(report), regressions=sessionRegressions(), finalChanges=flatConfigDiff();
+  const session=ensureCalibSession(), report=impactReport(), summary=summarizeDiff(report), regressions=sessionRegressions(), finalChanges=flatConfigDiff(),editorChanges=editorOverrideRows();
   const lines=[];
   lines.push("=== RELATORIO DE CALIBRACAO SANDBOX ===");
   lines.push(`Sessao iniciada: ${session.startedAt}`);
@@ -1045,6 +1092,13 @@ function buildCalibrationReport(){
   // (ex.: Boombl4 Ancora=Spacetaker) e a reprodução saía diferente do sandbox.
   if(finalChanges.length)finalChanges.forEach(change=>lines.push(`${change.path}: ${(+change.from).toFixed(6)} -> ${(+change.to).toFixed(6)}`));
   else lines.push("Sem mudancas pendentes.");
+  lines.push("");
+  lines.push("=== ATRIBUTOS DE JOGADORES APLICADOS ===");
+  if(editorChanges.length)editorChanges.forEach(player=>{
+    lines.push(`${player.name} (${player.team}) [${player.id}]`);
+    player.changes.forEach(change=>lines.push(`  ${editorFieldLabel(change.key)}: ${String(change.from)} -> ${String(change.to)}`));
+  });
+  else lines.push("Nenhum atributo de jogador aplicado.");
   lines.push("");
   lines.push("=== INTENCOES MONITORADAS ===");
   const reportSnap=impactSnapshot();
@@ -1084,26 +1138,29 @@ function buildCalibrationReport(){
   return lines.join("\n");
 }
 function reportIsEmpty(){
-  return !flatConfigDiff().length && !ensureCalibSession().applied.length && !sessionRegressions().length;
+  return !flatConfigDiff().length && !editorOverrideRows().length && !ensureCalibSession().applied.length && !sessionRegressions().length;
 }
 function renderReportPanel(){
-  const session=ensureCalibSession(), report=impactReport(), summary=summarizeDiff(report), regressions=sessionRegressions(), finalChanges=flatConfigDiff();
+  const session=ensureCalibSession(), report=impactReport(), summary=summarizeDiff(report), regressions=sessionRegressions(), finalChanges=flatConfigDiff(),editorChanges=editorOverrideRows(),editorFieldCount=editorChanges.reduce((sum,player)=>sum+player.changes.length,0),pendingCount=finalChanges.length+editorFieldCount;
   // estado vazio: uma linha quieta, sem herói gigante de "0" nem botões inúteis
   if(reportIsEmpty()){
     return `<div class="report-quiet"><span class="report-quiet-title">Relatório da bancada</span><span class="report-quiet-sub">Nada aplicado ainda — as sugestões que você confirmar aparecem aqui.</span></div>`;
   }
   const last=session.applied.slice(-4).reverse().map(entry=>`<div class="report-item"><b>#${entry.id} ${esc(entry.targetName)}</b><span>${esc(entry.before)} → ${esc(entry.after)}</span><span>${entry.incremental.players} jog · ${entry.incremental.teams} times · colateral ${entry.incremental.collateralPlayers}</span></div>`).join("");
+  const editedPlayers=editorChanges.map(player=>`<div class="report-item"><b>${esc(player.name)} · ${esc(player.team)}</b><span>${player.changes.map(change=>`${esc(editorFieldLabel(change.key))} ${esc(String(change.from))} → ${esc(String(change.to))}`).join(" · ")}</span><span>ID ${esc(player.id)} · aplicado somente nesta sessão</span></div>`).join("");
   const regressionRows=regressions.slice(0,4).map(item=>`<div class="report-item warn"><b>${esc(item.nome)} — regrediu</b><span>Esperado ${esc(intentionExpectedText(item))}</span><span>${esc((item.failed||[]).join(", "))}</span></div>`).join("");
-  const changesBump=bumpTrack("report:changes",finalChanges.length);
+  const changesBump=bumpTrack("report:changes",pendingCount);
   return `<div class="report-panel">
-    <div class="report-head"><div class="report-title">Relatório da bancada</div><div class="liveimpact-count">${session.applied.length} ${session.applied.length===1?"aplicação":"aplicações"}</div></div>
-    <div class="stat-hero${regressions.length?" warn":""}"><div class="v mono${changesBump}">${finalChanges.length}</div><div class="l">Mudanças pendentes</div></div>
+    <div class="report-head"><div class="report-title">Relatório da bancada</div><div class="liveimpact-count">${session.applied.length} ${session.applied.length===1?"calibração":"calibrações"} · ${editorChanges.length} jogador${editorChanges.length===1?"":"es"} editado${editorChanges.length===1?"":"s"}</div></div>
+    <div class="stat-hero${regressions.length?" warn":""}"><div class="v mono${changesBump}">${pendingCount}</div><div class="l">Mudanças pendentes</div></div>
     <div class="stat-mini" style="margin-bottom:8px">
       <span><b class="mono">${summary.players}</b>jogadores</span>
       <span><b class="mono">${summary.teams}</b>times</span>
+      <span><b class="mono">${editorChanges.length}</b>editados</span>
       <span class="${regressions.length?"warn-txt":""}"><b class="mono">${regressions.length}</b>regressões</span>
     </div>
     ${regressionRows?`<div class="impact-section"><h4>Regressões</h4><div class="report-list">${regressionRows}</div></div>`:""}
+    ${editedPlayers?`<div class="impact-section"><h4>Atributos aplicados</h4><div class="report-list">${editedPlayers}</div></div>`:""}
     ${last?`<div class="impact-section"><h4>Histórico recente</h4><div class="report-list">${last}</div></div>`:""}
     <div class="report-actions"><button class="btn accent" id="copyReportBtn">Copiar relatório</button><button class="btn" id="downloadReportBtn">Baixar .txt</button><button class="btn" id="resetWorkbenchBtn">Resetar tudo</button></div>
     ${reportFallbackText?`<textarea class="report-textarea" readonly>${esc(reportFallbackText)}</textarea>`:""}
@@ -1404,7 +1461,9 @@ function resetWorkbench(){
   if(DEF.STYLE_FIT)copyInto(E.STYLE_ROLE_FIT,DEF.STYLE_FIT);
   if(DEF.STYLE_CONTRA)copyInto(E.STYLE_CONTRA,DEF.STYLE_CONTRA);
   if(DEF.CFG)copyInto(E.CFG_AVALIACAO,DEF.CFG); // [22] os params de OVR (base/span/K) também voltam ao padrão
-  calibLast=null;baseline=null;calibSession=null;reportFallbackText="";
+  playerOverrides.clear();editorDrafts.clear();
+  if(loadedIdx!=null)setEditorStateFrom(POOLRAW[loadedIdx]);
+  calibLast=null;baseline=null;calibSession=null;reportFallbackText="";lastMap=null;lastBatch=null;
   invalidateAllTeamEval();
   refresh("all");
   toast("Bancada resetada");
@@ -3581,20 +3640,83 @@ function renderMatchPanel(){
     <div class="scoreboards">${scoreTable(g.nomeA,g.statsA)}${scoreTable(g.nomeB,g.statsB)}</div>
   </div>`;
 }
+function setEditorStateFrom(source){
+  if(!source)return;
+  Object.assign(state,{nome:source.nome,fp:source.fp,en:source.en,tr:source.tr,op:source.op,cl:source.cl,sn:source.sn,ut:source.ut,rating:source.rating,isIGL:!!source.isIGL,colocacao:source.colocacao});
+}
+function persistEditorDraft(){
+  if(loadedIdx==null)return;
+  const applied=editorValues(playerAt(loadedIdx)),draft=editorValues(state);
+  if(editorFieldDiff(applied,draft).length)editorDrafts.set(loadedIdx,draft);else editorDrafts.delete(loadedIdx);
+}
+function editorOverrideRows(){
+  return [...playerOverrides.entries()].map(([poolIdx,edited])=>{
+    const original=POOLRAW[poolIdx],changes=editorFieldDiff(editorValues(original),edited);
+    return {poolIdx,id:original.id||original.nome,name:original.nome,team:original.time,teamIndex:original.ti,playerIndex:original.pi,original:editorValues(original),edited:{...edited},changes};
+  }).filter(row=>row.changes.length).sort((a,b)=>a.teamIndex-b.teamIndex||a.playerIndex-b.playerIndex);
+}
+function editorFieldLabel(key){
+  return Object.fromEntries(STATS)[key]||({rating:"RATING DE REFERÊNCIA",isIGL:"LIDERANÇA (IGL)",colocacao:"RESULTADO NO TORNEIO"})[key]||key;
+}
+function editorPreviewPlayer(){
+  if(loadedIdx==null)return evaluatePlayer(jogadorAtual());
+  const p=POOLRAW[loadedIdx],team=E.TEAMS[p.ti];
+  return team?teamPlayers(team,p.ti,editorPlayerAt)[p.pi]||evaluatePlayer(editorDraftRaw()):evaluatePlayer(editorDraftRaw());
+}
+function clearResultsAfterEditorApply(){calibLast=null;lastMap=null;lastBatch=null;invalidateAllTeamEval();}
+function applyEditorDraft(){
+  if(loadedIdx==null)return;
+  ensureBaseline();
+  const original=editorValues(POOLRAW[loadedIdx]),draft=editorValues(editorDraftRaw());
+  if(editorFieldDiff(original,draft).length)playerOverrides.set(loadedIdx,draft);else playerOverrides.delete(loadedIdx);
+  editorDrafts.delete(loadedIdx);setEditorStateFrom(playerAt(loadedIdx));clearResultsAfterEditorApply();refresh("all");
+  toast(`${state.nome} aplicado ao laboratório nesta sessão`);
+}
+function discardEditorDraft(){
+  if(loadedIdx==null)return;
+  editorDrafts.delete(loadedIdx);setEditorStateFrom(playerAt(loadedIdx));syncEditorControls();refresh("live");toast("Rascunho descartado");
+}
+function restoreEditorOriginal(){
+  if(loadedIdx==null)return;
+  ensureBaseline();
+  const name=POOLRAW[loadedIdx]?.nome||"Jogador";
+  playerOverrides.delete(loadedIdx);editorDrafts.delete(loadedIdx);setEditorStateFrom(POOLRAW[loadedIdx]);clearResultsAfterEditorApply();refresh("all");toast(`${name} restaurado aos valores originais`);
+}
+function editorExportPayload(){
+  return {schemaVersion:1,source:"sandbox-player-editor",scope:"session-overrides",players:editorOverrideRows().map(row=>({id:row.id,name:row.name,team:row.team,teamIndex:row.teamIndex,playerIndex:row.playerIndex,original:row.original,edited:row.edited,changes:row.changes}))};
+}
+function downloadEditorOverrides(){
+  const payload=editorExportPayload();if(!payload.players.length){toast("Nenhum jogador aplicado para exportar");return;}
+  const blob=new window.Blob([JSON.stringify(payload,null,2)+"\n"],{type:"application/json;charset=utf-8"}),a=document.createElement("a");
+  a.href=window.URL.createObjectURL(blob);a.download="sandbox-player-overrides.json";document.body.appendChild(a);a.click();window.URL.revokeObjectURL(a.href);a.remove();toast(`${payload.players.length} jogador${payload.players.length===1?"":"es"} exportado${payload.players.length===1?"":"s"}`);
+}
+function refreshEditorState(){
+  if(loadedIdx==null)return;
+  const hasDraft=editorDrafts.has(loadedIdx),hasApplied=playerOverrides.has(loadedIdx),status=document.getElementById("editorState"),counter=document.getElementById("editorCount");
+  if(status){status.className=`editor-state${hasDraft?" draft":hasApplied?" applied":""}`;status.textContent=hasDraft?"Rascunho não aplicado":hasApplied?"Aplicado nesta sessão":"Valores originais";}
+  if(counter)counter.textContent=`${playerOverrides.size} aplicado${playerOverrides.size===1?"":"s"} · ${editorDrafts.size} rascunho${editorDrafts.size===1?"":"s"}`;
+  const apply=document.getElementById("editorApply"),discard=document.getElementById("editorDiscard"),restore=document.getElementById("editorRestore"),exportButton=document.getElementById("editorExport");
+  if(apply)apply.disabled=!hasDraft;if(discard)discard.disabled=!hasDraft;if(restore)restore.disabled=!hasDraft&&!hasApplied;if(exportButton)exportButton.disabled=!playerOverrides.size;
+}
 function wireAtributos(onChange){
+  const changed=()=>{persistEditorDraft();calibLast=null;onChange();};
   STATS.forEach(([k])=>{const r=document.getElementById("r_"+k),n=document.getElementById("n_"+k);
-    const sync=v=>{v=Math.max(0,Math.min(100,+v||0));state[k]=v;r.value=v;n.value=v;calibLast=null;onChange();};r.oninput=()=>sync(r.value);n.oninput=()=>sync(n.value);});
+    const sync=v=>{v=Math.max(0,Math.min(100,+v||0));state[k]=v;r.value=v;n.value=v;changed();};r.oninput=()=>sync(r.value);n.oninput=()=>sync(n.value);});
   const rr=document.getElementById("r_rating"),nr=document.getElementById("n_rating");
-  const syncR=v=>{v=Math.max(0.5,Math.min(2,+v||0.5));state.rating=+v.toFixed(2);rr.value=state.rating;nr.value=state.rating;calibLast=null;onChange();};
+  const syncR=v=>{v=Math.max(0.5,Math.min(2,+v||0.5));state.rating=+v.toFixed(2);rr.value=state.rating;nr.value=state.rating;changed();};
   rr.oninput=()=>syncR(rr.value);nr.oninput=()=>syncR(nr.value);
-  document.getElementById("f_nome").oninput=e=>{state.nome=e.target.value;calibLast=null;onChange();};
-  document.getElementById("c_igl").onchange=e=>{state.isIGL=e.target.checked;calibLast=null;onChange();};
-  document.getElementById("s_coloc").onchange=e=>{state.colocacao=e.target.value;calibLast=null;onChange();};
+  document.getElementById("c_igl").onchange=e=>{state.isIGL=e.target.checked;changed();};
+  document.getElementById("s_coloc").onchange=e=>{state.colocacao=e.target.value;changed();};
+  document.getElementById("editorApply").onclick=applyEditorDraft;
+  document.getElementById("editorDiscard").onclick=discardEditorDraft;
+  document.getElementById("editorRestore").onclick=restoreEditorOriginal;
+  document.getElementById("editorExport").onclick=downloadEditorOverrides;
+  refreshEditorState();
 }
 
 /* ===== UI unificada: roles + playstyle + OVR + time ===== */
 function refresh(target){
-  invalidateTeamEval(loadedIdx!=null?POOLRAW[loadedIdx].ti:teamIdx);
+  if(target!=="live")invalidateTeamEval(loadedIdx!=null?POOLRAW[loadedIdx].ti:teamIdx);
   renderPlayerContext(); // âncora ao vivo, sempre
   // "live": tecla de slider — só atualiza âncora + resultado do editor, sem reconstruir controles (não perde foco)
   if(target==="live"){if(centerMode==="editar")renderEditorResult();return;}
@@ -3652,7 +3774,7 @@ function renderNavRail(){
 // âncora AO VIVO: o jogador atual fixo no topo do canvas (OVR/função/playstyle atualizam na hora)
 function renderPlayerContext(){
   const box=document.getElementById("pcontext");if(!box)return;
-  const ev=mainPlayer();
+  const ev=centerMode==="editar"?editorPreviewPlayer():mainPlayer();
   const nm=state.nome||ev.nome||"Jogador";
   const teamNm=loadedIdx!=null?(POOLRAW[loadedIdx]?.time||""):"";
   const ovrBump=bumpTrack("ctx:ovr",ev.ovr);
@@ -3702,27 +3824,32 @@ function wireTeamMode(){
 }
 // corpo do editor de atributos (cabeçalho + sliders + resultado) usado no modo "Editar"
 function editorBodyHTML(){
+  const original=loadedIdx!=null?POOLRAW[loadedIdx]:null,team=original?E.TEAMS[original.ti]:null,hasDraft=loadedIdx!=null&&editorDrafts.has(loadedIdx),hasApplied=loadedIdx!=null&&playerOverrides.has(loadedIdx),statusClass=hasDraft?" draft":hasApplied?" applied":"",statusText=hasDraft?"Rascunho não aplicado":hasApplied?"Aplicado nesta sessão":"Valores originais";
   return `<div class="editor-head">
       <div class="ovr-badge" style="--tc:var(${state.fp>=70?"--t22":"--t15"})" id="editorOvrBadge">—</div>
       <div class="editor-meta">
-        <input type="text" id="f_nome" class="editor-name" placeholder="Nome" value="${esc(state.nome)}">
-        <div class="editor-options">
-          <label class="chk"><input type="checkbox" id="c_igl" ${state.isIGL?"checked":""}> IGL</label>
-          <select id="s_coloc">${COLOC.map(c=>`<option value="${c}" ${c===state.colocacao?"selected":""}>${c}</option>`).join("")}</select>
-        </div>
+        <div class="editor-kicker">Editor de atributos</div>
+        <div class="editor-name">${esc(state.nome||"Jogador")}</div>
+        <div class="editor-team">${esc(original?.id&&original.id!==original.nome?`ID ${original.id} · `:"")}${esc(team?.nome||original?.time||"")}${team?.camp?` · ${esc(team.camp)}`:""}</div>
       </div>
+      <span class="editor-state${statusClass}" id="editorState">${statusText}</span>
+    </div>
+    <div class="editor-scope"><span><b>Prévia ao vivo:</b> estes controles são um rascunho. Time, Simular e Calibrar só recebem os valores depois de <b>Aplicar ao laboratório</b>.</span><span class="editor-count" id="editorCount">${playerOverrides.size} aplicados · ${editorDrafts.size} rascunhos</span></div>
+    <div class="editor-options">
+      <label class="editor-option"><span>Liderança</span><span class="chk"><input type="checkbox" id="c_igl" ${state.isIGL?"checked":""}> É IGL</span></label>
+      <label class="editor-option"><span>Resultado no torneio</span><select id="s_coloc">${COLOC.map(c=>`<option value="${c}" ${c===state.colocacao?"selected":""}>${COLOC_LABEL[c]||c}</option>`).join("")}</select></label>
     </div>
     <div class="editor-fields">
-      ${STATS.map(([k,l])=>`<div class="field-c"><label title="${STAT_FULL[k]||l}">${l}</label><input type="range" id="r_${k}" min="0" max="100" value="${state[k]}"><input type="number" id="n_${k}" class="num" min="0" max="100" value="${state[k]}"></div>`).join("")}
-      <div class="field-c"><label>RT</label><input type="range" id="r_rating" min="0.50" max="2.00" step="0.01" value="${state.rating}"><input type="number" id="n_rating" class="num" min="0.50" max="2.00" step="0.01" value="${state.rating}"></div>
+      ${STATS.map(([k,label])=>`<div class="field-c"><div class="field-copy"><label for="n_${k}">${label}</label><span class="field-help">${esc(STAT_HELP[k])}</span></div><input type="number" id="n_${k}" class="num" min="0" max="100" value="${state[k]}" aria-label="${label}"><input type="range" id="r_${k}" min="0" max="100" value="${state[k]}" aria-label="Ajustar ${label}"></div>`).join("")}
+      <div class="field-c"><div class="field-copy"><label for="n_rating">RATING DE REFERÊNCIA</label><span class="field-help">Rating histórico usado para calibrar a eficiência individual.</span></div><input type="number" id="n_rating" class="num" min="0.50" max="2.00" step="0.01" value="${state.rating}" aria-label="Rating de referência"><input type="range" id="r_rating" min="0.50" max="2.00" step="0.01" value="${state.rating}" aria-label="Ajustar rating de referência"></div>
     </div>
+    <div class="editor-actions"><button type="button" class="btn accent" id="editorApply">Aplicar ao laboratório</button><button type="button" class="btn" id="editorDiscard">Descartar rascunho</button><button type="button" class="btn" id="editorRestore">Restaurar original</button><button type="button" class="btn" id="editorExport">Exportar JSON</button><span class="editor-session-note">Aplicações valem nesta sessão e não escrevem no game.js.</span></div>
     <div id="editorResult" class="result-compact"></div>`;
 }
 const ROLE_COLORS={AWPer:"#b8a4ef",Rifler:"#e0c374",Entry:"#e58f7c",Lurker:"#96d19b",Support:"#77d2d2",IGL:"#9fb6d8"};
 
 /* === load player into editor === */
 function syncEditorControls(){
-  const name=document.getElementById("f_nome");if(name)name.value=state.nome;
   STATS.forEach(([k])=>{
     const r=document.getElementById("r_"+k), n=document.getElementById("n_"+k);
     if(r)r.value=state[k];
@@ -3741,8 +3868,8 @@ function loadPlayer(poolIdx,ti){
   const p=POOLRAW[poolIdx];
   if(!p)return;
   calibLast=null;
-  Object.assign(state,{nome:p.nome,fp:p.fp,en:p.en,tr:p.tr,op:p.op,cl:p.cl,sn:p.sn,ut:p.ut,rating:p.rating,isIGL:p.isIGL,colocacao:p.colocacao});
   loadedIdx=poolIdx; teamIdx=Number.isFinite(+ti)?+ti:p.ti;
+  setEditorStateFrom(editorDrafts.has(poolIdx)?{...playerAt(poolIdx),...editorDrafts.get(poolIdx)}:playerAt(poolIdx));
   syncEditorControls();
   refresh("all");
 }
@@ -3751,7 +3878,7 @@ function loadPlayer(poolIdx,ti){
 /* === render compact player result === */
 function renderEditorResult(){
   const box=document.getElementById("editorResult");if(!box)return;
-  const ev=mainPlayer();
+  const ev=editorPreviewPlayer();
   const badge=document.getElementById("editorOvrBadge");
   if(badge){
     const novoOvr=String(ev.ovr);
@@ -3763,10 +3890,11 @@ function renderEditorResult(){
   // interno do MODELO NOVO: score da receita (identidade 0..100), bônus de rating (pontos de OVR)
   // e clareza (quão distante o estilo vencedor está do 2º). O antigo wR não existe mais no nmOVR.
   box.innerHTML=`<div class="stat-mini editor-diag">
-      <span><b class="mono">${Math.round(st.score??st.statScore??0)}</b>score</span>
-      <span><b class="mono">+${(st.bonus??0).toFixed(1)}</b>rating</span>
-      <span><b class="mono">${Math.round((st.matchScore??0)*100)}%</b>clareza</span>
+      <span><b class="mono">${Math.round(st.score??st.statScore??0)}</b>identidade do estilo</span>
+      <span><b class="mono">+${(st.bonus??0).toFixed(1)}</b>bônus de OVR pelo rating</span>
+      <span><b class="mono">${Math.round((st.matchScore??0)*100)}%</b>clareza da classificação</span>
     </div>`;
+  refreshEditorState();
 }
 
 const CENTER_MODES=[["calibrar","Calibrar"],["time","Time"],["simular","Simular"],["editar","Editar"],["guia","Guia"],["relatorio","Relatório"]];
@@ -3848,6 +3976,7 @@ function montarUI(){
 function setCenterMode(mode){
   centerMode=mode;
   document.querySelectorAll("#modebar button").forEach(b=>b.classList.toggle("on",b.dataset.mode===mode));
+  renderPlayerContext();
   renderCanvasMode();
   goMobileTab("canvas");
 }
@@ -3947,6 +4076,7 @@ if(typeof window!=="undefined"&&typeof location!=="undefined"&&/[?&]e2e(?:=|&|$)
     regressions:()=>calibSession?sessionRegressions().map(r=>({nome:r.nome,failed:r.failed||[]})):[],
     player:()=>{const p=mainPlayer(),pr=rolePairParts(p);return {nome:p.nome,ovr:Math.round(p.ovr),r1:pr.r1,r2:pr.r2,style:STYLE_LABEL(p.playstyle)};},
     loadedIdx:()=>loadedIdx,
+    editor:()=>({applied:editorOverrideRows(),drafts:editorDrafts.size,current:loadedIdx==null?null:{poolIdx:loadedIdx,applied:editorValues(playerAt(loadedIdx)),draft:editorValues(editorDraftRaw(loadedIdx))}}),
     simulation:()=>({
       seed:lastBatch?.seed||lastMap?.labSeed||0,
       scope:lastBatch?.scope||simScope,
@@ -3965,10 +4095,7 @@ if(typeof window!=="undefined"&&typeof location!=="undefined"&&/[?&]e2e(?:=|&|$)
     await Promise.all([carregarMotores(),carregarEstatisticas()]);
     const sel=document.getElementById("loadSel");
     POOLRAW.forEach((p,i)=>{const o=document.createElement("option");o.value=i;o.textContent=p.nome+" — "+p.time;sel.appendChild(o);});
-    sel.onchange=()=>{if(sel.value==="")return;const p=POOLRAW[+sel.value];
-      calibLast=null;
-      Object.assign(state,{nome:p.nome,fp:p.fp,en:p.en,tr:p.tr,op:p.op,cl:p.cl,sn:p.sn,ut:p.ut,rating:p.rating,isIGL:p.isIGL,colocacao:p.colocacao});
-      loadedIdx=+sel.value; teamIdx=p.ti; montarUI();};
+    sel.onchange=()=>{if(sel.value==="")return;const p=POOLRAW[+sel.value];loadPlayer(+sel.value,p.ti);};
     montarUI();
     // abre já num jogador real (o de maior OVR do 1º time) — evita a âncora "fantasma" com jogador em branco no load
     try{
