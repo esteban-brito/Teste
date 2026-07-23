@@ -37,6 +37,9 @@ multiplicadores por role.
 
 ### R5.0 — contrato do experimento
 
+**Concluída.** O manifesto congelado identifica o baseline `8136df1`, hashes,
+agenda, seeds, métricas, pisos materiais e gates de evidência.
+
 - congelar hash do motor, auditoria, telemetria, agenda, seeds e contexto;
 - registrar métricas, quantis, diferenças materialmente relevantes e pisos de
   regressão antes do primeiro candidato;
@@ -44,6 +47,10 @@ multiplicadores por role.
   históricos.
 
 ### R5.1 — comparação pareada
+
+**Concluída.** A captura de desenvolvimento possui 1.088 mapas e 10.880
+player-maps; baseline contra baseline gera delta e IC95% exatamente zero, e as
+mutações sintéticas provam detecção de regressão e deriva de contexto.
 
 - capturar uma observação por jogador e mapa;
 - preservar IDs, confronto, mapa, seed, orientação, lado e compras;
@@ -65,6 +72,11 @@ congelada, sem misturar Train no alvo real.
 
 ### R5.2 — caudas sem curadoria
 
+**Concluída.** O clamp final do rating foi removido e a forma passou a usar
+continuações suaves, positivas e sem limite superior, preservando os pontos de
+RNG. Provas, deltas pareados, benchmark e mudanças intencionais do golden estão
+em `docs/r5-tail-balance-2026-07-23.md`.
+
 - remover o clamp final de rating `0,30–3,0`;
 - substituir o teto de `formaDoDia` por uma distribuição positiva sem limite
   superior e com momentos finitos;
@@ -76,6 +88,9 @@ Limites matemáticos de probabilidade em `[0,1]` permanecem necessários e não 
 tetos de desempenho.
 
 ### R5.3 — alvos empíricos
+
+**Próximo gate científico.** O corpus oficial ainda é insuficiente; nenhuma
+faixa tática por role será inventada a partir do print ou do benchmark simulado.
 
 - usar a população congelada em `docs/fidelity-target.json` para dinâmica CS2;
 - rotular roles por protocolo anterior ao resultado, sem escolher jogadores que

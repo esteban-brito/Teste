@@ -826,7 +826,7 @@ const logistica=(fa,fb,D)=>1/(1+Math.pow(10,(fb-fa)/D));
 const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓLVORA (combate) + COFRE (economia)
   PESO_EF:.60,                  // 60% força do time (OVR+química+treinador), 40% skill individual cru
   // motor de combate por jogador (validado vs CS2 real: KPR~0.67, rating~1.0, fiel HLTV)
-  LADO_CT:0.8,FORMA_DIA:7,      // vantagem-base de CT (pequena; a composição é que decide o lado)
+  LADO_CT:0.8,FORMA_DIA:7,FORMA_TAIL_KNEE:2.2,FORMA_TAIL_SCALE:.20, // joelho suave da cauda, nunca teto
   LADO_COMP:1.05,               // escala da vantagem de lado por COMPOSIÇÃO (lurker/anchor→CT, entry→T)
   MOM_STEP:.05,MOM_MAX:.14,TILT_STEP:.018,TILT_MAX:.10,
   // ROUND VIVO: o round é uma SEQUÊNCIA DE DUELOS; o vencedor EMERGE (não é um dado só).
@@ -907,7 +907,7 @@ function fallenAngels(ev){const C=CFG_FA,R=ev.totalRounds||1;
   const impEf=(ev.impacto??1)*(1+C.IMP_OVR*((ev.ovr??16)-16));
   const sistema=ev.prim==="IGL"?C.IGL_SIS:0;
   const rating=C.BASE+ekpr*C.W_EK*impEf+survPR*C.W_SURV+kast*C.W_KAST+multiScore*C.W_MULTI+(swing/R)*C.W_SWING+openPR+adrTerm+tradePR+prior+sistema;
-  return Math.max(.30,Math.min(3.0,rating));}
+  return rating;}
 
 /* ╔═══════════════════════════════════════════════════════════════════╗
    ║  MARÉ — forma do dia e de campanha (o motor de variância)          ║
@@ -923,29 +923,35 @@ function tierDe(j){const a=j._eng||j,rating=ratingCompetitivo(a);
   const fp=a.fp??60,prim=a.primario||j.primario||"Rifler";
   if(rating<=CFG_NIVEL.ROLE_MAX||((prim==="IGL"||prim==="Support")&&fp<55))return "Role";
   return "Solido";}
-// perfil de distribuição por tier (piso=resistência a cair, vol=largura, teto modulado por fp)
+// perfil de distribuição por tier (piso=resistência a cair, vol=largura da oscilação)
 // vol = largura da oscilação da forma. Estrela/lenda OSCILA MENOS (consistente, piso alto); role
 // player é mais streaky (vol maior). É o que separa o craque confiável do jogador de altos e baixos.
-const PERFIL_TIER={Lenda:{piso:.16,vol:.27,tetoBase:2.05,tetoFp:.65},Star:{piso:.13,vol:.28,tetoBase:1.70,tetoFp:.50},
-  Solido:{piso:.07,vol:.28,tetoBase:1.45,tetoFp:.40},Role:{piso:.05,vol:.29,tetoBase:1.30,tetoFp:.20}};
-// explosividade por função: teto e largura da cauda de cima próprios de cada role (AWP/entry/rifler explodem; support/IGL travados)
-const PERFIL_ROLE={AWPer:{expl:1.32,teto:1.32},Rifler:{expl:1.28,teto:1.24},Entry:{expl:1.26,teto:1.16},Lurker:{expl:1.14,teto:1.16},Support:{expl:1.12,teto:1.12},IGL:{expl:1.02,teto:1.02}};
+const PERFIL_TIER={Lenda:{piso:.16,vol:.27,caudaBase:2.05,caudaFp:.65},Star:{piso:.13,vol:.28,caudaBase:1.70,caudaFp:.50},
+  Solido:{piso:.07,vol:.28,caudaBase:1.45,caudaFp:.40},Role:{piso:.05,vol:.29,caudaBase:1.30,caudaFp:.20}};
+// explosividade por função: largura e joelho suave da cauda de cima próprios de cada role.
+const PERFIL_ROLE={AWPer:{expl:1.32,cauda:1.32},Rifler:{expl:1.28,cauda:1.24},Entry:{expl:1.26,cauda:1.16},Lurker:{expl:1.14,cauda:1.16},Support:{expl:1.12,cauda:1.12},IGL:{expl:1.02,cauda:1.02}};
 const centroOVR=ovr=>clamp(0.28+(ovr-5)*0.060,0.53,1.44); // OVR puxa o centro (média esperada)
+// Mantém a forma fisicamente positiva sem piso duro: acima do joelho é identidade;
+// abaixo dele, a continuação exponencial é C1 e se aproxima de zero sem jamais formar uma parede.
+const formaPositiva=(valor,joelho=.05)=>valor>=joelho?valor:joelho*Math.exp(valor/joelho-1);
+// Continuação logarítmica C1: preserva tudo até o joelho e comprime o excesso sem
+// formar parede. Continua estritamente crescente e não possui limite superior.
+const formaCaudaLivre=(valor,joelho,escala)=>valor<=joelho?valor:joelho+escala*Math.log1p((valor-joelho)/escala);
 // sorteia a forma do dia do jogador: o "humor competitivo" daquele mapa (assimétrica, com vida)
 function formaDoDia(j){const a=j._eng||j;const t=tierDe(j),p=PERFIL_TIER[t];
   const centroBase=centroOVR(a.ovr??13),centro=centroBase*(1-CFG_SIM.FORMA_RATING)+ratingCompetitivo(a)*CFG_SIM.FORMA_RATING+(a._formaCamp??0); // OVR + nível observado, sem identidade nominal
-  const fp=a.fp??60,sn=a.sn??0,cl=a.cl??45;const pr=PERFIL_ROLE[a.primario]||{expl:1,teto:1};const ovrAmp=clamp(((a.ovr??13)-13)/55,0,.18); // OVR amplifica a explosão (suave: craque é consistente, não mais volátil)
+  const fp=a.fp??60,sn=a.sn??0,cl=a.cl??45;const pr=PERFIL_ROLE[a.primario]||{expl:1,cauda:1};const ovrAmp=clamp(((a.ovr??13)-13)/55,0,.18); // OVR amplifica a explosão (suave: craque é consistente, não mais volátil)
   const combust=clamp((fp-45)/50,0.05,1.35);        // firepower explode (cauda pra cima)
   const apoio=clamp((sn*0.3+cl*0.4)/100,0,0.4);     // awp/clutch dão empurrão menor
   const pisoExtra=clamp((sn*0.5+cl*0.3)/100,0,0.35);// awp/clutch sobem o piso (consistência)
   const piso=0.50+p.piso*((a.ovr??13)-5)/17+pisoExtra*0.3;
-  const teto=(p.tetoBase+p.tetoFp*clamp((fp-50)/50,0,1.3))*(1.35+(pr.teto-1)*1.4); // teto livre, modulado pelo role
+  const joelhoCauda=Math.min((p.caudaBase+p.caudaFp*clamp((fp-50)/50,0,1.3))*(1.35+(pr.cauda-1)*1.4),CFG_SIM.FORMA_TAIL_KNEE);
   const g=gaussF();let desvio;
   if(g>=0)desvio=g*p.vol*(0.45+(combust+apoio)*1.0)*pr.expl*(1+ovrAmp); // cauda pra cima: firepower × explosão do role × OVR (amortecida: 1.50 é pico, não média)
   else desvio=g*p.vol*(1-p.piso*1.1);                  // queda amortecida por tier
   let r=centro+desvio;
   if(r<piso)r=piso-(piso-r)*0.35;                       // piso resistente, não parede
-  return clamp(r,0.30,Math.min(teto,2.2));}                // teto absoluto: nem heater vira 2.5+ (rating de mapa real raramente passa de ~2.2)
+  return formaCaudaLivre(formaPositiva(r),joelhoCauda,CFG_SIM.FORMA_TAIL_SCALE);} // sem piso/teto duro
 
 // forma de CAMPANHA: sorteada uma vez no início do Major, vale os 9 mapas da run.
 // um componente coletivo (o time "clica" ou não no evento) + um individual por tier
