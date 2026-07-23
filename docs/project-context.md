@@ -99,16 +99,18 @@ Atualização operacional de 23 de julho de 2026:
   positivas e ilimitadas, sem adicionar pontos de RNG. A comparação pareada e
   o benchmark integral não detectaram deslocamento material do centro; detalhes
   estão em `docs/r5-tail-balance-2026-07-23.md`.
+- R5.4 extraiu `combatProfile` e as parcelas somáveis de `fallenAngels` com
+  golden idêntico e delta zero em 1.088 mapas/10.880 player-maps. A role ativa
+  do IGL não mudou; detalhes em `docs/r5-structural-extraction-2026-07-23.md`.
 
 ### Decisão imediata para a próxima sessão
 
 **Próximo gate científico:** R5.3 deve completar alvos empíricos auditáveis para
 exposição, save, trade, assistência e KAST. O corpus oficial ainda é insuficiente
 (1/800 mapas e 1/6 eventos), portanto tuning tático por role não pode ser
-inventado. R5.4, uma extração estrutural de `combatProfile` e dos componentes de
-`fallenAngels`, pode avançar separadamente apenas com paridade exata e golden
-idêntico. A distribuição entre muitas MD3 continua aberta em R3, mas não deve
-ser misturada ao ciclo R5/R6.
+inventado. A fronteira estrutural R5.4 já está concluída; R5.5 não deve ser
+ativada antes desse gate. A distribuição entre muitas MD3 continua aberta em
+R3, mas não deve ser misturada ao ciclo R5/R6.
 
 ### Preferências de comunicação do responsável
 

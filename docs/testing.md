@@ -31,6 +31,12 @@ O `npm run check` também compara o módulo estatístico compartilhado com as
 fórmulas legadas em 5.464 amostras determinísticas, incluindo vazios, extremos,
 quantis, imutabilidade da entrada e intervalo de confiança.
 
+As fronteiras puras R5.4 também fazem parte de `npm run check`: `combatProfile`
+é comparado em 261 perfis reais, wrappers e fallbacks; as onze parcelas de
+`fallenAngels` são comparadas em 2.048 eventos determinísticos. O golden e uma
+comparação pareada de desenvolvimento devem continuar exatamente idênticos em
+qualquer refatoração dessas fronteiras.
+
 ## Estado de referência
 
 - A aplicação possui 17 times e 85 cards de jogador.

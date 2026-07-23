@@ -345,7 +345,9 @@ player-maps; baseline contra baseline deve produzir deltas e IC95% exatamente
 zero antes de qualquer candidato. R5.2 removeu isoladamente os pisos/tetos duros
 de forma e rating, sem novo ponto de RNG e sem tuning tático; a evidência está em
 `docs/r5-tail-balance-2026-07-23.md`. O próximo gate é R5.3: completar alvos
-empíricos auditáveis antes de alterar comportamento por função.
+empíricos auditáveis antes de alterar comportamento por função. R5.4 também foi
+concluída como extração estrutural de paridade exata, sem ativar ainda a função
+secundária do IGL; evidência em `docs/r5-structural-extraction-2026-07-23.md`.
 
 Regras:
 
