@@ -42,6 +42,11 @@ IGL use a função de combate classificada e que não-IGL preserve a primária. 
 goldens Node e do laboratório foram atualizados somente após documentar as
 timelines alteradas em `docs/r5-effective-role-balance-2026-07-23.md`.
 
+R5.6 acrescentou `exposureProfile` ao mesmo gate: 175 perfis reais, wrappers e
+fallbacks devem produzir pesos positivos, finitos e idênticos entre o adapter
+legado e o módulo puro. O teste também prova que a função efetiva diferencia
+IGL/Entry de IGL/AWPer no primeiro contato.
+
 ## Estado de referência
 
 - A aplicação possui 17 times e 85 cards de jogador.

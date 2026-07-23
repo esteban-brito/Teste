@@ -349,7 +349,10 @@ de forma e rating, sem novo ponto de RNG e sem tuning tático; a evidência est�
 futura e nenhuma faixa por role será inventada. R5.4 foi concluída por paridade
 exata e R5.5 ativou a função secundária já classificada dos IGLs sem criar pesos.
 Evidências em `docs/r5-structural-extraction-2026-07-23.md` e
-`docs/r5-effective-role-balance-2026-07-23.md`.
+`docs/r5-effective-role-balance-2026-07-23.md`. A etapa de exposição da R5.6
+também foi concluída: contato agora depende de atributos, função efetiva, lado
+e fase, com evidência em `docs/r5-exposure-balance-2026-07-23.md`. Save permanece
+um candidato separado.
 
 Regras:
 

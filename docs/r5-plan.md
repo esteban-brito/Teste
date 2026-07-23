@@ -130,10 +130,11 @@ novo foi criado. Evidência em `docs/r5-effective-role-balance-2026-07-23.md`.
 
 ### R5.6 — exposição e save
 
-Exposição será derivada de função efetiva, atributos `en`, `op`, `sn`, `cl`,
-`ut`, agressividade, lado e fase do round. Entry assume mais primeiro contato;
-AWPer e Lurker não recebem um bônus direto de sobrevivência: a sobrevivência
-deve emergir da seleção de contatos e das decisões do round.
+**Exposição concluída; save pendente.** A vítima agora é escolhida por
+volume residual de contato e um perfil contínuo derivado de função efetiva,
+atributos `en`, `op`, `sn`, `cl`, `ut`, agressividade, lado e fase do round.
+Entry assume mais primeiro contato; AWPer e Lurker não recebem bônus direto de
+sobrevivência. Evidência em `docs/r5-exposure-balance-2026-07-23.md`.
 
 Save será um candidato separado. Sem inventário individual, pode considerar
 somente compra do time, vantagem numérica, objetivo e valor abstrato dos
