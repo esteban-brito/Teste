@@ -95,16 +95,20 @@ Atualização operacional de 23 de julho de 2026:
 - R5.0–R5.1 concluíram a comparação pareada, com 1.088 mapas, 10.880
   player-maps, delta nulo e detecção sintética. Nenhum balanceamento foi
   misturado a essa infraestrutura.
+- R5.2 removeu os pisos/tetos duros de forma e rating com caudas suaves,
+  positivas e ilimitadas, sem adicionar pontos de RNG. A comparação pareada e
+  o benchmark integral não detectaram deslocamento material do centro; detalhes
+  estão em `docs/r5-tail-balance-2026-07-23.md`.
 
 ### Decisão imediata para a próxima sessão
 
-**Próxima implementação recomendada e aprovada:** concluir R5.0–R5.1, provando
-que baseline contra baseline produz delta e IC95% exatamente zero por
-player-map. Depois, R5.2 remove os tetos artificiais de rating/forma em commit
-exclusivo, com guardas de cauda e sem adicionar pontos de RNG. Tuning tático por
-role permanece condicionado a alvos empíricos; o corpus oficial ainda é
-insuficiente. A distribuição entre muitas MD3 continua aberta em R3, mas não
-deve ser misturada ao ciclo R5/R6.
+**Próximo gate científico:** R5.3 deve completar alvos empíricos auditáveis para
+exposição, save, trade, assistência e KAST. O corpus oficial ainda é insuficiente
+(1/800 mapas e 1/6 eventos), portanto tuning tático por role não pode ser
+inventado. R5.4, uma extração estrutural de `combatProfile` e dos componentes de
+`fallenAngels`, pode avançar separadamente apenas com paridade exata e golden
+idêntico. A distribuição entre muitas MD3 continua aberta em R3, mas não deve
+ser misturada ao ciclo R5/R6.
 
 ### Preferências de comunicação do responsável
 

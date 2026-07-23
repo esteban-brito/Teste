@@ -99,8 +99,8 @@ function campaignSeriesScenario(){
   X.sortearFormaCampanha(teams);
   const a=combatTeam(X,teams,aIndex,true),b=combatTeam(X,teams,bIndex);
   const result=X.simularSerie(a,b,()=>X.forcaDoDia(a.ef,a.quim),()=>X.forcaDoDia(b.ef,b.quim),3,false);
-  assert.equal(result.placarSerie.join(","),"1,2",`${id}: ancora da serie mudou antes de atualizar o fixture`);
-  assert.equal(result.mapas.map(map=>map.mapa).join(","),"Nuke,Anubis,Train",`${id}: sequencia de mapas mudou antes de atualizar o fixture`);
+  assert.equal(result.placarSerie.join(","),"2,1",`${id}: ancora da serie mudou antes de atualizar o fixture`);
+  assert.equal(result.mapas.map(map=>map.mapa).join(","),"Nuke,Train,Overpass",`${id}: sequencia de mapas mudou antes de atualizar o fixture`);
   return {
     id,kind:"campaign-series",seed,
     input:{...projectInput(a,b,aIndex,bIndex),bestOf:3,campaignForm:true},
@@ -119,7 +119,7 @@ function buildCurrent(){
     rngContract:"mulberry32-v1",
     scenarios:[
       fixedMapScenario({id:"economy-and-clutches",seed:1,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[4,13]}),
-      fixedMapScenario({id:"repeated-overtime",seed:8,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[19,17]}),
+      fixedMapScenario({id:"repeated-overtime",seed:36,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[19,17]}),
       campaignSeriesScenario()
     ]
   };

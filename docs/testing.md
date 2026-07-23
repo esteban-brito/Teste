@@ -21,10 +21,11 @@ faixas atuais são guardas de regressão, não uma nota de 0–100.
 | `npm run test:fidelity` | scorer e corpus IFCS | matemática, cobertura, caps, proveniência e auditoria |
 | `npm run test:e2e` | intent, simulation, game flow | calibrador, aba Simular e jogo principal no navegador |
 | `npm run test:r5` | comparador pareado R5 | hashes, cobertura, delta nulo e detecção sintética |
-| `npm run test:all` | as 18 suítes acima | validação completa na ordem histórica |
+| `npm run test:r5:tails` | guardas de cauda R5.2 | ratings extremos, forma positiva e ausência de massa nos limites antigos |
+| `npm run test:all` | as 19 suítes acima | validação completa na ordem histórica |
 | `npm run bench` | alias de `test:all` | compatibilidade com CI e fluxo legado |
 
-`npm run validate` executa sintaxe, lint e as 18 suítes.
+`npm run validate` executa sintaxe, lint e as 19 suítes.
 
 O `npm run check` também compara o módulo estatístico compartilhado com as
 fórmulas legadas em 5.464 amostras determinísticas, incluindo vazios, extremos,
@@ -99,6 +100,15 @@ balanceamento congelado é ideal. Uma mudança deliberada de balanceamento deve
 ser comparada estatisticamente em commit separado antes de executar
 `npm run golden:update`; nunca se atualiza o fixture apenas para esconder uma
 regressão.
+
+## Caudas individuais R5
+
+`npm run test:r5:tails` prova, com eventos sintéticos válidos, que o rating pode
+atravessar os limites antigos de `0,30` e `3,0`. A mesma suíte amostra 250.000
+formas determinísticas e exige valores positivos e finitos, passagem pelos
+limites antigos e ausência de massa exatamente em `0,30` ou `2,20`. O teste não
+substitui a suíte rara de release: frequências da ordem de 1/10.000 ou 1/100.000
+exigem ao menos um milhão de player-maps no gate R6.
 
 ## E2E obrigatório
 
