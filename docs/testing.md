@@ -88,6 +88,10 @@ dez jogadores com `bancada/simulation-golden.json`. A cobertura inclui uma
 série melhor de três, prorrogação repetida e paridade entre os modos completo e
 leve. Os jogadores são identificados pelo ID cru, não apenas pelo nick.
 
+A suíte também liga a telemetria opcional de rounds em um motor novo, reconcilia
+K/D/A/KAST/ADR com o resultado final e exige igualdade profunda, inclusive no
+estado posterior do RNG, após remover somente o campo diagnóstico.
+
 O golden é um teste de caracterização: ele prova que uma refatoração preservou
 o comportamento observável e o consumo do Mulberry32. Ele não afirma que o
 balanceamento congelado é ideal. Uma mudança deliberada de balanceamento deve

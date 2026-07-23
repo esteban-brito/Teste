@@ -6,13 +6,14 @@ const {pathToFileURL}=require("node:url");
 const {X,T}=require("./motor");
 const {compactStats,countBy,sortedCountEntries,teamNameFor}=require("./common");
 
-const DEEP_SCHEMA_VERSION=2;
+const DEEP_SCHEMA_VERSION=3;
 const DEFAULT_DEEP_CYCLES=8;
 const DEEP_BASE_SEED=0x51f15e1d;
 const MAPS=["Mirage","Inferno","Nuke","Ancient","Anubis","Dust2","Train","Overpass"];
 const QUARTILES=["Q1","Q2","Q3","Q4"];
 const OUTCOMES=["win","loss"];
 const BUY_STATES=["pistol","eco","force","full"];
+const SIDES=["CT","TR"];
 let statisticsPromise=null,sum,mean,quantile,rounded,describe;
 
 function loadSampleStatistics(){
@@ -214,6 +215,35 @@ function emptyMetricSamples(){
   return {rating:[],kpr:[],dpr:[],apr:[],kast:[],adr:[]};
 }
 
+function emptyRoundTelemetry(){
+  return {rounds:0,kills:0,deaths:0,assists:0,damage:0,tradeKills:0,kastCredits:0,
+    killRounds:0,assistRounds:0,survived:0,saved:0,tradedDeaths:0,tradeKastCredits:0};
+}
+
+function addRoundTelemetry(total,row){
+  total.rounds++;
+  total.kills+=row.kills;total.deaths+=row.deaths;total.assists+=row.assists;total.damage+=row.damage;
+  total.tradeKills+=row.tradeKills;total.kastCredits+=row.kastCredit;
+  total.killRounds+=row.kastComponents.kill?1:0;total.assistRounds+=row.kastComponents.assist?1:0;
+  total.survived+=row.survived?1:0;total.saved+=row.saved?1:0;
+  total.tradedDeaths+=row.wasTraded?1:0;total.tradeKastCredits+=row.kastComponents.traded?1:0;
+}
+
+function combineRoundTelemetry(rows){
+  const total=emptyRoundTelemetry();
+  rows.forEach(row=>Object.keys(total).forEach(key=>{total[key]+=row[key];}));
+  return total;
+}
+
+function summarizeRoundTelemetry(total){
+  const rounds=Math.max(1,total.rounds),deaths=Math.max(1,total.deaths),traded=Math.max(1,total.tradedDeaths);
+  return {...total,
+    kpr:rounded(total.kills/rounds),dpr:rounded(total.deaths/rounds),apr:rounded(total.assists/rounds),
+    adr:rounded(total.damage/rounds),kastPercent:rounded(total.kastCredits/rounds*100),
+    survivalPercent:rounded(total.survived/rounds*100),savePercent:rounded(total.saved/rounds*100),
+    tradedDeathPercent:rounded(total.tradedDeaths/deaths*100),tradeKastCreditPercent:rounded(total.tradeKastCredits/traded*100)};
+}
+
 function recordMetricSample(samples,row,rounds){
   samples.rating.push(+row.rating||0);
   samples.kpr.push((row.k||0)/rounds);
@@ -248,6 +278,9 @@ function emptyPlayerAccumulator(teamIndex,playerIndex,card){
     ownDayStrength:[],opponentDayStrength:[],opponents:new Set(),mapCounts:{},samples:emptyMetricSamples(),
     outcomeCounts:Object.fromEntries(OUTCOMES.map(outcome=>[outcome,0])),
     byOutcome:Object.fromEntries(OUTCOMES.map(outcome=>[outcome,emptyMetricSamples()])),
+    roundTelemetry:{overall:emptyRoundTelemetry(),
+      bySide:Object.fromEntries(SIDES.map(side=>[side,emptyRoundTelemetry()])),
+      byBuy:Object.fromEntries(BUY_STATES.map(state=>[state,emptyRoundTelemetry()]))},
     byMap:Object.fromEntries(MAPS.map(map=>[map,emptyMetricSamples()])),
     byOpponentStrengthQuartile:Object.fromEntries(QUARTILES.map(quartile=>[quartile,emptyMetricSamples()]))
   };
@@ -298,6 +331,7 @@ function groupedPlayerSummary(players,key){
     const rounds=sum(rows.map(row=>row.exposure.rounds));
     const maps=sum(rows.map(row=>row.exposure.maps));
     const roundWeighted=metric=>rounded(sum(rows.map(row=>row[metric]*row.exposure.rounds))/rounds);
+    const roundTelemetry=summarizeRoundTelemetry(combineRoundTelemetry(rows.map(row=>row.roundTelemetry.overall)));
     return {
       group:name,players:rows.length,maps,rounds,aggregation:"player-round-weighted",
       realRating:rounded(mean(rows.map(row=>row.realRating))),
@@ -307,8 +341,22 @@ function groupedPlayerSummary(players,key){
       dpr:rounded(sum(rows.map(row=>row.counts.deaths))/rounds),
       apr:rounded(sum(rows.map(row=>row.counts.assists))/rounds),
       kastPercent:roundWeighted("kastPercent"),
-      adr:roundWeighted("adr")
+      adr:roundWeighted("adr"),roundTelemetry
     };
+  });
+}
+
+function groupedRoundStratum(players,key,dimension,value){
+  const groups={};
+  players.forEach(player=>{
+    const name=String(player[key]??"unknown");
+    (groups[name]||(groups[name]=[])).push(player);
+  });
+  return Object.keys(groups).sort(compareText).map(name=>{
+    const rows=groups[name];
+    return {group:name,players:rows.length,...summarizeRoundTelemetry(combineRoundTelemetry(
+      rows.map(player=>player.roundTelemetry[dimension][value])
+    ))};
   });
 }
 
@@ -350,6 +398,19 @@ function recordPlayerSide(accumulators,teamIndex,opponentIndex,stats,rounds,map,
     recordMetricSample(player.byMap[map],row,rounds);
     recordMetricSample(player.byOpponentStrengthQuartile[quartile],row,rounds);
   });
+}
+
+function recordRoundTelemetry(playerAccumulators,telemetry){
+  if(!telemetry||telemetry.schemaVersion!==1)throw new Error("telemetria de round ausente ou incompatível");
+  telemetry.rounds.forEach(round=>[...round.players.A,...round.players.B].forEach(row=>{
+    const player=playerAccumulators.get(row.id);
+    if(!player)throw new Error(`telemetria sem acumulador: ${row.id}`);
+    if(!SIDES.includes(row.side))throw new Error(`${row.id}: lado inválido ${row.side}`);
+    if(!BUY_STATES.includes(row.buy))throw new Error(`${row.id}: compra inválida ${row.buy}`);
+    addRoundTelemetry(player.roundTelemetry.overall,row);
+    addRoundTelemetry(player.roundTelemetry.bySide[row.side],row);
+    addRoundTelemetry(player.roundTelemetry.byBuy[row.buy],row);
+  }));
 }
 
 function assertDeepCoverage({cycles,pairs,mapCount,playerAccumulators,beforeFingerprint}){
@@ -394,6 +455,9 @@ function finalizePlayers(playerAccumulators){
         meanOwnDayStrength:rounded(mean(player.ownDayStrength)),meanOpponentDayStrength:rounded(mean(player.opponentDayStrength))},
       distributions:summarizeMetricSamples(player.samples),
       byOutcome:Object.fromEntries(OUTCOMES.map(outcome=>[outcome,summarizeMetricSamples(player.byOutcome[outcome])])),
+      roundTelemetry:{overall:summarizeRoundTelemetry(player.roundTelemetry.overall),
+        bySide:Object.fromEntries(SIDES.map(side=>[side,summarizeRoundTelemetry(player.roundTelemetry.bySide[side])])),
+        byBuy:Object.fromEntries(BUY_STATES.map(state=>[state,summarizeRoundTelemetry(player.roundTelemetry.byBuy[state])]))},
       byMap:Object.fromEntries(MAPS.map(map=>[map,summarizeMetricSamples(player.byMap[map])])),
       byOpponentStrengthQuartile:Object.fromEntries(QUARTILES.map(quartile=>[quartile,summarizeMetricSamples(player.byOpponentStrengthQuartile[quartile])]))
     };
@@ -450,7 +514,7 @@ function buildDeepAuditSync(cycles=DEFAULT_DEEP_CYCLES){
     const map=MAPS[(pairIndex+cycle)%MAPS.length];
     X.srand(seedFor(cycle,pairIndex));
     const strengthA=X.forcaDoDia(a.ef,a.quim),strengthB=X.forcaDoDia(b.ef,b.quim);
-    const result=X.simularMapa(a,b,strengthA,strengthB,map,false);
+    const result=X.simularMapa(a,b,strengthA,strengthB,map,false,{telemetry:true});
     const rounds=result.totalRounds||1;
     totalRounds+=rounds;
     mapCount[map]++;
@@ -462,6 +526,7 @@ function buildDeepAuditSync(cycles=DEFAULT_DEEP_CYCLES){
     const aWon=result.placar[0]>result.placar[1];
     recordPlayerSide(playerAccumulators,aIndex,bIndex,result.statsA,rounds,map,true,strengthA,strengthB,quartileA,aWon?"win":"loss");
     recordPlayerSide(playerAccumulators,bIndex,aIndex,result.statsB,rounds,map,false,strengthB,strengthA,quartileB,aWon?"loss":"win");
+    recordRoundTelemetry(playerAccumulators,result.telemetry);
     result.rounds.forEach(round=>{
       [round.buyA,round.buyB].forEach(state=>{
         if(!BUY_STATES.includes(state))throw new Error(`estado de compra desconhecido: ${state}`);
@@ -538,12 +603,14 @@ function buildDeepAuditSync(cycles=DEFAULT_DEEP_CYCLES){
       byCombatRole:groupedPlayerSummary(players,"effectiveCombatRole"),
       byRolePair:groupedPlayerSummary(players,"rolePair"),
       bySecondaryRole:groupedPlayerSummary(players,"secondaryRole"),
+      byRoleSide:Object.fromEntries(SIDES.map(side=>[side,groupedRoundStratum(players,"role","bySide",side)])),
+      byRoleBuy:Object.fromEntries(BUY_STATES.map(state=>[state,groupedRoundStratum(players,"role","byBuy",state)])),
       byPlaystyle:groupedPlayerSummary(players,"playstyle"),
       byOvr:groupedPlayerSummary(players,"ovr")
     },
     limitations:[
-      "player metrics are map-level; CT/T production is not separable without event telemetry",
-      "buy states are global and cannot yet be joined to individual damage or survival",
+      "buy states are team-level abstractions; the engine has no individual weapon inventory",
+      "save telemetry marks explicit save branches and surviving players, not a preserved weapon",
       "assists do not distinguish damage assists from flash assists",
       "the report characterizes the simulator and is not an IFCS score or a real-data target"
     ],
@@ -563,6 +630,16 @@ function assertDeepReport(report){
     const rounds=sum(report.groups[key].map(group=>group.rounds));
     if(rounds!==report.global.playerRounds)throw new Error(`${key}: player-rounds incompletos`);
   });
+  SIDES.forEach(side=>{
+    const groups=report.groups.byRoleSide[side];
+    if(sum(groups.map(group=>group.players))!==expectedPlayers)throw new Error(`${side}: cobertura por role incompleta`);
+  });
+  BUY_STATES.forEach(state=>{
+    const groups=report.groups.byRoleBuy[state];
+    if(sum(groups.map(group=>group.players))!==expectedPlayers)throw new Error(`${state}: cobertura por role incompleta`);
+    const playerRounds=sum(groups.map(group=>group.rounds));
+    if(playerRounds!==report.global.economy.buyStateCounts[state]*5)throw new Error(`${state}: telemetria econômica incompleta`);
+  });
   if(report.global.totals.kills!==report.global.totals.deaths)throw new Error("kills e deaths globais divergem");
   if(report.global.economy.teamRoundSamples!==report.global.rounds*2){
     throw new Error("amostra economica diverge de dois times por round");
@@ -572,6 +649,16 @@ function assertDeepReport(report){
     if(outcomes!==player.exposure.maps)throw new Error(`${player.id}: vitorias/derrotas divergem dos mapas`);
     const outcomeSamples=sum(OUTCOMES.map(outcome=>player.byOutcome[outcome].rating.n));
     if(outcomeSamples!==player.exposure.maps)throw new Error(`${player.id}: distribuicao por resultado incompleta`);
+    const overall=player.roundTelemetry.overall;
+    if(overall.rounds!==player.exposure.rounds)throw new Error(`${player.id}: telemetria não cobre todos os rounds`);
+    if(overall.kills!==player.counts.kills||overall.deaths!==player.counts.deaths||overall.assists!==player.counts.assists){
+      throw new Error(`${player.id}: K/D/A da telemetria diverge do mapa`);
+    }
+    if(Math.abs(overall.kastPercent-player.kastPercent)>.051)throw new Error(`${player.id}: KAST da telemetria diverge do mapa`);
+    if(Math.abs(overall.adr-player.adr)>.51)throw new Error(`${player.id}: ADR da telemetria diverge do mapa`);
+    if(sum(SIDES.map(side=>player.roundTelemetry.bySide[side].rounds))!==overall.rounds)throw new Error(`${player.id}: lados incompletos`);
+    if(sum(BUY_STATES.map(state=>player.roundTelemetry.byBuy[state].rounds))!==overall.rounds)throw new Error(`${player.id}: compras incompletas`);
+    if(overall.tradeKastCredits>overall.tradedDeaths)throw new Error(`${player.id}: créditos de trade excedem mortes trocadas`);
   });
 }
 
@@ -587,6 +674,20 @@ function printMetricLine(name,stats){
 function printGroupRows(title,rows){
   console.log(`\n-- ${title} --`);
   rows.forEach(row=>console.log(`  ${row.group.padEnd(18)} n=${String(row.players).padStart(2)} · rating ${row.simRating.toFixed(3)} · KPR ${row.kpr.toFixed(3)} · DPR ${row.dpr.toFixed(3)} · APR ${row.apr.toFixed(3)} · KAST ${row.kastPercent.toFixed(1)}% · ADR ${row.adr.toFixed(1)}`));
+}
+
+function printRoleTelemetry(report){
+  const bySide=report.groups.byRoleSide;
+  console.log("\n-- Sobrevivencia e save por lado --");
+  report.groups.byRole.forEach(role=>{
+    const ct=bySide.CT.find(row=>row.group===role.group),tr=bySide.TR.find(row=>row.group===role.group);
+    console.log(`  ${role.group.padEnd(8)} CT DPR ${ct.dpr.toFixed(3)} · sobrevive ${ct.survivalPercent.toFixed(1)}% · save ${ct.savePercent.toFixed(1)}% | TR DPR ${tr.dpr.toFixed(3)} · sobrevive ${tr.survivalPercent.toFixed(1)}% · save ${tr.savePercent.toFixed(1)}%`);
+  });
+  console.log("\n-- Mortes trocadas e credito KAST --");
+  report.groups.byRole.forEach(role=>{
+    const trace=role.roundTelemetry;
+    console.log(`  ${role.group.padEnd(8)} mortes trocadas ${trace.tradedDeathPercent.toFixed(1)}% · creditadas no KAST ${trace.tradeKastCreditPercent.toFixed(1)}%`);
+  });
 }
 
 function printDeepAudit(report){
@@ -612,6 +713,7 @@ function printDeepAudit(report){
   console.log("\n-- Compras (time-rounds) --");
   BUY_STATES.forEach(state=>console.log(`  ${state.padEnd(8)} ${String(economy.buyStateCounts[state]).padStart(6)} · ${economy.buyStatePercent[state].toFixed(1)}%`));
   printGroupRows("Por role primaria",report.groups.byRole);
+  printRoleTelemetry(report);
   printGroupRows("Por funcao de combate efetiva",report.groups.byCombatRole);
   printGroupRows("Por par primaria/secundaria",report.groups.byRolePair);
   printGroupRows("Por playstyle",report.groups.byPlaystyle);
