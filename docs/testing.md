@@ -61,6 +61,11 @@ fallbacks devem preservar por paridade o sinal finito de utilidade. O teste não
 decide a assistência nem concede KAST; apenas protege a fronteira pura usada
 pelo evento.
 
+`npm run audit:r5:rating` reconstrói as onze parcelas do FALLEnANGELs a partir
+da telemetria e exige igualdade com o rating final de cada player-map. A
+execução padrão usa 61.200 mapas-alvo, separa 60/20/20 jogadores por hash
+determinístico e não reporta o candidato no holdout de auditoria.
+
 ## Estado de referência
 
 - A aplicação possui 17 times e 85 cards de jogador.

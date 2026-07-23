@@ -125,12 +125,16 @@ Atualização operacional de 23 de julho de 2026:
   quatro companheiros elegíveis. APR global permaneceu estável e a separação
   entre facilitadores e finalizadores aumentou sem bônus direto por função ou
   KAST; evidência em `docs/r5-assist-balance-2026-07-23.md`.
+- R5.8 reconstruiu e mediu as onze parcelas do rating em 61.200 mapas-alvo. O
+  prior atual `0,450` ficou praticamente no ótimo `0,455`; como o candidato
+  piorou MAE/RMSE na validação, nenhum peso foi alterado. Evidência em
+  `docs/r5-rating-audit-2026-07-23.md`.
 
 ### Decisão imediata para a próxima sessão
 
-**Próxima subetapa:** decompor o rating pós-eventos na R5.8 e medir o peso do
-prior histórico contra a produção simulada. Trade, assistência e composição
-factual do KAST estão concluídos. O corpus
+**Próxima subetapa:** executar o fechamento R6 do ciclo aprovado. Trade,
+assistência, composição factual do KAST e auditoria do rating estão concluídos.
+O corpus
 oficial segue insuficiente (1/800 mapas e 1/6 eventos), portanto nenhuma nota
 IFCS será publicada. A distribuição entre muitas MD3 continua aberta em R3 e não
 deve ser misturada ao ciclo R5/R6.
