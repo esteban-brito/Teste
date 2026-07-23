@@ -83,6 +83,19 @@ O veredito técnico foi:
 - a ordenação permanece por desvio absoluto decrescente;
 - nenhum cálculo de rating foi alterado por essa mudança visual.
 
+### Refinamento concluído em 23 de julho de 2026
+
+- o painel principal passa a priorizar rating, K/D, KPR, DPR, assistências por
+  round, KAST e ADR;
+- cada jogador mostra função primária e secundária; para IGL, a secundária é o
+  papel de combate;
+- filtros, ordenação, comparação e CSV conhecem as duas funções e as novas
+  métricas;
+- desvio-padrão e IC95% saem das colunas principais, mas continuam disponíveis
+  na comparação, na visualização acessível e no CSV;
+- a mudança acumula saídas já produzidas por cada mapa e não altera motor,
+  fórmulas, RNG, balanceamento, snapshot ou golden;
+
 ## 5. Lacunas atuais
 
 O benchmark ainda protege principalmente média, correlação, inclinação, MAE e
@@ -143,6 +156,8 @@ Objetivo: mostrar o que a média de 491 mapas esconde.
 
 Para cada jogador, exibir ou disponibilizar:
 
+- função primária e secundária;
+- kills, deaths, assists, K/D, KPR, DPR, assistências por round, KAST e ADR;
 - média e mediana;
 - desvio-padrão;
 - P5 e P95;
@@ -332,8 +347,9 @@ Aceitação:
 
 Depois de R1–R3, aprofundar explicações estatísticas, navegação por teclado,
 leitores de tela e, se houver demanda, formatos adicionais de exportação, sem
-ocultar jogadores. Busca, filtros, comparação, CSV, escala comum, legenda
-completa e ajuda recolhível das distribuições já foram entregues em R2.
+ocultar jogadores. Busca, filtros nas duas funções, comparação, CSV de
+desempenho, escala comum, legenda completa e ajuda recolhível das distribuições
+já foram entregues em R2.
 
 ### P2 — modularização por paridade
 

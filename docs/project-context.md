@@ -302,12 +302,16 @@ A modernização mais recente concentrou-se no sandbox. O estado publicado inclu
 
 R2 acrescentou ao painel individual, sem alterar a simulação:
 
+- função primária e secundária por jogador; para IGL, a secundária representa o
+  papel de combate;
+- totais de kills, deaths e assists e leitura comparável por round com K/D, KPR,
+  DPR, A/R, KAST e ADR;
 - amostras de rating preservadas por ID estável e mapa;
 - média, mediana, desvio-padrão, P5, P95 e IC95% da média;
 - extremos absolutos e faixa recorrente P10–P90, que retira os 10% mapas mais
   baixos e os 10% mais altos da leitura central;
 - referência histórica, referência atual, delta, mapas e aviso de suficiência;
-- busca por nome/ID, filtros por time, função e suficiência;
+- busca por nome/ID, filtros por time, ambas as funções e suficiência;
 - ordenação numérica por todas as métricas relevantes;
 - comparação de até dois jogadores;
 - exportação CSV do conjunto visível, com seed, contexto, BOM, schema estável,
@@ -320,6 +324,10 @@ R2 acrescentou ao painel individual, sem alterar a simulação:
   comparação recolhida quando vazia e jogadores convertidos em cards no celular;
 - composição responsiva validada em desktop, tablet e celular, sem overflow
   horizontal da página.
+
+O refinamento de desempenho acima foi concluído em 23 de julho de 2026.
+Desvio-padrão e IC95% permanecem na comparação, na descrição acessível da
+distribuição e no CSV, mas não ocupam colunas da tabela principal.
 
 A matemática descritiva compartilhada vive em
 `src/domain/statistics/sample-summary.mjs`, recebe amostras explícitas e não
@@ -994,8 +1002,9 @@ A fonte canônica da sequência é `docs/next-steps.md`. Ordem resumida:
 
 1. R1 concluída: auditoria individual profunda sem tocar no motor ou
    balanceamento;
-2. R2 concluída: distribuições, diagnóstico, comparação e CSV individual no
-   sandbox, usando matemática compartilhada com R1;
+2. R2 concluída: desempenho, duas funções, distribuições, diagnóstico,
+   comparação e CSV individual no sandbox, usando matemática compartilhada com
+   R1;
 3. R3 em andamento: a MD3 isolada já está implementada; a próxima fatia deve
    comparar a distribuição entre muitas campanhas;
 4. R4: auditar AWPer, sobrevivência e playstyle por critérios numéricos;
