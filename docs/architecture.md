@@ -28,7 +28,8 @@ caminho Node, evitando duas fórmulas para o mesmo conceito.
 As primeiras fronteiras puras da simulação vivem em `src/domain/simulation/`:
 `combat-profile.mjs` descreve a leitura corrente de função e multiplicadores;
 `exposure-profile.mjs` calcula pesos relativos de contato por função efetiva,
-atributos, lado e fase; `fallen-angels.mjs` decompõe o rating em parcelas
+atributos, lado e fase; `preservation-value.mjs` calcula o valor abstrato usado
+na decisão coletiva de save; `fallen-angels.mjs` decompõe o rating em parcelas
 somáveis. Enquanto o entrypoint clássico não migrar para módulos, `game.js`
 mantém adapters legados protegidos por paridade exata. Essas fronteiras não
 autorizam balanceamento implícito.

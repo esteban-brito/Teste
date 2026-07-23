@@ -47,6 +47,11 @@ fallbacks devem produzir pesos positivos, finitos e idênticos entre o adapter
 legado e o módulo puro. O teste também prova que a função efetiva diferencia
 IGL/Entry de IGL/AWPer no primeiro contato.
 
+O candidato de save acrescentou `preservationValue`: 174 entradas reais,
+wrappers e fallbacks devem produzir o mesmo valor finito e não negativo no
+módulo e no adapter. Esse contrato não autoriza interpretar o valor como arma ou
+inventário individual.
+
 ## Estado de referência
 
 - A aplicação possui 17 times e 85 cards de jogador.

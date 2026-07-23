@@ -351,8 +351,9 @@ exata e R5.5 ativou a função secundária já classificada dos IGLs sem criar p
 Evidências em `docs/r5-structural-extraction-2026-07-23.md` e
 `docs/r5-effective-role-balance-2026-07-23.md`. A etapa de exposição da R5.6
 também foi concluída: contato agora depende de atributos, função efetiva, lado
-e fase, com evidência em `docs/r5-exposure-balance-2026-07-23.md`. Save permanece
-um candidato separado.
+e fase, com evidência em `docs/r5-exposure-balance-2026-07-23.md`. O candidato
+separado de save também foi concluído, zero-centrado e sem alegar inventário;
+evidência em `docs/r5-save-balance-2026-07-23.md`.
 
 Regras:
 

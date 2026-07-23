@@ -833,7 +833,7 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓL
   // D_DUELO = decisão de UM duelo (bem mais raso que o round; o round é a soma de ~5-9 duelos).
   // pistol é quase cara-ou-coroa (D alto) → o azarão ganha pistol/anti-eco e o 13-0 fica raro.
   D_DUELO:112,D_DUELO_PIST:360,OPEN_SCALE:520,CLUTCH_DUEL:.22,CLUTCH_X:.115,CLUTCH_EXP:1.55,LADO_MAPA_P:.013,
-  SAVE_BASE:.30,SAVE_MEN:.10,CLOSE_MEN:.30, // salvar (eco em desvantagem) e fechar bomb/tempo (vantagem de homem) — CLOSE_MEN mais alto = menos kills de limpeza (KPR/round ao real), mesmo vencedor, clutch 1vX intacto
+  SAVE_BASE:.30,SAVE_MEN:.10,SAVE_VALUE:.20,CLOSE_MEN:.30, // salvar (eco em desvantagem) e fechar bomb/tempo (vantagem de homem) — CLOSE_MEN mais alto = menos kills de limpeza (KPR/round ao real), mesmo vencedor, clutch 1vX intacto
   // ——— BOMBA / RELÓGIO (assimetria real T×CT): o round tem fases, não é só eliminar ———
   // pré-plant: o T tenta plantar (cresce com tempo e vantagem de homem); se o relógio estoura sem plant, o CT vence (default/hold).
   RND_TEMPO:6,PLANT_BASE:.05,PLANT_TEMPO:.05,PLANT_MEN:.11,
@@ -1032,6 +1032,11 @@ function exposureProfile(j){const a=j?._eng||j||{},C=CFG_SIM,role=combatProfile(
       profile[phase][side]=Math.exp(score);
     }}
   return profile;}
+// Valor abstrato de preservação, sem inferir arma ou inventário individual.
+// A média simples evita prioridade de role criada por tabela: ela emerge dos stats.
+function preservationValue(j){const a=j?._eng||j||{};
+  return ((a.sn??0)+(a.cl??0)+(a.ut??0)+(a.fp??0))/400;}
+const PRESERVATION_MEAN=(()=>{const ps=Object.values(POOL);return ps.reduce((sum,p)=>sum+preservationValue(p),0)/ps.length;})();
 // ——— AFINIDADE DE LADO (composição): CT = segurar/anchor, T = tomar espaço/entry ———
 // derivada dos STATS (cl/ut/sn seguram bombsite; en/op/fp tomam espaço) + role + sub-arquétipo.
 // lurker/support/âncora puxam o time pro CT; entry/agressivo puxam pro T. zero-centrado: time
@@ -1062,6 +1067,7 @@ function prepTime(t,mapa){
     ctEdge:js.reduce((s,j)=>s+ladoFit(j)[0],0)/js.length,
     tEdge:js.reduce((s,j)=>s+ladoFit(j)[1],0)/js.length,
     cls:js.map(j=>j.cl||40),agr:js.map(j=>subAgr(j)),exposure:js.map(j=>exposureProfile(j)),
+    preservation:js.map(j=>preservationValue(j)),
     ops:js.map(j=>j.op??50),trs:js.map(j=>j.tr??50), // categorias HLTV por jogador (tipo de kill)
     // força de abertura do time (op/entry/sniper/util — flashes ajudam a abrir): inclina o PRIMEIRO duelo
     open:js.reduce((s,j)=>s+((j.op??50)*.35+(j.en??45)*.30+(j.sn??0)*.20+(j.ut??50)*.15),0)/js.length,
@@ -1133,6 +1139,7 @@ function combateRound(a,b,ctx){
   const aCT=ctx.aIsCT;                          // time a está no CT neste round? (b é o T, e vice-versa)
   const ctVence=()=>aCT?"A":"B", tVence=()=>aCT?"B":"A"; // quem leva o round se o objetivo decide
   const sideOf=team=>team===a?(aCT?"CT":"TR"):(aCT?"TR":"CT");
+  const preservationEdge=(team,alive)=>alive.reduce((sum,index)=>sum+team.preservation[index],0)/alive.length-PRESERVATION_MEAN;
   let primeira=true,fim=null,g=0;               // fim: "A"/"B" se o round fecha por objetivo/save antes da eliminação
   let plantado=false,tempo=0,pp=0,metodo=null,saveTeam=null; // saveTeam só marca a decisão explícita de guardar
   let clutch=null;                              // 1ª vez que um lado fica em 1vX (pra medir/registrar o clutch)
@@ -1173,18 +1180,20 @@ function combateRound(a,b,ctx){
     const vivT=aCT?vivB:vivA,vivCT=aCT?vivA:vivB,buyT=aCT?buyB:buyA,buyCT=aCT?buyA:buyB;
     tempo++;
     if(!plantado){
-      // SAVE do T: muito atrás (>=2) e sem dinheiro → desiste do plant, guarda armas → CT vence no tempo (sobreviventes vivem)
+      // SAVE do T: muito atrás (>=2) → desiste do plant e preserva sobreviventes/economia; CT vence no tempo
       if(vivCT.length-vivT.length>=2){const eco=buyT==="eco"||buyT==="force";
-        if(rndF()<(eco?C.SAVE_BASE:C.SAVE_BASE*.35)+(vivCT.length-vivT.length)*C.SAVE_MEN){fim=ctVence();metodo="tempo";saveTeam=tVence();break;}}
+        const losingTeam=aCT?b:a;
+        if(rndF()<(eco?C.SAVE_BASE:C.SAVE_BASE*.35)+(vivCT.length-vivT.length)*C.SAVE_MEN+C.SAVE_VALUE*preservationEdge(losingTeam,vivT)){fim=ctVence();metodo="tempo";saveTeam=tVence();break;}}
       // PLANT: chance cresce com o tempo e com a vantagem de homem do T (tomou o site)
       const pPlant=clamp(C.PLANT_BASE+tempo*C.PLANT_TEMPO+(vivT.length-vivCT.length)*C.PLANT_MEN,0,.92);
       if(rndF()<pPlant){plantado=true;pp=0;}
       else if(tempo>=C.RND_TEMPO){fim=ctVence();metodo="tempo";break;} // relógio estourou sem plant → CT segura (default/hold)
     }else{
       pp++;
-      // SAVE do CT: pós-plant muito atrás (>=2) e sem grana → não retoma → T detona (sobreviventes CT vivem)
+      // SAVE do CT: pós-plant muito atrás (>=2) → não retoma e preserva sobreviventes/economia; T detona
       if(vivT.length-vivCT.length>=2){const eco=buyCT==="eco"||buyCT==="force";
-        if(rndF()<(eco?C.SAVE_BASE:C.SAVE_BASE*.35)+(vivT.length-vivCT.length)*C.SAVE_MEN){fim=tVence();metodo="detona";saveTeam=ctVence();break;}}
+        const losingTeam=aCT?a:b;
+        if(rndF()<(eco?C.SAVE_BASE:C.SAVE_BASE*.35)+(vivT.length-vivCT.length)*C.SAVE_MEN+C.SAVE_VALUE*preservationEdge(losingTeam,vivCT)){fim=tVence();metodo="detona";saveTeam=ctVence();break;}}
       // DEFUSE: CT com pelo menos paridade limpa o site e defusa (cresce com a vantagem de homem)
       if(vivCT.length>=vivT.length&&rndF()<C.DEFUSE_BASE+Math.max(0,vivCT.length-vivT.length)*C.DEFUSE_MEN){fim=ctVence();metodo="defuse";break;}
       // DETONAÇÃO: relógio da bomba estourou → T vence o post-plant

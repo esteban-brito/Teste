@@ -130,15 +130,17 @@ novo foi criado. Evidência em `docs/r5-effective-role-balance-2026-07-23.md`.
 
 ### R5.6 — exposição e save
 
-**Exposição concluída; save pendente.** A vítima agora é escolhida por
+**Concluída.** A vítima agora é escolhida por
 volume residual de contato e um perfil contínuo derivado de função efetiva,
 atributos `en`, `op`, `sn`, `cl`, `ut`, agressividade, lado e fase do round.
 Entry assume mais primeiro contato; AWPer e Lurker não recebem bônus direto de
 sobrevivência. Evidência em `docs/r5-exposure-balance-2026-07-23.md`.
 
-Save será um candidato separado. Sem inventário individual, pode considerar
-somente compra do time, vantagem numérica, objetivo e valor abstrato dos
-sobreviventes. O relatório não afirmará que uma arma específica foi preservada.
+O candidato separado de save preserva as regras existentes de compra do time,
+vantagem numérica e objetivo, acrescentando somente o valor abstrato e
+zero-centrado dos sobreviventes. Evidência em
+`docs/r5-save-balance-2026-07-23.md`. Sem inventário individual, o relatório não
+afirma que uma arma específica foi preservada.
 
 ### R5.7 — trade, assistência e KAST
 

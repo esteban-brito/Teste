@@ -113,14 +113,18 @@ Atualização operacional de 23 de julho de 2026:
   volume residual e contexto contínuo de função, atributos, lado e fase. Entry
   passou a liderar as mortes de abertura por pequena margem sem deslocamento
   material global; evidência em `docs/r5-exposure-balance-2026-07-23.md`.
+- o candidato separado de save acrescentou valor abstrato dos sobreviventes à
+  decisão coletiva existente. Save de AWPer subiu cerca de 10% em termos
+  relativos, enquanto save e produção globais ficaram estáveis; evidência em
+  `docs/r5-save-balance-2026-07-23.md`.
 
 ### Decisão imediata para a próxima sessão
 
-**Próxima família:** concluir o candidato separado de save da R5.6, sem afirmar
-arma preservada enquanto não houver inventário individual. R5.7 tratará
-trade/assistência depois. O corpus oficial segue insuficiente (1/800 mapas e
-1/6 eventos), portanto nenhuma nota IFCS será publicada. A distribuição entre
-muitas MD3 continua aberta em R3 e não deve ser misturada ao ciclo R5/R6.
+**Próxima família:** R5.7 tratará oportunidade de trade, seleção do refragger,
+assistência e composição factual do KAST. O corpus oficial segue insuficiente
+(1/800 mapas e 1/6 eventos), portanto nenhuma nota IFCS será publicada. A
+distribuição entre muitas MD3 continua aberta em R3 e não deve ser misturada ao
+ciclo R5/R6.
 
 ### Preferências de comunicação do responsável
 
