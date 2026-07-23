@@ -52,6 +52,10 @@ wrappers e fallbacks devem produzir o mesmo valor finito e não negativo no
 módulo e no adapter. Esse contrato não autoriza interpretar o valor como arma ou
 inventário individual.
 
+R5.7a acrescentou `tradeContextProfile`: 174 entradas devem preservar por
+paridade os sinais finitos de prontidão e possibilidade de troca. O teste não
+credita trade ou KAST; essa decisão continua pertencendo ao evento do round.
+
 ## Estado de referência
 
 - A aplicação possui 17 times e 85 cards de jogador.

@@ -144,7 +144,11 @@ afirma que uma arma específica foi preservada.
 
 ### R5.7 — trade, assistência e KAST
 
-- condicionar a oportunidade de trade ao contexto e à prontidão coletiva;
+**Oportunidade de trade concluída; assistência pendente.** Prontidão dos
+companheiros vivos e possibilidade de troca da vítima agora deslocam a chance
+do refrag de forma zero-centrada. Evidência em
+`docs/r5-trade-balance-2026-07-23.md`.
+
 - usar `tr` para selecionar o refragger;
 - usar utilidade e contexto para assistência;
 - avaliar Entry por APR, sem transformar A/K no alvo principal;

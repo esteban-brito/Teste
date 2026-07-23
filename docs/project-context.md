@@ -117,14 +117,18 @@ Atualização operacional de 23 de julho de 2026:
   decisão coletiva existente. Save de AWPer subiu cerca de 10% em termos
   relativos, enquanto save e produção globais ficaram estáveis; evidência em
   `docs/r5-save-balance-2026-07-23.md`.
+- R5.7a condicionou a oportunidade de refrag à prontidão dos vivos e à
+  possibilidade de troca da vítima. Entry e Support passaram a ser trocados com
+  maior frequência sem inflar trades globais; evidência em
+  `docs/r5-trade-balance-2026-07-23.md`.
 
 ### Decisão imediata para a próxima sessão
 
-**Próxima família:** R5.7 tratará oportunidade de trade, seleção do refragger,
-assistência e composição factual do KAST. O corpus oficial segue insuficiente
-(1/800 mapas e 1/6 eventos), portanto nenhuma nota IFCS será publicada. A
-distribuição entre muitas MD3 continua aberta em R3 e não deve ser misturada ao
-ciclo R5/R6.
+**Próxima subetapa:** concluir assistência contextual da R5.7 e verificar a
+composição factual do KAST; a oportunidade de trade já está concluída. O corpus
+oficial segue insuficiente (1/800 mapas e 1/6 eventos), portanto nenhuma nota
+IFCS será publicada. A distribuição entre muitas MD3 continua aberta em R3 e não
+deve ser misturada ao ciclo R5/R6.
 
 ### Preferências de comunicação do responsável
 

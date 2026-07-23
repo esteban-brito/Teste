@@ -353,7 +353,9 @@ Evidências em `docs/r5-structural-extraction-2026-07-23.md` e
 também foi concluída: contato agora depende de atributos, função efetiva, lado
 e fase, com evidência em `docs/r5-exposure-balance-2026-07-23.md`. O candidato
 separado de save também foi concluído, zero-centrado e sem alegar inventário;
-evidência em `docs/r5-save-balance-2026-07-23.md`.
+evidência em `docs/r5-save-balance-2026-07-23.md`. R5.7a concluiu a oportunidade
+contextual de trade sem inflar a taxa global; detalhes em
+`docs/r5-trade-balance-2026-07-23.md`. Assistência permanece a próxima subetapa.
 
 Regras:
 

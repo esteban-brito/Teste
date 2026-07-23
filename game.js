@@ -839,7 +839,7 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓL
   RND_TEMPO:6,PLANT_BASE:.05,PLANT_TEMPO:.05,PLANT_MEN:.11,
   // pós-plant: a bomba tem 40s. T segura ângulos (edge POST_EDGE); CT precisa retomar+defusar antes da detonação.
   PP_TEMPO:3,POST_EDGE:.07,DEFUSE_BASE:.24,DEFUSE_MEN:.22,PLANT_BONUS:800,KILL_REWARD:90,
-  EXP_KILL:1.15,EXP_OPEN:1.10,TRADE_CHANCE:.56, // EXP_KILL comprime a distribuição de kills; TRADE_CHANCE menor = menos refrag = KPR/round ao real; EXP_OPEN: abertura é menos sobre fp puro
+  EXP_KILL:1.15,EXP_OPEN:1.10,TRADE_CHANCE:.56,TRADE_CONTEXT:.15, // EXP_KILL comprime a distribuição de kills; TRADE_CHANCE menor = menos refrag = KPR/round ao real; EXP_OPEN: abertura é menos sobre fp puro
   // PARTICIPAÇÃO por FUNÇÃO (multiplica fragPeso): baixa/sobe o VOLUME de duelos do papel — mexe em kills
   // E mortes juntos (o AWPer real joga menos duelos mas ganha), então KPR e DPR caem sem distorcer o K/D.
   FRAG_ROLE:{AWPer:.74,Lurker:.82,Rifler:.86,Entry:1.05,Support:1.02,IGL:1},
@@ -1037,6 +1037,13 @@ function exposureProfile(j){const a=j?._eng||j||{},C=CFG_SIM,role=combatProfile(
 function preservationValue(j){const a=j?._eng||j||{};
   return ((a.sn??0)+(a.cl??0)+(a.ut??0)+(a.fp??0))/400;}
 const PRESERVATION_MEAN=(()=>{const ps=Object.values(POOL);return ps.reduce((sum,p)=>sum+preservationValue(p),0)/ps.length;})();
+// Prontidão coletiva para refrag e possibilidade de troca da vítima. São
+// sinais de contexto, não crédito direto de trade/KAST.
+function tradeContextProfile(j){const a=j?._eng||j||{};
+  return {readiness:((a.tr??50)+(a.ut??50))/200,tradeability:((a.en??45)+(a.tr??50))/200};}
+const TRADE_CONTEXT_MEAN=(()=>{const ps=Object.values(POOL),sum=ps.reduce((acc,p)=>{const v=tradeContextProfile(p);
+  acc.readiness+=v.readiness;acc.tradeability+=v.tradeability;return acc;},{readiness:0,tradeability:0});
+  return {readiness:sum.readiness/ps.length,tradeability:sum.tradeability/ps.length};})();
 // ——— AFINIDADE DE LADO (composição): CT = segurar/anchor, T = tomar espaço/entry ———
 // derivada dos STATS (cl/ut/sn seguram bombsite; en/op/fp tomam espaço) + role + sub-arquétipo.
 // lurker/support/âncora puxam o time pro CT; entry/agressivo puxam pro T. zero-centrado: time
@@ -1068,6 +1075,7 @@ function prepTime(t,mapa){
     tEdge:js.reduce((s,j)=>s+ladoFit(j)[1],0)/js.length,
     cls:js.map(j=>j.cl||40),agr:js.map(j=>subAgr(j)),exposure:js.map(j=>exposureProfile(j)),
     preservation:js.map(j=>preservationValue(j)),
+    tradeContext:js.map(j=>tradeContextProfile(j)),
     ops:js.map(j=>j.op??50),trs:js.map(j=>j.tr??50), // categorias HLTV por jogador (tipo de kill)
     // força de abertura do time (op/entry/sniper/util — flashes ajudam a abrir): inclina o PRIMEIRO duelo
     open:js.reduce((s,j)=>s+((j.op??50)*.35+(j.en??45)*.30+(j.sn??0)*.20+(j.ut??50)*.15),0)/js.length,
@@ -1140,6 +1148,8 @@ function combateRound(a,b,ctx){
   const ctVence=()=>aCT?"A":"B", tVence=()=>aCT?"B":"A"; // quem leva o round se o objetivo decide
   const sideOf=team=>team===a?(aCT?"CT":"TR"):(aCT?"TR":"CT");
   const preservationEdge=(team,alive)=>alive.reduce((sum,index)=>sum+team.preservation[index],0)/alive.length-PRESERVATION_MEAN;
+  const tradeChance=(team,alive,victimIndex)=>{const readiness=alive.reduce((sum,index)=>sum+team.tradeContext[index].readiness,0)/alive.length;
+    return C.TRADE_CHANCE+C.TRADE_CONTEXT*((readiness-TRADE_CONTEXT_MEAN.readiness)+(team.tradeContext[victimIndex].tradeability-TRADE_CONTEXT_MEAN.tradeability));};
   let primeira=true,fim=null,g=0;               // fim: "A"/"B" se o round fecha por objetivo/save antes da eliminação
   let plantado=false,tempo=0,pp=0,metodo=null,saveTeam=null; // saveTeam só marca a decisão explícita de guardar
   let clutch=null;                              // 1ª vez que um lado fica em 1vX (pra medir/registrar o clutch)
@@ -1160,9 +1170,9 @@ function combateRound(a,b,ctx){
     primeira=false;
     // TRADE/refrag: o time que LEVOU a kill troca na hora (o entry abriu, mas é trocado)
     const vVnow=aWins?vivA:vivB,vPnow=aWins?vivB:vivA; // venc do duelo segue vivo; perd perdeu 1
-    // frequência de trade fixa (calibrada); QUEM pega o trade kill é que pende pra tr (fidelidade na stat).
+    // oportunidade de trade segue prontidão/spacing; QUEM pega o trade kill pende pra tr.
     // NÃO troca contra um CLUTCHER (vencedor sozinho): o último vivo isola os duelos — sem isso o 1vX morre injusto.
-    if(vPnow.length>0&&vVnow.length>1&&rndF()<C.TRADE_CHANCE){
+    if(vPnow.length>0&&vVnow.length>1&&rndF()<tradeChance(perd,vPnow,vi)){
       const vi2=duelo(perd,vPnow,buyP,venc,vVnow,buyV,false,true,phase,sideOf(venc));
       mata(aWins?vivA:vivB,vi2);
       const kastTradeCredit=rndF()<C.KAST_TRADE_P;
