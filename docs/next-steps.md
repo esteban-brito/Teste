@@ -292,13 +292,13 @@ Ainda falta em R3:
 
 ### Etapa R4 — auditoria de AWPer, sobrevivência e playstyle
 
-**Status:** em andamento. A primeira camada observável foi adicionada à
-auditoria profunda sem alterar o motor: o relatório separa função primária,
-função de combate efetiva, par primária/secundária, vitória/derrota e a
-distribuição global de compras. O próprio relatório valida cobertura dos 85
-IDs, resultados, grupos e duas observações de compra por round. Métricas por lado,
-arma e estado econômico individual continuam bloqueadas até a etapa isolada de
-telemetria; não devem ser inferidas das médias atuais.
+**Status:** R4.1 e R4.2 concluídas; diagnóstico para o gate de R5 em andamento.
+A auditoria profunda separa função primária, função de combate efetiva, par
+primária/secundária, vitória/derrota, lado e compra do time. A telemetria opcional
+reconcilia K/D/A/KAST/ADR por round com o resultado final e preserva resultado e
+consumo de RNG por igualdade profunda no golden. O relatório valida cobertura
+dos 85 IDs, resultados e todas as partições. Arma, inventário e compra individual
+continuam indisponíveis e não devem ser inferidos do estado econômico do time.
 Evidência reproduzível: `docs/role-fidelity-audit-2026-07-23.md`.
 
 Objetivo: verificar, sem presumir culpa, se algum perfil recebe rating alto por
@@ -324,6 +324,15 @@ Aceitação:
 - conclusão distingue problema do simulador, problema do rating e simples
   consequência da composição/confronto;
 - nenhuma mudança de balanceamento no commit da auditoria.
+
+Achados do gate:
+
+- AWPer não possui comportamento de save distintivo no modelo atual;
+- chance de morte trocada e crédito de KAST são praticamente iguais entre roles;
+- IGL primário não é grupo de combate homogêneo e deve ser estratificado pelo
+  papel secundário;
+- rounds eco existem; sua ausência não explica o ADR observado;
+- qualquer R5 precisa definir alvos antes/depois sem condições por jogador.
 
 ### Etapa R5 — balanceamento condicional
 

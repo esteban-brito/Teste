@@ -1,7 +1,7 @@
-# Auditoria de identidade individual — Etapa R4.1
+# Auditoria de identidade individual — Etapas R4.1 e R4.2
 
 Data: 23 de julho de 2026  
-Escopo: caracterização diagnóstica, sem balanceamento
+Escopo: caracterização diagnóstica e telemetria opcional, sem balanceamento
 
 ## Contrato da execução
 
@@ -20,18 +20,34 @@ round-robin determinística e o contrato Mulberry32 existente. A execução cobr
 - 8 ciclos e 1.088 mapas;
 - 22.446 rounds;
 - 128 mapas por jogador;
-- orientação A/B equilibrada, que não deve ser confundida com produção CT/TR.
+- orientação A/B e exposição aos lados CT/TR equilibradas.
 
-O JSON completo do schema 2 foi construído duas vezes no mesmo processo. Os
+O JSON completo do schema 3 foi construído duas vezes no mesmo processo. Os
 dois resultados produziram o mesmo SHA-256:
 
 ```text
-18a77a4aa8cba855a1a7cfc3ba60605c69de5a3b16b42229761a5ce9c6e26a23
+eaf99d88c72cf6f0e912017a36865bdb9a329051b784a018ef0e930df48a0584
 ```
 
 O relatório se autovalida antes de ser retornado: cobertura de todos os grupos,
-player-rounds, resultados por jogador, duas observações de compra por round e
-igualdade global entre kills e deaths.
+player-rounds, resultados por jogador, partições CT/TR e por compra, igualdade
+global entre kills e deaths e reconciliação de K/D/A/KAST da telemetria com o
+resultado final de cada mapa.
+
+## Telemetria R4.2
+
+`simularMapa` aceita `{telemetry: true}` como opção exclusivamente diagnóstica.
+Quando habilitada, registra os fatos que o motor já decidiu em cada round:
+
+- lado e compra do time;
+- kills, deaths, assists, dano e sobrevivência por jogador;
+- abertura, trade imediato e crédito efetivo de KAST;
+- plant, método do resultado, clutch e ramo explícito de save.
+
+A opção não cria chamadas ao RNG nem altera placar, timeline, economia ou
+estatísticas. O golden executa a mesma seed em motores novos com a opção desligada
+e ligada, remove somente a telemetria e exige igualdade profunda do resultado
+completo. Ele também reconstitui K/D/A/KAST/ADR dos rounds e confere os totais.
 
 ## Resultado por função primária
 
@@ -47,6 +63,43 @@ igualdade global entre kills e deaths.
 Essas taxas são agregadas por player-round. O relatório mantém também as
 distribuições por jogador-mapa, e não somente as médias desta tabela.
 
+## Sobrevivência e save por lado
+
+| Função | DPR CT | Sobrevive CT | Save CT | DPR TR | Sobrevive TR | Save TR |
+|---|---:|---:|---:|---:|---:|---:|
+| AWPer | 0,686 | 31,4% | 0,7% | 0,677 | 32,3% | 1,3% |
+| Rifler | 0,740 | 26,0% | 0,5% | 0,728 | 27,2% | 0,9% |
+| Entry | 0,727 | 27,3% | 0,6% | 0,713 | 28,7% | 1,0% |
+| Lurker | 0,710 | 29,0% | 0,8% | 0,708 | 29,2% | 1,4% |
+| Support | 0,696 | 30,4% | 0,8% | 0,674 | 32,6% | 1,5% |
+| IGL | 0,653 | 34,7% | 0,9% | 0,635 | 36,5% | 1,5% |
+
+`Save` significa que o jogador sobreviveu em um ramo de save já existente. O
+motor não mantém inventário individual; portanto, a coluna não prova que uma AWP
+ou outra arma específica foi preservada.
+
+O AWPer tem DPR menor que Rifler, Entry e Lurker, mas não possui um mecanismo de
+save distintivo. O IGL primário é o grupo que mais sobrevive. Isso confirma o
+sintoma agregado, mas não autoriza a conclusão comportamental de que todo IGL
+está “baitando”: a função primária mistura perfis de combate incompatíveis.
+
+## Trade e composição do KAST
+
+| Função | Mortes trocadas | Crédito KAST entre mortes trocadas |
+|---|---:|---:|
+| AWPer | 31,2% | 44,7% |
+| Rifler | 31,8% | 44,9% |
+| Entry | 32,0% | 44,3% |
+| Lurker | 32,0% | 44,7% |
+| Support | 32,2% | 45,4% |
+| IGL | 30,9% | 44,9% |
+
+As diferenças são mínimas e o crédito efetivo converge para a probabilidade
+global já existente de 45%. Logo, o motor atual não produz uma identidade de
+trade/KAST própria para Support, Entry ou outro papel. Esta é evidência do local
+do modelo que precisará ser comparado em eventual R5; ainda não é uma proposta
+de novos pesos.
+
 ## A média IGL esconde a função de combate
 
 | Par | N | Rating | KPR | DPR | APR | KAST | ADR |
@@ -56,11 +109,9 @@ distribuições por jogador-mapa, e não somente as médias desta tabela.
 | IGL/Entry | 5 | 0,972 | 0,506 | 0,661 | 0,239 | 69,8% | 64,4 |
 | IGL/Support | 8 | 0,893 | 0,467 | 0,613 | 0,307 | 74,0% | 63,2 |
 
-Conclusão restrita aos dados simulados: `IGL` isoladamente não é uma unidade
-válida para diagnosticar identidade de combate. O par primária/secundária deve
-ser preservado em toda comparação posterior. A diferença não autoriza ainda
-alterar multiplicadores; primeiro é necessário localizar quanto vem dos dados
-dos jogadores, do papel usado pelo motor e do fluxo de combate.
+`IGL` isoladamente não é unidade válida para diagnosticar identidade de combate.
+O par primária/secundária deve ser preservado em toda comparação posterior. A
+diferença também mostra por que uma correção uniforme por role seria arriscada.
 
 ## Economia observada
 
@@ -71,46 +122,49 @@ dos jogadores, do papel usado pelo motor e do fluxo de combate.
 | Force | 3.410 | 7,6% |
 | Full | 32.308 | 72,0% |
 
-Isso rejeita a hipótese de que o simulador não produz rounds eco. Não permite,
-porém, declarar o ADR fiel: o resultado individual ainda é agregado por mapa e
-não pode ser relacionado a compra, arma, lado ou estado de sobrevivência.
+O relatório agora relaciona essas compras de time à produção individual de cada
+round. A presença de 10,7% de ecos rejeita a causa proposta de “ausência de
+rounds eco” para o ADR observado. Declarar a média de ADR inflada ainda exige um
+alvo empírico equivalente em época, nível, formato e composição de roles.
 
-## Achados que permanecem abertos
+## Diagnóstico do laudo externo
 
-1. AWPers continuam em aproximadamente 0,68 DPR. A auditoria confirma o
-   sintoma, mas ainda não separa exposição, save, lado e perfil agressivo.
-2. `IGL/AWPer` apresenta produção muito acima de `AWPer` primário. É necessário
-   medir o caminho efetivo do papel de combate antes de mudar qualquer regra.
-3. Support registra 72,2% KAST. A média não informa quantos créditos vieram de
-   kill, assistência, sobrevivência ou trade.
-4. Entry tem 0,192 APR, praticamente igual a Rifler (0,186) e abaixo de Lurker
-   (0,205). O suposto paradoxo de A/K não aparece quando se usa APR.
-5. olofmeister permanece o maior desvio absoluto: rating real 1,27 contra
-   1,081 simulado nesta agenda. Ele é caso de reprodução, não alvo de regra.
+1. A igualdade global KPR=DPR é uma invariante correta, mas não basta para
+   classificar todo o sistema como robusto ou realista.
+2. A crítica ao DPR/survival do AWPer é material; a causa específica alegada
+   (arma e economia quebrada) não pode ser provada sem inventário individual.
+3. A linha IGL realmente sobrevive mais, porém o rótulo “baiter” não é provado.
+   O agregado é fortemente afetado pelo segundo papel e pelos atributos.
+4. Rifler e Lurker permanecem próximos; a telemetria também não encontrou uma
+   grande separação de sobrevivência entre eles.
+5. Support não recebe identidade especial de trade/KAST. Esta crítica é
+   sustentada diretamente pelos eventos de round.
+6. A hipótese de inflação do ADR por ausência de eco é rejeitada pelos dados.
+7. `A/K` não deve orientar o ajuste: o motor e o relatório usam APR. Entry tem
+   0,192 APR, próximo de Rifler (0,186), não o maior valor entre as funções.
+8. olofmeister segue como maior desvio absoluto, rating real 1,27 contra 1,081
+   simulado nesta agenda. É caso de reprodução, nunca alvo nominal de regra.
 
-## Limite desta etapa
+## Limites restantes
 
-O relatório não consegue observar, sem telemetria adicional:
+Mesmo com a telemetria, o relatório não observa:
 
-- KPR, DPR, ADR, KAST e sobrevivência separados por CT/TR;
-- compra do time ligada à produção individual de cada round;
-- save por jogador ou preservação de arma;
-- arma usada, porque o motor atual não mantém inventário individual;
+- inventário, arma usada ou arma preservada por jogador;
+- compra individual, pois a compra disponível é um estado do time;
 - assistência de dano separada de flash assist;
-- componentes factuais do KAST por round.
+- dados empíricos externos equivalentes que convertam caracterização em alvo;
+- IFCS válido; esta auditoria continua sendo uma prova interna do simulador.
 
-Essas ausências são declaradas no próprio JSON. Nenhuma conclusão deve simular
-essa granularidade a partir de médias agregadas.
+## Gate para balanceamento
 
-## Gate para R4.2
-
-A próxima etapa permitida é somente telemetria opcional dos eventos que já
-existem no motor. Ela deve manter quantidade e ordem das chamadas ao RNG, placar,
-timeline, estatísticas e goldens exatamente iguais. Armas individuais ou novas
-regras de save são mudanças de modelo e ficam fora da telemetria.
+R4.2 encerra a lacuna de observabilidade de rounds sem mudar o modelo. Antes de
+R5, cada hipótese de alteração deve receber alvo mensurável, comparação pareada
+nas mesmas seeds e avaliação por role primária/secundária, lado, compra, caudas e
+métricas macro. Armas individuais ou novas regras de save são mudanças de modelo,
+não extensões de telemetria.
 
 Nenhum `CFG_*`, peso, threshold, dado de jogador, role, rating, regra econômica
-ou golden foi alterado nesta etapa.
+ou fixture golden foi alterado nas etapas R4.1 e R4.2.
 
 ## Validação
 
@@ -122,7 +176,10 @@ npm run lint
 npm run test:data
 npm run test:regression
 npm run test:benchmark
+npm run test:e2e
 ```
 
-O golden completo permaneceu idêntico. O benchmark histórico também permaneceu
-verde em 45.900 mapas e 941.838 rounds.
+O benchmark histórico permaneceu verde em 45.900 mapas e 941.838 rounds. O E2E
+completo passou pelos fluxos do editor, Simular e jogo principal. Dentro da
+regressão, o golden prova a paridade opcional da telemetria, o estado posterior
+do RNG e a reconciliação dos eventos com o resultado final.

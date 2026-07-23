@@ -207,6 +207,52 @@ function validateLightParity(){
   assert.ok(light.rounds.every(round=>round.scoreboard.a===null&&round.scoreboard.b===null),"modo leve criou snapshots de placar");
 }
 
+function validateTelemetryParity(){
+  const run=enabled=>{
+    const X=loadEngines(),teams=buildCombatTeams(X),a=combatTeam(X,teams,0,true),b=combatTeam(X,teams,1);
+    X.srand(20260723);
+    const primary=plain(X.simularMapa(a,b,X.forcaDoDia(a.ef,a.quim),X.forcaDoDia(b.ef,b.quim),"Nuke",false,enabled?{telemetry:true}:undefined));
+    const followUp=plain(X.simularMapa(a,b,50,50,"Inferno",false));
+    return {primary,followUp};
+  };
+  const baseRun=run(false),tracedRun=run(true),base=baseRun.primary,traced=tracedRun.primary,telemetry=traced.telemetry;
+  assert.ok(telemetry&&telemetry.schemaVersion===1,"telemetria ausente ou sem versao");
+  assert.equal(telemetry.rounds.length,traced.totalRounds,"telemetria nao cobre todos os rounds");
+  telemetry.rounds.forEach((round,index)=>{
+    assert.equal(round.round,index+1,"telemetria fora de ordem");
+    assert.equal(round.players.A.length,5,"telemetria A sem cinco jogadores");
+    assert.equal(round.players.B.length,5,"telemetria B sem cinco jogadores");
+    const players=[...round.players.A,...round.players.B];
+    assert.equal(new Set(players.map(player=>player.id)).size,10,"telemetria repetiu ID no round");
+    players.forEach(player=>{
+      const components=player.kastComponents;
+      assert.equal(Boolean(player.kastCredit),components.kill||components.assist||components.survived||components.traded,"componentes KAST divergem do credito");
+      if(player.saved){
+        const playerTeam=round.players.A.includes(player)?"A":"B";
+        assert.equal(player.survived,true,"save creditado a jogador morto");
+        assert.equal(round.result.saveTeam,playerTeam,"save creditado ao time errado");
+      }
+    });
+    assert.equal(players.reduce((total,player)=>total+player.kills,0),round.events.length,"kills do round divergem dos eventos");
+    assert.equal(players.reduce((total,player)=>total+player.deaths,0),round.events.length,"deaths do round divergem dos eventos");
+  });
+  for(const [teamKey,statsKey] of [["A","statsA"],["B","statsB"]]){
+    const totals=Array.from({length:5},()=>({k:0,d:0,a:0,kast:0,dmg:0}));
+    telemetry.rounds.forEach(round=>round.players[teamKey].forEach((player,index)=>{
+      totals[index].k+=player.kills;totals[index].d+=player.deaths;totals[index].a+=player.assists;
+      totals[index].kast+=player.kastCredit;totals[index].dmg+=player.damage;
+    }));
+    traced[statsKey].forEach((player,index)=>{
+      assert.deepEqual([totals[index].k,totals[index].d,totals[index].a],[player.k,player.d,player.a],`totais da telemetria divergiram em ${teamKey}/${index}`);
+      assert.equal(+(totals[index].kast/traced.totalRounds).toFixed(3),player.kast,`KAST da telemetria divergiu em ${teamKey}/${index}`);
+      assert.equal(Math.round(totals[index].dmg/traced.totalRounds),player.adr,`ADR da telemetria divergiu em ${teamKey}/${index}`);
+    });
+  }
+  delete traced.telemetry;
+  assert.deepEqual(traced,base,"ativar telemetria alterou o resultado observado");
+  assert.deepEqual(tracedRun.followUp,baseRun.followUp,"ativar telemetria alterou o estado posterior do RNG");
+}
+
 function firstDifference(expected,actual,pathName="$"){
   if(Object.is(expected,actual))return null;
   if(typeof expected!==typeof actual||expected===null||actual===null)return {path:pathName,expected,actual};
@@ -235,6 +281,7 @@ console.log("— GOLDEN DO SIMULADOR (seed + timeline completa) —");
 const current=buildCurrent();
 validateCurrent(current);
 validateLightParity();
+validateTelemetryParity();
 validateNameInvariance();
 assert.deepEqual(buildCurrent(),current,"mesmos inputs e seeds nao repetiram o resultado");
 
@@ -256,5 +303,6 @@ if(difference){
 console.log(`  ${okMark(true)} 3 cenarios identicos ao aprovado`);
 console.log(`  ${okMark(true)} repeticao deterministica em motor novo`);
 console.log(`  ${okMark(true)} modo leve preserva placar e timeline`);
+console.log(`  ${okMark(true)} telemetria preserva resultado e consumo de RNG`);
 console.log(`  ${okMark(true)} nomes nao alteram avaliacao nem resultado esportivo`);
 console.log(`${okMark(true)} contrato Mulberry32 protegido por resultados observaveis`);

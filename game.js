@@ -49,6 +49,7 @@
      placar[2] · vencedor/vencedorNome · mapa · totalRounds · half1
      rounds[]: {r,pa,pb,venceA,ladoA/B,troca,plantado,buyA/B,clutchX,clutchWon,destaque,snapA/B}
      statsA/B[]: {nick,k,d,a,rating}  (vazios em modo leve)
+     telemetry?: diagnóstico round-a-round, presente somente com {telemetry:true}
    Fluxo: ATRIBUTOS → avaliarJogador → POOL → TEAMS → forcaTime → simularMapa/Serie.
    ──────────────────────────────────────────────────────────────────── */
 /* ╔═══════════════════════════════════════════════════════════════════╗
@@ -1024,6 +1025,12 @@ function prepTime(t,mapa){
     stats:js.map(j=>({nick:j.nick||t.nome,impacto:FA_IMPACTO[j.primario]??1,prim:j.primario,ovr:j.ovr??16,ratingBase:ratingCompetitivo(j),ut:j.ut??50,k:0,d:0,a:0,dmg:0,tradeK:0,
       fa:{kills:[],mortes:[],assists:0,roundsKAST:0,multi:{},opK:0,opD:0},_kRound:0,_contribRound:false}))};
 }
+const TELEMETRY_SCHEMA_VERSION=1;
+function telemetryPlayerId(team,index){const player=team.js[index];return player.id||player.nome||player.nick||`${team.nome}:${index}`;}
+function telemetryTeam(team){return {name:team.nome,players:team.js.map((player,index)=>({
+  index,id:telemetryPlayerId(team,index),nick:player.nick||player.nome||team.nome,
+  role:player.primario||null,secondaryRole:player.secundario||null,combatRole:player.combatRole||null
+}))};}
 // ROUND VIVO — o round é uma SEQUÊNCIA DE DUELOS e o vencedor EMERGE deles.
 //  • quem GANHA cada duelo = força do time (pEdgeA, vinda do OVR/efetiva/lado/momentum/economia);
 //  • quem FRAGA dentro do time = firepower (pondera matador e vítima). Eixos desacoplados.
@@ -1037,6 +1044,11 @@ function combateRound(a,b,ctx){
   const vivA=[0,1,2,3,4],vivB=[0,1,2,3,4];
   const mata=(arr,i)=>arr.splice(arr.indexOf(i),1); // remoção in-place (mesma ordem dos vivos; zero alocação por kill)
   const buyA=ctx.buyA,buyB=ctx.buyB;
+  const trace=ctx.trace||null;
+  const before=trace?[a,b].map(team=>team.stats.map(stat=>({
+    k:stat.k,d:stat.d,a:stat.a,dmg:stat.dmg,tradeK:stat.tradeK,kast:stat.fa.roundsKAST
+  }))):null;
+  if(trace)trace.events=[];
   const roundKills=[]; // {team,rec} → roundGanho marcado no fim (só kills do vencedor contam swing)
   const pick=(arr,fn)=>{let tot=0;for(let i=0;i<arr.length;i++){_psDuelo[i]=fn(arr[i]);tot+=_psDuelo[i];}tot=tot||1;
     let r=rndF()*tot;for(let i=0;i<arr.length;i++)if((r-=_psDuelo[i])<0)return arr[i];return arr[arr.length-1];};
@@ -1060,9 +1072,18 @@ function combateRound(a,b,ctx){
     if(opening){venc.stats[ki].fa.opK++;perd.stats[vi].fa.opD++;}
     // ASSIST preso à kill: um companheiro do matador (não ele) habilitou a morte com util/dano.
     // Ponderado por utility; quem já morreu entra com desconto (flash/dano antes de cair). Ver CFG_SIM.
+    let ai=null;
     if(rndF()<C.ASSIST_CHANCE*(opening?C.ASSIST_OPEN_MULT:1)){
-      const ai=pick(ASSIST_SLOTS[ki],i=>(C.ASSIST_BASE+C.ASSIST_UT_W*(venc.stats[i].ut||40))*(vivV.includes(i)?1:C.ASSIST_DEAD_W));
+      ai=pick(ASSIST_SLOTS[ki],i=>(C.ASSIST_BASE+C.ASSIST_UT_W*(venc.stats[i].ut||40))*(vivV.includes(i)?1:C.ASSIST_DEAD_W));
       venc.stats[ai].a++;venc.stats[ai].fa.assists++;venc.stats[ai]._contribRound=true;venc.stats[ai].dmg+=C.ADR_SCALE*(C.ADR_AST+rndF()*30);
+    }
+    if(trace){
+      const killerTeam=venc===a?"A":"B",victimTeam=perd===a?"A":"B";
+      trace.events.push({sequence:trace.events.length+1,type:"kill",opening:!!opening,trade:!!trade,
+        killer:{team:killerTeam,index:ki,id:telemetryPlayerId(venc,ki),buy:buyV},
+        victim:{team:victimTeam,index:vi,id:telemetryPlayerId(perd,vi),buy:buyP},
+        assist:ai===null?null:{team:killerTeam,index:ai,id:telemetryPlayerId(venc,ai)},
+        victimTraded:false,kastTradeCredit:false});
     }
     return vi;
   }
@@ -1070,7 +1091,7 @@ function combateRound(a,b,ctx){
   const aCT=ctx.aIsCT;                          // time a está no CT neste round? (b é o T, e vice-versa)
   const ctVence=()=>aCT?"A":"B", tVence=()=>aCT?"B":"A"; // quem leva o round se o objetivo decide
   let primeira=true,fim=null,g=0;               // fim: "A"/"B" se o round fecha por objetivo/save antes da eliminação
-  let plantado=false,tempo=0,pp=0,metodo=null;  // metodo: tempo|defuse|detona|close|elim → define o prêmio (CS2: objetivo=3500)
+  let plantado=false,tempo=0,pp=0,metodo=null,saveTeam=null; // saveTeam só marca a decisão explícita de guardar
   let clutch=null;                              // 1ª vez que um lado fica em 1vX (pra medir/registrar o clutch)
   while(vivA.length>0&&vivB.length>0&&fim===null&&g++<30){
     let p=ctx.pEdgeA;
@@ -1083,6 +1104,7 @@ function combateRound(a,b,ctx){
     const aWins=rndF()<p;
     const venc=aWins?a:b,perd=aWins?b:a,vivV=aWins?vivA:vivB,vivP=aWins?vivB:vivA,buyV=aWins?buyA:buyB,buyP=aWins?buyB:buyA;
     const vi=duelo(venc,vivV,buyV,perd,vivP,buyP,primeira,false);
+    const victimEvent=trace?trace.events[trace.events.length-1]:null;
     mata(aWins?vivB:vivA,vi);
     primeira=false;
     // TRADE/refrag: o time que LEVOU a kill troca na hora (o entry abriu, mas é trocado)
@@ -1092,7 +1114,9 @@ function combateRound(a,b,ctx){
     if(vPnow.length>0&&vVnow.length>1&&rndF()<C.TRADE_CHANCE){
       const vi2=duelo(perd,vPnow,buyP,venc,vVnow,buyV,false,true);
       mata(aWins?vivA:vivB,vi2);
-      if(rndF()<C.KAST_TRADE_P)perd.stats[vi]._contribRound=true; // KAST: parte de quem morreu e foi TROCADO ganha crédito de "traded" (KAST_TRADE_P amortece p/ ~72% real) — fiel ao "T" do KAST
+      const kastTradeCredit=rndF()<C.KAST_TRADE_P;
+      if(kastTradeCredit)perd.stats[vi]._contribRound=true; // KAST: parte de quem morreu e foi TROCADO ganha crédito de "traded" (KAST_TRADE_P amortece p/ ~72% real) — fiel ao "T" do KAST
+      if(victimEvent){victimEvent.victimTraded=true;victimEvent.kastTradeCredit=kastTradeCredit;}
     }
     if(vivA.length===0||vivB.length===0)break; // eliminação total decide na hora
     // registra a 1ª situação de clutch (1vX): o solitário enfrenta X inimigos. medido/aproveitado depois.
@@ -1107,7 +1131,7 @@ function combateRound(a,b,ctx){
     if(!plantado){
       // SAVE do T: muito atrás (>=2) e sem dinheiro → desiste do plant, guarda armas → CT vence no tempo (sobreviventes vivem)
       if(vivCT.length-vivT.length>=2){const eco=buyT==="eco"||buyT==="force";
-        if(rndF()<(eco?C.SAVE_BASE:C.SAVE_BASE*.35)+(vivCT.length-vivT.length)*C.SAVE_MEN){fim=ctVence();metodo="tempo";break;}}
+        if(rndF()<(eco?C.SAVE_BASE:C.SAVE_BASE*.35)+(vivCT.length-vivT.length)*C.SAVE_MEN){fim=ctVence();metodo="tempo";saveTeam=tVence();break;}}
       // PLANT: chance cresce com o tempo e com a vantagem de homem do T (tomou o site)
       const pPlant=clamp(C.PLANT_BASE+tempo*C.PLANT_TEMPO+(vivT.length-vivCT.length)*C.PLANT_MEN,0,.92);
       if(rndF()<pPlant){plantado=true;pp=0;}
@@ -1116,7 +1140,7 @@ function combateRound(a,b,ctx){
       pp++;
       // SAVE do CT: pós-plant muito atrás (>=2) e sem grana → não retoma → T detona (sobreviventes CT vivem)
       if(vivT.length-vivCT.length>=2){const eco=buyCT==="eco"||buyCT==="force";
-        if(rndF()<(eco?C.SAVE_BASE:C.SAVE_BASE*.35)+(vivT.length-vivCT.length)*C.SAVE_MEN){fim=tVence();metodo="detona";break;}}
+        if(rndF()<(eco?C.SAVE_BASE:C.SAVE_BASE*.35)+(vivT.length-vivCT.length)*C.SAVE_MEN){fim=tVence();metodo="detona";saveTeam=ctVence();break;}}
       // DEFUSE: CT com pelo menos paridade limpa o site e defusa (cresce com a vantagem de homem)
       if(vivCT.length>=vivT.length&&rndF()<C.DEFUSE_BASE+Math.max(0,vivCT.length-vivT.length)*C.DEFUSE_MEN){fim=ctVence();metodo="defuse";break;}
       // DETONAÇÃO: relógio da bomba estourou → T vence o post-plant
@@ -1139,6 +1163,26 @@ function combateRound(a,b,ctx){
   const clutchWon=clutch?(clutch.aLone?venceA:!venceA):null; // o solitário venceu o round?
   // método por ELIMINAÇÃO: com bomba no chão, o vencedor ainda resolve o objetivo (CT defusa / T detona)
   if(!metodo)metodo=plantado?(venceA===aCT?"defuse":"detona"):"elim";
+  if(trace){
+    const wasTraded={A:[false,false,false,false,false],B:[false,false,false,false,false]};
+    const tradeCredit={A:[false,false,false,false,false],B:[false,false,false,false,false]};
+    trace.events.forEach(event=>{
+      if(event.victimTraded)wasTraded[event.victim.team][event.victim.index]=true;
+      if(event.kastTradeCredit)tradeCredit[event.victim.team][event.victim.index]=true;
+    });
+    const finishPlayers=(team,teamCode,viv,buy,base)=>team.stats.map((stat,index)=>{
+      const kills=stat.k-base[index].k,deaths=stat.d-base[index].d,assists=stat.a-base[index].a;
+      const survived=viv.includes(index),traded=tradeCredit[teamCode][index];
+      return {index,id:telemetryPlayerId(team,index),side:teamCode==="A"?(aCT?"CT":"TR"):(aCT?"TR":"CT"),buy,
+        kills,deaths,assists,damage:+(stat.dmg-base[index].dmg).toFixed(6),tradeKills:stat.tradeK-base[index].tradeK,
+        survived,saved:saveTeam===teamCode&&survived,wasTraded:wasTraded[teamCode][index],
+        kastCredit:stat.fa.roundsKAST-base[index].kast,
+        kastComponents:{kill:kills>0,assist:assists>0,survived,traded}};
+    });
+    trace.result={winner:venceA?"A":"B",planted:plantado,method:metodo,saveTeam,
+      survivors:{A:vivA.length,B:vivB.length},clutch:clutch?{team:clutch.aLone?"A":"B",opponents:clutch.x,won:clutchWon}:null};
+    trace.players={A:finishPlayers(a,"A",vivA,buyA,before[0]),B:finishPlayers(b,"B",vivB,buyB,before[1])};
+  }
   const premioV=(metodo==="defuse"||metodo==="detona")?PREMIO_OBJETIVO:PREMIO_VITORIA; // CS2: objetivo paga 3500
   return {venceA,sobreviventes:vivVfinal.length,destaque,plantado,metodo,premioV,killsA:kA,killsB:kB,clutchX:clutch&&clutch.x,clutchWon};
 }
@@ -1190,10 +1234,13 @@ const MAPAS_POOL=["Mirage","Inferno","Nuke","Ancient","Anubis","Dust2","Train","
 // simula um mapa completo round a round; retorna placar, vencedor, timeline e stats por jogador.
 // leve=true (jogos que ninguém assiste: playoffs NPC / bancadas): pula snapshots do scoreboard e o
 // cálculo de rating — MESMO combate, mesmo consumo de RNG (placar idêntico sob a mesma semente).
-function simularMapa(A,B,fA,fB,mapaForcado,leve){
+// options.telemetry=true observa decisões já tomadas; não chama RNG nem altera o resultado esportivo.
+function simularMapa(A,B,fA,fB,mapaForcado,leve,options){
   const C=CFG_SIM;
   const mapa=mapaForcado||MAPAS_POOL[Math.floor(rndF()*MAPAS_POOL.length)]; // mapa decidido ANTES (modula o combate)
   const a=prepTime(A,mapa),b=prepTime(B,mapa);
+  const telemetry=options&&options.telemetry?{schemaVersion:TELEMETRY_SCHEMA_VERSION,kind:"polvora-round-events",map:mapa,
+    teams:{A:telemetryTeam(a),B:telemetryTeam(b)},rounds:[]}:null;
   const formaDiaA=gaussF()*C.FORMA_DIA,formaDiaB=gaussF()*C.FORMA_DIA;
   let pa=0,pb=0,mA=800,mB=800,lsA=0,lsB=0,r=0;
   let sA=0,sB=0; // sequências de vitória (momentum)
@@ -1240,7 +1287,8 @@ function simularMapa(A,B,fA,fB,mapaForcado,leve){
     // (vantagem de homem, clutch, save, trade nascem daí). pistol ≈ cara-ou-coroa → azarão tem chance.
     // viés do mapa: quem está de CT num mapa CT-sided ganha o edge por duelo (Nuke pesa p/ os dois lados)
     const pEdgeA=clamp(logistica(fRA,fRB,pistol?C.D_DUELO_PIST:C.D_DUELO)+(ladoA==="CT"?pLadoMapa:-pLadoMapa),.03,.97);
-    const res=combateRound(a,b,{pEdgeA,openEdgeA,buyA,buyB,aIsCT:ladoA==="CT"});
+    const roundTrace=telemetry?{round:r,scoreBefore:[pa,pb],sides:{A:ladoA,B:ladoB},buys:{A:buyA,B:buyB}}:null;
+    const res=combateRound(a,b,{pEdgeA,openEdgeA,buyA,buyB,aIsCT:ladoA==="CT",trace:roundTrace});
     const venceA=res.venceA;
     // COFRE CS2: perdedor recebe o NÍVEL atual da escada (1ª derrota=1400) e sobe 1; vencedor
     // ganha o prêmio PELO MÉTODO (bomba/defuse=3500, resto=3250) e o nível do rival DESCE 1 (não zera).
@@ -1263,6 +1311,7 @@ function simularMapa(A,B,fA,fB,mapaForcado,leve){
     const snapA=leve?null:a.stats.map(s=>({k:s.k,d:s.d})),snapB=leve?null:b.stats.map(s=>({k:s.k,d:s.d}));
     rounds.push({r,pa,pb,venceA,ladoA,ladoB,troca:(r===13),plantado:res.plantado,buyA,buyB,
       clutchX:res.clutchX,clutchWon:res.clutchWon,destaque:res.destaque,snapA,snapB});
+    if(roundTrace){roundTrace.scoreAfter=[pa,pb];telemetry.rounds.push(roundTrace);}
   }
   // rating FALLEnANGELs por jogador (contextual: swing, eco, KAST, multi-kills)
   const totalR=pa+pb;
@@ -1270,10 +1319,12 @@ function simularMapa(A,B,fA,fB,mapaForcado,leve){
     const rating=fallenAngels({...s.fa,totalRounds:totalR,impacto:s.impacto,prim:s.prim,ovr:s.ovr,ratingBase:s.ratingBase,dmg:s.dmg,tradeK:s.tradeK});
     return {nick:s.nick,k:s.k,d:s.d,a:s.a,rating:+rating.toFixed(2),
       kast:+((s.fa.roundsKAST||0)/totalR).toFixed(3),adr:Math.round((s.dmg||0)/totalR)};});
-  return {placar:[pa,pb],vencedorNome:pa>pb?A.nome:B.nome,vencedor:pa>pb?A:B,rounds,
+  const result={placar:[pa,pb],vencedorNome:pa>pb?A.nome:B.nome,vencedor:pa>pb?A:B,rounds,
     half1,mapa,
     nomeA:A.nome,nomeB:B.nome,meuA:!!A.meu,meuB:!!B.meu,corA:A.cor,corB:B.cor,
     statsA:leve?[]:rate(a.stats),statsB:leve?[]:rate(b.stats),totalRounds:totalR}; // leve: rating não é visto → não calcula
+  if(telemetry)result.telemetry=telemetry;
+  return result;
 }
 
 /* ┌─ PÓLVORA ─ série best-of (MD1 na suíça, MD3 nos playoffs) ─────────┐ */
