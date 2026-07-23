@@ -104,6 +104,11 @@ completo. Tuning tático numérico por role não pode usar faixas inventadas.
 
 ### R5.4 — fronteiras puras
 
+**Concluída.** `combatProfile` e os componentes somáveis de `fallenAngels`
+foram extraídos com golden idêntico e delta zero em 1.088 mapas pareados. A role
+ativa de IGL permanece inalterada. Evidência em
+`docs/r5-structural-extraction-2026-07-23.md`.
+
 Em commit estrutural e com golden idêntico:
 
 - extrair `combatProfile` com o comportamento corrente;

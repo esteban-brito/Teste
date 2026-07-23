@@ -889,8 +889,8 @@ const CFG_FA={BASE:.592,W_EK:.385,W_SURV:.160,W_KAST:.240,W_MULTI:.042,W_SWING:.
   PRIOR:{ref:1.16,per:.45,min:-.18,max:.27}};
 // impacto por função no kill: entry/rifler que fragga gera mais valor que support/igl (centrado ~1.0)
 const FA_IMPACTO={AWPer:1.035,Entry:1.065,Lurker:1.04,Rifler:1.03,Support:.97,IGL:.955}; // calibrado por validação real×sim (com IMP_OVR o impacto escala por skill; bases recentradas)
-// rating FALLEnANGELs de um jogador a partir do seu log de eventos no mapa
-function fallenAngels(ev){const C=CFG_FA,R=ev.totalRounds||1;
+// componentes somáveis do rating, extraídos sem alterar valores ou ordem aritmética.
+function fallenAngelsComponents(ev){const C=CFG_FA,R=ev.totalRounds||1;
   const ekpr=ev.kills.reduce((s,k)=>s+faEco(k.buyMatador,k.buyVitima),0)/R; // kills eco-ajustadas
   const survPR=1-(ev.mortes.length/R);
   const kast=(ev.roundsKAST||0)/R;
@@ -906,8 +906,12 @@ function fallenAngels(ev){const C=CFG_FA,R=ev.totalRounds||1;
   // impacto EFETIVO = base da função × skill dentro dela (AWPer de elite ≠ AWPer modesto); IGL soma o crédito de sistema
   const impEf=(ev.impacto??1)*(1+C.IMP_OVR*((ev.ovr??16)-16));
   const sistema=ev.prim==="IGL"?C.IGL_SIS:0;
-  const rating=C.BASE+ekpr*C.W_EK*impEf+survPR*C.W_SURV+kast*C.W_KAST+multiScore*C.W_MULTI+(swing/R)*C.W_SWING+openPR+adrTerm+tradePR+prior+sistema;
-  return rating;}
+  return {base:C.BASE,economyAdjustedKills:ekpr*C.W_EK*impEf,survival:survPR*C.W_SURV,
+    kast:kast*C.W_KAST,multikill:multiScore*C.W_MULTI,swing:(swing/R)*C.W_SWING,
+    opening:openPR,damage:adrTerm,trade:tradePR,prior,system:sistema};}
+// rating FALLEnANGELs de um jogador a partir do seu log de eventos no mapa
+function fallenAngels(ev){const c=fallenAngelsComponents(ev);
+  return c.base+c.economyAdjustedKills+c.survival+c.kast+c.multikill+c.swing+c.opening+c.damage+c.trade+c.prior+c.system;}
 
 /* ╔═══════════════════════════════════════════════════════════════════╗
    ║  MARÉ — forma do dia e de campanha (o motor de variância)          ║
@@ -983,12 +987,21 @@ function sortearFormaCampanha(times){
 //    fp manda; OVR dá só um empurrão leve de habilidade. IGL fp 2 fraga pouco (rating baixo) ainda
 //    que decisivo pra vitória; fragger fp alto fraga muito (rating alto). É o que o CS real mostra.
 const CONV_FUNC={Rifler:1.0,AWPer:1.0,Entry:.98,Lurker:.97,Support:.92,IGL:.90};
-function skillDuelo(j){const a=j._eng||j;const C=CFG_SIM;const ovr=j.ovr??a.ovr??13;const prim=j.primario||a.primario||"Rifler";
-  return (C.DUELO_BASE+(ovr-5)*C.DUELO_OVR)*(CONV_FUNC[prim]??.95);}
+// Centraliza a leitura de função sem mudar o comportamento corrente: até R5.5,
+// a função ativa do combate continua sendo a primária, inclusive para IGL.
+function combatProfile(j){const a=j?._eng||j||{};
+  const primaryRole=j?.primario||a.primario||null,secondaryRole=j?.secundario||a.secundario||null;
+  const classifiedCombatRole=j?.combatRole||a.combatRole||(primaryRole==="IGL"?(secondaryRole||"Rifler"):primaryRole);
+  const activeCombatRole=primaryRole||"Rifler";
+  return {primaryRole,secondaryRole,classifiedCombatRole:classifiedCombatRole||null,activeCombatRole,
+    duelConversion:CONV_FUNC[activeCombatRole]??.95,fragMultiplier:CFG_SIM.FRAG_ROLE[activeCombatRole]||1,
+    ratingImpact:FA_IMPACTO[primaryRole]??1};}
+function skillDuelo(j){const a=j._eng||j;const C=CFG_SIM;const ovr=j.ovr??a.ovr??13,profile=combatProfile(j);
+  return (C.DUELO_BASE+(ovr-5)*C.DUELO_OVR)*profile.duelConversion;}
 function fragPeso(j){const a=j._eng||j;const C=CFG_SIM;const fp=a.fp??60,ovr=j.ovr??a.ovr??13;
-  const prim=j.primario||a.primario||"Rifler"; // participação por papel: AWPer/Lurker jogam menos duelos (menos volume, K/D intacto)
+  const profile=combatProfile(j); // participação por papel: AWPer/Lurker jogam menos duelos (menos volume, K/D intacto)
   const rating=ratingCompetitivo(a),ratingMult=clamp(1+(rating-C.RATING_REF)*C.FRAG_RATING,.60,1.55);
-  return (C.FRAG_FP_BASE+fp)*(1+(ovr-13)*C.FRAG_OVR)*ratingMult*(C.FRAG_ROLE[prim]||1);} // OVR decide força; rating+fp distribuem produção individual
+  return (C.FRAG_FP_BASE+fp)*(1+(ovr-13)*C.FRAG_OVR)*ratingMult*profile.fragMultiplier;} // OVR decide força; rating+fp distribuem produção individual
 
 // prepara um time pro combate: skills (com forma da noite), clutch e acumulador de stats
 // agressão de playstyle derivada do sub-arquétipo: quão na frente o jogador joga o round
@@ -1028,8 +1041,8 @@ function prepTime(t,mapa){
     ops:js.map(j=>j.op??50),ens:js.map(j=>j.en??45),trs:js.map(j=>j.tr??50), // categorias HLTV por jogador (tipo de kill)
     // força de abertura do time (op/entry/sniper/util — flashes ajudam a abrir): inclina o PRIMEIRO duelo
     open:js.reduce((s,j)=>s+((j.op??50)*.35+(j.en??45)*.30+(j.sn??0)*.20+(j.ut??50)*.15),0)/js.length,
-    stats:js.map(j=>({nick:j.nick||t.nome,impacto:FA_IMPACTO[j.primario]??1,prim:j.primario,ovr:j.ovr??16,ratingBase:ratingCompetitivo(j),ut:j.ut??50,k:0,d:0,a:0,dmg:0,tradeK:0,
-      fa:{kills:[],mortes:[],assists:0,roundsKAST:0,multi:{},opK:0,opD:0},_kRound:0,_contribRound:false}))};
+    stats:js.map(j=>{const profile=combatProfile(j);return {nick:j.nick||t.nome,impacto:profile.ratingImpact,prim:profile.primaryRole,ovr:j.ovr??16,ratingBase:ratingCompetitivo(j),ut:j.ut??50,k:0,d:0,a:0,dmg:0,tradeK:0,
+      fa:{kills:[],mortes:[],assists:0,roundsKAST:0,multi:{},opK:0,opD:0},_kRound:0,_contribRound:false};})};
 }
 const TELEMETRY_SCHEMA_VERSION=1;
 function telemetryPlayerId(team,index){const player=team.js[index];return player.id||player.nome||player.nick||`${team.nome}:${index}`;}
