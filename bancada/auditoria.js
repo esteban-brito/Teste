@@ -486,10 +486,12 @@ function buildTeamReports(players,teamAccumulators){
   });
 }
 
-function buildDeepAuditSync(cycles=DEFAULT_DEEP_CYCLES){
+function buildDeepAuditSync(cycles=DEFAULT_DEEP_CYCLES,options={}){
   if(!Number.isInteger(cycles)||cycles<=0||cycles%MAPS.length!==0){
     throw new Error(`--cycles deve ser multiplo positivo de ${MAPS.length}`);
   }
+  if(!options||typeof options!=="object")throw new TypeError("opcoes da auditoria devem formar um objeto");
+  if(options.onMap!==undefined&&typeof options.onMap!=="function")throw new TypeError("onMap deve ser uma funcao");
   if(!X.srand)throw new Error("motor nao exporta srand; auditoria deterministica indisponivel");
   const beforeFingerprint=classificationFingerprint();
   const pairs=roundRobinPairs(T.length);
@@ -512,7 +514,8 @@ function buildDeepAuditSync(cycles=DEFAULT_DEEP_CYCLES){
     const aIndex=swapped?pair.b:pair.a,bIndex=swapped?pair.a:pair.b;
     const a=T[aIndex],b=T[bIndex];
     const map=MAPS[(pairIndex+cycle)%MAPS.length];
-    X.srand(seedFor(cycle,pairIndex));
+    const seed=seedFor(cycle,pairIndex);
+    X.srand(seed);
     const strengthA=X.forcaDoDia(a.ef,a.quim),strengthB=X.forcaDoDia(b.ef,b.quim);
     const result=X.simularMapa(a,b,strengthA,strengthB,map,false,{telemetry:true});
     const rounds=result.totalRounds||1;
@@ -527,6 +530,7 @@ function buildDeepAuditSync(cycles=DEFAULT_DEEP_CYCLES){
     recordPlayerSide(playerAccumulators,aIndex,bIndex,result.statsA,rounds,map,true,strengthA,strengthB,quartileA,aWon?"win":"loss");
     recordPlayerSide(playerAccumulators,bIndex,aIndex,result.statsB,rounds,map,false,strengthB,strengthA,quartileB,aWon?"loss":"win");
     recordRoundTelemetry(playerAccumulators,result.telemetry);
+    if(options.onMap)options.onMap({cycle,pairIndex,pairRound:pair.round,seed,map,aIndex,bIndex,strengthA,strengthB,result});
     result.rounds.forEach(round=>{
       [round.buyA,round.buyB].forEach(state=>{
         if(!BUY_STATES.includes(state))throw new Error(`estado de compra desconhecido: ${state}`);
@@ -662,9 +666,9 @@ function assertDeepReport(report){
   });
 }
 
-async function buildDeepAudit(cycles=DEFAULT_DEEP_CYCLES){
+async function buildDeepAudit(cycles=DEFAULT_DEEP_CYCLES,options={}){
   await loadSampleStatistics();
-  return buildDeepAuditSync(cycles);
+  return buildDeepAuditSync(cycles,options);
 }
 
 function printMetricLine(name,stats){

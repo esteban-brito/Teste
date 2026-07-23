@@ -15,15 +15,16 @@ faixas atuais são guardas de regressão, não uma nota de 0–100.
 | Comando | Suítes | Finalidade |
 |---|---|---|
 | `npm run test:data` | `times.js` | integridade de jogadores, times e derivados |
-| `npm run test:regression` | auditoria, snapshot, drop, golden do simulador | classificação, invariantes e resultados completos por seed |
+| `npm run test:regression` | auditoria, snapshot, drop, golden e comparador R5 | classificação, invariantes, resultados completos e pareamento |
 | `npm run test:calibrator` | basic, heavy, worker | busca, intenção, custo e paralelismo |
 | `npm run test:benchmark` | realismo, assists, KDA, rating | fidelidade estatística dos motores |
 | `npm run test:fidelity` | scorer e corpus IFCS | matemática, cobertura, caps, proveniência e auditoria |
 | `npm run test:e2e` | intent, simulation, game flow | calibrador, aba Simular e jogo principal no navegador |
-| `npm run test:all` | as 17 suítes acima | validação completa na ordem histórica |
+| `npm run test:r5` | comparador pareado R5 | hashes, cobertura, delta nulo e detecção sintética |
+| `npm run test:all` | as 18 suítes acima | validação completa na ordem histórica |
 | `npm run bench` | alias de `test:all` | compatibilidade com CI e fluxo legado |
 
-`npm run validate` executa sintaxe, lint e as 17 suítes.
+`npm run validate` executa sintaxe, lint e as 18 suítes.
 
 O `npm run check` também compara o módulo estatístico compartilhado com as
 fórmulas legadas em 5.464 amostras determinísticas, incluindo vazios, extremos,
