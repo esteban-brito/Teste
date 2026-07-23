@@ -83,3 +83,4 @@ O próximo trabalho cientificamente defensável é melhorar proveniência dos se
 atributos crus ou medir a relação entre domínio de rounds e distribuição de
 kills usando referência factual. Isso deve ser uma etapa de dados/combate
 separada, não uma alteração no rating final.
+
