@@ -47,8 +47,8 @@ Estado registrado em 22 de julho de 2026:
 - o E2E do jogo percorre draft, lineup, Suíça, playoffs, título e reinício;
 - workflow do commit `c3e2355`: sucesso em validação e deploy;
 - run do GitHub Actions: `29955558168`;
-- última validação local completa: 17/17 suítes em 180,3 s, com 45.900 mapas
-  e 941.838 rounds nos benchmarks;
+- última validação local completa: 19/19 suítes em 195,6 s, com 45.900 mapas
+  e 938.511 rounds nos benchmarks;
 - nenhuma mudança IFCS alterou motor, dados, configuração, RNG ou balanceamento;
 - o alvo IFCS de 22/01/2026 a 07/07/2026 está congelado com fontes e hashes; a
   revisão 2 corrige a troca oficial de Train por Anubis antes da coleta;
@@ -129,12 +129,15 @@ Atualização operacional de 23 de julho de 2026:
   prior atual `0,450` ficou praticamente no ótimo `0,455`; como o candidato
   piorou MAE/RMSE na validação, nenhum peso foi alterado. Evidência em
   `docs/r5-rating-audit-2026-07-23.md`.
+- R6 fechou o ciclo com comparação acumulada, 19/19 suítes e os três E2E. O
+  resultado, os números finais e os limites honestos estão em
+  `docs/r6-closure-2026-07-23.md`.
 
 ### Decisão imediata para a próxima sessão
 
-**Próxima subetapa:** executar o fechamento R6 do ciclo aprovado. Trade,
-assistência, composição factual do KAST e auditoria do rating estão concluídos.
-O corpus
+**Próxima decisão:** tratar como trabalho separado a proveniência dos atributos
+crus e a apresentação de função primária versus função efetiva. O ciclo R5/R6
+está concluído. O corpus
 oficial segue insuficiente (1/800 mapas e 1/6 eventos), portanto nenhuma nota
 IFCS será publicada. A distribuição entre muitas MD3 continua aberta em R3 e não
 deve ser misturada ao ciclo R5/R6.

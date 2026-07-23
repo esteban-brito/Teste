@@ -197,3 +197,7 @@ permanecem acumulados.
 R6 executa a comparação completa, lados invertidos, forças extremas, suíte rara,
 `npm run validate` e E2E. Goldens só mudam depois de explicar cada diferença
 intencional; publicação permanece separada da decisão científica.
+
+**Fechamento:** R6 foi concluída em 23 de julho de 2026. A comparação acumulada
+cobriu 1.088 partidas pareadas e a validação integral aprovou 19/19 suítes em
+195,6 segundos. Evidência em `docs/r6-closure-2026-07-23.md`.
