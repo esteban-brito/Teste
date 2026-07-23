@@ -101,7 +101,10 @@ Playwright é uma dependência de desenvolvimento e Chromium é instalado
 explicitamente na CI. Ausência da biblioteca, do browser ou falha de lançamento
 encerra a suíte com erro. Um E2E pulado não é considerado cobertura.
 
-`e2e-intent.js` protege o caminho paralelo do calibrador. `e2e-simulation.js`
+`e2e-intent.js` protege o editor de atributos e o caminho paralelo do calibrador.
+No editor, o navegador valida rascunhos por jogador, aplicação explícita,
+restauração individual, descarte, reset global, relatório, exportação JSON e a
+ordem visual nome completo → número → slider limitado. `e2e-simulation.js`
 protege mapa, lote A × B e amostra round-robin da liga. O contrato inclui
 KAST/ADR/Rating, lados, plant e pós-plant, anti-eco, conversão pós-pistol,
 clutches, força do favorito, métricas por função, diagnóstico de suficiência,

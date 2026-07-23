@@ -45,12 +45,16 @@ return {
   loadByName(nome){
     loadedIdx=POOLRAW.findIndex(p=>p.nome===nome);
     if(loadedIdx<0)throw new Error("jogador nao encontrado no pool: "+nome);
-    const p=POOLRAW[loadedIdx];
-    Object.assign(state,{nome:p.nome,fp:p.fp,en:p.en,tr:p.tr,op:p.op,cl:p.cl,sn:p.sn,ut:p.ut,rating:p.rating,isIGL:p.isIGL,colocacao:p.colocacao});
+    setEditorStateFrom(playerAt(loadedIdx));
   },
   setMode(mode){ calibMode=mode; },
   setSeed(seed){ searchSeedSalt=seed||0; },
-  setStats(values){ Object.assign(state,values||{}); },
+  setStats(values){
+    Object.assign(state,values||{});
+    const edited=editorValues(state),original=editorValues(POOLRAW[loadedIdx]);
+    if(editorFieldDiff(original,edited).length)playerOverrides.set(loadedIdx,edited);else playerOverrides.delete(loadedIdx);
+    editorDrafts.delete(loadedIdx);invalidateAllTeamEval();
+  },
   overrideBudget(ms){ Object.values(CALIB_STRATEGIES).forEach(s=>{ if(ms)s.maxMs=ms; }); },
   info(nome){ const p=POOLRAW.find(x=>x.nome===nome); if(!p)throw new Error("nao achei: "+nome);
     const ev=E.avaliarJogador({...p}); return {isIGL:!!ev.isIGL,ovr:Math.round(ev.ovr),style:STYLE_LABEL(ev.playstyle),r1:ev.role1||ev.combatRole,r2:ev.role2||ev.secundario}; },
@@ -65,6 +69,8 @@ return {
     copyInto(E.ROLE_PERFIL,DEF.ROLE);copyInto(E.NM_DEF,DEF.NM);copyInto(E.NM_COR,DEF.NM_COR);
     copyInto(E.ROLE_CONTRA,DEF.CONTRA);copyInto(E.IGL_ROLE_AFIN,DEF.IGL);copyInto(E.ROLE_RULES,DEF.RULES);
     copyInto(E.STYLE_ROLE_FIT,DEF.STYLE_FIT);copyInto(E.STYLE_CONTRA,DEF.STYLE_CONTRA);copyInto(E.CFG_AVALIACAO,DEF.CFG);
+    playerOverrides.clear();editorDrafts.clear();
+    if(loadedIdx!=null)setEditorStateFrom(POOLRAW[loadedIdx]);
     baseline=null;calibSession=null;calibLast=null;invalidateAllTeamEval();
   },
   get STYLE_LABEL(){ return STYLE_LABEL; }
