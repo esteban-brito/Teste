@@ -113,10 +113,13 @@ O painel individual também possui contrato explícito: mostra os dez jogadores
 de um confronto mesmo com lote abaixo do mínimo estatístico e mostra os 85 IDs
 na amostra completa da liga. A quantidade de mapas permanece visível para que
 uma linha com pouca amostra não pareça tão confiável quanto uma média longa. O
-E2E valida média, mediana, desvio-padrão, P5, P95, extremos, P10–P90, IC95%, busca, filtros,
-ordenação numérica, comparação de dois jogadores e reset entre amostras. O
-download CSV é lido pelo teste para verificar BOM, nome rastreável, schema,
-respeito aos filtros, escaping e neutralização de fórmulas.
+E2E valida as duas funções de cada jogador, totais de kills, deaths e assists,
+K/D e as médias por round KPR, DPR, A/R, KAST e ADR. Valida ainda média,
+mediana, desvio-padrão, P5, P95, extremos, P10–P90, IC95%, busca, filtros nas
+duas funções, ordenação numérica, comparação de dois jogadores e reset entre
+amostras. O download CSV é lido pelo teste para verificar BOM, nome rastreável,
+schema de desempenho, respeito aos filtros, escaping e neutralização de
+fórmulas.
 
 O contrato visual exige um gráfico acessível por jogador, painéis em largura
 integral, tabela desktop sem rolagem horizontal, cabeçalho e três colunas de

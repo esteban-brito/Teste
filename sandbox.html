@@ -276,7 +276,7 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .player-delta{overflow:hidden;margin:0}
 .player-delta>.sim-data-title{display:flex;align-items:center;gap:8px}
 .player-table-scroll{position:relative;overflow-x:auto;scrollbar-gutter:stable}
-.player-controls{display:grid;grid-template-columns:minmax(210px,1.6fr) repeat(5,minmax(112px,1fr)) auto;align-items:end;gap:8px;padding:10px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--panel) 45%,var(--panel-soft))}
+.player-controls{display:grid;grid-template-columns:minmax(180px,1.4fr) repeat(5,minmax(96px,1fr)) auto;align-items:end;gap:8px;padding:10px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--panel) 45%,var(--panel-soft))}
 .player-filter{display:flex;flex-direction:column;gap:4px;min-width:0}
 .player-filter span{font-size:var(--fs-2xs);font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
 .player-filter input,.player-filter select{width:100%;min-width:0}
@@ -300,25 +300,32 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
 .player-compare-metrics span{font-size:var(--fs-xs);color:var(--dim)}
 .player-compare-metrics b{display:block;margin-top:2px;font-family:var(--ff);font-size:var(--fs-sm);color:var(--neutral);font-variant-numeric:tabular-nums}
 .player-compare-empty{padding:7px 0;font-size:var(--fs-s);color:var(--dim)}
-.player-variance-table{width:100%;min-width:1000px;table-layout:fixed;font-size:var(--fs-sm)}
+.player-variance-table{width:100%;min-width:992px;table-layout:fixed;font-size:var(--fs-sm)}
 .player-variance-table th,.player-variance-table td{padding-block:7px;vertical-align:middle}
 .player-variance-table th{position:sticky;top:0;z-index:4}
 .player-variance-table th:nth-child(1),.player-variance-table td:nth-child(1){width:118px;position:sticky;left:0}
 .player-variance-table th:nth-child(2),.player-variance-table td:nth-child(2){width:112px;position:sticky;left:118px}
-.player-variance-table th:nth-child(3),.player-variance-table td:nth-child(3){width:62px;position:sticky;left:230px;box-shadow:10px 0 16px -16px rgba(0,0,0,.95)}
+.player-variance-table th:nth-child(3),.player-variance-table td:nth-child(3){width:82px;position:sticky;left:230px;box-shadow:10px 0 16px -16px rgba(0,0,0,.95)}
 .player-variance-table th:nth-child(-n+3){z-index:6;background:var(--panel)}
 .player-variance-table td:nth-child(-n+3){z-index:2;background:var(--panel-soft)}
-.player-variance-table th:nth-child(4){width:56px}
-.player-variance-table th:nth-child(5),.player-variance-table th:nth-child(6),.player-variance-table th:nth-child(7),.player-variance-table th:nth-child(9),.player-variance-table th:nth-child(11){width:54px}
-.player-variance-table th:nth-child(8){width:280px}
-.player-variance-table th:nth-child(10){width:82px}
+.player-variance-table th:nth-child(4){width:60px}
+.player-variance-table th:nth-child(5){width:78px}
+.player-variance-table th:nth-child(6){width:102px}
+.player-variance-table th:nth-child(7){width:54px}
+.player-variance-table th:nth-child(8){width:50px}
+.player-variance-table th:nth-child(9){width:278px}
+.player-variance-table th:nth-child(10){width:58px}
 .player-variance-table tbody tr:hover td{background:color-mix(in srgb,var(--cyan) 5%,var(--panel-soft))}
 .player-cell strong{display:block;color:var(--txt);font-size:var(--fs-base)}
 .player-cell span,.team-cell span{display:block;margin-top:2px;font-size:var(--fs-xs);color:var(--dim)}
 .team-cell{min-width:0}
 .compare-cell{text-align:center}
+.role-pair{display:flex;align-items:flex-start;flex-direction:column;gap:3px}
 .role-pill{display:inline-flex;padding:2px 7px;border:1px solid var(--line);border-radius:var(--radius-pill);font-size:var(--fs-xs);font-weight:700;color:var(--neutral);white-space:nowrap}
-.sample-cell{min-width:92px}
+.role-pill.secondary{border-color:var(--line2);font-size:var(--fs-2xs);font-weight:600;color:var(--dim)}
+.rating-cell strong,.kd-cell strong,.kast-cell strong,.adr-cell strong{display:block;font-family:var(--ff);font-size:var(--fs-base);font-weight:800;color:var(--neutral);font-variant-numeric:tabular-nums}
+.kd-cell span{display:block;margin-top:2px;font-family:var(--fb);font-size:var(--fs-2xs);color:var(--dim);white-space:nowrap}
+.sample-cell{min-width:0}
 .sample-status{display:block;width:max-content;margin-top:4px;padding:2px 6px;border:1px solid color-mix(in srgb,var(--win) 35%,var(--line));border-radius:var(--radius-pill);font-size:var(--fs-2xs);font-weight:700;color:var(--win);white-space:nowrap}
 .sample-status.low{border-color:color-mix(in srgb,var(--warn) 45%,var(--line));color:var(--warn)}
 .reference-note{display:block;margin-top:2px;font-size:var(--fs-xs);color:var(--dim);white-space:nowrap}
@@ -3256,6 +3263,11 @@ function simRolePlayers(t,ti,preparedTeam=null){
   try{
     return (preparedTeam?.jogadores||teamPlayers(t,ti)).map((player,playerIndex)=>{
       const source=t.jogadores?.[playerIndex]?._eng||t.jogadores?.[playerIndex]||player;
+      const isIGL=!!(player.isIGL||source.isIGL||player.primario==="IGL"||source.primario==="IGL");
+      const rolePrimary=isIGL?"IGL":(player.role1||player.primario||player.combatRole||source.primario||"?");
+      const roleSecondary=isIGL
+        ?(player.combatRole||player.role2||player.secundario||source.combatRole||source.secundario||"?")
+        :(player.role2||player.secundario||player.combatRole||source.secundario||source.combatRole||"?");
       return {
         key:`${ti}:${playerIndex}`,
         id:source.id||source.nome||player.id||player.nome||player.nick||`${ti}:${playerIndex}`,
@@ -3263,7 +3275,9 @@ function simRolePlayers(t,ti,preparedTeam=null){
         teamIndex:ti,
         teamName:t.nome,
         teamCampaign:t.camp||"",
-        role:player.isIGL?"IGL":(player.role1||player.combatRole||"?"),
+        role:rolePrimary,
+        rolePrimary,
+        roleSecondary,
         historicalRating:+source.rating||0,
         rating:+player.rating||0
       };
@@ -3274,8 +3288,8 @@ function newSimAcc(n,scope,seed){const clutch={},gaps={};for(let x=1;x<=5;x++)cl
 function accSimSide(acc,stats,players,rounds,teamIndex){
   (stats||[]).forEach((s,i)=>{const p=players[i]||{name:s.nick||"?",role:"?",rating:0},role=p.role,b=acc.role[role]=acc.role[role]||{k:0,d:0,a:0,r:0,kast:0,adr:0};
     b.k+=s.k||0;b.d+=s.d||0;b.a+=s.a||0;b.r+=rounds;b.kast+=(s.kast||0)*rounds;b.adr+=(s.adr||0)*rounds;
-    const key=p.key||`${teamIndex}:${i}`,q=acc.players[key]=acc.players[key]||{id:p.id||key,name:p.name,teamIndex,teamName:p.teamName||"",teamCampaign:p.teamCampaign||"",role,historical:p.historicalRating||0,real:p.rating,sim:0,n:0,ratings:[]},rating=+s.rating||0;
-    q.sim+=rating;q.n++;q.ratings.push(rating);
+    const key=p.key||`${teamIndex}:${i}`,q=acc.players[key]=acc.players[key]||{id:p.id||key,name:p.name,teamIndex,teamName:p.teamName||"",teamCampaign:p.teamCampaign||"",role,rolePrimary:p.rolePrimary||role,roleSecondary:p.roleSecondary||"?",historical:p.historicalRating||0,real:p.rating,sim:0,n:0,ratings:[],rounds:0,kills:0,deaths:0,assists:0,kastRoundWeight:0,adrRoundWeight:0},rating=+s.rating||0;
+    q.sim+=rating;q.n++;q.ratings.push(rating);q.rounds+=rounds;q.kills+=s.k||0;q.deaths+=s.d||0;q.assists+=s.a||0;q.kastRoundWeight+=(s.kast||0)*rounds;q.adrRoundWeight+=(s.adr||0)*rounds;
   });
 }
 function accSimGame(acc,g,playersA,playersB,ai,bi,A,B){
@@ -3291,13 +3305,19 @@ function accSimGame(acc,g,playersA,playersB,ai,bi,A,B){
 function simPlayerDistributionRows(batch){
   const minimumMaps=batch.scope==="league"?5:10;
   return Object.values(batch.players).filter(player=>player.n&&player.real).map(player=>{
-    const average=player.sim/player.n,historical=player.historical||player.real;
+    const average=player.sim/player.n,historical=player.historical||player.real,rounds=player.rounds||1;
     return {
       ...player,
       avg:average,
       delta:average-player.real,
       historical,
       historicalDelta:average-historical,
+      kdRatio:player.deaths?player.kills/player.deaths:player.kills,
+      kpr:player.kills/rounds,
+      dpr:player.deaths/rounds,
+      apr:player.assists/rounds,
+      kastPercent:player.kastRoundWeight/rounds*100,
+      adr:player.adrRoundWeight/rounds,
       distribution:SampleStatistics.describeSample(player.ratings),
       recurringRange:SampleStatistics.percentileRange(player.ratings,.1,.9),
       meanCI:SampleStatistics.meanConfidenceInterval(player.ratings),
@@ -3310,10 +3330,11 @@ function simSearchText(value){return String(value??"").normalize("NFD").replace(
 function simPlayerSortValue(player,key){
   const stats=player.distribution;
   return ({
-    name:player.name,team:`${player.teamName} ${player.teamCampaign}`,role:player.role,
+    name:player.name,team:`${player.teamName} ${player.teamCampaign}`,role:`${player.rolePrimary} ${player.roleSecondary}`,
     historical:player.historical,mean:stats.mean,median:stats.median,stdDev:stats.stdDev,
     p05:stats.p05,p95:stats.p95,min:stats.min,p10:player.recurringRange?.lower,p90:player.recurringRange?.upper,max:stats.max,ciWidth:player.meanCI?player.meanCI[1]-player.meanCI[0]:null,
-    delta:player.historicalDelta,absDelta:Math.abs(player.historicalDelta),maps:player.n
+    delta:player.historicalDelta,absDelta:Math.abs(player.historicalDelta),kills:player.kills,deaths:player.deaths,assists:player.assists,kd:player.kdRatio,
+    kpr:player.kpr,dpr:player.dpr,apr:player.apr,kast:player.kastPercent,adr:player.adr,maps:player.n
   })[key];
 }
 function simPlayerViewRows(allRows){
@@ -3321,7 +3342,7 @@ function simPlayerViewRows(allRows){
   const filtered=allRows.filter(player=>{
     if(query&&!simSearchText(`${player.name} ${player.id}`).includes(query))return false;
     if(simPlayerView.team!=="all"&&String(player.teamIndex)!==simPlayerView.team)return false;
-    if(simPlayerView.role!=="all"&&player.role!==simPlayerView.role)return false;
+    if(simPlayerView.role!=="all"&&player.rolePrimary!==simPlayerView.role&&player.roleSecondary!==simPlayerView.role)return false;
     if(simPlayerView.sufficiency==="enough"&&!player.sufficient)return false;
     if(simPlayerView.sufficiency==="small"&&player.sufficient)return false;
     return true;
@@ -3344,12 +3365,13 @@ function simCsvCell(value){
 }
 function simCsvNumber(value,digits=6){return Number.isFinite(value)?Number(value.toFixed(digits)):null;}
 function simPlayerCsv(batch,rows){
-  const header=["seed","scope","batch_maps","player_id","player_name","team","campaign","role","historical_rating","current_reference_rating","simulated_mean","median","std_dev","p05","p95","minimum","p10","p90","maximum","ci95_lower","ci95_upper","historical_delta","player_maps","sample_status","minimum_maps"];
+  const header=["seed","scope","batch_maps","player_id","player_name","team","campaign","primary_role","secondary_role","historical_rating","current_reference_rating","simulated_mean","kills","deaths","assists","kd_ratio","kpr","dpr","apr","kast_percent","adr","median","std_dev","p05","p95","minimum","p10","p90","maximum","ci95_lower","ci95_upper","historical_delta","player_maps","player_rounds","sample_status","minimum_maps"];
   const data=rows.map(player=>{
     const stats=player.distribution,ci=player.meanCI;
-    return [batch.seed,batch.scope,batch.n,player.id,player.name,player.teamName,player.teamCampaign,player.role,
-      simCsvNumber(player.historical),simCsvNumber(player.real),simCsvNumber(stats.mean),simCsvNumber(stats.median),simCsvNumber(stats.stdDev),simCsvNumber(stats.p05),simCsvNumber(stats.p95),simCsvNumber(stats.min),simCsvNumber(player.recurringRange?.lower),simCsvNumber(player.recurringRange?.upper),simCsvNumber(stats.max),
-      ci?simCsvNumber(ci[0]):null,ci?simCsvNumber(ci[1]):null,simCsvNumber(player.historicalDelta),player.n,player.sufficient?"sufficient":"small",player.minimumMaps];
+    return [batch.seed,batch.scope,batch.n,player.id,player.name,player.teamName,player.teamCampaign,player.rolePrimary,player.roleSecondary,
+      simCsvNumber(player.historical),simCsvNumber(player.real),simCsvNumber(stats.mean),player.kills,player.deaths,player.assists,simCsvNumber(player.kdRatio),simCsvNumber(player.kpr),simCsvNumber(player.dpr),simCsvNumber(player.apr),simCsvNumber(player.kastPercent),simCsvNumber(player.adr),
+      simCsvNumber(stats.median),simCsvNumber(stats.stdDev),simCsvNumber(stats.p05),simCsvNumber(stats.p95),simCsvNumber(stats.min),simCsvNumber(player.recurringRange?.lower),simCsvNumber(player.recurringRange?.upper),simCsvNumber(stats.max),
+      ci?simCsvNumber(ci[0]):null,ci?simCsvNumber(ci[1]):null,simCsvNumber(player.historicalDelta),player.n,player.rounds,player.sufficient?"sufficient":"small",player.minimumMaps];
   });
   return [header,...data].map(row=>row.map(simCsvCell).join(",")).join("\r\n")+"\r\n";
 }
@@ -3358,7 +3380,7 @@ function downloadSimPlayerCsv(){
   const rows=simPlayerViewRows(simPlayerDistributionRows(lastBatch));
   if(!rows.length){toast("Nenhum jogador visível para exportar");return;}
   const blob=new window.Blob(["\ufeff",simPlayerCsv(lastBatch,rows)],{type:"text/csv;charset=utf-8"}),a=document.createElement("a"),scope=String(lastBatch.scope).replace(/[^a-z0-9_-]+/gi,"-");
-  a.href=window.URL.createObjectURL(blob);a.download=`sandbox-player-ratings-${scope}-seed-${lastBatch.seed}.csv`;
+  a.href=window.URL.createObjectURL(blob);a.download=`sandbox-player-performance-${scope}-seed-${lastBatch.seed}.csv`;
   document.body.appendChild(a);a.click();window.URL.revokeObjectURL(a.href);a.remove();
   toast(`${rows.length} jogador${rows.length===1?"":"es"} exportado${rows.length===1?"":"s"}`);
 }
@@ -3373,28 +3395,27 @@ function simPlayerChartScale(rows){
 function simRatingPosition(value,scale){return `${Math.max(0,Math.min(100,(value-scale[0])/Math.max(.000001,scale[1]-scale[0])*100)).toFixed(3)}%`;}
 function simPlayerDistributionVisual(player,scale){
   const stats=player.distribution,range=player.recurringRange,style=`--r-min:${simRatingPosition(stats.min,scale)};--r-p05:${simRatingPosition(stats.p05,scale)};--r-p10:${simRatingPosition(range.lower,scale)};--r-median:${simRatingPosition(stats.median,scale)};--r-mean:${simRatingPosition(stats.mean,scale)};--r-p90:${simRatingPosition(range.upper,scale)};--r-p95:${simRatingPosition(stats.p95,scale)};--r-max:${simRatingPosition(stats.max,scale)};--r-historical:${simRatingPosition(player.historical,scale)}`;
-  const label=`${player.name}: mínimo ${stats.min.toFixed(2)}, P10 ${range.lower.toFixed(2)}, mediana ${stats.median.toFixed(2)}, média ${stats.mean.toFixed(2)}, P90 ${range.upper.toFixed(2)}, máximo ${stats.max.toFixed(2)}, histórico ${player.historical.toFixed(2)}`;
+  const ci=player.meanCI,label=`${player.name}: mínimo ${stats.min.toFixed(2)}, P10 ${range.lower.toFixed(2)}, mediana ${stats.median.toFixed(2)}, média ${stats.mean.toFixed(2)}, P90 ${range.upper.toFixed(2)}, máximo ${stats.max.toFixed(2)}, histórico ${player.historical.toFixed(2)}, desvio-padrão ${stats.stdDev.toFixed(3)}${ci?`, intervalo de confiança ${ci[0].toFixed(2)} a ${ci[1].toFixed(2)}`:""}`;
   return `<div class="rating-viz" role="img" aria-label="${esc(label)}" style="${style}"><div class="rating-track"><span class="rating-axis"></span><span class="rating-whisker"></span><span class="rating-tail"></span><span class="rating-band"></span><span class="rating-historical"></span><span class="rating-median"></span><span class="rating-mean"></span></div><div class="rating-viz-main"><span>80% ${range.lower.toFixed(2)}–${range.upper.toFixed(2)}</span><span>Med. ${stats.median.toFixed(2)}</span></div><div class="rating-viz-meta"><span>Ext. ${stats.min.toFixed(2)}–${stats.max.toFixed(2)}</span><span>P5–P95 ${stats.p05.toFixed(2)}–${stats.p95.toFixed(2)}</span></div></div>`;
 }
 function simPlayerRowHtml(player,scale){
-  const stats=player.distribution,ci=player.meanCI,edited=Math.abs(player.real-player.historical)>1e-9;
+  const stats=player.distribution,delta=player.historicalDelta,deltaText=`${delta>=0?"+":""}${delta.toFixed(2)}`;
   const sampleStatus=player.sufficient?"":`<span class="sample-status low">Pequena · mín. ${player.minimumMaps}</span>`;
   return `<tr data-player-id="${esc(player.id)}" data-sufficient="${player.sufficient}">
     <td class="player-cell"><strong>${esc(player.name)}</strong><span>${esc(player.id)}</span></td>
     <td class="team-cell">${esc(player.teamName)}<span>${esc(player.teamCampaign)}</span></td>
-    <td class="role-cell"><span class="role-pill">${esc(player.role)}</span></td>
+    <td class="role-cell" data-primary-role="${esc(player.rolePrimary)}" data-secondary-role="${esc(player.roleSecondary)}"><span class="role-pair"><span class="role-pill">${esc(player.rolePrimary)}</span><span class="role-pill secondary">${esc(player.roleSecondary)}</span></span></td>
     <td class="compare-cell" data-label="Comparar"><label class="player-compare-check"><input type="checkbox" data-compare-player="${esc(player.id)}"${simPlayerView.compare.includes(String(player.id))?" checked":""} aria-label="Comparar ${esc(player.name)}"><span class="sr-only">Selecionar ${esc(player.name)} para comparação</span></label></td>
-    <td class="mono historical-cell" data-label="Histórico" data-stat="historical" data-value="${player.historical}">${player.historical.toFixed(2)}${edited?`<span class="reference-note">ref. ${player.real.toFixed(2)}</span>`:""}</td>
-    <td class="mono mean-cell" data-label="Média" data-stat="mean" data-value="${stats.mean}">${stats.mean.toFixed(2)}</td>
-    <td class="mono delta-cell" data-label="Δ histórico" data-stat="delta" data-value="${player.historicalDelta}" style="color:var(--${Math.abs(player.historicalDelta)>.12?"warn":"neutral"})">${player.historicalDelta>=0?"+":""}${player.historicalDelta.toFixed(2)}</td>
+    <td class="mono rating-cell" data-label="Rating" data-stat="mean" data-value="${stats.mean}"><strong>${stats.mean.toFixed(2)}</strong><span class="reference-note">ref. ${player.historical.toFixed(2)} · <b style="color:var(--${Math.abs(delta)>.12?"warn":"neutral"})">Δ ${deltaText}</b></span></td>
+    <td class="mono kd-cell" data-label="K/D e produção" data-stat="kd" data-value="${player.kdRatio}" data-kills="${player.kills}" data-deaths="${player.deaths}" data-assists="${player.assists}" data-kpr="${player.kpr}" data-dpr="${player.dpr}" data-apr="${player.apr}" title="${player.kills} kills · ${player.deaths} deaths · ${player.assists} assists"><strong>${player.kdRatio.toFixed(2)}</strong><span>KPR ${player.kpr.toFixed(3)}</span><span>DPR ${player.dpr.toFixed(3)}</span><span>A/R ${player.apr.toFixed(3)}</span></td>
+    <td class="mono kast-cell" data-label="KAST" data-stat="kast" data-value="${player.kastPercent}"><strong>${player.kastPercent.toFixed(1)}%</strong></td>
+    <td class="mono adr-cell" data-label="ADR" data-stat="adr" data-value="${player.adr}"><strong>${player.adr.toFixed(1)}</strong></td>
     <td class="distribution-cell" data-min="${stats.min}" data-p10="${player.recurringRange.lower}" data-p90="${player.recurringRange.upper}" data-max="${stats.max}">${simPlayerDistributionVisual(player,scale)}</td>
-    <td class="mono std-cell" data-label="DP" data-stat="stdDev" data-value="${stats.stdDev}">${stats.stdDev.toFixed(3)}</td>
-    <td class="mono ci-cell" data-label="IC95%" data-stat="ciWidth" data-value="${ci?ci[1]-ci[0]:""}">${ci?`${ci[0].toFixed(2)}–${ci[1].toFixed(2)}`:"—"}</td>
     <td class="mono sample-cell" data-label="Mapas" data-stat="maps" data-value="${player.n}" title="${player.sufficient?"Amostra suficiente":"Amostra pequena"}">${player.n}${sampleStatus}</td>
   </tr>`;
 }
 function simPlayerTableRowsHtml(rows,scale){
-  return rows.map(player=>simPlayerRowHtml(player,scale)).join("")||`<tr class="player-empty"><td colspan="11" style="text-align:left;color:var(--dim)">Nenhum jogador corresponde aos filtros.</td></tr>`;
+  return rows.map(player=>simPlayerRowHtml(player,scale)).join("")||`<tr class="player-empty"><td colspan="10" style="text-align:left;color:var(--dim)">Nenhum jogador corresponde aos filtros.</td></tr>`;
 }
 function simPlayerComparisonBody(allRows){
   const selected=simPlayerView.compare.map(id=>allRows.find(player=>String(player.id)===id)).filter(Boolean);
@@ -3402,9 +3423,10 @@ function simPlayerComparisonBody(allRows){
   const scale=simPlayerChartScale(allRows);
   return `<div class="player-comparison-grid">${selected.map(player=>{
     const stats=player.distribution,ci=player.meanCI;
-    return `<article class="player-compare-card" data-compare-card="${esc(player.id)}"><div class="player-compare-name">${esc(player.name)}</div><div class="player-compare-meta">${esc(player.teamName)} · ${esc(player.teamCampaign)} · ${esc(player.role)}</div>${simPlayerDistributionVisual(player,scale)}<div class="player-compare-metrics">
-      <span>Histórico<b>${player.historical.toFixed(2)}</b></span><span>Média<b>${stats.mean.toFixed(2)}</b></span><span>Mediana<b>${stats.median.toFixed(2)}</b></span><span>DP<b>${stats.stdDev.toFixed(3)}</b></span>
-      <span>P5–P95<b>${stats.p05.toFixed(2)}–${stats.p95.toFixed(2)}</b></span><span>Extremos<b>${stats.min.toFixed(2)}–${stats.max.toFixed(2)}</b></span><span>Faixa recorrente<b>${player.recurringRange.lower.toFixed(2)}–${player.recurringRange.upper.toFixed(2)}</b></span><span>IC95%<b>${ci?`${ci[0].toFixed(2)}–${ci[1].toFixed(2)}`:"—"}</b></span><span>Δ histórico<b>${player.historicalDelta>=0?"+":""}${player.historicalDelta.toFixed(2)}</b></span><span>Mapas<b>${player.n}</b></span>
+    return `<article class="player-compare-card" data-compare-card="${esc(player.id)}"><div class="player-compare-name">${esc(player.name)}</div><div class="player-compare-meta">${esc(player.teamName)} · ${esc(player.teamCampaign)} · ${esc(player.rolePrimary)} / ${esc(player.roleSecondary)}</div>${simPlayerDistributionVisual(player,scale)}<div class="player-compare-metrics">
+      <span>Rating<b>${stats.mean.toFixed(2)}</b></span><span>Referência<b>${player.historical.toFixed(2)} · Δ ${player.historicalDelta>=0?"+":""}${player.historicalDelta.toFixed(2)}</b></span><span>K/D<b>${player.kdRatio.toFixed(2)}</b></span><span>KPR / DPR<b>${player.kpr.toFixed(3)} / ${player.dpr.toFixed(3)}</b></span>
+      <span>Assist./round<b>${player.apr.toFixed(3)}</b></span><span>KAST<b>${player.kastPercent.toFixed(1)}%</b></span><span>ADR<b>${player.adr.toFixed(1)}</b></span><span>Mapas<b>${player.n}</b></span>
+      <span>Faixa recorrente<b>${player.recurringRange.lower.toFixed(2)}–${player.recurringRange.upper.toFixed(2)}</b></span><span>P5–P95<b>${stats.p05.toFixed(2)}–${stats.p95.toFixed(2)}</b></span><span>DP / IC95%<b>${stats.stdDev.toFixed(3)} · ${ci?`${ci[0].toFixed(2)}–${ci[1].toFixed(2)}`:"—"}</b></span><span>Extremos<b>${stats.min.toFixed(2)}–${stats.max.toFixed(2)}</b></span>
     </div></article>`;
   }).join("")}</div>`;
 }
@@ -3412,17 +3434,18 @@ function simPlayerPanelHtml(allRows){
   const availableTeams=[...new Map(allRows.map(player=>[String(player.teamIndex),`${player.teamName} · ${player.teamCampaign}`])).entries()]
     .sort((a,b)=>a[1].localeCompare(b[1],"pt-BR",{numeric:true,sensitivity:"base"}));
   if(simPlayerView.team!=="all"&&!availableTeams.some(([value])=>value===simPlayerView.team))simPlayerView.team="all";
-  const availableRoles=[...new Set(allRows.map(player=>player.role))].sort((a,b)=>a.localeCompare(b));
+  const availableRoles=[...new Set(allRows.flatMap(player=>[player.rolePrimary,player.roleSecondary]).filter(role=>role&&role!=="?"))].sort((a,b)=>a.localeCompare(b));
   const visible=simPlayerViewRows(allRows),scale=simPlayerChartScale(allRows),allSufficient=allRows.length>0&&allRows.every(player=>player.sufficient);
   const option=(value,label,current)=>`<option value="${esc(value)}"${value===current?" selected":""}>${esc(label)}</option>`;
-  return `<div class="sim-data-title"><span>Distribuições individuais</span><span class="player-view-count">${visible.length} / ${allRows.length} participantes${allSufficient?" · amostra suficiente":""}</span></div>
+  return `<div class="sim-data-title"><span>Desempenho individual</span><span class="player-view-count">${visible.length} / ${allRows.length} participantes${allSufficient?" · amostra suficiente":""}</span></div>
     <div class="player-controls" aria-label="Filtros dos jogadores">
       <label class="player-filter"><span>Buscar jogador</span><input id="simPlayerSearch" type="search" value="${esc(simPlayerView.query)}" placeholder="Nome ou ID" autocomplete="off"></label>
       <label class="player-filter"><span>Time</span><select id="simPlayerTeam">${option("all","Todos",simPlayerView.team)}${availableTeams.map(([value,label])=>option(value,label,simPlayerView.team)).join("")}</select></label>
-      <label class="player-filter"><span>Função</span><select id="simPlayerRole">${option("all","Todas",simPlayerView.role)}${availableRoles.map(role=>option(role,role,simPlayerView.role)).join("")}</select></label>
+      <label class="player-filter"><span>Função primária ou secundária</span><select id="simPlayerRole">${option("all","Todas",simPlayerView.role)}${availableRoles.map(role=>option(role,role,simPlayerView.role)).join("")}</select></label>
       <label class="player-filter"><span>Amostra</span><select id="simPlayerSufficiency">${option("all","Todas",simPlayerView.sufficiency)}${option("enough","Suficiente",simPlayerView.sufficiency)}${option("small","Pequena",simPlayerView.sufficiency)}</select></label>
       <label class="player-filter"><span>Ordenar</span><select id="simPlayerSort">${[
-        ["absDelta","|Δ histórico|"],["name","Jogador"],["team","Time"],["role","Função"],["historical","Histórico"],
+        ["absDelta","|Δ histórico|"],["name","Jogador"],["team","Time"],["role","Funções"],["historical","Rating de referência"],
+        ["kd","K/D"],["kpr","KPR"],["dpr","DPR"],["apr","Assistências por round"],["kast","KAST"],["adr","ADR"],
         ["mean","Média"],["median","Mediana"],["stdDev","Desvio-padrão"],["p05","P5"],["p95","P95"],["min","Mínimo"],["p10","P10 recorrente"],["p90","P90 recorrente"],["max","Máximo"],
         ["ciWidth","Largura do IC95%"],["delta","Δ histórico"],["maps","Mapas"]
       ].map(([value,label])=>option(value,label,simPlayerView.sort)).join("")}</select></label>
@@ -3431,8 +3454,8 @@ function simPlayerPanelHtml(allRows){
     </div>
     <div class="player-comparison${simPlayerView.compare.length?"":" is-empty"}"><div class="player-comparison-head">Comparar jogadores <span>${simPlayerView.compare.length?`${simPlayerView.compare.length} / 2 selecionados`:"Marque até 2 na coluna Comparar"}</span></div><div class="player-comparison-body">${simPlayerComparisonBody(allRows)}</div></div>
     <div class="player-dist-legend" aria-label="Legenda completa da distribuição"><b>Distribuição por mapa</b><span class="dist-legend-key"><i class="dist-legend-swatch whisker"></i>Mín.–Máx.</span><span class="dist-legend-key"><i class="dist-legend-swatch tail"></i>P5–P95</span><span class="dist-legend-key"><i class="dist-legend-swatch"></i>80% recorrente</span><span class="dist-legend-key"><i class="dist-legend-swatch mean"></i>Média</span><span class="dist-legend-key"><i class="dist-legend-swatch historical"></i>Histórico</span><span class="dist-legend-key"><i class="dist-legend-swatch median"></i>Mediana</span><span class="dist-scale">Escala comum ${scale[0].toFixed(2)}–${scale[1].toFixed(2)}</span></div>
-    <div class="player-table-scroll"><table class="player-variance-table"><thead><tr><th>Jogador</th><th>Time</th><th>Função</th><th><abbr title="Selecione até dois jogadores para comparar">Comparar</abbr></th><th>Hist.</th><th>Média</th><th>Δ hist.</th><th>Distribuição</th><th><abbr title="Desvio-padrão entre mapas">DP</abbr></th><th><abbr title="Intervalo de confiança de 95% da média">IC95%</abbr></th><th>Mapas</th></tr></thead><tbody>${simPlayerTableRowsHtml(visible,scale)}</tbody></table></div>
-    <details class="player-help"><summary>Como interpretar as distribuições</summary><div class="player-help-body"><span><b>Faixa recorrente:</b> P10–P90 reúne os 80% resultados centrais.</span><span><b>Extremos e P5–P95:</b> separam picos isolados da oscilação mais comum.</span><span><b>IC95%:</b> mede a precisão da média e requer pelo menos 2 mapas.</span><span><b>Somente leitura:</b> filtros e comparações não alteram a simulação.</span></div></details>`;
+    <div class="player-table-scroll"><table class="player-variance-table"><thead><tr><th>Jogador</th><th>Time</th><th>Funções</th><th><abbr title="Selecione até dois jogadores para comparar">Comparar</abbr></th><th>Rating</th><th><abbr title="Relação kills/deaths; inclui KPR, DPR e assistências por round">K/D</abbr></th><th>KAST</th><th>ADR</th><th>Distribuição</th><th>Mapas</th></tr></thead><tbody>${simPlayerTableRowsHtml(visible,scale)}</tbody></table></div>
+    <details class="player-help"><summary>Como interpretar desempenho e variação</summary><div class="player-help-body"><span><b>KPR / DPR / A/R:</b> kills, deaths e assistências por round, comparáveis entre mapas de durações diferentes.</span><span><b>KAST:</b> porcentagem de rounds com kill, assistência, sobrevivência ou trade.</span><span><b>ADR:</b> dano médio causado por round.</span><span><b>Variação:</b> P10–P90 mostra a faixa recorrente; DP e IC95% permanecem na comparação e no CSV.</span><span><b>Somente leitura:</b> filtros e comparações não alteram a simulação.</span></div></details>`;
 }
 function refreshSimPlayerView(){
   if(!lastBatch)return;
@@ -3928,7 +3951,10 @@ if(typeof window!=="undefined"&&typeof location!=="undefined"&&/[?&]e2e(?:=|&|$)
       seed:lastBatch?.seed||lastMap?.labSeed||0,
       scope:lastBatch?.scope||simScope,
       maps:lastBatch?.n||(lastMap?1:0),
-      players:Object.values(lastBatch?.players||{}).map(player=>({id:player.id,maps:player.n,samples:player.ratings.length})),
+      players:Object.values(lastBatch?.players||{}).map(player=>({
+        id:player.id,maps:player.n,samples:player.ratings.length,primaryRole:player.rolePrimary,secondaryRole:player.roleSecondary,
+        rounds:player.rounds,kills:player.kills,deaths:player.deaths,assists:player.assists,kastRoundWeight:player.kastRoundWeight,adrRoundWeight:player.adrRoundWeight
+      })),
       campaign:lastBatch?.campaign?{...lastBatch.campaign,maps:lastBatch.campaign.maps.map(map=>({...map}))}:null
     })
   };

@@ -80,19 +80,29 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     const singleMapVariance=await page.evaluate(()=>({
       headers:[...document.querySelectorAll(".player-variance-table thead th")].map(cell=>cell.textContent.trim()),
       rows:[...document.querySelectorAll(".player-variance-table tbody tr")].map(row=>({
+        id:row.dataset.playerId,
         stats:Object.fromEntries([...row.querySelectorAll("td[data-stat]")].map(cell=>[cell.dataset.stat,cell.dataset.value])),
+        roles:{primary:row.querySelector(".role-cell")?.dataset.primaryRole,secondary:row.querySelector(".role-cell")?.dataset.secondaryRole},
+        combat:{...row.querySelector(".kd-cell")?.dataset},
         range:{...row.querySelector(".distribution-cell")?.dataset},
         distributionLabel:row.querySelector(".rating-viz")?.getAttribute("aria-label")||"",
         sufficient:row.dataset.sufficient
-      }))
+      })),
+      players:window.__e2e.simulation().players
     }));
-    const expectedVarianceColumns=["Jogador","Time","Função","Comparar","Hist.","Média","Δ hist.","Distribuição","DP","IC95%","Mapas"];
+    const expectedVarianceColumns=["Jogador","Time","Funções","Comparar","Rating","K/D","KAST","ADR","Distribuição","Mapas"];
+    const singlePlayers=new Map(singleMapVariance.players.map(player=>[player.id,player]));
     const validSingleMap=singleMapVariance.rows.every(row=>{
-      const historical=Number(row.stats.historical),average=Number(row.stats.mean),stdDev=Number(row.stats.stdDev),range=[row.range.min,row.range.p10,row.range.p90,row.range.max].map(Number);
-      return [historical,average,stdDev,...range].every(Number.isFinite)&&range.every(value=>value===average)&&stdDev===0&&row.stats.ciWidth===""&&/mediana|média/.test(row.distributionLabel)&&row.sufficient==="false";
+      const player=singlePlayers.get(row.id),average=Number(row.stats.mean),kd=Number(row.stats.kd),kast=Number(row.stats.kast),adr=Number(row.stats.adr),maps=Number(row.stats.maps);
+      const kills=Number(row.combat.kills),deaths=Number(row.combat.deaths),assists=Number(row.combat.assists),kpr=Number(row.combat.kpr),dpr=Number(row.combat.dpr),apr=Number(row.combat.apr),range=[row.range.min,row.range.p10,row.range.p90,row.range.max].map(Number);
+      return player&&row.roles.primary&&row.roles.secondary&&row.roles.primary!==row.roles.secondary&&
+        [average,kd,kast,adr,maps,kills,deaths,assists,kpr,dpr,apr,...range].every(Number.isFinite)&&range.every(value=>value===average)&&maps===1&&
+        kills===player.kills&&deaths===player.deaths&&assists===player.assists&&Math.abs(kpr-kills/player.rounds)<1e-12&&Math.abs(dpr-deaths/player.rounds)<1e-12&&Math.abs(apr-assists/player.rounds)<1e-12&&
+        Math.abs(kast-player.kastRoundWeight/player.rounds*100)<1e-12&&Math.abs(adr-player.adrRoundWeight/player.rounds)<1e-12&&
+        /mediana|média/.test(row.distributionLabel)&&/desvio-padrão 0\.000/.test(row.distributionLabel)&&row.sufficient==="false";
     });
-    check(JSON.stringify(singleMapVariance.headers)===JSON.stringify(expectedVarianceColumns),"painel individual separa histórico, tendência, dispersão e incerteza");
-    check(singleMapVariance.rows.length===10&&validSingleMap,"um mapa mantém 10 jogadores, estatísticas degeneradas válidas e aviso de amostra pequena");
+    check(JSON.stringify(singleMapVariance.headers)===JSON.stringify(expectedVarianceColumns),"painel individual prioriza rating, produção, KAST e ADR");
+    check(singleMapVariance.rows.length===10&&validSingleMap,"um mapa mantém 10 jogadores, duas funções e estatísticas individuais derivadas do placar");
 
     await page.fill("#simRuns","3");
     await page.click("#runBatchBtn");
@@ -203,12 +213,14 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     check(visiblePlayers===5,"filtro de time isola os cinco jogadores da escalação histórica");
     await page.click("#simPlayerReset");
     await page.selectOption("#simPlayerRole","AWPer");
-    const roleCells=await page.locator('.player-variance-table tbody tr[data-player-id] td:nth-child(3)').allTextContents();
-    check(roleCells.length>0&&roleCells.every(role=>role.trim()==="AWPer"),"filtro de função mantém somente a função escolhida");
+    const roleCells=await page.locator('.player-variance-table tbody tr[data-player-id] .role-cell').evaluateAll(cells=>cells.map(cell=>({primary:cell.dataset.primaryRole,secondary:cell.dataset.secondaryRole})));
+    check(roleCells.length>0&&roleCells.every(role=>role.primary==="AWPer"||role.secondary==="AWPer"),"filtro de função considera papéis primários e secundários");
     const [csvDownload]=await Promise.all([page.waitForEvent("download"),page.click("#simPlayerExport")]);
     const csv=fs.readFileSync(await csvDownload.path(),"utf8"),csvLines=csv.trim().split(/\r?\n/);
-    check(csv.charCodeAt(0)===0xfeff&&/^sandbox-player-ratings-league-seed--?\d+\.csv$/.test(csvDownload.suggestedFilename())&&csvLines[0].includes("historical_rating,current_reference_rating,simulated_mean")&&csvLines[0].includes("minimum,p10,p90,maximum"),"CSV inclui BOM, nome rastreável e schema estável");
-    check(csvLines.length===roleCells.length+1&&csvLines.slice(1).every(line=>line.includes(",AWPer,")),"CSV exporta exatamente os jogadores visíveis após os filtros");
+    const csvHeader=csvLines[0].replace(/^\ufeff/,"").split(","),primaryRoleIndex=csvHeader.indexOf("primary_role"),secondaryRoleIndex=csvHeader.indexOf("secondary_role");
+    const csvRoles=csvLines.slice(1).map(line=>{const cells=line.split(",");return {primary:cells[primaryRoleIndex],secondary:cells[secondaryRoleIndex]};});
+    check(csv.charCodeAt(0)===0xfeff&&/^sandbox-player-performance-league-seed--?\d+\.csv$/.test(csvDownload.suggestedFilename())&&csvLines[0].includes("primary_role,secondary_role")&&csvLines[0].includes("kills,deaths,assists,kd_ratio,kpr,dpr,apr,kast_percent,adr")&&csvLines[0].includes("minimum,p10,p90,maximum"),"CSV inclui BOM, nome rastreável, duas funções e desempenho individual");
+    check(csvLines.length===roleCells.length+1&&csvRoles.every(role=>role.primary==="AWPer"||role.secondary==="AWPer"),"CSV exporta exatamente os jogadores visíveis após filtros em ambas as funções");
     const csvSafety=await page.evaluate(()=>[window.simCsvCell("=2+2"),window.simCsvCell('nome, "apelido"')]);
     check(csvSafety[0]==="'=2+2"&&csvSafety[1]==='"nome, ""apelido"""',"CSV neutraliza fórmulas e escapa campos compostos");
     await page.click("#simPlayerReset");
