@@ -383,6 +383,12 @@ Aceitação:
 
 ### Etapa R6 — validação e publicação do balanceamento
 
+**Concluída em 23 de julho de 2026.** A comparação acumulada preservou as
+métricas globais e confirmou mudanças direcionais por função efetiva. A
+validação integral passou em 19/19 suítes, 45.900 mapas e 938.511 rounds. O
+fechamento e os limites remanescentes estão em
+`docs/r6-closure-2026-07-23.md`.
+
 1. executar os goldens antigos e explicar cada diferença;
 2. executar a comparação pareada antes/depois;
 3. revisar maiores beneficiados, prejudicados e inversões de ranking;
