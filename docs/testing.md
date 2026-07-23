@@ -56,6 +56,11 @@ R5.7a acrescentou `tradeContextProfile`: 174 entradas devem preservar por
 paridade os sinais finitos de prontidão e possibilidade de troca. O teste não
 credita trade ou KAST; essa decisão continua pertencendo ao evento do round.
 
+R5.7b acrescentou `assistContextProfile`: 174 entradas reais, wrappers e
+fallbacks devem preservar por paridade o sinal finito de utilidade. O teste não
+decide a assistência nem concede KAST; apenas protege a fronteira pura usada
+pelo evento.
+
 ## Estado de referência
 
 - A aplicação possui 17 times e 85 cards de jogador.

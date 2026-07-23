@@ -851,7 +851,7 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓL
   // kill: flash/dano). Preso à kill, nos 2 times, elegível vivo OU morto (flasheou/feriu antes de cair).
   // ASSIST_CHANCE≈razão A/K alvo; peso do assistente = ASSIST_BASE+ASSIST_UT_W·ut (support/IGL ganham
   // mais); ASSIST_DEAD_W desconta quem já morreu; ASSIST_OPEN_MULT: abertura tem mais flash-assist.
-  ASSIST_CHANCE:.30,ASSIST_OPEN_MULT:1.15,ASSIST_BASE:12,ASSIST_UT_W:.9,ASSIST_DEAD_W:.5,
+  ASSIST_CHANCE:.30,ASSIST_OPEN_MULT:1.15,ASSIST_CONTEXT:.10,ASSIST_BASE:12,ASSIST_UT_W:.9,ASSIST_DEAD_W:.5,
   FRAG_FP_BASE:35,FRAG_OVR:.003,FRAG_RATING:.90,RATING_REF:1.16,FORMA_RATING:.35, // fp dá o perfil; rating observado calibra a eficiência sem nomes
   DUELO_BASE:12,DUELO_OVR:4.6,   // skillDuelo: força de combate por OVR (base + inclinação) — quem GANHA o round
   // Exposição decide quem participa do contato perdido. O volume anterior
@@ -1044,6 +1044,8 @@ function tradeContextProfile(j){const a=j?._eng||j||{};
 const TRADE_CONTEXT_MEAN=(()=>{const ps=Object.values(POOL),sum=ps.reduce((acc,p)=>{const v=tradeContextProfile(p);
   acc.readiness+=v.readiness;acc.tradeability+=v.tradeability;return acc;},{readiness:0,tradeability:0});
   return {readiness:sum.readiness/ps.length,tradeability:sum.tradeability/ps.length};})();
+function assistContextProfile(j){const a=j?._eng||j||{};return {utility:(a.ut??50)/100};}
+const ASSIST_UTILITY_MEAN=(()=>{const ps=Object.values(POOL);return ps.reduce((sum,p)=>sum+assistContextProfile(p).utility,0)/ps.length;})();
 // ——— AFINIDADE DE LADO (composição): CT = segurar/anchor, T = tomar espaço/entry ———
 // derivada dos STATS (cl/ut/sn seguram bombsite; en/op/fp tomam espaço) + role + sub-arquétipo.
 // lurker/support/âncora puxam o time pro CT; entry/agressivo puxam pro T. zero-centrado: time
@@ -1076,6 +1078,7 @@ function prepTime(t,mapa){
     cls:js.map(j=>j.cl||40),agr:js.map(j=>subAgr(j)),exposure:js.map(j=>exposureProfile(j)),
     preservation:js.map(j=>preservationValue(j)),
     tradeContext:js.map(j=>tradeContextProfile(j)),
+    assistContext:js.map(j=>assistContextProfile(j)),
     ops:js.map(j=>j.op??50),trs:js.map(j=>j.tr??50), // categorias HLTV por jogador (tipo de kill)
     // força de abertura do time (op/entry/sniper/util — flashes ajudam a abrir): inclina o PRIMEIRO duelo
     open:js.reduce((s,j)=>s+((j.op??50)*.35+(j.en??45)*.30+(j.sn??0)*.20+(j.ut??50)*.15),0)/js.length,
@@ -1129,8 +1132,12 @@ function combateRound(a,b,ctx){
     // ASSIST preso à kill: um companheiro do matador (não ele) habilitou a morte com util/dano.
     // Ponderado por utility; quem já morreu entra com desconto (flash/dano antes de cair). Ver CFG_SIM.
     let ai=null;
-    if(rndF()<C.ASSIST_CHANCE*(opening?C.ASSIST_OPEN_MULT:1)){
-      ai=pick(ASSIST_SLOTS[ki],i=>(C.ASSIST_BASE+C.ASSIST_UT_W*(venc.stats[i].ut||40))*(vivV.includes(i)?1:C.ASSIST_DEAD_W));
+    const assistSlots=ASSIST_SLOTS[ki],assistPresence=i=>vivV.includes(i)?1:C.ASSIST_DEAD_W;
+    const assistPresenceTotal=assistSlots.reduce((sum,i)=>sum+assistPresence(i),0);
+    const assistUtility=assistSlots.reduce((sum,i)=>sum+venc.assistContext[i].utility*assistPresence(i),0)/assistPresenceTotal;
+    const assistChance=C.ASSIST_CHANCE*(opening?C.ASSIST_OPEN_MULT:1)+C.ASSIST_CONTEXT*(assistUtility-ASSIST_UTILITY_MEAN);
+    if(rndF()<assistChance){
+      ai=pick(assistSlots,i=>(C.ASSIST_BASE+C.ASSIST_UT_W*(venc.stats[i].ut||40))*assistPresence(i));
       venc.stats[ai].a++;venc.stats[ai].fa.assists++;venc.stats[ai]._contribRound=true;venc.stats[ai].dmg+=C.ADR_SCALE*(C.ADR_AST+rndF()*30);
     }
     if(trace){

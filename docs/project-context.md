@@ -121,11 +121,16 @@ Atualização operacional de 23 de julho de 2026:
   possibilidade de troca da vítima. Entry e Support passaram a ser trocados com
   maior frequência sem inflar trades globais; evidência em
   `docs/r5-trade-balance-2026-07-23.md`.
+- R5.7b condicionou a oportunidade de assistência à utilidade disponível dos
+  quatro companheiros elegíveis. APR global permaneceu estável e a separação
+  entre facilitadores e finalizadores aumentou sem bônus direto por função ou
+  KAST; evidência em `docs/r5-assist-balance-2026-07-23.md`.
 
 ### Decisão imediata para a próxima sessão
 
-**Próxima subetapa:** concluir assistência contextual da R5.7 e verificar a
-composição factual do KAST; a oportunidade de trade já está concluída. O corpus
+**Próxima subetapa:** decompor o rating pós-eventos na R5.8 e medir o peso do
+prior histórico contra a produção simulada. Trade, assistência e composição
+factual do KAST estão concluídos. O corpus
 oficial segue insuficiente (1/800 mapas e 1/6 eventos), portanto nenhuma nota
 IFCS será publicada. A distribuição entre muitas MD3 continua aberta em R3 e não
 deve ser misturada ao ciclo R5/R6.

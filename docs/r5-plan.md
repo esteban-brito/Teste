@@ -144,16 +144,21 @@ afirma que uma arma específica foi preservada.
 
 ### R5.7 — trade, assistência e KAST
 
-**Oportunidade de trade concluída; assistência pendente.** Prontidão dos
+**Concluída.** Prontidão dos
 companheiros vivos e possibilidade de troca da vítima agora deslocam a chance
 do refrag de forma zero-centrada. Evidência em
 `docs/r5-trade-balance-2026-07-23.md`.
 
-- usar `tr` para selecionar o refragger;
-- usar utilidade e contexto para assistência;
-- avaliar Entry por APR, sem transformar A/K no alvo principal;
-- manter KAST como união factual de kill, assist, survival e trade;
-- nunca aplicar crédito direto de KAST por role.
+A oportunidade de assistência agora considera a utilidade disponível dos
+companheiros elegíveis, preservando o desconto histórico de quem já morreu e a
+seleção ponderada do assistente. Evidência em
+`docs/r5-assist-balance-2026-07-23.md`.
+
+- `tr` continua selecionando o refragger;
+- utilidade disponível contextualiza a assistência;
+- Entry foi avaliado por APR, sem transformar A/K no alvo principal;
+- KAST permanece a união factual de kill, assist, survival e trade;
+- nenhum crédito direto de KAST foi aplicado por role.
 
 ### R5.8 — rating após os eventos
 

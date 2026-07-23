@@ -10,16 +10,16 @@
     "maps": [
       {
         "map": "Nuke",
-        "scoreA": 16,
-        "scoreB": 14,
-        "winnerIndex": 0,
+        "scoreA": 4,
+        "scoreB": 13,
+        "winnerIndex": 1,
         "orientation": "A-B"
       },
       {
         "map": "Ancient",
-        "scoreA": 9,
-        "scoreB": 13,
-        "winnerIndex": 1,
+        "scoreA": 13,
+        "scoreB": 6,
+        "winnerIndex": 0,
         "orientation": "B-A"
       },
       {
