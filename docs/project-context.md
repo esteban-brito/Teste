@@ -84,26 +84,27 @@ Estado registrado em 22 de julho de 2026:
   próxima retomada é congelar o design atual e implementar a distribuição entre
   muitas campanhas MD3, sem novo polimento visual ou balanceamento incidental.
 
+Atualização operacional de 23 de julho de 2026:
+
+- R4.1 e R4.2 foram publicadas até `8136df1`; a auditoria profunda e a
+  telemetria opcional caracterizam 1.088 mapas e 22.446 rounds sem alterar RNG;
+- o diagnóstico confirmou ausência de identidade própria de save para AWPer e
+  probabilidades quase uniformes de trade/crédito KAST entre roles;
+- o plano mestre R5 está em `docs/r5-plan.md` e o contrato executável em
+  `docs/r5-experiment.json`;
+- R5.0–R5.1 concluíram a comparação pareada, com 1.088 mapas, 10.880
+  player-maps, delta nulo e detecção sintética. Nenhum balanceamento foi
+  misturado a essa infraestrutura.
+
 ### Decisão imediata para a próxima sessão
 
-**Próxima implementação recomendada e aprovada:** repetir muitas MD3 entre dois
-times e resumir a distribuição das séries. A primeira entrega deve permitir uma
-quantidade explícita de campanhas, como 100 ou 500, e mostrar:
-
-- porcentagem de séries vencidas por cada time;
-- frequências de `2–0`, `2–1`, `1–2` e `0–2`;
-- quantidade média de mapas por série;
-- frequência dos mapas e desempenho dos times por mapa;
-- consistência individual ao longo das séries, sem confundir mapa e campanha;
-- seed e contrato determinístico protegidos por golden e E2E.
-
-Depois dessa entrega, a ordem recomendada é: auditar AWPers, sobrevivência,
-Entry, Support/IGL, playstyles e força do adversário; balancear somente desvios
-repetidos e comprovados; continuar a modularização em commits separados;
-completar o corpus e a nota IFCS oficial; só então avançar gradualmente no modo
-Carreira de Jogador. Não balancear a partir de um único lote: o benchmark atual
-permanece saudável, com correlação real × simulado de aproximadamente `0,946`,
-erro médio `0,052` e maior erro individual `0,178`.
+**Próxima implementação recomendada e aprovada:** concluir R5.0–R5.1, provando
+que baseline contra baseline produz delta e IC95% exatamente zero por
+player-map. Depois, R5.2 remove os tetos artificiais de rating/forma em commit
+exclusivo, com guardas de cauda e sem adicionar pontos de RNG. Tuning tático por
+role permanece condicionado a alvos empíricos; o corpus oficial ainda é
+insuficiente. A distribuição entre muitas MD3 continua aberta em R3, mas não
+deve ser misturada ao ciclo R5/R6.
 
 ### Preferências de comunicação do responsável
 

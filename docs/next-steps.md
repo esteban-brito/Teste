@@ -338,6 +338,13 @@ Achados do gate:
 
 Só executar se R4 comprovar um problema material.
 
+**Status em 23/07/2026:** R5.0–R5.1 concluídas, sem balanceamento. O
+manifesto congelado está em `docs/r5-experiment.json` e a arquitetura completa
+em `docs/r5-plan.md`. A captura de desenvolvimento cobre 1.088 mapas e 10.880
+player-maps; baseline contra baseline deve produzir deltas e IC95% exatamente
+zero antes de qualquer candidato. R5.2, remoção isolada dos tetos artificiais,
+é a próxima família autorizada pelo plano.
+
 Regras:
 
 - um commit exclusivo de balanceamento;
