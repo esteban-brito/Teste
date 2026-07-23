@@ -6,11 +6,13 @@ const {pathToFileURL}=require("node:url");
 const {X,T}=require("./motor");
 const {compactStats,countBy,sortedCountEntries,teamNameFor}=require("./common");
 
-const DEEP_SCHEMA_VERSION=1;
+const DEEP_SCHEMA_VERSION=2;
 const DEFAULT_DEEP_CYCLES=8;
 const DEEP_BASE_SEED=0x51f15e1d;
 const MAPS=["Mirage","Inferno","Nuke","Ancient","Anubis","Dust2","Train","Overpass"];
 const QUARTILES=["Q1","Q2","Q3","Q4"];
+const OUTCOMES=["win","loss"];
+const BUY_STATES=["pistol","eco","force","full"];
 let statisticsPromise=null,sum,mean,quantile,rounded,describe;
 
 function loadSampleStatistics(){
@@ -234,13 +236,18 @@ function summarizeMetricSamples(samples){
 
 function emptyPlayerAccumulator(teamIndex,playerIndex,card){
   const engine=playerEngine(card);
+  const secondaryRole=engine.secundario||engine.combatRole||null;
+  const effectiveCombatRole=engine.combatRole||(engine.primario==="IGL"?secondaryRole:engine.primario)||engine.primario;
   return {
     id:rawPlayerId(card),nick:card.nick||engine.nick||engine.nome,teamIndex,playerIndex,
-    team:T[teamIndex].nome,role:engine.primario,secondaryRole:engine.secundario,
-    combatRole:engine.combatRole,playstyle:engine.playstyle,subarchetype:engine.sub?.nome||null,
+    team:T[teamIndex].nome,role:engine.primario,secondaryRole,
+    rolePair:`${engine.primario}/${secondaryRole||"-"}`,combatRole:engine.combatRole,
+    effectiveCombatRole,playstyle:engine.playstyle,subarchetype:engine.sub?.nome||null,
     ovr:engine.ovr,realRating:+engine.rating||0,
-    maps:0,firstHalfA:0,rounds:0,kills:0,deaths:0,assists:0,kastRoundWeight:0,adrRoundWeight:0,
+    maps:0,orientationA:0,rounds:0,kills:0,deaths:0,assists:0,kastRoundWeight:0,adrRoundWeight:0,
     ownDayStrength:[],opponentDayStrength:[],opponents:new Set(),mapCounts:{},samples:emptyMetricSamples(),
+    outcomeCounts:Object.fromEntries(OUTCOMES.map(outcome=>[outcome,0])),
+    byOutcome:Object.fromEntries(OUTCOMES.map(outcome=>[outcome,emptyMetricSamples()])),
     byMap:Object.fromEntries(MAPS.map(map=>[map,emptyMetricSamples()])),
     byOpponentStrengthQuartile:Object.fromEntries(QUARTILES.map(quartile=>[quartile,emptyMetricSamples()]))
   };
@@ -288,16 +295,19 @@ function groupedPlayerSummary(players,key){
   });
   return Object.keys(groups).sort(compareText).map(name=>{
     const rows=groups[name];
+    const rounds=sum(rows.map(row=>row.exposure.rounds));
+    const maps=sum(rows.map(row=>row.exposure.maps));
+    const roundWeighted=metric=>rounded(sum(rows.map(row=>row[metric]*row.exposure.rounds))/rounds);
     return {
-      group:name,players:rows.length,
+      group:name,players:rows.length,maps,rounds,aggregation:"player-round-weighted",
       realRating:rounded(mean(rows.map(row=>row.realRating))),
       simRating:rounded(mean(rows.map(row=>row.simRating))),
       ratingDelta:rounded(mean(rows.map(row=>row.ratingDelta))),
-      kpr:rounded(mean(rows.map(row=>row.kpr))),
-      dpr:rounded(mean(rows.map(row=>row.dpr))),
-      apr:rounded(mean(rows.map(row=>row.apr))),
-      kastPercent:rounded(mean(rows.map(row=>row.kastPercent))),
-      adr:rounded(mean(rows.map(row=>row.adr)))
+      kpr:rounded(sum(rows.map(row=>row.counts.kills))/rounds),
+      dpr:rounded(sum(rows.map(row=>row.counts.deaths))/rounds),
+      apr:rounded(sum(rows.map(row=>row.counts.assists))/rounds),
+      kastPercent:roundWeighted("kastPercent"),
+      adr:roundWeighted("adr")
     };
   });
 }
@@ -316,13 +326,14 @@ function recordTopPreservation(teamAcc,teamIndex,stats){
   teamAcc.top3Overlap+=actual.slice(0,3).filter(row=>expectedTop3.has(row.id)).length;
 }
 
-function recordPlayerSide(accumulators,teamIndex,opponentIndex,stats,rounds,map,firstHalfA,ownStrength,opponentStrength,quartile){
+function recordPlayerSide(accumulators,teamIndex,opponentIndex,stats,rounds,map,orientationA,ownStrength,opponentStrength,quartile,outcome){
+  if(!OUTCOMES.includes(outcome))throw new Error(`resultado individual invalido: ${outcome}`);
   stats.forEach((row,playerIndex)=>{
     const id=rawPlayerId(X.TEAMS[teamIndex].jogadores[playerIndex]);
     const player=accumulators.get(id);
     if(!player)throw new Error(`jogador sem acumulador: ${id}`);
     player.maps++;
-    player.firstHalfA+=firstHalfA?1:0;
+    player.orientationA+=orientationA?1:0;
     player.rounds+=rounds;
     player.kills+=row.k||0;
     player.deaths+=row.d||0;
@@ -333,7 +344,9 @@ function recordPlayerSide(accumulators,teamIndex,opponentIndex,stats,rounds,map,
     player.opponentDayStrength.push(opponentStrength);
     player.opponents.add(opponentIndex);
     player.mapCounts[map]=(player.mapCounts[map]||0)+1;
+    player.outcomeCounts[outcome]++;
     recordMetricSample(player.samples,row,rounds);
+    recordMetricSample(player.byOutcome[outcome],row,rounds);
     recordMetricSample(player.byMap[map],row,rounds);
     recordMetricSample(player.byOpponentStrengthQuartile[quartile],row,rounds);
   });
@@ -354,7 +367,7 @@ function assertDeepCoverage({cycles,pairs,mapCount,playerAccumulators,beforeFing
   playerAccumulators.forEach(player=>{
     if(player.maps!==expectedPlayerMaps)throw new Error(`${player.id}: ${player.maps} mapas, esperado ${expectedPlayerMaps}`);
     if(player.opponents.size!==T.length-1)throw new Error(`${player.id}: cobertura incompleta de adversarios`);
-    if(player.firstHalfA!==expectedPlayerMaps/2)throw new Error(`${player.id}: exposicao A/B desigual`);
+    if(player.orientationA!==expectedPlayerMaps/2)throw new Error(`${player.id}: exposicao A/B desigual`);
     MAPS.forEach(map=>{
       if(player.mapCounts[map]!==expectedPerMap)throw new Error(`${player.id}: exposicao desigual em ${map}`);
     });
@@ -368,15 +381,19 @@ function finalizePlayers(playerAccumulators){
     return {
       id:player.id,nick:player.nick,teamIndex:player.teamIndex,teamId:X.TEAMS[player.teamIndex].id,
       team:player.team,role:player.role,secondaryRole:player.secondaryRole,
-      combatRole:player.combatRole,playstyle:player.playstyle,subarchetype:player.subarchetype,
+      rolePair:player.rolePair,combatRole:player.combatRole,effectiveCombatRole:player.effectiveCombatRole,
+      playstyle:player.playstyle,subarchetype:player.subarchetype,
       ovr:player.ovr,realRating:player.realRating,simRating:rates.rating,
       ratingDelta:rounded(rates.rating-player.realRating),kpr:rates.kpr,dpr:rates.dpr,apr:rates.apr,
       kastPercent:rates.kastPercent,adr:rates.adr,
-      exposure:{maps:player.maps,rounds:player.rounds,firstHalfA:player.firstHalfA,firstHalfB:player.maps-player.firstHalfA,
+      counts:{kills:player.kills,deaths:player.deaths,assists:player.assists},
+      exposure:{maps:player.maps,rounds:player.rounds,orientationA:player.orientationA,orientationB:player.maps-player.orientationA,
+        outcomes:{...player.outcomeCounts},
         opponents:Array.from(player.opponents).sort((a,b)=>a-b).map(index=>({index,name:T[index].nome})),
         mapsByName:Object.fromEntries(MAPS.map(map=>[map,player.mapCounts[map]||0])),
         meanOwnDayStrength:rounded(mean(player.ownDayStrength)),meanOpponentDayStrength:rounded(mean(player.opponentDayStrength))},
       distributions:summarizeMetricSamples(player.samples),
+      byOutcome:Object.fromEntries(OUTCOMES.map(outcome=>[outcome,summarizeMetricSamples(player.byOutcome[outcome])])),
       byMap:Object.fromEntries(MAPS.map(map=>[map,summarizeMetricSamples(player.byMap[map])])),
       byOpponentStrengthQuartile:Object.fromEntries(QUARTILES.map(quartile=>[quartile,summarizeMetricSamples(player.byOpponentStrengthQuartile[quartile])]))
     };
@@ -423,6 +440,7 @@ function buildDeepAuditSync(cycles=DEFAULT_DEEP_CYCLES){
   const teamAccumulators=T.map(()=>({maps:0,top1Hits:0,top3Overlap:0}));
   const globalSamples=emptyMetricSamples();
   const mapCount=Object.fromEntries(MAPS.map(map=>[map,0]));
+  const buyStateCounts=Object.fromEntries(BUY_STATES.map(state=>[state,0]));
   let totalRounds=0,totalKills=0,totalDeaths=0,totalAssists=0,totalPlayerRounds=0;
 
   for(let cycle=0;cycle<cycles;cycle++)pairs.forEach((pair,pairIndex)=>{
@@ -441,8 +459,15 @@ function buildDeepAuditSync(cycles=DEFAULT_DEEP_CYCLES){
     recordTopPreservation(teamAccumulators[aIndex],aIndex,result.statsA);
     recordTopPreservation(teamAccumulators[bIndex],bIndex,result.statsB);
     const quartileA=strengthQuartile(b.ef,strengthBounds),quartileB=strengthQuartile(a.ef,strengthBounds);
-    recordPlayerSide(playerAccumulators,aIndex,bIndex,result.statsA,rounds,map,true,strengthA,strengthB,quartileA);
-    recordPlayerSide(playerAccumulators,bIndex,aIndex,result.statsB,rounds,map,false,strengthB,strengthA,quartileB);
+    const aWon=result.placar[0]>result.placar[1];
+    recordPlayerSide(playerAccumulators,aIndex,bIndex,result.statsA,rounds,map,true,strengthA,strengthB,quartileA,aWon?"win":"loss");
+    recordPlayerSide(playerAccumulators,bIndex,aIndex,result.statsB,rounds,map,false,strengthB,strengthA,quartileB,aWon?"loss":"win");
+    result.rounds.forEach(round=>{
+      [round.buyA,round.buyB].forEach(state=>{
+        if(!BUY_STATES.includes(state))throw new Error(`estado de compra desconhecido: ${state}`);
+        buyStateCounts[state]++;
+      });
+    });
     [...result.statsA,...result.statsB].forEach(row=>{
       totalKills+=row.k||0;
       totalDeaths+=row.d||0;
@@ -469,7 +494,8 @@ function buildDeepAuditSync(cycles=DEFAULT_DEEP_CYCLES){
     .map(player=>({id:player.id,nick:player.nick,team:player.team,realRank:player.realRatingRank,simRank:player.simRatingRank,
       rankMovement:player.rankMovement,realRating:player.realRating,simRating:player.simRating}));
 
-  return {
+  const teamRoundSamples=sum(Object.values(buyStateCounts));
+  const report={
     schemaVersion:DEEP_SCHEMA_VERSION,
     kind:"prisma-simulator-characterization",
     diagnosticOnly:true,
@@ -477,18 +503,23 @@ function buildDeepAuditSync(cycles=DEFAULT_DEEP_CYCLES){
     method:{
       source:"game.js via bancada/motor.js",rngContract:"mulberry32-v1",baseSeed:DEEP_BASE_SEED,
       cycles,teams:T.length,players:players.length,pairingsPerCycle:pairs.length,maps:pairs.length*cycles,
-      mapsPerPlayer:(T.length-1)*cycles,mapRotation:MAPS,sidePolicy:"odd cycles swap every pairing",
+      mapsPerPlayer:(T.length-1)*cycles,mapRotation:MAPS,orientationPolicy:"odd cycles swap every pairing",
       seedPolicy:"base + imul(cycle + 1, 0x9e3779b1) + imul(pair + 1, 0x85ebca6b)",
       opponentStrengthQuartileBounds:strengthBounds.map(value=>rounded(value))
     },
     coverage:{
       rawIds:players.length,uniqueTeams:T.length,uniqueOpponentsPerPlayer:T.length-1,
-      mapCounts:mapCount,classificationFingerprintPreserved:true,equalMapExposure:true,equalSideExposure:true
+      mapCounts:mapCount,classificationFingerprintPreserved:true,equalMapExposure:true,equalOrientationExposure:true
     },
     global:{
       maps:pairs.length*cycles,rounds:totalRounds,playerRounds:totalPlayerRounds,
+      totals:{kills:totalKills,deaths:totalDeaths,assists:totalAssists},
       pooledRates:{kpr:rounded(totalKills/totalPlayerRounds),dpr:rounded(totalDeaths/totalPlayerRounds),apr:rounded(totalAssists/totalPlayerRounds)},
       playerMapDistributions:summarizeMetricSamples(globalSamples),
+      economy:{
+        teamRoundSamples,buyStateCounts,
+        buyStatePercent:Object.fromEntries(BUY_STATES.map(state=>[state,rounded(buyStateCounts[state]/teamRoundSamples*100)]))
+      },
       calibration:{
         realRatingVsSimRating:{pearson:rounded(pearson(ratingPoints)),spearman:rounded(spearman(ratingPoints)),
           mae:rounded(mean(errors.map(Math.abs))),rmse:rounded(Math.sqrt(mean(errors.map(error=>error**2)))),
@@ -502,11 +533,46 @@ function buildDeepAuditSync(cycles=DEFAULT_DEEP_CYCLES){
           ratePercent:rounded(inversionTotals.pairs?inversionTotals.inversions/inversionTotals.pairs*100:0)}
       }
     },
-    groups:{byRole:groupedPlayerSummary(players,"role"),byPlaystyle:groupedPlayerSummary(players,"playstyle"),byOvr:groupedPlayerSummary(players,"ovr")},
+    groups:{
+      byRole:groupedPlayerSummary(players,"role"),
+      byCombatRole:groupedPlayerSummary(players,"effectiveCombatRole"),
+      byRolePair:groupedPlayerSummary(players,"rolePair"),
+      bySecondaryRole:groupedPlayerSummary(players,"secondaryRole"),
+      byPlaystyle:groupedPlayerSummary(players,"playstyle"),
+      byOvr:groupedPlayerSummary(players,"ovr")
+    },
+    limitations:[
+      "player metrics are map-level; CT/T production is not separable without event telemetry",
+      "buy states are global and cannot yet be joined to individual damage or survival",
+      "assists do not distinguish damage assists from flash assists",
+      "the report characterizes the simulator and is not an IFCS score or a real-data target"
+    ],
     anomalies:{largestAbsoluteRatingDeltas:largestDeltas,largestAbsoluteRankMovements:largestRankMovements},
     teams,
     players
   };
+  assertDeepReport(report);
+  return report;
+}
+
+function assertDeepReport(report){
+  const expectedPlayers=report.method.players;
+  ["byRole","byCombatRole","byRolePair","bySecondaryRole","byPlaystyle","byOvr"].forEach(key=>{
+    const covered=sum(report.groups[key].map(group=>group.players));
+    if(covered!==expectedPlayers)throw new Error(`${key}: cobertura ${covered}/${expectedPlayers}`);
+    const rounds=sum(report.groups[key].map(group=>group.rounds));
+    if(rounds!==report.global.playerRounds)throw new Error(`${key}: player-rounds incompletos`);
+  });
+  if(report.global.totals.kills!==report.global.totals.deaths)throw new Error("kills e deaths globais divergem");
+  if(report.global.economy.teamRoundSamples!==report.global.rounds*2){
+    throw new Error("amostra economica diverge de dois times por round");
+  }
+  report.players.forEach(player=>{
+    const outcomes=sum(Object.values(player.exposure.outcomes));
+    if(outcomes!==player.exposure.maps)throw new Error(`${player.id}: vitorias/derrotas divergem dos mapas`);
+    const outcomeSamples=sum(OUTCOMES.map(outcome=>player.byOutcome[outcome].rating.n));
+    if(outcomeSamples!==player.exposure.maps)throw new Error(`${player.id}: distribuicao por resultado incompleta`);
+  });
 }
 
 async function buildDeepAudit(cycles=DEFAULT_DEEP_CYCLES){
@@ -520,7 +586,7 @@ function printMetricLine(name,stats){
 
 function printGroupRows(title,rows){
   console.log(`\n-- ${title} --`);
-  rows.forEach(row=>console.log(`  ${row.group.padEnd(12)} n=${String(row.players).padStart(2)} · real ${row.realRating.toFixed(3)} · sim ${row.simRating.toFixed(3)} · delta ${row.ratingDelta>=0?"+":""}${row.ratingDelta.toFixed(3)} · KPR ${row.kpr.toFixed(3)}`));
+  rows.forEach(row=>console.log(`  ${row.group.padEnd(18)} n=${String(row.players).padStart(2)} · rating ${row.simRating.toFixed(3)} · KPR ${row.kpr.toFixed(3)} · DPR ${row.dpr.toFixed(3)} · APR ${row.apr.toFixed(3)} · KAST ${row.kastPercent.toFixed(1)}% · ADR ${row.adr.toFixed(1)}`));
 }
 
 function printDeepAudit(report){
@@ -529,7 +595,7 @@ function printDeepAudit(report){
   console.log("AUDITORIA PROFUNDA PRISMA / POLVORA");
   console.log(`${report.method.players} jogadores · ${report.method.teams} times · ${report.method.maps} mapas · ${report.global.rounds} rounds`);
   console.log(`Agenda: ${report.method.cycles} ciclos round-robin · ${report.method.mapsPerPlayer} mapas por jogador · 16 adversarios · 8 mapas equilibrados`);
-  console.log(`Cobertura: ${report.coverage.rawIds}/85 IDs · lados equilibrados · classificacoes preservadas`);
+  console.log(`Cobertura: ${report.coverage.rawIds}/85 IDs · orientacao A/B equilibrada · classificacoes preservadas`);
   console.log("\n-- Distribuicoes por jogador-mapa --");
   const distributions=report.global.playerMapDistributions;
   printMetricLine("Rating",distributions.rating);
@@ -542,7 +608,12 @@ function printDeepAudit(report){
   console.log(`  rating real x simulado · Pearson ${calibration.pearson.toFixed(3)} · Spearman ${calibration.spearman.toFixed(3)} · MAE ${calibration.mae.toFixed(3)} · RMSE ${calibration.rmse.toFixed(3)}`);
   console.log(`  regressao · sim = ${calibration.intercept.toFixed(3)} + ${calibration.slope.toFixed(3)} × real`);
   console.log(`  top 1 preservado ${ranking.top1PreservationPercent.toFixed(1)}% · overlap top 3 ${ranking.top3OverlapPercent.toFixed(1)}% · inversoes internas ${ranking.withinTeamInversions.inversions}/${ranking.withinTeamInversions.pairs}`);
-  printGroupRows("Por role",report.groups.byRole);
+  const economy=report.global.economy;
+  console.log("\n-- Compras (time-rounds) --");
+  BUY_STATES.forEach(state=>console.log(`  ${state.padEnd(8)} ${String(economy.buyStateCounts[state]).padStart(6)} · ${economy.buyStatePercent[state].toFixed(1)}%`));
+  printGroupRows("Por role primaria",report.groups.byRole);
+  printGroupRows("Por funcao de combate efetiva",report.groups.byCombatRole);
+  printGroupRows("Por par primaria/secundaria",report.groups.byRolePair);
   printGroupRows("Por playstyle",report.groups.byPlaystyle);
   console.log("\n-- Maiores deltas absolutos de rating --");
   report.anomalies.largestAbsoluteRatingDeltas.forEach(row=>console.log(`  ${row.nick.padEnd(12)} ${row.team.padEnd(11)} ${row.role.padEnd(7)} real ${row.realRating.toFixed(2)} · sim ${row.simRating.toFixed(3)} · delta ${row.delta>=0?"+":""}${row.delta.toFixed(3)} · rank ${row.realRank}->${row.simRank}`));

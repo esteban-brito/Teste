@@ -292,6 +292,15 @@ Ainda falta em R3:
 
 ### Etapa R4 — auditoria de AWPer, sobrevivência e playstyle
 
+**Status:** em andamento. A primeira camada observável foi adicionada à
+auditoria profunda sem alterar o motor: o relatório separa função primária,
+função de combate efetiva, par primária/secundária, vitória/derrota e a
+distribuição global de compras. O próprio relatório valida cobertura dos 85
+IDs, resultados, grupos e duas observações de compra por round. Métricas por lado,
+arma e estado econômico individual continuam bloqueadas até a etapa isolada de
+telemetria; não devem ser inferidas das médias atuais.
+Evidência reproduzível: `docs/role-fidelity-audit-2026-07-23.md`.
+
 Objetivo: verificar, sem presumir culpa, se algum perfil recebe rating alto por
 produzir ou por ser excessivamente recompensado por sobreviver.
 
