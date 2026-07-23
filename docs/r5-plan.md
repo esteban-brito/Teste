@@ -89,8 +89,10 @@ tetos de desempenho.
 
 ### R5.3 — alvos empíricos
 
-**Próximo gate científico.** O corpus oficial ainda é insuficiente; nenhuma
-faixa tática por role será inventada a partir do print ou do benchmark simulado.
+**Gate operacional ajustado pelo responsável.** O corpus IFCS completo não será
+adquirido neste ciclo e permanece uma trilha futura opcional. R5 pode usar
+evidência direcionada, regras já classificadas e comparações pareadas, sem
+inventar faixas por role nem alegar uma nota IFCS oficial.
 
 - usar a população congelada em `docs/fidelity-target.json` para dinâmica CS2;
 - rotular roles por protocolo anterior ao resultado, sem escolher jogadores que
@@ -116,6 +118,10 @@ Em commit estrutural e com golden idêntico:
 - manter CFG, dados, ordem das operações e RNG exatamente iguais.
 
 ### R5.5 — função de combate efetiva
+
+**Concluída.** IGL preserva liderança, química e sistema, mas usa AWPer, Entry,
+Rifler ou Support já classificado nas decisões de combate. Nenhum multiplicador
+novo foi criado. Evidência em `docs/r5-effective-role-balance-2026-07-23.md`.
 
 - IGL permanece liderança para sistema e química;
 - decisões de combate de IGL usam seu papel secundário/efetivo;

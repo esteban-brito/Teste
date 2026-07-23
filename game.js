@@ -987,15 +987,15 @@ function sortearFormaCampanha(times){
 //    fp manda; OVR dá só um empurrão leve de habilidade. IGL fp 2 fraga pouco (rating baixo) ainda
 //    que decisivo pra vitória; fragger fp alto fraga muito (rating alto). É o que o CS real mostra.
 const CONV_FUNC={Rifler:1.0,AWPer:1.0,Entry:.98,Lurker:.97,Support:.92,IGL:.90};
-// Centraliza a leitura de função sem mudar o comportamento corrente: até R5.5,
-// a função ativa do combate continua sendo a primária, inclusive para IGL.
+// IGL permanece liderança para química/sistema, mas combate pela função já
+// classificada no PRISMA (secundária); os demais preservam a função primária.
 function combatProfile(j){const a=j?._eng||j||{};
   const primaryRole=j?.primario||a.primario||null,secondaryRole=j?.secundario||a.secundario||null;
   const classifiedCombatRole=j?.combatRole||a.combatRole||(primaryRole==="IGL"?(secondaryRole||"Rifler"):primaryRole);
-  const activeCombatRole=primaryRole||"Rifler";
+  const activeCombatRole=primaryRole==="IGL"?(classifiedCombatRole||"Rifler"):(primaryRole||"Rifler");
   return {primaryRole,secondaryRole,classifiedCombatRole:classifiedCombatRole||null,activeCombatRole,
     duelConversion:CONV_FUNC[activeCombatRole]??.95,fragMultiplier:CFG_SIM.FRAG_ROLE[activeCombatRole]||1,
-    ratingImpact:FA_IMPACTO[primaryRole]??1};}
+    ratingImpact:FA_IMPACTO[activeCombatRole]??1};}
 function skillDuelo(j){const a=j._eng||j;const C=CFG_SIM;const ovr=j.ovr??a.ovr??13,profile=combatProfile(j);
   return (C.DUELO_BASE+(ovr-5)*C.DUELO_OVR)*profile.duelConversion;}
 function fragPeso(j){const a=j._eng||j;const C=CFG_SIM;const fp=a.fp??60,ovr=j.ovr??a.ovr??13;

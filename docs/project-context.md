@@ -102,15 +102,22 @@ Atualização operacional de 23 de julho de 2026:
 - R5.4 extraiu `combatProfile` e as parcelas somáveis de `fallenAngels` com
   golden idêntico e delta zero em 1.088 mapas/10.880 player-maps. A role ativa
   do IGL não mudou; detalhes em `docs/r5-structural-extraction-2026-07-23.md`.
+- por decisão do responsável, o corpus IFCS completo de 800 mapas não é
+  pré-requisito operacional deste ciclo. Ele permanece opcional para futura
+  certificação; o produto não alegará nota IFCS oficial sem esse corpus;
+- R5.5 ativou a função de combate secundária já classificada dos IGLs, sem criar
+  multiplicadores. A comparação pareada teve deltas globais imateriais e o
+  benchmark melhorou correlação/MAE do rating; evidência em
+  `docs/r5-effective-role-balance-2026-07-23.md`.
 
 ### Decisão imediata para a próxima sessão
 
-**Próximo gate científico:** R5.3 deve completar alvos empíricos auditáveis para
-exposição, save, trade, assistência e KAST. O corpus oficial ainda é insuficiente
-(1/800 mapas e 1/6 eventos), portanto tuning tático por role não pode ser
-inventado. A fronteira estrutural R5.4 já está concluída; R5.5 não deve ser
-ativada antes desse gate. A distribuição entre muitas MD3 continua aberta em
-R3, mas não deve ser misturada ao ciclo R5/R6.
+**Próxima família:** R5.6 deve modelar exposição e save por eventos do round,
+sem bônus direto de DPR/KAST e sem inventário inexistente. R5.7 tratará
+trade/assistência depois, separadamente. O corpus oficial segue insuficiente
+(1/800 mapas e 1/6 eventos), portanto nenhuma nota IFCS será publicada. A
+distribuição entre muitas MD3 continua aberta em R3, mas não deve ser misturada
+ao ciclo R5/R6.
 
 ### Preferências de comunicação do responsável
 

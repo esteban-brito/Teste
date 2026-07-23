@@ -37,6 +37,11 @@ As fronteiras puras R5.4 também fazem parte de `npm run check`: `combatProfile`
 comparação pareada de desenvolvimento devem continuar exatamente idênticos em
 qualquer refatoração dessas fronteiras.
 
+Depois de R5.5, a paridade de `combatProfile` também exige explicitamente que
+IGL use a função de combate classificada e que não-IGL preserve a primária. Os
+goldens Node e do laboratório foram atualizados somente após documentar as
+timelines alteradas em `docs/r5-effective-role-balance-2026-07-23.md`.
+
 ## Estado de referência
 
 - A aplicação possui 17 times e 85 cards de jogador.
