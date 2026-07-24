@@ -6,7 +6,7 @@ const fs=require("fs");
 const path=require("path");
 const {spawn}=require("child_process");
 const {chromium}=require("playwright");
-const {okMark}=require("./common");
+const {okMark,chromiumLaunchOptions}=require("./common");
 const CAMPAIGN_GOLDEN=require("./campaign-golden.json");
 
 function waitServer(port,tries=50){
@@ -32,7 +32,7 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
 
   try{
     await waitServer(port);
-    browser=await chromium.launch({headless:true});
+    browser=await chromium.launch(chromiumLaunchOptions());
     const page=await browser.newPage({viewport:{width:1440,height:700}});
     const errors=[];
     page.on("pageerror",error=>errors.push(String(error.message||error)));

@@ -1409,6 +1409,119 @@ function simularSerie(A,B,fdA,fdB,md,leve){
 }
 
 /* ╔═══════════════════════════════════════════════════════════════════╗
+   ║  MEMÓRIA — marcos, recordes e narrativa                             ║
+   ║  Funções PURAS que LEEM a saída de simularMapa e a campanha.        ║
+   ║  Invariantes: nunca chamam rndF (variação de texto por HASH dos     ║
+   ║  dados), nunca mutam a simulação, nunca tocam DOM. A persistência   ║
+   ║  (localStorage) fica na camada de UI; aqui é só derivação de dados. ║
+   ╚═══════════════════════════════════════════════════════════════════╝ */
+// perspectiva do MEU time num mapa fechado (null se o mapa não é meu — ex.: séries de NPCs)
+function perspectivaDoMapa(jogo){
+  const meu=jogo.meuA?"A":jogo.meuB?"B":null;if(!meu)return null;
+  const ehA=meu==="A";
+  return {meu,stats:ehA?jogo.statsA:jogo.statsB,advNome:ehA?jogo.nomeB:jogo.nomeA,
+    meuSc:jogo.placar[ehA?0:1],advSc:jogo.placar[ehA?1:0],
+    meuHalf:jogo.half1?jogo.half1[ehA?0:1]:null,advHalf:jogo.half1?jogo.half1[ehA?1:0]:null};
+}
+// maior clutch 1vX VENCIDO pelo lado `lado` ("A"/"B") neste mapa. O round não grava quem clutchou,
+// mas grava se o solitário venceu — e o solitário vencedor é, por definição, o vencedor do round.
+function maiorClutchDoLado(rounds,lado){
+  let melhor=0;
+  (rounds||[]).forEach(r=>{if(!r.clutchX||!r.clutchWon)return;
+    const ladoClutch=r.venceA?"A":"B";if(ladoClutch===lado&&r.clutchX>melhor)melhor=r.clutchX;});
+  return melhor;
+}
+// extrai os CANDIDATOS a recorde de um mapa fechado do meu time (valores crus; quem decide se
+// viraram recorde é atualizarRecordes). Retorna null para mapas que não são meus.
+function coletarMarcos(jogo){
+  const p=perspectivaDoMapa(jogo);if(!p)return null;
+  const venceu=p.meuSc>p.advSc;
+  let topKills=null,topRating=null,topAdr=null;
+  p.stats.forEach(s=>{
+    if(!topKills||s.k>topKills.v)topKills={v:s.k,nick:s.nick};
+    if(!topRating||s.rating>topRating.v)topRating={v:s.rating,nick:s.nick};
+    if(!topAdr||(s.adr||0)>topAdr.v)topAdr={v:s.adr||0,nick:s.nick};
+  });
+  const clutch=maiorClutchDoLado(jogo.rounds,p.meu);
+  const comeback=(venceu&&p.meuHalf!=null&&p.advHalf>p.meuHalf)?p.advHalf-p.meuHalf:0;
+  return {adv:p.advNome,mapa:jogo.mapa,venceu,
+    kills:topKills,rating:topRating,adr:topAdr,
+    clutch:clutch>=2?{v:clutch}:null,               // 1v1 é rotina; recorde começa no 1v2
+    margem:venceu?{v:p.meuSc-p.advSc}:null,
+    comeback:comeback?{v:comeback}:null};
+}
+// aplica os marcos ao objeto de recordes (mutação controlada) e devolve a LISTA dos que viraram
+// recorde novo — a UI usa a lista pra celebrar. `ctx.data` chega da UI (a camada pura não lê relógio).
+const RECORDE_LABELS={kills:"kills num mapa",rating:"rating num mapa",adr:"ADR num mapa",
+  clutch:"clutch vencido",margem:"maior margem",comeback:"maior virada"};
+function atualizarRecordes(recordes,marcos,ctx){
+  if(!marcos)return [];
+  const novos=[];
+  for(const chave of Object.keys(RECORDE_LABELS)){
+    const cand=marcos[chave];if(!cand||!(cand.v>0))continue;
+    const atual=recordes[chave];
+    if(!atual||cand.v>atual.v){
+      recordes[chave]={v:cand.v,nick:cand.nick||null,adv:marcos.adv,mapa:marcos.mapa,data:ctx&&ctx.data||null};
+      novos.push({chave,label:RECORDE_LABELS[chave],v:cand.v,nick:cand.nick||null});
+    }
+  }
+  return novos;
+}
+// manchete do mapa: escolhe A história por prioridade e varia o template por HASH dos dados
+// (mesmo mapa => mesma manchete; zero RNG). Funciona pra qualquer confronto, meu ou não.
+function manchete(jogo){
+  const [pa,pb]=jogo.placar,venceuA=pa>pb;
+  const vencNome=venceuA?jogo.nomeA:jogo.nomeB,perdNome=venceuA?jogo.nomeB:jogo.nomeA;
+  const vencSc=Math.max(pa,pb),perdSc=Math.min(pa,pb),margem=vencSc-perdSc;
+  const vencStats=venceuA?jogo.statsA:jogo.statsB;
+  const carry=(vencStats||[]).reduce((m,s)=>!m||s.rating>m.rating?s:m,null);
+  const clutchV=maiorClutchDoLado(jogo.rounds,venceuA?"A":"B");
+  const halfVenc=jogo.half1?jogo.half1[venceuA?0:1]:null,halfPerd=jogo.half1?jogo.half1[venceuA?1:0]:null;
+  const ot=jogo.totalRounds>24;
+  const hash=(pa*31+pb*7+(jogo.totalRounds||0)+(jogo.mapa||"").length)>>>0;
+  const pick=arr=>arr[hash%arr.length];
+  const sc=`${vencSc}-${perdSc}`;
+  if(clutchV>=3)return {tipo:"clutch",texto:pick([
+    `INACREDITÁVEL: um 1v${clutchV} sela o ${sc} do ${vencNome} na ${jogo.mapa}`,
+    `${vencNome} vence de ${sc} na ${jogo.mapa} com um 1v${clutchV} pra história`])};
+  if(ot)return {tipo:"ot",texto:pick([
+    `${vencNome} sobrevive à prorrogação e arranca o ${sc} na ${jogo.mapa}`,
+    `Na base do coração: ${vencNome} leva a ${jogo.mapa} por ${sc} no overtime`])};
+  if(halfVenc!=null&&halfPerd-halfVenc>=4)return {tipo:"virada",texto:pick([
+    `VIRADA: ${vencNome} estava ${halfVenc}-${halfPerd} no intervalo e fechou em ${sc} na ${jogo.mapa}`,
+    `${perdNome} abriu ${halfPerd}-${halfVenc}, mas o ${vencNome} virou pra ${sc} na ${jogo.mapa}`])};
+  if(carry&&carry.rating>=1.45)return {tipo:"carry",texto:pick([
+    `${carry.nick} carrega com ${carry.rating.toFixed(2)} e o ${vencNome} leva a ${jogo.mapa} (${sc})`,
+    `Noite de gala: ${carry.nick} crava ${carry.rating.toFixed(2)} no ${sc} sobre o ${perdNome}`])};
+  if(margem>=10)return {tipo:"atropelo",texto:pick([
+    `Atropelo: ${vencNome} passa por cima do ${perdNome} por ${sc} na ${jogo.mapa}`,
+    `${vencNome} não toma conhecimento e faz ${sc} na ${jogo.mapa}`])};
+  if(margem<=2)return {tipo:"equilibrio",texto:pick([
+    `No detalhe: ${vencNome} escapa com o ${sc} na ${jogo.mapa}`,
+    `${sc}: ${vencNome} vence o duelo mais apertado da noite na ${jogo.mapa}`])};
+  return {tipo:"padrao",texto:pick([
+    `${vencNome} controla a ${jogo.mapa} e fecha em ${sc}`,
+    `${vencNome} confirma o favoritismo: ${sc} na ${jogo.mapa}`])};
+}
+// narrativa do MVP da campanha a partir do acumulado {ratings:{nick:{r:[],k,d,a}},mapasV,mapasD}.
+// Puro: recebe o objeto da campanha, devolve {nick,media,texto} (null sem dados).
+function narrativaMVP(campanha){
+  const entradas=Object.entries((campanha&&campanha.ratings)||{});
+  if(!entradas.length)return null;
+  const linhas=entradas.map(([nick,e])=>({nick,n:e.r.length,k:e.k,d:e.d,a:e.a||0,
+    media:e.r.reduce((s,v)=>s+v,0)/Math.max(1,e.r.length),pico:e.r.reduce((m,v)=>v>m?v:m,0)}));
+  const mvp=linhas.reduce((m,l)=>!m||l.media>m.media?l:m,null);
+  const kd=mvp.d?(mvp.k/mvp.d):mvp.k;
+  const invicto=campanha.mapasD===0&&campanha.mapasV>0;
+  const hash=(Math.round(mvp.media*100)+mvp.k)>>>0;
+  const abre=[`${mvp.nick} foi o coração da campanha`,`A campanha teve um dono: ${mvp.nick}`][hash%2];
+  const texto=`${abre} — média ${mvp.media.toFixed(2)} em ${mvp.n} mapa${mvp.n>1?"s":""}, com pico de `+
+    `${mvp.pico.toFixed(2)}, ${mvp.k} kills e K/D ${kd.toFixed(2)}.`+
+    (invicto?" E o feito máximo: nenhum mapa perdido no caminho.":"");
+  return {nick:mvp.nick,media:mvp.media,texto};
+}
+
+/* ╔═══════════════════════════════════════════════════════════════════╗
    ║  ESTADO + UI — roleta de draft, montagem de elenco, fase suíça,    ║
    ║  playoffs e o reprodutor de partidas. Consome TEAMS e os motores    ║
    ║  acima; daqui pra baixo é apresentação (DOM/áudio/animação).        ║
@@ -2065,6 +2178,33 @@ function iniciarTorneio(){
   TG.campanha={mapasV:0,mapasD:0,ratings:{},jornada:[],fim:null};
   sortearFormaCampanha(TG.times); // semeia o "humor" da run: cada Major joga diferente
 }
+/* ─── PROGRESSO — memória persistente entre campanhas (localStorage, blindado) ───
+   Storage indisponível (modo privado/quota) = jogo funciona normal, só não lembra.
+   Schema versionado: migrações futuras leem `versao`. Nada aqui toca a simulação. */
+const PROGRESSO={
+  KEY:"draft90.progresso.v1",
+  dados:null,
+  vazio(){return {versao:1,titulos:[],recordes:{},contadores:{campanhas:0,titulos:0,invictos:0}};},
+  valido(d){return d&&d.versao===1&&Array.isArray(d.titulos)&&d.recordes&&d.contadores;},
+  carregar(){let d;try{d=JSON.parse(localStorage.getItem(this.KEY));}catch{d=null;}
+    this.dados=this.valido(d)?d:this.vazio();},
+  salvar(){try{localStorage.setItem(this.KEY,JSON.stringify(this.dados));}catch{/* sem storage: segue sem memória */}},
+  exportar(){const blob=new window.Blob([JSON.stringify(this.dados,null,1)],{type:"application/json"});
+    const a=document.createElement("a");a.href=window.URL.createObjectURL(blob);a.download="draft9-0-progresso.json";
+    document.body.appendChild(a);a.click();window.URL.revokeObjectURL(a.href);a.remove();},
+  importar(texto){let d;try{d=JSON.parse(texto);}catch{return false;}
+    if(!this.valido(d))return false;this.dados=d;this.salvar();return true;}
+};
+PROGRESSO.carregar();
+const dataHoje=()=>new Date().toISOString().slice(0,10);
+// banner de manchete + celebração de recordes no fim do mapa (some no início do próximo)
+function mostrarManchete(jogo,novosRecordes){
+  const el=$("manchetePosMapa");if(!el)return;
+  const h=manchete(jogo);
+  const chips=(novosRecordes||[]).map(n=>`<span class="rec-chip">🏆 ${esc(n.nick?n.nick+" · ":"")}${n.v} ${esc(n.label)}</span>`).join("");
+  el.innerHTML=`<span class="manchete-tag">MANCHETE</span><span class="manchete-tx">${esc(h.texto)}</span>${chips?`<span class="manchete-recs">${chips}</span>`:""}`;
+  el.hidden=false;
+}
 // registra os mapas de uma partida jogada pelo jogador (acumula rating por jogador do seu time)
 function registrarPartida(jogo){
   const c=TG.campanha;if(!c)return;
@@ -2077,6 +2217,28 @@ function registrarPartida(jogo){
   if(!c.jornada)c.jornada=[];
   const adv=(typeof MATCH!=="undefined"&&MATCH.B)?MATCH.B.nome:"???";
   c.jornada.push({adv,meu:meuSc,dele:advSc,venc:meuVenceu});
+  // MEMÓRIA: marcos do mapa competem com os recordes persistentes; manchete conta a história
+  const marcos=coletarMarcos(jogo);
+  let novos=[];
+  if(marcos){novos=atualizarRecordes(PROGRESSO.dados.recordes,marcos,{data:dataHoje()});
+    if(novos.length)PROGRESSO.salvar();}
+  mostrarManchete(jogo,novos);
+}
+// grava a campanha encerrada no progresso persistente (uma vez por campanha)
+function registrarCampanhaNoProgresso(c,campeao,rt,roster){
+  if(c._registrado)return;c._registrado=true;
+  const P=PROGRESSO.dados;
+  P.contadores.campanhas++;
+  if(campeao){
+    P.contadores.titulos++;
+    const invicto=c.mapasD===0;if(invicto)P.contadores.invictos++;
+    const mvp=rt&&rt[0];
+    P.titulos.push({data:dataHoje(),placar:`${c.mapasV}-${c.mapasD}`,invicto,
+      elenco:Object.keys(roster||{}),
+      treinador:(typeof S!=="undefined"&&S.treinador&&S.treinador.nick)||null,
+      mvp:mvp?{nick:mvp.nick,media:+mvp.r.toFixed(2)}:null});
+  }
+  PROGRESSO.salvar();
 }
 // detecta fim de campanha e abre a tela final (campeão ou eliminado)
 function checarFimDeCampanha(){
@@ -2101,13 +2263,16 @@ function telaFinal(){
   const selos=campeao?(c.mapasD===0?["CAMPEÃO","9-0 INVICTO"]:["CAMPEÃO"]):["ELIMINADO"];
   $("finalSelos").innerHTML=selos.map(x=>`<span class="selo-final${x.indexOf("INVICTO")>=0?" selo-gold":""}">${esc(x)}</span>`).join("");
   if(mvp){const e=roster[mvp.nick]||{};const rl=ROLE[e.primario]||{a:"",c:"#6c7d93"};
+    const nv=narrativaMVP(c); // arco da campanha em texto (puro, determinístico)
     $("finalMvpCard").style.display="";
     $("finalMvpCard").innerHTML=`<div class="mvp-badge">MVP</div>`+
       `<div class="mvp-id">${e.pais?`<span class="mvp-flag">${esc(e.pais)}</span>`:""}<span class="mvp-nick">${esc(mvp.nick)}</span>`+
       `${rl.a?`<span class="mvp-role" style="--rc:${rl.c}">${rl.a}</span>`:""}${e.ovr!=null?`<span class="mvp-ovr">OVR ${e.ovr}</span>`:""}</div>`+
       `<div class="mvp-stats">${mvp.k} / ${mvp.d} / ${mvp.a} <span>K·D·A</span></div>`+
-      `<div class="mvp-rate ${fx(mvp.r)}">${mvp.r.toFixed(2)}</div>`;
+      `<div class="mvp-rate ${fx(mvp.r)}">${mvp.r.toFixed(2)}</div>`+
+      (nv?`<div class="mvp-narrativa">${esc(nv.texto)}</div>`:"");
   } else $("finalMvpCard").style.display="none";
+  registrarCampanhaNoProgresso(c,campeao,rt,roster); // MEMÓRIA: campanha entra no Hall da Fama
   const jor=c.jornada||[];
   $("finalJornada").innerHTML=jor.length?`<div class="sec-lbl">A JORNADA</div><div class="jor-tiles">`+jor.map(m=>`<div class="jt ${m.venc?"jt-w":"jt-l"}"><span class="jt-adv">${esc(String(m.adv||"").slice(0,4))}</span><span class="jt-sc">${m.meu}-${m.dele}</span></div>`).join("")+`</div>`:"";
   $("finalRatings").innerHTML=`<div class="sec-lbl">ELENCO</div>`+rt.map((pp,i)=>{const e=roster[pp.nick]||{};const rl=ROLE[e.primario]||{a:"",c:"#6c7d93"};const md=i===0?"md-g":i===1?"md-s":i===2?"md-b":"";
@@ -2324,6 +2489,7 @@ function reproduzirMapa(jogo,A,B,contexto){
   $("sbTeamB").innerHTML=monoChip(B.nome,B.cor)+`<div class="sb-info"><span class="sb-name">${esc(B.nome)}</span>${B.camp?`<span class="sb-camp">${esc(B.camp)}</span>`:""}<span class="sb-side tr" id="sideB">TR</span></div>`;
   $("sbScoreA").textContent="0";$("sbScoreB").textContent="0";
   $("sbMap").textContent=jogo.mapa;$("sbProgress").style.width="0%";
+  const bm=$("manchetePosMapa");if(bm){bm.hidden=true;bm.innerHTML="";} // manchete é do mapa FECHADO
   montarScoreboard(jogo); // tabela inicial dos 10 jogadores (zerada)
   // cacheia os elementos quentes do loop (evita $() por round)
   const elProg=$("sbProgress"),elRS=$("roundStrip"),elScA=$("sbScoreA"),elScB=$("sbScoreB"),elSideA=$("sideA"),elSideB=$("sideB");
@@ -2488,6 +2654,32 @@ function jogarNovamente(){
   window.scrollTo(0,0);
 }
 $("finalVoltar").onclick=jogarNovamente;
+/* ─── HALL DA FAMA — render + wiring (lê PROGRESSO; nunca simula nada) ─── */
+function renderHall(){
+  const P=PROGRESSO.dados,c=P.contadores;
+  $("hallContadores").innerHTML=[[c.titulos,"títulos"],[c.invictos,"9-0 invictos"],[c.campanhas,"campanhas"]]
+    .map(([v,l])=>`<div class="rec"><span class="rec-v">${v}</span><span class="rec-l">${l}</span></div>`).join("");
+  const tits=[...P.titulos].reverse();
+  $("hallTitulos").innerHTML=tits.length
+    ?`<div class="sec-lbl">TÍTULOS</div>`+tits.map(t=>`<div class="hall-titulo">
+        <span class="hall-selos">🏆${t.invicto?"<b class=\"hall-inv\">💎 9-0</b>":""}</span>
+        <span class="hall-info"><b>${esc(t.placar)}</b> · ${esc(t.data||"")}${t.mvp?` · MVP ${esc(t.mvp.nick)} (${t.mvp.media.toFixed(2)})`:""}</span>
+        <span class="hall-elenco">${(t.elenco||[]).map(esc).join(" · ")}${t.treinador?` — coach ${esc(t.treinador)}`:""}</span>
+      </div>`).join("")
+    :`<div class="hall-vazio">Sua história começa no primeiro título. A roleta está esperando.</div>`;
+  const recs=Object.entries(P.recordes);
+  $("hallRecordes").innerHTML=recs.length
+    ?`<div class="sec-lbl">RECORDES DO CLUBE</div><div class="hall-recgrid">`+recs.map(([chave,r])=>
+      `<div class="hall-rec"><span class="hall-rec-v">${chave==="rating"?r.v.toFixed(2):r.v}</span><span class="hall-rec-l">${esc(RECORDE_LABELS[chave]||chave)}</span><span class="hall-rec-m">${r.nick?esc(r.nick)+" · ":""}vs ${esc(r.adv||"?")}${r.mapa?" · "+esc(r.mapa):""}${r.data?" · "+esc(r.data):""}</span></div>`).join("")+`</div>`
+    :"";
+}
+$("hallBtn").onclick=e=>{e.preventDefault();renderHall();abrir("hallOverlay");};
+$("hallFechar").onclick=()=>fechar("hallOverlay");
+$("hallExportar").onclick=()=>PROGRESSO.exportar();
+$("hallImportar").onchange=e=>{const f=e.target.files&&e.target.files[0];if(!f)return;
+  const r=new window.FileReader();
+  r.onload=()=>{if(PROGRESSO.importar(String(r.result))){renderHall();hint("Progresso importado.");}else hint("Arquivo de progresso inválido.");e.target.value="";};
+  r.readAsText(f);};
 function atualizarMajorUI(){
   const pronto=elencoCheio();
   $("majorTag").hidden=!pronto;

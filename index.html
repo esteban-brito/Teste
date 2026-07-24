@@ -37,7 +37,7 @@
 <meta name="twitter:image" content="https://esteban-brito.github.io/Teste/og-image.png">
 <title>draft9-0 · Simulador de Counter-Strike</title>
 <link rel="stylesheet" href="fonts.css">
-<link rel="stylesheet" href="style.css?v=6cb1caa3">
+<link rel="stylesheet" href="style.css?v=eaecc79d">
 </head>
 <body>
 <noscript>
@@ -96,6 +96,14 @@
   <div class="section-tag" id="majorTag" hidden>Major · simulação</div>
   <div class="majorbar" id="majorSection" hidden>
     <button class="majorbtn" id="suicabtn"><span class="mbtxt"><span class="mbt">Entrar no Major</span><span class="mbs">fase suíça · rumo ao 9-0 invicto</span></span></button>
+  </div>
+  <div class="section-tag">Hall da Fama</div>
+  <div class="rosterbar">
+    <a class="ghost rosterlink" id="hallBtn" href="#" role="button">
+      <span class="rl-ic" aria-hidden="true">🏆</span>
+      <span class="rl-tx"><span class="rl-t">Sua história</span><span class="rl-s">títulos · recordes do clube · campanhas 9-0</span></span>
+      <span class="rl-ar" aria-hidden="true">›</span>
+    </a>
   </div>
   <div class="section-tag">Base de elencos</div>
   <div class="rosterbar">
@@ -168,6 +176,7 @@
       <div class="ls-side" id="lsSideA"></div>
       <div class="ls-side" id="lsSideB"></div>
     </div>
+    <div class="manchete" id="manchetePosMapa" hidden aria-live="polite"></div>
     <div class="livemap-foot" id="livemapFoot">
       <button class="roll ghost" id="matchSkip">Pular para o resultado</button>
       <button class="roll" id="matchContinue" hidden>Continuar</button>
@@ -195,6 +204,22 @@
   </div>
 </div>
 
-<script src="game.js?v=f475d1f5" defer></script>
+<div class="overlay" id="hallOverlay" role="dialog" aria-modal="true" aria-labelledby="hallTitulo" hidden>
+  <div class="overlay-head">
+    <div class="overlay-title" id="hallTitulo">Hall da Fama</div>
+    <div class="overlay-actions">
+      <button class="ghost" id="hallExportar" title="Baixar backup do progresso">Exportar</button>
+      <label class="ghost hall-import" title="Restaurar progresso de um backup">Importar<input type="file" id="hallImportar" accept="application/json" hidden></label>
+      <button class="ghost" id="hallFechar">Fechar</button>
+    </div>
+  </div>
+  <div class="hall-body">
+    <div class="final-rec" id="hallContadores"></div>
+    <div id="hallTitulos"></div>
+    <div id="hallRecordes"></div>
+  </div>
+</div>
+
+<script src="game.js?v=8329cec5" defer></script>
 </body>
 </html>

@@ -14,7 +14,7 @@ const fs=require("fs");
 const path=require("path");
 const {spawn}=require("child_process");
 const pw=require("playwright");
-const {okMark}=require("./common");
+const {okMark,chromiumLaunchOptions}=require("./common");
 
 function waitServer(port,tries=50){
   return new Promise((resolve,reject)=>{
@@ -39,7 +39,7 @@ function check(ok,label){ console.log(`  ${okMark(!!ok)} ${label}`); if(!ok)fail
 
   try{
     await waitServer(port);
-    browser=await pw.chromium.launch({headless:true});
+    browser=await pw.chromium.launch(chromiumLaunchOptions());
 
     const page=await browser.newPage();
     const errors=[];

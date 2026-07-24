@@ -13,6 +13,16 @@ const signed=value=>(value>=0?"+":"")+value.toFixed(2);
 const secondsSince=start=>((Date.now()-start)/1000).toFixed(1);
 const compactStats=player=>DISPLAY_ATTRS.map(attr=>player[attr]).join("/");
 
+// Opções de launch dos E2E. CHROMIUM_EXECUTABLE (opt-in) aponta um Chromium local válido quando o
+// cache do Playwright não bate com a versão fixada (ex.: container com browser pré-instalado).
+// Sem a env, o comportamento é idêntico ao padrão; com caminho inválido, o launch segue falhando
+// visível — nunca converte falta de browser em sucesso.
+function chromiumLaunchOptions(){
+  const options={headless:true};
+  if(process.env.CHROMIUM_EXECUTABLE)options.executablePath=process.env.CHROMIUM_EXECUTABLE;
+  return options;
+}
+
 function countBy(items,fn){
   return items.reduce((out,item)=>{
     const key=fn(item);
@@ -56,5 +66,5 @@ module.exports={
   ROOT,ATTRS,DISPLAY_ATTRS,COLOCACOES,
   mean,pct,inRange,signed,secondsSince,compactStats,
   countBy,sortedCountEntries,
-  okMark,printCheck,scheduledMatch,teamNameFor
+  okMark,printCheck,scheduledMatch,teamNameFor,chromiumLaunchOptions
 };
