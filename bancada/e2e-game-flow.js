@@ -7,7 +7,7 @@ const http=require("http");
 const path=require("path");
 const {spawn}=require("child_process");
 const {chromium}=require("playwright");
-const {okMark}=require("./common");
+const {okMark,chromiumLaunchOptions}=require("./common");
 
 function waitServer(port,tries=50){
   return new Promise((resolve,reject)=>{
@@ -114,7 +114,7 @@ async function finishUserSeries(page){
 
   try{
     await waitServer(port);
-    browser=await chromium.launch({headless:true});
+    browser=await chromium.launch(chromiumLaunchOptions());
     const page=await browser.newPage({viewport:{width:1440,height:900},reducedMotion:"reduce"});
     const errors=[];
     page.on("pageerror",error=>errors.push(String(error.message||error)));
