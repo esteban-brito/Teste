@@ -177,9 +177,34 @@ async function finishUserSeries(page){
     check(final.ratings===5&&final.journey===totalMaps,"resumo final cobre os cinco jogadores e todos os mapas disputados");
     check(!final.invalid&&errors.length===0,`fluxo completo não produz valores inválidos nem page-error${errors.length?": "+errors[0]:""}`);
 
+    // MEMÓRIA: título e recordes persistem no localStorage, com narrativa do MVP na tela final
+    const memoria=await page.evaluate(()=>{
+      const d=JSON.parse(localStorage.getItem("draft90.progresso.v1")||"null");
+      return {salvo:!!d,titulos:d?d.titulos.length:0,campanhas:d?d.contadores.campanhas:0,
+        recordes:d?Object.keys(d.recordes).length:0,killsRec:d&&d.recordes.kills?d.recordes.kills.v:0,
+        narrativa:(document.querySelector("#finalMvpCard .mvp-narrativa")||{}).textContent||""};
+    });
+    check(memoria.salvo&&memoria.titulos===1&&memoria.campanhas===1,"título campeão entra no progresso persistente");
+    check(memoria.recordes>=3&&memoria.killsRec>0,"recordes do clube capturados da campanha");
+    check(memoria.narrativa.length>20,"tela final conta a narrativa do MVP da campanha");
+
     await page.click("#finalVoltar");
     await page.waitForFunction(()=>document.getElementById("cnt").textContent==="0/6"&&document.getElementById("majorSection").hidden);
     check(await page.locator("#lineup [data-move]").count()===0,"jogar novamente limpa campanha e elenco");
+
+    // MEMÓRIA: sobrevive ao reload e alimenta o Hall da Fama pela UI real
+    await page.reload({waitUntil:"networkidle"});
+    await page.click("#hallBtn");
+    await page.waitForSelector("#hallOverlay",{state:"visible"});
+    const hall=await page.evaluate(()=>({
+      titulos:document.querySelectorAll("#hallTitulos .hall-titulo").length,
+      recordes:document.querySelectorAll("#hallRecordes .hall-rec").length,
+      contadores:document.getElementById("hallContadores").textContent,
+      invalido:!!document.getElementById("hallOverlay").textContent.match(/NaN|undefined|Infinity/)
+    }));
+    check(hall.titulos===1&&hall.recordes>=3&&!hall.invalido,"Hall da Fama mostra o título e os recordes após reload");
+    check(hall.contadores.includes("1")&&hall.contadores.includes("títulos"),"contadores do Hall refletem a campanha");
+    await page.click("#hallFechar");
 
     console.log(failures?`✗ ${failures} checagem(ns) e2e falharam`:"✓ jogo principal preserva draft, Major e reinício completo");
     return done(failures?1:0);
