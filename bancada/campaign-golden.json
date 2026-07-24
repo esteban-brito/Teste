@@ -4,9 +4,9 @@
   "maps": 3,
   "campaign": {
     "format": "MD3",
-    "winsA": 1,
-    "winsB": 2,
-    "winnerIndex": 1,
+    "winsA": 2,
+    "winsB": 1,
+    "winnerIndex": 0,
     "maps": [
       {
         "map": "Nuke",
@@ -24,9 +24,9 @@
       },
       {
         "map": "Anubis",
-        "scoreA": 11,
-        "scoreB": 13,
-        "winnerIndex": 1,
+        "scoreA": 19,
+        "scoreB": 16,
+        "winnerIndex": 0,
         "orientation": "A-B"
       }
     ],

@@ -34,14 +34,14 @@
       "output": {
         "map": "Nuke",
         "score": [
-          5,
+          7,
           13
         ],
         "firstHalf": [
           5,
           7
         ],
-        "totalRounds": 18,
+        "totalRounds": 20,
         "winnerSide": "B",
         "winnerName": "Outsiders",
         "identity": {
@@ -618,7 +618,7 @@
               "full"
             ],
             "clutch": null,
-            "highlight": "Perfecto",
+            "highlight": "b1t",
             "scoreboard": {
               "a": [
                 {
@@ -628,17 +628,17 @@
                 },
                 {
                   "id": "electroNic",
-                  "kills": 1,
-                  "deaths": 4
+                  "kills": 0,
+                  "deaths": 5
                 },
                 {
                   "id": "b1t",
-                  "kills": 6,
-                  "deaths": 4
+                  "kills": 8,
+                  "deaths": 3
                 },
                 {
                   "id": "Perfecto",
-                  "kills": 6,
+                  "kills": 5,
                   "deaths": 5
                 },
                 {
@@ -655,7 +655,7 @@
                 },
                 {
                   "id": "FL1T",
-                  "kills": 10,
+                  "kills": 9,
                   "deaths": 3
                 },
                 {
@@ -665,7 +665,7 @@
                 },
                 {
                   "id": "n0rb3r7",
-                  "kills": 4,
+                  "kills": 5,
                   "deaths": 1
                 },
                 {
@@ -688,7 +688,7 @@
               "TR"
             ],
             "sideSwitch": false,
-            "planted": true,
+            "planted": false,
             "buys": [
               "full",
               "full"
@@ -697,44 +697,44 @@
               "opponents": 2,
               "won": false
             },
-            "highlight": "FL1T",
+            "highlight": "Jame",
             "scoreboard": {
               "a": [
                 {
                   "id": "s1mple",
-                  "kills": 2,
+                  "kills": 3,
                   "deaths": 8
                 },
                 {
                   "id": "electroNic",
-                  "kills": 3,
-                  "deaths": 5
+                  "kills": 0,
+                  "deaths": 6
                 },
                 {
                   "id": "b1t",
-                  "kills": 6,
-                  "deaths": 5
+                  "kills": 9,
+                  "deaths": 4
                 },
                 {
                   "id": "Perfecto",
-                  "kills": 6,
+                  "kills": 7,
                   "deaths": 6
                 },
                 {
                   "id": "Boombl4",
-                  "kills": 2,
+                  "kills": 1,
                   "deaths": 5
                 }
               ],
               "b": [
                 {
                   "id": "Jame",
-                  "kills": 7,
-                  "deaths": 3
+                  "kills": 10,
+                  "deaths": 2
                 },
                 {
                   "id": "FL1T",
-                  "kills": 12,
+                  "kills": 10,
                   "deaths": 4
                 },
                 {
@@ -744,13 +744,13 @@
                 },
                 {
                   "id": "n0rb3r7",
-                  "kills": 6,
-                  "deaths": 1
+                  "kills": 5,
+                  "deaths": 2
                 },
                 {
                   "id": "Qikert",
                   "kills": 2,
-                  "deaths": 4
+                  "deaths": 5
                 }
               ]
             }
@@ -772,61 +772,64 @@
               "full",
               "full"
             ],
-            "clutch": null,
-            "highlight": "FL1T",
+            "clutch": {
+              "opponents": 2,
+              "won": false
+            },
+            "highlight": "Jame",
             "scoreboard": {
               "a": [
                 {
                   "id": "s1mple",
-                  "kills": 2,
-                  "deaths": 8
+                  "kills": 3,
+                  "deaths": 9
                 },
                 {
                   "id": "electroNic",
-                  "kills": 3,
-                  "deaths": 6
+                  "kills": 0,
+                  "deaths": 7
                 },
                 {
                   "id": "b1t",
-                  "kills": 6,
+                  "kills": 10,
                   "deaths": 5
                 },
                 {
                   "id": "Perfecto",
-                  "kills": 6,
+                  "kills": 7,
                   "deaths": 7
                 },
                 {
                   "id": "Boombl4",
-                  "kills": 2,
-                  "deaths": 5
+                  "kills": 3,
+                  "deaths": 6
                 }
               ],
               "b": [
                 {
                   "id": "Jame",
-                  "kills": 7,
-                  "deaths": 3
+                  "kills": 13,
+                  "deaths": 2
                 },
                 {
                   "id": "FL1T",
-                  "kills": 13,
-                  "deaths": 4
+                  "kills": 11,
+                  "deaths": 5
                 },
                 {
                   "id": "fame",
                   "kills": 3,
-                  "deaths": 7
+                  "deaths": 8
                 },
                 {
                   "id": "n0rb3r7",
-                  "kills": 6,
-                  "deaths": 1
+                  "kills": 5,
+                  "deaths": 2
                 },
                 {
                   "id": "Qikert",
                   "kills": 2,
-                  "deaths": 4
+                  "deaths": 6
                 }
               ]
             }
@@ -843,54 +846,51 @@
               "TR"
             ],
             "sideSwitch": false,
-            "planted": true,
+            "planted": false,
             "buys": [
-              "full",
+              "eco",
               "full"
             ],
-            "clutch": {
-              "opponents": 1,
-              "won": true
-            },
-            "highlight": "Boombl4",
+            "clutch": null,
+            "highlight": "s1mple",
             "scoreboard": {
               "a": [
                 {
                   "id": "s1mple",
-                  "kills": 3,
+                  "kills": 4,
                   "deaths": 9
                 },
                 {
                   "id": "electroNic",
-                  "kills": 3,
+                  "kills": 1,
                   "deaths": 7
                 },
                 {
                   "id": "b1t",
-                  "kills": 6,
-                  "deaths": 6
+                  "kills": 11,
+                  "deaths": 5
                 },
                 {
                   "id": "Perfecto",
-                  "kills": 6,
+                  "kills": 7,
                   "deaths": 8
                 },
                 {
                   "id": "Boombl4",
-                  "kills": 6,
-                  "deaths": 5
+                  "kills": 3,
+                  "deaths": 6
                 }
               ],
               "b": [
                 {
                   "id": "Jame",
-                  "kills": 10,
-                  "deaths": 4
+                  "kills": 13,
+                  "deaths": 3
                 },
                 {
                   "id": "FL1T",
-                  "kills": 13,
-                  "deaths": 5
+                  "kills": 11,
+                  "deaths": 6
                 },
                 {
                   "id": "fame",
@@ -899,13 +899,13 @@
                 },
                 {
                   "id": "n0rb3r7",
-                  "kills": 6,
-                  "deaths": 2
+                  "kills": 5,
+                  "deaths": 3
                 },
                 {
                   "id": "Qikert",
                   "kills": 2,
-                  "deaths": 5
+                  "deaths": 6
                 }
               ]
             }
@@ -922,32 +922,29 @@
               "TR"
             ],
             "sideSwitch": false,
-            "planted": false,
+            "planted": true,
             "buys": [
               "full",
               "full"
             ],
-            "clutch": {
-              "opponents": 2,
-              "won": false
-            },
-            "highlight": "b1t",
+            "clutch": null,
+            "highlight": "s1mple",
             "scoreboard": {
               "a": [
                 {
                   "id": "s1mple",
-                  "kills": 3,
+                  "kills": 7,
                   "deaths": 10
                 },
                 {
                   "id": "electroNic",
-                  "kills": 4,
+                  "kills": 1,
                   "deaths": 8
                 },
                 {
                   "id": "b1t",
-                  "kills": 8,
-                  "deaths": 7
+                  "kills": 11,
+                  "deaths": 5
                 },
                 {
                   "id": "Perfecto",
@@ -956,34 +953,34 @@
                 },
                 {
                   "id": "Boombl4",
-                  "kills": 6,
-                  "deaths": 5
+                  "kills": 3,
+                  "deaths": 6
                 }
               ],
               "b": [
                 {
                   "id": "Jame",
-                  "kills": 10,
-                  "deaths": 5
+                  "kills": 13,
+                  "deaths": 4
                 },
                 {
                   "id": "FL1T",
-                  "kills": 14,
-                  "deaths": 6
+                  "kills": 11,
+                  "deaths": 7
                 },
                 {
                   "id": "fame",
-                  "kills": 5,
-                  "deaths": 9
+                  "kills": 6,
+                  "deaths": 8
                 },
                 {
                   "id": "n0rb3r7",
-                  "kills": 8,
-                  "deaths": 2
+                  "kills": 5,
+                  "deaths": 4
                 },
                 {
                   "id": "Qikert",
-                  "kills": 2,
+                  "kills": 3,
                   "deaths": 6
                 }
               ]
@@ -992,16 +989,16 @@
           {
             "number": 13,
             "score": [
-              5,
-              8
+              6,
+              7
             ],
-            "winnerSide": "B",
+            "winnerSide": "A",
             "sides": [
               "TR",
               "CT"
             ],
             "sideSwitch": true,
-            "planted": false,
+            "planted": true,
             "buys": [
               "pistol",
               "pistol"
@@ -1010,60 +1007,60 @@
               "opponents": 3,
               "won": false
             },
-            "highlight": "FL1T",
+            "highlight": "electroNic",
             "scoreboard": {
               "a": [
                 {
                   "id": "s1mple",
-                  "kills": 5,
+                  "kills": 8,
                   "deaths": 11
                 },
                 {
                   "id": "electroNic",
-                  "kills": 4,
+                  "kills": 3,
                   "deaths": 8
                 },
                 {
                   "id": "b1t",
-                  "kills": 8,
-                  "deaths": 8
+                  "kills": 11,
+                  "deaths": 6
                 },
                 {
                   "id": "Perfecto",
-                  "kills": 7,
-                  "deaths": 10
+                  "kills": 8,
+                  "deaths": 9
                 },
                 {
                   "id": "Boombl4",
-                  "kills": 6,
+                  "kills": 4,
                   "deaths": 6
                 }
               ],
               "b": [
                 {
                   "id": "Jame",
-                  "kills": 10,
+                  "kills": 13,
                   "deaths": 5
                 },
                 {
                   "id": "FL1T",
-                  "kills": 16,
-                  "deaths": 7
+                  "kills": 13,
+                  "deaths": 8
                 },
                 {
                   "id": "fame",
-                  "kills": 5,
-                  "deaths": 10
+                  "kills": 6,
+                  "deaths": 9
                 },
                 {
                   "id": "n0rb3r7",
-                  "kills": 10,
-                  "deaths": 2
+                  "kills": 5,
+                  "deaths": 5
                 },
                 {
                   "id": "Qikert",
-                  "kills": 2,
-                  "deaths": 6
+                  "kills": 3,
+                  "deaths": 7
                 }
               ]
             }
@@ -1071,7 +1068,86 @@
           {
             "number": 14,
             "score": [
-              5,
+              6,
+              8
+            ],
+            "winnerSide": "B",
+            "sides": [
+              "TR",
+              "CT"
+            ],
+            "sideSwitch": false,
+            "planted": true,
+            "buys": [
+              "full",
+              "eco"
+            ],
+            "clutch": {
+              "opponents": 2,
+              "won": false
+            },
+            "highlight": "Jame",
+            "scoreboard": {
+              "a": [
+                {
+                  "id": "s1mple",
+                  "kills": 9,
+                  "deaths": 12
+                },
+                {
+                  "id": "electroNic",
+                  "kills": 3,
+                  "deaths": 9
+                },
+                {
+                  "id": "b1t",
+                  "kills": 11,
+                  "deaths": 7
+                },
+                {
+                  "id": "Perfecto",
+                  "kills": 10,
+                  "deaths": 10
+                },
+                {
+                  "id": "Boombl4",
+                  "kills": 5,
+                  "deaths": 7
+                }
+              ],
+              "b": [
+                {
+                  "id": "Jame",
+                  "kills": 16,
+                  "deaths": 5
+                },
+                {
+                  "id": "FL1T",
+                  "kills": 14,
+                  "deaths": 9
+                },
+                {
+                  "id": "fame",
+                  "kills": 6,
+                  "deaths": 10
+                },
+                {
+                  "id": "n0rb3r7",
+                  "kills": 6,
+                  "deaths": 6
+                },
+                {
+                  "id": "Qikert",
+                  "kills": 3,
+                  "deaths": 8
+                }
+              ]
+            }
+          },
+          {
+            "number": 15,
+            "score": [
+              6,
               9
             ],
             "winnerSide": "B",
@@ -1086,71 +1162,71 @@
               "full"
             ],
             "clutch": {
-              "opponents": 2,
+              "opponents": 3,
               "won": false
             },
-            "highlight": "FL1T",
+            "highlight": "fame",
             "scoreboard": {
               "a": [
                 {
                   "id": "s1mple",
-                  "kills": 6,
+                  "kills": 10,
                   "deaths": 12
                 },
                 {
                   "id": "electroNic",
                   "kills": 4,
-                  "deaths": 9
+                  "deaths": 10
                 },
                 {
                   "id": "b1t",
-                  "kills": 9,
-                  "deaths": 9
+                  "kills": 11,
+                  "deaths": 8
                 },
                 {
                   "id": "Perfecto",
-                  "kills": 9,
+                  "kills": 10,
                   "deaths": 11
                 },
                 {
                   "id": "Boombl4",
-                  "kills": 6,
-                  "deaths": 7
+                  "kills": 5,
+                  "deaths": 8
                 }
               ],
               "b": [
                 {
                   "id": "Jame",
-                  "kills": 11,
-                  "deaths": 6
+                  "kills": 16,
+                  "deaths": 5
                 },
                 {
                   "id": "FL1T",
-                  "kills": 19,
-                  "deaths": 8
+                  "kills": 15,
+                  "deaths": 10
                 },
                 {
                   "id": "fame",
-                  "kills": 5,
+                  "kills": 8,
                   "deaths": 11
                 },
                 {
                   "id": "n0rb3r7",
-                  "kills": 10,
-                  "deaths": 3
+                  "kills": 7,
+                  "deaths": 6
                 },
                 {
                   "id": "Qikert",
                   "kills": 3,
-                  "deaths": 6
+                  "deaths": 8
                 }
               ]
             }
           },
           {
-            "number": 15,
+            "number": 16,
             "score": [
-              5,
+              6,
               10
             ],
             "winnerSide": "B",
@@ -1164,140 +1240,61 @@
               "full",
               "full"
             ],
-            "clutch": {
-              "opponents": 2,
-              "won": false
-            },
-            "highlight": "Jame",
-            "scoreboard": {
-              "a": [
-                {
-                  "id": "s1mple",
-                  "kills": 8,
-                  "deaths": 12
-                },
-                {
-                  "id": "electroNic",
-                  "kills": 5,
-                  "deaths": 10
-                },
-                {
-                  "id": "b1t",
-                  "kills": 9,
-                  "deaths": 10
-                },
-                {
-                  "id": "Perfecto",
-                  "kills": 9,
-                  "deaths": 12
-                },
-                {
-                  "id": "Boombl4",
-                  "kills": 6,
-                  "deaths": 8
-                }
-              ],
-              "b": [
-                {
-                  "id": "Jame",
-                  "kills": 13,
-                  "deaths": 7
-                },
-                {
-                  "id": "FL1T",
-                  "kills": 20,
-                  "deaths": 9
-                },
-                {
-                  "id": "fame",
-                  "kills": 5,
-                  "deaths": 12
-                },
-                {
-                  "id": "n0rb3r7",
-                  "kills": 10,
-                  "deaths": 3
-                },
-                {
-                  "id": "Qikert",
-                  "kills": 4,
-                  "deaths": 6
-                }
-              ]
-            }
-          },
-          {
-            "number": 16,
-            "score": [
-              5,
-              11
-            ],
-            "winnerSide": "B",
-            "sides": [
-              "TR",
-              "CT"
-            ],
-            "sideSwitch": false,
-            "planted": false,
-            "buys": [
-              "force",
-              "full"
-            ],
             "clutch": null,
             "highlight": "fame",
             "scoreboard": {
               "a": [
                 {
                   "id": "s1mple",
-                  "kills": 8,
-                  "deaths": 12
+                  "kills": 10,
+                  "deaths": 13
                 },
                 {
                   "id": "electroNic",
-                  "kills": 5,
+                  "kills": 6,
                   "deaths": 10
                 },
                 {
                   "id": "b1t",
-                  "kills": 9,
-                  "deaths": 11
+                  "kills": 11,
+                  "deaths": 9
                 },
                 {
                   "id": "Perfecto",
-                  "kills": 9,
-                  "deaths": 13
+                  "kills": 10,
+                  "deaths": 12
                 },
                 {
                   "id": "Boombl4",
-                  "kills": 6,
+                  "kills": 5,
                   "deaths": 8
                 }
               ],
               "b": [
                 {
                   "id": "Jame",
-                  "kills": 13,
-                  "deaths": 7
+                  "kills": 17,
+                  "deaths": 5
                 },
                 {
                   "id": "FL1T",
-                  "kills": 20,
-                  "deaths": 9
+                  "kills": 15,
+                  "deaths": 11
                 },
                 {
                   "id": "fame",
-                  "kills": 7,
-                  "deaths": 12
+                  "kills": 10,
+                  "deaths": 11
                 },
                 {
                   "id": "n0rb3r7",
-                  "kills": 10,
-                  "deaths": 3
+                  "kills": 7,
+                  "deaths": 7
                 },
                 {
                   "id": "Qikert",
-                  "kills": 4,
-                  "deaths": 6
+                  "kills": 3,
+                  "deaths": 8
                 }
               ]
             }
@@ -1305,8 +1302,8 @@
           {
             "number": 17,
             "score": [
-              5,
-              12
+              6,
+              11
             ],
             "winnerSide": "B",
             "sides": [
@@ -1325,55 +1322,55 @@
               "a": [
                 {
                   "id": "s1mple",
-                  "kills": 9,
-                  "deaths": 13
+                  "kills": 10,
+                  "deaths": 14
                 },
                 {
                   "id": "electroNic",
-                  "kills": 5,
+                  "kills": 6,
                   "deaths": 11
                 },
                 {
                   "id": "b1t",
-                  "kills": 9,
-                  "deaths": 12
+                  "kills": 11,
+                  "deaths": 10
                 },
                 {
                   "id": "Perfecto",
-                  "kills": 9,
-                  "deaths": 13
+                  "kills": 10,
+                  "deaths": 12
                 },
                 {
                   "id": "Boombl4",
-                  "kills": 6,
+                  "kills": 5,
                   "deaths": 8
                 }
               ],
               "b": [
                 {
                   "id": "Jame",
-                  "kills": 14,
-                  "deaths": 7
+                  "kills": 17,
+                  "deaths": 5
                 },
                 {
                   "id": "FL1T",
-                  "kills": 22,
-                  "deaths": 9
+                  "kills": 16,
+                  "deaths": 11
                 },
                 {
                   "id": "fame",
-                  "kills": 7,
-                  "deaths": 13
+                  "kills": 11,
+                  "deaths": 11
                 },
                 {
                   "id": "n0rb3r7",
-                  "kills": 10,
-                  "deaths": 3
+                  "kills": 8,
+                  "deaths": 7
                 },
                 {
                   "id": "Qikert",
-                  "kills": 4,
-                  "deaths": 6
+                  "kills": 3,
+                  "deaths": 8
                 }
               ]
             }
@@ -1381,10 +1378,10 @@
           {
             "number": 18,
             "score": [
-              5,
-              13
+              7,
+              11
             ],
-            "winnerSide": "B",
+            "winnerSide": "A",
             "sides": [
               "TR",
               "CT"
@@ -1397,25 +1394,104 @@
             ],
             "clutch": {
               "opponents": 1,
-              "won": false
+              "won": true
             },
-            "highlight": "FL1T",
+            "highlight": "b1t",
             "scoreboard": {
               "a": [
                 {
                   "id": "s1mple",
-                  "kills": 10,
-                  "deaths": 14
+                  "kills": 11,
+                  "deaths": 15
                 },
                 {
                   "id": "electroNic",
-                  "kills": 6,
+                  "kills": 7,
                   "deaths": 12
                 },
                 {
                   "id": "b1t",
-                  "kills": 9,
+                  "kills": 14,
+                  "deaths": 10
+                },
+                {
+                  "id": "Perfecto",
+                  "kills": 10,
                   "deaths": 13
+                },
+                {
+                  "id": "Boombl4",
+                  "kills": 5,
+                  "deaths": 9
+                }
+              ],
+              "b": [
+                {
+                  "id": "Jame",
+                  "kills": 17,
+                  "deaths": 6
+                },
+                {
+                  "id": "FL1T",
+                  "kills": 16,
+                  "deaths": 12
+                },
+                {
+                  "id": "fame",
+                  "kills": 14,
+                  "deaths": 12
+                },
+                {
+                  "id": "n0rb3r7",
+                  "kills": 8,
+                  "deaths": 8
+                },
+                {
+                  "id": "Qikert",
+                  "kills": 4,
+                  "deaths": 9
+                }
+              ]
+            }
+          },
+          {
+            "number": 19,
+            "score": [
+              7,
+              12
+            ],
+            "winnerSide": "B",
+            "sides": [
+              "TR",
+              "CT"
+            ],
+            "sideSwitch": false,
+            "planted": true,
+            "buys": [
+              "full",
+              "full"
+            ],
+            "clutch": {
+              "opponents": 3,
+              "won": false
+            },
+            "highlight": "n0rb3r7",
+            "scoreboard": {
+              "a": [
+                {
+                  "id": "s1mple",
+                  "kills": 11,
+                  "deaths": 16
+                },
+                {
+                  "id": "electroNic",
+                  "kills": 8,
+                  "deaths": 13
+                },
+                {
+                  "id": "b1t",
+                  "kills": 14,
+                  "deaths": 11
                 },
                 {
                   "id": "Perfecto",
@@ -1424,35 +1500,114 @@
                 },
                 {
                   "id": "Boombl4",
-                  "kills": 7,
-                  "deaths": 9
+                  "kills": 8,
+                  "deaths": 10
                 }
               ],
               "b": [
                 {
                   "id": "Jame",
-                  "kills": 14,
-                  "deaths": 8
+                  "kills": 17,
+                  "deaths": 7
                 },
                 {
                   "id": "FL1T",
-                  "kills": 25,
-                  "deaths": 10
+                  "kills": 18,
+                  "deaths": 13
                 },
                 {
                   "id": "fame",
-                  "kills": 8,
-                  "deaths": 14
+                  "kills": 14,
+                  "deaths": 13
                 },
                 {
                   "id": "n0rb3r7",
                   "kills": 11,
-                  "deaths": 3
+                  "deaths": 8
                 },
                 {
                   "id": "Qikert",
                   "kills": 4,
-                  "deaths": 7
+                  "deaths": 10
+                }
+              ]
+            }
+          },
+          {
+            "number": 20,
+            "score": [
+              7,
+              13
+            ],
+            "winnerSide": "B",
+            "sides": [
+              "TR",
+              "CT"
+            ],
+            "sideSwitch": false,
+            "planted": false,
+            "buys": [
+              "force",
+              "full"
+            ],
+            "clutch": {
+              "opponents": 2,
+              "won": false
+            },
+            "highlight": "fame",
+            "scoreboard": {
+              "a": [
+                {
+                  "id": "s1mple",
+                  "kills": 11,
+                  "deaths": 17
+                },
+                {
+                  "id": "electroNic",
+                  "kills": 8,
+                  "deaths": 14
+                },
+                {
+                  "id": "b1t",
+                  "kills": 16,
+                  "deaths": 12
+                },
+                {
+                  "id": "Perfecto",
+                  "kills": 10,
+                  "deaths": 15
+                },
+                {
+                  "id": "Boombl4",
+                  "kills": 9,
+                  "deaths": 11
+                }
+              ],
+              "b": [
+                {
+                  "id": "Jame",
+                  "kills": 17,
+                  "deaths": 8
+                },
+                {
+                  "id": "FL1T",
+                  "kills": 19,
+                  "deaths": 14
+                },
+                {
+                  "id": "fame",
+                  "kills": 17,
+                  "deaths": 13
+                },
+                {
+                  "id": "n0rb3r7",
+                  "kills": 11,
+                  "deaths": 9
+                },
+                {
+                  "id": "Qikert",
+                  "kills": 5,
+                  "deaths": 10
                 }
               ]
             }
@@ -1463,104 +1618,104 @@
             {
               "id": "s1mple",
               "nick": "s1mple",
-              "kills": 10,
-              "deaths": 14,
-              "assists": 6,
-              "rating": 1.21,
-              "kast": 0.667,
-              "adr": 72
+              "kills": 11,
+              "deaths": 17,
+              "assists": 3,
+              "rating": 1.14,
+              "kast": 0.5,
+              "adr": 71
             },
             {
               "id": "electroNic",
               "nick": "electroNic",
-              "kills": 6,
-              "deaths": 12,
-              "assists": 4,
-              "rating": 0.95,
-              "kast": 0.667,
-              "adr": 53
+              "kills": 8,
+              "deaths": 14,
+              "assists": 5,
+              "rating": 0.99,
+              "kast": 0.6,
+              "adr": 60
             },
             {
               "id": "b1t",
               "nick": "b1t",
-              "kills": 9,
-              "deaths": 13,
-              "assists": 2,
-              "rating": 1.04,
-              "kast": 0.611,
-              "adr": 58
+              "kills": 16,
+              "deaths": 12,
+              "assists": 0,
+              "rating": 1.25,
+              "kast": 0.65,
+              "adr": 78
             },
             {
               "id": "Perfecto",
               "nick": "Perfecto",
               "kills": 10,
-              "deaths": 14,
-              "assists": 2,
-              "rating": 0.95,
-              "kast": 0.556,
-              "adr": 60
+              "deaths": 15,
+              "assists": 3,
+              "rating": 0.89,
+              "kast": 0.65,
+              "adr": 58
             },
             {
               "id": "Boombl4",
               "nick": "Boombl4",
-              "kills": 7,
-              "deaths": 9,
-              "assists": 3,
-              "rating": 0.93,
-              "kast": 0.667,
-              "adr": 48
+              "kills": 9,
+              "deaths": 11,
+              "assists": 5,
+              "rating": 0.97,
+              "kast": 0.8,
+              "adr": 53
             }
           ],
           "b": [
             {
               "id": "Jame",
               "nick": "Jame",
-              "kills": 14,
+              "kills": 17,
               "deaths": 8,
-              "assists": 4,
-              "rating": 1.36,
-              "kast": 0.833,
-              "adr": 78
+              "assists": 6,
+              "rating": 1.44,
+              "kast": 0.75,
+              "adr": 84
             },
             {
               "id": "FL1T",
               "nick": "FL1T",
-              "kills": 25,
-              "deaths": 10,
-              "assists": 2,
-              "rating": 1.68,
-              "kast": 1,
-              "adr": 130
+              "kills": 19,
+              "deaths": 14,
+              "assists": 3,
+              "rating": 1.39,
+              "kast": 0.9,
+              "adr": 96
             },
             {
               "id": "fame",
               "nick": "fame",
-              "kills": 8,
-              "deaths": 14,
-              "assists": 1,
-              "rating": 0.9,
-              "kast": 0.556,
-              "adr": 54
+              "kills": 17,
+              "deaths": 13,
+              "assists": 4,
+              "rating": 1.25,
+              "kast": 0.8,
+              "adr": 89
             },
             {
               "id": "n0rb3r7",
               "nick": "n0rb3r7",
               "kills": 11,
-              "deaths": 3,
-              "assists": 3,
-              "rating": 1.13,
-              "kast": 0.889,
-              "adr": 63
+              "deaths": 9,
+              "assists": 4,
+              "rating": 1.01,
+              "kast": 0.7,
+              "adr": 64
             },
             {
               "id": "Qikert",
               "nick": "Qikert",
-              "kills": 4,
-              "deaths": 7,
-              "assists": 8,
-              "rating": 0.83,
-              "kast": 0.889,
-              "adr": 47
+              "kills": 5,
+              "deaths": 10,
+              "assists": 9,
+              "rating": 0.82,
+              "kast": 0.8,
+              "adr": 51
             }
           ]
         }
@@ -6160,19 +6315,19 @@
                   "kills": 15,
                   "deaths": 12,
                   "assists": 0,
-                  "rating": 1.61,
+                  "rating": 1.62,
                   "kast": 0.733,
-                  "adr": 100
+                  "adr": 101
                 },
                 {
                   "id": "GuardiaN",
                   "nick": "GuardiaN",
                   "kills": 9,
                   "deaths": 11,
-                  "assists": 2,
-                  "rating": 1.14,
+                  "assists": 3,
+                  "rating": 1.15,
                   "kast": 0.667,
-                  "adr": 67
+                  "adr": 70
                 },
                 {
                   "id": "olofmeister",

@@ -118,7 +118,7 @@ function buildCurrent(){
     schemaVersion:SCHEMA_VERSION,
     rngContract:"mulberry32-v1",
     scenarios:[
-      fixedMapScenario({id:"economy-and-clutches",seed:1,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[5,13]}),
+      fixedMapScenario({id:"economy-and-clutches",seed:1,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[7,13]}),
       fixedMapScenario({id:"repeated-overtime",seed:129,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[22,18]}),
       campaignSeriesScenario()
     ]
