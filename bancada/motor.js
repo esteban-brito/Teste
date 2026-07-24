@@ -12,7 +12,8 @@ const EXPORTS=[
   "forcaTime","simularMapa","simularSerie","forcaDoDia","formaDoDia","sortearFormaCampanha",
   "avaliarJogador","aplicarAvaliacaoContextual","distribuirRoles","quimicaComposicao","combatProfile","exposureProfile","preservationValue","tradeContextProfile","assistContextProfile","fallenAngelsComponents","fallenAngels",
   "afinidades","roleAfinidade","rolePairReality","secondaryScore","roleStyleReality","STYLE_LABEL","styleScoreTable","nmOVR",
-  "CFG_AVALIACAO","NM_DEF"
+  "CFG_AVALIACAO","NM_DEF",
+  "coletarMarcos","atualizarRecordes","manchete","narrativaMVP"
 ];
 
 function loadEngines(){
