@@ -133,11 +133,32 @@ Atualização operacional de 23 de julho de 2026:
   resultado, os números finais e os limites honestos estão em
   `docs/r6-closure-2026-07-23.md`.
 
+Atualização operacional de 24 de julho de 2026:
+
+- o commit `f731b3a` aplicou no código os overrides produzidos pelo editor do
+  sandbox para kennyS, NBK-, Happy, apEX da EnVyUs, kioShiMa e RUSH;
+- `game.js` e `src/data/players.mjs` permanecem em paridade, `elencos.html` foi
+  regenerado e o snapshot continua cobrindo os 85 IDs;
+- o snapshot derivado passou a registrar NBK- `Rifler/Support · Trader · 15`,
+  Happy `IGL/Lurker · Infiltrador · 19`, apEX `Entry/Rifler · Opener · 17` e
+  RUSH `Entry/Rifler · Spacetaker · 17`;
+- como o simulador centraliza sinais pela população completa de jogadores, a
+  alteração não ficou restrita aos dois times: o golden NAVI × Outsiders da
+  seed 1 mudou de 5–13 para 7–13 e a campanha MD3 da seed 424242 mudou de
+  vencedor;
+- a validação posterior ao commit passou em 19/19 suítes, com 45.900 mapas e
+  937.856 rounds. Rating real×sim ficou em correlação `0,955`, MAE `0,050`,
+  inclinação `1,016` e maior erro individual `0,178`;
+- o JSON original exportado pelo sandbox e fontes externas para justificar os
+  novos atributos não estão versionados. Os valores são executáveis e passam
+  nos gates, mas a proveniência histórica ainda precisa ser registrada antes de
+  tratá-los como uma revisão cientificamente auditada.
+
 ### Decisão imediata para a próxima sessão
 
-**Próxima decisão:** tratar como trabalho separado a proveniência dos atributos
-crus e a apresentação de função primária versus função efetiva. O ciclo R5/R6
-está concluído. O corpus
+**Próxima decisão:** auditar e registrar primeiro a proveniência dos overrides do
+commit `f731b3a`; depois tratar, em trabalho separado, a apresentação de função
+primária versus função efetiva. O ciclo R5/R6 está concluído. O corpus
 oficial segue insuficiente (1/800 mapas e 1/6 eventos), portanto nenhuma nota
 IFCS será publicada. A distribuição entre muitas MD3 continua aberta em R3 e não
 deve ser misturada ao ciclo R5/R6.

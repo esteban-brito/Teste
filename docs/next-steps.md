@@ -389,6 +389,13 @@ validação integral passou em 19/19 suítes, 45.900 mapas e 938.511 rounds. O
 fechamento e os limites remanescentes estão em
 `docs/r6-closure-2026-07-23.md`.
 
+Atualização posterior: o commit de dados `f731b3a`, de 24 de julho, alterou seis
+jogadores por overrides do editor do sandbox e produziu uma nova execução de
+referência, com 45.900 mapas e 937.856 rounds. Os 19 gates continuam verdes, mas
+o export original e as fontes históricas dos novos atributos não estão no
+repositório. Antes de novo balanceamento, registrar essa proveniência e revisar
+explicitamente o efeito sistêmico das médias populacionais sobre todos os times.
+
 1. executar os goldens antigos e explicar cada diferença;
 2. executar a comparação pareada antes/depois;
 3. revisar maiores beneficiados, prejudicados e inversões de ranking;
