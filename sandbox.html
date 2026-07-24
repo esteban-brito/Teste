@@ -3361,7 +3361,16 @@ function accSimGame(acc,g,playersA,playersB,ai,bi,A,B){
   accSimSide(acc,g.statsA,playersA,r,ai);accSimSide(acc,g.statsB,playersB,r,bi);acc.maps[g.mapa]=(acc.maps[g.mapa]||0)+1;acc.teams[ai]=1;acc.teams[bi]=1;
   const bucket=simGapBucket(Math.abs(A.forca.efetiva-B.forca.efetiva));if(bucket){acc.gaps[bucket].n++;if((A.forca.efetiva>=B.forca.efetiva)===(g.vencedor===A))acc.gaps[bucket].w++;}
 }
+// Linhas derivadas são PURAS do lote e o lote é imutável depois do run — memoizar por objeto
+// (WeakMap) elimina o recomputo integral (3 ordenações × 85 jogadores, ~13ms medidos) que rodava
+// a cada tecla da busca, troca de filtro/ordenação, reset e exportação. Saída idêntica.
+const simPlayerRowsCache=new WeakMap();
 function simPlayerDistributionRows(batch){
+  let rows=simPlayerRowsCache.get(batch);
+  if(!rows){rows=simPlayerRowsBuild(batch);simPlayerRowsCache.set(batch,rows);}
+  return rows;
+}
+function simPlayerRowsBuild(batch){
   const minimumMaps=batch.scope==="league"?5:10;
   return Object.values(batch.players).filter(player=>player.n&&player.real).map(player=>{
     const average=player.sim/player.n,historical=player.historical||player.real,rounds=player.rounds||1;
