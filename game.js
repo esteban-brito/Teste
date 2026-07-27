@@ -450,18 +450,21 @@ const CFG_NIVEL={LENDA_OVR:21,STAR_OVR:18,SOLIDO_OVR:16,ESTRELA_OVR:20};
 // ratingCompetitivo foi REMOVIDO: nenhum ponto do motor lê mais o rating histórico.
 // Ele entra uma vez, dentro de nmOVR, e vira OVR. Quem precisa do valor bruto para
 // RELATÓRIO (bancada/rating.js) lê o campo `rating` do jogador diretamente.
-const ehEstrela=p=>(p.ovr??0)>=CFG_NIVEL.ESTRELA_OVR;
 // ORQUESTRADOR PRISMA→ZÊNITE: classifica (função+sub) e avalia (OVR) um jogador de uma vez.
 function aplicarAvaliacaoContextual(p){
   const fallback=(!p.primario||!p.secundario)?classificar(p):null;
   const role=p.primario||fallback[0],sec=role==="IGL"?(p.secundario||fallback[1]):roleSecundarioSeguro(role,p.secundario||fallback[1],p);
   const combatRole=role==="IGL"?(sec||"Rifler"):role,style=nmOVR(p,combatRole),C=CFG_AVALIACAO;
   const ovr=role==="IGL"?iglOvr(style.core,p.colocacao):Math.min(C.OVR_MAX,Math.max(C.OVR_MIN,style.ovr));
-  return Object.assign(p,{ovr,combatRole,role1:role==="IGL"?"IGL":role,role2:role==="IGL"?null:sec,playstyle:style.style,style});
+  // `estrela` PRECISA ser decidida aqui: ela deriva do OVR, que só existe neste ponto.
+  // (Calculá-la antes, sobre o jogador cru, devolvia sempre false e apagava silenciosamente
+  //  toda a penalidade de ego da química.)
+  return Object.assign(p,{ovr,combatRole,role1:role==="IGL"?"IGL":role,role2:role==="IGL"?null:sec,
+    playstyle:style.style,style,estrela:ovr>=CFG_NIVEL.ESTRELA_OVR});
 }
 function avaliarJogador(p){const classe=classificar(p);const role=classe[0];
-  const estrela=ehEstrela(p);
-  return aplicarAvaliacaoContextual({...p,primario:role,secundario:classe[1],secForte:classe.secForte!==false,classe:classe.join("-"),estrela});}
+  // `estrela` sai de aplicarAvaliacaoContextual, que é onde o OVR passa a existir.
+  return aplicarAvaliacaoContextual({...p,primario:role,secundario:classe[1],secForte:classe.secForte!==false,classe:classe.join("-")});}
 // PRISMA · passe de TIME: distribui as funções olhando o elenco, não o jogador isolado.
 //  • cap 2 no role 1: no máx 2 jogadores com a mesma função primária; o excedente desce pra 2ª melhor afinidade.
 //  • AWP: todo time tem AWPer — se ninguém é, o de maior sn assume (role 1; role 2 se for o IGL).

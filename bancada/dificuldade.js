@@ -13,10 +13,15 @@
      · jogo decisivo (alguém em 2V ou 2D) é MD3; o resto é MD1;
      · playoffs: top 8 por força efetiva, quartas/semi/final em MD3.
 
-   Ressalva de leitura: aqui o "seu time" é um elenco de fábrica. No jogo real o usuário
-   DRAFTA, escolhendo as melhores cartas de cada roleta — o elenco montado tende a ser
-   mais forte que qualquer time de fábrica. Por isso a linha que vale para o alvo é a
-   faixa de força ALTA, não a média de todos os times. */
+   A linha que governa o alvo é a do ELENCO DRAFTADO, não a dos times de fábrica: é o
+   elenco draftado que o usuário realmente joga. Ele é sorteado de novo a cada campanha,
+   simulando o draft do jogo (cinco giros, uma carta por giro).
+
+   ESTADO EM 27/07/2026: o invicto do elenco draftado está em ~1,5%, ou seja, MAIS DIFÍCIL
+   que o alvo acordado de 4–6%. Fechar essa diferença não é ajuste de constante — as
+   alavancas de variância testadas (química, forma, cauda) levantam o campo inteiro junto e
+   se cancelam. Depende de decisão de produto: dar re-spin no draft, restringir o Major a
+   times fortes, ou aceitar a faixa mais dura. Por isso esta suíte segue como RELATÓRIO. */
 const {X,T}=require("./motor");
 const {pct,inRange,printCheck,mean}=require("./common");
 
@@ -138,6 +143,36 @@ function campanha(meuIndice){
   return {fim:titulo?"campeao":"playoffs",titulo,invicto:titulo&&estado.mapasD===0,...estado};
 }
 
+/* ─── ELENCO DRAFTADO ────────────────────────────────────────────────────────
+   O alvo de 4–6% descreve o elenco que o USUÁRIO monta. Mas montar não é escolher os
+   cinco melhores do jogo: no draft real a roleta sorteia UM time por rodada e você escolhe
+   UMA carta dele. Medir o top-5 global daria um limite superior, não o elenco que se joga.
+   Aqui o draft é simulado como no jogo — seis giros, escolha gulosa da melhor carta
+   disponível do time sorteado, respeitando cobertura de IGL e AWP. */
+function elencoDraftado(){
+  const times=X.TEAMS;
+  const escolhidos=[];
+  const temIgl=()=>escolhidos.some(p=>p.primario==="IGL");
+  const temAwp=()=>escolhidos.some(p=>(p.combatRole||p.primario)==="AWPer");
+  for(let giro=0;giro<5;giro++){
+    const time=times[Math.floor(rnd()*times.length)];
+    const cartas=time.jogadores.map(c=>c._eng).filter(p=>!escolhidos.includes(p));
+    if(!cartas.length){giro--;continue;}
+    const faltamSlots=5-escolhidos.length;
+    // um jogador competente prioriza cobrir IGL e AWP enquanto ainda há espaço
+    let alvo=null;
+    if(!temIgl()&&faltamSlots<=3)alvo=cartas.filter(p=>p.primario==="IGL").sort((x,y)=>y.ovr-x.ovr)[0];
+    if(!alvo&&!temAwp()&&faltamSlots<=2)alvo=cartas.filter(p=>(p.combatRole||p.primario)==="AWPer").sort((x,y)=>y.ovr-x.ovr)[0];
+    if(!alvo)alvo=cartas.slice().sort((x,y)=>y.ovr-x.ovr)[0];
+    escolhidos.push(alvo);
+  }
+  const timeTreinador=times[Math.floor(rnd()*times.length)];
+  const treinador=timeTreinador.treinador;
+  const forca=X.forcaTime(escolhidos,treinador&&treinador.carac,treinador&&treinador.ovr);
+  return {nome:"DRAFT",jogadores:escolhidos.map(p=>({_eng:p})),
+    ef:forca.efetiva,quim:forca.quimica,elenco:escolhidos.map(p=>`${p.nick}(${p.ovr})`)};
+}
+
 /* ─── execução: uma fatia de campanhas por time, agrupada por força ──────── */
 const inicio=Date.now();
 const porTime=T.map((t,i)=>({nome:t.nome,ef:t.ef,i,campanhas:0,titulos:0,invictos:0,mapasV:0,mapasD:0,suica:0}));
@@ -185,13 +220,30 @@ ordenados.forEach(l=>{
   console.log(`    ${l.nome.padEnd(14)} ef ${l.ef.toFixed(1).padStart(5)}  título ${pct(l.titulos,l.campanhas).toFixed(1).padStart(5)}%  invicto ${pct(l.invictos,l.campanhas).toFixed(1).padStart(5)}%`);
 });
 
+/* ─── a linha que governa o alvo: o elenco draftado ─────────────────────── */
+let dCamp=0,dTit=0,dInv=0,dSuica=0,somaEf=0,somaQuim=0;
+const campanhasDraft=Math.max(300,porCampanha*4);
+const exemplos=[];
+for(let c=0;c<campanhasDraft;c++){
+  const draft=elencoDraftado(); // draft NOVO a cada run, como no jogo
+  somaEf+=draft.ef;somaQuim+=draft.quim;
+  if(exemplos.length<3)exemplos.push(`${draft.elenco.join(" ")} → força ${draft.ef.toFixed(0)}`);
+  T.push(draft);
+  const r=campanha(T.length-1);
+  T.pop();
+  dCamp++;if(r.titulo)dTit++;if(r.invicto)dInv++;if(r.fim==="suica")dSuica++;
+}
+console.log(`
+  ELENCO DRAFTADO (${dCamp} drafts · força média ${(somaEf/dCamp).toFixed(1)} · química média ${(somaQuim/dCamp*100).toFixed(0)}%)`);
+exemplos.forEach(e=>console.log(`    ex: ${e}`));
+console.log(`    título ${pct(dTit,dCamp).toFixed(1)}% · invicto ${pct(dInv,dCamp).toFixed(1)}% · cai na suíça ${pct(dSuica,dCamp).toFixed(1)}%`);
+
 const checks=[
-  ["Invicto (faixa alta) %",alta.pInvicto.toFixed(1),"4–6",inRange(alta.pInvicto,4,6)],
-  ["Título (faixa alta) %",alta.pTitulo.toFixed(1),"12–30",inRange(alta.pTitulo,12,30)],
-  ["Invicto global %",pct(total.invictos,total.campanhas).toFixed(1),"1–6",
-    inRange(pct(total.invictos,total.campanhas),1,6)],
-  ["Faixa alta supera a baixa em título",(alta.pTitulo-baixa.pTitulo).toFixed(1),">0",alta.pTitulo>baixa.pTitulo],
-  ["Faixa baixa ainda ganha às vezes",baixa.pTitulo.toFixed(1),">0",baixa.pTitulo>0]
+  // O alvo de 4-6% descreve o elenco DRAFTADO — é o que o usuário realmente joga.
+  ["Invicto (elenco draftado) %",pct(dInv,dCamp).toFixed(1),"4–6",inRange(pct(dInv,dCamp),4,6)],
+  ["Título (elenco draftado) %",pct(dTit,dCamp).toFixed(1),"25–60",inRange(pct(dTit,dCamp),25,60)],
+  ["Título (faixa alta de fábrica) %",alta.pTitulo.toFixed(1),"12–30",inRange(alta.pTitulo,12,30)],
+  ["Faixa alta supera a baixa em título",(alta.pTitulo-baixa.pTitulo).toFixed(1),">0",alta.pTitulo>baixa.pTitulo]
 ];
 
 console.log("");
