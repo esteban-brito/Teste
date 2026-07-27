@@ -20,24 +20,20 @@ const MAPS=9;
 /* Ratchet por etapa: cada critério pertence à etapa que o resolve, e vira gate quando ela
    é entregue. Uma regressão que desfaça uma etapa concluída REPROVA a suíte.
 
-   As pendências têm causa medida e dono identificado — ficam como relatório, com o
-   diagnóstico registrado para não serem reinvestigadas do zero:
-
-   · `distribuicao` — desvio intra-jogador (0,167; alvo 0,22–0,32). NÃO é a forma do dia
-     nem o relógio: as duas hipóteses foram testadas e reprovadas (dobrar a volatilidade
-     move para 0,180; varrer o piso da forma mantém tudo entre 0,165 e 0,173). A causa é
-     que as kills se distribuem dentro do mapa por sorteio multinomial com pesos FIXOS,
-     que é o caso de MENOR dispersão possível. O CS real é superdisperso: quem está bem
-     no mapa tende a levar também as próximas kills. Resolver exige momentum individual
-     intra-mapa, mecânica nova.
+   · `distribuicao` — RESOLVIDA em 28/07/2026. O desvio intra-jogador estava em 0,167 contra
+     o alvo 0,22–0,32, e a causa medida era estrutural: as kills se distribuíam dentro do mapa
+     por sorteio multinomial de pesos FIXOS, o caso de MENOR dispersão possível, enquanto o CS
+     real é superdisperso. Três hipóteses foram testadas e reprovadas antes (volatilidade da
+     forma, relógio do round, piso da forma). A solução foi CFG_SIM.MOM_HEAT: reforço de urna
+     de Pólya sobre as kills líquidas já feitas no mapa, que é o mecanismo canônico de
+     superdispersão. Desvio agora em 0,258. Ver docs/momentum-2026-07-28.md.
    Correção de registro: na etapa do relógio o Spacetaker foi promovido a gate por ter
    passado por um fio, sem que a margem fosse verificada. Foi engano — o critério voltou
    para relatório assim que a economia deslocou o número. Por isso a etapa `abertura` só foi
    ligada com a margem medida em TRÊS amostras (2.295, 6.885 e 9.180 mapas):
    Entry −Playmaker em opKPR ficou em +0,039 / +0,036 / +0,036, e o Spacetaker acima da
    média dos estilos em +0,049 / +0,050 / +0,051. Nada de margem de faca desta vez. */
-const ETAPA_ATIVA={rating:true,relogio:true,abertura:true,
-  distribuicao:process.env.PERFIS_STRICT==="1"};
+const ETAPA_ATIVA={rating:true,relogio:true,abertura:true,distribuicao:true};
 const ROLES=["AWPer","Rifler","Entry","Lurker","Support","IGL"];
 // Bandas de OVR usadas na prova de sobreposição. Distantes o bastante pra que o resultado
 // signifique algo (5 pontos de OVR), largas o bastante pra ter amostra.
@@ -282,9 +278,11 @@ checks.forEach(([etapa,nome,valor,faixa,ok])=>{
     return;
   }
   const vale=ETAPA_ATIVA[etapa];
-  if(!ok&&!vale){ // critério cujo dono ainda não foi implementado: informa, não reprova
+  // Critério cujo dono ainda não foi implementado: informa, não reprova. Hoje TODAS as etapas
+  // estão ativas — o caminho fica para a próxima que entrar em ETAPA_ATIVA como false.
+  if(!ok&&!vale){
     pendentes++;
-    console.log(`  ▲ ${nome.padEnd(34)} ${String(valor).padStart(6)}   [${faixa} · ${etapa==="distribuicao"?"depende de momentum intra-mapa":"balanceamento de abertura"}]`);
+    console.log(`  ▲ ${nome.padEnd(34)} ${String(valor).padStart(6)}   [${faixa} · etapa "${etapa}" ainda não entregue]`);
     return;
   }
   if(!ok)falhas++;

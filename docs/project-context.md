@@ -225,13 +225,11 @@ guarda `totalRounds>=30` protege isso. A seed já foi trocada três vezes neste 
 
 ### O que ficou ABERTO, com causa já medida
 
-1. **Desvio intra-jogador do rating: 0,165** (alvo real 0,22–0,32). Três hipóteses
-   testadas e **refutadas**: volatilidade da forma (move só para 0,180), relógio do
-   round (não move) e piso da forma (grade de 18 combinações, tudo entre 0,165 e
-   0,173). Causa identificada: as kills se distribuem dentro do mapa por **sorteio
-   multinomial com pesos fixos**, que é o caso de menor dispersão possível; o CS real é
-   superdisperso. Resolver exige **momentum individual intra-mapa** — mecânica nova.
-   Registrado em `perfis.js` sob o dono `distribuicao`.
+1. ~~Desvio intra-jogador do rating.~~ **RESOLVIDO em 28/07** — `docs/momentum-2026-07-28.md`.
+   A causa era estrutural (multinomial de pesos fixos é o piso da variância), e a solução foi
+   `CFG_SIM.MOM_HEAT`: reforço de urna de Pólya sobre as kills líquidas já feitas no mapa.
+   Desvio de 0,167 para **0,258**. Com isso **não resta nenhum critério em relatório** em
+   `bancada/perfis.js` — as quatro etapas do ratchet estão ativas.
 2. ~~Duelo de abertura decidido por firepower bruto.~~ **RESOLVIDO em 27/07** —
    `docs/abertura-2026-07-27.md`. Os dois critérios viraram gate.
 3. **Utilidade como recurso do round** (flash/smoke/molotov comprados e gastos, ligando
@@ -270,8 +268,12 @@ tirar os times fracos torna todo adversário mais forte e **derruba** o invicto 
 direção contrária. O que resolveu foi corrigir o chaveamento (que semeava por força em vez
 do resultado da suíça) mais `PESO_EF` e `AMP_TIME`.
 
-**Trabalho recomendado ao retomar**, na ordem: (a) momentum intra-mapa, que fecha a
-variância individual (0,168 contra alvo 0,22–0,32); (b) utilidade como recurso do round.
+**Trabalho recomendado ao retomar** (atualizado em 28/07, depois do momentum): resta uma
+única peça do escopo original — **utilidade como recurso do round**. Fora isso, a decisão é
+de produto: continuar refinando fidelidade ou começar o **Modo Carreira** (P6), que depende
+de schema de save e API estável, não de mais precisão. Ver o plano em
+`docs/momentum-2026-07-28.md` e `docs/dados-era-rating-1-0.md` para a dívida de dados
+já registrada.
 
 Pendências anteriores que continuam válidas: a proveniência dos overrides do commit
 `f731b3a` não está versionada; o corpus IFCS segue insuficiente (1/800 mapas e 1/6

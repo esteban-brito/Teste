@@ -391,10 +391,20 @@ fechamento e os limites remanescentes estão em
 
 Atualização posterior: o commit de dados `f731b3a`, de 24 de julho, alterou seis
 jogadores por overrides do editor do sandbox e produziu uma nova execução de
-referência, com 45.900 mapas e 937.856 rounds. Os 19 gates continuam verdes, mas
-o export original e as fontes históricas dos novos atributos não estão no
-repositório. Antes de novo balanceamento, registrar essa proveniência e revisar
-explicitamente o efeito sistêmico das médias populacionais sobre todos os times.
+referência, com 45.900 mapas e 937.856 rounds. Os 19 gates continuam verdes.
+
+**Proveniência registrada em 28/07/2026** — `docs/dados-era-rating-1-0.md`. Cinco
+dos seis jogadores são da EnVyUs de 2015, era **Rating 1.0**, que não publica
+KAST, ADR nem impacto: cinco dos sete atributos do motor não são deriváveis
+daquela métrica. Os valores foram estimados por julgamento do responsável, pela
+mesma prática já registrada no bloco da Virtus.pro, e agora estão marcados como
+juízo no próprio dado. O sexto jogador é da era Rating 2.0 e precisou de um único
+ajuste — a distribuição do esforço corrobora o motivo. O export JSON original não
+existe mais e não é recuperável; o diff exato está permanente no git.
+
+Fica aberta a guarda estrutural: o campo `rating` é **gabarito**, não atributo, e
+o editor do sandbox o trata como mais um campo editável. Separá-lo numa fonte
+própria com `fonte` por jogador é pré-requisito honesto de qualquer nota IFCS.
 
 1. executar os goldens antigos e explicar cada diferença;
 2. executar a comparação pareada antes/depois;

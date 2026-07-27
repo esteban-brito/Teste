@@ -93,10 +93,9 @@ function fixedMapScenario({id,seed,aIndex,bIndex,map,expectedScore}){
 }
 
 function campaignSeriesScenario(){
-  // Seed 3: a 9 passou a varrer 2-0 depois deste ciclo, e uma varrida não exercita o mapa
-  // decisivo — que é a única razão de este cenário existir. A 3 devolve a série 1-2 em três
-  // mapas distintos, mesma cobertura de antes.
-  const id="campaign-best-of-three",seed=3,aIndex=4,bIndex=9;
+  // Seed 4: a única razão de este cenário existir é exercitar o MAPA DECISIVO, que uma varrida
+  // 2-0 nunca alcança. A 4 devolve a série 1-2 em três mapas distintos, mesma cobertura.
+  const id="campaign-best-of-three",seed=4,aIndex=4,bIndex=9;
   const X=loadEngines(),teams=buildCombatTeams(X);
   X.srand(seed);
   X.sortearFormaCampanha(teams);
@@ -105,7 +104,7 @@ function campaignSeriesScenario(){
   // Série de três mapas: cobre o mapa decisivo, que uma varrida 2-0 nunca alcança. A sequência
   // de mapas acompanha o novo sorteio de RNG; a cobertura é a mesma.
   assert.equal(result.placarSerie.join(","),"1,2",`${id}: ancora da serie mudou antes de atualizar o fixture`);
-  assert.equal(result.mapas.map(map=>map.mapa).join(","),"Anubis,Overpass,Inferno",`${id}: sequencia de mapas mudou antes de atualizar o fixture`);
+  assert.equal(result.mapas.map(map=>map.mapa).join(","),"Anubis,Ancient,Nuke",`${id}: sequencia de mapas mudou antes de atualizar o fixture`);
   return {
     id,kind:"campaign-series",seed,
     input:{...projectInput(a,b,aIndex,bIndex),bestOf:3,campaignForm:true},
@@ -123,20 +122,21 @@ function buildCurrent(){
     schemaVersion:SCHEMA_VERSION,
     rngContract:"mulberry32-v1",
     scenarios:[
-      // Âncoras revisadas em 27/07/2026 pelo ciclo da ABERTURA + DIFICULDADE: mudar quem fraga
-      // na abertura muda a recompensa por arma, e daí a compra de todo round; PESO_EF e AMP_TIME
-      // mudam a força do round. As seeds foram reescolhidas para preservar a FORMA do cenário,
-      // não para encobrir a diferença: a seed 2 reproduz o mesmo 10-13 competitivo com as quatro
-      // classes de compra e clutch vencido que a seed 1 dava antes.
-      fixedMapScenario({id:"economy-and-clutches",seed:2,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[10,13]}),
+      // Âncoras revisadas em 28/07/2026 pelo MOMENTUM INTRA-MAPA: quem já está por cima passa a
+      // levar mais das kills seguintes, o que muda quem fraga em cada duelo e portanto a
+      // recompensa por arma, a compra do round seguinte e todo o stream de RNG a partir daí.
+      // As seeds são reescolhidas para preservar a FORMA do cenário, nunca para encobrir a
+      // diferença: a seed 20 devolve o mesmo mapa competitivo de 23 rounds com as quatro classes
+      // de compra e clutch vencido.
+      fixedMapScenario({id:"economy-and-clutches",seed:20,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[13,10]}),
       // Este cenário cobre o OT REPETÍVEL (alvo 13→16→19→22), caminho que só executa com duas ou
       // mais prorrogações. Ele é frágil por natureza: qualquer balanceamento reembaralha o RNG e a
       // seed antiga deixa de ir para o overtime. A regra ao mexer aqui é procurar uma seed que
       // volte a produzir 2+ prorrogações — nunca aceitar um placar de tempo normal, que esvaziaria
-      // o teste. A seed 456 reproduz 22-19 em 41 rounds (três prorrogações), o mesmo placar que a
-      // 200 dava antes deste ciclo — na qual o mapa agora acaba 8-13 no tempo normal.
-      // Histórico da seed: 129 → 349 → 515 → 200 → 456.
-      fixedMapScenario({id:"repeated-overtime",seed:456,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[22,19]}),
+      // o teste. A seed 132 reproduz 22-20 em 42 rounds — três prorrogações, mesma forma do
+      // 22-19 em 41 rounds que a 456 dava antes do momentum.
+      // Histórico da seed: 129 → 349 → 515 → 200 → 456 → 132.
+      fixedMapScenario({id:"repeated-overtime",seed:132,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[22,20]}),
       campaignSeriesScenario()
     ]
   };

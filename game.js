@@ -672,6 +672,9 @@ const ATRIBUTOS=[
   {nome:"FalleN",fp:68,en:46,tr:17,op:78,cl:51,sn:95,ut:55,rating:1.19,colocacao:"Campeao",isIGL:true},
   {nome:"fnx",fp:79,en:48,tr:24,op:52,cl:33,sn:0,ut:82,rating:1.19,colocacao:"Campeao",isIGL:false},
   {nome:"fer",fp:72,en:25,tr:10,op:89,cl:32,sn:0,ut:17,rating:1.12,colocacao:"Campeao",isIGL:false},
+  // EnVyUs · DreamHack Cluj-Napoca 2015 (curadoria: era Rating 1.0 — sem KAST, ADR nem impacto
+  // publicados, os atributos foram estimados por julgamento do responsável em 24/07/2026,
+  // commit f731b3a. São JUÍZO, não fonte. Ver docs/dados-era-rating-1-0.md)
   {nome:"kennyS",fp:70,en:29,tr:44,op:96,cl:39,sn:98,ut:45,rating:1.23,colocacao:"Campeao",isIGL:false},
   {nome:"NBK-",fp:61,en:36,tr:58,op:18,cl:49,sn:5,ut:42,rating:1.14,colocacao:"Campeao",isIGL:false},
   {nome:"Happy",fp:63,en:21,tr:39,op:74,cl:59,sn:28,ut:50,rating:1.14,colocacao:"Campeao",isIGL:true},
@@ -849,6 +852,16 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓL
   // margem (+0.036 opKPR) se mantém igual em 2.295, 6.885 e 9.180 mapas. Acima disso a
   // assinatura vira caricatura (em 3, o Entry abre 0.191 e o Playmaker desaba).
   MAPA_SCALE:380,MAPA_CAP:.06,AGR_ABRE:2,
+  // MOMENTUM INTRA-MAPA: reforço de urna de Pólya sobre quem já está por cima no mapa.
+  // Sem ele, as kills se distribuem por sorteio multinomial de pesos FIXOS — o caso de MENOR
+  // dispersão possível, e a razão medida de o desvio intra-jogador ficar em 0,168 contra os
+  // 0,22–0,32 do CS real. O reforço é proporcional às kills LÍQUIDAS (k−d, piso zero): quem
+  // está bem no mapa tende a levar as próximas. MOM_HEAT=0 desliga a mecânica inteira.
+  // Calibrado por varredura pareada: 0 → desvio 0,166; 0,2 → 0,234; 0,3 → 0,258; 0,5 → 0,297.
+  // Em 0,3 o desvio fica no meio da faixa 0,22–0,32 e se repete em 2.295, 4.590 e 9.180 mapas
+  // (0,256 · 0,257 · 0,258). Acima disso o peso do contexto encosta no teto de 88% e a
+  // assinatura do Entry na abertura começa a diluir.
+  MOM_HEAT:0.3,
   // IDENTIDADE ÚNICA: agressão e afinidade de lado vêm do PLAYSTYLE (traits.pace / traits.ct / traits.t).
   // Antes vinham de um sub-arquétipo paralelo, derivado do próprio playstyle e por isso capaz de
   // contradizê-lo. As escalas abaixo foram MEDIDAS sobre os 85 jogadores para preservar o
@@ -1144,7 +1157,12 @@ function combateRound(a,b,ctx){
     // que soma pesos sem piso. AGR_ABRE deixou de ser coeficiente e virou o ganho da exposição.
     const ladoMatador=opening?sideOf(venc):null;   // constante no duelo: fora do peso por jogador
     const abertura=opening?i=>Math.pow(venc.exposure[i].opening[ladoMatador],C.AGR_ABRE):()=>1;
-    const ki=pick(vivV,i=>Math.pow(Math.max(venc.frags[i],8),expK)*tilt(i)*abertura(i));
+    // Urna de Pólya: o peso cresce com as kills líquidas JÁ FEITAS neste mapa. É o mecanismo
+    // canônico de superdispersão — transforma o multinomial de pesos fixos (dispersão mínima)
+    // numa Dirichlet-multinomial, que é a forma do CS real. Positivo por construção, sem novo
+    // ponto de RNG, e o piso zero impede que quem está afundando fique com peso negativo.
+    const embalo=i=>1+C.MOM_HEAT*Math.max(0,venc.stats[i].k-venc.stats[i].d);
+    const ki=pick(vivV,i=>Math.pow(Math.max(venc.frags[i],8),expK)*tilt(i)*abertura(i)*embalo(i));
     // quem MORRE: volume residual + exposição contextual; nunca bônus direto de DPR.
     const vi=pick(vivP,i=>Math.pow(Math.max(perd.frags[i],8),C.CONTACT_VOLUME_EXP[phase])*perd.exposure[i][phase][victimSide]);
     const rec={estadoMeu:vivV.length,estadoInim:vivP.length,
