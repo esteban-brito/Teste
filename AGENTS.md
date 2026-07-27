@@ -32,6 +32,9 @@ como balanceamento e acompanhados de comparação estatística.
 
 ## Fontes de verdade atuais
 
+- `docs/project-context.md`, seção **2-bis**: estado do ciclo de fidelidade da
+  simulação (26-27/07/2026) — contratos novos, pendências abertas com causa medida
+  e armadilhas. **Leia antes de tocar no simulador.**
 - `game.js`, antes de `// === UI START ===`: motores e dados executáveis.
 - `game.js`, depois do marcador: aplicação, estado e interface do jogo.
 - `sandbox.html`: interface e algoritmo do calibrador.
