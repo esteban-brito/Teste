@@ -30,17 +30,14 @@ const MAPS=9;
      que é o caso de MENOR dispersão possível. O CS real é superdisperso: quem está bem
      no mapa tende a levar também as próximas kills. Resolver exige momentum individual
      intra-mapa, mecânica nova.
-   · `abertura` — o duelo de abertura ainda é decidido por firepower bruto, e isso quebra
-     duas assinaturas: o Entry não lidera opening kills (0,112 contra 0,161 do Playmaker) e
-     o Spacetaker fica na média em vez de acima dela (0,078 contra média 0,078 — margem de
-     faca, estável em N=15/30/45). Medido: AGR_ABRE ≈ 1,8 inverte a ordem do Entry.
-     É balanceamento de função e merece commit próprio, não pode entrar de carona.
-
-     Correção de registro: na etapa do relógio o Spacetaker foi promovido a gate por ter
-     passado por um fio, sem que a margem fosse verificada. Foi engano — o critério voltou
-     para cá assim que a economia deslocou o número. */
-const ETAPA_ATIVA={rating:true,relogio:true,
-  distribuicao:process.env.PERFIS_STRICT==="1",abertura:process.env.PERFIS_STRICT==="1"};
+   Correção de registro: na etapa do relógio o Spacetaker foi promovido a gate por ter
+   passado por um fio, sem que a margem fosse verificada. Foi engano — o critério voltou
+   para relatório assim que a economia deslocou o número. Por isso a etapa `abertura` só foi
+   ligada com a margem medida em TRÊS amostras (2.295, 6.885 e 9.180 mapas):
+   Entry −Playmaker em opKPR ficou em +0,039 / +0,036 / +0,036, e o Spacetaker acima da
+   média dos estilos em +0,049 / +0,050 / +0,051. Nada de margem de faca desta vez. */
+const ETAPA_ATIVA={rating:true,relogio:true,abertura:true,
+  distribuicao:process.env.PERFIS_STRICT==="1"};
 const ROLES=["AWPer","Rifler","Entry","Lurker","Support","IGL"];
 // Bandas de OVR usadas na prova de sobreposição. Distantes o bastante pra que o resultado
 // signifique algo (5 pontos de OVR), largas o bastante pra ter amostra.

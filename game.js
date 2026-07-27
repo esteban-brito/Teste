@@ -847,7 +847,11 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓL
   CONTACT_EN:{opening:{CT:.30,TR:.35},preplant:{CT:.02,TR:.06},postplant:{CT:.08,TR:0}},
   CONTACT_POS:{AWPer:{opening:.10,preplant:.03,postplant:.03},Lurker:{opening:.06,preplant:.03,postplant:.03},
     Support:{opening:.02,preplant:.01,postplant:.01},Rifler:{opening:.02,preplant:.01,postplant:.01}},
-  MAPA_SCALE:380,MAPA_CAP:.06,AGR_ABRE:0.72,
+  // AGR_ABRE é o GANHO da exposição de abertura sobre quem fraga (ver duelo()). Calibrado por
+  // varredura pareada: a partir de ~1.0 o Entry passa o Playmaker em opening kills, e em 2 a
+  // margem (+0.036 opKPR) se mantém igual em 2.295, 6.885 e 9.180 mapas. Acima disso a
+  // assinatura vira caricatura (em 3, o Entry abre 0.191 e o Playmaker desaba).
+  MAPA_SCALE:380,MAPA_CAP:.06,AGR_ABRE:2,
   // IDENTIDADE ÚNICA: agressão e afinidade de lado vêm do PLAYSTYLE (traits.pace / traits.ct / traits.t).
   // Antes vinham de um sub-arquétipo paralelo, derivado do próprio playstyle e por isso capaz de
   // contradizê-lo. As escalas abaixo foram MEDIDAS sobre os 85 jogadores para preservar o
@@ -1134,7 +1138,13 @@ function combateRound(a,b,ctx){
     const expK=opening?C.EXP_OPEN:C.EXP_KILL;
     // quem FRAGA: firepower é o VOLUME; o TIPO de kill pende pra categoria HLTV (abertura→op, trade→tr)
     const tilt=i=>opening?Math.max(.25,1+C.W_OP_KILL*((venc.ops[i]-50)/50)):trade?Math.max(.25,1+C.W_TR_KILL*((venc.trs[i]-50)/50)):1;
-    const ki=pick(vivV,i=>Math.pow(Math.max(venc.frags[i],8),expK)*tilt(i)*(1+(opening?C.AGR_ABRE:0)*(venc.agr[i]||0)));
+    // Na ABERTURA, quem fraga é quem se expôs primeiro. É a MESMA exposição que escolhe a
+    // vítima na linha abaixo, agora aplicada também de quem mata: quem vai na frente tanto
+    // abre quanto morre abrindo. Como exposureProfile é um Math.exp, o fator é positivo por
+    // construção — o fator linear anterior virava NEGATIVO com ganho alto e corrompia pick(),
+    // que soma pesos sem piso. AGR_ABRE deixou de ser coeficiente e virou o ganho da exposição.
+    const abertura=opening?i=>Math.pow(venc.exposure[i].opening[sideOf(venc)],C.AGR_ABRE):()=>1;
+    const ki=pick(vivV,i=>Math.pow(Math.max(venc.frags[i],8),expK)*tilt(i)*abertura(i));
     // quem MORRE: volume residual + exposição contextual; nunca bônus direto de DPR.
     const vi=pick(vivP,i=>Math.pow(Math.max(perd.frags[i],8),C.CONTACT_VOLUME_EXP[phase])*perd.exposure[i][phase][victimSide]);
     const rec={estadoMeu:vivV.length,estadoInim:vivP.length,
