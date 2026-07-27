@@ -40,7 +40,9 @@ Estado registrado em 22 de julho de 2026:
 - repositório: `esteban-brito/Teste`;
 - branch de trabalho: `sandbox-test`;
 - `main`: intocável durante a profissionalização;
-- último estado funcional publicado antes deste registro:
+- **estado atual: `d3d43c5`, ciclo de fidelidade da simulação concluído e publicado
+  (ver seção 2-bis, que tem precedência sobre o restante desta seção);**
+- último estado funcional publicado antes do registro original:
   `c3e2355 docs(sandbox): record diagnostic polish`;
 - branch local e `origin/sandbox-test` sincronizadas e limpas após a publicação;
 - Pages do sandbox: <https://esteban-brito.github.io/Teste/sandbox.html>;
@@ -154,14 +156,109 @@ Atualização operacional de 24 de julho de 2026:
   nos gates, mas a proveniência histórica ainda precisa ser registrada antes de
   tratá-los como uma revisão cientificamente auditada.
 
+## 2-bis. CICLO DE FIDELIDADE DA SIMULAÇÃO — 26 e 27 de julho de 2026
+
+> Ciclo de cinco etapas pedido pelo responsável, concluído e publicado em
+> `origin/sandbox-test` (`a884742..d3d43c5`). **Leia esta seção antes de qualquer
+> trabalho novo no simulador.**
+
+### O que foi entregue, em ordem
+
+| Commit | Etapa | Documento |
+|---|---|---|
+| `ce8133f` | Bancada multi-fator (medição pura) | `docs/baseline-simulacao-2026-07-26.md` |
+| `7119305` | Identidade única: o playstyle | `docs/identidade-playstyle-2026-07-26.md` |
+| `0d62d10` | O rating emerge da carta | `docs/rating-da-carta-2026-07-26.md` |
+| `798908e` | O round ganha um relógio real | `docs/relogio-do-round-2026-07-26.md` |
+| `7cf6bed` | Economia e arsenal reais | `docs/economia-real-2026-07-26.md` |
+| `d3d43c5` | Correção da flag de estrela + dificuldade pelo draft real | `docs/fechamento-dificuldade-2026-07-27.md` |
+
+Validação final: **22/22 suítes verdes**, incluindo os três E2E. `realismo.js` fecha
+**12/12 macro e 6/6 forma** — a primeira vez que as duas camadas fecham juntas.
+
+### Mudanças de contrato que uma sessão futura precisa conhecer
+
+- **O rating histórico entra UMA vez, dentro do OVR (`nmOVR`).** Nenhum ponto do motor
+  o lê depois disso; `ratingCompetitivo` foi removida. Reintroduzir essa leitura é
+  regressão e `bancada/perfis.js` reprova.
+- **`bancada/rating.js` deixou de ser gate** e virou relatório: a correlação real×sim
+  era circular. Só a cobertura (85/85) continua obrigatória. O gate de qualidade
+  individual é `bancada/perfis.js`.
+- **O sub-arquétipo não existe mais.** `SUBARQ`, `SUB_BY_STYLE`, `ESTEIRA`, `ehCoringa`
+  e os campos `sub`/`esteira` foram removidos. Agressão e afinidade de lado saem de
+  `PLAYSTYLES[id].traits`, extraídos em `src/domain/evaluation/style-identity.mjs`.
+- **O round roda sobre relógio** (115 s + 40 s de bomba, tiques de 5 s). `CLOSE_MEN`,
+  `RND_TEMPO` e `PP_TEMPO` não existem mais.
+- **A economia é por jogador.** `mA`/`mB` viraram `dinA[5]`/`dinB[5]`; custos de CS2;
+  drop de arma; recompensa por kill pela arma; `FA_ECO` usa a arma do jogador.
+- **`bancada/perfis.js` e `realismo.js` têm ratchet por etapa** (`ETAPA_ATIVA`): cada
+  critério vira gate quando sua etapa é entregue. Não afrouxe um critério já ativo.
+- **`bancada/campaign-golden-update.js`** é novo e é a única forma correta de regravar
+  o fixture MD3 do sandbox.
+
+### Armadilha conhecida ao mexer em balanceamento
+
+O cenário `repeated-overtime` do `simulation-golden.js` é **frágil por natureza**:
+qualquer mudança reembaralha o RNG e a seed antiga deixa de ir para a prorrogação. A
+regra, escrita no próprio arquivo, é **procurar uma seed que volte a produzir 2+
+prorrogações** — nunca aceitar um placar de tempo normal, que esvaziaria o teste. O
+guarda `totalRounds>=30` protege isso. A seed já foi trocada três vezes neste ciclo
+(129 → 349 → 515 → 200).
+
+### O que ficou ABERTO, com causa já medida
+
+1. **Desvio intra-jogador do rating: 0,165** (alvo real 0,22–0,32). Três hipóteses
+   testadas e **refutadas**: volatilidade da forma (move só para 0,180), relógio do
+   round (não move) e piso da forma (grade de 18 combinações, tudo entre 0,165 e
+   0,173). Causa identificada: as kills se distribuem dentro do mapa por **sorteio
+   multinomial com pesos fixos**, que é o caso de menor dispersão possível; o CS real é
+   superdisperso. Resolver exige **momentum individual intra-mapa** — mecânica nova.
+   Registrado em `perfis.js` sob o dono `distribuicao`.
+2. **Duelo de abertura decidido por firepower bruto.** Quebra duas assinaturas: Entry
+   não lidera opening kills (0,112 contra 0,161 do Playmaker) e Spacetaker fica na
+   média. **Correção já medida: `AGR_ABRE ≈ 1,8` inverte a ordem do Entry.** Ficou de
+   fora de propósito — é balanceamento de função e merece commit próprio. É o trabalho
+   mais barato e de maior retorno pendente.
+3. **Utilidade como recurso do round** (flash/smoke/molotov comprados e gastos, ligando
+   `ut` a execução e retake). Única parte do escopo original que não entrou. O custo de
+   `full` (4300) já está dimensionado para absorvê-la quando existir.
+4. **Dificuldade: 1,5% de invicto contra alvo de 4–6%** — o jogo ficou MAIS difícil que
+   o pedido. Ver decisão aberta abaixo.
+
+### Erros meus registrados neste ciclo (para não se repetirem)
+
+- **Duas faixas da Etapa 1 eram invenção sem fonte** ("rounds com 0-1 kill em 8–20%" e
+  "mapas apertados em 45–70%"). Foram reclassificadas em vez de o motor ser distorcido
+  para acertá-las. Antes de criar uma faixa nova, exigir fonte ou rebaixá-la a relatório.
+- **Promovi o critério do Spacetaker a gate por ele ter passado por um fio**, sem
+  verificar a margem; caiu assim que a economia deslocou o número. Verificar margem
+  antes de promover qualquer critério.
+- **Bug da flag de estrela**: mover `ehEstrela` para o OVR sem notar que era chamada
+  antes de o OVR existir apagou silenciosamente toda a penalidade de ego da química.
+  Ao mover uma derivação, conferir a **ordem de cálculo**, não só a fórmula.
+
 ### Decisão imediata para a próxima sessão
 
-**Próxima decisão:** auditar e registrar primeiro a proveniência dos overrides do
-commit `f731b3a`; depois tratar, em trabalho separado, a apresentação de função
-primária versus função efetiva. O ciclo R5/R6 está concluído. O corpus
-oficial segue insuficiente (1/800 mapas e 1/6 eventos), portanto nenhuma nota
-IFCS será publicada. A distribuição entre muitas MD3 continua aberta em R3 e não
-deve ser misturada ao ciclo R5/R6.
+**Decisão do responsável, pendente:** a campanha invicta está em **1,5%**, mais dura que
+os 4–6% acordados. Não foi calibrada até o alvo porque as alavancas de variância
+levantam o campo inteiro junto e se cancelam (`QUIMICA_MAX` de 1,00 a 1,16 deixa o
+invicto entre 0,8% e 1,5% sem tendência), e comprimir a conversão de força em vitória
+quebraria a guarda `Favorito gap 16+` — trocaria fidelidade por dificuldade. As opções,
+todas de produto:
+
+1. dar **re-spin** no draft, para o usuário montar um elenco melhor;
+2. **restringir o campo do Major a times fortes**, como um Major real (hoje entram times
+   de força 73 e 74);
+3. **aceitar a faixa mais dura** — o ciclo foi pedido como "TEM que ser difícil".
+
+**Trabalho técnico recomendado ao retomar**, na ordem: (a) o balanceamento de abertura
+(`AGR_ABRE`), que é barato e fecha duas assinaturas; (b) momentum intra-mapa, que fecha
+a variância individual; (c) utilidade como recurso.
+
+Pendências anteriores que continuam válidas: a proveniência dos overrides do commit
+`f731b3a` não está versionada; o corpus IFCS segue insuficiente (1/800 mapas e 1/6
+eventos), portanto nenhuma nota IFCS será publicada; a distribuição entre muitas MD3
+continua aberta em R3.
 
 ### Preferências de comunicação do responsável
 
