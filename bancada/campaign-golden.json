@@ -1,33 +1,26 @@
 {
   "seed": 424242,
   "scope": "campaign",
-  "maps": 3,
+  "maps": 2,
   "campaign": {
     "format": "MD3",
     "winsA": 2,
-    "winsB": 1,
+    "winsB": 0,
     "winnerIndex": 0,
     "maps": [
       {
         "map": "Nuke",
-        "scoreA": 11,
+        "scoreA": 16,
         "scoreB": 13,
-        "winnerIndex": 1,
+        "winnerIndex": 0,
         "orientation": "A-B"
       },
       {
         "map": "Ancient",
         "scoreA": 13,
-        "scoreB": 8,
+        "scoreB": 10,
         "winnerIndex": 0,
         "orientation": "B-A"
-      },
-      {
-        "map": "Anubis",
-        "scoreA": 13,
-        "scoreB": 2,
-        "winnerIndex": 0,
-        "orientation": "A-B"
       }
     ],
     "formPersistence": "series"

@@ -20,7 +20,7 @@ const MAPS=9;
 /* Ratchet por etapa: cada critério pertence à etapa que o resolve, e vira gate quando ela
    é entregue. Uma regressão que desfaça uma etapa concluída REPROVA a suíte.
 
-   Duas pendências têm causa medida e dono identificado — ficam como relatório, com o
+   As pendências têm causa medida e dono identificado — ficam como relatório, com o
    diagnóstico registrado para não serem reinvestigadas do zero:
 
    · `distribuicao` — desvio intra-jogador (0,167; alvo 0,22–0,32). NÃO é a forma do dia
@@ -30,9 +30,15 @@ const MAPS=9;
      que é o caso de MENOR dispersão possível. O CS real é superdisperso: quem está bem
      no mapa tende a levar também as próximas kills. Resolver exige momentum individual
      intra-mapa, mecânica nova.
-   · `abertura` — Entry não lidera opening kills (0,114 contra 0,131 do Rifler). O duelo
-     de abertura ainda é decidido por firepower bruto. Medido: AGR_ABRE ≈ 1,8 inverte a
-     ordem. É balanceamento de função e merece commit próprio, não pode entrar de carona. */
+   · `abertura` — o duelo de abertura ainda é decidido por firepower bruto, e isso quebra
+     duas assinaturas: o Entry não lidera opening kills (0,112 contra 0,161 do Playmaker) e
+     o Spacetaker fica na média em vez de acima dela (0,078 contra média 0,078 — margem de
+     faca, estável em N=15/30/45). Medido: AGR_ABRE ≈ 1,8 inverte a ordem do Entry.
+     É balanceamento de função e merece commit próprio, não pode entrar de carona.
+
+     Correção de registro: na etapa do relógio o Spacetaker foi promovido a gate por ter
+     passado por um fio, sem que a margem fosse verificada. Foi engano — o critério voltou
+     para cá assim que a economia deslocou o número. */
 const ETAPA_ATIVA={rating:true,relogio:true,
   distribuicao:process.env.PERFIS_STRICT==="1",abertura:process.env.PERFIS_STRICT==="1"};
 const ROLES=["AWPer","Rifler","Entry","Lurker","Support","IGL"];
@@ -256,7 +262,7 @@ const checks=[
 
   // 2. assinatura por playstyle — os estilos precisam ser distinguíveis
   ["rating","Opener abre acima da média",amostraDe("aggressive"),"opKPR >",acima("aggressive","opKpr",mediaOpKpr)],
-  ["rating","Spacetaker abre acima da média",amostraDe("spacetaker"),"opKPR >",acima("spacetaker","opKpr",mediaOpKpr)],
+  ["abertura","Spacetaker abre acima da média",amostraDe("spacetaker"),"opKPR >",acima("spacetaker","opKpr",mediaOpKpr)],
   ["rating","Trader troca acima da média",amostraDe("trader"),"tradePR >",acima("trader","tradePr",mediaTradePr)],
   ["rating","Facilitador assiste acima da média",amostraDe("support"),"APR >",acima("support","apr",mediaApr)],
   ["rating","Baiter morre abaixo da média",amostraDe("baiter"),"DPR <",abaixo("baiter","dpr",mediaDpr)],

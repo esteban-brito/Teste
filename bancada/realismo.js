@@ -33,7 +33,7 @@ function initStats(){
     // ——— FORMA (não é média): distribuições que uma faixa de média não protege ———
     killsPorRound:{},          // quantas kills teve cada round → 0/1-kill rounds existem?
     placarPerdedor:{},         // placar do perdedor → o mapa é competitivo ou atropelo?
-    compraPorLado:{CT:{pistol:0,eco:0,force:0,full:0},TR:{pistol:0,eco:0,force:0,full:0}},
+    compraPorLado:{CT:{pistol:0,eco:0,force:0,full:0,awp:0},TR:{pistol:0,eco:0,force:0,full:0,awp:0}},
     metodo:{},                 // elim/tempo/defuse/detona → como o round termina
     equilibradoN:0,equilibradoApertado:0, // competitividade entre times de força parecida
     aberturaPorLado:{CT:0,TR:0},
@@ -80,8 +80,10 @@ function recordRound(stats,game,round,index){
 
   stats.buy[round.buyA]++;
   stats.buy[round.buyB]++;
-  stats.compraPorLado[round.ladoA][round.buyA]++;
-  stats.compraPorLado[round.ladoB][round.buyB]++;
+  // Mix de compra medido POR JOGADOR: com carteira individual, a moda do time esconde os
+  // times que compram em dois níveis (3 force + 2 eco viram "force" e o eco desaparece).
+  (round.comprasA||[round.buyA]).forEach(classe=>stats.compraPorLado[round.ladoA][classe]++);
+  (round.comprasB||[round.buyB]).forEach(classe=>stats.compraPorLado[round.ladoB][classe]++);
 
   const kills=killsDoRound(game,index);
   if(kills!==null)stats.killsPorRound[kills]=(stats.killsPorRound[kills]||0)+1;
@@ -224,7 +226,9 @@ const checksForma=[
   ["relogio","Rounds por eliminação total %",porMetodo("elim").toFixed(1),"20–45",inRange(porMetodo("elim"),20,45)],
   ["relogio","Rounds por tempo/default %",porMetodo("tempo").toFixed(1),"6–18",inRange(porMetodo("tempo"),6,18)],
   ["relogio","Abertura vencida pelo CT %",aberturaCT.toFixed(1),"46–56",inRange(aberturaCT,46,56)],
-  ["economia","Full buy no CT %",compraLado("CT","full").toFixed(1),"55–75",inRange(compraLado("CT","full"),55,75)],
+  // "full" inclui a AWP: ambos são compra completa, e separá-los aqui esconderia o AWPer.
+  ["economia","Full buy no CT %",(compraLado("CT","full")+compraLado("CT","awp")).toFixed(1),"55–75",
+    inRange(compraLado("CT","full")+compraLado("CT","awp"),55,75)],
   ["economia","Eco no TR %",compraLado("TR","eco").toFixed(1),"10–25",inRange(compraLado("TR","eco"),10,25)]
 ];
 
@@ -239,6 +243,8 @@ console.log(`\n  FORMA (telemetria em 1 de cada ${TELEMETRY_EVERY} mapas · ${st
 console.log(`    kills por round:   ${distribuicao(stats.killsPorRound,roundsMedidos)}`);
 console.log(`    placar do perdedor: ${distribuicao(stats.placarPerdedor,mapasMedidos)}`);
 console.log(`    método do round:    ${Object.entries(stats.metodo).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k}:${pct(v,metodoTotal).toFixed(1)}%`).join("  ")}`);
+["CT","TR"].forEach(lado=>{const tot=somaMapa(stats.compraPorLado[lado]);
+  console.log(`    compra por jogador (${lado}): ${Object.entries(stats.compraPorLado[lado]).map(([k,v])=>`${k}:${pct(v,tot).toFixed(1)}%`).join("  ")}`);});
 console.log(`    mapas apertados entre times equilibrados (|Δforça|≤3): ${mapasApertados.toFixed(1)}%  — relatório, sem faixa publicada`);
 console.log("");
 let formaFora=0,formaPendente=0;
