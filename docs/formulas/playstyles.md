@@ -31,9 +31,11 @@ Facilitador pode receber `facilitatorGlueBonus`, baseado no piso e equilíbrio
 entre fogo, entrada e utilitário, especialização e trade. AWPer possui ajuste
 `AWP_LEAN` entre Closer e Infiltrador.
 
-`STYLE_ROLE_FIT` ainda é exposto pelo legado, mas não decide a classificação.
-A plausibilidade role/playstyle é calculada separadamente por
-`roleStyleReality` e `ROLE_STYLE_BASE`.
+`STYLE_ROLE_FIT` foi **removido em 28/07/2026**. Era uma tabela de afinidade
+função→playstyle que empurrava a classificação, e isso era circular: a função já
+sai dos atributos, então usá-la para decidir o estilo fazia o estilo ecoar a
+função em vez de ser evidência independente. A plausibilidade role/playstyle é
+calculada separadamente por `roleStyleReality` e `ROLE_STYLE_BASE`.
 
 ## Gates
 

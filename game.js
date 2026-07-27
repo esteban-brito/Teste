@@ -288,14 +288,11 @@ const STYLE_CONTRA={
   cerebral:{ent:.22,fogo:.08},
   anchor:{ent:.252,ab:.12,fogo:.06}
 };
-const STYLE_ROLE_FIT={
-  AWPer:{spacetaker:.06,clutcher:.07,playmaker:.055,infiltrator:.04,baiter:.02,anchor:.02,aggressive:.02},
-  Rifler:{spacetaker:.055,aggressive:.055,trader:.045,infiltrator:.03,playmaker:.03},
-  Entry:{aggressive:.215,spacetaker:.18,trader:.07,playmaker:.045,infiltrator:-.08,clutcher:-.10,cerebral:-.16,baiter:-.28,anchor:-.30,support:-.12},
-  Lurker:{infiltrator:.11,playmaker:.08,clutcher:.12,cerebral:.09,baiter:.06,anchor:.06,spacetaker:-.08,aggressive:-.16},
-  Support:{support:.20,trader:.13,cerebral:.13,anchor:.12,clutcher:.04,aggressive:-.10,spacetaker:-.12,playmaker:-.04},
-  IGL:{cerebral:.12,support:.10,trader:.06,playmaker:.04}
-};
+// STYLE_ROLE_FIT foi REMOVIDO em 28/07/2026. Era uma tabela de afinidade função→playstyle que
+// empurrava a classificação: Entry ganhava +0.215 para Opener, −0.30 para Âncora. Isso era
+// circular — a função já sai dos atributos, então usá-la para decidir o playstyle fazia o
+// playstyle ecoar a função em vez de ser evidência independente. O modelo novo tira o estilo
+// dos atributos, e a plausibilidade do par função/estilo é cobrada por roleStyleReality.
 const NM_COR={pisoMin:45,spreadMax:35};
 const STYLE_KEYS={aggressive:"Opener",spacetaker:"Spacetaker",trader:"Trader",playmaker:"Playmaker",infiltrator:"Infiltrador",baiter:"Baiter",clutcher:"Closer",support:"Facilitador",cerebral:"Cerebral",anchor:"Ancora"};
 const PLAYSTYLES={

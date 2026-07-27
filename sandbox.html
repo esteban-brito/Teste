@@ -782,9 +782,9 @@ async function carregarMotores(){
   if(cut<0)cut=linhas.findIndex(l=>l.includes("document.getElementById"));
   if(cut<0)throw new Error("não encontrei o início da camada de UI em game.js");
   const slice=linhas.slice(0,cut).join("\n");
-  E=new Function(slice+"\nreturn {avaliarJogador,aplicarAvaliacaoContextual,distribuirRoles,forcaTime,ovrUnificado,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,STYLE_ROLE_FIT,STYLE_CONTRA,MAPAS_POOL,MAPA_LADO,srand,simularMapa,forcaDoDia,TEAMS,nmOVR,styleScoreTable,roleAfinidade,secondaryScore,NM_DEF,NM_COR,STYLE_LABEL,PLAYSTYLE_IDS,PLAYSTYLES,NM_AXES,STYLE_KEYS};")();
+  E=new Function(slice+"\nreturn {avaliarJogador,aplicarAvaliacaoContextual,distribuirRoles,forcaTime,ovrUnificado,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,STYLE_CONTRA,MAPAS_POOL,MAPA_LADO,srand,simularMapa,forcaDoDia,TEAMS,nmOVR,styleScoreTable,roleAfinidade,secondaryScore,NM_DEF,NM_COR,STYLE_LABEL,PLAYSTYLE_IDS,PLAYSTYLES,NM_AXES,STYLE_KEYS};")();
   ["avaliarJogador","distribuirRoles","forcaTime","simularMapa","forcaDoDia","srand","TEAMS"].forEach(k=>{if(!E[k])throw new Error(`motor ausente: ${k}`);});
-  DEF={ROLE:clone(E.ROLE_PERFIL),NM:clone(E.NM_DEF),NM_COR:clone(E.NM_COR),CONTRA:clone(E.ROLE_CONTRA),IGL:clone(E.IGL_ROLE_AFIN),RULES:clone(E.ROLE_RULES),STYLE_FIT:clone(E.STYLE_ROLE_FIT),STYLE_CONTRA:clone(E.STYLE_CONTRA),CFG:clone(E.CFG_AVALIACAO)};
+  DEF={ROLE:clone(E.ROLE_PERFIL),NM:clone(E.NM_DEF),NM_COR:clone(E.NM_COR),CONTRA:clone(E.ROLE_CONTRA),IGL:clone(E.IGL_ROLE_AFIN),RULES:clone(E.ROLE_RULES),STYLE_CONTRA:clone(E.STYLE_CONTRA),CFG:clone(E.CFG_AVALIACAO)};
   // aliases locais para as funções/dados importados do motor (evita E.xxx em toda a UI)
   ({nmOVR,STYLE_LABEL,PLAYSTYLE_IDS}=E);
   POOLRAW=[]; poolBySlot=new Map();
@@ -1283,7 +1283,7 @@ function setRoleWeight(role,attr,value){
   afin[attr]=Math.max(0,+value.toFixed(3));
 }
 function configSnapshot(){
-  return {role:clone(E.ROLE_PERFIL),nm:clone(E.NM_DEF),cor:clone(E.NM_COR),contra:clone(E.ROLE_CONTRA),igl:clone(E.IGL_ROLE_AFIN),rules:clone(E.ROLE_RULES),styleFit:clone(E.STYLE_ROLE_FIT),styleContra:clone(E.STYLE_CONTRA),cfg:clone(E.CFG_AVALIACAO)};
+  return {role:clone(E.ROLE_PERFIL),nm:clone(E.NM_DEF),cor:clone(E.NM_COR),contra:clone(E.ROLE_CONTRA),igl:clone(E.IGL_ROLE_AFIN),rules:clone(E.ROLE_RULES),styleContra:clone(E.STYLE_CONTRA),cfg:clone(E.CFG_AVALIACAO)};
 }
 function restoreConfig(snapshot){
   copyInto(E.ROLE_PERFIL,snapshot.role);
@@ -1292,7 +1292,6 @@ function restoreConfig(snapshot){
   if(snapshot.contra)copyInto(E.ROLE_CONTRA,snapshot.contra);
   if(snapshot.igl)copyInto(E.IGL_ROLE_AFIN,snapshot.igl);
   if(snapshot.rules)copyInto(E.ROLE_RULES,snapshot.rules);
-  if(snapshot.styleFit)copyInto(E.STYLE_ROLE_FIT,snapshot.styleFit);
   if(snapshot.styleContra)copyInto(E.STYLE_CONTRA,snapshot.styleContra);
   if(snapshot.cfg)copyInto(E.CFG_AVALIACAO,snapshot.cfg);
 }
@@ -1304,7 +1303,7 @@ function ensureCalibSession(){
 }
 function flatConfigDiff(){
   const before=configSnapshot();
-  const base={role:DEF.ROLE,nm:DEF.NM,cor:DEF.NM_COR,contra:DEF.CONTRA,igl:DEF.IGL,rules:DEF.RULES,styleFit:DEF.STYLE_FIT,styleContra:DEF.STYLE_CONTRA,cfg:DEF.CFG};
+  const base={role:DEF.ROLE,nm:DEF.NM,cor:DEF.NM_COR,contra:DEF.CONTRA,igl:DEF.IGL,rules:DEF.RULES,styleContra:DEF.STYLE_CONTRA,cfg:DEF.CFG};
   const out=[];
   const walk=(label,a,b)=>{
     const keys=new Set([...Object.keys(a||{}),...Object.keys(b||{})]);
@@ -1320,7 +1319,6 @@ function flatConfigDiff(){
   walk("ROLE_CONTRA",before.contra,base.contra);
   walk("IGL_ROLE_AFIN",before.igl,base.igl);
   walk("ROLE_RULES",before.rules,base.rules);
-  walk("STYLE_ROLE_FIT",before.styleFit,base.styleFit);
   walk("STYLE_CONTRA",before.styleContra,base.styleContra);
   walk("CFG_AVALIACAO",before.cfg,base.cfg); // [21] params de OVR (base/span/K) entram no relatório
   return out.sort((a,b)=>a.path.localeCompare(b.path));
@@ -1380,7 +1378,7 @@ function changeRangePath(change){
 }
 function configDistanceFromDef(snapshot=null){
   const current=snapshot||configSnapshot();
-  const base={role:DEF.ROLE,nm:DEF.NM,cor:DEF.NM_COR,contra:DEF.CONTRA,igl:DEF.IGL,rules:DEF.RULES,styleFit:DEF.STYLE_FIT,styleContra:DEF.STYLE_CONTRA,cfg:DEF.CFG};
+  const base={role:DEF.ROLE,nm:DEF.NM,cor:DEF.NM_COR,contra:DEF.CONTRA,igl:DEF.IGL,rules:DEF.RULES,styleContra:DEF.STYLE_CONTRA,cfg:DEF.CFG};
   let total=0;
   const walk=(label,a,b)=>{
     const keys=new Set([...Object.keys(a||{}),...Object.keys(b||{})]);
@@ -1458,7 +1456,6 @@ function resetWorkbench(){
   if(DEF.CONTRA)copyInto(E.ROLE_CONTRA,DEF.CONTRA);
   if(DEF.IGL)copyInto(E.IGL_ROLE_AFIN,DEF.IGL);
   if(DEF.RULES)copyInto(E.ROLE_RULES,DEF.RULES);
-  if(DEF.STYLE_FIT)copyInto(E.STYLE_ROLE_FIT,DEF.STYLE_FIT);
   if(DEF.STYLE_CONTRA)copyInto(E.STYLE_CONTRA,DEF.STYLE_CONTRA);
   if(DEF.CFG)copyInto(E.CFG_AVALIACAO,DEF.CFG); // [22] os params de OVR (base/span/K) também voltam ao padrão
   playerOverrides.clear();editorDrafts.clear();
@@ -3215,7 +3212,7 @@ function buildCalibrator(){
       catch(err){console.error(err);const rb=document.getElementById("calibResult");if(rb)rb.innerHTML=renderCalibResult(calibLast,goal);}
     }
   };
-  document.getElementById("calibReset").onclick=()=>{copyInto(E.ROLE_PERFIL,DEF.ROLE);copyInto(E.NM_DEF,DEF.NM);copyInto(E.NM_COR,DEF.NM_COR);if(DEF.CONTRA)copyInto(E.ROLE_CONTRA,DEF.CONTRA);if(DEF.IGL)copyInto(E.IGL_ROLE_AFIN,DEF.IGL);if(DEF.RULES)copyInto(E.ROLE_RULES,DEF.RULES);if(DEF.STYLE_FIT)copyInto(E.STYLE_ROLE_FIT,DEF.STYLE_FIT);if(DEF.STYLE_CONTRA)copyInto(E.STYLE_CONTRA,DEF.STYLE_CONTRA);if(DEF.CFG)copyInto(E.CFG_AVALIACAO,DEF.CFG);calibLast=null;invalidateAllTeamEval();refresh("all");};
+  document.getElementById("calibReset").onclick=()=>{copyInto(E.ROLE_PERFIL,DEF.ROLE);copyInto(E.NM_DEF,DEF.NM);copyInto(E.NM_COR,DEF.NM_COR);if(DEF.CONTRA)copyInto(E.ROLE_CONTRA,DEF.CONTRA);if(DEF.IGL)copyInto(E.IGL_ROLE_AFIN,DEF.IGL);if(DEF.RULES)copyInto(E.ROLE_RULES,DEF.RULES);if(DEF.STYLE_CONTRA)copyInto(E.STYLE_CONTRA,DEF.STYLE_CONTRA);if(DEF.CFG)copyInto(E.CFG_AVALIACAO,DEF.CFG);calibLast=null;invalidateAllTeamEval();refresh("all");};
   document.querySelectorAll("[data-calib-alt]").forEach(btn=>btn.onclick=()=>{
     const idx=+btn.dataset.calibAlt,alt=calibLast?.alternatives?.[idx];
     if(!alt)return;
