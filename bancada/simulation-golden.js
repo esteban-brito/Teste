@@ -99,10 +99,10 @@ function campaignSeriesScenario(){
   X.sortearFormaCampanha(teams);
   const a=combatTeam(X,teams,aIndex,true),b=combatTeam(X,teams,bIndex);
   const result=X.simularSerie(a,b,()=>X.forcaDoDia(a.ef,a.quim),()=>X.forcaDoDia(b.ef,b.quim),3,false);
-  // Série de três mapas: cobre o mapa decisivo, que uma varrida 2-0 nunca alcança. O terceiro
-  // mapa mudou de Dust2 para Ancient com o novo sorteio de RNG; a cobertura é a mesma.
+  // Série de três mapas: cobre o mapa decisivo, que uma varrida 2-0 nunca alcança. A sequência
+  // de mapas acompanha o novo sorteio de RNG; a cobertura é a mesma.
   assert.equal(result.placarSerie.join(","),"1,2",`${id}: ancora da serie mudou antes de atualizar o fixture`);
-  assert.equal(result.mapas.map(map=>map.mapa).join(","),"Nuke,Train,Ancient",`${id}: sequencia de mapas mudou antes de atualizar o fixture`);
+  assert.equal(result.mapas.map(map=>map.mapa).join(","),"Nuke,Mirage,Ancient",`${id}: sequencia de mapas mudou antes de atualizar o fixture`);
   return {
     id,kind:"campaign-series",seed,
     input:{...projectInput(a,b,aIndex,bIndex),bestOf:3,campaignForm:true},
@@ -120,15 +120,15 @@ function buildCurrent(){
     schemaVersion:SCHEMA_VERSION,
     rngContract:"mulberry32-v1",
     scenarios:[
-      // Âncoras revisadas em 26/07/2026, agora pelo ciclo "rating emerge da carta". A timeline
-      // muda porque produção individual e forma deixaram de ler o rating histórico.
-      fixedMapScenario({id:"economy-and-clutches",seed:1,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[5,13]}),
+      // Âncoras revisadas em 26/07/2026 pelo ciclo do RELÓGIO DO ROUND: o duelo virou um evento
+      // sobre o tempo em vez de ser o próprio avanço do round, então a timeline muda inteira.
+      fixedMapScenario({id:"economy-and-clutches",seed:1,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[11,13]}),
       // Este cenário cobre o OT REPETÍVEL (alvo 13→16→19→22), caminho que só executa com duas ou
       // mais prorrogações. Ele é frágil por natureza: qualquer balanceamento reembaralha o RNG e a
       // seed antiga deixa de ir para o overtime. A regra ao mexer aqui é procurar uma seed que
       // volte a produzir 2+ prorrogações — nunca aceitar um placar de tempo normal, que esvaziaria
-      // o teste. A seed 111 reproduz 22-18 em 40 rounds (três prorrogações).
-      fixedMapScenario({id:"repeated-overtime",seed:111,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[22,18]}),
+      // o teste. A seed 515 reproduz 22-18 em 40 rounds (três prorrogações).
+      fixedMapScenario({id:"repeated-overtime",seed:515,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[22,18]}),
       campaignSeriesScenario()
     ]
   };

@@ -8,23 +8,33 @@
      4. variância intra-jogador  — o mesmo jogador oscila de mapa pra mapa;
      5. peso do contexto         — contexto tem que explicar mais variância que o OVR.
 
-   Por que isso substitui a correlação com o rating histórico: enquanto o motor recebe
+   Por que isso substituiu a correlação com o rating histórico: enquanto o motor recebia
    o rating real como entrada (CFG_FA.PRIOR, FRAG_RATING, FORMA_RATING), a correlação
-   real×sim mede o motor copiando o alvo. Estes cinco testes medem se a CARTA — e não
-   o nome do jogador — produz o desempenho.
-
-   Modo padrão: RELATÓRIO (imprime o retrato, não falha). Os alvos só passam a ser
-   obrigatórios depois da Etapa 3, com PERFIS_STRICT=1. */
+   real×sim media o motor copiando o alvo. Removidas as injeções, esta suíte passou a ser
+   o GATE de qualidade individual, e bancada/rating.js virou relatório. */
 const {X,T}=require("./motor");
 const {mean,inRange,printCheck,scheduledMatch}=require("./common");
 
 const N=+(process.env.N||60);
 const MAPS=9;
-// Ratchet por etapa: cada critério pertence à etapa que o resolve. Os da etapa "rating"
-// já valem (o rating passou a emergir da carta), então uma regressão que reintroduza
-// circularidade REPROVA a suíte. Os da etapa "relogio" dependem do round ter tempo
-// (rounds quietos, produção lumpy) e seguem como relatório até lá.
-const ETAPA_ATIVA={rating:true,relogio:process.env.PERFIS_STRICT==="1"};
+/* Ratchet por etapa: cada critério pertence à etapa que o resolve, e vira gate quando ela
+   é entregue. Uma regressão que desfaça uma etapa concluída REPROVA a suíte.
+
+   Duas pendências têm causa medida e dono identificado — ficam como relatório, com o
+   diagnóstico registrado para não serem reinvestigadas do zero:
+
+   · `distribuicao` — desvio intra-jogador (0,167; alvo 0,22–0,32). NÃO é a forma do dia
+     nem o relógio: as duas hipóteses foram testadas e reprovadas (dobrar a volatilidade
+     move para 0,180; varrer o piso da forma mantém tudo entre 0,165 e 0,173). A causa é
+     que as kills se distribuem dentro do mapa por sorteio multinomial com pesos FIXOS,
+     que é o caso de MENOR dispersão possível. O CS real é superdisperso: quem está bem
+     no mapa tende a levar também as próximas kills. Resolver exige momentum individual
+     intra-mapa, mecânica nova.
+   · `abertura` — Entry não lidera opening kills (0,114 contra 0,131 do Rifler). O duelo
+     de abertura ainda é decidido por firepower bruto. Medido: AGR_ABRE ≈ 1,8 inverte a
+     ordem. É balanceamento de função e merece commit próprio, não pode entrar de carona. */
+const ETAPA_ATIVA={rating:true,relogio:true,
+  distribuicao:process.env.PERFIS_STRICT==="1",abertura:process.env.PERFIS_STRICT==="1"};
 const ROLES=["AWPer","Rifler","Entry","Lurker","Support","IGL"];
 // Bandas de OVR usadas na prova de sobreposição. Distantes o bastante pra que o resultado
 // signifique algo (5 pontos de OVR), largas o bastante pra ter amostra.
@@ -233,7 +243,7 @@ const amostraDe=id=>{const g=estilo(id);return g?`n=${g.jogadores}`:"n=0";};
 // [etapa, nome, valor, faixa, ok]
 const checks=[
   // 1. assinatura por função
-  ["relogio","Entry lidera opening kills",funcao("Entry").opKpr.toFixed(3),"máx",
+  ["abertura","Entry lidera opening kills",funcao("Entry").opKpr.toFixed(3),"máx",
     ROLES.every(r=>funcao("Entry").opKpr>=funcao(r).opKpr)],
   ["rating","Entry lidera opening deaths",funcao("Entry").opDpr.toFixed(3),"máx",
     ROLES.every(r=>funcao("Entry").opDpr>=funcao(r).opDpr)],
@@ -246,7 +256,7 @@ const checks=[
 
   // 2. assinatura por playstyle — os estilos precisam ser distinguíveis
   ["rating","Opener abre acima da média",amostraDe("aggressive"),"opKPR >",acima("aggressive","opKpr",mediaOpKpr)],
-  ["relogio","Spacetaker abre acima da média",amostraDe("spacetaker"),"opKPR >",acima("spacetaker","opKpr",mediaOpKpr)],
+  ["rating","Spacetaker abre acima da média",amostraDe("spacetaker"),"opKPR >",acima("spacetaker","opKpr",mediaOpKpr)],
   ["rating","Trader troca acima da média",amostraDe("trader"),"tradePR >",acima("trader","tradePr",mediaTradePr)],
   ["rating","Facilitador assiste acima da média",amostraDe("support"),"APR >",acima("support","apr",mediaApr)],
   ["rating","Baiter morre abaixo da média",amostraDe("baiter"),"DPR <",abaixo("baiter","dpr",mediaDpr)],
@@ -255,10 +265,7 @@ const checks=[
 
   // 3-5. coerência de carta
   ["rating","Sobreposição entre bandas de OVR %",sobreposicao.toFixed(1),"25–40",inRange(sobreposicao,25,40)],
-  // O desvio intra-jogador depende de a produção por mapa ser irregular. Hoje 58% dos rounds
-  // são quase-varreduras, então todo mundo produz todo round: dobrar a volatilidade da forma
-  // move o desvio de 0,168 só para 0,180. Quem resolve isso é o relógio do round.
-  ["relogio","Desvio intra-jogador",desvioIntra.toFixed(3),"0.22–0.32",inRange(desvioIntra,.22,.32)],
+  ["distribuicao","Desvio intra-jogador",desvioIntra.toFixed(3),"0.22–0.32",inRange(desvioIntra,.22,.32)],
   ["rating","Peso do contexto %",pesoContexto.toFixed(1),"70–88",inRange(pesoContexto,70,88)],
   ["rating","r² do OVR (não pode explicar tudo)",r2Ovr.toFixed(3),"0.20–0.75",inRange(r2Ovr,.20,.75)]
 ];
@@ -274,7 +281,7 @@ checks.forEach(([etapa,nome,valor,faixa,ok])=>{
   const vale=ETAPA_ATIVA[etapa];
   if(!ok&&!vale){ // critério cujo dono ainda não foi implementado: informa, não reprova
     pendentes++;
-    console.log(`  ▲ ${nome.padEnd(34)} ${String(valor).padStart(6)}   [${faixa} · aguarda o relógio do round]`);
+    console.log(`  ▲ ${nome.padEnd(34)} ${String(valor).padStart(6)}   [${faixa} · ${etapa==="distribuicao"?"depende de momentum intra-mapa":"balanceamento de abertura"}]`);
     return;
   }
   if(!ok)falhas++;
@@ -288,7 +295,7 @@ if(falhas){
   process.exitCode=1;
 }else{
   console.log(pendentes
-    ?`✓ coerência de carta no alvo · ▲ ${pendentes} critério(s) aguardam o relógio do round`
+    ?`✓ coerência de carta no alvo · ▲ ${pendentes} critério(s) com causa diagnosticada e dono próprio`
     :"✓ perfis coerentes com a carta");
   process.exitCode=0;
 }

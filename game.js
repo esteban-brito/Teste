@@ -803,13 +803,24 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓL
   // ROUND VIVO: o round é uma SEQUÊNCIA DE DUELOS; o vencedor EMERGE (não é um dado só).
   // D_DUELO = decisão de UM duelo (bem mais raso que o round; o round é a soma de ~5-9 duelos).
   // pistol é quase cara-ou-coroa (D alto) → o azarão ganha pistol/anti-eco e o 13-0 fica raro.
-  D_DUELO:112,D_DUELO_PIST:360,OPEN_SCALE:520,CLUTCH_DUEL:.22,CLUTCH_X:.115,CLUTCH_EXP:1.55,LADO_MAPA_P:.013,
-  SAVE_BASE:.30,SAVE_MEN:.10,SAVE_VALUE:.20,CLOSE_MEN:.30, // salvar (eco em desvantagem) e fechar bomb/tempo (vantagem de homem) — CLOSE_MEN mais alto = menos kills de limpeza (KPR/round ao real), mesmo vencedor, clutch 1vX intacto
-  // ——— BOMBA / RELÓGIO (assimetria real T×CT): o round tem fases, não é só eliminar ———
-  // pré-plant: o T tenta plantar (cresce com tempo e vantagem de homem); se o relógio estoura sem plant, o CT vence (default/hold).
-  RND_TEMPO:6,PLANT_BASE:.05,PLANT_TEMPO:.05,PLANT_MEN:.11,
-  // pós-plant: a bomba tem 40s. T segura ângulos (edge POST_EDGE); CT precisa retomar+defusar antes da detonação.
-  PP_TEMPO:3,POST_EDGE:.07,DEFUSE_BASE:.24,DEFUSE_MEN:.22,PLANT_BONUS:800,KILL_REWARD:90,
+  D_DUELO:112,D_DUELO_PIST:360,OPEN_SCALE:520,CLUTCH_DUEL:.22,CLUTCH_X:.090,CLUTCH_EXP:1.55,LADO_MAPA_P:.013,
+  SAVE_BASE:.105,SAVE_MEN:.035,SAVE_VALUE:.07, // salvar (eco em desvantagem): por TICK de relógio, não por duelo
+  // ——— RELÓGIO REAL (CS2): o round tem 115s e a bomba 40s. O duelo é um EVENTO SOBRE O RELÓGIO,
+  // não o próprio relógio. Antes o laço só avançava quando alguém morria, então era impossível
+  // existir round quieto, default sem contato ou perda de tempo sem baixa — e foi preciso inventar
+  // um "fecha por vantagem de homem" só para segurar o KPR. Agora o tempo corre sozinho.
+  RND_SEGUNDOS:115,BOMBA_SEGUNDOS:40,TICK:5,
+  // chance de CONTATO por tick. O ritmo é sorteado uma vez por round a partir da agressão coletiva
+  // do lado T (quem dita o tempo no CS): composição agressiva executa rápido, composição posicional
+  // joga default. É daí que nascem os rounds de 0-1 kill.
+  CONTATO_BASE:.42,CONTATO_AGR:.10,CONTATO_RITMO:.60,CONTATO_MIN:.08,CONTATO_MAX:2.2,
+  CONTATO_POS:1.45,      // pós-plant o contato é forçado: o CT precisa retomar antes da detonação
+  CONTATO_DESV:.16,      // lado em desvantagem evita contato e joga o relógio (substitui o antigo CLOSE_MEN)
+  // pré-plant: o T tenta plantar; a chance cresce com o tempo decorrido e com a vantagem de homem.
+  // Se o relógio estoura sem plant, o CT vence (default/hold).
+  PLANT_BASE:.012,PLANT_TEMPO:.100,PLANT_MEN:.030,
+  // pós-plant: T segura ângulos (POST_EDGE); CT precisa limpar e defusar antes da detonação.
+  POST_EDGE:.07,DEFUSE_BASE:.065,DEFUSE_MEN:.10,PLANT_BONUS:800,KILL_REWARD:90,
   EXP_KILL:1.15,EXP_OPEN:1.10,TRADE_CHANCE:.56,TRADE_CONTEXT:.15, // EXP_KILL comprime a distribuição de kills; TRADE_CHANCE menor = menos refrag = KPR/round ao real; EXP_OPEN: abertura é menos sobre fp puro
   // PARTICIPAÇÃO por FUNÇÃO (multiplica fragPeso): baixa/sobe o VOLUME de duelos do papel — mexe em kills
   // E mortes juntos (o AWPer real joga menos duelos mas ganha), então KPR e DPR caem sem distorcer o K/D.
@@ -839,7 +850,10 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓL
   // contradizê-lo. As escalas abaixo foram MEDIDAS sobre os 85 jogadores para preservar o
   // desvio-padrão do efeito anterior — só a fonte da identidade muda, não a magnitude dela.
   // sd(agressão) 0.363 → traits.pace 0.249; sd(lado CT) 2.049 → traits.ct 0.346; sd(lado T) 1.852 → traits.t 0.360.
-  STYLE_AGR:1.4,STYLE_LADO:{ct:5.9,t:5.2}};
+  STYLE_AGR:1.4,STYLE_LADO:{ct:5.9,t:5.2},
+  // piso da forma do dia: quanto uma noite ruim pode de fato ser ruim. AMORT=1 seria sem
+  // amortecimento; abaixo disso a queda é comprimida (craque tem piso alto, mas não parede).
+  FORMA_PISO_BASE:.50,FORMA_PISO_AMORT:.35};
 // slots de companheiros (0..4) exceto o matador — candidatos a assist, pré-computado p/ não alocar por kill
 const ASSIST_SLOTS=[[1,2,3,4],[0,2,3,4],[0,1,3,4],[0,1,2,4],[0,1,2,3]];
 
@@ -934,19 +948,19 @@ const formaPositiva=(valor,joelho=.05)=>valor>=joelho?valor:joelho*Math.exp(valo
 // formar parede. Continua estritamente crescente e não possui limite superior.
 const formaCaudaLivre=(valor,joelho,escala)=>valor<=joelho?valor:joelho+escala*Math.log1p((valor-joelho)/escala);
 // sorteia a forma do dia do jogador: o "humor competitivo" daquele mapa (assimétrica, com vida)
-function formaDoDia(j){const a=j._eng||j;const t=tierDe(j),p=PERFIL_TIER[t];
+function formaDoDia(j){const a=j._eng||j;const t=tierDe(j),p=PERFIL_TIER[t],C=CFG_SIM;
   const centro=centroOVR(a.ovr??13)+(a._formaCamp??0); // só a carta: o nível vem do OVR, não do rating histórico
   const fp=a.fp??60,sn=a.sn??0,cl=a.cl??45;const pr=PERFIL_ROLE[a.primario]||{expl:1,cauda:1};const ovrAmp=clamp(((a.ovr??13)-13)/55,0,.18); // OVR amplifica a explosão (suave: craque é consistente, não mais volátil)
   const combust=clamp((fp-45)/50,0.05,1.35);        // firepower explode (cauda pra cima)
   const apoio=clamp((sn*0.3+cl*0.4)/100,0,0.4);     // awp/clutch dão empurrão menor
   const pisoExtra=clamp((sn*0.5+cl*0.3)/100,0,0.35);// awp/clutch sobem o piso (consistência)
-  const piso=0.50+p.piso*((a.ovr??13)-5)/17+pisoExtra*0.3;
+  const piso=C.FORMA_PISO_BASE+p.piso*((a.ovr??13)-5)/17+pisoExtra*0.3;
   const joelhoCauda=Math.min((p.caudaBase+p.caudaFp*clamp((fp-50)/50,0,1.3))*(1.35+(pr.cauda-1)*1.4),CFG_SIM.FORMA_TAIL_KNEE);
   const g=gaussF();let desvio;
   if(g>=0)desvio=g*p.vol*(0.45+(combust+apoio)*1.0)*pr.expl*(1+ovrAmp); // cauda pra cima: firepower × explosão do role × OVR (amortecida: 1.50 é pico, não média)
   else desvio=g*p.vol*(1-p.piso*1.1);                  // queda amortecida por tier
   let r=centro+desvio;
-  if(r<piso)r=piso-(piso-r)*0.35;                       // piso resistente, não parede
+  if(r<piso)r=piso-(piso-r)*C.FORMA_PISO_AMORT;         // piso resistente, não parede
   return formaCaudaLivre(formaPositiva(r),joelhoCauda,CFG_SIM.FORMA_TAIL_SCALE);} // sem piso/teto duro
 
 // forma de CAMPANHA: sorteada uma vez no início do Major, vale os 9 mapas da run.
@@ -1149,64 +1163,73 @@ function combateRound(a,b,ctx){
   const preservationEdge=(team,alive)=>alive.reduce((sum,index)=>sum+team.preservation[index],0)/alive.length-PRESERVATION_MEAN;
   const tradeChance=(team,alive,victimIndex)=>{const readiness=alive.reduce((sum,index)=>sum+team.tradeContext[index].readiness,0)/alive.length;
     return C.TRADE_CHANCE+C.TRADE_CONTEXT*((readiness-TRADE_CONTEXT_MEAN.readiness)+(team.tradeContext[victimIndex].tradeability-TRADE_CONTEXT_MEAN.tradeability));};
-  let primeira=true,fim=null,g=0;               // fim: "A"/"B" se o round fecha por objetivo/save antes da eliminação
-  let plantado=false,tempo=0,pp=0,metodo=null,saveTeam=null; // saveTeam só marca a decisão explícita de guardar
+  let primeira=true,fim=null;                   // fim: "A"/"B" se o round fecha por objetivo/save antes da eliminação
+  let plantado=false,relogio=0,pp=0,metodo=null,saveTeam=null; // relogio/pp em SEGUNDOS; saveTeam marca a decisão de guardar
   let clutch=null;                              // 1ª vez que um lado fica em 1vX (pra medir/registrar o clutch)
-  while(vivA.length>0&&vivB.length>0&&fim===null&&g++<30){
-    let p=ctx.pEdgeA;
-    if(primeira)p=clamp(p+ctx.openEdgeA,.03,.97);                // abertura: melhor entry/AWP leva o 1º pick
-    if(plantado)p=clamp(p+(aCT?-C.POST_EDGE:C.POST_EDGE),.03,.97); // pós-plant: o T segura ângulos do bombsite (edge defensivo)
-    // clutch: o último vivo segura ângulos e isola os inimigos que empurram → edge por duelo que CRESCE com X
-    // (mantém a força de time no duelo, só soma o bônus de clutch + habilidade cl). Calibrado p/ ~real.
-    if(vivA.length===1&&vivB.length>1)p=clamp(p+Math.pow(vivB.length-1,C.CLUTCH_EXP)*C.CLUTCH_X+((a.cls[vivA[0]]||45)-50)/100*C.CLUTCH_DUEL,.03,.97);
-    if(vivB.length===1&&vivA.length>1)p=clamp(p-Math.pow(vivA.length-1,C.CLUTCH_EXP)*C.CLUTCH_X-((b.cls[vivB[0]]||45)-50)/100*C.CLUTCH_DUEL,.03,.97);
-    const aWins=rndF()<p;
-    const venc=aWins?a:b,perd=aWins?b:a,vivV=aWins?vivA:vivB,vivP=aWins?vivB:vivA,buyV=aWins?buyA:buyB,buyP=aWins?buyB:buyA;
-    const phase=primeira?"opening":plantado?"postplant":"preplant";
-    const vi=duelo(venc,vivV,buyV,perd,vivP,buyP,primeira,false,phase,sideOf(perd));
-    const victimEvent=trace?trace.events[trace.events.length-1]:null;
-    mata(aWins?vivB:vivA,vi);
-    primeira=false;
-    // TRADE/refrag: o time que LEVOU a kill troca na hora (o entry abriu, mas é trocado)
-    const vVnow=aWins?vivA:vivB,vPnow=aWins?vivB:vivA; // venc do duelo segue vivo; perd perdeu 1
-    // oportunidade de trade segue prontidão/spacing; QUEM pega o trade kill pende pra tr.
-    // NÃO troca contra um CLUTCHER (vencedor sozinho): o último vivo isola os duelos — sem isso o 1vX morre injusto.
-    if(vPnow.length>0&&vVnow.length>1&&rndF()<tradeChance(perd,vPnow,vi)){
-      const vi2=duelo(perd,vPnow,buyP,venc,vVnow,buyV,false,true,phase,sideOf(venc));
-      mata(aWins?vivA:vivB,vi2);
-      const kastTradeCredit=rndF()<C.KAST_TRADE_P;
-      if(kastTradeCredit)perd.stats[vi]._contribRound=true; // KAST: parte de quem morreu e foi TROCADO ganha crédito de "traded" (KAST_TRADE_P amortece p/ ~72% real) — fiel ao "T" do KAST
-      if(victimEvent){victimEvent.victimTraded=true;victimEvent.kastTradeCredit=kastTradeCredit;}
+  // RITMO do round: sorteado uma vez, a partir da agressão coletiva do lado T — é o lado T que
+  // dita o tempo no CS (executa cedo ou joga default). Um número por round, não por duelo: é o que
+  // permite existir round quieto e round frenético em vez de todos iguais.
+  const idxT=aCT?vivB:vivA,timeT=aCT?b:a;
+  const agrT=idxT.reduce((soma,i)=>soma+(timeT.agr[i]||0),0)/Math.max(1,idxT.length);
+  const ritmo=clamp(1+C.CONTATO_AGR*agrT+gaussF()*C.CONTATO_RITMO,C.CONTATO_MIN,C.CONTATO_MAX);
+  const LIMITE=C.RND_SEGUNDOS+C.BOMBA_SEGUNDOS; // teto absoluto de segurança do laço
+  while(vivA.length>0&&vivB.length>0&&fim===null&&relogio<LIMITE){
+    relogio+=C.TICK;
+    // ——— CONTATO: o duelo é um evento sobre o relógio. Pode não acontecer neste tick. ———
+    const desvantagem=Math.abs(vivA.length-vivB.length);
+    // quem está em desvantagem evita o contato e joga o tempo — é isso que fecha rounds sem
+    // precisar duelar até o último homem (o antigo CLOSE_MEN existia só para simular esse efeito)
+    const pContato=clamp(C.CONTATO_BASE*ritmo*(plantado?C.CONTATO_POS:1)*(1-C.CONTATO_DESV*desvantagem),.01,.95);
+    if(rndF()<pContato){
+      let p=ctx.pEdgeA;
+      if(primeira)p=clamp(p+ctx.openEdgeA,.03,.97);                // abertura: melhor entry/AWP leva o 1º pick
+      if(plantado)p=clamp(p+(aCT?-C.POST_EDGE:C.POST_EDGE),.03,.97); // pós-plant: o T segura ângulos do bombsite
+      // clutch: o último vivo segura ângulos e isola os inimigos que empurram → edge que CRESCE com X
+      if(vivA.length===1&&vivB.length>1)p=clamp(p+Math.pow(vivB.length-1,C.CLUTCH_EXP)*C.CLUTCH_X+((a.cls[vivA[0]]||45)-50)/100*C.CLUTCH_DUEL,.03,.97);
+      if(vivB.length===1&&vivA.length>1)p=clamp(p-Math.pow(vivA.length-1,C.CLUTCH_EXP)*C.CLUTCH_X-((b.cls[vivB[0]]||45)-50)/100*C.CLUTCH_DUEL,.03,.97);
+      const aWins=rndF()<p;
+      const venc=aWins?a:b,perd=aWins?b:a,vivV=aWins?vivA:vivB,vivP=aWins?vivB:vivA,buyV=aWins?buyA:buyB,buyP=aWins?buyB:buyA;
+      const phase=primeira?"opening":plantado?"postplant":"preplant";
+      const vi=duelo(venc,vivV,buyV,perd,vivP,buyP,primeira,false,phase,sideOf(perd));
+      const victimEvent=trace?trace.events[trace.events.length-1]:null;
+      mata(aWins?vivB:vivA,vi);
+      primeira=false;
+      // TRADE/refrag: o time que LEVOU a kill troca na hora (o entry abriu, mas é trocado)
+      const vVnow=aWins?vivA:vivB,vPnow=aWins?vivB:vivA;
+      // NÃO troca contra um CLUTCHER (vencedor sozinho): o último vivo isola os duelos.
+      if(vPnow.length>0&&vVnow.length>1&&rndF()<tradeChance(perd,vPnow,vi)){
+        const vi2=duelo(perd,vPnow,buyP,venc,vVnow,buyV,false,true,phase,sideOf(venc));
+        mata(aWins?vivA:vivB,vi2);
+        const kastTradeCredit=rndF()<C.KAST_TRADE_P;
+        if(kastTradeCredit)perd.stats[vi]._contribRound=true; // KAST: parte de quem morreu e foi TROCADO ganha crédito
+        if(victimEvent){victimEvent.victimTraded=true;victimEvent.kastTradeCredit=kastTradeCredit;}
+      }
+      if(vivA.length===0||vivB.length===0)break; // eliminação total decide na hora
+      // registra a 1ª situação de clutch (1vX)
+      if(!clutch){if(vivA.length===1)clutch={aLone:true,x:vivB.length};else if(vivB.length===1)clutch={aLone:false,x:vivA.length};}
     }
-    if(vivA.length===0||vivB.length===0)break; // eliminação total decide na hora
-    // registra a 1ª situação de clutch (1vX): o solitário enfrenta X inimigos. medido/aproveitado depois.
-    if(!clutch){if(vivA.length===1)clutch={aLone:true,x:vivB.length};else if(vivB.length===1)clutch={aLone:false,x:vivA.length};}
-    // CLOSE por vantagem de homem: o lado dominante FECHA o round (executa o plant+detona / segura / retoma)
-    // sem precisar duelar até o último homem — como no CS real. 1vX NUNCA encerra aqui (o clutch é sempre jogado).
-    const adv=Math.abs(vivA.length-vivB.length);
-    if(adv>=2&&Math.min(vivA.length,vivB.length)>=2&&rndF()<C.CLOSE_MEN*adv){fim=vivA.length>vivB.length?"A":"B";metodo="close";break;}
-    // estado por LADO (não por time): o objetivo é assimétrico
+    // ——— OBJETIVO: corre com o relógio, tenha havido contato ou não ———
     const vivT=aCT?vivB:vivA,vivCT=aCT?vivA:vivB,buyT=aCT?buyB:buyA,buyCT=aCT?buyA:buyB;
-    tempo++;
     if(!plantado){
       // SAVE do T: muito atrás (>=2) → desiste do plant e preserva sobreviventes/economia; CT vence no tempo
       if(vivCT.length-vivT.length>=2){const eco=buyT==="eco"||buyT==="force";
         const losingTeam=aCT?b:a;
         if(rndF()<(eco?C.SAVE_BASE:C.SAVE_BASE*.35)+(vivCT.length-vivT.length)*C.SAVE_MEN+C.SAVE_VALUE*preservationEdge(losingTeam,vivT)){fim=ctVence();metodo="tempo";saveTeam=tVence();break;}}
-      // PLANT: chance cresce com o tempo e com a vantagem de homem do T (tomou o site)
-      const pPlant=clamp(C.PLANT_BASE+tempo*C.PLANT_TEMPO+(vivT.length-vivCT.length)*C.PLANT_MEN,0,.92);
+      // PLANT: cresce com a fração de tempo já gasta (o T precisa commitar) e com a vantagem de homem
+      const fracao=relogio/C.RND_SEGUNDOS;
+      const pPlant=clamp(C.PLANT_BASE+fracao*C.PLANT_TEMPO+(vivT.length-vivCT.length)*C.PLANT_MEN,0,.92);
       if(rndF()<pPlant){plantado=true;pp=0;}
-      else if(tempo>=C.RND_TEMPO){fim=ctVence();metodo="tempo";break;} // relógio estourou sem plant → CT segura (default/hold)
+      else if(relogio>=C.RND_SEGUNDOS){fim=ctVence();metodo="tempo";break;} // relógio estourou sem plant → CT segura
     }else{
-      pp++;
-      // SAVE do CT: pós-plant muito atrás (>=2) → não retoma e preserva sobreviventes/economia; T detona
+      pp+=C.TICK;
+      // SAVE do CT: pós-plant muito atrás (>=2) → não retoma e preserva sobreviventes; T detona
       if(vivT.length-vivCT.length>=2){const eco=buyCT==="eco"||buyCT==="force";
         const losingTeam=aCT?a:b;
         if(rndF()<(eco?C.SAVE_BASE:C.SAVE_BASE*.35)+(vivT.length-vivCT.length)*C.SAVE_MEN+C.SAVE_VALUE*preservationEdge(losingTeam,vivCT)){fim=tVence();metodo="detona";saveTeam=ctVence();break;}}
       // DEFUSE: CT com pelo menos paridade limpa o site e defusa (cresce com a vantagem de homem)
       if(vivCT.length>=vivT.length&&rndF()<C.DEFUSE_BASE+Math.max(0,vivCT.length-vivT.length)*C.DEFUSE_MEN){fim=ctVence();metodo="defuse";break;}
       // DETONAÇÃO: relógio da bomba estourou → T vence o post-plant
-      if(pp>=C.PP_TEMPO){fim=tVence();metodo="detona";break;}
+      if(pp>=C.BOMBA_SEGUNDOS){fim=tVence();metodo="detona";break;}
     }
   }
   const venceA=fim!==null?fim==="A":vivA.length>0;
