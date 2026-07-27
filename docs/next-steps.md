@@ -521,6 +521,27 @@ Primeiro passo operacional:
 - todas as decisões de produto da Carreira listadas em
   `docs/project-context.md`.
 
+## 10-bis. Backlog declarado pelo responsável (28/07/2026)
+
+Itens citados como **"para DEPOIS"** — registrados aqui para não se perderem entre sessões.
+O escopo de cada um **ainda não foi definido**; não presuma o que significam nem comece por
+eles sem conversar com o responsável.
+
+- **Reformulação de roles e playstyles.** Mexe no coração da classificação (`ROLE_PERFIL`,
+  `NM_DEF`, `STYLE_CONTRA`, `roleStyleReality`) e, portanto, no snapshot dos 85 jogadores e em
+  todas as assinaturas de `bancada/perfis.js`. É a mudança de maior alcance já cogitada:
+  qualquer versão dela é balanceamento estrutural, com comparação pareada e commit próprio.
+- **Estilo das cartas** (apresentação visual dos jogadores). Camada de interface; não deve
+  tocar motor, avaliação nem RNG.
+- **Utilidade como recurso do round** — única peça remanescente do escopo original da
+  simulação: flash/smoke/molotov comprados e gastos, ligando `ut` a execução e retake. O custo
+  do `full` (4300) já foi dimensionado prevendo isso.
+
+Estado da simulação em 28/07/2026, para calibrar a urgência: **nenhum critério em relatório**.
+As quatro etapas do ratchet de `perfis.js` estão ativas, e `npm run validate` fecha 24/24 —
+12/12 macro, 6/6 forma, 15/15 assinatura individual e 4/4 dificuldade. Nada acima é conserto;
+tudo é evolução deliberada.
+
 ## 11. Regra de parada
 
 Se uma etapa revelar que o problema presumido não existe, registrar a evidência
