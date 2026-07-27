@@ -10,7 +10,7 @@
     "maps": [
       {
         "map": "Nuke",
-        "scoreA": 6,
+        "scoreA": 11,
         "scoreB": 13,
         "winnerIndex": 1,
         "orientation": "A-B"
@@ -18,14 +18,14 @@
       {
         "map": "Ancient",
         "scoreA": 13,
-        "scoreB": 1,
+        "scoreB": 5,
         "winnerIndex": 0,
         "orientation": "B-A"
       },
       {
         "map": "Anubis",
-        "scoreA": 6,
-        "scoreB": 13,
+        "scoreA": 13,
+        "scoreB": 16,
         "winnerIndex": 1,
         "orientation": "A-B"
       }
