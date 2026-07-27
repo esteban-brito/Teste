@@ -1145,7 +1145,8 @@ function combateRound(a,b,ctx){
     // abre quanto morre abrindo. Como exposureProfile é um Math.exp, o fator é positivo por
     // construção — o fator linear anterior virava NEGATIVO com ganho alto e corrompia pick(),
     // que soma pesos sem piso. AGR_ABRE deixou de ser coeficiente e virou o ganho da exposição.
-    const abertura=opening?i=>Math.pow(venc.exposure[i].opening[sideOf(venc)],C.AGR_ABRE):()=>1;
+    const ladoMatador=opening?sideOf(venc):null;   // constante no duelo: fora do peso por jogador
+    const abertura=opening?i=>Math.pow(venc.exposure[i].opening[ladoMatador],C.AGR_ABRE):()=>1;
     const ki=pick(vivV,i=>Math.pow(Math.max(venc.frags[i],8),expK)*tilt(i)*abertura(i));
     // quem MORRE: volume residual + exposição contextual; nunca bônus direto de DPR.
     const vi=pick(vivP,i=>Math.pow(Math.max(perd.frags[i],8),C.CONTACT_VOLUME_EXP[phase])*perd.exposure[i][phase][victimSide]);
@@ -1437,6 +1438,7 @@ function simularMapa(A,B,fA,fB,mapaForcado,leve,options){
   const awperA=a.js.map(j=>combatProfile(j).activeCombatRole==="AWPer");
   const awperB=b.js.map(j=>combatProfile(j).activeCombatRole==="AWPer");
   const zerar=(dinheiro,valor)=>{for(let i=0;i<5;i++)dinheiro[i]=valor;};
+  const creditar=(dinheiro,valor)=>{for(let i=0;i<5;i++)dinheiro[i]+=valor;};
   const rounds=[];
   // lados: 1º tempo A=CT · 2º tempo A=TR · OT (r≥25): alterna a cada 3 rounds (MR3 real)
   const ladoDe=(time,round)=>{const ehA=time===A;
@@ -1490,7 +1492,6 @@ function simularMapa(A,B,fA,fB,mapaForcado,leve,options){
     // COFRE CS2: perdedor recebe o NÍVEL atual da escada (1ª derrota=1400) e sobe 1; vencedor
     // ganha o prêmio PELO MÉTODO (bomba/defuse=3500, resto=3250) e o nível do rival DESCE 1 (não zera).
     // O prêmio vai para a CARTEIRA DE CADA JOGADOR, como no CS2 real.
-    const creditar=(dinheiro,valor)=>{for(let i=0;i<5;i++)dinheiro[i]+=valor;};
     if(venceA){pa++;sA++;sB=0;creditar(dinA,res.premioV);creditar(dinB,LOSS_BONUS[Math.min(lsB,4)]);lsB=Math.min(lsB+1,4);lsA=Math.max(0,lsA-1);}
     else{pb++;sB++;sA=0;creditar(dinB,res.premioV);creditar(dinA,LOSS_BONUS[Math.min(lsA,4)]);lsA=Math.min(lsA+1,4);lsB=Math.max(0,lsB-1);}
     if(pa===alvo-1&&pb===alvo-1)alvo+=3; // 12-12 → alvo 16 · 15-15 → 19 · 18-18 → 22 (OT repetível)
