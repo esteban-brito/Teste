@@ -672,6 +672,9 @@ const ATRIBUTOS=[
   {nome:"FalleN",fp:68,en:46,tr:17,op:78,cl:51,sn:95,ut:55,rating:1.19,colocacao:"Campeao",isIGL:true},
   {nome:"fnx",fp:79,en:48,tr:24,op:52,cl:33,sn:0,ut:82,rating:1.19,colocacao:"Campeao",isIGL:false},
   {nome:"fer",fp:72,en:25,tr:10,op:89,cl:32,sn:0,ut:17,rating:1.12,colocacao:"Campeao",isIGL:false},
+  // EnVyUs · DreamHack Cluj-Napoca 2015 (curadoria: era Rating 1.0 — sem KAST, ADR nem impacto
+  // publicados, os atributos foram estimados por julgamento do responsável em 24/07/2026,
+  // commit f731b3a. São JUÍZO, não fonte. Ver docs/dados-era-rating-1-0.md)
   {nome:"kennyS",fp:70,en:29,tr:44,op:96,cl:39,sn:98,ut:45,rating:1.23,colocacao:"Campeao",isIGL:false},
   {nome:"NBK-",fp:61,en:36,tr:58,op:18,cl:49,sn:5,ut:42,rating:1.14,colocacao:"Campeao",isIGL:false},
   {nome:"Happy",fp:63,en:21,tr:39,op:74,cl:59,sn:28,ut:50,rating:1.14,colocacao:"Campeao",isIGL:true},
