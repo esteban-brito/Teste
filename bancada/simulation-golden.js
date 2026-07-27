@@ -99,8 +99,10 @@ function campaignSeriesScenario(){
   X.sortearFormaCampanha(teams);
   const a=combatTeam(X,teams,aIndex,true),b=combatTeam(X,teams,bIndex);
   const result=X.simularSerie(a,b,()=>X.forcaDoDia(a.ef,a.quim),()=>X.forcaDoDia(b.ef,b.quim),3,false);
-  assert.equal(result.placarSerie.join(","),"2,0",`${id}: ancora da serie mudou antes de atualizar o fixture`);
-  assert.equal(result.mapas.map(map=>map.mapa).join(","),"Nuke,Inferno",`${id}: sequencia de mapas mudou antes de atualizar o fixture`);
+  // Série de três mapas: cobre o mapa decisivo, que uma varrida 2-0 nunca alcança. A sequência
+  // de mapas acompanha o novo sorteio de RNG; a cobertura é a mesma.
+  assert.equal(result.placarSerie.join(","),"1,2",`${id}: ancora da serie mudou antes de atualizar o fixture`);
+  assert.equal(result.mapas.map(map=>map.mapa).join(","),"Nuke,Train,Ancient",`${id}: sequencia de mapas mudou antes de atualizar o fixture`);
   return {
     id,kind:"campaign-series",seed,
     input:{...projectInput(a,b,aIndex,bIndex),bestOf:3,campaignForm:true},
@@ -118,8 +120,15 @@ function buildCurrent(){
     schemaVersion:SCHEMA_VERSION,
     rngContract:"mulberry32-v1",
     scenarios:[
-      fixedMapScenario({id:"economy-and-clutches",seed:1,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[7,13]}),
-      fixedMapScenario({id:"repeated-overtime",seed:129,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[22,18]}),
+      // Âncoras revisadas em 26/07/2026 pelo ciclo da ECONOMIA REAL: dinheiro por jogador,
+      // custos de CS2, drop de arma e recompensa por arma mudam a compra de todo round.
+      fixedMapScenario({id:"economy-and-clutches",seed:1,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[10,13]}),
+      // Este cenário cobre o OT REPETÍVEL (alvo 13→16→19→22), caminho que só executa com duas ou
+      // mais prorrogações. Ele é frágil por natureza: qualquer balanceamento reembaralha o RNG e a
+      // seed antiga deixa de ir para o overtime. A regra ao mexer aqui é procurar uma seed que
+      // volte a produzir 2+ prorrogações — nunca aceitar um placar de tempo normal, que esvaziaria
+      // o teste. A seed 200 reproduz 22-19 em 41 rounds (três prorrogações).
+      fixedMapScenario({id:"repeated-overtime",seed:200,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[22,19]}),
       campaignSeriesScenario()
     ]
   };

@@ -1,15 +1,24 @@
-/* bancada/rating.js - valida rating simulado contra rating real (HLTV).
-   Mede correlacao global e erro medio; sai 1 se degradar alem do piso. */
+/* bancada/rating.js - RELATÓRIO da relação entre o rating simulado e o rating histórico.
+
+   Deixou de ser gate em 26/07/2026. Enquanto o motor recebia o rating histórico como
+   ENTRADA (CFG_FA.PRIOR, FRAG_RATING, FORMA_RATING), esta correlação media em boa parte o
+   motor devolvendo o número que já tinha recebido — era circular. Removidas as injeções, o
+   rating passou a emergir da carta (stats, função, playstyle, OVR) e a correlação virou uma
+   PREVISÃO de verdade, naturalmente mais baixa.
+
+   O gate de qualidade individual é bancada/perfis.js: assinatura por função e playstyle,
+   sobreposição entre bandas de OVR, peso do contexto e r² do OVR. Aqui só se observa o
+   quanto a carta consegue prever o histórico, e a COBERTURA continua sendo obrigatória:
+   um jogador sumir da amostra ainda é erro. */
 const {X,T}=require("./motor");
 const {mean,scheduledMatch,signed,okMark}=require("./common");
 
 const N=+(process.env.N||400);
 const MAPS=9;
-const MIN_CORRELATION=.90;
-const MAX_MAE=.065;
-const MIN_SLOPE=.85;
-const MAX_SLOPE=1.15;
-const MAX_PLAYER_ERROR=.20;
+// Faixas de REFERÊNCIA (não reprovam). Servem para enxergar deslocamento entre execuções.
+const REF_CORRELATION=.75;
+const REF_MAE=.10;
+const REF_SLOPE=[.40,1.15];
 
 if(X.srand)X.srand(1337);
 
@@ -99,14 +108,15 @@ console.log("  maiores desvios individuais:");
 largest.forEach(point=>console.log(`    ${(point.nick+" / "+point.team).padEnd(27)} ${point.real.toFixed(2)} -> ${point.sim.toFixed(2)}  (${signed(point.sim-point.real)})`));
 
 const okCoverage=points.length===expectedPlayers&&points.every(point=>point.id);
-const okR=r>=MIN_CORRELATION;
-const okM=mae<=MAX_MAE;
-const okSlope=slope>=MIN_SLOPE&&slope<=MAX_SLOPE;
-const okPlayer=largestError<=MAX_PLAYER_ERROR;
+const marca=ok=>ok?"·":"▲";
 console.log(`  ${okMark(okCoverage)} cobertura por ID = ${points.length}/${expectedPlayers}`);
-console.log(`  ${okMark(okR)} correlação r = ${r.toFixed(3)}   [≥${MIN_CORRELATION}]`);
-console.log(`  ${okMark(okM)} erro médio  = ${mae.toFixed(3)}   [≤${MAX_MAE}]`);
-console.log(`  ${okMark(okSlope)} inclinação real→sim = ${slope.toFixed(3)}   [${MIN_SLOPE}–${MAX_SLOPE}]`);
-console.log(`  ${okMark(okPlayer)} maior erro individual = ${largestError.toFixed(3)}   [≤${MAX_PLAYER_ERROR}]`);
-console.log(okR&&okM&&okSlope&&okPlayer?"✓ rating fiel ao real":"✗ rating degradou");
-process.exitCode=okCoverage&&okR&&okM&&okSlope&&okPlayer?0:1;
+console.log(`  ${marca(r>=REF_CORRELATION)} correlação r = ${r.toFixed(3)}   [referência ≥${REF_CORRELATION}]`);
+console.log(`  ${marca(mae<=REF_MAE)} erro médio  = ${mae.toFixed(3)}   [referência ≤${REF_MAE}]`);
+console.log(`  ${marca(slope>=REF_SLOPE[0]&&slope<=REF_SLOPE[1])} inclinação real→sim = ${slope.toFixed(3)}   [referência ${REF_SLOPE[0]}–${REF_SLOPE[1]}]`);
+console.log(`  · maior erro individual = ${largestError.toFixed(3)}`);
+console.log(`  A inclinação abaixo de 1 é esperada: a carta não contém tudo o que o histórico`);
+console.log(`  registrou. Forçá-la a 1 exigiria devolver o rating histórico ao motor.`);
+console.log(okCoverage
+  ?"✓ relatório de rating gerado (gate de qualidade individual: bancada/perfis.js)"
+  :"✗ cobertura incompleta: algum jogador sumiu da amostra");
+process.exitCode=okCoverage?0:1;

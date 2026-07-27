@@ -19,7 +19,7 @@ O mapa técnico e as regras para mudanças estão em:
 - [`docs/next-steps.md`](docs/next-steps.md): sequência aprovada para auditoria
   individual, variância, modo campanha, balanceamento condicional e retomada;
 - [`docs/architecture.md`](docs/architecture.md): fluxo de dados e fronteiras;
-- [`docs/testing.md`](docs/testing.md): 17 suítes e comandos por camada;
+- [`docs/testing.md`](docs/testing.md): 22 suítes e comandos por camada;
 - [`docs/rating-balance-2026-07-20.md`](docs/rating-balance-2026-07-20.md): auditoria sem curadoria e comparação antes/depois;
 - [`docs/fidelity-corpus.md`](docs/fidelity-corpus.md): coleta e auditoria do corpus IFCS;
 - [`docs/fidelity-target.json`](docs/fidelity-target.json): alvo histórico
@@ -229,19 +229,21 @@ A pasta `bancada/` contém uma suíte de validação que roda no Node.js:
 | Arquivo | O que valida |
 |---|---|
 | `times.js` | IDs únicos, atributos 0–100, ≥1 IGL, país do treinador, ≥16 times |
-| `realismo.js` | KPR, CT-win, plant, clutch 1vX, anti-eco, conversão pós-pistol vs CS real |
+| `realismo.js` | KPR, CT-win, plant, clutch 1vX, anti-eco, conversão pós-pistol vs CS real; e a **forma** (kills por round, placar do perdedor, método do round, compra por lado) |
 | `rating.js` | 85 IDs; correlação r≥0.90, MAE≤0.065, inclinação 0.85–1.15 e erro individual máximo≤0.20 |
-| `run.js` | Roda as 17 suítes; aceita grupos de dados, regressão, calibrador, benchmark, fidelidade e E2E |
+| `perfis.js` | Coerência de carta: assinatura por função e playstyle, sobreposição entre bandas de OVR, variância intra-jogador e peso do contexto |
+| `dificuldade.js` | P(título) e P(campanha invicta) por faixa de força, replicando o Major (suíça + playoffs) |
+| `run.js` | Roda as 22 suítes; aceita grupos de dados, regressão, calibrador, benchmark, fidelidade e E2E |
 
 ```bash
 npm run test:data          # integridade dos dados
 npm run test:regression    # auditoria + snapshot + guardas históricas + golden por seed
 npm run test:calibrator    # calibrador e workers
-npm run test:benchmark     # realismo + assists + KDA + rating
+npm run test:benchmark     # realismo + assists + KDA + rating + perfis + dificuldade
 npm run test:fidelity      # scorer e contrato do corpus IFCS
 npm run test:e2e           # calibrador, aba Simular e jogo principal no navegador
-npm run test:all           # todas as 17 suítes
-npm run validate           # check + lint + todas as 17 suítes
+npm run test:all           # todas as 22 suítes
+npm run validate           # check + lint + todas as 22 suítes
 npm run score:fidelity -- caminho/entrada.json  # calcula um relatório IFCS
 npm run corpus:fidelity -- --template  # modelo do manifesto auditável
 ```

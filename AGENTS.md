@@ -62,7 +62,7 @@ npm run test:fidelity     # se tocar no scorer, corpus ou metodologia IFCS
 npm run test:e2e          # se tocar no jogo ou na interface do calibrador
 ```
 
-`npm run test:all` e `npm run bench` executam as mesmas 16 suítes, na ordem
+`npm run test:all` e `npm run bench` executam as mesmas 22 suítes, na ordem
 histórica. O benchmark completo é demorado; não reduza amostras ou limites para
 obter um resultado verde.
 

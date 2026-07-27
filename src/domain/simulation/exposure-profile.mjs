@@ -1,4 +1,5 @@
 import {combatProfile} from "./combat-profile.mjs";
+import {styleAggression} from "../evaluation/style-identity.mjs";
 
 const CONTACT_AGGRESSION={opening:.45,preplant:.28,postplant:.28};
 const CONTACT_OPPORTUNITY={opening:.06,preplant:.02,postplant:.02};
@@ -13,22 +14,12 @@ const CONTACT_POSITION={
   Support:{opening:.02,preplant:.01,postplant:.01},
   Rifler:{opening:.02,preplant:.01,postplant:.01}
 };
-const SUB_INTENSITY=40;
-
-function subAggression(player){
-  const source=player?._eng||player||{};
-  const sub=source.sub;
-  if(!sub)return 0;
-  const intensity=Math.max(.35,Math.min(1,Math.abs(sub.eixo||0)/SUB_INTENSITY));
-  return (sub.agr||0)*intensity;
-}
-
 /** Relative likelihood of taking a lost contact, not a direct death bonus. */
 export function exposureProfile(player){
   const source=player?._eng||player||{};
   const role=combatProfile(player).activeCombatRole;
   const normalized=key=>((source[key]??50)-50)/50;
-  const aggression=subAggression(player);
+  const aggression=styleAggression(player);
   const profile={};
 
   for(const phase of ["opening","preplant","postplant"]){

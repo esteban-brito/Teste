@@ -27,7 +27,7 @@
       │  combateRound         │  duelos, vantagem de homem, clutch, plant/
       │  simularMapa/Serie    │  post-plant/retake/relógio. Quem GANHA emerge.
       │   └─ COFRE            │     sub-motor de ECONOMIA: compra/gasto, carrego
-      │      decidirBuy/premio│     de equipamento, recompensa por kill, anti-eco.
+      │      decidirCompra/prem│     por jogador, arma carregada, recompensa por arma.
       └───┬───────────────────┘
       ┌───▼──── FALLEnANGELs ─┐  o veredito contextual pós-combate: KAST, ADR,
       │  fallenAngels         │  swing, multi-kill, abertura, trade, eco → o
@@ -42,8 +42,8 @@
 /* ── CONTRATOS (o dado que circula entre os motores) ────────────────────
    @typedef {Object} Eng  — jogador avaliado (POOL[id]; vive em carta._eng)
      atributos crus: fp,en,tr,op,cl,sn,ut (0-100) · rating (HLTV real) · isIGL
-     do PRISMA: primario, secundario, secForte, sub{nome,eixo,agr,lado,stats}
-     do ZÊNITE: ovr (5-22) · estrela · esteira · caches: _lado,_mapBase,_formaCamp
+     do PRISMA: primario, secundario, secForte, playstyle (identidade única) · style{...}
+     do ZÊNITE: ovr (5-22) · estrela · caches: _lado,_mapBase,_formaCamp
    @typedef {Object} TimePronto — {nome,jogadores:[{_eng,...}],ef,quim} (após SINAPSE)
    @typedef {Object} ResultadoMapa — retorno de simularMapa:
      placar[2] · vencedor/vencedorNome · mapa · totalRounds · half1
@@ -73,7 +73,6 @@ const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22, // ⚙ balanceamento do PRISMA (afini
   IGL_TITULO:{Campeao:3,Final:2,Top4:1,Top8:0,Grupos:0}, // bônus de OVR do IGL por COLOCAÇÃO (campeão 3 · vice 2 · 3-4º 1); qualquer campeonato, só p/ IGL
   IGL_TETO:21,                               // teto do IGL: um degrau abaixo do 22 dos fraggers (o jogo é decidido por eles)
   SUP_FRAG:72,                               // fp acima disso: não é Support role 1, é Lurker de utilidade (frag + util)
-  CORINGA_PISO:42,CORINGA_SPREAD:24,         // sub "Coringa": piso alto E sem especialidade dominante (spread baixo) = polivalente
   AWP_LEAN:.152,                             // viés de estilo do AWPer PASSIVO: op alto dele é pick de AWP (Closer/Ancora), não espaço de Infiltrador. 0=desligado, calibrável (sessão sandbox)
   // Rifler generalista: bônus SUAVE para perfis equilibrados em fogo/entrada/utility,
   // reduzido continuamente quando abertura/clutch/AWP revelam uma especialidade dominante.
@@ -255,7 +254,6 @@ function roleSecundarioSeguro(primary,secondary,p,scores=null){
   return ROLES_COMBATE.filter(r=>r!==primary)
     .sort((a,b)=>secondaryScore(primary,b,p,sc)-secondaryScore(primary,a,p,sc))[0]||"Rifler";
 }
-const ESTEIRA={AWPer:"Artilharia",Rifler:"Assalto",Entry:"Vanguarda",Lurker:"Ancora",Support:"Sistema",IGL:"Comando"};
 /* ┌─ ZÊNITE ─ OVR unificado ───────────────────────────────────────────┐ */
 // OVR = base(receita do playstyle) + bônus de rating uniforme (ver nmOVR); a FUNÇÃO não entra.
 // Exceção CURADA do IGL: soma um bônus por COLOCAÇÃO do time (IGL_TITULO) e tem teto próprio
@@ -315,6 +313,16 @@ const PLAYSTYLE_IDS=Object.keys(PLAYSTYLES);
 const STYLE_LABEL=id=>id==="joker"?"Coringa":(PLAYSTYLES[id]?.label||id);
 const STYLE_ID=x=>x==="Coringa"||x==="joker"?"joker":(PLAYSTYLE_IDS.find(id=>id===x||STYLE_KEYS[id]===x||PLAYSTYLES[id].label===x)||x);
 const STYLE_RECIPE=id=>NM_DEF[STYLE_KEYS[id]];
+/* ── IDENTIDADE DE COMBATE — fonte única: o playstyle ──────────────────────
+   O Coringa é polivalente por definição: não inclina agressão nem lado. Um estilo
+   desconhecido cai no mesmo neutro, para que dado incompleto nunca vire viés. */
+const STYLE_TRAITS_NEUTRO={pace:0,space:0,trade:0,structure:0,ct:0,t:0};
+const styleTraits=id=>id==="joker"?STYLE_TRAITS_NEUTRO:(PLAYSTYLES[id]?.traits||STYLE_TRAITS_NEUTRO);
+// Quão DEFINIDO é o estilo do jogador. styleMatch já mede a distância para o 2º colocado
+// (`clarity`); aqui reconstruímos a partir da margem guardada na avaliação. O piso de 0.35
+// preserva o comportamento anterior: identidade difusa ainda conta, só conta menos.
+const styleClareza=a=>{const margem=a&&a.style&&a.style.matchMargin;
+  return margem==null?1:clamp(margem*5,.35,1);};
 const ROLE_STYLE_BASE={
   Entry:{anchor:.46,support:.30,cerebral:.26,clutcher:.22,infiltrator:.18,trader:.12},
   Support:{aggressive:.28,spacetaker:.24,playmaker:.14,infiltrator:.12,baiter:.10},
@@ -426,76 +434,42 @@ function ovrUnificado(role,p,sec){const C=CFG_AVALIACAO,combatRole=role==="IGL"?
   if(role==="IGL")return iglOvr(style.core,p.colocacao); // exceção curada: playstyle + bônus por colocação
   return Math.min(C.OVR_MAX,Math.max(C.OVR_MIN,style.ovr));}
 /* ┌─ PRISMA ─ arquétipo unificado ────────────────────────────────────┐ */
-// Playstyle é a identidade principal; sub-arquétipo é a tradução dessa identidade
-// dentro da função. Assim química/sim/verso leem a mesma decisão, não dois
-// classificadores independentes.
-const SUBARQ={
-  AWPer:[
-    {nome:"AWP Agressiva",sig:{en:.48,op:.27,fp:.25},agr:.9, lado:[-1,3],stats:["sn","op","fp","en"]}, // entra/abre com pick (en = agressão)
-    {nome:"AWP Reativa",  sig:{cl:.48,sn:.30,ut:.22},agr:-.9,lado:[3,-1],stats:["sn","cl","ut","op"]}],// segura ângulos, espera o pick
-  Rifler:[
-    {nome:"Fragger",    sig:{fp:.55,op:.45},        agr:.6, lado:[-1,2],stats:["fp","op","en","cl"]}, // pura mira/impacto
-    {nome:"Conector",   sig:{tr:.45,cl:.30,ut:.25}, agr:-.4,lado:[1,1], stats:["tr","cl","ut","fp"]}, // liga as jogadas
-    {nome:"Mid-rounder",sig:{op:.42,cl:.33,ut:.25}, agr:0,  lado:[1,1], stats:["op","cl","ut","fp"]}],// controla o meio/info
-  Entry:[
-    {nome:"Ponta-de-lança",sig:{en:.55,op:.45},        agr:1, lado:[-3,5],stats:["en","op","fp","tr"]}, // 1º contato puro
-    {nome:"Spacetaker",    sig:{op:.40,fp:.40,en:.20}, agr:.8,lado:[-2,4],stats:["op","fp","en","cl"]}],// 2º homem, toma espaço fragando
-  Lurker:[
-    {nome:"Infiltrador",sig:{cl:.50,fp:.28,op:.22},agr:-.3,lado:[2,1], stats:["cl","fp","op","ut"]}, // solo, flanco, info
-    {nome:"Playmaker",  sig:{op:.50,fp:.30,cl:.20},agr:.4, lado:[0,2], stats:["op","fp","cl","ut"]}, // cria a jogada
-    {nome:"Âncora",     sig:{cl:.40,ut:.40,tr:.20},agr:-1, lado:[5,-2],stats:["cl","ut","tr","op"]}],// segura o bombsite (CT)
-  Support:[
-    {nome:"Pop-flasher",sig:{ut:.55,op:.25,en:.20},agr:.2, lado:[1,1], stats:["ut","op","en","tr"]}, // flashes p/ abrir
-    {nome:"Refrag",     sig:{tr:.50,fp:.30,ut:.20},agr:.3, lado:[1,2], stats:["tr","fp","ut","cl"]}] // troca e fecha o round
-};
-const SUB_CONTRA={
-  AWPer:[{ut:.08,tr:.06},{en:.14,fp:.05}],
-  Rifler:[{ut:.10,tr:.06,sn:.08},{en:.10,sn:.08},{en:.08,sn:.08}],
-  Entry:[{cl:.14,ut:.10,tr:.08,sn:.08},{ut:.08,tr:.06,sn:.08}],
-  Lurker:[{en:.20,tr:.06,sn:.06},{tr:.06,ut:.04,sn:.06},{en:.38,op:.16,fp:.08,sn:.06}],
-  Support:[{fp:.08,sn:.08},{en:.08,sn:.08}]
-};
-const SUB_BY_STYLE={
-  AWPer:{aggressive:0,spacetaker:0,playmaker:0,trader:1,infiltrator:1,baiter:1,clutcher:1,support:1,cerebral:1,anchor:1},
-  Rifler:{aggressive:0,spacetaker:0,playmaker:0,trader:1,baiter:1,support:1,cerebral:2,infiltrator:2,clutcher:2,anchor:1},
-  Entry:{aggressive:0,spacetaker:1,playmaker:1,trader:1,infiltrator:1,clutcher:1,baiter:1,cerebral:1,support:1,anchor:1},
-  Lurker:{infiltrator:0,baiter:0,playmaker:1,spacetaker:1,aggressive:1,trader:1,clutcher:2,cerebral:2,support:2,anchor:2},
-  Support:{support:0,cerebral:0,anchor:0,trader:1,aggressive:1,spacetaker:1,playmaker:1,infiltrator:1,baiter:1,clutcher:1}
-};
-// Coringa: jogador POLIVALENTE — piso alto em tudo E sem especialidade dominante (joga de tudo, sem estilo fixo)
-const ehCoringa=p=>{const v=[p.fp||0,p.en||0,p.tr||0,p.op||0,p.cl||0,p.ut||0],mn=Math.min(...v),mx=Math.max(...v);
-  return mn>=CFG_AVALIACAO.CORINGA_PISO&&(mx-mn)<=CFG_AVALIACAO.CORINGA_SPREAD;};
-const SUB_CORINGA={nome:"Coringa",eixo:0,agr:0,lado:[0,0],stats:["fp","op","cl","ut"]};
-function subArquetipo(role,p,styleId=null){const subs=SUBARQ[role];if(!subs)return null;
-  if(ehCoringa(p))return{...SUB_CORINGA}; // polivalente: sobrepõe o estilo da função
-  const forcedIndex=SUB_BY_STYLE[role]?.[STYLE_ID(styleId)];
-  let best=subs[0],bs=-1,second=-1;
-  subs.forEach((s,i)=>{const sc=dot(s.sig,p)-dot((SUB_CONTRA[role]||[])[i]||{},p);if(sc>bs){second=bs;bs=sc;if(forcedIndex==null)best=s;}else if(sc>second)second=sc;});
-  if(forcedIndex!=null)best=subs[forcedIndex]||best;
-  return{nome:best.nome,eixo:+(bs-Math.max(0,second)).toFixed(1),agr:best.agr,lado:best.lado,stats:best.stats};}
+// O SUB-ARQUÉTIPO foi removido: ele era derivado do próprio playstyle (SUB_BY_STYLE) e por
+// isso não acrescentava informação — só contradizia a carta. Um Âncora aparecia como
+// "Pop-flasher" e um Playmaker de AWP como "AWP Agressiva". A identidade agora é uma só,
+// o playstyle, e governa carta, química, exposição e afinidade de lado (ver styleTraits).
+// A detecção de Coringa também passou a ser única: `jokerProfile`, dentro de styleMatch.
 // Nível competitivo deriva do rating observado, nunca do nome. Os cortes representam
 // desempenho excepcional (1.40), estrela (1.20) e destaque que entra no cálculo de ego
 // do elenco (1.30). Trocar nick, era ou time não pode alterar a classificação numérica.
-const CFG_NIVEL={LENDA_MIN:1.40,STAR_MIN:1.20,ESTRELA_MIN:1.30,ROLE_MAX:.99};
-const ratingCompetitivo=p=>Number.isFinite(+p.rating)?+p.rating:1;
-const ehEstrela=p=>ratingCompetitivo(p)>=CFG_NIVEL.ESTRELA_MIN;
+// Cortes por OVR — o nível da CARTA. O rating histórico já entrou uma vez, dentro do OVR
+// (nmOVR); relê-lo aqui seria usá-lo duas vezes. Os limiares foram escolhidos sobre os 85
+// jogadores para preservar a ordem de grandeza das faixas antigas (Lenda 6->9, Star 28->30,
+// Solido 31->34, Role 20->12) e a contagem de estrelas (15->17).
+const CFG_NIVEL={LENDA_OVR:21,STAR_OVR:18,SOLIDO_OVR:16,ESTRELA_OVR:20};
+// ratingCompetitivo foi REMOVIDO: nenhum ponto do motor lê mais o rating histórico.
+// Ele entra uma vez, dentro de nmOVR, e vira OVR. Quem precisa do valor bruto para
+// RELATÓRIO (bancada/rating.js) lê o campo `rating` do jogador diretamente.
 // ORQUESTRADOR PRISMA→ZÊNITE: classifica (função+sub) e avalia (OVR) um jogador de uma vez.
 function aplicarAvaliacaoContextual(p){
   const fallback=(!p.primario||!p.secundario)?classificar(p):null;
   const role=p.primario||fallback[0],sec=role==="IGL"?(p.secundario||fallback[1]):roleSecundarioSeguro(role,p.secundario||fallback[1],p);
   const combatRole=role==="IGL"?(sec||"Rifler"):role,style=nmOVR(p,combatRole),C=CFG_AVALIACAO;
   const ovr=role==="IGL"?iglOvr(style.core,p.colocacao):Math.min(C.OVR_MAX,Math.max(C.OVR_MIN,style.ovr));
-  const sub=subArquetipo(combatRole,p,style.style);
-  return Object.assign(p,{ovr,combatRole,role1:role==="IGL"?"IGL":role,role2:role==="IGL"?null:sec,playstyle:style.style,style,sub,esteira:ESTEIRA[role]});
+  // `estrela` PRECISA ser decidida aqui: ela deriva do OVR, que só existe neste ponto.
+  // (Calculá-la antes, sobre o jogador cru, devolvia sempre false e apagava silenciosamente
+  //  toda a penalidade de ego da química.)
+  return Object.assign(p,{ovr,combatRole,role1:role==="IGL"?"IGL":role,role2:role==="IGL"?null:sec,
+    playstyle:style.style,style,estrela:ovr>=CFG_NIVEL.ESTRELA_OVR});
 }
 function avaliarJogador(p){const classe=classificar(p);const role=classe[0];
-  const estrela=ehEstrela(p);
-  return aplicarAvaliacaoContextual({...p,primario:role,secundario:classe[1],secForte:classe.secForte!==false,classe:classe.join("-"),estrela});}
+  // `estrela` sai de aplicarAvaliacaoContextual, que é onde o OVR passa a existir.
+  return aplicarAvaliacaoContextual({...p,primario:role,secundario:classe[1],secForte:classe.secForte!==false,classe:classe.join("-")});}
 // PRISMA · passe de TIME: distribui as funções olhando o elenco, não o jogador isolado.
 //  • cap 2 no role 1: no máx 2 jogadores com a mesma função primária; o excedente desce pra 2ª melhor afinidade.
 //  • AWP: todo time tem AWPer — se ninguém é, o de maior sn assume (role 1; role 2 se for o IGL).
 // idempotente (deriva da afinidade dos atributos, nunca do estado atual → seguro re-rodar). NÃO mexe em
-// OVR (fica no melhor encaixe do jogador, ninguém é rebaixado) nem na esteira/sub.
+// OVR (fica no melhor encaixe do jogador, ninguém é rebaixado) nem no playstyle.
 function distribuirRoles(engs){
   const naoIgl=engs.filter(e=>!e.isIGL);
   const sc=new Map(naoIgl.map(e=>[e,afinidades(e)])); // mesma afinidade do PRISMA (fonte única)
@@ -801,7 +775,7 @@ const TEAMS=TIMES_DEF.map((t,i)=>{
     jogadores:t.jogadores.map(n=>{const j=POOL[n];
       return{
       id:"p"+(pid++),nick:j.nick,pais:j.pais,time:t.nome,tipo:"player",
-      ovr:j.ovr,prim:j.primario,sec:j.secundario,esteira:j.esteira,estrela:j.estrela,
+      ovr:j.ovr,prim:j.primario,sec:j.secundario,estrela:j.estrela,
       _eng:j /* objeto do motor (avaliação A/B/C) usado no cálculo de química */
     };}),
     treinador:t.coach?{id:"c"+i,nick:t.coach,pais:t.coachPais||PAISES_MAP[t.coach]||"—",time:t.nome,tipo:"coach", // coachPais inline: times novos não precisam mexer no PAISES_MAP
@@ -832,13 +806,24 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓL
   // ROUND VIVO: o round é uma SEQUÊNCIA DE DUELOS; o vencedor EMERGE (não é um dado só).
   // D_DUELO = decisão de UM duelo (bem mais raso que o round; o round é a soma de ~5-9 duelos).
   // pistol é quase cara-ou-coroa (D alto) → o azarão ganha pistol/anti-eco e o 13-0 fica raro.
-  D_DUELO:112,D_DUELO_PIST:360,OPEN_SCALE:520,CLUTCH_DUEL:.22,CLUTCH_X:.115,CLUTCH_EXP:1.55,LADO_MAPA_P:.013,
-  SAVE_BASE:.30,SAVE_MEN:.10,SAVE_VALUE:.20,CLOSE_MEN:.30, // salvar (eco em desvantagem) e fechar bomb/tempo (vantagem de homem) — CLOSE_MEN mais alto = menos kills de limpeza (KPR/round ao real), mesmo vencedor, clutch 1vX intacto
-  // ——— BOMBA / RELÓGIO (assimetria real T×CT): o round tem fases, não é só eliminar ———
-  // pré-plant: o T tenta plantar (cresce com tempo e vantagem de homem); se o relógio estoura sem plant, o CT vence (default/hold).
-  RND_TEMPO:6,PLANT_BASE:.05,PLANT_TEMPO:.05,PLANT_MEN:.11,
-  // pós-plant: a bomba tem 40s. T segura ângulos (edge POST_EDGE); CT precisa retomar+defusar antes da detonação.
-  PP_TEMPO:3,POST_EDGE:.07,DEFUSE_BASE:.24,DEFUSE_MEN:.22,PLANT_BONUS:800,KILL_REWARD:90,
+  D_DUELO:112,D_DUELO_PIST:360,OPEN_SCALE:520,CLUTCH_DUEL:.22,CLUTCH_X:.090,CLUTCH_EXP:1.55,LADO_MAPA_P:.013,
+  SAVE_BASE:.105,SAVE_MEN:.035,SAVE_VALUE:.07, // salvar (eco em desvantagem): por TICK de relógio, não por duelo
+  // ——— RELÓGIO REAL (CS2): o round tem 115s e a bomba 40s. O duelo é um EVENTO SOBRE O RELÓGIO,
+  // não o próprio relógio. Antes o laço só avançava quando alguém morria, então era impossível
+  // existir round quieto, default sem contato ou perda de tempo sem baixa — e foi preciso inventar
+  // um "fecha por vantagem de homem" só para segurar o KPR. Agora o tempo corre sozinho.
+  RND_SEGUNDOS:115,BOMBA_SEGUNDOS:40,TICK:5,
+  // chance de CONTATO por tick. O ritmo é sorteado uma vez por round a partir da agressão coletiva
+  // do lado T (quem dita o tempo no CS): composição agressiva executa rápido, composição posicional
+  // joga default. É daí que nascem os rounds de 0-1 kill.
+  CONTATO_BASE:.42,CONTATO_AGR:.10,CONTATO_RITMO:.60,CONTATO_MIN:.08,CONTATO_MAX:2.2,
+  CONTATO_POS:1.45,      // pós-plant o contato é forçado: o CT precisa retomar antes da detonação
+  CONTATO_DESV:.16,      // lado em desvantagem evita contato e joga o relógio (substitui o antigo CLOSE_MEN)
+  // pré-plant: o T tenta plantar; a chance cresce com o tempo decorrido e com a vantagem de homem.
+  // Se o relógio estoura sem plant, o CT vence (default/hold).
+  PLANT_BASE:.012,PLANT_TEMPO:.100,PLANT_MEN:.030,
+  // pós-plant: T segura ângulos (POST_EDGE); CT precisa limpar e defusar antes da detonação.
+  POST_EDGE:.07,DEFUSE_BASE:.065,DEFUSE_MEN:.10,PLANT_BONUS:800,
   EXP_KILL:1.15,EXP_OPEN:1.10,TRADE_CHANCE:.56,TRADE_CONTEXT:.15, // EXP_KILL comprime a distribuição de kills; TRADE_CHANCE menor = menos refrag = KPR/round ao real; EXP_OPEN: abertura é menos sobre fp puro
   // PARTICIPAÇÃO por FUNÇÃO (multiplica fragPeso): baixa/sobe o VOLUME de duelos do papel — mexe em kills
   // E mortes juntos (o AWPer real joga menos duelos mas ganha), então KPR e DPR caem sem distorcer o K/D.
@@ -852,7 +837,7 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓL
   // ASSIST_CHANCE≈razão A/K alvo; peso do assistente = ASSIST_BASE+ASSIST_UT_W·ut (support/IGL ganham
   // mais); ASSIST_DEAD_W desconta quem já morreu; ASSIST_OPEN_MULT: abertura tem mais flash-assist.
   ASSIST_CHANCE:.30,ASSIST_OPEN_MULT:1.15,ASSIST_CONTEXT:.10,ASSIST_BASE:12,ASSIST_UT_W:.9,ASSIST_DEAD_W:.5,
-  FRAG_FP_BASE:35,FRAG_OVR:.003,FRAG_RATING:.90,RATING_REF:1.16,FORMA_RATING:.35, // fp dá o perfil; rating observado calibra a eficiência sem nomes
+  FRAG_FP_BASE:35,FRAG_OVR:.003,FRAG_OVR_MULT:.045,FRAG_OVR_REF:17.56, // fp dá o perfil; o NÍVEL DA CARTA (OVR) calibra a eficiência — nunca o rating histórico
   DUELO_BASE:12,DUELO_OVR:4.6,   // skillDuelo: força de combate por OVR (base + inclinação) — quem GANHA o round
   // Exposição decide quem participa do contato perdido. O volume anterior
   // permanece como sinal residual; contexto/posicionamento carregam a identidade.
@@ -862,7 +847,16 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓL
   CONTACT_EN:{opening:{CT:.30,TR:.35},preplant:{CT:.02,TR:.06},postplant:{CT:.08,TR:0}},
   CONTACT_POS:{AWPer:{opening:.10,preplant:.03,postplant:.03},Lurker:{opening:.06,preplant:.03,postplant:.03},
     Support:{opening:.02,preplant:.01,postplant:.01},Rifler:{opening:.02,preplant:.01,postplant:.01}},
-  MAPA_SCALE:380,MAPA_CAP:.06,SUB_ABRE:0.72,SUB_INT:40};
+  MAPA_SCALE:380,MAPA_CAP:.06,AGR_ABRE:0.72,
+  // IDENTIDADE ÚNICA: agressão e afinidade de lado vêm do PLAYSTYLE (traits.pace / traits.ct / traits.t).
+  // Antes vinham de um sub-arquétipo paralelo, derivado do próprio playstyle e por isso capaz de
+  // contradizê-lo. As escalas abaixo foram MEDIDAS sobre os 85 jogadores para preservar o
+  // desvio-padrão do efeito anterior — só a fonte da identidade muda, não a magnitude dela.
+  // sd(agressão) 0.363 → traits.pace 0.249; sd(lado CT) 2.049 → traits.ct 0.346; sd(lado T) 1.852 → traits.t 0.360.
+  STYLE_AGR:1.4,STYLE_LADO:{ct:5.9,t:5.2},
+  // piso da forma do dia: quanto uma noite ruim pode de fato ser ruim. AMORT=1 seria sem
+  // amortecimento; abaixo disso a queda é comprimida (craque tem piso alto, mas não parede).
+  FORMA_PISO_BASE:.50,FORMA_PISO_AMORT:.35};
 // slots de companheiros (0..4) exceto o matador — candidatos a assist, pré-computado p/ não alocar por kill
 const ASSIST_SLOTS=[[1,2,3,4],[0,2,3,4],[0,1,3,4],[0,1,2,4],[0,1,2,3]];
 
@@ -885,16 +879,19 @@ const faSwingMorte=(meu,ini)=>faWP(meu-1,ini)-faWP(meu,ini);  // <=0
 const FA_ECO={full:{full:1,force:.9,eco:.62,pistol:.55},force:{full:1.18,force:1,eco:.78,pistol:.68},
   eco:{full:1.6,force:1.3,eco:1,pistol:.85},pistol:{full:1.55,force:1.25,eco:.95,pistol:1}};
 const faEco=(mb,vb)=>(FA_ECO[mb]&&FA_ECO[mb][vb])||1;
-const CFG_FA={BASE:.592,W_EK:.385,W_SURV:.160,W_KAST:.240,W_MULTI:.042,W_SWING:.10,PESO_MORTE:.95,PESO_OPEN:.216, // ⚙ balanceamento do FALLEnANGELs (pesos do rating) — BASE recentra o nível após ADR/KAST/kills irem ao real
+// BASE recentrada de .592 para .614 ao remover o PRIOR: o prior tinha média ligeiramente
+// positiva no pool, e sem ele a média simulada caía para 1,140. Em .614 ela volta a 1,163,
+// que é a média histórica do próprio elenco — a referência externa, agora só de validação.
+const CFG_FA={BASE:.614,W_EK:.385,W_SURV:.160,W_KAST:.240,W_MULTI:.042,W_SWING:.10,PESO_MORTE:.95,PESO_OPEN:.216, // ⚙ balanceamento do FALLEnANGELs (pesos do rating) — BASE recentra o nível após ADR/KAST/kills irem ao real
   // W_EK menor + BASE maior = tiers comprimidos (topo desce, 19-22 se sobrepõem) sem matar a variação (forma é que oscila)
   // ADR (dano por round) entra como sinal independente das kills: parte do peso saiu de W_EK pra cá,
   // então quem dá muito dano sem converter (ou vice-versa) varia → mais sobreposição entre OVRs (vida).
   W_ADR:.0019,ADR_REF:76,W_TRADE:.075,OPEN_D_W:.6, // fidelidade: dano + trade (refrag); morte-de-abertura pesa menos (tentar a entrada é a função) — HLTV
-  IMP_OVR:.012,IGL_SIS:.015, // impacto escala com a SKILL dentro da função (±~5%, centrado em 16); IGL: crédito de sistema moderado
-
-  // Prior moderado do nível observado: ancora a média sem decidir o mapa. Substitui o antigo
-  // bônus de firepower, que confundia um atributo do card com desempenho pós-jogo.
-  PRIOR:{ref:1.16,per:.45,min:-.18,max:.27}};
+  IMP_OVR:.012,IGL_SIS:.015}; // impacto escala com a SKILL dentro da função (±~5%, centrado em 16); IGL: crédito de sistema moderado
+// O PRIOR do rating histórico foi REMOVIDO. Ele injetava 45% do desvio do rating real
+// direto na nota final: uma constante por jogador, com desvio 0,081 ENTRE jogadores e
+// ZERO dentro deles. Media-se o motor copiando o alvo. O rating histórico entra uma
+// única vez, no OVR da carta (nmOVR); daqui em diante o motor só enxerga a carta.
 // impacto por função no kill: entry/rifler que fragga gera mais valor que support/igl (centrado ~1.0)
 const FA_IMPACTO={AWPer:1.035,Entry:1.065,Lurker:1.04,Rifler:1.03,Support:.97,IGL:.955}; // calibrado por validação real×sim (com IMP_OVR o impacto escala por skill; bases recentradas)
 // componentes somáveis do rating, extraídos sem alterar valores ou ordem aritmética.
@@ -910,16 +907,15 @@ function fallenAngelsComponents(ev){const C=CFG_FA,R=ev.totalRounds||1;
   const adr=(ev.dmg||0)/R;                                   // dano por round (ADR) — sinal de impacto independente das kills
   const adrTerm=(adr-C.ADR_REF)*C.W_ADR;                     // centrado: quem dá muito dano sobe, pouco dano desce (suave)
   const tradePR=(ev.tradeK||0)/R*C.W_TRADE;                  // eficiência de trade: refrag pelo time vale rating
-  const prior=Math.max(C.PRIOR.min,Math.min(C.PRIOR.max,((ev.ratingBase??C.PRIOR.ref)-C.PRIOR.ref)*C.PRIOR.per));
   // impacto EFETIVO = base da função × skill dentro dela (AWPer de elite ≠ AWPer modesto); IGL soma o crédito de sistema
   const impEf=(ev.impacto??1)*(1+C.IMP_OVR*((ev.ovr??16)-16));
   const sistema=ev.prim==="IGL"?C.IGL_SIS:0;
   return {base:C.BASE,economyAdjustedKills:ekpr*C.W_EK*impEf,survival:survPR*C.W_SURV,
     kast:kast*C.W_KAST,multikill:multiScore*C.W_MULTI,swing:(swing/R)*C.W_SWING,
-    opening:openPR,damage:adrTerm,trade:tradePR,prior,system:sistema};}
+    opening:openPR,damage:adrTerm,trade:tradePR,system:sistema};}
 // rating FALLEnANGELs de um jogador a partir do seu log de eventos no mapa
 function fallenAngels(ev){const c=fallenAngelsComponents(ev);
-  return c.base+c.economyAdjustedKills+c.survival+c.kast+c.multikill+c.swing+c.opening+c.damage+c.trade+c.prior+c.system;}
+  return c.base+c.economyAdjustedKills+c.survival+c.kast+c.multikill+c.swing+c.opening+c.damage+c.trade+c.system;}
 
 /* ╔═══════════════════════════════════════════════════════════════════╗
    ║  MARÉ — forma do dia e de campanha (o motor de variância)          ║
@@ -927,14 +923,16 @@ function fallenAngels(ev){const c=fallenAngelsComponents(ev);
    ║  craque oscila pouco e tem piso alto; role player é streaky. É o    ║
    ║  que faz cada run do roguelike ser diferente sem deslocar a média.  ║
    ╚═══════════════════════════════════════════════════════════════════╝ */
-// Faixas calculadas por desempenho. Função e firepower só distinguem role players dentro
-// da faixa comum; nenhum ID, nick, time ou época participa desta decisão.
-function tierDe(j){const a=j._eng||j,rating=ratingCompetitivo(a);
-  if(rating>=CFG_NIVEL.LENDA_MIN)return "Lenda";
-  if(rating>=CFG_NIVEL.STAR_MIN)return "Star";
+// Faixas calculadas pelo NÍVEL DA CARTA (OVR). Função e firepower só distinguem role players
+// dentro da faixa comum; nenhum ID, nick, time ou época participa desta decisão.
+function tierDe(j){const a=j._eng||j,ovr=j.ovr??a.ovr??13;
   const fp=a.fp??60,prim=a.primario||j.primario||"Rifler";
-  if(rating<=CFG_NIVEL.ROLE_MAX||((prim==="IGL"||prim==="Support")&&fp<55))return "Role";
-  return "Solido";}
+  // IGL/Support de pouco fogo é streaky por função, não por nível — regra da carta, preservada.
+  if((prim==="IGL"||prim==="Support")&&fp<55&&ovr<CFG_NIVEL.STAR_OVR)return "Role";
+  if(ovr>=CFG_NIVEL.LENDA_OVR)return "Lenda";
+  if(ovr>=CFG_NIVEL.STAR_OVR)return "Star";
+  if(ovr>=CFG_NIVEL.SOLIDO_OVR)return "Solido";
+  return "Role";}
 // perfil de distribuição por tier (piso=resistência a cair, vol=largura da oscilação)
 // vol = largura da oscilação da forma. Estrela/lenda OSCILA MENOS (consistente, piso alto); role
 // player é mais streaky (vol maior). É o que separa o craque confiável do jogador de altos e baixos.
@@ -942,7 +940,10 @@ const PERFIL_TIER={Lenda:{piso:.16,vol:.27,caudaBase:2.05,caudaFp:.65},Star:{pis
   Solido:{piso:.07,vol:.28,caudaBase:1.45,caudaFp:.40},Role:{piso:.05,vol:.29,caudaBase:1.30,caudaFp:.20}};
 // explosividade por função: largura e joelho suave da cauda de cima próprios de cada role.
 const PERFIL_ROLE={AWPer:{expl:1.32,cauda:1.32},Rifler:{expl:1.28,cauda:1.24},Entry:{expl:1.26,cauda:1.16},Lurker:{expl:1.14,cauda:1.16},Support:{expl:1.12,cauda:1.12},IGL:{expl:1.02,cauda:1.02}};
-const centroOVR=ovr=>clamp(0.28+(ovr-5)*0.060,0.53,1.44); // OVR puxa o centro (média esperada)
+// OVR puxa o centro (média esperada). Reajustado ao remover FORMA_RATING: sozinho, precisa
+// reproduzir a média (1,079) e o desvio (0,138) que o centro tinha quando misturava OVR e
+// rating histórico. Inclinação 0,060 -> 0,064; base 0,28 -> 0,277.
+const centroOVR=ovr=>clamp(0.277+(ovr-5)*0.064,0.53,1.44);
 // Mantém a forma fisicamente positiva sem piso duro: acima do joelho é identidade;
 // abaixo dele, a continuação exponencial é C1 e se aproxima de zero sem jamais formar uma parede.
 const formaPositiva=(valor,joelho=.05)=>valor>=joelho?valor:joelho*Math.exp(valor/joelho-1);
@@ -950,19 +951,19 @@ const formaPositiva=(valor,joelho=.05)=>valor>=joelho?valor:joelho*Math.exp(valo
 // formar parede. Continua estritamente crescente e não possui limite superior.
 const formaCaudaLivre=(valor,joelho,escala)=>valor<=joelho?valor:joelho+escala*Math.log1p((valor-joelho)/escala);
 // sorteia a forma do dia do jogador: o "humor competitivo" daquele mapa (assimétrica, com vida)
-function formaDoDia(j){const a=j._eng||j;const t=tierDe(j),p=PERFIL_TIER[t];
-  const centroBase=centroOVR(a.ovr??13),centro=centroBase*(1-CFG_SIM.FORMA_RATING)+ratingCompetitivo(a)*CFG_SIM.FORMA_RATING+(a._formaCamp??0); // OVR + nível observado, sem identidade nominal
+function formaDoDia(j){const a=j._eng||j;const t=tierDe(j),p=PERFIL_TIER[t],C=CFG_SIM;
+  const centro=centroOVR(a.ovr??13)+(a._formaCamp??0); // só a carta: o nível vem do OVR, não do rating histórico
   const fp=a.fp??60,sn=a.sn??0,cl=a.cl??45;const pr=PERFIL_ROLE[a.primario]||{expl:1,cauda:1};const ovrAmp=clamp(((a.ovr??13)-13)/55,0,.18); // OVR amplifica a explosão (suave: craque é consistente, não mais volátil)
   const combust=clamp((fp-45)/50,0.05,1.35);        // firepower explode (cauda pra cima)
   const apoio=clamp((sn*0.3+cl*0.4)/100,0,0.4);     // awp/clutch dão empurrão menor
   const pisoExtra=clamp((sn*0.5+cl*0.3)/100,0,0.35);// awp/clutch sobem o piso (consistência)
-  const piso=0.50+p.piso*((a.ovr??13)-5)/17+pisoExtra*0.3;
+  const piso=C.FORMA_PISO_BASE+p.piso*((a.ovr??13)-5)/17+pisoExtra*0.3;
   const joelhoCauda=Math.min((p.caudaBase+p.caudaFp*clamp((fp-50)/50,0,1.3))*(1.35+(pr.cauda-1)*1.4),CFG_SIM.FORMA_TAIL_KNEE);
   const g=gaussF();let desvio;
   if(g>=0)desvio=g*p.vol*(0.45+(combust+apoio)*1.0)*pr.expl*(1+ovrAmp); // cauda pra cima: firepower × explosão do role × OVR (amortecida: 1.50 é pico, não média)
   else desvio=g*p.vol*(1-p.piso*1.1);                  // queda amortecida por tier
   let r=centro+desvio;
-  if(r<piso)r=piso-(piso-r)*0.35;                       // piso resistente, não parede
+  if(r<piso)r=piso-(piso-r)*C.FORMA_PISO_AMORT;         // piso resistente, não parede
   return formaCaudaLivre(formaPositiva(r),joelhoCauda,CFG_SIM.FORMA_TAIL_SCALE);} // sem piso/teto duro
 
 // forma de CAMPANHA: sorteada uma vez no início do Major, vale os 9 mapas da run.
@@ -1006,21 +1007,29 @@ function combatProfile(j){const a=j?._eng||j||{};
     ratingImpact:FA_IMPACTO[activeCombatRole]??1};}
 function skillDuelo(j){const a=j._eng||j;const C=CFG_SIM;const ovr=j.ovr??a.ovr??13,profile=combatProfile(j);
   return (C.DUELO_BASE+(ovr-5)*C.DUELO_OVR)*profile.duelConversion;}
+// Quem fraga dentro do time: firepower dá o perfil, OVR dá o nível e a função dá o volume.
+// O multiplicador antes vinha do rating histórico (FRAG_RATING) — informação que a carta não
+// carrega. Agora vem do OVR, que é onde o rating histórico legitimamente entrou (nmOVR).
+// FRAG_OVR_MULT saiu de uma regressão do multiplicador antigo sobre o OVR (0,0565 por ponto)
+// e foi então baixado para 0,045, valor em que a sobreposição entre bandas de OVR volta à
+// faixa real (25–40%): um OVR 15 precisa conseguir superar um OVR 20 às vezes.
 function fragPeso(j){const a=j._eng||j;const C=CFG_SIM;const fp=a.fp??60,ovr=j.ovr??a.ovr??13;
   const profile=combatProfile(j); // participação por papel: AWPer/Lurker jogam menos duelos (menos volume, K/D intacto)
-  const rating=ratingCompetitivo(a),ratingMult=clamp(1+(rating-C.RATING_REF)*C.FRAG_RATING,.60,1.55);
-  return (C.FRAG_FP_BASE+fp)*(1+(ovr-13)*C.FRAG_OVR)*ratingMult*profile.fragMultiplier;} // OVR decide força; rating+fp distribuem produção individual
+  const nivelMult=clamp(1+(ovr-C.FRAG_OVR_REF)*C.FRAG_OVR_MULT,.60,1.55);
+  return (C.FRAG_FP_BASE+fp)*(1+(ovr-13)*C.FRAG_OVR)*nivelMult*profile.fragMultiplier;}
 
 // prepara um time pro combate: skills (com forma da noite), clutch e acumulador de stats
 // agressão de playstyle derivada do sub-arquétipo: quão na frente o jogador joga o round
 // (abre duelos e se expõe) vs quão posicional/clutcher ele é. Escala pela definição do arquétipo.
-function subAgr(j){const a=j?._eng||j||{},sb=a.sub;if(!sb)return 0; // agressão = direção do sub × quão definido ele é
-  const inten=Math.max(.35,Math.min(1,Math.abs(sb.eixo||0)/CFG_SIM.SUB_INT));return (sb.agr||0)*inten;}
+// agressão de combate = ritmo do PLAYSTYLE × quão definido ele é. Quem joga na frente
+// abre duelos e se expõe; quem joga posicional espera. Fonte única: traits.pace.
+function styleAgr(j){const a=j?._eng||j||{};
+  return styleTraits(STYLE_ID(a.playstyle)).pace*styleClareza(a)*CFG_SIM.STYLE_AGR;}
 // Perfil de exposição por evento. O peso é relativo aos companheiros vivos:
 // en/op/agressão aproximam iniciativa; sniper/closer/utility aproximam distância
 // do primeiro contato conforme função, lado e fase. Não altera a chance do time.
 function exposureProfile(j){const a=j?._eng||j||{},C=CFG_SIM,role=combatProfile(j).activeCombatRole;
-  const z=key=>((a[key]??50)-50)/50,agr=subAgr(j),profile={};
+  const z=key=>((a[key]??50)-50)/50,agr=styleAgr(j),profile={};
   for(const phase of ["opening","preplant","postplant"]){profile[phase]={};
     for(const side of ["CT","TR"]){
       let positional=0;
@@ -1047,13 +1056,13 @@ const TRADE_CONTEXT_MEAN=(()=>{const ps=Object.values(POOL),sum=ps.reduce((acc,p
 function assistContextProfile(j){const a=j?._eng||j||{};return {utility:(a.ut??50)/100};}
 const ASSIST_UTILITY_MEAN=(()=>{const ps=Object.values(POOL);return ps.reduce((sum,p)=>sum+assistContextProfile(p).utility,0)/ps.length;})();
 // ——— AFINIDADE DE LADO (composição): CT = segurar/anchor, T = tomar espaço/entry ———
-// derivada dos STATS (cl/ut/sn seguram bombsite; en/op/fp tomam espaço) + role + sub-arquétipo.
+// derivada dos STATS (cl/ut/sn seguram bombsite; en/op/fp tomam espaço) + role + PLAYSTYLE.
 // lurker/support/âncora puxam o time pro CT; entry/agressivo puxam pro T. zero-centrado: time
 // equilibrado fica ~0 (só a vantagem-base de CT), composição desbalanceada inclina o lado.
 const LADO_ROLE={Lurker:[5,1],Support:[4,0],AWPer:[2,2],IGL:[1,1],Rifler:[-1,3],Entry:[-4,5]};
-function ladoFitRaw(a){const r=LADO_ROLE[a.primario]||[0,0],s=(a.sub&&a.sub.lado)||[0,0];
-  return [.08*((a.cl||45)-50)+.06*((a.ut||50)-50)+.05*((a.sn||0)-35)+r[0]+s[0],   // segurar (CT)
-          .08*((a.en||45)-50)+.07*((a.op||50)-50)+.05*((a.fp||60)-55)+r[1]+s[1]];} // tomar espaço (T)
+function ladoFitRaw(a){const r=LADO_ROLE[a.primario]||[0,0],tr=styleTraits(STYLE_ID(a.playstyle)),E=CFG_SIM.STYLE_LADO;
+  return [.08*((a.cl||45)-50)+.06*((a.ut||50)-50)+.05*((a.sn||0)-35)+r[0]+tr.ct*E.ct,   // segurar (CT)
+          .08*((a.en||45)-50)+.07*((a.op||50)-50)+.05*((a.fp||60)-55)+r[1]+tr.t*E.t];}  // tomar espaço (T)
 // média da liga p/ ZERO-CENTRAR: a afinidade vira DESVIO (time equilibrado ~0; só composição inclina)
 const LADO_MEAN=(()=>{const ps=Object.values(POOL);let c=0,t=0;ps.forEach(p=>{const f=ladoFitRaw(p);c+=f[0];t+=f[1];});return[c/ps.length,t/ps.length];})();
 function ladoFit(j){const a=j._eng||j;if(a._lado)return a._lado;const f=ladoFitRaw(a);return a._lado=[f[0]-LADO_MEAN[0],f[1]-LADO_MEAN[1]];}
@@ -1075,14 +1084,14 @@ function prepTime(t,mapa){
     // afinidade de lado do time = média da composição (ct, t) — define a vantagem por lado
     ctEdge:js.reduce((s,j)=>s+ladoFit(j)[0],0)/js.length,
     tEdge:js.reduce((s,j)=>s+ladoFit(j)[1],0)/js.length,
-    cls:js.map(j=>j.cl||40),agr:js.map(j=>subAgr(j)),exposure:js.map(j=>exposureProfile(j)),
+    cls:js.map(j=>j.cl||40),agr:js.map(j=>styleAgr(j)),exposure:js.map(j=>exposureProfile(j)),
     preservation:js.map(j=>preservationValue(j)),
     tradeContext:js.map(j=>tradeContextProfile(j)),
     assistContext:js.map(j=>assistContextProfile(j)),
     ops:js.map(j=>j.op??50),trs:js.map(j=>j.tr??50), // categorias HLTV por jogador (tipo de kill)
     // força de abertura do time (op/entry/sniper/util — flashes ajudam a abrir): inclina o PRIMEIRO duelo
     open:js.reduce((s,j)=>s+((j.op??50)*.35+(j.en??45)*.30+(j.sn??0)*.20+(j.ut??50)*.15),0)/js.length,
-    stats:js.map(j=>{const profile=combatProfile(j);return {nick:j.nick||t.nome,impacto:profile.ratingImpact,prim:profile.primaryRole,ovr:j.ovr??16,ratingBase:ratingCompetitivo(j),ut:j.ut??50,k:0,d:0,a:0,dmg:0,tradeK:0,
+    stats:js.map(j=>{const profile=combatProfile(j);return {nick:j.nick||t.nome,impacto:profile.ratingImpact,prim:profile.primaryRole,ovr:j.ovr??16,ut:j.ut??50,k:0,d:0,a:0,dmg:0,tradeK:0,
       fa:{kills:[],mortes:[],assists:0,roundsKAST:0,multi:{},opK:0,opD:0},_kRound:0,_contribRound:false};})};
 }
 const TELEMETRY_SCHEMA_VERSION=1;
@@ -1103,6 +1112,11 @@ function combateRound(a,b,ctx){
   const C=CFG_SIM;
   const vivA=[0,1,2,3,4],vivB=[0,1,2,3,4];
   const mata=(arr,i)=>arr.splice(arr.indexOf(i),1); // remoção in-place (mesma ordem dos vivos; zero alocação por kill)
+  // Compra INDIVIDUAL: o eco-adjust do rating (FA_ECO) passa a comparar a arma de quem matou
+  // com a de quem morreu, que é o que o HLTV realmente faz. O rótulo de time só sobrevive para
+  // telemetria e para as guardas históricas.
+  const comprasA=ctx.comprasA||[ctx.buyA,ctx.buyA,ctx.buyA,ctx.buyA,ctx.buyA];
+  const comprasB=ctx.comprasB||[ctx.buyB,ctx.buyB,ctx.buyB,ctx.buyB,ctx.buyB];
   const buyA=ctx.buyA,buyB=ctx.buyB;
   const trace=ctx.trace||null;
   const before=trace?[a,b].map(team=>team.stats.map(stat=>({
@@ -1113,14 +1127,19 @@ function combateRound(a,b,ctx){
   const pick=(arr,fn)=>{let tot=0;for(let i=0;i<arr.length;i++){_psDuelo[i]=fn(arr[i]);tot+=_psDuelo[i];}tot=tot||1;
     let r=rndF()*tot;for(let i=0;i<arr.length;i++)if((r-=_psDuelo[i])<0)return arr[i];return arr[arr.length-1];};
   // um duelo: o lado VENCEDOR mata um do PERDEDOR. opening = 1º duelo; trade = refrag imediato.
-  function duelo(venc,vivV,buyV,perd,vivP,buyP,opening,trade,phase,victimSide){
+  // Classe de arma -> classe do eco-adjust. A AWP é equipamento de full buy: matar com ela
+  // não é kill de eco.
+  const classeEco=classe=>classe==="awp"?"full":classe;
+  function duelo(venc,vivV,comprasV,perd,vivP,comprasP,opening,trade,phase,victimSide){
     const expK=opening?C.EXP_OPEN:C.EXP_KILL;
     // quem FRAGA: firepower é o VOLUME; o TIPO de kill pende pra categoria HLTV (abertura→op, trade→tr)
     const tilt=i=>opening?Math.max(.25,1+C.W_OP_KILL*((venc.ops[i]-50)/50)):trade?Math.max(.25,1+C.W_TR_KILL*((venc.trs[i]-50)/50)):1;
-    const ki=pick(vivV,i=>Math.pow(Math.max(venc.frags[i],8),expK)*tilt(i)*(1+(opening?C.SUB_ABRE:0)*(venc.agr[i]||0)));
+    const ki=pick(vivV,i=>Math.pow(Math.max(venc.frags[i],8),expK)*tilt(i)*(1+(opening?C.AGR_ABRE:0)*(venc.agr[i]||0)));
     // quem MORRE: volume residual + exposição contextual; nunca bônus direto de DPR.
     const vi=pick(vivP,i=>Math.pow(Math.max(perd.frags[i],8),C.CONTACT_VOLUME_EXP[phase])*perd.exposure[i][phase][victimSide]);
-    const rec={estadoMeu:vivV.length,estadoInim:vivP.length,buyMatador:buyV,buyVitima:buyP,roundGanho:true};
+    const rec={estadoMeu:vivV.length,estadoInim:vivP.length,
+      buyMatador:classeEco(comprasV[ki]),buyVitima:classeEco(comprasP[vi]),roundGanho:true};
+    rec._ki=ki; // índice do matador: a recompensa por kill é individual (ver killsPorJogador)
     venc.stats[ki].fa.kills.push(rec);roundKills.push({team:venc,rec});
     venc.stats[ki].k++;venc.stats[ki]._kRound++;venc.stats[ki]._contribRound=true;
     venc.stats[ki].dmg+=C.ADR_SCALE*(C.ADR_KILL+rndF()*40);          // dano letal
@@ -1143,8 +1162,8 @@ function combateRound(a,b,ctx){
     if(trace){
       const killerTeam=venc===a?"A":"B",victimTeam=perd===a?"A":"B";
       trace.events.push({sequence:trace.events.length+1,type:"kill",opening:!!opening,trade:!!trade,
-        killer:{team:killerTeam,index:ki,id:telemetryPlayerId(venc,ki),buy:buyV},
-        victim:{team:victimTeam,index:vi,id:telemetryPlayerId(perd,vi),buy:buyP},
+        killer:{team:killerTeam,index:ki,id:telemetryPlayerId(venc,ki),buy:comprasV[ki]},
+        victim:{team:victimTeam,index:vi,id:telemetryPlayerId(perd,vi),buy:comprasP[vi]},
         assist:ai===null?null:{team:killerTeam,index:ai,id:telemetryPlayerId(venc,ai)},
         victimTraded:false,kastTradeCredit:false});
     }
@@ -1157,64 +1176,74 @@ function combateRound(a,b,ctx){
   const preservationEdge=(team,alive)=>alive.reduce((sum,index)=>sum+team.preservation[index],0)/alive.length-PRESERVATION_MEAN;
   const tradeChance=(team,alive,victimIndex)=>{const readiness=alive.reduce((sum,index)=>sum+team.tradeContext[index].readiness,0)/alive.length;
     return C.TRADE_CHANCE+C.TRADE_CONTEXT*((readiness-TRADE_CONTEXT_MEAN.readiness)+(team.tradeContext[victimIndex].tradeability-TRADE_CONTEXT_MEAN.tradeability));};
-  let primeira=true,fim=null,g=0;               // fim: "A"/"B" se o round fecha por objetivo/save antes da eliminação
-  let plantado=false,tempo=0,pp=0,metodo=null,saveTeam=null; // saveTeam só marca a decisão explícita de guardar
+  let primeira=true,fim=null;                   // fim: "A"/"B" se o round fecha por objetivo/save antes da eliminação
+  let plantado=false,relogio=0,pp=0,metodo=null,saveTeam=null; // relogio/pp em SEGUNDOS; saveTeam marca a decisão de guardar
   let clutch=null;                              // 1ª vez que um lado fica em 1vX (pra medir/registrar o clutch)
-  while(vivA.length>0&&vivB.length>0&&fim===null&&g++<30){
-    let p=ctx.pEdgeA;
-    if(primeira)p=clamp(p+ctx.openEdgeA,.03,.97);                // abertura: melhor entry/AWP leva o 1º pick
-    if(plantado)p=clamp(p+(aCT?-C.POST_EDGE:C.POST_EDGE),.03,.97); // pós-plant: o T segura ângulos do bombsite (edge defensivo)
-    // clutch: o último vivo segura ângulos e isola os inimigos que empurram → edge por duelo que CRESCE com X
-    // (mantém a força de time no duelo, só soma o bônus de clutch + habilidade cl). Calibrado p/ ~real.
-    if(vivA.length===1&&vivB.length>1)p=clamp(p+Math.pow(vivB.length-1,C.CLUTCH_EXP)*C.CLUTCH_X+((a.cls[vivA[0]]||45)-50)/100*C.CLUTCH_DUEL,.03,.97);
-    if(vivB.length===1&&vivA.length>1)p=clamp(p-Math.pow(vivA.length-1,C.CLUTCH_EXP)*C.CLUTCH_X-((b.cls[vivB[0]]||45)-50)/100*C.CLUTCH_DUEL,.03,.97);
-    const aWins=rndF()<p;
-    const venc=aWins?a:b,perd=aWins?b:a,vivV=aWins?vivA:vivB,vivP=aWins?vivB:vivA,buyV=aWins?buyA:buyB,buyP=aWins?buyB:buyA;
-    const phase=primeira?"opening":plantado?"postplant":"preplant";
-    const vi=duelo(venc,vivV,buyV,perd,vivP,buyP,primeira,false,phase,sideOf(perd));
-    const victimEvent=trace?trace.events[trace.events.length-1]:null;
-    mata(aWins?vivB:vivA,vi);
-    primeira=false;
-    // TRADE/refrag: o time que LEVOU a kill troca na hora (o entry abriu, mas é trocado)
-    const vVnow=aWins?vivA:vivB,vPnow=aWins?vivB:vivA; // venc do duelo segue vivo; perd perdeu 1
-    // oportunidade de trade segue prontidão/spacing; QUEM pega o trade kill pende pra tr.
-    // NÃO troca contra um CLUTCHER (vencedor sozinho): o último vivo isola os duelos — sem isso o 1vX morre injusto.
-    if(vPnow.length>0&&vVnow.length>1&&rndF()<tradeChance(perd,vPnow,vi)){
-      const vi2=duelo(perd,vPnow,buyP,venc,vVnow,buyV,false,true,phase,sideOf(venc));
-      mata(aWins?vivA:vivB,vi2);
-      const kastTradeCredit=rndF()<C.KAST_TRADE_P;
-      if(kastTradeCredit)perd.stats[vi]._contribRound=true; // KAST: parte de quem morreu e foi TROCADO ganha crédito de "traded" (KAST_TRADE_P amortece p/ ~72% real) — fiel ao "T" do KAST
-      if(victimEvent){victimEvent.victimTraded=true;victimEvent.kastTradeCredit=kastTradeCredit;}
+  // RITMO do round: sorteado uma vez, a partir da agressão coletiva do lado T — é o lado T que
+  // dita o tempo no CS (executa cedo ou joga default). Um número por round, não por duelo: é o que
+  // permite existir round quieto e round frenético em vez de todos iguais.
+  const idxT=aCT?vivB:vivA,timeT=aCT?b:a;
+  const agrT=idxT.reduce((soma,i)=>soma+(timeT.agr[i]||0),0)/Math.max(1,idxT.length);
+  const ritmo=clamp(1+C.CONTATO_AGR*agrT+gaussF()*C.CONTATO_RITMO,C.CONTATO_MIN,C.CONTATO_MAX);
+  const LIMITE=C.RND_SEGUNDOS+C.BOMBA_SEGUNDOS; // teto absoluto de segurança do laço
+  while(vivA.length>0&&vivB.length>0&&fim===null&&relogio<LIMITE){
+    relogio+=C.TICK;
+    // ——— CONTATO: o duelo é um evento sobre o relógio. Pode não acontecer neste tick. ———
+    const desvantagem=Math.abs(vivA.length-vivB.length);
+    // quem está em desvantagem evita o contato e joga o tempo — é isso que fecha rounds sem
+    // precisar duelar até o último homem (o antigo CLOSE_MEN existia só para simular esse efeito)
+    const pContato=clamp(C.CONTATO_BASE*ritmo*(plantado?C.CONTATO_POS:1)*(1-C.CONTATO_DESV*desvantagem),.01,.95);
+    if(rndF()<pContato){
+      let p=ctx.pEdgeA;
+      if(primeira)p=clamp(p+ctx.openEdgeA,.03,.97);                // abertura: melhor entry/AWP leva o 1º pick
+      if(plantado)p=clamp(p+(aCT?-C.POST_EDGE:C.POST_EDGE),.03,.97); // pós-plant: o T segura ângulos do bombsite
+      // clutch: o último vivo segura ângulos e isola os inimigos que empurram → edge que CRESCE com X
+      if(vivA.length===1&&vivB.length>1)p=clamp(p+Math.pow(vivB.length-1,C.CLUTCH_EXP)*C.CLUTCH_X+((a.cls[vivA[0]]||45)-50)/100*C.CLUTCH_DUEL,.03,.97);
+      if(vivB.length===1&&vivA.length>1)p=clamp(p-Math.pow(vivA.length-1,C.CLUTCH_EXP)*C.CLUTCH_X-((b.cls[vivB[0]]||45)-50)/100*C.CLUTCH_DUEL,.03,.97);
+      const aWins=rndF()<p;
+      const venc=aWins?a:b,perd=aWins?b:a,vivV=aWins?vivA:vivB,vivP=aWins?vivB:vivA;
+      const compV=aWins?comprasA:comprasB,compP=aWins?comprasB:comprasA;
+      const phase=primeira?"opening":plantado?"postplant":"preplant";
+      const vi=duelo(venc,vivV,compV,perd,vivP,compP,primeira,false,phase,sideOf(perd));
+      const victimEvent=trace?trace.events[trace.events.length-1]:null;
+      mata(aWins?vivB:vivA,vi);
+      primeira=false;
+      // TRADE/refrag: o time que LEVOU a kill troca na hora (o entry abriu, mas é trocado)
+      const vVnow=aWins?vivA:vivB,vPnow=aWins?vivB:vivA;
+      // NÃO troca contra um CLUTCHER (vencedor sozinho): o último vivo isola os duelos.
+      if(vPnow.length>0&&vVnow.length>1&&rndF()<tradeChance(perd,vPnow,vi)){
+        const vi2=duelo(perd,vPnow,compP,venc,vVnow,compV,false,true,phase,sideOf(venc));
+        mata(aWins?vivA:vivB,vi2);
+        const kastTradeCredit=rndF()<C.KAST_TRADE_P;
+        if(kastTradeCredit)perd.stats[vi]._contribRound=true; // KAST: parte de quem morreu e foi TROCADO ganha crédito
+        if(victimEvent){victimEvent.victimTraded=true;victimEvent.kastTradeCredit=kastTradeCredit;}
+      }
+      if(vivA.length===0||vivB.length===0)break; // eliminação total decide na hora
+      // registra a 1ª situação de clutch (1vX)
+      if(!clutch){if(vivA.length===1)clutch={aLone:true,x:vivB.length};else if(vivB.length===1)clutch={aLone:false,x:vivA.length};}
     }
-    if(vivA.length===0||vivB.length===0)break; // eliminação total decide na hora
-    // registra a 1ª situação de clutch (1vX): o solitário enfrenta X inimigos. medido/aproveitado depois.
-    if(!clutch){if(vivA.length===1)clutch={aLone:true,x:vivB.length};else if(vivB.length===1)clutch={aLone:false,x:vivA.length};}
-    // CLOSE por vantagem de homem: o lado dominante FECHA o round (executa o plant+detona / segura / retoma)
-    // sem precisar duelar até o último homem — como no CS real. 1vX NUNCA encerra aqui (o clutch é sempre jogado).
-    const adv=Math.abs(vivA.length-vivB.length);
-    if(adv>=2&&Math.min(vivA.length,vivB.length)>=2&&rndF()<C.CLOSE_MEN*adv){fim=vivA.length>vivB.length?"A":"B";metodo="close";break;}
-    // estado por LADO (não por time): o objetivo é assimétrico
+    // ——— OBJETIVO: corre com o relógio, tenha havido contato ou não ———
     const vivT=aCT?vivB:vivA,vivCT=aCT?vivA:vivB,buyT=aCT?buyB:buyA,buyCT=aCT?buyA:buyB;
-    tempo++;
     if(!plantado){
       // SAVE do T: muito atrás (>=2) → desiste do plant e preserva sobreviventes/economia; CT vence no tempo
-      if(vivCT.length-vivT.length>=2){const eco=buyT==="eco"||buyT==="force";
+      if(vivCT.length-vivT.length>=2){const eco=buyT==="eco"||buyT==="force"||buyT==="pistol";
         const losingTeam=aCT?b:a;
         if(rndF()<(eco?C.SAVE_BASE:C.SAVE_BASE*.35)+(vivCT.length-vivT.length)*C.SAVE_MEN+C.SAVE_VALUE*preservationEdge(losingTeam,vivT)){fim=ctVence();metodo="tempo";saveTeam=tVence();break;}}
-      // PLANT: chance cresce com o tempo e com a vantagem de homem do T (tomou o site)
-      const pPlant=clamp(C.PLANT_BASE+tempo*C.PLANT_TEMPO+(vivT.length-vivCT.length)*C.PLANT_MEN,0,.92);
+      // PLANT: cresce com a fração de tempo já gasta (o T precisa commitar) e com a vantagem de homem
+      const fracao=relogio/C.RND_SEGUNDOS;
+      const pPlant=clamp(C.PLANT_BASE+fracao*C.PLANT_TEMPO+(vivT.length-vivCT.length)*C.PLANT_MEN,0,.92);
       if(rndF()<pPlant){plantado=true;pp=0;}
-      else if(tempo>=C.RND_TEMPO){fim=ctVence();metodo="tempo";break;} // relógio estourou sem plant → CT segura (default/hold)
+      else if(relogio>=C.RND_SEGUNDOS){fim=ctVence();metodo="tempo";break;} // relógio estourou sem plant → CT segura
     }else{
-      pp++;
-      // SAVE do CT: pós-plant muito atrás (>=2) → não retoma e preserva sobreviventes/economia; T detona
-      if(vivT.length-vivCT.length>=2){const eco=buyCT==="eco"||buyCT==="force";
+      pp+=C.TICK;
+      // SAVE do CT: pós-plant muito atrás (>=2) → não retoma e preserva sobreviventes; T detona
+      if(vivT.length-vivCT.length>=2){const eco=buyCT==="eco"||buyCT==="force"||buyCT==="pistol";
         const losingTeam=aCT?a:b;
         if(rndF()<(eco?C.SAVE_BASE:C.SAVE_BASE*.35)+(vivT.length-vivCT.length)*C.SAVE_MEN+C.SAVE_VALUE*preservationEdge(losingTeam,vivCT)){fim=tVence();metodo="detona";saveTeam=ctVence();break;}}
       // DEFUSE: CT com pelo menos paridade limpa o site e defusa (cresce com a vantagem de homem)
       if(vivCT.length>=vivT.length&&rndF()<C.DEFUSE_BASE+Math.max(0,vivCT.length-vivT.length)*C.DEFUSE_MEN){fim=ctVence();metodo="defuse";break;}
       // DETONAÇÃO: relógio da bomba estourou → T vence o post-plant
-      if(pp>=C.PP_TEMPO){fim=tVence();metodo="detona";break;}
+      if(pp>=C.BOMBA_SEGUNDOS){fim=tVence();metodo="detona";break;}
     }
   }
   const venceA=fim!==null?fim==="A":vivA.length>0;
@@ -1229,7 +1258,10 @@ function combateRound(a,b,ctx){
     const vivo=viv.includes(i);
     if(s._contribRound||vivo){s.fa.roundsKAST++;if(kr===0)s.dmg+=C.ADR_SCALE*rndF()*C.ADR_CHIP;} // participou: chip de dano
     s._kRound=0;s._contribRound=false;});});
-  let kA=0,kB=0;roundKills.forEach(rk=>{rk.team===a?kA++:kB++;}); // kills por time no round → recompensa econômica
+  let kA=0,kB=0;roundKills.forEach(rk=>{rk.team===a?kA++:kB++;}); // kills por time no round
+  // kills POR JOGADOR no round: a recompensa por abate agora é individual e depende da arma
+  const killsJogA=[0,0,0,0,0],killsJogB=[0,0,0,0,0];
+  roundKills.forEach(rk=>{const idx=rk.rec._ki;if(idx!=null)(rk.team===a?killsJogA:killsJogB)[idx]++;});
   const clutchWon=clutch?(clutch.aLone?venceA:!venceA):null; // o solitário venceu o round?
   // método por ELIMINAÇÃO: com bomba no chão, o vencedor ainda resolve o objetivo (CT defusa / T detona)
   if(!metodo)metodo=plantado?(venceA===aCT?"defuse":"detona"):"elim";
@@ -1254,7 +1286,9 @@ function combateRound(a,b,ctx){
     trace.players={A:finishPlayers(a,"A",vivA,buyA,before[0]),B:finishPlayers(b,"B",vivB,buyB,before[1])};
   }
   const premioV=(metodo==="defuse"||metodo==="detona")?PREMIO_OBJETIVO:PREMIO_VITORIA; // CS2: objetivo paga 3500
-  return {venceA,sobreviventes:vivVfinal.length,destaque,plantado,metodo,premioV,killsA:kA,killsB:kB,clutchX:clutch&&clutch.x,clutchWon};
+  return {venceA,sobreviventes:vivVfinal.length,destaque,plantado,metodo,premioV,killsA:kA,killsB:kB,
+    killsPorJogador:{A:killsJogA,B:killsJogB},vivosA:[...vivA],vivosB:[...vivB],
+    clutchX:clutch&&clutch.x,clutchWon};
 }
 
 // força do dia: oscila inverso à química (coeso=consistente, caótico=imprevisível)
@@ -1268,20 +1302,90 @@ function forcaDoDia(efetiva,quimica){
    Comprar GASTA; morrer PERDE equipamento (sobrevivente carrega a arma);
    cada kill paga. A decisão de compra é ciente do carrego. Daí emergem
    eco, force-buy de leitura, anti-eco e a conversão pós-pistol. */
-const BUY={pistol:.5,eco:.12,force:.62,full:1.0};
-// ECONOMIA REAL: comprar GASTA dinheiro; morrer PERDE equipamento (sobrevivente carrega a arma).
-const COMPRA_CUSTO={pistol:0,eco:200,force:2400,full:4300}; // custo de equipar 5 do zero
-const EQUIP_CARRY=500; // valor de equipamento que cada sobrevivente leva pro próximo round (não precisa recomprar)
-const custoReal=(buy,surv)=>Math.max(0,COMPRA_CUSTO[buy]-(surv||0)*EQUIP_CARRY); // só repõe quem morreu
-// compra inteligente, ciente do carregamento: full se dá pra equipar; senão força (com folga) ou eco
-// pra RESETAR; force-buy de LEITURA quando vem de poucas derrotas (negar o anti-eco / pegar de surpresa).
-const decidirBuy=(m,pist,ls,surv)=>{
-  if(pist)return"pistol";
-  if(m>=custoReal("full",surv))return"full";
-  if(m>=custoReal("force",surv)+1500)return"force";
-  if((ls||0)<=1&&m>=custoReal("force",surv)&&rndF()<.45)return"force";
-  return"eco";};
+// Poder de fogo relativo por classe de compra (entra na força do round).
+const BUY={pistol:.5,eco:.12,force:.62,full:1.0,awp:1.06};
+/* ECONOMIA EM UNIDADES REAIS (CS2), POR JOGADOR.
+   Antes o dinheiro era um pote único do time e equipar OS CINCO custava 4300 — enquanto
+   prêmios, escada de derrota e teto usavam os valores exatos do jogo. Receita real com
+   despesa cinco vezes barata: o time quase nunca ficava sem comprar, e a punição por
+   perder rounds sumia. Agora cada jogador tem carteira própria e paga preço de CS2. */
+const CUSTO={
+  pistol:0,                       // pistola inicial: já vem com o round
+  eco:200,                        // no máximo um upgrade de pistola
+  force:2500,                     // SMG/pistola forte + colete
+  full:4300,                      // rifle (2700) + colete e capacete (1000) + granada (300-600)
+  awp:6050                        // AWP (4750) + colete e capacete + granada
+};
+// O sobrevivente carrega a ARMA para o próximo round: só repõe colete e utilidade.
+const CUSTO_REPOR={pistol:0,eco:0,force:1000,full:1800,awp:1800};
+// Recompensa por kill PELA ARMA (CS2 real). O AWPer ganha muito menos por abate — é uma
+// identidade econômica que o modelo antigo, com um valor único por time, não podia ter.
+const RECOMPENSA_ARMA={pistol:300,eco:300,force:600,full:300,awp:100};
 const PREMIO_VITORIA=3250,PREMIO_OBJETIVO=3500,LOSS_BONUS=[1400,1900,2400,2900,3400],TETO_GRANA=16000; // CS2: bomba/defuse pagam 3500; escada de derrota 1400→3400
+/* Decisão de compra: COLETIVA no nível (o time inteiro compra ou o time inteiro salva —
+   comprar sozinho é o erro clássico), INDIVIDUAL no loadout (cada um compra o melhor que
+   sua carteira permite dentro do nível decidido, e o AWPer tenta a AWP).
+   Devolve um array de 5 classes e desconta o custo de cada carteira. */
+const PRECO_RIFLE=2700; // AK-47: o preço do rifle que se dropa para o companheiro
+/* Decisão de compra: COLETIVA no nível, INDIVIDUAL no loadout.
+
+   A regra que faz a economia do CS parecer CS é a de SALVAR: um time que não consegue
+   equipar todo mundo faz eco completo e volta full no round seguinte. Forçar no meio do
+   caminho é o erro que drena a economia — por isso o force-buy aqui é decisão deliberada
+   (leitura para negar o anti-eco, ou desespero em sequência de derrotas), nunca o estado
+   padrão de quem está sem dinheiro. */
+function decidirCompra(dinheiro,armado,pistol,lossStreak,ehAwper){
+  if(pistol)return {compras:dinheiro.map(()=>"pistol"),extra:[0,0,0,0,0]};
+  const custoDe=(classe,i)=>armado[i]?CUSTO_REPOR[classe]:CUSTO[classe];
+  const quantosPodem=classe=>dinheiro.reduce((n,m,i)=>n+(m>=custoDe(classe,i)?1:0),0);
+  const caixa=dinheiro.reduce((soma,m)=>soma+m,0);
+
+  let nivel="eco";
+  if(quantosPodem("full")>=4)nivel="full";
+  // o caixa quase dá para o full de todos: um drop resolve — vale a compra em bloco
+  else if(quantosPodem("full")>=2&&caixa>=5*CUSTO.full*.85)nivel="full";
+  // desespero: em sequência longa de derrotas o eco não paga mais, força para quebrar o ciclo
+  else if((lossStreak||0)>=3&&quantosPodem("force")>=4)nivel="force";
+  // leitura: force ocasional vindo de poucas derrotas, para negar o anti-eco do rival
+  else if((lossStreak||0)<=1&&quantosPodem("force")>=4&&rndF()<.30)nivel="force";
+
+  const compras=dinheiro.map((m,i)=>{
+    if(nivel==="eco")return m>=custoDe("eco",i)?"eco":"pistol";
+    if(nivel==="force")return m>=custoDe("force",i)?"force":"eco";
+    if(ehAwper[i]&&m>=custoDe("awp",i))return "awp";
+    if(m>=custoDe("full",i))return "full";
+    return null; // curto para o full: candidato a receber um DROP
+  });
+
+  // DROP DE ARMA — mecânica central do CS e a razão de times profissionais comprarem em
+  // bloco: quem sobrou dinheiro compra um rifle a mais e joga para o companheiro curto.
+  const extra=[0,0,0,0,0];
+  if(nivel==="full"){
+    const sobra=i=>compras[i]?dinheiro[i]-custoDe(compras[i],i)-extra[i]:0;
+    for(let i=0;i<5;i++){
+      if(compras[i])continue;
+      // paga quem tiver a maior sobra e ainda cobrir um rifle inteiro
+      let pagador=-1,melhor=PRECO_RIFLE;
+      for(let k=0;k<5;k++)if(k!==i&&compras[k]&&sobra(k)>=melhor){melhor=sobra(k);pagador=k;}
+      if(pagador>=0){extra[pagador]+=PRECO_RIFLE;compras[i]="full";}
+      else{const m=dinheiro[i];compras[i]=m>=custoDe("force",i)?"force":m>=custoDe("eco",i)?"eco":"pistol";}
+    }
+  }
+  return {compras,extra};
+}
+// aplica a compra: desconta a carteira (inclusive o rifle comprado para um companheiro)
+function pagarCompra(dinheiro,armado,compras,extra){
+  compras.forEach((classe,i)=>{
+    const custo=(armado[i]?CUSTO_REPOR[classe]:CUSTO[classe])+((extra&&extra[i])||0);
+    dinheiro[i]=Math.max(0,dinheiro[i]-custo);
+  });
+}
+// classe de compra REPRESENTATIVA do time (moda), só para relatório/telemetria e para as
+// guardas históricas que leem uma compra por time. O motor usa a classe individual.
+function compraDoTime(compras){
+  const contagem={};compras.forEach(c=>contagem[c]=(contagem[c]||0)+1);
+  return Object.entries(contagem).sort((x,y)=>y[1]-x[1]||CUSTO[y[0]]-CUSTO[x[0]])[0][0];
+}
 // ——— identidade de mapa: cada mapa recompensa atributos diferentes (modula, não determina) ———
 // peso por atributo (soma ~1). a afinidade é medida CONTRA a média do próprio jogador em todos os
 // mapas, então lenda equilibrada varia quase nada (boa em tudo); só o especialista sente o mapa.
@@ -1312,9 +1416,15 @@ function simularMapa(A,B,fA,fB,mapaForcado,leve,options){
   const telemetry=options&&options.telemetry?{schemaVersion:TELEMETRY_SCHEMA_VERSION,kind:"polvora-round-events",map:mapa,
     teams:{A:telemetryTeam(a),B:telemetryTeam(b)},rounds:[]}:null;
   const formaDiaA=gaussF()*C.FORMA_DIA,formaDiaB=gaussF()*C.FORMA_DIA;
-  let pa=0,pb=0,mA=800,mB=800,lsA=0,lsB=0,r=0;
+  let pa=0,pb=0,lsA=0,lsB=0,r=0;
   let sA=0,sB=0; // sequências de vitória (momentum)
-  let survA=5,survB=5; // sobreviventes do round anterior (carregam equipamento → barateia a próxima compra)
+  // CARTEIRA e ARSENAL por jogador (não mais um pote de time): quem sobrevive carrega a arma.
+  const dinA=[800,800,800,800,800],dinB=[800,800,800,800,800];
+  let armadoA=[false,false,false,false,false],armadoB=[false,false,false,false,false];
+  // quem é AWPer tenta comprar AWP quando o time entra em full
+  const awperA=a.js.map(j=>combatProfile(j).activeCombatRole==="AWPer");
+  const awperB=b.js.map(j=>combatProfile(j).activeCombatRole==="AWPer");
+  const zerar=(dinheiro,valor)=>{for(let i=0;i<5;i++)dinheiro[i]=valor;};
   const rounds=[];
   // lados: 1º tempo A=CT · 2º tempo A=TR · OT (r≥25): alterna a cada 3 rounds (MR3 real)
   const ladoDe=(time,round)=>{const ehA=time===A;
@@ -1336,13 +1446,18 @@ function simularMapa(A,B,fA,fB,mapaForcado,leve,options){
   let alvo=13;
   while(pa<alvo&&pb<alvo){
     r++;
-    if(r===13){half1=[pa,pb];lsA=0;lsB=0;sA=0;sB=0;mA=800;mB=800;survA=5;survB=5;} // reset economia/momentum no 2º tempo
+    if(r===13){half1=[pa,pb];lsA=0;lsB=0;sA=0;sB=0;zerar(dinA,800);zerar(dinB,800);
+      armadoA=[false,false,false,false,false];armadoB=[false,false,false,false,false];} // reset econômico no 2º tempo
     const pistol=(r===1||r===13);
-    if(pistol){mA=800;mB=800;survA=5;survB=5;}
-    // OT (MR3): cada half de prorrogação começa com $10k fixos (real CS2) → full buy garantido
-    if(r>=25&&(r-25)%3===0){mA=10000;mB=10000;survA=0;survB=0;lsA=0;lsB=0;}
-    const buyA=decidirBuy(mA,pistol,lsA,survA),buyB=decidirBuy(mB,pistol,lsB,survB);
-    mA=Math.max(0,mA-custoReal(buyA,survA));mB=Math.max(0,mB-custoReal(buyB,survB)); // GASTA na compra (repõe só quem morreu)
+    if(pistol){zerar(dinA,800);zerar(dinB,800);armadoA=[false,false,false,false,false];armadoB=[false,false,false,false,false];}
+    // OT (MR3): cada half de prorrogação começa com $10k por jogador (real CS2) → full buy garantido
+    if(r>=25&&(r-25)%3===0){zerar(dinA,10000);zerar(dinB,10000);
+      armadoA=[false,false,false,false,false];armadoB=[false,false,false,false,false];lsA=0;lsB=0;}
+    const planoA=decidirCompra(dinA,armadoA,pistol,lsA,awperA),comprasA=planoA.compras;
+    const planoB=decidirCompra(dinB,armadoB,pistol,lsB,awperB),comprasB=planoB.compras;
+    pagarCompra(dinA,armadoA,comprasA,planoA.extra);pagarCompra(dinB,armadoB,comprasB,planoB.extra); // GASTA de cada carteira
+    const buyA=compraDoTime(comprasA),buyB=compraDoTime(comprasB); // rótulo do time (relatório/telemetria)
+    const poderA=comprasA.reduce((soma,c)=>soma+BUY[c],0)/5,poderB=comprasB.reduce((soma,c)=>soma+BUY[c],0)/5;
     // força do round por time = média de skill × economia × lado × momentum − tilt + forma do dia
     const momA=clamp(sA*C.MOM_STEP,0,C.MOM_MAX),momB=clamp(sB*C.MOM_STEP,0,C.MOM_MAX);
     // tilt = derrotas SEGUIDAS (= sequência de vitórias do rival); lsA/lsB agora é o nível da escada de grana
@@ -1351,42 +1466,46 @@ function simularMapa(A,B,fA,fB,mapaForcado,leve,options){
     const ladoA=ladoDe(A,r),ladoB=ladoDe(B,r);
     const ladoBonusA=ladoA==="CT"?bonusCtA:bonusTA;
     const ladoBonusB=ladoB==="CT"?bonusCtB:bonusTB;
-    const fRA=(baseA+ladoBonusA+formaDiaA)*(0.42+0.58*BUY[buyA])*(1+momA-tiltA);
-    const fRB=(baseB+ladoBonusB+formaDiaB)*(0.42+0.58*BUY[buyB])*(1+momB-tiltB);
+    const fRA=(baseA+ladoBonusA+formaDiaA)*(0.42+0.58*poderA)*(1+momA-tiltA);
+    const fRB=(baseB+ladoBonusB+formaDiaB)*(0.42+0.58*poderB)*(1+momB-tiltB);
     // pEdge = prob de A vencer UM duelo (raso); o VENCEDOR DO ROUND emerge da sequência de duelos
     // (vantagem de homem, clutch, save, trade nascem daí). pistol ≈ cara-ou-coroa → azarão tem chance.
     // viés do mapa: quem está de CT num mapa CT-sided ganha o edge por duelo (Nuke pesa p/ os dois lados)
     const pEdgeA=clamp(logistica(fRA,fRB,pistol?C.D_DUELO_PIST:C.D_DUELO)+(ladoA==="CT"?pLadoMapa:-pLadoMapa),.03,.97);
     const roundTrace=telemetry?{round:r,scoreBefore:[pa,pb],sides:{A:ladoA,B:ladoB},buys:{A:buyA,B:buyB}}:null;
-    const res=combateRound(a,b,{pEdgeA,openEdgeA,buyA,buyB,aIsCT:ladoA==="CT",trace:roundTrace});
+    const res=combateRound(a,b,{pEdgeA,openEdgeA,buyA,buyB,comprasA,comprasB,aIsCT:ladoA==="CT",trace:roundTrace});
     const venceA=res.venceA;
     // COFRE CS2: perdedor recebe o NÍVEL atual da escada (1ª derrota=1400) e sobe 1; vencedor
     // ganha o prêmio PELO MÉTODO (bomba/defuse=3500, resto=3250) e o nível do rival DESCE 1 (não zera).
-    if(venceA){pa++;sA++;sB=0;mA+=res.premioV;mB+=LOSS_BONUS[Math.min(lsB,4)];lsB=Math.min(lsB+1,4);lsA=Math.max(0,lsA-1);}
-    else{pb++;sB++;sA=0;mB+=res.premioV;mA+=LOSS_BONUS[Math.min(lsA,4)];lsA=Math.min(lsA+1,4);lsB=Math.max(0,lsB-1);}
+    // O prêmio vai para a CARTEIRA DE CADA JOGADOR, como no CS2 real.
+    const creditar=(dinheiro,valor)=>{for(let i=0;i<5;i++)dinheiro[i]+=valor;};
+    if(venceA){pa++;sA++;sB=0;creditar(dinA,res.premioV);creditar(dinB,LOSS_BONUS[Math.min(lsB,4)]);lsB=Math.min(lsB+1,4);lsA=Math.max(0,lsA-1);}
+    else{pb++;sB++;sA=0;creditar(dinB,res.premioV);creditar(dinA,LOSS_BONUS[Math.min(lsA,4)]);lsA=Math.min(lsA+1,4);lsB=Math.max(0,lsB-1);}
     if(pa===alvo-1&&pb===alvo-1)alvo+=3; // 12-12 → alvo 16 · 15-15 → 19 · 18-18 → 22 (OT repetível)
-    // bônus de plant (CS2): o T que plantou ganha $800 mesmo perdendo o round — mantém o lado perdedor vivo na economia
-    if(res.plantado){const tÉA=ladoA!=="CT"; if(tÉA){if(!venceA)mA+=C.PLANT_BONUS;}else{if(venceA)mB+=C.PLANT_BONUS;}}
-    // recompensa por kill: cada abate dá dinheiro (independe de ganhar/perder) — fragar mantém a economia viva.
-    // proxy do CS2 real por arma: force-buy joga de SMG ($600/kill) → paga mais; rifle/pistol $300 → base
-    const krA=buyA==="force"?C.KILL_REWARD*1.8:C.KILL_REWARD,krB=buyB==="force"?C.KILL_REWARD*1.8:C.KILL_REWARD;
-    mA+=res.killsA*krA;mB+=res.killsB*krB;
-    mA=Math.min(TETO_GRANA,mA);mB=Math.min(TETO_GRANA,mB);
-    // sobreviventes carregam equipamento pro próximo round (só quem comprou arma de verdade: force/full)
-    const deadA=res.killsB,deadB=res.killsA;
-    survA=(buyA==="force"||buyA==="full")?Math.max(0,5-deadA):0;
-    survB=(buyB==="force"||buyB==="full")?Math.max(0,5-deadB):0;
+    // bônus de plant (CS2): o T que plantou ganha $800 mesmo perdendo o round
+    if(res.plantado){const tÉA=ladoA!=="CT"; if(tÉA){if(!venceA)creditar(dinA,C.PLANT_BONUS);}else{if(venceA)creditar(dinB,C.PLANT_BONUS);}}
+    // recompensa por kill PELA ARMA de quem matou (CS2 real): AWP paga 100, SMG 600, rifle/pistola 300.
+    // É individual — o AWPer sustenta a própria economia com muito mais dificuldade.
+    res.killsPorJogador.A.forEach((n,i)=>{dinA[i]+=n*RECOMPENSA_ARMA[comprasA[i]];});
+    res.killsPorJogador.B.forEach((n,i)=>{dinB[i]+=n*RECOMPENSA_ARMA[comprasB[i]];});
+    for(let i=0;i<5;i++){dinA[i]=Math.min(TETO_GRANA,dinA[i]);dinB[i]=Math.min(TETO_GRANA,dinB[i]);}
+    // ARSENAL: só quem SOBREVIVEU carrega a arma para o próximo round; quem morreu perde tudo.
+    // Comprar eco/pistola não deixa nada para carregar.
+    const carrega=classe=>classe==="force"||classe==="full"||classe==="awp";
+    armadoA=comprasA.map((classe,i)=>carrega(classe)&&res.vivosA.includes(i));
+    armadoB=comprasB.map((classe,i)=>carrega(classe)&&res.vivosB.includes(i));
     // snapshot do K-D acumulado dos 10 jogadores até este round (pro scoreboard ao vivo animar).
     // leve: ninguém assiste → sem snapshot (era ~440 objetos por mapa jogados fora)
     const snapA=leve?null:a.stats.map(s=>({k:s.k,d:s.d})),snapB=leve?null:b.stats.map(s=>({k:s.k,d:s.d}));
     rounds.push({r,pa,pb,venceA,ladoA,ladoB,troca:(r===13),plantado:res.plantado,buyA,buyB,
+      comprasA:[...comprasA],comprasB:[...comprasB], // compra POR JOGADOR: buyA/buyB é só a moda do time
       clutchX:res.clutchX,clutchWon:res.clutchWon,destaque:res.destaque,snapA,snapB});
     if(roundTrace){roundTrace.scoreAfter=[pa,pb];telemetry.rounds.push(roundTrace);}
   }
   // rating FALLEnANGELs por jogador (contextual: swing, eco, KAST, multi-kills)
   const totalR=pa+pb;
   const rate=stats=>stats.map(s=>{
-    const rating=fallenAngels({...s.fa,totalRounds:totalR,impacto:s.impacto,prim:s.prim,ovr:s.ovr,ratingBase:s.ratingBase,dmg:s.dmg,tradeK:s.tradeK});
+    const rating=fallenAngels({...s.fa,totalRounds:totalR,impacto:s.impacto,prim:s.prim,ovr:s.ovr,dmg:s.dmg,tradeK:s.tradeK});
     return {nick:s.nick,k:s.k,d:s.d,a:s.a,rating:+rating.toFixed(2),
       kast:+((s.fa.roundsKAST||0)/totalR).toFixed(3),adr:Math.round((s.dmg||0)/totalR)};});
   const result={placar:[pa,pb],vencedorNome:pa>pb?A.nome:B.nome,vencedor:pa>pb?A:B,rounds,
@@ -1699,14 +1818,23 @@ const coachHTML=p=>`<div class="coach-seal">Treinador</div>
   <div class="ccore"><div class="ovr">${p.ovr}</div><div class="nick">${esc(p.nick)}</div></div>
   <div class="carac">${esc(p.carac)}</div>`;
 
-// ——— VERSO da carta: as 4 stats vêm do próprio SUB-ARQUÉTIPO (sub.stats, definido no SUBARQ) ———
+// ——— VERSO da carta: o PLAYSTYLE no topo e as 4 stats da receita dele embaixo ———
+// Mesma fonte que decide o OVR e a química, então o que a carta diz é o que o motor usa.
 const STAT_LABEL={fp:"Firepower",op:"Abertura",cl:"Clutch",ut:"Utilitário",en:"Entrada",tr:"Trade",sn:"AWP"};
-const STAT_VERSO_DEF=["fp","op","cl","ut"]; // fallback (sem sub)
+const STAT_VERSO_DEF=["fp","op","cl","ut"]; // Coringa (polivalente) e fallback
+// eixos da receita (espaço s6) → atributos da carta (espaço do jogador)
+const EIXO_ATTR={fogo:"fp",ent:"en",ab:"op",tr:"tr",cl:"cl",ut:"ut"};
+const statsDoEstilo=id=>{
+  const rec=id==="joker"?null:STYLE_RECIPE(id);
+  if(!rec)return STAT_VERSO_DEF;
+  const pesos=rec.ovrW||rec.w; // ovrW quando existe: é o que o nível realmente pondera
+  return Object.entries(pesos).sort((a,b)=>b[1]-a[1]).map(([eixo])=>EIXO_ATTR[eixo]).filter(Boolean);
+};
 const statBar=(lab,v)=>`<div class="statbar"><span class="sb-lab">${esc(lab)}</span><span class="sb-val">${Math.round(v||0)}</span></div>`;
-// verso do jogador: nome + estilo no topo e as 4 stats do sub-arquétipo embaixo
-const backPlayer=p=>{const e=p._eng||{};const base=(e.sub&&e.sub.stats)||STAT_VERSO_DEF;
-  const keys=["fp",...base.filter(k=>k!=="fp")].slice(0,4); // Firepower sempre 1º; os outros 3 na ordem de relevância do sub
-  return `<div class="cb-head">${esc(e.sub?e.sub.nome:(p.prim||""))}</div>`+
+const backPlayer=p=>{const e=p._eng||{};const id=STYLE_ID(e.playstyle);
+  const base=statsDoEstilo(id);
+  const keys=["fp",...base.filter(k=>k!=="fp")].slice(0,4); // Firepower sempre 1º; os outros 3 na ordem de peso da receita
+  return `<div class="cb-head">${esc(e.playstyle?STYLE_LABEL(id):(p.prim||""))}</div>`+
   `<div class="cb-stats">${keys.map(k=>statBar(STAT_LABEL[k],e[k])).join("")}</div>`;};
 // o que cada característica de treinador FAZ — objetivo, com os números reais do efeito no SINAPSE
 const CARAC_DESC={
