@@ -42,8 +42,8 @@
 /* ── CONTRATOS (o dado que circula entre os motores) ────────────────────
    @typedef {Object} Eng  — jogador avaliado (POOL[id]; vive em carta._eng)
      atributos crus: fp,en,tr,op,cl,sn,ut (0-100) · rating (HLTV real) · isIGL
-     do PRISMA: primario, secundario, secForte, sub{nome,eixo,agr,lado,stats}
-     do ZÊNITE: ovr (5-22) · estrela · esteira · caches: _lado,_mapBase,_formaCamp
+     do PRISMA: primario, secundario, secForte, playstyle (identidade única) · style{...}
+     do ZÊNITE: ovr (5-22) · estrela · caches: _lado,_mapBase,_formaCamp
    @typedef {Object} TimePronto — {nome,jogadores:[{_eng,...}],ef,quim} (após SINAPSE)
    @typedef {Object} ResultadoMapa — retorno de simularMapa:
      placar[2] · vencedor/vencedorNome · mapa · totalRounds · half1
@@ -73,7 +73,6 @@ const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22, // ⚙ balanceamento do PRISMA (afini
   IGL_TITULO:{Campeao:3,Final:2,Top4:1,Top8:0,Grupos:0}, // bônus de OVR do IGL por COLOCAÇÃO (campeão 3 · vice 2 · 3-4º 1); qualquer campeonato, só p/ IGL
   IGL_TETO:21,                               // teto do IGL: um degrau abaixo do 22 dos fraggers (o jogo é decidido por eles)
   SUP_FRAG:72,                               // fp acima disso: não é Support role 1, é Lurker de utilidade (frag + util)
-  CORINGA_PISO:42,CORINGA_SPREAD:24,         // sub "Coringa": piso alto E sem especialidade dominante (spread baixo) = polivalente
   AWP_LEAN:.152,                             // viés de estilo do AWPer PASSIVO: op alto dele é pick de AWP (Closer/Ancora), não espaço de Infiltrador. 0=desligado, calibrável (sessão sandbox)
   // Rifler generalista: bônus SUAVE para perfis equilibrados em fogo/entrada/utility,
   // reduzido continuamente quando abertura/clutch/AWP revelam uma especialidade dominante.
@@ -255,7 +254,6 @@ function roleSecundarioSeguro(primary,secondary,p,scores=null){
   return ROLES_COMBATE.filter(r=>r!==primary)
     .sort((a,b)=>secondaryScore(primary,b,p,sc)-secondaryScore(primary,a,p,sc))[0]||"Rifler";
 }
-const ESTEIRA={AWPer:"Artilharia",Rifler:"Assalto",Entry:"Vanguarda",Lurker:"Ancora",Support:"Sistema",IGL:"Comando"};
 /* ┌─ ZÊNITE ─ OVR unificado ───────────────────────────────────────────┐ */
 // OVR = base(receita do playstyle) + bônus de rating uniforme (ver nmOVR); a FUNÇÃO não entra.
 // Exceção CURADA do IGL: soma um bônus por COLOCAÇÃO do time (IGL_TITULO) e tem teto próprio
@@ -315,6 +313,16 @@ const PLAYSTYLE_IDS=Object.keys(PLAYSTYLES);
 const STYLE_LABEL=id=>id==="joker"?"Coringa":(PLAYSTYLES[id]?.label||id);
 const STYLE_ID=x=>x==="Coringa"||x==="joker"?"joker":(PLAYSTYLE_IDS.find(id=>id===x||STYLE_KEYS[id]===x||PLAYSTYLES[id].label===x)||x);
 const STYLE_RECIPE=id=>NM_DEF[STYLE_KEYS[id]];
+/* ── IDENTIDADE DE COMBATE — fonte única: o playstyle ──────────────────────
+   O Coringa é polivalente por definição: não inclina agressão nem lado. Um estilo
+   desconhecido cai no mesmo neutro, para que dado incompleto nunca vire viés. */
+const STYLE_TRAITS_NEUTRO={pace:0,space:0,trade:0,structure:0,ct:0,t:0};
+const styleTraits=id=>id==="joker"?STYLE_TRAITS_NEUTRO:(PLAYSTYLES[id]?.traits||STYLE_TRAITS_NEUTRO);
+// Quão DEFINIDO é o estilo do jogador. styleMatch já mede a distância para o 2º colocado
+// (`clarity`); aqui reconstruímos a partir da margem guardada na avaliação. O piso de 0.35
+// preserva o comportamento anterior: identidade difusa ainda conta, só conta menos.
+const styleClareza=a=>{const margem=a&&a.style&&a.style.matchMargin;
+  return margem==null?1:clamp(margem*5,.35,1);};
 const ROLE_STYLE_BASE={
   Entry:{anchor:.46,support:.30,cerebral:.26,clutcher:.22,infiltrator:.18,trader:.12},
   Support:{aggressive:.28,spacetaker:.24,playmaker:.14,infiltrator:.12,baiter:.10},
@@ -426,53 +434,11 @@ function ovrUnificado(role,p,sec){const C=CFG_AVALIACAO,combatRole=role==="IGL"?
   if(role==="IGL")return iglOvr(style.core,p.colocacao); // exceção curada: playstyle + bônus por colocação
   return Math.min(C.OVR_MAX,Math.max(C.OVR_MIN,style.ovr));}
 /* ┌─ PRISMA ─ arquétipo unificado ────────────────────────────────────┐ */
-// Playstyle é a identidade principal; sub-arquétipo é a tradução dessa identidade
-// dentro da função. Assim química/sim/verso leem a mesma decisão, não dois
-// classificadores independentes.
-const SUBARQ={
-  AWPer:[
-    {nome:"AWP Agressiva",sig:{en:.48,op:.27,fp:.25},agr:.9, lado:[-1,3],stats:["sn","op","fp","en"]}, // entra/abre com pick (en = agressão)
-    {nome:"AWP Reativa",  sig:{cl:.48,sn:.30,ut:.22},agr:-.9,lado:[3,-1],stats:["sn","cl","ut","op"]}],// segura ângulos, espera o pick
-  Rifler:[
-    {nome:"Fragger",    sig:{fp:.55,op:.45},        agr:.6, lado:[-1,2],stats:["fp","op","en","cl"]}, // pura mira/impacto
-    {nome:"Conector",   sig:{tr:.45,cl:.30,ut:.25}, agr:-.4,lado:[1,1], stats:["tr","cl","ut","fp"]}, // liga as jogadas
-    {nome:"Mid-rounder",sig:{op:.42,cl:.33,ut:.25}, agr:0,  lado:[1,1], stats:["op","cl","ut","fp"]}],// controla o meio/info
-  Entry:[
-    {nome:"Ponta-de-lança",sig:{en:.55,op:.45},        agr:1, lado:[-3,5],stats:["en","op","fp","tr"]}, // 1º contato puro
-    {nome:"Spacetaker",    sig:{op:.40,fp:.40,en:.20}, agr:.8,lado:[-2,4],stats:["op","fp","en","cl"]}],// 2º homem, toma espaço fragando
-  Lurker:[
-    {nome:"Infiltrador",sig:{cl:.50,fp:.28,op:.22},agr:-.3,lado:[2,1], stats:["cl","fp","op","ut"]}, // solo, flanco, info
-    {nome:"Playmaker",  sig:{op:.50,fp:.30,cl:.20},agr:.4, lado:[0,2], stats:["op","fp","cl","ut"]}, // cria a jogada
-    {nome:"Âncora",     sig:{cl:.40,ut:.40,tr:.20},agr:-1, lado:[5,-2],stats:["cl","ut","tr","op"]}],// segura o bombsite (CT)
-  Support:[
-    {nome:"Pop-flasher",sig:{ut:.55,op:.25,en:.20},agr:.2, lado:[1,1], stats:["ut","op","en","tr"]}, // flashes p/ abrir
-    {nome:"Refrag",     sig:{tr:.50,fp:.30,ut:.20},agr:.3, lado:[1,2], stats:["tr","fp","ut","cl"]}] // troca e fecha o round
-};
-const SUB_CONTRA={
-  AWPer:[{ut:.08,tr:.06},{en:.14,fp:.05}],
-  Rifler:[{ut:.10,tr:.06,sn:.08},{en:.10,sn:.08},{en:.08,sn:.08}],
-  Entry:[{cl:.14,ut:.10,tr:.08,sn:.08},{ut:.08,tr:.06,sn:.08}],
-  Lurker:[{en:.20,tr:.06,sn:.06},{tr:.06,ut:.04,sn:.06},{en:.38,op:.16,fp:.08,sn:.06}],
-  Support:[{fp:.08,sn:.08},{en:.08,sn:.08}]
-};
-const SUB_BY_STYLE={
-  AWPer:{aggressive:0,spacetaker:0,playmaker:0,trader:1,infiltrator:1,baiter:1,clutcher:1,support:1,cerebral:1,anchor:1},
-  Rifler:{aggressive:0,spacetaker:0,playmaker:0,trader:1,baiter:1,support:1,cerebral:2,infiltrator:2,clutcher:2,anchor:1},
-  Entry:{aggressive:0,spacetaker:1,playmaker:1,trader:1,infiltrator:1,clutcher:1,baiter:1,cerebral:1,support:1,anchor:1},
-  Lurker:{infiltrator:0,baiter:0,playmaker:1,spacetaker:1,aggressive:1,trader:1,clutcher:2,cerebral:2,support:2,anchor:2},
-  Support:{support:0,cerebral:0,anchor:0,trader:1,aggressive:1,spacetaker:1,playmaker:1,infiltrator:1,baiter:1,clutcher:1}
-};
-// Coringa: jogador POLIVALENTE — piso alto em tudo E sem especialidade dominante (joga de tudo, sem estilo fixo)
-const ehCoringa=p=>{const v=[p.fp||0,p.en||0,p.tr||0,p.op||0,p.cl||0,p.ut||0],mn=Math.min(...v),mx=Math.max(...v);
-  return mn>=CFG_AVALIACAO.CORINGA_PISO&&(mx-mn)<=CFG_AVALIACAO.CORINGA_SPREAD;};
-const SUB_CORINGA={nome:"Coringa",eixo:0,agr:0,lado:[0,0],stats:["fp","op","cl","ut"]};
-function subArquetipo(role,p,styleId=null){const subs=SUBARQ[role];if(!subs)return null;
-  if(ehCoringa(p))return{...SUB_CORINGA}; // polivalente: sobrepõe o estilo da função
-  const forcedIndex=SUB_BY_STYLE[role]?.[STYLE_ID(styleId)];
-  let best=subs[0],bs=-1,second=-1;
-  subs.forEach((s,i)=>{const sc=dot(s.sig,p)-dot((SUB_CONTRA[role]||[])[i]||{},p);if(sc>bs){second=bs;bs=sc;if(forcedIndex==null)best=s;}else if(sc>second)second=sc;});
-  if(forcedIndex!=null)best=subs[forcedIndex]||best;
-  return{nome:best.nome,eixo:+(bs-Math.max(0,second)).toFixed(1),agr:best.agr,lado:best.lado,stats:best.stats};}
+// O SUB-ARQUÉTIPO foi removido: ele era derivado do próprio playstyle (SUB_BY_STYLE) e por
+// isso não acrescentava informação — só contradizia a carta. Um Âncora aparecia como
+// "Pop-flasher" e um Playmaker de AWP como "AWP Agressiva". A identidade agora é uma só,
+// o playstyle, e governa carta, química, exposição e afinidade de lado (ver styleTraits).
+// A detecção de Coringa também passou a ser única: `jokerProfile`, dentro de styleMatch.
 // Nível competitivo deriva do rating observado, nunca do nome. Os cortes representam
 // desempenho excepcional (1.40), estrela (1.20) e destaque que entra no cálculo de ego
 // do elenco (1.30). Trocar nick, era ou time não pode alterar a classificação numérica.
@@ -485,8 +451,7 @@ function aplicarAvaliacaoContextual(p){
   const role=p.primario||fallback[0],sec=role==="IGL"?(p.secundario||fallback[1]):roleSecundarioSeguro(role,p.secundario||fallback[1],p);
   const combatRole=role==="IGL"?(sec||"Rifler"):role,style=nmOVR(p,combatRole),C=CFG_AVALIACAO;
   const ovr=role==="IGL"?iglOvr(style.core,p.colocacao):Math.min(C.OVR_MAX,Math.max(C.OVR_MIN,style.ovr));
-  const sub=subArquetipo(combatRole,p,style.style);
-  return Object.assign(p,{ovr,combatRole,role1:role==="IGL"?"IGL":role,role2:role==="IGL"?null:sec,playstyle:style.style,style,sub,esteira:ESTEIRA[role]});
+  return Object.assign(p,{ovr,combatRole,role1:role==="IGL"?"IGL":role,role2:role==="IGL"?null:sec,playstyle:style.style,style});
 }
 function avaliarJogador(p){const classe=classificar(p);const role=classe[0];
   const estrela=ehEstrela(p);
@@ -495,7 +460,7 @@ function avaliarJogador(p){const classe=classificar(p);const role=classe[0];
 //  • cap 2 no role 1: no máx 2 jogadores com a mesma função primária; o excedente desce pra 2ª melhor afinidade.
 //  • AWP: todo time tem AWPer — se ninguém é, o de maior sn assume (role 1; role 2 se for o IGL).
 // idempotente (deriva da afinidade dos atributos, nunca do estado atual → seguro re-rodar). NÃO mexe em
-// OVR (fica no melhor encaixe do jogador, ninguém é rebaixado) nem na esteira/sub.
+// OVR (fica no melhor encaixe do jogador, ninguém é rebaixado) nem no playstyle.
 function distribuirRoles(engs){
   const naoIgl=engs.filter(e=>!e.isIGL);
   const sc=new Map(naoIgl.map(e=>[e,afinidades(e)])); // mesma afinidade do PRISMA (fonte única)
@@ -801,7 +766,7 @@ const TEAMS=TIMES_DEF.map((t,i)=>{
     jogadores:t.jogadores.map(n=>{const j=POOL[n];
       return{
       id:"p"+(pid++),nick:j.nick,pais:j.pais,time:t.nome,tipo:"player",
-      ovr:j.ovr,prim:j.primario,sec:j.secundario,esteira:j.esteira,estrela:j.estrela,
+      ovr:j.ovr,prim:j.primario,sec:j.secundario,estrela:j.estrela,
       _eng:j /* objeto do motor (avaliação A/B/C) usado no cálculo de química */
     };}),
     treinador:t.coach?{id:"c"+i,nick:t.coach,pais:t.coachPais||PAISES_MAP[t.coach]||"—",time:t.nome,tipo:"coach", // coachPais inline: times novos não precisam mexer no PAISES_MAP
@@ -862,7 +827,13 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓL
   CONTACT_EN:{opening:{CT:.30,TR:.35},preplant:{CT:.02,TR:.06},postplant:{CT:.08,TR:0}},
   CONTACT_POS:{AWPer:{opening:.10,preplant:.03,postplant:.03},Lurker:{opening:.06,preplant:.03,postplant:.03},
     Support:{opening:.02,preplant:.01,postplant:.01},Rifler:{opening:.02,preplant:.01,postplant:.01}},
-  MAPA_SCALE:380,MAPA_CAP:.06,SUB_ABRE:0.72,SUB_INT:40};
+  MAPA_SCALE:380,MAPA_CAP:.06,AGR_ABRE:0.72,
+  // IDENTIDADE ÚNICA: agressão e afinidade de lado vêm do PLAYSTYLE (traits.pace / traits.ct / traits.t).
+  // Antes vinham de um sub-arquétipo paralelo, derivado do próprio playstyle e por isso capaz de
+  // contradizê-lo. As escalas abaixo foram MEDIDAS sobre os 85 jogadores para preservar o
+  // desvio-padrão do efeito anterior — só a fonte da identidade muda, não a magnitude dela.
+  // sd(agressão) 0.363 → traits.pace 0.249; sd(lado CT) 2.049 → traits.ct 0.346; sd(lado T) 1.852 → traits.t 0.360.
+  STYLE_AGR:1.4,STYLE_LADO:{ct:5.9,t:5.2}};
 // slots de companheiros (0..4) exceto o matador — candidatos a assist, pré-computado p/ não alocar por kill
 const ASSIST_SLOTS=[[1,2,3,4],[0,2,3,4],[0,1,3,4],[0,1,2,4],[0,1,2,3]];
 
@@ -1014,13 +985,15 @@ function fragPeso(j){const a=j._eng||j;const C=CFG_SIM;const fp=a.fp??60,ovr=j.o
 // prepara um time pro combate: skills (com forma da noite), clutch e acumulador de stats
 // agressão de playstyle derivada do sub-arquétipo: quão na frente o jogador joga o round
 // (abre duelos e se expõe) vs quão posicional/clutcher ele é. Escala pela definição do arquétipo.
-function subAgr(j){const a=j?._eng||j||{},sb=a.sub;if(!sb)return 0; // agressão = direção do sub × quão definido ele é
-  const inten=Math.max(.35,Math.min(1,Math.abs(sb.eixo||0)/CFG_SIM.SUB_INT));return (sb.agr||0)*inten;}
+// agressão de combate = ritmo do PLAYSTYLE × quão definido ele é. Quem joga na frente
+// abre duelos e se expõe; quem joga posicional espera. Fonte única: traits.pace.
+function styleAgr(j){const a=j?._eng||j||{};
+  return styleTraits(STYLE_ID(a.playstyle)).pace*styleClareza(a)*CFG_SIM.STYLE_AGR;}
 // Perfil de exposição por evento. O peso é relativo aos companheiros vivos:
 // en/op/agressão aproximam iniciativa; sniper/closer/utility aproximam distância
 // do primeiro contato conforme função, lado e fase. Não altera a chance do time.
 function exposureProfile(j){const a=j?._eng||j||{},C=CFG_SIM,role=combatProfile(j).activeCombatRole;
-  const z=key=>((a[key]??50)-50)/50,agr=subAgr(j),profile={};
+  const z=key=>((a[key]??50)-50)/50,agr=styleAgr(j),profile={};
   for(const phase of ["opening","preplant","postplant"]){profile[phase]={};
     for(const side of ["CT","TR"]){
       let positional=0;
@@ -1047,13 +1020,13 @@ const TRADE_CONTEXT_MEAN=(()=>{const ps=Object.values(POOL),sum=ps.reduce((acc,p
 function assistContextProfile(j){const a=j?._eng||j||{};return {utility:(a.ut??50)/100};}
 const ASSIST_UTILITY_MEAN=(()=>{const ps=Object.values(POOL);return ps.reduce((sum,p)=>sum+assistContextProfile(p).utility,0)/ps.length;})();
 // ——— AFINIDADE DE LADO (composição): CT = segurar/anchor, T = tomar espaço/entry ———
-// derivada dos STATS (cl/ut/sn seguram bombsite; en/op/fp tomam espaço) + role + sub-arquétipo.
+// derivada dos STATS (cl/ut/sn seguram bombsite; en/op/fp tomam espaço) + role + PLAYSTYLE.
 // lurker/support/âncora puxam o time pro CT; entry/agressivo puxam pro T. zero-centrado: time
 // equilibrado fica ~0 (só a vantagem-base de CT), composição desbalanceada inclina o lado.
 const LADO_ROLE={Lurker:[5,1],Support:[4,0],AWPer:[2,2],IGL:[1,1],Rifler:[-1,3],Entry:[-4,5]};
-function ladoFitRaw(a){const r=LADO_ROLE[a.primario]||[0,0],s=(a.sub&&a.sub.lado)||[0,0];
-  return [.08*((a.cl||45)-50)+.06*((a.ut||50)-50)+.05*((a.sn||0)-35)+r[0]+s[0],   // segurar (CT)
-          .08*((a.en||45)-50)+.07*((a.op||50)-50)+.05*((a.fp||60)-55)+r[1]+s[1]];} // tomar espaço (T)
+function ladoFitRaw(a){const r=LADO_ROLE[a.primario]||[0,0],tr=styleTraits(STYLE_ID(a.playstyle)),E=CFG_SIM.STYLE_LADO;
+  return [.08*((a.cl||45)-50)+.06*((a.ut||50)-50)+.05*((a.sn||0)-35)+r[0]+tr.ct*E.ct,   // segurar (CT)
+          .08*((a.en||45)-50)+.07*((a.op||50)-50)+.05*((a.fp||60)-55)+r[1]+tr.t*E.t];}  // tomar espaço (T)
 // média da liga p/ ZERO-CENTRAR: a afinidade vira DESVIO (time equilibrado ~0; só composição inclina)
 const LADO_MEAN=(()=>{const ps=Object.values(POOL);let c=0,t=0;ps.forEach(p=>{const f=ladoFitRaw(p);c+=f[0];t+=f[1];});return[c/ps.length,t/ps.length];})();
 function ladoFit(j){const a=j._eng||j;if(a._lado)return a._lado;const f=ladoFitRaw(a);return a._lado=[f[0]-LADO_MEAN[0],f[1]-LADO_MEAN[1]];}
@@ -1075,7 +1048,7 @@ function prepTime(t,mapa){
     // afinidade de lado do time = média da composição (ct, t) — define a vantagem por lado
     ctEdge:js.reduce((s,j)=>s+ladoFit(j)[0],0)/js.length,
     tEdge:js.reduce((s,j)=>s+ladoFit(j)[1],0)/js.length,
-    cls:js.map(j=>j.cl||40),agr:js.map(j=>subAgr(j)),exposure:js.map(j=>exposureProfile(j)),
+    cls:js.map(j=>j.cl||40),agr:js.map(j=>styleAgr(j)),exposure:js.map(j=>exposureProfile(j)),
     preservation:js.map(j=>preservationValue(j)),
     tradeContext:js.map(j=>tradeContextProfile(j)),
     assistContext:js.map(j=>assistContextProfile(j)),
@@ -1117,7 +1090,7 @@ function combateRound(a,b,ctx){
     const expK=opening?C.EXP_OPEN:C.EXP_KILL;
     // quem FRAGA: firepower é o VOLUME; o TIPO de kill pende pra categoria HLTV (abertura→op, trade→tr)
     const tilt=i=>opening?Math.max(.25,1+C.W_OP_KILL*((venc.ops[i]-50)/50)):trade?Math.max(.25,1+C.W_TR_KILL*((venc.trs[i]-50)/50)):1;
-    const ki=pick(vivV,i=>Math.pow(Math.max(venc.frags[i],8),expK)*tilt(i)*(1+(opening?C.SUB_ABRE:0)*(venc.agr[i]||0)));
+    const ki=pick(vivV,i=>Math.pow(Math.max(venc.frags[i],8),expK)*tilt(i)*(1+(opening?C.AGR_ABRE:0)*(venc.agr[i]||0)));
     // quem MORRE: volume residual + exposição contextual; nunca bônus direto de DPR.
     const vi=pick(vivP,i=>Math.pow(Math.max(perd.frags[i],8),C.CONTACT_VOLUME_EXP[phase])*perd.exposure[i][phase][victimSide]);
     const rec={estadoMeu:vivV.length,estadoInim:vivP.length,buyMatador:buyV,buyVitima:buyP,roundGanho:true};
@@ -1699,14 +1672,23 @@ const coachHTML=p=>`<div class="coach-seal">Treinador</div>
   <div class="ccore"><div class="ovr">${p.ovr}</div><div class="nick">${esc(p.nick)}</div></div>
   <div class="carac">${esc(p.carac)}</div>`;
 
-// ——— VERSO da carta: as 4 stats vêm do próprio SUB-ARQUÉTIPO (sub.stats, definido no SUBARQ) ———
+// ——— VERSO da carta: o PLAYSTYLE no topo e as 4 stats da receita dele embaixo ———
+// Mesma fonte que decide o OVR e a química, então o que a carta diz é o que o motor usa.
 const STAT_LABEL={fp:"Firepower",op:"Abertura",cl:"Clutch",ut:"Utilitário",en:"Entrada",tr:"Trade",sn:"AWP"};
-const STAT_VERSO_DEF=["fp","op","cl","ut"]; // fallback (sem sub)
+const STAT_VERSO_DEF=["fp","op","cl","ut"]; // Coringa (polivalente) e fallback
+// eixos da receita (espaço s6) → atributos da carta (espaço do jogador)
+const EIXO_ATTR={fogo:"fp",ent:"en",ab:"op",tr:"tr",cl:"cl",ut:"ut"};
+const statsDoEstilo=id=>{
+  const rec=id==="joker"?null:STYLE_RECIPE(id);
+  if(!rec)return STAT_VERSO_DEF;
+  const pesos=rec.ovrW||rec.w; // ovrW quando existe: é o que o nível realmente pondera
+  return Object.entries(pesos).sort((a,b)=>b[1]-a[1]).map(([eixo])=>EIXO_ATTR[eixo]).filter(Boolean);
+};
 const statBar=(lab,v)=>`<div class="statbar"><span class="sb-lab">${esc(lab)}</span><span class="sb-val">${Math.round(v||0)}</span></div>`;
-// verso do jogador: nome + estilo no topo e as 4 stats do sub-arquétipo embaixo
-const backPlayer=p=>{const e=p._eng||{};const base=(e.sub&&e.sub.stats)||STAT_VERSO_DEF;
-  const keys=["fp",...base.filter(k=>k!=="fp")].slice(0,4); // Firepower sempre 1º; os outros 3 na ordem de relevância do sub
-  return `<div class="cb-head">${esc(e.sub?e.sub.nome:(p.prim||""))}</div>`+
+const backPlayer=p=>{const e=p._eng||{};const id=STYLE_ID(e.playstyle);
+  const base=statsDoEstilo(id);
+  const keys=["fp",...base.filter(k=>k!=="fp")].slice(0,4); // Firepower sempre 1º; os outros 3 na ordem de peso da receita
+  return `<div class="cb-head">${esc(e.playstyle?STYLE_LABEL(id):(p.prim||""))}</div>`+
   `<div class="cb-stats">${keys.map(k=>statBar(STAT_LABEL[k],e[k])).join("")}</div>`;};
 // o que cada característica de treinador FAZ — objetivo, com os números reais do efeito no SINAPSE
 const CARAC_DESC={

@@ -23,7 +23,7 @@ function playerSnapshot(player){
     r1:engine.primario,
     r2:engine.secundario,
     sf:engine.secForte!==false,
-    sub:engine.sub&&engine.sub.nome,
+    ps:engine.playstyle?X.STYLE_LABEL(X.STYLE_ID(engine.playstyle)):null, // identidade única (era o sub-arquétipo)
     st:!!engine.estrela,
     igl:!!firstDefined(engine,"isIGL"),
     pa:firstDefined(engine,"pais"),

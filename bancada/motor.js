@@ -14,7 +14,7 @@ const EXPORTS=[
   "afinidades","roleAfinidade","rolePairReality","secondaryScore","roleStyleReality","STYLE_LABEL","styleScoreTable","nmOVR",
   "CFG_AVALIACAO","NM_DEF",
   // identidade e balanceamento: a bancada de perfis precisa ler playstyle e config sem duplicar tabelas
-  "PLAYSTYLES","PLAYSTYLE_IDS","STYLE_ID","ratingCompetitivo","tierDe","MAPAS_POOL",
+  "PLAYSTYLES","PLAYSTYLE_IDS","STYLE_ID","styleAgr","styleTraits","ratingCompetitivo","tierDe","MAPAS_POOL",
   "CFG_SIM","CFG_FA","logistica","rndF",
   "coletarMarcos","atualizarRecordes","manchete","narrativaMVP"
 ];

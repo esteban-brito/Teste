@@ -272,7 +272,7 @@ function emptyPlayerAccumulator(teamIndex,playerIndex,card){
     id:rawPlayerId(card),nick:card.nick||engine.nick||engine.nome,teamIndex,playerIndex,
     team:T[teamIndex].nome,role:engine.primario,secondaryRole,
     rolePair:`${engine.primario}/${secondaryRole||"-"}`,combatRole:engine.combatRole,
-    effectiveCombatRole,playstyle:engine.playstyle,subarchetype:engine.sub?.nome||null,
+    effectiveCombatRole,playstyle:engine.playstyle,
     ovr:engine.ovr,realRating:+engine.rating||0,
     maps:0,orientationA:0,rounds:0,kills:0,deaths:0,assists:0,kastRoundWeight:0,adrRoundWeight:0,
     ownDayStrength:[],opponentDayStrength:[],opponents:new Set(),mapCounts:{},samples:emptyMetricSamples(),
