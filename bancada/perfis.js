@@ -20,7 +20,11 @@ const {mean,inRange,printCheck,scheduledMatch}=require("./common");
 
 const N=+(process.env.N||60);
 const MAPS=9;
-const STRICT=process.env.PERFIS_STRICT==="1";
+// Ratchet por etapa: cada critério pertence à etapa que o resolve. Os da etapa "rating"
+// já valem (o rating passou a emergir da carta), então uma regressão que reintroduza
+// circularidade REPROVA a suíte. Os da etapa "relogio" dependem do round ter tempo
+// (rounds quietos, produção lumpy) e seguem como relatório até lá.
+const ETAPA_ATIVA={rating:true,relogio:process.env.PERFIS_STRICT==="1"};
 const ROLES=["AWPer","Rifler","Entry","Lurker","Support","IGL"];
 // Bandas de OVR usadas na prova de sobreposição. Distantes o bastante pra que o resultado
 // signifique algo (5 pontos de OVR), largas o bastante pra ter amostra.
@@ -226,41 +230,51 @@ const acima=(id,campo,media)=>direcao(id,campo,media,1);
 const abaixo=(id,campo,media)=>direcao(id,campo,media,-1);
 const amostraDe=id=>{const g=estilo(id);return g?`n=${g.jogadores}`:"n=0";};
 
+// [etapa, nome, valor, faixa, ok]
 const checks=[
   // 1. assinatura por função
-  ["Entry lidera opening kills",funcao("Entry").opKpr.toFixed(3),"máx",
+  ["relogio","Entry lidera opening kills",funcao("Entry").opKpr.toFixed(3),"máx",
     ROLES.every(r=>funcao("Entry").opKpr>=funcao(r).opKpr)],
-  ["Entry lidera opening deaths",funcao("Entry").opDpr.toFixed(3),"máx",
+  ["rating","Entry lidera opening deaths",funcao("Entry").opDpr.toFixed(3),"máx",
     ROLES.every(r=>funcao("Entry").opDpr>=funcao(r).opDpr)],
-  ["AWPer KPR − Support KPR",(funcao("AWPer").kpr-funcao("Support").kpr).toFixed(3),"≥0.06",
+  ["rating","AWPer KPR − Support KPR",(funcao("AWPer").kpr-funcao("Support").kpr).toFixed(3),"≥0.06",
     funcao("AWPer").kpr-funcao("Support").kpr>=.06],
-  ["Support APR − AWPer APR",(funcao("Support").apr-funcao("AWPer").apr).toFixed(3),"≥0.02",
+  ["rating","Support APR − AWPer APR",(funcao("Support").apr-funcao("AWPer").apr).toFixed(3),"≥0.02",
     funcao("Support").apr-funcao("AWPer").apr>=.02],
-  ["IGL rating abaixo da média",funcao("IGL").rating.toFixed(3),"< média",
+  ["rating","IGL rating abaixo da média",funcao("IGL").rating.toFixed(3),"< média",
     funcao("IGL").rating<mean(ROLES.map(r=>funcao(r).rating))],
 
   // 2. assinatura por playstyle — os estilos precisam ser distinguíveis
-  ["Opener abre acima da média",amostraDe("aggressive"),"opKPR >",acima("aggressive","opKpr",mediaOpKpr)],
-  ["Spacetaker abre acima da média",amostraDe("spacetaker"),"opKPR >",acima("spacetaker","opKpr",mediaOpKpr)],
-  ["Trader troca acima da média",amostraDe("trader"),"tradePR >",acima("trader","tradePr",mediaTradePr)],
-  ["Facilitador assiste acima da média",amostraDe("support"),"APR >",acima("support","apr",mediaApr)],
-  ["Baiter morre abaixo da média",amostraDe("baiter"),"DPR <",abaixo("baiter","dpr",mediaDpr)],
-  ["Âncora morre abaixo da média",amostraDe("anchor"),"DPR <",abaixo("anchor","dpr",mediaDpr)],
-  ["Playmaker fraga acima da média",amostraDe("playmaker"),"KPR >",acima("playmaker","kpr",mean(porEstilo.map(g=>g.kpr)))],
+  ["rating","Opener abre acima da média",amostraDe("aggressive"),"opKPR >",acima("aggressive","opKpr",mediaOpKpr)],
+  ["relogio","Spacetaker abre acima da média",amostraDe("spacetaker"),"opKPR >",acima("spacetaker","opKpr",mediaOpKpr)],
+  ["rating","Trader troca acima da média",amostraDe("trader"),"tradePR >",acima("trader","tradePr",mediaTradePr)],
+  ["rating","Facilitador assiste acima da média",amostraDe("support"),"APR >",acima("support","apr",mediaApr)],
+  ["rating","Baiter morre abaixo da média",amostraDe("baiter"),"DPR <",abaixo("baiter","dpr",mediaDpr)],
+  ["rating","Âncora morre abaixo da média",amostraDe("anchor"),"DPR <",abaixo("anchor","dpr",mediaDpr)],
+  ["rating","Playmaker fraga acima da média",amostraDe("playmaker"),"KPR >",acima("playmaker","kpr",mean(porEstilo.map(g=>g.kpr)))],
 
   // 3-5. coerência de carta
-  ["Sobreposição entre bandas de OVR %",sobreposicao.toFixed(1),"25–40",inRange(sobreposicao,25,40)],
-  ["Desvio intra-jogador",desvioIntra.toFixed(3),"0.22–0.32",inRange(desvioIntra,.22,.32)],
-  ["Peso do contexto %",pesoContexto.toFixed(1),"70–88",inRange(pesoContexto,70,88)],
-  ["r² do OVR (não pode explicar tudo)",r2Ovr.toFixed(3),"0.20–0.75",inRange(r2Ovr,.20,.75)]
+  ["rating","Sobreposição entre bandas de OVR %",sobreposicao.toFixed(1),"25–40",inRange(sobreposicao,25,40)],
+  // O desvio intra-jogador depende de a produção por mapa ser irregular. Hoje 58% dos rounds
+  // são quase-varreduras, então todo mundo produz todo round: dobrar a volatilidade da forma
+  // move o desvio de 0,168 só para 0,180. Quem resolve isso é o relógio do round.
+  ["relogio","Desvio intra-jogador",desvioIntra.toFixed(3),"0.22–0.32",inRange(desvioIntra,.22,.32)],
+  ["rating","Peso do contexto %",pesoContexto.toFixed(1),"70–88",inRange(pesoContexto,70,88)],
+  ["rating","r² do OVR (não pode explicar tudo)",r2Ovr.toFixed(3),"0.20–0.75",inRange(r2Ovr,.20,.75)]
 ];
 
 console.log("");
-let falhas=0,dispensadas=0;
-checks.forEach(([nome,valor,faixa,ok])=>{
+let falhas=0,pendentes=0,dispensadas=0;
+checks.forEach(([etapa,nome,valor,faixa,ok])=>{
   if(ok===null){ // sem amostra: não conta como aprovada nem como falha
     dispensadas++;
-    console.log(`  ~ ${nome.padEnd(26)} ${String(valor).padStart(6)}   [${faixa} · amostra < ${MIN_JOGADORES}]`);
+    console.log(`  ~ ${nome.padEnd(34)} ${String(valor).padStart(6)}   [${faixa} · amostra < ${MIN_JOGADORES}]`);
+    return;
+  }
+  const vale=ETAPA_ATIVA[etapa];
+  if(!ok&&!vale){ // critério cujo dono ainda não foi implementado: informa, não reprova
+    pendentes++;
+    console.log(`  ▲ ${nome.padEnd(34)} ${String(valor).padStart(6)}   [${faixa} · aguarda o relógio do round]`);
     return;
   }
   if(!ok)falhas++;
@@ -269,13 +283,12 @@ checks.forEach(([nome,valor,faixa,ok])=>{
 if(dispensadas)console.log(`  (${dispensadas} checagem(ns) dispensada(s) por amostra insuficiente no pool atual)`);
 
 console.log(`\n  (${((Date.now()-inicio)/1000).toFixed(1)}s)`);
-if(falhas===0){
-  console.log("✓ perfis coerentes com a carta");
-  process.exitCode=0;
-}else if(STRICT){
-  console.log(`✗ ${falhas} critério(s) de coerência fora do alvo`);
+if(falhas){
+  console.log(`✗ ${falhas} critério(s) de coerência de carta fora do alvo`);
   process.exitCode=1;
 }else{
-  console.log(`▲ ${falhas} critério(s) fora do alvo — RELATÓRIO (alvos passam a valer com PERFIS_STRICT=1, após a Etapa 3)`);
+  console.log(pendentes
+    ?`✓ coerência de carta no alvo · ▲ ${pendentes} critério(s) aguardam o relógio do round`
+    :"✓ perfis coerentes com a carta");
   process.exitCode=0;
 }

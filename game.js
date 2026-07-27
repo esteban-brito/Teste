@@ -442,9 +442,15 @@ function ovrUnificado(role,p,sec){const C=CFG_AVALIACAO,combatRole=role==="IGL"?
 // Nível competitivo deriva do rating observado, nunca do nome. Os cortes representam
 // desempenho excepcional (1.40), estrela (1.20) e destaque que entra no cálculo de ego
 // do elenco (1.30). Trocar nick, era ou time não pode alterar a classificação numérica.
-const CFG_NIVEL={LENDA_MIN:1.40,STAR_MIN:1.20,ESTRELA_MIN:1.30,ROLE_MAX:.99};
-const ratingCompetitivo=p=>Number.isFinite(+p.rating)?+p.rating:1;
-const ehEstrela=p=>ratingCompetitivo(p)>=CFG_NIVEL.ESTRELA_MIN;
+// Cortes por OVR — o nível da CARTA. O rating histórico já entrou uma vez, dentro do OVR
+// (nmOVR); relê-lo aqui seria usá-lo duas vezes. Os limiares foram escolhidos sobre os 85
+// jogadores para preservar a ordem de grandeza das faixas antigas (Lenda 6->9, Star 28->30,
+// Solido 31->34, Role 20->12) e a contagem de estrelas (15->17).
+const CFG_NIVEL={LENDA_OVR:21,STAR_OVR:18,SOLIDO_OVR:16,ESTRELA_OVR:20};
+// ratingCompetitivo foi REMOVIDO: nenhum ponto do motor lê mais o rating histórico.
+// Ele entra uma vez, dentro de nmOVR, e vira OVR. Quem precisa do valor bruto para
+// RELATÓRIO (bancada/rating.js) lê o campo `rating` do jogador diretamente.
+const ehEstrela=p=>(p.ovr??0)>=CFG_NIVEL.ESTRELA_OVR;
 // ORQUESTRADOR PRISMA→ZÊNITE: classifica (função+sub) e avalia (OVR) um jogador de uma vez.
 function aplicarAvaliacaoContextual(p){
   const fallback=(!p.primario||!p.secundario)?classificar(p):null;
@@ -817,7 +823,7 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓL
   // ASSIST_CHANCE≈razão A/K alvo; peso do assistente = ASSIST_BASE+ASSIST_UT_W·ut (support/IGL ganham
   // mais); ASSIST_DEAD_W desconta quem já morreu; ASSIST_OPEN_MULT: abertura tem mais flash-assist.
   ASSIST_CHANCE:.30,ASSIST_OPEN_MULT:1.15,ASSIST_CONTEXT:.10,ASSIST_BASE:12,ASSIST_UT_W:.9,ASSIST_DEAD_W:.5,
-  FRAG_FP_BASE:35,FRAG_OVR:.003,FRAG_RATING:.90,RATING_REF:1.16,FORMA_RATING:.35, // fp dá o perfil; rating observado calibra a eficiência sem nomes
+  FRAG_FP_BASE:35,FRAG_OVR:.003,FRAG_OVR_MULT:.045,FRAG_OVR_REF:17.56, // fp dá o perfil; o NÍVEL DA CARTA (OVR) calibra a eficiência — nunca o rating histórico
   DUELO_BASE:12,DUELO_OVR:4.6,   // skillDuelo: força de combate por OVR (base + inclinação) — quem GANHA o round
   // Exposição decide quem participa do contato perdido. O volume anterior
   // permanece como sinal residual; contexto/posicionamento carregam a identidade.
@@ -856,16 +862,19 @@ const faSwingMorte=(meu,ini)=>faWP(meu-1,ini)-faWP(meu,ini);  // <=0
 const FA_ECO={full:{full:1,force:.9,eco:.62,pistol:.55},force:{full:1.18,force:1,eco:.78,pistol:.68},
   eco:{full:1.6,force:1.3,eco:1,pistol:.85},pistol:{full:1.55,force:1.25,eco:.95,pistol:1}};
 const faEco=(mb,vb)=>(FA_ECO[mb]&&FA_ECO[mb][vb])||1;
-const CFG_FA={BASE:.592,W_EK:.385,W_SURV:.160,W_KAST:.240,W_MULTI:.042,W_SWING:.10,PESO_MORTE:.95,PESO_OPEN:.216, // ⚙ balanceamento do FALLEnANGELs (pesos do rating) — BASE recentra o nível após ADR/KAST/kills irem ao real
+// BASE recentrada de .592 para .614 ao remover o PRIOR: o prior tinha média ligeiramente
+// positiva no pool, e sem ele a média simulada caía para 1,140. Em .614 ela volta a 1,163,
+// que é a média histórica do próprio elenco — a referência externa, agora só de validação.
+const CFG_FA={BASE:.614,W_EK:.385,W_SURV:.160,W_KAST:.240,W_MULTI:.042,W_SWING:.10,PESO_MORTE:.95,PESO_OPEN:.216, // ⚙ balanceamento do FALLEnANGELs (pesos do rating) — BASE recentra o nível após ADR/KAST/kills irem ao real
   // W_EK menor + BASE maior = tiers comprimidos (topo desce, 19-22 se sobrepõem) sem matar a variação (forma é que oscila)
   // ADR (dano por round) entra como sinal independente das kills: parte do peso saiu de W_EK pra cá,
   // então quem dá muito dano sem converter (ou vice-versa) varia → mais sobreposição entre OVRs (vida).
   W_ADR:.0019,ADR_REF:76,W_TRADE:.075,OPEN_D_W:.6, // fidelidade: dano + trade (refrag); morte-de-abertura pesa menos (tentar a entrada é a função) — HLTV
-  IMP_OVR:.012,IGL_SIS:.015, // impacto escala com a SKILL dentro da função (±~5%, centrado em 16); IGL: crédito de sistema moderado
-
-  // Prior moderado do nível observado: ancora a média sem decidir o mapa. Substitui o antigo
-  // bônus de firepower, que confundia um atributo do card com desempenho pós-jogo.
-  PRIOR:{ref:1.16,per:.45,min:-.18,max:.27}};
+  IMP_OVR:.012,IGL_SIS:.015}; // impacto escala com a SKILL dentro da função (±~5%, centrado em 16); IGL: crédito de sistema moderado
+// O PRIOR do rating histórico foi REMOVIDO. Ele injetava 45% do desvio do rating real
+// direto na nota final: uma constante por jogador, com desvio 0,081 ENTRE jogadores e
+// ZERO dentro deles. Media-se o motor copiando o alvo. O rating histórico entra uma
+// única vez, no OVR da carta (nmOVR); daqui em diante o motor só enxerga a carta.
 // impacto por função no kill: entry/rifler que fragga gera mais valor que support/igl (centrado ~1.0)
 const FA_IMPACTO={AWPer:1.035,Entry:1.065,Lurker:1.04,Rifler:1.03,Support:.97,IGL:.955}; // calibrado por validação real×sim (com IMP_OVR o impacto escala por skill; bases recentradas)
 // componentes somáveis do rating, extraídos sem alterar valores ou ordem aritmética.
@@ -881,16 +890,15 @@ function fallenAngelsComponents(ev){const C=CFG_FA,R=ev.totalRounds||1;
   const adr=(ev.dmg||0)/R;                                   // dano por round (ADR) — sinal de impacto independente das kills
   const adrTerm=(adr-C.ADR_REF)*C.W_ADR;                     // centrado: quem dá muito dano sobe, pouco dano desce (suave)
   const tradePR=(ev.tradeK||0)/R*C.W_TRADE;                  // eficiência de trade: refrag pelo time vale rating
-  const prior=Math.max(C.PRIOR.min,Math.min(C.PRIOR.max,((ev.ratingBase??C.PRIOR.ref)-C.PRIOR.ref)*C.PRIOR.per));
   // impacto EFETIVO = base da função × skill dentro dela (AWPer de elite ≠ AWPer modesto); IGL soma o crédito de sistema
   const impEf=(ev.impacto??1)*(1+C.IMP_OVR*((ev.ovr??16)-16));
   const sistema=ev.prim==="IGL"?C.IGL_SIS:0;
   return {base:C.BASE,economyAdjustedKills:ekpr*C.W_EK*impEf,survival:survPR*C.W_SURV,
     kast:kast*C.W_KAST,multikill:multiScore*C.W_MULTI,swing:(swing/R)*C.W_SWING,
-    opening:openPR,damage:adrTerm,trade:tradePR,prior,system:sistema};}
+    opening:openPR,damage:adrTerm,trade:tradePR,system:sistema};}
 // rating FALLEnANGELs de um jogador a partir do seu log de eventos no mapa
 function fallenAngels(ev){const c=fallenAngelsComponents(ev);
-  return c.base+c.economyAdjustedKills+c.survival+c.kast+c.multikill+c.swing+c.opening+c.damage+c.trade+c.prior+c.system;}
+  return c.base+c.economyAdjustedKills+c.survival+c.kast+c.multikill+c.swing+c.opening+c.damage+c.trade+c.system;}
 
 /* ╔═══════════════════════════════════════════════════════════════════╗
    ║  MARÉ — forma do dia e de campanha (o motor de variância)          ║
@@ -898,14 +906,16 @@ function fallenAngels(ev){const c=fallenAngelsComponents(ev);
    ║  craque oscila pouco e tem piso alto; role player é streaky. É o    ║
    ║  que faz cada run do roguelike ser diferente sem deslocar a média.  ║
    ╚═══════════════════════════════════════════════════════════════════╝ */
-// Faixas calculadas por desempenho. Função e firepower só distinguem role players dentro
-// da faixa comum; nenhum ID, nick, time ou época participa desta decisão.
-function tierDe(j){const a=j._eng||j,rating=ratingCompetitivo(a);
-  if(rating>=CFG_NIVEL.LENDA_MIN)return "Lenda";
-  if(rating>=CFG_NIVEL.STAR_MIN)return "Star";
+// Faixas calculadas pelo NÍVEL DA CARTA (OVR). Função e firepower só distinguem role players
+// dentro da faixa comum; nenhum ID, nick, time ou época participa desta decisão.
+function tierDe(j){const a=j._eng||j,ovr=j.ovr??a.ovr??13;
   const fp=a.fp??60,prim=a.primario||j.primario||"Rifler";
-  if(rating<=CFG_NIVEL.ROLE_MAX||((prim==="IGL"||prim==="Support")&&fp<55))return "Role";
-  return "Solido";}
+  // IGL/Support de pouco fogo é streaky por função, não por nível — regra da carta, preservada.
+  if((prim==="IGL"||prim==="Support")&&fp<55&&ovr<CFG_NIVEL.STAR_OVR)return "Role";
+  if(ovr>=CFG_NIVEL.LENDA_OVR)return "Lenda";
+  if(ovr>=CFG_NIVEL.STAR_OVR)return "Star";
+  if(ovr>=CFG_NIVEL.SOLIDO_OVR)return "Solido";
+  return "Role";}
 // perfil de distribuição por tier (piso=resistência a cair, vol=largura da oscilação)
 // vol = largura da oscilação da forma. Estrela/lenda OSCILA MENOS (consistente, piso alto); role
 // player é mais streaky (vol maior). É o que separa o craque confiável do jogador de altos e baixos.
@@ -913,7 +923,10 @@ const PERFIL_TIER={Lenda:{piso:.16,vol:.27,caudaBase:2.05,caudaFp:.65},Star:{pis
   Solido:{piso:.07,vol:.28,caudaBase:1.45,caudaFp:.40},Role:{piso:.05,vol:.29,caudaBase:1.30,caudaFp:.20}};
 // explosividade por função: largura e joelho suave da cauda de cima próprios de cada role.
 const PERFIL_ROLE={AWPer:{expl:1.32,cauda:1.32},Rifler:{expl:1.28,cauda:1.24},Entry:{expl:1.26,cauda:1.16},Lurker:{expl:1.14,cauda:1.16},Support:{expl:1.12,cauda:1.12},IGL:{expl:1.02,cauda:1.02}};
-const centroOVR=ovr=>clamp(0.28+(ovr-5)*0.060,0.53,1.44); // OVR puxa o centro (média esperada)
+// OVR puxa o centro (média esperada). Reajustado ao remover FORMA_RATING: sozinho, precisa
+// reproduzir a média (1,079) e o desvio (0,138) que o centro tinha quando misturava OVR e
+// rating histórico. Inclinação 0,060 -> 0,064; base 0,28 -> 0,277.
+const centroOVR=ovr=>clamp(0.277+(ovr-5)*0.064,0.53,1.44);
 // Mantém a forma fisicamente positiva sem piso duro: acima do joelho é identidade;
 // abaixo dele, a continuação exponencial é C1 e se aproxima de zero sem jamais formar uma parede.
 const formaPositiva=(valor,joelho=.05)=>valor>=joelho?valor:joelho*Math.exp(valor/joelho-1);
@@ -922,7 +935,7 @@ const formaPositiva=(valor,joelho=.05)=>valor>=joelho?valor:joelho*Math.exp(valo
 const formaCaudaLivre=(valor,joelho,escala)=>valor<=joelho?valor:joelho+escala*Math.log1p((valor-joelho)/escala);
 // sorteia a forma do dia do jogador: o "humor competitivo" daquele mapa (assimétrica, com vida)
 function formaDoDia(j){const a=j._eng||j;const t=tierDe(j),p=PERFIL_TIER[t];
-  const centroBase=centroOVR(a.ovr??13),centro=centroBase*(1-CFG_SIM.FORMA_RATING)+ratingCompetitivo(a)*CFG_SIM.FORMA_RATING+(a._formaCamp??0); // OVR + nível observado, sem identidade nominal
+  const centro=centroOVR(a.ovr??13)+(a._formaCamp??0); // só a carta: o nível vem do OVR, não do rating histórico
   const fp=a.fp??60,sn=a.sn??0,cl=a.cl??45;const pr=PERFIL_ROLE[a.primario]||{expl:1,cauda:1};const ovrAmp=clamp(((a.ovr??13)-13)/55,0,.18); // OVR amplifica a explosão (suave: craque é consistente, não mais volátil)
   const combust=clamp((fp-45)/50,0.05,1.35);        // firepower explode (cauda pra cima)
   const apoio=clamp((sn*0.3+cl*0.4)/100,0,0.4);     // awp/clutch dão empurrão menor
@@ -977,10 +990,16 @@ function combatProfile(j){const a=j?._eng||j||{};
     ratingImpact:FA_IMPACTO[activeCombatRole]??1};}
 function skillDuelo(j){const a=j._eng||j;const C=CFG_SIM;const ovr=j.ovr??a.ovr??13,profile=combatProfile(j);
   return (C.DUELO_BASE+(ovr-5)*C.DUELO_OVR)*profile.duelConversion;}
+// Quem fraga dentro do time: firepower dá o perfil, OVR dá o nível e a função dá o volume.
+// O multiplicador antes vinha do rating histórico (FRAG_RATING) — informação que a carta não
+// carrega. Agora vem do OVR, que é onde o rating histórico legitimamente entrou (nmOVR).
+// FRAG_OVR_MULT saiu de uma regressão do multiplicador antigo sobre o OVR (0,0565 por ponto)
+// e foi então baixado para 0,045, valor em que a sobreposição entre bandas de OVR volta à
+// faixa real (25–40%): um OVR 15 precisa conseguir superar um OVR 20 às vezes.
 function fragPeso(j){const a=j._eng||j;const C=CFG_SIM;const fp=a.fp??60,ovr=j.ovr??a.ovr??13;
   const profile=combatProfile(j); // participação por papel: AWPer/Lurker jogam menos duelos (menos volume, K/D intacto)
-  const rating=ratingCompetitivo(a),ratingMult=clamp(1+(rating-C.RATING_REF)*C.FRAG_RATING,.60,1.55);
-  return (C.FRAG_FP_BASE+fp)*(1+(ovr-13)*C.FRAG_OVR)*ratingMult*profile.fragMultiplier;} // OVR decide força; rating+fp distribuem produção individual
+  const nivelMult=clamp(1+(ovr-C.FRAG_OVR_REF)*C.FRAG_OVR_MULT,.60,1.55);
+  return (C.FRAG_FP_BASE+fp)*(1+(ovr-13)*C.FRAG_OVR)*nivelMult*profile.fragMultiplier;}
 
 // prepara um time pro combate: skills (com forma da noite), clutch e acumulador de stats
 // agressão de playstyle derivada do sub-arquétipo: quão na frente o jogador joga o round
@@ -1055,7 +1074,7 @@ function prepTime(t,mapa){
     ops:js.map(j=>j.op??50),trs:js.map(j=>j.tr??50), // categorias HLTV por jogador (tipo de kill)
     // força de abertura do time (op/entry/sniper/util — flashes ajudam a abrir): inclina o PRIMEIRO duelo
     open:js.reduce((s,j)=>s+((j.op??50)*.35+(j.en??45)*.30+(j.sn??0)*.20+(j.ut??50)*.15),0)/js.length,
-    stats:js.map(j=>{const profile=combatProfile(j);return {nick:j.nick||t.nome,impacto:profile.ratingImpact,prim:profile.primaryRole,ovr:j.ovr??16,ratingBase:ratingCompetitivo(j),ut:j.ut??50,k:0,d:0,a:0,dmg:0,tradeK:0,
+    stats:js.map(j=>{const profile=combatProfile(j);return {nick:j.nick||t.nome,impacto:profile.ratingImpact,prim:profile.primaryRole,ovr:j.ovr??16,ut:j.ut??50,k:0,d:0,a:0,dmg:0,tradeK:0,
       fa:{kills:[],mortes:[],assists:0,roundsKAST:0,multi:{},opK:0,opD:0},_kRound:0,_contribRound:false};})};
 }
 const TELEMETRY_SCHEMA_VERSION=1;
@@ -1359,7 +1378,7 @@ function simularMapa(A,B,fA,fB,mapaForcado,leve,options){
   // rating FALLEnANGELs por jogador (contextual: swing, eco, KAST, multi-kills)
   const totalR=pa+pb;
   const rate=stats=>stats.map(s=>{
-    const rating=fallenAngels({...s.fa,totalRounds:totalR,impacto:s.impacto,prim:s.prim,ovr:s.ovr,ratingBase:s.ratingBase,dmg:s.dmg,tradeK:s.tradeK});
+    const rating=fallenAngels({...s.fa,totalRounds:totalR,impacto:s.impacto,prim:s.prim,ovr:s.ovr,dmg:s.dmg,tradeK:s.tradeK});
     return {nick:s.nick,k:s.k,d:s.d,a:s.a,rating:+rating.toFixed(2),
       kast:+((s.fa.roundsKAST||0)/totalR).toFixed(3),adr:Math.round((s.dmg||0)/totalR)};});
   const result={placar:[pa,pb],vencedorNome:pa>pb?A.nome:B.nome,vencedor:pa>pb?A:B,rounds,

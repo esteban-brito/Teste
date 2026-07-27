@@ -99,11 +99,10 @@ function campaignSeriesScenario(){
   X.sortearFormaCampanha(teams);
   const a=combatTeam(X,teams,aIndex,true),b=combatTeam(X,teams,bIndex);
   const result=X.simularSerie(a,b,()=>X.forcaDoDia(a.ef,a.quim),()=>X.forcaDoDia(b.ef,b.quim),3,false);
-  // Âncora revisada em 26/07/2026 (identidade única do playstyle): a série deixou de ser varrida
-  // 2-0 em Nuke,Inferno e passou a 1-2 em Nuke,Train,Dust2. A cobertura AUMENTA — três mapas
-  // exercitam o mapa decisivo, que o 2-0 nunca alcançava.
+  // Série de três mapas: cobre o mapa decisivo, que uma varrida 2-0 nunca alcança. O terceiro
+  // mapa mudou de Dust2 para Ancient com o novo sorteio de RNG; a cobertura é a mesma.
   assert.equal(result.placarSerie.join(","),"1,2",`${id}: ancora da serie mudou antes de atualizar o fixture`);
-  assert.equal(result.mapas.map(map=>map.mapa).join(","),"Nuke,Train,Dust2",`${id}: sequencia de mapas mudou antes de atualizar o fixture`);
+  assert.equal(result.mapas.map(map=>map.mapa).join(","),"Nuke,Train,Ancient",`${id}: sequencia de mapas mudou antes de atualizar o fixture`);
   return {
     id,kind:"campaign-series",seed,
     input:{...projectInput(a,b,aIndex,bIndex),bestOf:3,campaignForm:true},
@@ -121,13 +120,15 @@ function buildCurrent(){
     schemaVersion:SCHEMA_VERSION,
     rngContract:"mulberry32-v1",
     scenarios:[
-      // Âncoras revisadas em 26/07/2026 (identidade única do playstyle). O placar da seed 1 passou
-      // de 7-13 para 10-13: agressão e afinidade de lado mudaram de fonte, então a timeline muda.
-      fixedMapScenario({id:"economy-and-clutches",seed:1,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[10,13]}),
-      // A seed 129 deixou de produzir prorrogação (virou 13-5). Trocar só o placar esvaziaria o
-      // cenário, que existe para cobrir o OT REPETÍVEL. A seed 349 reproduz o mesmo 22-18 em 40
-      // rounds — três prorrogações —, preservando exatamente a cobertura original.
-      fixedMapScenario({id:"repeated-overtime",seed:349,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[22,18]}),
+      // Âncoras revisadas em 26/07/2026, agora pelo ciclo "rating emerge da carta". A timeline
+      // muda porque produção individual e forma deixaram de ler o rating histórico.
+      fixedMapScenario({id:"economy-and-clutches",seed:1,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[5,13]}),
+      // Este cenário cobre o OT REPETÍVEL (alvo 13→16→19→22), caminho que só executa com duas ou
+      // mais prorrogações. Ele é frágil por natureza: qualquer balanceamento reembaralha o RNG e a
+      // seed antiga deixa de ir para o overtime. A regra ao mexer aqui é procurar uma seed que
+      // volte a produzir 2+ prorrogações — nunca aceitar um placar de tempo normal, que esvaziaria
+      // o teste. A seed 111 reproduz 22-18 em 40 rounds (três prorrogações).
+      fixedMapScenario({id:"repeated-overtime",seed:111,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[22,18]}),
       campaignSeriesScenario()
     ]
   };
