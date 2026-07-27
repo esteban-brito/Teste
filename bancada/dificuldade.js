@@ -24,9 +24,19 @@
    times fortes, ou aceitar a faixa mais dura. Por isso esta suíte segue como RELATÓRIO. */
 const {X,T}=require("./motor");
 const {pct,inRange,printCheck,mean}=require("./common");
+const {wilsonIntervalPercent}=require("../src/domain/statistics/proportion-interval.mjs");
 
 const N=+(process.env.N||400);
+// A linha do elenco draftado tem amostra própria: o invicto vive perto de 5%, e a 300 campanhas
+// um único evento vale 0,33 pp — essa amostra não distingue 1,5% de 4%. Ver DIMENSIONAMENTO.
+const DRAFT_N=+(process.env.DIFICULDADE_N||3000);
 const STRICT=process.env.DIFICULDADE_STRICT==="1";
+
+// invicto% com IC95% de Wilson: sem o intervalo, mover o número é indistinguível de sorte.
+const proporcao=(sucessos,total)=>{
+  const ic=wilsonIntervalPercent(sucessos,total);
+  return ic.n?`${ic.estimate.toFixed(1)}% [${ic.low.toFixed(1)}–${ic.high.toFixed(1)}]`:"—";
+};
 
 if(X.srand)X.srand(20260726);
 
@@ -222,7 +232,7 @@ ordenados.forEach(l=>{
 
 /* ─── a linha que governa o alvo: o elenco draftado ─────────────────────── */
 let dCamp=0,dTit=0,dInv=0,dSuica=0,somaEf=0,somaQuim=0;
-const campanhasDraft=Math.max(300,porCampanha*4);
+const campanhasDraft=DRAFT_N;
 const exemplos=[];
 for(let c=0;c<campanhasDraft;c++){
   const draft=elencoDraftado(); // draft NOVO a cada run, como no jogo
@@ -236,12 +246,13 @@ for(let c=0;c<campanhasDraft;c++){
 console.log(`
   ELENCO DRAFTADO (${dCamp} drafts · força média ${(somaEf/dCamp).toFixed(1)} · química média ${(somaQuim/dCamp*100).toFixed(0)}%)`);
 exemplos.forEach(e=>console.log(`    ex: ${e}`));
-console.log(`    título ${pct(dTit,dCamp).toFixed(1)}% · invicto ${pct(dInv,dCamp).toFixed(1)}% · cai na suíça ${pct(dSuica,dCamp).toFixed(1)}%`);
+console.log(`    título ${proporcao(dTit,dCamp)} · invicto ${proporcao(dInv,dCamp)} · cai na suíça ${proporcao(dSuica,dCamp)}`);
+console.log(`    (IC95% de Wilson; ±${wilsonIntervalPercent(dInv,dCamp).margin.toFixed(2)} pp no invicto)`);
 
 const checks=[
   // O alvo de 4-6% descreve o elenco DRAFTADO — é o que o usuário realmente joga.
-  ["Invicto (elenco draftado) %",pct(dInv,dCamp).toFixed(1),"4–6",inRange(pct(dInv,dCamp),4,6)],
-  ["Título (elenco draftado) %",pct(dTit,dCamp).toFixed(1),"25–60",inRange(pct(dTit,dCamp),25,60)],
+  ["Invicto (elenco draftado) %",proporcao(dInv,dCamp),"4–6",inRange(pct(dInv,dCamp),4,6)],
+  ["Título (elenco draftado) %",proporcao(dTit,dCamp),"25–60",inRange(pct(dTit,dCamp),25,60)],
   ["Título (faixa alta de fábrica) %",alta.pTitulo.toFixed(1),"12–30",inRange(alta.pTitulo,12,30)],
   ["Faixa alta supera a baixa em título",(alta.pTitulo-baixa.pTitulo).toFixed(1),">0",alta.pTitulo>baixa.pTitulo]
 ];
