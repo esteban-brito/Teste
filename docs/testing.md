@@ -17,15 +17,28 @@ faixas atuais são guardas de regressão, não uma nota de 0–100.
 | `npm run test:data` | `times.js` | integridade de jogadores, times e derivados |
 | `npm run test:regression` | auditoria, snapshot, drop, golden e comparador R5 | classificação, invariantes, resultados completos e pareamento |
 | `npm run test:calibrator` | basic, heavy, worker | busca, intenção, custo e paralelismo |
-| `npm run test:benchmark` | realismo, assists, KDA, rating | fidelidade estatística dos motores |
+| `npm run test:benchmark` | realismo, assists, KDA, rating, perfis, dificuldade | fidelidade estatística dos motores, coerência de carta e dificuldade da campanha |
 | `npm run test:fidelity` | scorer e corpus IFCS | matemática, cobertura, caps, proveniência e auditoria |
 | `npm run test:e2e` | intent, simulation, game flow | calibrador, aba Simular e jogo principal no navegador |
 | `npm run test:r5` | comparador pareado R5 | hashes, cobertura, delta nulo e detecção sintética |
 | `npm run test:r5:tails` | guardas de cauda R5.2 | ratings extremos, forma positiva e ausência de massa nos limites antigos |
-| `npm run test:all` | as 19 suítes acima | validação completa na ordem histórica |
+| `npm run test:all` | as 22 suítes acima | validação completa na ordem histórica |
 | `npm run bench` | alias de `test:all` | compatibilidade com CI e fluxo legado |
 
-`npm run validate` executa sintaxe, lint e as 19 suítes.
+`npm run validate` executa sintaxe, lint e as 22 suítes.
+
+## Suítes de forma (medição, não gate)
+
+`perfis.js`, `dificuldade.js` e a seção FORMA de `realismo.js` medem **distribuição**,
+não média: assinatura por função e playstyle, sobreposição entre bandas de OVR,
+variância intra-jogador, peso do contexto, kills por round, método do round e
+probabilidade de campanha invicta.
+
+Elas rodam em modo relatório e não reprovam a suíte enquanto o problema que medem não
+for atacado. Os alvos passam a valer por variável de ambiente:
+`PERFIS_STRICT=1` (após a etapa de rating), `FORMA_STRICT=1` (após o relógio do round)
+e `DIFICULDADE_STRICT=1` (no fechamento). O retrato de referência que originou os
+alvos está em [`baseline-simulacao-2026-07-26.md`](baseline-simulacao-2026-07-26.md).
 
 O `npm run check` também compara o módulo estatístico compartilhado com as
 fórmulas legadas em 5.464 amostras determinísticas, incluindo vazios, extremos,
