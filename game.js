@@ -798,7 +798,7 @@ const gaussF=()=>{let u=0,v=0;while(u===0)u=rndF();while(v===0)v=rndF();return M
 const logistica=(fa,fb,D)=>1/(1+Math.pow(10,(fb-fa)/D));
 
 const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓLVORA (combate) + COFRE (economia)
-  PESO_EF:.60,                  // 60% força do time (OVR+química+treinador), 40% skill individual cru
+  PESO_EF:.40,                  // 40% força do time (OVR+química+treinador), 60% skill individual cru
   // motor de combate por jogador (validado vs CS2 real: KPR~0.67, rating~1.0, fiel HLTV)
   LADO_CT:0.8,FORMA_DIA:7,FORMA_TAIL_KNEE:2.2,FORMA_TAIL_SCALE:.20, // joelho suave da cauda, nunca teto
   LADO_COMP:1.05,               // escala da vantagem de lado por COMPOSIÇÃO (lurker/anchor→CT, entry→T)
@@ -976,7 +976,9 @@ function formaDoDia(j){const a=j._eng||j;const t=tierDe(j),p=PERFIL_TIER[t],C=CF
 // o rating global, só faz CADA run ser diferente (o motor de variância do roguelike).
 // forma de campanha: lenda/estrela varia POUCO no Major (confiável); role player balança mais.
 // AMP_TIME maior = o time "clica" ou não no evento com mais força (mais zebras de campanha).
-const CFG_CAMP={AMP_TIME:0.11,AMP_JOG:{Lenda:0.12,Star:0.13,Solido:0.18,Role:0.23}};
+// Calibrado com PESO_EF pela campanha invicta (bancada/dificuldade.js): a 0.11 o Major era
+// previsível demais para um elenco draftado passar ileso pelos ~10 mapas de um título.
+const CFG_CAMP={AMP_TIME:0.22,AMP_JOG:{Lenda:0.12,Star:0.13,Solido:0.18,Role:0.23}};
 function sortearFormaCampanha(times){
   times.forEach(t=>{
     const seedTime=gaussF()*CFG_CAMP.AMP_TIME;
@@ -2509,7 +2511,9 @@ function renderSwiss(){
 // ---- Playoffs ----
 function garantirPlayoffs(){
   if(TG.playoffs)return;
-  const seeds=[...TG.classificados].slice(0,8).sort((a,b)=>b.ef-a.ef);
+  // seed pelo RESULTADO da suíça: 3-0 na frente de 3-1, 3-1 na frente de 3-2, força só como
+  // desempate. É como um Major real chaveia, e semear por força punia quem passou invicto.
+  const seeds=[...TG.classificados].slice(0,8).sort((a,b)=>a.d-b.d||b.ef-a.ef);
   TG.playoffs={seeds,
     quartas:[[seeds[0],seeds[7]],[seeds[3],seeds[4]],[seeds[1],seeds[6]],[seeds[2],seeds[5]]],
     semi:[null,null,null,null],final:[null,null],campeao:null,fase:0,res:{}};

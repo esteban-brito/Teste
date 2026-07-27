@@ -33,7 +33,9 @@ const LIMIAR=+(process.env.DIFICULDADE_LIMIAR||0);
 // isoladamente (DIFICULDADE_AJUSTES=nicks,roles,overlap). Padrão: todas ligadas.
 const AJUSTES=process.env.DIFICULDADE_AJUSTES===undefined?AJUSTES_PADRAO
   :new Set(process.env.DIFICULDADE_AJUSTES.split(",").map(item=>item.trim()).filter(Boolean));
-const STRICT=process.env.DIFICULDADE_STRICT==="1";
+// O alvo virou gate em 27/07/2026, quando o invicto do jogador apressado entrou na faixa com
+// margem verificada em 2.000, 4.000 e 8.000 campanhas (5,70% · 5,13% · 4,91%).
+const STRICT=process.env.DIFICULDADE_STRICT!=="0";
 
 // invicto% com IC95% de Wilson: sem o intervalo, mover o número é indistinguível de sorte.
 const proporcao=(sucessos,total)=>{
@@ -97,10 +99,12 @@ ordenados.forEach(l=>{
 const LIMIARES=[0,18,19,20,21,22];
 console.log(`\n  CURVA DE ESFORÇO DO DRAFT (${CURVA_N} campanhas por ponto)`);
 console.log(`    ${"OVR mín".padEnd(8)} ${"giros".padStart(6)} ${"força".padStart(6)} ${"quím".padStart(5)}  ${"título".padStart(18)}  ${"invicto".padStart(18)}`);
-const curva=LIMIARES.map(limiar=>{
+LIMIARES.forEach(limiar=>{
   const r=medirDraft({limiar,campanhas:CURVA_N,ajustes:AJUSTES});
-  console.log(`    ${String(limiar).padEnd(8)} ${r.giros.toFixed(1).padStart(6)} ${r.ef.toFixed(1).padStart(6)} ${(r.quim*100).toFixed(0).padStart(4)}%  ${proporcao(r.titulos,r.campanhas).padStart(18)}  ${proporcao(r.invictos,r.campanhas).padStart(18)}`);
-  return r;
+  // marca quem cai na faixa do alvo: o esforço 0 é a referência, os demais ficam acima de
+  // propósito — quem gasta re-spin monta um elenco melhor e merece campanha mais fácil.
+  const marca=inRange(pct(r.invictos,r.campanhas),4,6)?"◆":" ";
+  console.log(`  ${marca} ${String(limiar).padEnd(8)} ${r.giros.toFixed(1).padStart(6)} ${r.ef.toFixed(1).padStart(6)} ${(r.quim*100).toFixed(0).padStart(4)}%  ${proporcao(r.titulos,r.campanhas).padStart(18)}  ${proporcao(r.invictos,r.campanhas).padStart(18)}`);
 });
 
 /* ─── a linha que governa o alvo: o elenco draftado no esforço declarado ─── */
@@ -111,9 +115,6 @@ console.log(`
 draftado.exemplos.forEach(e=>console.log(`    ex: ${e}`));
 console.log(`    título ${proporcao(dTit,dCamp)} · invicto ${proporcao(dInv,dCamp)} · cai na suíça ${proporcao(draftado.suica,dCamp)}`);
 console.log(`    (IC95% de Wilson; ±${wilsonIntervalPercent(dInv,dCamp).margin.toFixed(2)} pp no invicto)`);
-const naFaixa=curva.filter(r=>inRange(pct(r.invictos,r.campanhas),4,6));
-if(naFaixa.length)console.log(`    esforço que cai em 4–6%: OVR mín ${naFaixa.map(r=>r.limiar).join(", ")}`);
-else console.log("    nenhum esforço de draft medido cai em 4–6% — a diferença não é só de elenco");
 
 const checks=[
   // O alvo de 4-6% descreve o elenco DRAFTADO — é o que o usuário realmente joga.

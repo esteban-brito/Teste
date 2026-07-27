@@ -87,7 +87,9 @@ function rodadaSuica(times,campanha){
 
 /* ─── playoffs ───────────────────────────────────────────────────────────── */
 function playoffs(times,campanha){
-  const seeds=times.filter(t=>t.classificado).slice(0,8).sort((a,b)=>b.ef-a.ef);
+  // seed pelo RESULTADO da suíça (3-0 na frente de 3-1, 3-1 na frente de 3-2), força só como
+  // desempate — é assim que um Major real chaveia. Ver garantirPlayoffs em game.js.
+  const seeds=times.filter(t=>t.classificado).slice(0,8).sort((a,b)=>a.d-b.d||b.ef-a.ef);
   if(seeds.length<8)return null;
   let fase=[[seeds[0],seeds[7]],[seeds[3],seeds[4]],[seeds[1],seeds[6]],[seeds[2],seeds[5]]];
   while(fase.length>=1){
