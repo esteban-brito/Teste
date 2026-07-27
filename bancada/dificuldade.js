@@ -4,174 +4,46 @@
    Esta suíte transforma o alvo em número. Alvo acordado com o responsável:
    INVICTO (título sem perder um único mapa) em 4–6% das campanhas com elenco bom.
 
-   Replica fielmente o torneio da camada de UI (game.js: iniciarTorneio / avancarSuica /
-   garantirPlayoffs / avancarPlayoff), porque a campanha vive na UI e não no motor:
-     · Major de 16 — 15 NPC sorteados + o seu time;
-     · suíça por buckets de campanha, anti-rematch, 3V classifica / 3D elimina;
-     · o SEU jogo é simulado round a round; jogos entre NPCs são resolvidos por moeda
-       ponderada (logistica sobre a força do dia), exatamente como no jogo;
-     · jogo decisivo (alguém em 2V ou 2D) é MD3; o resto é MD1;
-     · playoffs: top 8 por força efetiva, quartas/semi/final em MD3.
+   O torneio em si vive em bancada/campanha-major.js, compartilhado com as varreduras de
+   balanceamento — assim a suíte e a calibração medem exatamente o mesmo Major.
 
    A linha que governa o alvo é a do ELENCO DRAFTADO, não a dos times de fábrica: é o
-   elenco draftado que o usuário realmente joga. Ele é sorteado de novo a cada campanha,
-   simulando o draft do jogo (cinco giros, uma carta por giro).
+   elenco draftado que o usuário realmente joga.
 
-   ESTADO EM 27/07/2026: o invicto do elenco draftado está em ~1,5%, ou seja, MAIS DIFÍCIL
-   que o alvo acordado de 4–6%. Fechar essa diferença não é ajuste de constante — as
-   alavancas de variância testadas (química, forma, cauda) levantam o campo inteiro junto e
-   se cancelam. Depende de decisão de produto: dar re-spin no draft, restringir o Major a
-   times fortes, ou aceitar a faixa mais dura. Por isso esta suíte segue como RELATÓRIO. */
+   O DRAFT TEM RE-SPIN, e ele é ilimitado e gratuito. Por isso a dificuldade não é uma
+   propriedade só do motor: é função do esforço que o jogador gasta no draft. A suíte
+   imprime a curva invicto × esforço, e a linha do alvo declara qual jogador está sendo
+   medido (DIFICULDADE_LIMIAR). */
 const {X,T}=require("./motor");
 const {pct,inRange,printCheck,mean}=require("./common");
+const {AJUSTES_PADRAO,campanha,medirDraft}=require("./campanha-major");
+const {wilsonIntervalPercent}=require("../src/domain/statistics/proportion-interval.mjs");
 
 const N=+(process.env.N||400);
-const STRICT=process.env.DIFICULDADE_STRICT==="1";
+// A linha do elenco draftado tem amostra própria: o invicto vive perto de 5%, e a 300 campanhas
+// um único evento vale 0,33 pp — essa amostra não distingue 1,5% de 4%. Ver DIMENSIONAMENTO.
+const DRAFT_N=+(process.env.DIFICULDADE_N||3000);
+const CURVA_N=+(process.env.DIFICULDADE_CURVA_N||600);
+// Esforço de draft da linha que governa o alvo: OVR mínimo que o jogador aceita antes de
+// girar de novo. 0 = aceita a primeira carta de cada giro.
+// DECISÃO DO RESPONSÁVEL (27/07/2026): o alvo de 4–6% descreve o jogador APRESSADO, ou seja,
+// limiar 0. Quem gasta re-spin fica acima da faixa de propósito — o esforço é recompensado.
+const LIMIAR=+(process.env.DIFICULDADE_LIMIAR||0);
+// Cada correção de fidelidade do medidor pode ser desligada para atribuir seu efeito
+// isoladamente (DIFICULDADE_AJUSTES=nicks,roles,overlap). Padrão: todas ligadas.
+const AJUSTES=process.env.DIFICULDADE_AJUSTES===undefined?AJUSTES_PADRAO
+  :new Set(process.env.DIFICULDADE_AJUSTES.split(",").map(item=>item.trim()).filter(Boolean));
+// O alvo virou gate em 27/07/2026, quando o invicto do jogador apressado entrou na faixa com
+// margem verificada em 2.000, 4.000 e 8.000 campanhas (5,70% · 5,13% · 4,91%).
+const STRICT=process.env.DIFICULDADE_STRICT!=="0";
+
+// invicto% com IC95% de Wilson: sem o intervalo, mover o número é indistinguível de sorte.
+const proporcao=(sucessos,total)=>{
+  const ic=wilsonIntervalPercent(sucessos,total);
+  return ic.n?`${ic.estimate.toFixed(1)}% [${ic.low.toFixed(1)}–${ic.high.toFixed(1)}]`:"—";
+};
 
 if(X.srand)X.srand(20260726);
-
-// O sorteio do torneio TEM que consumir o mesmo RNG semeado do motor. Cair em Math.random()
-// silenciosamente tornaria a medida não-reprodutível — melhor falhar aqui.
-if(typeof X.rndF!=="function")throw new Error("motor não exportou rndF: a dificuldade não seria reprodutível");
-const rnd=X.rndF;
-
-/* ─── suíça ──────────────────────────────────────────────────────────────── */
-function embaralhar(lista){
-  for(let i=lista.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[lista[i],lista[j]]=[lista[j],lista[i]];}
-  return lista;
-}
-
-const forcaDia=t=>X.forcaDoDia(t.ef,t.quim);
-// jogo entre NPCs: moeda ponderada pela força do dia, igual a resolverPar da UI
-function moeda(x,y){
-  return rnd()<X.logistica(forcaDia(x),forcaDia(y),X.CFG_SIM.D_MAPA);
-}
-function resolverNpc(x,y,need){
-  let wx=0,wy=0;
-  while(wx<need&&wy<need)moeda(x,y)?wx++:wy++;
-  const vencedor=wx>wy?x:y,perdedor=wx>wy?y:x;
-  vencedor.v++;perdedor.d++;
-}
-// jogo do JOGADOR: simulado de verdade, round a round. Devolve mapas ganhos/perdidos.
-function resolverMeu(meu,adv,need){
-  const serie=X.simularSerie(meu.time,adv.time,()=>forcaDia(meu),()=>forcaDia(adv),need*2-1,true);
-  const venci=serie.vencedor===meu.time;
-  let ganhos=0,perdidos=0;
-  serie.mapas.forEach(m=>{m.vencedor===meu.time?ganhos++:perdidos++;});
-  (venci?meu:adv).v++;(venci?adv:meu).d++;
-  return {venci,ganhos,perdidos};
-}
-
-const decisivo=(x,y)=>x.v===2||x.d===2||y.v===2||y.d===2;
-
-function rodadaSuica(times,campanha){
-  const ativos=times.filter(t=>t.vivo);
-  const buckets={};
-  ativos.forEach(t=>{const k=t.v+"-"+t.d;(buckets[k]=buckets[k]||[]).push(t);});
-  const pares=[];let parDoJogador=null;
-  const jaJogaram=(x,y)=>(x.opps||[]).includes(y);
-  Object.values(buckets).forEach(grupo=>{
-    const a=embaralhar([...grupo]);
-    for(let i=0;i<a.length-1;i+=2){ // anti-rematch: troca com alguém à frente se já se enfrentaram
-      if(jaJogaram(a[i],a[i+1]))for(let j=i+2;j<a.length;j++){if(!jaJogaram(a[i],a[j])){[a[i+1],a[j]]=[a[j],a[i+1]];break;}}
-    }
-    for(let i=0;i<a.length-1;i+=2){
-      a[i].opps=a[i].opps||[];a[i+1].opps=a[i+1].opps||[];
-      a[i].opps.push(a[i+1]);a[i+1].opps.push(a[i]);
-      if(a[i].meu||a[i+1].meu)parDoJogador=[a[i],a[i+1]];else pares.push([a[i],a[i+1]]);
-    }
-    if(a.length%2)a[a.length-1]._bye=true;
-  });
-  if(parDoJogador){
-    const [x,y]=parDoJogador,meu=x.meu?x:y,adv=x.meu?y:x;
-    const r=resolverMeu(meu,adv,decisivo(meu,adv)?2:1);
-    campanha.mapasV+=r.ganhos;campanha.mapasD+=r.perdidos;
-  }
-  pares.forEach(([x,y])=>resolverNpc(x,y,decisivo(x,y)?2:1));
-  ativos.forEach(t=>{if(t._bye){t.v++;delete t._bye;}});
-  times.forEach(t=>{
-    if(t.vivo&&t.v>=3){t.vivo=false;t.classificado=true;}
-    else if(t.vivo&&t.d>=3){t.vivo=false;t.eliminado=true;}
-  });
-}
-
-/* ─── playoffs ───────────────────────────────────────────────────────────── */
-function playoffs(times,campanha){
-  const seeds=times.filter(t=>t.classificado).slice(0,8).sort((a,b)=>b.ef-a.ef);
-  if(seeds.length<8)return null;
-  let fase=[[seeds[0],seeds[7]],[seeds[3],seeds[4]],[seeds[1],seeds[6]],[seeds[2],seeds[5]]];
-  while(fase.length>=1){
-    const vencedores=[];
-    for(const [x,y] of fase){
-      if(x.meu||y.meu){
-        const meu=x.meu?x:y,adv=x.meu?y:x;
-        const r=resolverMeu(meu,adv,2);
-        campanha.mapasV+=r.ganhos;campanha.mapasD+=r.perdidos;
-        vencedores.push(r.venci?meu:adv);
-      }else{
-        let wx=0,wy=0;
-        while(wx<2&&wy<2)moeda(x,y)?wx++:wy++;
-        vencedores.push(wx>wy?x:y);
-      }
-    }
-    if(vencedores.length===1)return vencedores[0];
-    fase=[];
-    for(let i=0;i<vencedores.length;i+=2)fase.push([vencedores[i],vencedores[i+1]]);
-  }
-  return null;
-}
-
-/* ─── uma campanha completa ──────────────────────────────────────────────── */
-function campanha(meuIndice){
-  const npc=embaralhar(T.filter((_,i)=>i!==meuIndice).slice()).slice(0,15);
-  const times=npc.map(t=>({time:t,nome:t.nome,ef:t.ef,quim:t.quim,v:0,d:0,vivo:true,meu:false}));
-  const meu=T[meuIndice];
-  times.push({time:meu,nome:meu.nome,ef:meu.ef,quim:meu.quim,v:0,d:0,vivo:true,meu:true});
-  X.sortearFormaCampanha(times.map(t=>t.time));
-  const estado={mapasV:0,mapasD:0};
-  const eu=times.find(t=>t.meu);
-
-  let guarda=0;
-  while(times.filter(t=>t.classificado).length<8&&times.some(t=>t.vivo)&&guarda++<12){
-    rodadaSuica(times,estado);
-    if(eu.eliminado)return {fim:"suica",titulo:false,invicto:false,...estado};
-  }
-  if(!eu.classificado)return {fim:"suica",titulo:false,invicto:false,...estado};
-
-  const campeao=playoffs(times,estado);
-  const titulo=!!campeao&&campeao.meu;
-  return {fim:titulo?"campeao":"playoffs",titulo,invicto:titulo&&estado.mapasD===0,...estado};
-}
-
-/* ─── ELENCO DRAFTADO ────────────────────────────────────────────────────────
-   O alvo de 4–6% descreve o elenco que o USUÁRIO monta. Mas montar não é escolher os
-   cinco melhores do jogo: no draft real a roleta sorteia UM time por rodada e você escolhe
-   UMA carta dele. Medir o top-5 global daria um limite superior, não o elenco que se joga.
-   Aqui o draft é simulado como no jogo — seis giros, escolha gulosa da melhor carta
-   disponível do time sorteado, respeitando cobertura de IGL e AWP. */
-function elencoDraftado(){
-  const times=X.TEAMS;
-  const escolhidos=[];
-  const temIgl=()=>escolhidos.some(p=>p.primario==="IGL");
-  const temAwp=()=>escolhidos.some(p=>(p.combatRole||p.primario)==="AWPer");
-  for(let giro=0;giro<5;giro++){
-    const time=times[Math.floor(rnd()*times.length)];
-    const cartas=time.jogadores.map(c=>c._eng).filter(p=>!escolhidos.includes(p));
-    if(!cartas.length){giro--;continue;}
-    const faltamSlots=5-escolhidos.length;
-    // um jogador competente prioriza cobrir IGL e AWP enquanto ainda há espaço
-    let alvo=null;
-    if(!temIgl()&&faltamSlots<=3)alvo=cartas.filter(p=>p.primario==="IGL").sort((x,y)=>y.ovr-x.ovr)[0];
-    if(!alvo&&!temAwp()&&faltamSlots<=2)alvo=cartas.filter(p=>(p.combatRole||p.primario)==="AWPer").sort((x,y)=>y.ovr-x.ovr)[0];
-    if(!alvo)alvo=cartas.slice().sort((x,y)=>y.ovr-x.ovr)[0];
-    escolhidos.push(alvo);
-  }
-  const timeTreinador=times[Math.floor(rnd()*times.length)];
-  const treinador=timeTreinador.treinador;
-  const forca=X.forcaTime(escolhidos,treinador&&treinador.carac,treinador&&treinador.ovr);
-  return {nome:"DRAFT",jogadores:escolhidos.map(p=>({_eng:p})),
-    ef:forca.efetiva,quim:forca.quimica,elenco:escolhidos.map(p=>`${p.nick}(${p.ovr})`)};
-}
 
 /* ─── execução: uma fatia de campanhas por time, agrupada por força ──────── */
 const inicio=Date.now();
@@ -180,7 +52,7 @@ const porCampanha=Math.max(1,Math.round(N/T.length));
 
 porTime.forEach(linha=>{
   for(let c=0;c<porCampanha;c++){
-    const r=campanha(linha.i);
+    const r=campanha(linha.i,AJUSTES);
     linha.campanhas++;
     if(r.titulo)linha.titulos++;
     if(r.invicto)linha.invictos++;
@@ -194,8 +66,8 @@ const total=porTime.reduce((acc,l)=>({
   suica:acc.suica+l.suica,mapasV:acc.mapasV+l.mapasV,mapasD:acc.mapasD+l.mapasD
 }),{campanhas:0,titulos:0,invictos:0,suica:0,mapasV:0,mapasD:0});
 
-// Faixa ALTA = terço mais forte do pool. É a linha que representa um elenco DRAFTADO,
-// e portanto a que o alvo de 4–6% governa.
+// Faixa ALTA = terço mais forte do pool. Serve de referência de fábrica: o elenco draftado
+// tem a linha própria mais abaixo.
 const ordenados=[...porTime].sort((a,b)=>b.ef-a.ef);
 const corte=Math.max(1,Math.round(ordenados.length/3));
 const faixa=lista=>{
@@ -220,28 +92,34 @@ ordenados.forEach(l=>{
   console.log(`    ${l.nome.padEnd(14)} ef ${l.ef.toFixed(1).padStart(5)}  título ${pct(l.titulos,l.campanhas).toFixed(1).padStart(5)}%  invicto ${pct(l.invictos,l.campanhas).toFixed(1).padStart(5)}%`);
 });
 
-/* ─── a linha que governa o alvo: o elenco draftado ─────────────────────── */
-let dCamp=0,dTit=0,dInv=0,dSuica=0,somaEf=0,somaQuim=0;
-const campanhasDraft=Math.max(300,porCampanha*4);
-const exemplos=[];
-for(let c=0;c<campanhasDraft;c++){
-  const draft=elencoDraftado(); // draft NOVO a cada run, como no jogo
-  somaEf+=draft.ef;somaQuim+=draft.quim;
-  if(exemplos.length<3)exemplos.push(`${draft.elenco.join(" ")} → força ${draft.ef.toFixed(0)}`);
-  T.push(draft);
-  const r=campanha(T.length-1);
-  T.pop();
-  dCamp++;if(r.titulo)dTit++;if(r.invicto)dInv++;if(r.fim==="suica")dSuica++;
-}
+/* ─── CURVA DE ESFORÇO: o alvo de 4–6% descreve QUAL jogador? ────────────────
+   Como o re-spin é ilimitado, o invicto não é uma propriedade do motor sozinho: é uma
+   função do esforço que o jogador gasta no draft. Sem essa curva, "1,5%" e "4%" descrevem
+   jogadores diferentes e a comparação não quer dizer nada. */
+const LIMIARES=[0,18,19,20,21,22];
+console.log(`\n  CURVA DE ESFORÇO DO DRAFT (${CURVA_N} campanhas por ponto)`);
+console.log(`    ${"OVR mín".padEnd(8)} ${"giros".padStart(6)} ${"força".padStart(6)} ${"quím".padStart(5)}  ${"título".padStart(18)}  ${"invicto".padStart(18)}`);
+LIMIARES.forEach(limiar=>{
+  const r=medirDraft({limiar,campanhas:CURVA_N,ajustes:AJUSTES});
+  // marca quem cai na faixa do alvo: o esforço 0 é a referência, os demais ficam acima de
+  // propósito — quem gasta re-spin monta um elenco melhor e merece campanha mais fácil.
+  const marca=inRange(pct(r.invictos,r.campanhas),4,6)?"◆":" ";
+  console.log(`  ${marca} ${String(limiar).padEnd(8)} ${r.giros.toFixed(1).padStart(6)} ${r.ef.toFixed(1).padStart(6)} ${(r.quim*100).toFixed(0).padStart(4)}%  ${proporcao(r.titulos,r.campanhas).padStart(18)}  ${proporcao(r.invictos,r.campanhas).padStart(18)}`);
+});
+
+/* ─── a linha que governa o alvo: o elenco draftado no esforço declarado ─── */
+const draftado=medirDraft({limiar:LIMIAR,campanhas:DRAFT_N,ajustes:AJUSTES});
+const dCamp=draftado.campanhas,dTit=draftado.titulos,dInv=draftado.invictos;
 console.log(`
-  ELENCO DRAFTADO (${dCamp} drafts · força média ${(somaEf/dCamp).toFixed(1)} · química média ${(somaQuim/dCamp*100).toFixed(0)}%)`);
-exemplos.forEach(e=>console.log(`    ex: ${e}`));
-console.log(`    título ${pct(dTit,dCamp).toFixed(1)}% · invicto ${pct(dInv,dCamp).toFixed(1)}% · cai na suíça ${pct(dSuica,dCamp).toFixed(1)}%`);
+  ELENCO DRAFTADO (${dCamp} drafts · OVR mín ${LIMIAR} · ${draftado.giros.toFixed(1)} giros · força média ${draftado.ef.toFixed(1)} · química média ${(draftado.quim*100).toFixed(0)}%)`);
+draftado.exemplos.forEach(e=>console.log(`    ex: ${e}`));
+console.log(`    título ${proporcao(dTit,dCamp)} · invicto ${proporcao(dInv,dCamp)} · cai na suíça ${proporcao(draftado.suica,dCamp)}`);
+console.log(`    (IC95% de Wilson; ±${wilsonIntervalPercent(dInv,dCamp).margin.toFixed(2)} pp no invicto)`);
 
 const checks=[
   // O alvo de 4-6% descreve o elenco DRAFTADO — é o que o usuário realmente joga.
-  ["Invicto (elenco draftado) %",pct(dInv,dCamp).toFixed(1),"4–6",inRange(pct(dInv,dCamp),4,6)],
-  ["Título (elenco draftado) %",pct(dTit,dCamp).toFixed(1),"25–60",inRange(pct(dTit,dCamp),25,60)],
+  ["Invicto (elenco draftado) %",proporcao(dInv,dCamp),"4–6",inRange(pct(dInv,dCamp),4,6)],
+  ["Título (elenco draftado) %",proporcao(dTit,dCamp),"25–60",inRange(pct(dTit,dCamp),25,60)],
   ["Título (faixa alta de fábrica) %",alta.pTitulo.toFixed(1),"12–30",inRange(alta.pTitulo,12,30)],
   ["Faixa alta supera a baixa em título",(alta.pTitulo-baixa.pTitulo).toFixed(1),">0",alta.pTitulo>baixa.pTitulo]
 ];

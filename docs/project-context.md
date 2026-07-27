@@ -172,9 +172,15 @@ Atualização operacional de 24 de julho de 2026:
 | `798908e` | O round ganha um relógio real | `docs/relogio-do-round-2026-07-26.md` |
 | `7cf6bed` | Economia e arsenal reais | `docs/economia-real-2026-07-26.md` |
 | `d3d43c5` | Correção da flag de estrela + dificuldade pelo draft real | `docs/fechamento-dificuldade-2026-07-27.md` |
+| `aa5841a` | Instrumento: varredura pareada e intervalo de Wilson | este arquivo, §2-bis |
+| `93f188a` | O medidor de dificuldade passa a medir o draft do jogo | `docs/dificuldade-invicto-2026-07-27.md` |
+| `b6156fd` | Abertura decidida por exposição, não por firepower | `docs/abertura-2026-07-27.md` |
+| `a92b210` | Campanha invicta entra na faixa de 4–6% | `docs/dificuldade-invicto-2026-07-27.md` |
+| `41d6b86` | Goldens regravados | mensagem do commit |
 
-Validação final: **22/22 suítes verdes**, incluindo os três E2E. `realismo.js` fecha
-**12/12 macro e 6/6 forma** — a primeira vez que as duas camadas fecham juntas.
+Validação final: **24/24 suítes verdes**, incluindo os três E2E. `realismo.js` fecha
+**12/12 macro e 6/6 forma**, `perfis.js` fecha **15/15** e `dificuldade.js` fecha **4/4** —
+a primeira vez que as três camadas fecham juntas.
 
 ### Mudanças de contrato que uma sessão futura precisa conhecer
 
@@ -195,6 +201,18 @@ Validação final: **22/22 suítes verdes**, incluindo os três E2E. `realismo.j
   critério vira gate quando sua etapa é entregue. Não afrouxe um critério já ativo.
 - **`bancada/campaign-golden-update.js`** é novo e é a única forma correta de regravar
   o fixture MD3 do sandbox.
+- **`AGR_ABRE` mudou de significado**: era coeficiente linear sobre `styleAgr`, virou o
+  **expoente** da exposição de abertura de quem fraga. A forma antiga produzia peso
+  NEGATIVO em `pick()` a partir de ganho 1,43 — o "AGR_ABRE ≈ 1,8" registrado no ciclo
+  anterior era inválido. `bancada/abertura.js` guarda essa prova.
+- **O Major da bancada vive em `bancada/campanha-major.js`**, compartilhado pela suíte de
+  dificuldade e pelas varreduras. Não duplicar o torneio em outro script.
+- **O chaveamento dos playoffs semeia pelo RESULTADO da suíça**, força só como desempate
+  (`garantirPlayoffs`). Semear por força punia quem passava bem pela suíça sendo mediano.
+- **`bancada/sweep.js` é o harness de varredura**: mesma seed e mesma agenda em todos os
+  braços, valor restaurado mesmo após falha, braço de controle obrigatório. Toda calibração
+  nova passa por ele em vez de editar `game.js` à mão.
+- **`DIFICULDADE_STRICT` vale por padrão** — os quatro alvos de `dificuldade.js` são gate.
 
 ### Armadilha conhecida ao mexer em balanceamento
 
@@ -214,16 +232,16 @@ guarda `totalRounds>=30` protege isso. A seed já foi trocada três vezes neste 
    multinomial com pesos fixos**, que é o caso de menor dispersão possível; o CS real é
    superdisperso. Resolver exige **momentum individual intra-mapa** — mecânica nova.
    Registrado em `perfis.js` sob o dono `distribuicao`.
-2. **Duelo de abertura decidido por firepower bruto.** Quebra duas assinaturas: Entry
-   não lidera opening kills (0,112 contra 0,161 do Playmaker) e Spacetaker fica na
-   média. **Correção já medida: `AGR_ABRE ≈ 1,8` inverte a ordem do Entry.** Ficou de
-   fora de propósito — é balanceamento de função e merece commit próprio. É o trabalho
-   mais barato e de maior retorno pendente.
+2. ~~Duelo de abertura decidido por firepower bruto.~~ **RESOLVIDO em 27/07** —
+   `docs/abertura-2026-07-27.md`. Os dois critérios viraram gate.
 3. **Utilidade como recurso do round** (flash/smoke/molotov comprados e gastos, ligando
    `ut` a execução e retake). Única parte do escopo original que não entrou. O custo de
    `full` (4300) já está dimensionado para absorvê-la quando existir.
-4. **Dificuldade: 1,5% de invicto contra alvo de 4–6%** — o jogo ficou MAIS difícil que
-   o pedido. Ver decisão aberta abaixo.
+4. ~~Dificuldade abaixo do alvo.~~ **RESOLVIDO em 27/07** —
+   `docs/dificuldade-invicto-2026-07-27.md`. Invicto em 4,91% [4,46–5,41] com 8.000
+   campanhas. Fica o risco registrado: a margem do título sobre a borda de 25% é de
+   1,3 pp, e `Favorito gap 16+` caiu para 84,8 numa faixa que termina em 82 — é o teto
+   de qualquer alavanca futura que aumente zebra.
 
 ### Erros meus registrados neste ciclo (para não se repetirem)
 
@@ -237,23 +255,23 @@ guarda `totalRounds>=30` protege isso. A seed já foi trocada três vezes neste 
   antes de o OVR existir apagou silenciosamente toda a penalidade de ego da química.
   Ao mover uma derivação, conferir a **ordem de cálculo**, não só a fórmula.
 
-### Decisão imediata para a próxima sessão
+### Decisões tomadas em 27/07/2026
 
-**Decisão do responsável, pendente:** a campanha invicta está em **1,5%**, mais dura que
-os 4–6% acordados. Não foi calibrada até o alvo porque as alavancas de variância
-levantam o campo inteiro junto e se cancelam (`QUIMICA_MAX` de 1,00 a 1,16 deixa o
-invicto entre 0,8% e 1,5% sem tendência), e comprimir a conversão de força em vitória
-quebraria a guarda `Favorito gap 16+` — trocaria fidelidade por dificuldade. As opções,
-todas de produto:
+**O re-spin do draft já existia** — `abortarSpin` (game.js:1953) descarta o sorteio sem
+gastar slot, ilimitado. A opção 1 daquela lista não era uma opção: era um fato do jogo que
+o medidor ignorava. Por isso a dificuldade não é propriedade só do motor, e sim função do
+esforço de draft: de **1,3%** (aceita a primeira carta) a **20,8%** (só carta de elite).
 
-1. dar **re-spin** no draft, para o usuário montar um elenco melhor;
-2. **restringir o campo do Major a times fortes**, como um Major real (hoje entram times
-   de força 73 e 74);
-3. **aceitar a faixa mais dura** — o ciclo foi pedido como "TEM que ser difícil".
+**Decisão do responsável:** o alvo de 4–6% descreve o **jogador apressado**. Quem gasta
+re-spin fica acima da faixa de propósito.
 
-**Trabalho técnico recomendado ao retomar**, na ordem: (a) o balanceamento de abertura
-(`AGR_ABRE`), que é barato e fecha duas assinaturas; (b) momentum intra-mapa, que fecha
-a variância individual; (c) utilidade como recurso.
+A opção 2 daquela lista (restringir o Major a times fortes) foi **descartada por medição**:
+tirar os times fracos torna todo adversário mais forte e **derruba** o invicto — empurra na
+direção contrária. O que resolveu foi corrigir o chaveamento (que semeava por força em vez
+do resultado da suíça) mais `PESO_EF` e `AMP_TIME`.
+
+**Trabalho recomendado ao retomar**, na ordem: (a) momentum intra-mapa, que fecha a
+variância individual (0,168 contra alvo 0,22–0,32); (b) utilidade como recurso do round.
 
 Pendências anteriores que continuam válidas: a proveniência dos overrides do commit
 `f731b3a` não está versionada; o corpus IFCS segue insuficiente (1/800 mapas e 1/6

@@ -798,7 +798,7 @@ const gaussF=()=>{let u=0,v=0;while(u===0)u=rndF();while(v===0)v=rndF();return M
 const logistica=(fa,fb,D)=>1/(1+Math.pow(10,(fb-fa)/D));
 
 const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓLVORA (combate) + COFRE (economia)
-  PESO_EF:.60,                  // 60% força do time (OVR+química+treinador), 40% skill individual cru
+  PESO_EF:.40,                  // 40% força do time (OVR+química+treinador), 60% skill individual cru
   // motor de combate por jogador (validado vs CS2 real: KPR~0.67, rating~1.0, fiel HLTV)
   LADO_CT:0.8,FORMA_DIA:7,FORMA_TAIL_KNEE:2.2,FORMA_TAIL_SCALE:.20, // joelho suave da cauda, nunca teto
   LADO_COMP:1.05,               // escala da vantagem de lado por COMPOSIÇÃO (lurker/anchor→CT, entry→T)
@@ -847,7 +847,11 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓL
   CONTACT_EN:{opening:{CT:.30,TR:.35},preplant:{CT:.02,TR:.06},postplant:{CT:.08,TR:0}},
   CONTACT_POS:{AWPer:{opening:.10,preplant:.03,postplant:.03},Lurker:{opening:.06,preplant:.03,postplant:.03},
     Support:{opening:.02,preplant:.01,postplant:.01},Rifler:{opening:.02,preplant:.01,postplant:.01}},
-  MAPA_SCALE:380,MAPA_CAP:.06,AGR_ABRE:0.72,
+  // AGR_ABRE é o GANHO da exposição de abertura sobre quem fraga (ver duelo()). Calibrado por
+  // varredura pareada: a partir de ~1.0 o Entry passa o Playmaker em opening kills, e em 2 a
+  // margem (+0.036 opKPR) se mantém igual em 2.295, 6.885 e 9.180 mapas. Acima disso a
+  // assinatura vira caricatura (em 3, o Entry abre 0.191 e o Playmaker desaba).
+  MAPA_SCALE:380,MAPA_CAP:.06,AGR_ABRE:2,
   // IDENTIDADE ÚNICA: agressão e afinidade de lado vêm do PLAYSTYLE (traits.pace / traits.ct / traits.t).
   // Antes vinham de um sub-arquétipo paralelo, derivado do próprio playstyle e por isso capaz de
   // contradizê-lo. As escalas abaixo foram MEDIDAS sobre os 85 jogadores para preservar o
@@ -972,7 +976,9 @@ function formaDoDia(j){const a=j._eng||j;const t=tierDe(j),p=PERFIL_TIER[t],C=CF
 // o rating global, só faz CADA run ser diferente (o motor de variância do roguelike).
 // forma de campanha: lenda/estrela varia POUCO no Major (confiável); role player balança mais.
 // AMP_TIME maior = o time "clica" ou não no evento com mais força (mais zebras de campanha).
-const CFG_CAMP={AMP_TIME:0.11,AMP_JOG:{Lenda:0.12,Star:0.13,Solido:0.18,Role:0.23}};
+// Calibrado com PESO_EF pela campanha invicta (bancada/dificuldade.js): a 0.11 o Major era
+// previsível demais para um elenco draftado passar ileso pelos ~10 mapas de um título.
+const CFG_CAMP={AMP_TIME:0.22,AMP_JOG:{Lenda:0.12,Star:0.13,Solido:0.18,Role:0.23}};
 function sortearFormaCampanha(times){
   times.forEach(t=>{
     const seedTime=gaussF()*CFG_CAMP.AMP_TIME;
@@ -1134,7 +1140,14 @@ function combateRound(a,b,ctx){
     const expK=opening?C.EXP_OPEN:C.EXP_KILL;
     // quem FRAGA: firepower é o VOLUME; o TIPO de kill pende pra categoria HLTV (abertura→op, trade→tr)
     const tilt=i=>opening?Math.max(.25,1+C.W_OP_KILL*((venc.ops[i]-50)/50)):trade?Math.max(.25,1+C.W_TR_KILL*((venc.trs[i]-50)/50)):1;
-    const ki=pick(vivV,i=>Math.pow(Math.max(venc.frags[i],8),expK)*tilt(i)*(1+(opening?C.AGR_ABRE:0)*(venc.agr[i]||0)));
+    // Na ABERTURA, quem fraga é quem se expôs primeiro. É a MESMA exposição que escolhe a
+    // vítima na linha abaixo, agora aplicada também de quem mata: quem vai na frente tanto
+    // abre quanto morre abrindo. Como exposureProfile é um Math.exp, o fator é positivo por
+    // construção — o fator linear anterior virava NEGATIVO com ganho alto e corrompia pick(),
+    // que soma pesos sem piso. AGR_ABRE deixou de ser coeficiente e virou o ganho da exposição.
+    const ladoMatador=opening?sideOf(venc):null;   // constante no duelo: fora do peso por jogador
+    const abertura=opening?i=>Math.pow(venc.exposure[i].opening[ladoMatador],C.AGR_ABRE):()=>1;
+    const ki=pick(vivV,i=>Math.pow(Math.max(venc.frags[i],8),expK)*tilt(i)*abertura(i));
     // quem MORRE: volume residual + exposição contextual; nunca bônus direto de DPR.
     const vi=pick(vivP,i=>Math.pow(Math.max(perd.frags[i],8),C.CONTACT_VOLUME_EXP[phase])*perd.exposure[i][phase][victimSide]);
     const rec={estadoMeu:vivV.length,estadoInim:vivP.length,
@@ -1425,6 +1438,7 @@ function simularMapa(A,B,fA,fB,mapaForcado,leve,options){
   const awperA=a.js.map(j=>combatProfile(j).activeCombatRole==="AWPer");
   const awperB=b.js.map(j=>combatProfile(j).activeCombatRole==="AWPer");
   const zerar=(dinheiro,valor)=>{for(let i=0;i<5;i++)dinheiro[i]=valor;};
+  const creditar=(dinheiro,valor)=>{for(let i=0;i<5;i++)dinheiro[i]+=valor;};
   const rounds=[];
   // lados: 1º tempo A=CT · 2º tempo A=TR · OT (r≥25): alterna a cada 3 rounds (MR3 real)
   const ladoDe=(time,round)=>{const ehA=time===A;
@@ -1478,7 +1492,6 @@ function simularMapa(A,B,fA,fB,mapaForcado,leve,options){
     // COFRE CS2: perdedor recebe o NÍVEL atual da escada (1ª derrota=1400) e sobe 1; vencedor
     // ganha o prêmio PELO MÉTODO (bomba/defuse=3500, resto=3250) e o nível do rival DESCE 1 (não zera).
     // O prêmio vai para a CARTEIRA DE CADA JOGADOR, como no CS2 real.
-    const creditar=(dinheiro,valor)=>{for(let i=0;i<5;i++)dinheiro[i]+=valor;};
     if(venceA){pa++;sA++;sB=0;creditar(dinA,res.premioV);creditar(dinB,LOSS_BONUS[Math.min(lsB,4)]);lsB=Math.min(lsB+1,4);lsA=Math.max(0,lsA-1);}
     else{pb++;sB++;sA=0;creditar(dinB,res.premioV);creditar(dinA,LOSS_BONUS[Math.min(lsA,4)]);lsA=Math.min(lsA+1,4);lsB=Math.max(0,lsB-1);}
     if(pa===alvo-1&&pb===alvo-1)alvo+=3; // 12-12 → alvo 16 · 15-15 → 19 · 18-18 → 22 (OT repetível)
@@ -2499,7 +2512,9 @@ function renderSwiss(){
 // ---- Playoffs ----
 function garantirPlayoffs(){
   if(TG.playoffs)return;
-  const seeds=[...TG.classificados].slice(0,8).sort((a,b)=>b.ef-a.ef);
+  // seed pelo RESULTADO da suíça: 3-0 na frente de 3-1, 3-1 na frente de 3-2, força só como
+  // desempate. É como um Major real chaveia, e semear por força punia quem passou invicto.
+  const seeds=[...TG.classificados].slice(0,8).sort((a,b)=>a.d-b.d||b.ef-a.ef);
   TG.playoffs={seeds,
     quartas:[[seeds[0],seeds[7]],[seeds[3],seeds[4]],[seeds[1],seeds[6]],[seeds[2],seeds[5]]],
     semi:[null,null,null,null],final:[null,null],campeao:null,fase:0,res:{}};
