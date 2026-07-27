@@ -1,4 +1,4 @@
-/* ════════════════════════════════════════════════════════════════════
+﻿/* ════════════════════════════════════════════════════════════════════
    draft9-0 · lógica do jogo
    ════════════════════════════════════════════════════════════════════
    SEIS MOTORES, UM PIPELINE. Cada um tem nome próprio e uma só
@@ -824,6 +824,28 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓL
   PLANT_BASE:.012,PLANT_TEMPO:.100,PLANT_MEN:.030,
   // pós-plant: T segura ângulos (POST_EDGE); CT precisa limpar e defusar antes da detonação.
   POST_EDGE:.07,DEFUSE_BASE:.065,DEFUSE_MEN:.10,PLANT_BONUS:800,
+  /* UTILITÁRIA COMO RECURSO DO ROUND. Quanto de granada cada classe de compra carrega: o full
+     (4300) já inclui 300-600 de utilidade, o force mal sobra troco, o eco não tem nada, e no
+     pistol os $800 iniciais compram uma flash ou uma smoke. A carga do round é a média ENTRE
+     OS VIVOS de (o que a compra carrega × quão bom o jogador é com utilitária) — per capita, e
+     não por total, para que a vantagem de homem continue inteira em PLANT_MEN e a carga meça
+     só a QUALIDADE da utilidade disponível. Um time full de jogadores medianos dá exatamente
+     1. O efeito é a carga de um lado CONTRA a do outro — execução e retomada são disputas, não
+     esforços isolados. Ser relativo torna o termo zero-soma por construção: dois times full não
+     mudam nada, e a diferença só aparece quando um lado tem utilidade e o outro não. Centrar no
+     full seria errado (o full não ganharia nada e todo o resto só perderia, derrubando o plant
+     global). Perder o cara de utilitária derruba a carga: é isso que liga o `ut` ao round. */
+  UTIL_COMPRA:{pistol:.20,eco:.05,force:.35,full:1,awp:1},
+  /* Calibrados por varredura pareada, e o teto aqui é apertado. Em 0,025 o plant do T abre de
+     51,0% no full para 35,3% no eco (a diferença era 7,2 pp antes da mecânica, virou 15,7).
+     Subir mais custa caro em três guardas ao mesmo tempo: o T pós-plant encosta no teto de 72%
+     por efeito de SELEÇÃO — quem planta com vantagem de utilidade também é quem segura melhor
+     depois —, o `Favorito gap 16+` cai (utilidade é mais uma via de a equipe pior levar o
+     round) e o invicto do elenco draftado sobe contra o teto de 6%. Em 0,04/0,04 duas guardas
+     ficaram a menos de 0,5 pp do piso; em 0,025/0,07 o invicto bateu exatamente 6,0%. O canal
+     da RETOMADA é o mais espremido: a 0,025 ele acrescenta pouco sobre o que a classe de compra
+     já fazia, e é assim de propósito — a alternativa era deixar um gate na borda. */
+  UTIL_PLANT:.025,UTIL_RETAKE:.025,
   EXP_KILL:1.15,EXP_OPEN:1.10,TRADE_CHANCE:.56,TRADE_CONTEXT:.15, // EXP_KILL comprime a distribuição de kills; TRADE_CHANCE menor = menos refrag = KPR/round ao real; EXP_OPEN: abertura é menos sobre fp puro
   // PARTICIPAÇÃO por FUNÇÃO (multiplica fragPeso): baixa/sobe o VOLUME de duelos do papel — mexe em kills
   // E mortes juntos (o AWPer real joga menos duelos mas ganha), então KPR e DPR caem sem distorcer o K/D.
@@ -1070,6 +1092,16 @@ const TRADE_CONTEXT_MEAN=(()=>{const ps=Object.values(POOL),sum=ps.reduce((acc,p
   acc.readiness+=v.readiness;acc.tradeability+=v.tradeability;return acc;},{readiness:0,tradeability:0});
   return {readiness:sum.readiness/ps.length,tradeability:sum.tradeability/ps.length};})();
 function assistContextProfile(j){const a=j?._eng||j||{};return {utility:(a.ut??50)/100};}
+/* Carga de utilitária de um lado, per capita entre os VIVOS: o que a compra de cada um carrega
+   de granada, ponderado por quão bom ele é com utilitária. Normalizada pela média do pool, de
+   modo que um time full de jogadores medianos vale exatamente 1 — o efeito entra zero-centrado
+   e não desloca a calibração de plant/defuse. Sem os vivos, não há utilidade para gastar. */
+function cargaUtil(time,vivos,compras){
+  if(!vivos.length)return 1;
+  let soma=0;
+  for(const i of vivos)soma+=(CFG_SIM.UTIL_COMPRA[compras[i]]??0)*(time.assistContext[i].utility/ASSIST_UTILITY_MEAN);
+  return soma/vivos.length;
+}
 const ASSIST_UTILITY_MEAN=(()=>{const ps=Object.values(POOL);return ps.reduce((sum,p)=>sum+assistContextProfile(p).utility,0)/ps.length;})();
 // ——— AFINIDADE DE LADO (composição): CT = segurar/anchor, T = tomar espaço/entry ———
 // derivada dos STATS (cl/ut/sn seguram bombsite; en/op/fp tomam espaço) + role + PLAYSTYLE.
@@ -1252,6 +1284,7 @@ function combateRound(a,b,ctx){
     }
     // ——— OBJETIVO: corre com o relógio, tenha havido contato ou não ———
     const vivT=aCT?vivB:vivA,vivCT=aCT?vivA:vivB,buyT=aCT?buyB:buyA,buyCT=aCT?buyA:buyB;
+    const timeT=aCT?b:a,timeCT=aCT?a:b,compT=aCT?comprasB:comprasA,compCT=aCT?comprasA:comprasB;
     if(!plantado){
       // SAVE do T: muito atrás (>=2) → desiste do plant e preserva sobreviventes/economia; CT vence no tempo
       if(vivCT.length-vivT.length>=2){const eco=buyT==="eco"||buyT==="force"||buyT==="pistol";
@@ -1259,7 +1292,9 @@ function combateRound(a,b,ctx){
         if(rndF()<(eco?C.SAVE_BASE:C.SAVE_BASE*.35)+(vivCT.length-vivT.length)*C.SAVE_MEN+C.SAVE_VALUE*preservationEdge(losingTeam,vivT)){fim=ctVence();metodo="tempo";saveTeam=tVence();break;}}
       // PLANT: cresce com a fração de tempo já gasta (o T precisa commitar) e com a vantagem de homem
       const fracao=relogio/C.RND_SEGUNDOS;
-      const pPlant=clamp(C.PLANT_BASE+fracao*C.PLANT_TEMPO+(vivT.length-vivCT.length)*C.PLANT_MEN,0,.92);
+      // EXECUÇÃO: smoke e flash do T abrem o site — contra a utilidade que o CT tem para negar
+      const pPlant=clamp(C.PLANT_BASE+fracao*C.PLANT_TEMPO+(vivT.length-vivCT.length)*C.PLANT_MEN
+        +C.UTIL_PLANT*(cargaUtil(timeT,vivT,compT)-cargaUtil(timeCT,vivCT,compCT)),0,.92);
       if(rndF()<pPlant){plantado=true;pp=0;}
       else if(relogio>=C.RND_SEGUNDOS){fim=ctVence();metodo="tempo";break;} // relógio estourou sem plant → CT segura
     }else{
@@ -1269,7 +1304,9 @@ function combateRound(a,b,ctx){
         const losingTeam=aCT?a:b;
         if(rndF()<(eco?C.SAVE_BASE:C.SAVE_BASE*.35)+(vivT.length-vivCT.length)*C.SAVE_MEN+C.SAVE_VALUE*preservationEdge(losingTeam,vivCT)){fim=tVence();metodo="detona";saveTeam=ctVence();break;}}
       // DEFUSE: CT com pelo menos paridade limpa o site e defusa (cresce com a vantagem de homem)
-      if(vivCT.length>=vivT.length&&rndF()<C.DEFUSE_BASE+Math.max(0,vivCT.length-vivT.length)*C.DEFUSE_MEN){fim=ctVence();metodo="defuse";break;}
+      // RETOMADA: molotov e flash do CT entram no site — contra a utilidade que sobrou ao T
+      if(vivCT.length>=vivT.length&&rndF()<C.DEFUSE_BASE+Math.max(0,vivCT.length-vivT.length)*C.DEFUSE_MEN
+        +C.UTIL_RETAKE*(cargaUtil(timeCT,vivCT,compCT)-cargaUtil(timeT,vivT,compT))){fim=ctVence();metodo="defuse";break;}
       // DETONAÇÃO: relógio da bomba estourou → T vence o post-plant
       if(pp>=C.BOMBA_SEGUNDOS){fim=tVence();metodo="detona";break;}
     }

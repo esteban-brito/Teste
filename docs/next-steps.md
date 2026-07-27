@@ -533,9 +533,8 @@ eles sem conversar com o responsável.
   qualquer versão dela é balanceamento estrutural, com comparação pareada e commit próprio.
 - **Estilo das cartas** (apresentação visual dos jogadores). Camada de interface; não deve
   tocar motor, avaliação nem RNG.
-- **Utilidade como recurso do round** — única peça remanescente do escopo original da
-  simulação: flash/smoke/molotov comprados e gastos, ligando `ut` a execução e retake. O custo
-  do `full` (4300) já foi dimensionado prevendo isso.
+- ~~Utilidade como recurso do round.~~ **ENTREGUE em 28/07/2026** —
+  `docs/utilitaria-2026-07-28.md`. Com ela, **o escopo original da simulação está fechado**.
 
 Estado da simulação em 28/07/2026, para calibrar a urgência: **nenhum critério em relatório**.
 As quatro etapas do ratchet de `perfis.js` estão ativas, e `npm run validate` fecha 24/24 —
