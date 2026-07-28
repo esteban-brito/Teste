@@ -57,12 +57,25 @@
    ╚═══════════════════════════════════════════════════════════════════╝ */
 /* Perfil por função: somente AFIN (identidade da função) e crédito intrínseco.
    OVR e peso de rating pertencem ao playstyle no ZÊNITE, não à função. */
+/* AFINIDADE DE FUNÇÃO PADRONIZADA — três stats, na mesma escada 0,50 / 0,30 / 0,20 usada pelas
+   receitas de playstyle. Antes cada função tinha um formato próprio: o AWPer era decidido por um
+   stat só (sn .80), o Rifler espalhava por cinco até .03, e o Support por cinco até .05. Pesos
+   abaixo de .10 não decidiam nada — eram ruído carregado de calibragens antigas.
+
+   Cada função vira uma frase: o que ela EXIGE, o que a APOIA, e o que a COMPLETA. O que
+   distingue as cinco é o primeiro stat, não a forma da tabela.
+
+   O AWPer é a ÚNICA EXCEÇÃO, e ela é deliberada. Ele é a única função do CS definida por um
+   stat só: você joga de AWP ou não joga, sem meio-termo — ao contrário de fogo, entrada e
+   utilitária, que são graduais. Colocá-lo na escada foi testado e cobrou exatamente onde não
+   podia: o sh1ro deixava de ser AWPer e o Jame perdia a AWP, sendo os dois AWPers de carreira.
+   Padronizar ali apagaria uma assimetria que existe de verdade, então o sn dominante fica. */
 const ROLE_PERFIL={
-  AWPer:  {afin:{sn:.80,op:.12,fp:.05}},
-  Rifler: {afin:{fp:.44,op:.25,tr:.17,cl:.14,ut:.03}},
-  Entry:  {afin:{en:.56,op:.25,fp:.12,tr:.07}},
+  AWPer:  {afin:{sn:.80,op:.12,fp:.05}},   // exceção declarada: ver acima
+  Rifler: {afin:{fp:.50,op:.30,tr:.20}},
+  Entry:  {afin:{en:.50,op:.30,fp:.20}},
   Lurker: {afin:{cl:.50,op:.30,fp:.20}},
-  Support:{afin:{ut:.50,tr:.25,en:.12,fp:.08,op:.05},credito:3}};
+  Support:{afin:{ut:.50,tr:.30,en:.20},credito:3}};
 const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22, // ⚙ balanceamento do PRISMA (afinidade/sub) + ZÊNITE (OVR)
   OVR_BASE:8.5,OVR_SPAN:10,RAT_BASE:1.0,RAT_K:8, // OVR = base(receita) + bônus(rating × ratingWeight do estilo)
   // COERÊNCIA stats×rating: os stats "prometem" um lift (COH_LIFT0 + COH_SLOPE·(rating-1)); o que passa
