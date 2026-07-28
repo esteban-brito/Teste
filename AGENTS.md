@@ -104,3 +104,19 @@ obter um resultado verde.
 - Para RNG e simulador, compare resultados completos usando seeds fixas.
 - Se um teste estatístico mudar, registre amostra, resultado anterior, resultado
   novo e justificativa antes de aceitar a diferença.
+
+### Orçamento acumulado: duas guardas que drenam sem ninguém ver
+
+`Favorito gap 16+` e o `invicto` do elenco draftado respondem à **mesma alavanca** — quanta
+zebra o jogo permite — e em **sentidos opostos**. Toda etapa de balanceamento gasta um pouco de
+um dos dois, e nenhuma etapa isolada parece errada.
+
+Em 28/07/2026 isso custou caro: `Favorito gap 16+` foi de 86,8% para 82,2% em quatro etapas,
+todas medidas e aprovadas uma a uma, até ficar a 0,2 pp do piso e abaixo dos 85–90% que o CS
+real sustenta. Ninguém estava somando.
+
+**Regra:** toda etapa de balanceamento reporta os dois números **antes e depois**, junto — como
+já se faz com a contagem de jogadores alterados. Um sem o outro não decide nada.
+
+A curva completa das quatro faixas de diferença de força sai em `bancada/realismo.js`; a
+dificuldade, com IC95%, em `bancada/dificuldade.js`.
