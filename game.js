@@ -1889,16 +1889,32 @@ const STAT_LABEL={fp:"Firepower",op:"Abertura",cl:"Clutch",ut:"Utilitário",en:"
 const STAT_VERSO_DEF=["fp","op","cl","ut"]; // Coringa (polivalente) e fallback
 // eixos da receita (espaço s6) → atributos da carta (espaço do jogador)
 const EIXO_ATTR={fogo:"fp",ent:"en",ab:"op",tr:"tr",cl:"cl",ut:"ut"};
-const statsDoEstilo=id=>{
+/* Ordem das stats no verso: Firepower SEMPRE em primeiro — é a leitura que todo mundo procura
+   antes de qualquer outra. Os demais entram por CONTRIBUIÇÃO deste jogador ao estilo dele:
+   peso do eixo na receita × o valor que ele tem naquele eixo.
+
+   É o mesmo produto que decide a classificação (a semelhança é um produto-escalar, e os
+   denominadores são constantes por jogador, então ordenar por peso×valor ordena por quanto
+   cada eixo empurrou o estilo). A carta passa a responder "por onde ESTE jogador expressa o
+   estilo" em vez de repetir o que a receita valoriza em tese: dois Closers saem em ordens
+   diferentes, um que fecha por clutch puro e outro que fecha no tiro.
+
+   Ordenar pelo valor cru seria outra coisa e estaria errado — 90 de fogo passaria à frente de
+   70 de clutch num Âncora, onde o fogo quase não define o estilo. */
+const statsDoEstilo=(id,e)=>{
   const rec=id==="joker"?null:STYLE_RECIPE(id);
   if(!rec)return STAT_VERSO_DEF;
   const pesos=rec.ovrW||rec.w; // ovrW quando existe: é o que o nível realmente pondera
-  return Object.entries(pesos).sort((a,b)=>b[1]-a[1]).map(([eixo])=>EIXO_ATTR[eixo]).filter(Boolean);
+  return Object.entries(pesos)
+    .map(([eixo,peso])=>({attr:EIXO_ATTR[eixo],contrib:peso*((e&&e[EIXO_ATTR[eixo]])||0)}))
+    .filter(x=>x.attr)
+    .sort((a,b)=>b.contrib-a.contrib)
+    .map(x=>x.attr);
 };
 const statBar=(lab,v)=>`<div class="statbar"><span class="sb-lab">${esc(lab)}</span><span class="sb-val">${Math.round(v||0)}</span></div>`;
 const backPlayer=p=>{const e=p._eng||{};const id=STYLE_ID(e.playstyle);
-  const base=statsDoEstilo(id);
-  const keys=["fp",...base.filter(k=>k!=="fp")].slice(0,4); // Firepower sempre 1º; os outros 3 na ordem de peso da receita
+  const base=statsDoEstilo(id,e);
+  const keys=["fp",...base.filter(k=>k!=="fp")].slice(0,4); // Firepower sempre 1º; os outros 3 por contribuição ao estilo
   return `<div class="cb-head">${esc(e.playstyle?STYLE_LABEL(id):(p.prim||""))}</div>`+
   `<div class="cb-stats">${keys.map(k=>statBar(STAT_LABEL[k],e[k])).join("")}</div>`;};
 // o que cada característica de treinador FAZ — objetivo, com os números reais do efeito no SINAPSE
