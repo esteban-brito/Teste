@@ -140,7 +140,17 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     check(["KPR","KAST","ADR","CT win","Plant"].every(label=>coreText.includes(label)),"resumo mantém somente os cinco indicadores centrais");
     check(firstBatch.sides.length===2&&firstBatch.sides.every(side=>side.name&&Number.isFinite(side.pct))&&firstBatch.sides.reduce((sum,side)=>sum+side.pct,0)===100,"confronto identifica os dois times e porcentagens complementares");
     check(JSON.stringify(firstBatch.headers)===JSON.stringify(expectedRoleColumns),"breakdown possui colunas por função esperadas");
-    check(firstBatch.rows.length===6,"breakdown cobre as 6 funções do confronto");
+    // O breakdown mostra uma linha por função PRESENTE no confronto, não seis fixas: dois times
+    // de cinco cobrem no máximo seis funções e frequentemente menos — a Outsiders, por exemplo,
+    // pode sair com dois Riflers e dois Supports e nenhum Entry, que é composição válida (a
+    // química já pune falta de iniciativa). Cravar 6 era sorte do confronto escolhido e quebrava
+    // a cada mudança de classificação. O contrato real é: uma linha por função, sem repetir e
+    // sem truncar.
+    const funcoesNoBreakdown=firstBatch.rows.map(row=>row[0]);
+    check(funcoesNoBreakdown.length>=4&&funcoesNoBreakdown.length<=6
+      &&new Set(funcoesNoBreakdown).size===funcoesNoBreakdown.length
+      &&funcoesNoBreakdown.every(Boolean),
+      `breakdown lista uma linha por função do confronto (${funcoesNoBreakdown.length}: ${funcoesNoBreakdown.join(", ")})`);
     check(firstBatch.deltaRows===10,"painel de rating mostra os 10 jogadores do confronto");
     check(firstBatch.breakdownColumns===1&&firstBatch.distributionVisuals===10,"funções e distribuições usam a largura completa com uma visualização por jogador");
     check(firstBatch.compactRolePanel&&!firstBatch.redundantSectionTag,"resumo por função permanece compacto sem título intermediário redundante");
