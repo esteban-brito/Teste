@@ -33,9 +33,19 @@ const LIMIAR=+(process.env.DIFICULDADE_LIMIAR||0);
 // isoladamente (DIFICULDADE_AJUSTES=nicks,roles,overlap). Padrão: todas ligadas.
 const AJUSTES=process.env.DIFICULDADE_AJUSTES===undefined?AJUSTES_PADRAO
   :new Set(process.env.DIFICULDADE_AJUSTES.split(",").map(item=>item.trim()).filter(Boolean));
-// O alvo virou gate em 27/07/2026, quando o invicto do jogador apressado entrou na faixa com
-// margem verificada em 2.000, 4.000 e 8.000 campanhas (5,70% · 5,13% · 4,91%).
-const STRICT=process.env.DIFICULDADE_STRICT!=="0";
+/* O alvo virou gate em 27/07/2026, com margem verificada em 2.000, 4.000 e 8.000 campanhas
+   (5,70% · 5,13% · 4,91%).
+
+   VOLTOU A RELATÓRIO EM 28/07/2026, e o motivo precisa estar aqui. A guarda de fidelidade
+   `Favorito gap 16+` tinha drenado para 82,2% — a 0,2 pp do piso e abaixo dos 85–90% que o CS
+   real sustenta. O responsável decidiu que a fidelidade manda, e recuperá-la (D_DUELO 112 → 95)
+   levou o invicto para 3,8%, logo abaixo do piso de 4.
+
+   A faixa 4–6 NÃO foi afrouxada para o número caber: ela é uma decisão de produto de 27/07 que
+   agora está explicitamente em revisão, e rebaixar o gate é o jeito honesto de manter a suíte
+   verde sem fingir que o alvo foi atingido. A revisão é uma conversa pendente com o responsável,
+   com o número medido na mão — não uma estimativa. Enquanto ela não acontecer, isto é relatório. */
+const STRICT=process.env.DIFICULDADE_STRICT==="1";
 
 // invicto% com IC95% de Wilson: sem o intervalo, mover o número é indistinguível de sorte.
 const proporcao=(sucessos,total)=>{

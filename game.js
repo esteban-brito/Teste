@@ -862,7 +862,7 @@ const gaussF=()=>{let u=0,v=0;while(u===0)u=rndF();while(v===0)v=rndF();return M
 const logistica=(fa,fb,D)=>1/(1+Math.pow(10,(fb-fa)/D));
 
 const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓLVORA (combate) + COFRE (economia)
-  PESO_EF:.40,                  // 40% força do time (OVR+química+treinador), 60% skill individual cru
+  PESO_EF:.55,                  // 55% força do time (OVR+química+treinador), 45% skill individual cru
   // motor de combate por jogador (validado vs CS2 real: KPR~0.67, rating~1.0, fiel HLTV)
   LADO_CT:0.8,FORMA_DIA:7,FORMA_TAIL_KNEE:2.2,FORMA_TAIL_SCALE:.20, // joelho suave da cauda, nunca teto
   LADO_COMP:1.05,               // escala da vantagem de lado por COMPOSIÇÃO (lurker/anchor→CT, entry→T)
@@ -870,7 +870,24 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓL
   // ROUND VIVO: o round é uma SEQUÊNCIA DE DUELOS; o vencedor EMERGE (não é um dado só).
   // D_DUELO = decisão de UM duelo (bem mais raso que o round; o round é a soma de ~5-9 duelos).
   // pistol é quase cara-ou-coroa (D alto) → o azarão ganha pistol/anti-eco e o 13-0 fica raro.
-  D_DUELO:112,D_DUELO_PIST:360,OPEN_SCALE:520,CLUTCH_DUEL:.22,CLUTCH_X:.090,CLUTCH_EXP:1.55,LADO_MAPA_P:.013,
+  /* D_DUELO é O botão da CURVA de conversão força → vitória, e foi de 112 para 95 em 28/07/2026
+     para devolver o favorito à faixa que o CS real sustenta (um time muito mais forte ganha
+     ~85–90% dos mapas). A guarda `Favorito gap 16+` tinha drenado para 82,2% — a 0,2 pp do piso
+     e abaixo do intervalo real que justificou a faixa.
+
+     Ele age quase só nas pontas: o mismatch grande foi de 82,2% para 85,6% e o confronto
+     equilibrado ficou em 51,1%, que é o que se quer — jogo parelho continua moeda.
+
+     Não descer mais: em 80 o KPR global cai abaixo do piso de 0,66 e a abertura vencida pelo CT
+     sai da faixa. Duelo mais decidido encerra o round mais cedo, então há menos duelos e menos
+     kills — é o preço, e em 95 ele ainda cabe.
+
+     PESO_EF foi testado antes e NÃO serve para isto: entre times de fábrica a skill média e a
+     força efetiva são fortemente correlacionadas, então a mistura entre as duas quase não muda
+     um mismatch (80,3% a 83,6%, sem tendência). PESO_EF governa o elenco DRAFTADO, onde as
+     duas divergem — por isso ele voltou a 0,55 nesta mesma etapa, para o invicto ficar no
+     centro da faixa em vez de encostar no teto. */
+  D_DUELO:95,D_DUELO_PIST:360,OPEN_SCALE:520,CLUTCH_DUEL:.22,CLUTCH_X:.090,CLUTCH_EXP:1.55,LADO_MAPA_P:.013,
   SAVE_BASE:.105,SAVE_MEN:.035,SAVE_VALUE:.07, // salvar (eco em desvantagem): por TICK de relógio, não por duelo
   // ——— RELÓGIO REAL (CS2): o round tem 115s e a bomba 40s. O duelo é um EVENTO SOBRE O RELÓGIO,
   // não o próprio relógio. Antes o laço só avançava quando alguém morria, então era impossível
