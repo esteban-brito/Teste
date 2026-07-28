@@ -207,25 +207,44 @@ function riflerGeneralistBonus(p){
   const antiSpec=clamp(1-(specialty-C.RIFLER_GLUE_SPEC_START)/Math.max(1,C.RIFLER_GLUE_SPEC_RANGE),0,1);
   return base*antiSpec;
 }
+/* IDENTIDADE DE FUNÇÃO, DECLARADA. Antes cada função tinha um bloco de código próprio dentro de
+   roleAfinidade, com números mágicos soltos: o Entry tinha quatro linhas, o Rifler duas, o
+   Lurker e o Support uma cada. Era impossível comparar duas funções sem ler o corpo da função,
+   e adicionar uma sexta significava escrever mais um `if`.
+
+   Agora toda função declara os mesmos campos, e roleAfinidade é uma só para todas:
+
+     sinergia — precisa dos DOIS stats juntos, não de um grande. `min(a, melhor de b)`: um Entry
+                com entrada 90 e abertura 20 não é entry, é um jogador que corre.
+     limite   — um stat que não pode ultrapassar o apoio que o sustenta. Entrada sem abertura
+                nem fogo por trás é morte anunciada, não função.
+     piso     — abaixo deste valor não é essa função, por mais que o resto encaixe.
+     tipo     — `generalista` soma o bônus de equilíbrio (o Rifler é definido por não ter buraco,
+                não por um pico).
+
+   Os pesos são os mesmos de antes, na mesma ordem de operação: esta extração é de forma, não de
+   balanceamento, e o medidor prova zero mudança na classificação dos 85. */
+const ROLE_IDENT={
+  AWPer:{},
+  Rifler:{sinergia:[{a:"fp",b:["op"],w:.065},{a:"fp",b:["tr"],w:.02}],tipo:"generalista"},
+  Entry:{sinergia:[{a:"en",b:["op"],w:.025},{a:"en",b:["fp"],w:.015}],
+    limite:{stat:"en",por:["op","fp"],w:.25},
+    piso:{stats:["fp","tr"],valor:55,w:.22}},
+  Lurker:{sinergia:[{a:"cl",b:["op","fp"],w:.04}]},
+  Support:{sinergia:[{a:"ut",b:["tr"],w:.05}]}
+};
+const melhorDe=(p,stats)=>Math.max(...stats.map(k=>p[k]||0));
 function roleAfinidade(role,p){
   let score=dot(ROLE_PERFIL[role].afin,p)-dot(ROLE_CONTRA[role]||{},p)-roleRulePenalty(role,p);
   if(p.isIGL)score+=dot(IGL_ROLE_AFIN[role]||{},p);
-  if(role==="Entry"){
-    const en=p.en||0,op=p.op||0,fp=p.fp||0,apoio=Math.max(op,fp);
-    score+=.025*Math.min(en,op)+.015*Math.min(en,fp);
-    score-=.25*Math.max(0,en-apoio);
-    score-=.22*Math.max(0,55-Math.max(fp,p.tr||0));
-  }
-  if(role==="Lurker"){
-    const cl=p.cl||0,op=p.op||0,fp=p.fp||0;
-    score+=.04*Math.min(cl,Math.max(op,fp));
-  }
-  if(role==="Support"){
-    score+=.05*Math.min(p.ut||0,p.tr||0);
-  }
-  if(role==="Rifler"){
-    score+=.065*Math.min(p.fp||0,p.op||0)+.02*Math.min(p.fp||0,p.tr||0)+riflerGeneralistBonus(p);
-  }
+  const ident=ROLE_IDENT[role]||{};
+  // soma as parcelas positivas antes de aplicar, preservando a ordem de operação anterior
+  let ganho=0;
+  (ident.sinergia||[]).forEach(s=>{ganho+=s.w*Math.min(p[s.a]||0,melhorDe(p,s.b));});
+  if(ident.tipo==="generalista")ganho+=riflerGeneralistBonus(p);
+  score+=ganho;
+  if(ident.limite)score-=ident.limite.w*Math.max(0,(p[ident.limite.stat]||0)-melhorDe(p,ident.limite.por));
+  if(ident.piso)score-=ident.piso.w*Math.max(0,ident.piso.valor-melhorDe(p,ident.piso.stats));
   return score;
 }
 // afinidade do jogador por cada função (núcleo do PRISMA): atração por perfil,
