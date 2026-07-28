@@ -320,7 +320,26 @@ const NM_DEF={
   Facilitador:{w:{ut:.50,ent:.30,fogo:.20},ovrW:{ut:.50,tr:.30,ent:.20},ratingWeight:1}, // identidade: utilitária, tomar espaço, e só então fogo — o glue não é fragger
   Cerebral:{w:{ut:.50,ab:.30,cl:.20},ratingWeight:1},
   Ancora:{w:{cl:.50,ut:.30,tr:.20},ratingWeight:1}};
-// contraindicações por estilo — só eixos do s6 (o antigo sn era inerte: dobrado em fogo, diluía o resto).
+/* CONTRAINDICAÇÕES POR ESTILO — só eixos do s6 (o antigo sn era inerte: dobrado em fogo, diluía
+   o resto). O que cada estilo NÃO pode ter muito, e em que proporção.
+
+   SÓ AS PROPORÇÕES IMPORTAM. Em styleScoreTable a penalidade é `cd/(100*cw)`, ou seja uma média
+   PONDERADA normalizada pela soma dos pesos: multiplicar a linha inteira por dez não mudaria
+   nada. Para ler estes números, divida pela soma da linha — o Cerebral é 73% entrada e 27% fogo,
+   o Infiltrador é 69% e 31%. Comparar .22 contra .18 entre estilos diferentes não significa nada.
+
+   DUAS PADRONIZAÇÕES FORAM TESTADAS AQUI EM 28/07/2026 E AMBAS REJEITADAS:
+
+   1. Escada fixa, como nas receitas. Rejeitada por PIORAR o modelo: a escada destrói justamente
+      as proporções, que são a informação. Custava 5 mudanças de classificação, elevava os
+      jogadores frágeis de 38 para 43 e desfazia o gla1ve → Cerebral.
+   2. Reescrever a tabela normalizada para somar 1, preservando as proporções exatas. É
+      matematicamente neutra e a classificação dos 85 ficou idêntica — mas o arredondamento na
+      terceira casa desloca o OVR fracionário o bastante para, em 45.900 mapas, mover
+      `Favorito gap 16+` de 82,2 para 81,8 e estourar o piso de 82.
+
+   Ou seja: os decimais irregulares não são dívida técnica, são calibragem — e a folga desta
+   guarda é pequena demais para gastar em legibilidade. */
 const STYLE_CONTRA={
   aggressive:{cl:.112,ut:.08},
   spacetaker:{cl:.036,ut:.05},
