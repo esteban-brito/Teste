@@ -17,6 +17,11 @@ const EXPORTS=[
   // o comportamento sob tabela CALIBRADA (é o que o calibrador muta)
   "ROLE_PERFIL","ROLE_CONTRA","IGL_ROLE_AFIN","ROLE_RULES","ROLES_COMBATE",
   "classificar","roleSecundarioSeguro",
+  // ZÊNITE: o checador compara a tabela de estilos posição a posição, não só o vencedor
+  "STYLE_CONTRA","nmStats6","stats7","styleMatch","badBaiterProfile","jokerProfile",
+  "ovrUnificado","CFG_NIVEL",
+  // SINAPSE: química de elenco, força efetiva e característica do treinador
+  "ovrTreinador","quimicaPlaystyles","derivaCaracteristica","CFG_QUIMICA",
   // identidade e balanceamento: a bancada de perfis precisa ler playstyle e config sem duplicar tabelas
   "PLAYSTYLES","PLAYSTYLE_IDS","STYLE_ID","styleAgr","styleTraits","tierDe","MAPAS_POOL",
   "CFG_SIM","CFG_FA","CFG_CAMP","PERFIL_TIER","logistica","rndF",
