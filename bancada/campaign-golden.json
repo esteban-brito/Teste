@@ -10,7 +10,7 @@
     "maps": [
       {
         "map": "Nuke",
-        "scoreA": 6,
+        "scoreA": 9,
         "scoreB": 13,
         "winnerIndex": 1,
         "orientation": "A-B"

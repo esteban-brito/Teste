@@ -106,7 +106,7 @@ function campaignSeriesScenario(){
   // Série de três mapas: cobre o mapa decisivo, que uma varrida 2-0 nunca alcança. A sequência
   // de mapas acompanha o novo sorteio de RNG; a cobertura é a mesma.
   assert.equal(result.placarSerie.join(","),"1,2",`${id}: ancora da serie mudou antes de atualizar o fixture`);
-  assert.equal(result.mapas.map(map=>map.mapa).join(","),"Nuke,Train,Overpass",`${id}: sequencia de mapas mudou antes de atualizar o fixture`);
+  assert.equal(result.mapas.map(map=>map.mapa).join(","),"Nuke,Anubis,Overpass",`${id}: sequencia de mapas mudou antes de atualizar o fixture`);
   return {
     id,kind:"campaign-series",seed,
     input:{...projectInput(a,b,aIndex,bIndex),bestOf:3,campaignForm:true},
@@ -127,17 +127,17 @@ function buildCurrent(){
       // Âncoras revisadas em 28/07/2026 pela PADRONIZAÇÃO de playstyles e funções: 31 jogadores
       // ao todo trocaram de estilo, de função ou de 1 de OVR, o que altera química, força efetiva
       // e todo o stream de RNG a partir do primeiro round. As seeds são reescolhidas para
-      // preservar a FORMA do cenário, nunca para encobrir a diferença: a seed 9 devolve um 13-9
+      // preservar a FORMA do cenário, nunca para encobrir a diferença: a seed 11 devolve um 13-9
       // competitivo em 22 rounds, com as quatro classes de compra e clutch vencido.
-      fixedMapScenario({id:"economy-and-clutches",seed:9,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[13,9]}),
+      fixedMapScenario({id:"economy-and-clutches",seed:11,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[13,9]}),
       // Este cenário cobre o OT REPETÍVEL (alvo 13→16→19→22), caminho que só executa com duas ou
       // mais prorrogações. Ele é frágil por natureza: qualquer balanceamento reembaralha o RNG e a
       // seed antiga deixa de ir para o overtime. A regra ao mexer aqui é procurar uma seed que
       // volte a produzir 2+ prorrogações — nunca aceitar um placar de tempo normal, que esvaziaria
-      // o teste. A seed 1036 reproduz 22-19 em 41 rounds — três prorrogações, exatamente a mesma
+      // o teste. A seed 622 reproduz 20-22 em 42 rounds — três prorrogações, exatamente a mesma
       // forma que a 132 dava antes da padronização.
-      // Histórico da seed: 129 → 349 → 515 → 200 → 456 → 132 → 645 → 1036.
-      fixedMapScenario({id:"repeated-overtime",seed:1036,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[22,19]}),
+      // Histórico da seed: 129 → 349 → 515 → 200 → 456 → 132 → 645 → 1036 → 622.
+      fixedMapScenario({id:"repeated-overtime",seed:622,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[20,22]}),
       campaignSeriesScenario()
     ]
   };
