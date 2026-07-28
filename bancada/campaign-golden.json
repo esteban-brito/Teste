@@ -4,29 +4,29 @@
   "maps": 3,
   "campaign": {
     "format": "MD3",
-    "winsA": 2,
-    "winsB": 1,
-    "winnerIndex": 0,
+    "winsA": 1,
+    "winsB": 2,
+    "winnerIndex": 1,
     "maps": [
       {
         "map": "Nuke",
-        "scoreA": 9,
+        "scoreA": 4,
         "scoreB": 13,
         "winnerIndex": 1,
         "orientation": "A-B"
       },
       {
         "map": "Ancient",
-        "scoreA": 13,
-        "scoreB": 8,
+        "scoreA": 16,
+        "scoreB": 13,
         "winnerIndex": 0,
         "orientation": "B-A"
       },
       {
         "map": "Anubis",
-        "scoreA": 13,
-        "scoreB": 4,
-        "winnerIndex": 0,
+        "scoreA": 11,
+        "scoreB": 13,
+        "winnerIndex": 1,
         "orientation": "A-B"
       }
     ],

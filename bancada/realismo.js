@@ -170,6 +170,17 @@ const clutch2=pct(stats.clutch[2].w,stats.clutch[2].n);
 const clutch3=pct(stats.clutch[3].w,stats.clutch[3].n);
 const favorite03=pct(stats.gaps["0-3"].w,stats.gaps["0-3"].n);
 const favorite16=pct(stats.gaps["16+"].w,stats.gaps["16+"].n);
+/* CURVA DE CONVERSÃO FORÇA → VITÓRIA. As quatro faixas sempre foram calculadas, mas só as duas
+   PONTAS eram reportadas: as do meio iam para o lixo. Discutir a confiabilidade do favorito
+   olhando um ponto isolado esconde a pergunta que importa — a curva está deslocada inteira, ou
+   achatada nas pontas? São consertos diferentes.
+
+   Motivo de existir: em 28/07/2026 descobriu-se que `gap 16+` tinha drenado de 86,8% para 82,2%
+   ao longo de várias etapas, cada uma medida e aprovada isoladamente, porque ninguém somava o
+   efeito acumulado. A curva completa é o instrumento que torna esse tipo de drenagem visível. */
+const curvaFavorito=Object.keys(BUCKETS).map(faixa=>({
+  faixa,n:stats.gaps[faixa].n,pct:pct(stats.gaps[faixa].w,stats.gaps[faixa].n)
+}));
 
 /* ─── FORMA: distribuições que uma faixa de média não protege ───────────── */
 const somaMapa=mapa=>Object.values(mapa).reduce((total,valor)=>total+valor,0);
@@ -246,6 +257,8 @@ console.log(`    método do round:    ${Object.entries(stats.metodo).sort((a,b)=
 ["CT","TR"].forEach(lado=>{const tot=somaMapa(stats.compraPorLado[lado]);
   console.log(`    compra por jogador (${lado}): ${Object.entries(stats.compraPorLado[lado]).map(([k,v])=>`${k}:${pct(v,tot).toFixed(1)}%`).join("  ")}`);});
 console.log(`    mapas apertados entre times equilibrados (|Δforça|≤3): ${mapasApertados.toFixed(1)}%  — relatório, sem faixa publicada`);
+console.log(`    curva favorito → vitória: ${curvaFavorito
+  .map(f=>`${f.faixa} ${f.pct.toFixed(1)}%`).join("  ·  ")}   (só as pontas são gate)`);
 console.log("");
 let formaFora=0,formaPendente=0;
 checksForma.forEach(([etapa,name,value,range,ok])=>{
