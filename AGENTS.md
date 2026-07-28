@@ -30,8 +30,24 @@ Uma refatoração deve preservar:
 Mudanças deliberadas nesses itens exigem trabalho e commit separados, descritos
 como balanceamento e acompanhados de comparação estatística.
 
+## Antes de concluir que um dado não existe
+
+**Leia `src/data/catalog.mjs`.** Ele lista todo dado do projeto: qual campo existe, em que
+arquivo, sob que chave e cobrindo quantos dos 85 jogadores. `tools/check-data-catalog.js` prova
+cada alegação e reprova a suíte quando o catálogo envelhece, então ele não mente.
+
+Isso existe por causa de um erro real (28/07/2026): um agente afirmou três vezes que dados
+existentes não existiam — `time`, `campeonato+ano` e `país completo` — porque procurou **num
+arquivo** o que era pergunta sobre **o projeto**, chutou o nome do campo (`campeonato`, quando é
+`camp`) e tratou "não achei" como "não existe". Os três estavam em `TIMES_DEF` e `PAISES_MAP`.
+
+Regra: `grep` num arquivo não responde "isto existe no projeto?". O catálogo responde. Se o
+catálogo não menciona o dado, aí sim ele não existe.
+
 ## Fontes de verdade atuais
 
+- `src/data/catalog.mjs`: **índice de todo dado do projeto** — fonte, chave, cobertura e a
+  fronteira cru × derivado do ADR 0002. Comece por aqui ao procurar um dado.
 - `docs/project-context.md`, seção **2-bis**: estado do ciclo de fidelidade da
   simulação (26-27/07/2026) — contratos novos, pendências abertas com causa medida
   e armadilhas. **Leia antes de tocar no simulador.**
@@ -46,8 +62,21 @@ como balanceamento e acompanhados de comparação estatística.
   e operacional do IFCS; não substituem os contratos executáveis acima.
 - `elencos.html`: artefato gerado; não editar os dados embutidos manualmente.
 
-Essa disposição é legado. O destino arquitetural está em
-`docs/architecture.md`; não antecipe várias etapas numa única mudança.
+Essa disposição é legado. O destino arquitetural está em `docs/architecture.md`.
+
+**Quanto se pode andar de uma vez (revisto em 28/07/2026).** A regra antiga — "não antecipe
+várias etapas numa única mudança" — protegia contra mudança *não medida*, mas na prática também
+travava migração estrutural que é totalmente verificável. Os dois casos são diferentes:
+
+- **Mudança não medida** (balanceamento, dados, regra nova) continua indo em fatia pequena, uma
+  família de parâmetros por vez, com comparação pareada. Aqui a cautela é a única defesa.
+- **Migração estrutural provada por paridade** pode ir em fatias maiores, desde que cada fatia
+  feche o invariante completo: snapshot idêntico, golden bit a bit, `validate` 24/24 e consumo de
+  RNG inalterado. Refatoração não muda resultado — se mudou, é bug da refatoração, e a fatia
+  volta atrás.
+
+O que não muda: fatia estrutural e fatia de balanceamento nunca dividem o mesmo commit, e um
+número vermelho nunca é contornado ajustando golden ou relaxando suíte.
 
 ## Validação obrigatória
 
