@@ -6830,16 +6830,16 @@
             }
           },
           {
-            "map": "Dust2",
+            "map": "Train",
             "score": [
-              12,
-              16
+              6,
+              13
             ],
             "firstHalf": [
-              7,
-              5
+              4,
+              8
             ],
-            "totalRounds": 28,
+            "totalRounds": 19,
             "winnerSide": "B",
             "winnerName": "FaZe",
             "identity": {
@@ -6888,12 +6888,12 @@
                     },
                     {
                       "id": "ropz",
-                      "kills": 1,
+                      "kills": 0,
                       "deaths": 1
                     },
                     {
                       "id": "mezii",
-                      "kills": 4,
+                      "kills": 5,
                       "deaths": 0
                     },
                     {
@@ -6953,29 +6953,32 @@
                   "force",
                   "eco"
                 ],
-                "clutch": null,
-                "highlight": "mezii",
+                "clutch": {
+                  "opponents": 2,
+                  "won": false
+                },
+                "highlight": "ZywOo",
                 "scoreboard": {
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 0,
+                      "kills": 4,
                       "deaths": 1
                     },
                     {
                       "id": "ropz",
                       "kills": 1,
-                      "deaths": 1
+                      "deaths": 2
                     },
                     {
                       "id": "mezii",
                       "kills": 5,
-                      "deaths": 0
+                      "deaths": 1
                     },
                     {
                       "id": "flameZ",
                       "kills": 0,
-                      "deaths": 0
+                      "deaths": 1
                     },
                     {
                       "id": "apEX",
@@ -6986,13 +6989,13 @@
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 1,
-                      "deaths": 1
+                      "kills": 2,
+                      "deaths": 2
                     },
                     {
                       "id": "rain",
-                      "kills": 0,
-                      "deaths": 1
+                      "kills": 2,
+                      "deaths": 2
                     },
                     {
                       "id": "GuardiaN",
@@ -7002,12 +7005,12 @@
                     {
                       "id": "olofmeister",
                       "kills": 0,
-                      "deaths": 1
+                      "deaths": 2
                     },
                     {
                       "id": "karrigan",
                       "kills": 1,
-                      "deaths": 1
+                      "deaths": 2
                     }
                   ]
                 }
@@ -7024,26 +7027,23 @@
                   "TR"
                 ],
                 "sideSwitch": false,
-                "planted": false,
+                "planted": true,
                 "buys": [
                   "full",
                   "full"
                 ],
-                "clutch": {
-                  "opponents": 1,
-                  "won": true
-                },
+                "clutch": null,
                 "highlight": "ZywOo",
                 "scoreboard": {
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 2,
-                      "deaths": 2
+                      "kills": 4,
+                      "deaths": 1
                     },
                     {
                       "id": "ropz",
-                      "kills": 2,
+                      "kills": 1,
                       "deaths": 2
                     },
                     {
@@ -7058,14 +7058,14 @@
                     },
                     {
                       "id": "apEX",
-                      "kills": 2,
+                      "kills": 0,
                       "deaths": 1
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 1,
+                      "kills": 2,
                       "deaths": 2
                     },
                     {
@@ -7076,11 +7076,11 @@
                     {
                       "id": "GuardiaN",
                       "kills": 1,
-                      "deaths": 3
+                      "deaths": 2
                     },
                     {
                       "id": "olofmeister",
-                      "kills": 2,
+                      "kills": 0,
                       "deaths": 2
                     },
                     {
@@ -7094,241 +7094,7 @@
               {
                 "number": 4,
                 "score": [
-                  4,
-                  0
-                ],
-                "winnerSide": "A",
-                "sides": [
-                  "CT",
-                  "TR"
-                ],
-                "sideSwitch": false,
-                "planted": false,
-                "buys": [
-                  "full",
-                  "force"
-                ],
-                "clutch": {
-                  "opponents": 2,
-                  "won": false
-                },
-                "highlight": "ropz",
-                "scoreboard": {
-                  "a": [
-                    {
-                      "id": "ZywOo",
-                      "kills": 2,
-                      "deaths": 3
-                    },
-                    {
-                      "id": "ropz",
-                      "kills": 5,
-                      "deaths": 3
-                    },
-                    {
-                      "id": "mezii",
-                      "kills": 6,
-                      "deaths": 1
-                    },
-                    {
-                      "id": "flameZ",
-                      "kills": 1,
-                      "deaths": 2
-                    },
-                    {
-                      "id": "apEX",
-                      "kills": 2,
-                      "deaths": 2
-                    }
-                  ],
-                  "b": [
-                    {
-                      "id": "NiKo",
-                      "kills": 1,
-                      "deaths": 3
-                    },
-                    {
-                      "id": "rain",
-                      "kills": 3,
-                      "deaths": 3
-                    },
-                    {
-                      "id": "GuardiaN",
-                      "kills": 4,
-                      "deaths": 4
-                    },
-                    {
-                      "id": "olofmeister",
-                      "kills": 2,
-                      "deaths": 3
-                    },
-                    {
-                      "id": "karrigan",
-                      "kills": 1,
-                      "deaths": 3
-                    }
-                  ]
-                }
-              },
-              {
-                "number": 5,
-                "score": [
-                  5,
-                  0
-                ],
-                "winnerSide": "A",
-                "sides": [
-                  "CT",
-                  "TR"
-                ],
-                "sideSwitch": false,
-                "planted": false,
-                "buys": [
-                  "full",
-                  "force"
-                ],
-                "clutch": {
-                  "opponents": 3,
-                  "won": false
-                },
-                "highlight": "mezii",
-                "scoreboard": {
-                  "a": [
-                    {
-                      "id": "ZywOo",
-                      "kills": 2,
-                      "deaths": 4
-                    },
-                    {
-                      "id": "ropz",
-                      "kills": 5,
-                      "deaths": 4
-                    },
-                    {
-                      "id": "mezii",
-                      "kills": 8,
-                      "deaths": 1
-                    },
-                    {
-                      "id": "flameZ",
-                      "kills": 2,
-                      "deaths": 2
-                    },
-                    {
-                      "id": "apEX",
-                      "kills": 3,
-                      "deaths": 2
-                    }
-                  ],
-                  "b": [
-                    {
-                      "id": "NiKo",
-                      "kills": 2,
-                      "deaths": 4
-                    },
-                    {
-                      "id": "rain",
-                      "kills": 4,
-                      "deaths": 4
-                    },
-                    {
-                      "id": "GuardiaN",
-                      "kills": 4,
-                      "deaths": 4
-                    },
-                    {
-                      "id": "olofmeister",
-                      "kills": 2,
-                      "deaths": 4
-                    },
-                    {
-                      "id": "karrigan",
-                      "kills": 1,
-                      "deaths": 4
-                    }
-                  ]
-                }
-              },
-              {
-                "number": 6,
-                "score": [
-                  6,
-                  0
-                ],
-                "winnerSide": "A",
-                "sides": [
-                  "CT",
-                  "TR"
-                ],
-                "sideSwitch": false,
-                "planted": false,
-                "buys": [
-                  "full",
-                  "full"
-                ],
-                "clutch": null,
-                "highlight": "ZywOo",
-                "scoreboard": {
-                  "a": [
-                    {
-                      "id": "ZywOo",
-                      "kills": 2,
-                      "deaths": 4
-                    },
-                    {
-                      "id": "ropz",
-                      "kills": 5,
-                      "deaths": 4
-                    },
-                    {
-                      "id": "mezii",
-                      "kills": 8,
-                      "deaths": 1
-                    },
-                    {
-                      "id": "flameZ",
-                      "kills": 2,
-                      "deaths": 2
-                    },
-                    {
-                      "id": "apEX",
-                      "kills": 3,
-                      "deaths": 2
-                    }
-                  ],
-                  "b": [
-                    {
-                      "id": "NiKo",
-                      "kills": 2,
-                      "deaths": 4
-                    },
-                    {
-                      "id": "rain",
-                      "kills": 4,
-                      "deaths": 4
-                    },
-                    {
-                      "id": "GuardiaN",
-                      "kills": 4,
-                      "deaths": 4
-                    },
-                    {
-                      "id": "olofmeister",
-                      "kills": 2,
-                      "deaths": 4
-                    },
-                    {
-                      "id": "karrigan",
-                      "kills": 1,
-                      "deaths": 4
-                    }
-                  ]
-                }
-              },
-              {
-                "number": 7,
-                "score": [
-                  6,
+                  3,
                   1
                 ],
                 "winnerSide": "B",
@@ -7343,71 +7109,71 @@
                   "full"
                 ],
                 "clutch": {
-                  "opponents": 2,
-                  "won": false
+                  "opponents": 3,
+                  "won": true
                 },
-                "highlight": "olofmeister",
+                "highlight": "NiKo",
                 "scoreboard": {
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 2,
-                      "deaths": 5
+                      "kills": 4,
+                      "deaths": 2
                     },
                     {
                       "id": "ropz",
-                      "kills": 7,
-                      "deaths": 5
+                      "kills": 4,
+                      "deaths": 3
                     },
                     {
                       "id": "mezii",
-                      "kills": 9,
+                      "kills": 6,
                       "deaths": 2
                     },
                     {
                       "id": "flameZ",
-                      "kills": 2,
-                      "deaths": 3
+                      "kills": 0,
+                      "deaths": 2
                     },
                     {
                       "id": "apEX",
-                      "kills": 3,
-                      "deaths": 3
+                      "kills": 0,
+                      "deaths": 2
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 3,
-                      "deaths": 4
+                      "kills": 6,
+                      "deaths": 2
                     },
                     {
                       "id": "rain",
-                      "kills": 5,
-                      "deaths": 5
+                      "kills": 2,
+                      "deaths": 3
                     },
                     {
                       "id": "GuardiaN",
-                      "kills": 4,
-                      "deaths": 5
+                      "kills": 1,
+                      "deaths": 3
                     },
                     {
                       "id": "olofmeister",
-                      "kills": 4,
-                      "deaths": 4
+                      "kills": 0,
+                      "deaths": 3
                     },
                     {
                       "id": "karrigan",
                       "kills": 2,
-                      "deaths": 5
+                      "deaths": 3
                     }
                   ]
                 }
               },
               {
-                "number": 8,
+                "number": 5,
                 "score": [
-                  6,
+                  3,
                   2
                 ],
                 "winnerSide": "B",
@@ -7418,72 +7184,75 @@
                 "sideSwitch": false,
                 "planted": true,
                 "buys": [
-                  "force",
+                  "full",
                   "full"
                 ],
-                "clutch": null,
-                "highlight": "rain",
+                "clutch": {
+                  "opponents": 3,
+                  "won": false
+                },
+                "highlight": "olofmeister",
                 "scoreboard": {
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 2,
-                      "deaths": 5
+                      "kills": 4,
+                      "deaths": 3
                     },
                     {
                       "id": "ropz",
-                      "kills": 7,
-                      "deaths": 6
+                      "kills": 5,
+                      "deaths": 4
                     },
                     {
                       "id": "mezii",
-                      "kills": 9,
+                      "kills": 6,
                       "deaths": 3
                     },
                     {
                       "id": "flameZ",
-                      "kills": 2,
+                      "kills": 0,
                       "deaths": 3
                     },
                     {
                       "id": "apEX",
                       "kills": 3,
-                      "deaths": 3
+                      "deaths": 2
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 3,
-                      "deaths": 4
+                      "kills": 6,
+                      "deaths": 3
                     },
                     {
                       "id": "rain",
-                      "kills": 6,
-                      "deaths": 5
-                    },
-                    {
-                      "id": "GuardiaN",
-                      "kills": 4,
-                      "deaths": 5
-                    },
-                    {
-                      "id": "olofmeister",
-                      "kills": 4,
+                      "kills": 3,
                       "deaths": 4
                     },
                     {
-                      "id": "karrigan",
+                      "id": "GuardiaN",
+                      "kills": 1,
+                      "deaths": 4
+                    },
+                    {
+                      "id": "olofmeister",
                       "kills": 3,
-                      "deaths": 5
+                      "deaths": 3
+                    },
+                    {
+                      "id": "karrigan",
+                      "kills": 2,
+                      "deaths": 4
                     }
                   ]
                 }
               },
               {
-                "number": 9,
+                "number": 6,
                 "score": [
-                  6,
+                  3,
                   3
                 ],
                 "winnerSide": "B",
@@ -7498,147 +7267,71 @@
                   "full"
                 ],
                 "clutch": null,
-                "highlight": "rain",
+                "highlight": "karrigan",
                 "scoreboard": {
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 2,
-                      "deaths": 5
+                      "kills": 4,
+                      "deaths": 3
                     },
                     {
                       "id": "ropz",
-                      "kills": 7,
-                      "deaths": 7
+                      "kills": 5,
+                      "deaths": 4
                     },
                     {
                       "id": "mezii",
-                      "kills": 9,
+                      "kills": 6,
                       "deaths": 3
                     },
                     {
                       "id": "flameZ",
-                      "kills": 2,
-                      "deaths": 3
+                      "kills": 0,
+                      "deaths": 4
                     },
                     {
                       "id": "apEX",
                       "kills": 3,
-                      "deaths": 3
+                      "deaths": 2
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
+                      "kills": 6,
+                      "deaths": 3
+                    },
+                    {
+                      "id": "rain",
                       "kills": 3,
                       "deaths": 4
                     },
                     {
-                      "id": "rain",
-                      "kills": 7,
-                      "deaths": 5
-                    },
-                    {
                       "id": "GuardiaN",
-                      "kills": 4,
-                      "deaths": 5
+                      "kills": 1,
+                      "deaths": 4
                     },
                     {
                       "id": "olofmeister",
-                      "kills": 4,
-                      "deaths": 4
+                      "kills": 3,
+                      "deaths": 3
                     },
                     {
                       "id": "karrigan",
                       "kills": 3,
-                      "deaths": 5
+                      "deaths": 4
                     }
                   ]
                 }
               },
               {
-                "number": 10,
+                "number": 7,
                 "score": [
-                  6,
+                  3,
                   4
                 ],
                 "winnerSide": "B",
-                "sides": [
-                  "CT",
-                  "TR"
-                ],
-                "sideSwitch": false,
-                "planted": true,
-                "buys": [
-                  "full",
-                  "full"
-                ],
-                "clutch": null,
-                "highlight": "rain",
-                "scoreboard": {
-                  "a": [
-                    {
-                      "id": "ZywOo",
-                      "kills": 2,
-                      "deaths": 6
-                    },
-                    {
-                      "id": "ropz",
-                      "kills": 8,
-                      "deaths": 7
-                    },
-                    {
-                      "id": "mezii",
-                      "kills": 9,
-                      "deaths": 4
-                    },
-                    {
-                      "id": "flameZ",
-                      "kills": 2,
-                      "deaths": 3
-                    },
-                    {
-                      "id": "apEX",
-                      "kills": 3,
-                      "deaths": 4
-                    }
-                  ],
-                  "b": [
-                    {
-                      "id": "NiKo",
-                      "kills": 4,
-                      "deaths": 4
-                    },
-                    {
-                      "id": "rain",
-                      "kills": 9,
-                      "deaths": 6
-                    },
-                    {
-                      "id": "GuardiaN",
-                      "kills": 4,
-                      "deaths": 5
-                    },
-                    {
-                      "id": "olofmeister",
-                      "kills": 4,
-                      "deaths": 4
-                    },
-                    {
-                      "id": "karrigan",
-                      "kills": 3,
-                      "deaths": 5
-                    }
-                  ]
-                }
-              },
-              {
-                "number": 11,
-                "score": [
-                  7,
-                  4
-                ],
-                "winnerSide": "A",
                 "sides": [
                   "CT",
                   "TR"
@@ -7650,71 +7343,71 @@
                   "full"
                 ],
                 "clutch": {
-                  "opponents": 1,
-                  "won": true
+                  "opponents": 2,
+                  "won": false
                 },
-                "highlight": "ZywOo",
+                "highlight": "karrigan",
                 "scoreboard": {
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 5,
-                      "deaths": 6
-                    },
-                    {
-                      "id": "ropz",
-                      "kills": 9,
-                      "deaths": 8
-                    },
-                    {
-                      "id": "mezii",
-                      "kills": 10,
-                      "deaths": 5
-                    },
-                    {
-                      "id": "flameZ",
-                      "kills": 2,
+                      "kills": 4,
                       "deaths": 4
                     },
                     {
-                      "id": "apEX",
-                      "kills": 3,
+                      "id": "ropz",
+                      "kills": 6,
                       "deaths": 5
+                    },
+                    {
+                      "id": "mezii",
+                      "kills": 6,
+                      "deaths": 4
+                    },
+                    {
+                      "id": "flameZ",
+                      "kills": 1,
+                      "deaths": 5
+                    },
+                    {
+                      "id": "apEX",
+                      "kills": 4,
+                      "deaths": 3
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 4,
-                      "deaths": 5
+                      "kills": 7,
+                      "deaths": 3
                     },
                     {
                       "id": "rain",
-                      "kills": 12,
-                      "deaths": 7
-                    },
-                    {
-                      "id": "GuardiaN",
                       "kills": 4,
-                      "deaths": 6
-                    },
-                    {
-                      "id": "olofmeister",
-                      "kills": 5,
                       "deaths": 5
                     },
                     {
+                      "id": "GuardiaN",
+                      "kills": 1,
+                      "deaths": 5
+                    },
+                    {
+                      "id": "olofmeister",
+                      "kills": 4,
+                      "deaths": 4
+                    },
+                    {
                       "id": "karrigan",
-                      "kills": 3,
-                      "deaths": 6
+                      "kills": 5,
+                      "deaths": 4
                     }
                   ]
                 }
               },
               {
-                "number": 12,
+                "number": 8,
                 "score": [
-                  7,
+                  3,
                   5
                 ],
                 "winnerSide": "B",
@@ -7723,89 +7416,89 @@
                   "TR"
                 ],
                 "sideSwitch": false,
-                "planted": true,
+                "planted": false,
                 "buys": [
-                  "full",
+                  "force",
                   "full"
                 ],
                 "clutch": {
                   "opponents": 2,
-                  "won": true
+                  "won": false
                 },
-                "highlight": "olofmeister",
+                "highlight": "GuardiaN",
                 "scoreboard": {
                   "a": [
                     {
                       "id": "ZywOo",
                       "kills": 6,
-                      "deaths": 7
-                    },
-                    {
-                      "id": "ropz",
-                      "kills": 10,
-                      "deaths": 9
-                    },
-                    {
-                      "id": "mezii",
-                      "kills": 12,
-                      "deaths": 6
-                    },
-                    {
-                      "id": "flameZ",
-                      "kills": 2,
                       "deaths": 5
                     },
                     {
-                      "id": "apEX",
-                      "kills": 3,
+                      "id": "ropz",
+                      "kills": 7,
                       "deaths": 6
+                    },
+                    {
+                      "id": "mezii",
+                      "kills": 7,
+                      "deaths": 5
+                    },
+                    {
+                      "id": "flameZ",
+                      "kills": 1,
+                      "deaths": 6
+                    },
+                    {
+                      "id": "apEX",
+                      "kills": 4,
+                      "deaths": 4
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 4,
-                      "deaths": 6
+                      "kills": 7,
+                      "deaths": 4
                     },
                     {
                       "id": "rain",
-                      "kills": 13,
-                      "deaths": 8
+                      "kills": 5,
+                      "deaths": 6
                     },
                     {
                       "id": "GuardiaN",
-                      "kills": 4,
-                      "deaths": 7
+                      "kills": 3,
+                      "deaths": 5
                     },
                     {
                       "id": "olofmeister",
-                      "kills": 8,
+                      "kills": 5,
                       "deaths": 5
                     },
                     {
                       "id": "karrigan",
-                      "kills": 4,
-                      "deaths": 7
+                      "kills": 6,
+                      "deaths": 5
                     }
                   ]
                 }
               },
               {
-                "number": 13,
+                "number": 9,
                 "score": [
-                  7,
+                  3,
                   6
                 ],
                 "winnerSide": "B",
                 "sides": [
-                  "TR",
-                  "CT"
+                  "CT",
+                  "TR"
                 ],
-                "sideSwitch": true,
-                "planted": true,
+                "sideSwitch": false,
+                "planted": false,
                 "buys": [
-                  "pistol",
-                  "pistol"
+                  "full",
+                  "full"
                 ],
                 "clutch": {
                   "opponents": 2,
@@ -7816,69 +7509,148 @@
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 6,
-                      "deaths": 8
-                    },
-                    {
-                      "id": "ropz",
-                      "kills": 10,
-                      "deaths": 10
-                    },
-                    {
-                      "id": "mezii",
-                      "kills": 15,
-                      "deaths": 7
-                    },
-                    {
-                      "id": "flameZ",
-                      "kills": 2,
+                      "kills": 7,
                       "deaths": 6
                     },
                     {
-                      "id": "apEX",
-                      "kills": 3,
+                      "id": "ropz",
+                      "kills": 8,
                       "deaths": 7
+                    },
+                    {
+                      "id": "mezii",
+                      "kills": 7,
+                      "deaths": 6
+                    },
+                    {
+                      "id": "flameZ",
+                      "kills": 1,
+                      "deaths": 7
+                    },
+                    {
+                      "id": "apEX",
+                      "kills": 5,
+                      "deaths": 5
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 5,
-                      "deaths": 6
+                      "kills": 7,
+                      "deaths": 5
                     },
                     {
                       "id": "rain",
-                      "kills": 15,
-                      "deaths": 9
+                      "kills": 7,
+                      "deaths": 6
                     },
                     {
                       "id": "GuardiaN",
-                      "kills": 6,
-                      "deaths": 7
+                      "kills": 4,
+                      "deaths": 5
                     },
                     {
                       "id": "olofmeister",
-                      "kills": 8,
+                      "kills": 6,
                       "deaths": 6
                     },
                     {
                       "id": "karrigan",
-                      "kills": 4,
-                      "deaths": 8
+                      "kills": 7,
+                      "deaths": 6
                     }
                   ]
                 }
               },
               {
-                "number": 14,
+                "number": 10,
                 "score": [
-                  7,
+                  3,
                   7
                 ],
                 "winnerSide": "B",
                 "sides": [
-                  "TR",
-                  "CT"
+                  "CT",
+                  "TR"
+                ],
+                "sideSwitch": false,
+                "planted": false,
+                "buys": [
+                  "full",
+                  "full"
+                ],
+                "clutch": {
+                  "opponents": 3,
+                  "won": false
+                },
+                "highlight": "karrigan",
+                "scoreboard": {
+                  "a": [
+                    {
+                      "id": "ZywOo",
+                      "kills": 7,
+                      "deaths": 7
+                    },
+                    {
+                      "id": "ropz",
+                      "kills": 8,
+                      "deaths": 8
+                    },
+                    {
+                      "id": "mezii",
+                      "kills": 8,
+                      "deaths": 7
+                    },
+                    {
+                      "id": "flameZ",
+                      "kills": 1,
+                      "deaths": 8
+                    },
+                    {
+                      "id": "apEX",
+                      "kills": 6,
+                      "deaths": 6
+                    }
+                  ],
+                  "b": [
+                    {
+                      "id": "NiKo",
+                      "kills": 8,
+                      "deaths": 5
+                    },
+                    {
+                      "id": "rain",
+                      "kills": 8,
+                      "deaths": 6
+                    },
+                    {
+                      "id": "GuardiaN",
+                      "kills": 5,
+                      "deaths": 5
+                    },
+                    {
+                      "id": "olofmeister",
+                      "kills": 6,
+                      "deaths": 7
+                    },
+                    {
+                      "id": "karrigan",
+                      "kills": 9,
+                      "deaths": 7
+                    }
+                  ]
+                }
+              },
+              {
+                "number": 11,
+                "score": [
+                  4,
+                  7
+                ],
+                "winnerSide": "A",
+                "sides": [
+                  "CT",
+                  "TR"
                 ],
                 "sideSwitch": false,
                 "planted": true,
@@ -7888,386 +7660,149 @@
                 ],
                 "clutch": {
                   "opponents": 3,
-                  "won": true
+                  "won": false
                 },
-                "highlight": "rain",
+                "highlight": "ZywOo",
                 "scoreboard": {
                   "a": [
                     {
                       "id": "ZywOo",
+                      "kills": 8,
+                      "deaths": 8
+                    },
+                    {
+                      "id": "ropz",
                       "kills": 9,
                       "deaths": 9
                     },
                     {
-                      "id": "ropz",
-                      "kills": 10,
-                      "deaths": 11
-                    },
-                    {
                       "id": "mezii",
-                      "kills": 15,
+                      "kills": 9,
                       "deaths": 8
                     },
                     {
                       "id": "flameZ",
-                      "kills": 3,
-                      "deaths": 7
+                      "kills": 1,
+                      "deaths": 9
                     },
                     {
                       "id": "apEX",
-                      "kills": 3,
-                      "deaths": 8
+                      "kills": 7,
+                      "deaths": 6
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 5,
-                      "deaths": 7
+                      "kills": 8,
+                      "deaths": 6
                     },
                     {
                       "id": "rain",
-                      "kills": 20,
-                      "deaths": 9
-                    },
-                    {
-                      "id": "GuardiaN",
-                      "kills": 6,
-                      "deaths": 8
-                    },
-                    {
-                      "id": "olofmeister",
                       "kills": 8,
                       "deaths": 7
                     },
                     {
+                      "id": "GuardiaN",
+                      "kills": 5,
+                      "deaths": 6
+                    },
+                    {
+                      "id": "olofmeister",
+                      "kills": 9,
+                      "deaths": 7
+                    },
+                    {
                       "id": "karrigan",
-                      "kills": 4,
-                      "deaths": 9
+                      "kills": 10,
+                      "deaths": 8
                     }
                   ]
                 }
               },
               {
-                "number": 15,
+                "number": 12,
                 "score": [
-                  8,
-                  7
+                  4,
+                  8
                 ],
-                "winnerSide": "A",
+                "winnerSide": "B",
                 "sides": [
-                  "TR",
-                  "CT"
+                  "CT",
+                  "TR"
                 ],
                 "sideSwitch": false,
                 "planted": true,
-                "buys": [
-                  "eco",
-                  "eco"
-                ],
-                "clutch": {
-                  "opponents": 2,
-                  "won": false
-                },
-                "highlight": "mezii",
-                "scoreboard": {
-                  "a": [
-                    {
-                      "id": "ZywOo",
-                      "kills": 9,
-                      "deaths": 10
-                    },
-                    {
-                      "id": "ropz",
-                      "kills": 11,
-                      "deaths": 12
-                    },
-                    {
-                      "id": "mezii",
-                      "kills": 19,
-                      "deaths": 8
-                    },
-                    {
-                      "id": "flameZ",
-                      "kills": 3,
-                      "deaths": 8
-                    },
-                    {
-                      "id": "apEX",
-                      "kills": 3,
-                      "deaths": 8
-                    }
-                  ],
-                  "b": [
-                    {
-                      "id": "NiKo",
-                      "kills": 5,
-                      "deaths": 8
-                    },
-                    {
-                      "id": "rain",
-                      "kills": 21,
-                      "deaths": 10
-                    },
-                    {
-                      "id": "GuardiaN",
-                      "kills": 7,
-                      "deaths": 9
-                    },
-                    {
-                      "id": "olofmeister",
-                      "kills": 8,
-                      "deaths": 8
-                    },
-                    {
-                      "id": "karrigan",
-                      "kills": 5,
-                      "deaths": 10
-                    }
-                  ]
-                }
-              },
-              {
-                "number": 16,
-                "score": [
-                  9,
-                  7
-                ],
-                "winnerSide": "A",
-                "sides": [
-                  "TR",
-                  "CT"
-                ],
-                "sideSwitch": false,
-                "planted": false,
                 "buys": [
                   "full",
                   "full"
-                ],
-                "clutch": {
-                  "opponents": 1,
-                  "won": true
-                },
-                "highlight": "flameZ",
-                "scoreboard": {
-                  "a": [
-                    {
-                      "id": "ZywOo",
-                      "kills": 10,
-                      "deaths": 11
-                    },
-                    {
-                      "id": "ropz",
-                      "kills": 12,
-                      "deaths": 13
-                    },
-                    {
-                      "id": "mezii",
-                      "kills": 20,
-                      "deaths": 9
-                    },
-                    {
-                      "id": "flameZ",
-                      "kills": 5,
-                      "deaths": 8
-                    },
-                    {
-                      "id": "apEX",
-                      "kills": 3,
-                      "deaths": 9
-                    }
-                  ],
-                  "b": [
-                    {
-                      "id": "NiKo",
-                      "kills": 6,
-                      "deaths": 9
-                    },
-                    {
-                      "id": "rain",
-                      "kills": 21,
-                      "deaths": 11
-                    },
-                    {
-                      "id": "GuardiaN",
-                      "kills": 8,
-                      "deaths": 10
-                    },
-                    {
-                      "id": "olofmeister",
-                      "kills": 10,
-                      "deaths": 9
-                    },
-                    {
-                      "id": "karrigan",
-                      "kills": 5,
-                      "deaths": 11
-                    }
-                  ]
-                }
-              },
-              {
-                "number": 17,
-                "score": [
-                  10,
-                  7
-                ],
-                "winnerSide": "A",
-                "sides": [
-                  "TR",
-                  "CT"
-                ],
-                "sideSwitch": false,
-                "planted": true,
-                "buys": [
-                  "full",
-                  "eco"
                 ],
                 "clutch": {
                   "opponents": 3,
                   "won": false
                 },
-                "highlight": "mezii",
-                "scoreboard": {
-                  "a": [
-                    {
-                      "id": "ZywOo",
-                      "kills": 10,
-                      "deaths": 12
-                    },
-                    {
-                      "id": "ropz",
-                      "kills": 13,
-                      "deaths": 13
-                    },
-                    {
-                      "id": "mezii",
-                      "kills": 23,
-                      "deaths": 10
-                    },
-                    {
-                      "id": "flameZ",
-                      "kills": 6,
-                      "deaths": 8
-                    },
-                    {
-                      "id": "apEX",
-                      "kills": 3,
-                      "deaths": 9
-                    }
-                  ],
-                  "b": [
-                    {
-                      "id": "NiKo",
-                      "kills": 6,
-                      "deaths": 10
-                    },
-                    {
-                      "id": "rain",
-                      "kills": 21,
-                      "deaths": 12
-                    },
-                    {
-                      "id": "GuardiaN",
-                      "kills": 8,
-                      "deaths": 11
-                    },
-                    {
-                      "id": "olofmeister",
-                      "kills": 10,
-                      "deaths": 10
-                    },
-                    {
-                      "id": "karrigan",
-                      "kills": 7,
-                      "deaths": 12
-                    }
-                  ]
-                }
-              },
-              {
-                "number": 18,
-                "score": [
-                  10,
-                  8
-                ],
-                "winnerSide": "B",
-                "sides": [
-                  "TR",
-                  "CT"
-                ],
-                "sideSwitch": false,
-                "planted": false,
-                "buys": [
-                  "full",
-                  "full"
-                ],
-                "clutch": {
-                  "opponents": 1,
-                  "won": false
-                },
                 "highlight": "rain",
                 "scoreboard": {
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 10,
-                      "deaths": 13
+                      "kills": 11,
+                      "deaths": 8
                     },
                     {
                       "id": "ropz",
-                      "kills": 13,
-                      "deaths": 14
+                      "kills": 9,
+                      "deaths": 10
                     },
                     {
                       "id": "mezii",
-                      "kills": 26,
-                      "deaths": 11
-                    },
-                    {
-                      "id": "flameZ",
-                      "kills": 6,
+                      "kills": 9,
                       "deaths": 9
                     },
                     {
-                      "id": "apEX",
-                      "kills": 4,
+                      "id": "flameZ",
+                      "kills": 1,
                       "deaths": 10
+                    },
+                    {
+                      "id": "apEX",
+                      "kills": 7,
+                      "deaths": 7
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 7,
-                      "deaths": 11
+                      "kills": 8,
+                      "deaths": 7
                     },
                     {
                       "id": "rain",
-                      "kills": 24,
-                      "deaths": 13
+                      "kills": 10,
+                      "deaths": 7
                     },
                     {
                       "id": "GuardiaN",
-                      "kills": 9,
-                      "deaths": 11
+                      "kills": 5,
+                      "deaths": 6
                     },
                     {
                       "id": "olofmeister",
-                      "kills": 10,
-                      "deaths": 11
+                      "kills": 9,
+                      "deaths": 8
                     },
                     {
                       "id": "karrigan",
-                      "kills": 7,
-                      "deaths": 13
+                      "kills": 12,
+                      "deaths": 9
                     }
                   ]
                 }
               },
               {
-                "number": 19,
+                "number": 13,
                 "score": [
-                  10,
+                  4,
                   9
                 ],
                 "winnerSide": "B",
@@ -8275,11 +7810,11 @@
                   "TR",
                   "CT"
                 ],
-                "sideSwitch": false,
+                "sideSwitch": true,
                 "planted": false,
                 "buys": [
-                  "full",
-                  "full"
+                  "pistol",
+                  "pistol"
                 ],
                 "clutch": {
                   "opponents": 2,
@@ -8290,63 +7825,63 @@
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 10,
-                      "deaths": 14
+                      "kills": 14,
+                      "deaths": 9
                     },
                     {
                       "id": "ropz",
-                      "kills": 13,
-                      "deaths": 15
+                      "kills": 9,
+                      "deaths": 11
                     },
                     {
                       "id": "mezii",
-                      "kills": 28,
-                      "deaths": 12
-                    },
-                    {
-                      "id": "flameZ",
-                      "kills": 6,
+                      "kills": 9,
                       "deaths": 10
                     },
                     {
-                      "id": "apEX",
-                      "kills": 6,
+                      "id": "flameZ",
+                      "kills": 1,
                       "deaths": 11
+                    },
+                    {
+                      "id": "apEX",
+                      "kills": 8,
+                      "deaths": 8
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 9,
-                      "deaths": 12
+                      "kills": 11,
+                      "deaths": 7
                     },
                     {
                       "id": "rain",
-                      "kills": 25,
-                      "deaths": 14
+                      "kills": 11,
+                      "deaths": 8
                     },
                     {
                       "id": "GuardiaN",
-                      "kills": 11,
-                      "deaths": 11
+                      "kills": 6,
+                      "deaths": 7
                     },
                     {
                       "id": "olofmeister",
-                      "kills": 10,
-                      "deaths": 12
+                      "kills": 9,
+                      "deaths": 9
                     },
                     {
                       "id": "karrigan",
-                      "kills": 7,
-                      "deaths": 14
+                      "kills": 12,
+                      "deaths": 10
                     }
                   ]
                 }
               },
               {
-                "number": 20,
+                "number": 14,
                 "score": [
-                  10,
+                  4,
                   10
                 ],
                 "winnerSide": "B",
@@ -8358,74 +7893,74 @@
                 "planted": false,
                 "buys": [
                   "eco",
-                  "force"
+                  "full"
                 ],
                 "clutch": {
-                  "opponents": 2,
+                  "opponents": 1,
                   "won": false
                 },
-                "highlight": "rain",
+                "highlight": "NiKo",
                 "scoreboard": {
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 10,
-                      "deaths": 15
+                      "kills": 15,
+                      "deaths": 10
                     },
                     {
                       "id": "ropz",
-                      "kills": 13,
-                      "deaths": 16
+                      "kills": 9,
+                      "deaths": 12
                     },
                     {
                       "id": "mezii",
-                      "kills": 28,
-                      "deaths": 13
+                      "kills": 11,
+                      "deaths": 11
                     },
                     {
                       "id": "flameZ",
-                      "kills": 8,
-                      "deaths": 11
+                      "kills": 1,
+                      "deaths": 12
                     },
                     {
                       "id": "apEX",
-                      "kills": 7,
-                      "deaths": 11
+                      "kills": 9,
+                      "deaths": 9
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 9,
-                      "deaths": 13
+                      "kills": 13,
+                      "deaths": 8
                     },
                     {
                       "id": "rain",
-                      "kills": 29,
-                      "deaths": 15
+                      "kills": 12,
+                      "deaths": 9
                     },
                     {
                       "id": "GuardiaN",
-                      "kills": 11,
-                      "deaths": 11
+                      "kills": 6,
+                      "deaths": 8
                     },
                     {
                       "id": "olofmeister",
                       "kills": 10,
-                      "deaths": 12
+                      "deaths": 9
                     },
                     {
                       "id": "karrigan",
-                      "kills": 7,
-                      "deaths": 15
+                      "kills": 13,
+                      "deaths": 11
                     }
                   ]
                 }
               },
               {
-                "number": 21,
+                "number": 15,
                 "score": [
-                  10,
+                  4,
                   11
                 ],
                 "winnerSide": "B",
@@ -8440,7 +7975,7 @@
                   "full"
                 ],
                 "clutch": {
-                  "opponents": 2,
+                  "opponents": 3,
                   "won": false
                 },
                 "highlight": "rain",
@@ -8448,143 +7983,64 @@
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 12,
-                      "deaths": 16
+                      "kills": 17,
+                      "deaths": 11
                     },
                     {
                       "id": "ropz",
-                      "kills": 13,
-                      "deaths": 17
+                      "kills": 9,
+                      "deaths": 13
                     },
                     {
                       "id": "mezii",
-                      "kills": 28,
-                      "deaths": 14
+                      "kills": 11,
+                      "deaths": 12
                     },
                     {
                       "id": "flameZ",
-                      "kills": 8,
-                      "deaths": 12
+                      "kills": 1,
+                      "deaths": 13
                     },
                     {
                       "id": "apEX",
-                      "kills": 8,
-                      "deaths": 12
+                      "kills": 9,
+                      "deaths": 10
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 9,
-                      "deaths": 13
-                    },
-                    {
-                      "id": "rain",
-                      "kills": 33,
-                      "deaths": 16
-                    },
-                    {
-                      "id": "GuardiaN",
-                      "kills": 11,
-                      "deaths": 12
-                    },
-                    {
-                      "id": "olofmeister",
-                      "kills": 10,
-                      "deaths": 13
-                    },
-                    {
-                      "id": "karrigan",
-                      "kills": 8,
-                      "deaths": 15
-                    }
-                  ]
-                }
-              },
-              {
-                "number": 22,
-                "score": [
-                  10,
-                  12
-                ],
-                "winnerSide": "B",
-                "sides": [
-                  "TR",
-                  "CT"
-                ],
-                "sideSwitch": false,
-                "planted": true,
-                "buys": [
-                  "full",
-                  "full"
-                ],
-                "clutch": {
-                  "opponents": 2,
-                  "won": true
-                },
-                "highlight": "karrigan",
-                "scoreboard": {
-                  "a": [
-                    {
-                      "id": "ZywOo",
-                      "kills": 12,
-                      "deaths": 17
-                    },
-                    {
-                      "id": "ropz",
                       "kills": 13,
-                      "deaths": 18
-                    },
-                    {
-                      "id": "mezii",
-                      "kills": 32,
-                      "deaths": 14
-                    },
-                    {
-                      "id": "flameZ",
-                      "kills": 8,
-                      "deaths": 13
-                    },
-                    {
-                      "id": "apEX",
-                      "kills": 8,
-                      "deaths": 13
-                    }
-                  ],
-                  "b": [
-                    {
-                      "id": "NiKo",
-                      "kills": 9,
-                      "deaths": 14
+                      "deaths": 9
                     },
                     {
                       "id": "rain",
-                      "kills": 34,
-                      "deaths": 17
+                      "kills": 15,
+                      "deaths": 10
                     },
                     {
                       "id": "GuardiaN",
-                      "kills": 11,
-                      "deaths": 13
+                      "kills": 6,
+                      "deaths": 8
                     },
                     {
                       "id": "olofmeister",
-                      "kills": 11,
-                      "deaths": 14
+                      "kills": 10,
+                      "deaths": 9
                     },
                     {
                       "id": "karrigan",
-                      "kills": 10,
-                      "deaths": 15
+                      "kills": 15,
+                      "deaths": 11
                     }
                   ]
                 }
               },
               {
-                "number": 23,
+                "number": 16,
                 "score": [
-                  11,
-                  12
+                  5,
+                  11
                 ],
                 "winnerSide": "A",
                 "sides": [
@@ -8594,73 +8050,73 @@
                 "sideSwitch": false,
                 "planted": true,
                 "buys": [
-                  "full",
+                  "force",
                   "full"
                 ],
                 "clutch": null,
-                "highlight": "flameZ",
+                "highlight": "ZywOo",
                 "scoreboard": {
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 12,
-                      "deaths": 17
+                      "kills": 18,
+                      "deaths": 12
                     },
                     {
                       "id": "ropz",
-                      "kills": 13,
-                      "deaths": 19
-                    },
-                    {
-                      "id": "mezii",
-                      "kills": 32,
+                      "kills": 9,
                       "deaths": 14
                     },
                     {
+                      "id": "mezii",
+                      "kills": 11,
+                      "deaths": 13
+                    },
+                    {
                       "id": "flameZ",
-                      "kills": 9,
+                      "kills": 2,
                       "deaths": 13
                     },
                     {
                       "id": "apEX",
-                      "kills": 8,
-                      "deaths": 14
+                      "kills": 9,
+                      "deaths": 10
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 9,
-                      "deaths": 15
+                      "kills": 13,
+                      "deaths": 10
                     },
                     {
                       "id": "rain",
-                      "kills": 34,
-                      "deaths": 17
+                      "kills": 17,
+                      "deaths": 10
                     },
                     {
                       "id": "GuardiaN",
-                      "kills": 11,
-                      "deaths": 13
+                      "kills": 6,
+                      "deaths": 8
                     },
                     {
                       "id": "olofmeister",
-                      "kills": 13,
-                      "deaths": 14
+                      "kills": 10,
+                      "deaths": 10
                     },
                     {
                       "id": "karrigan",
-                      "kills": 10,
-                      "deaths": 15
+                      "kills": 16,
+                      "deaths": 11
                     }
                   ]
                 }
               },
               {
-                "number": 24,
+                "number": 17,
                 "score": [
-                  12,
-                  12
+                  6,
+                  11
                 ],
                 "winnerSide": "A",
                 "sides": [
@@ -8668,13 +8124,13 @@
                   "CT"
                 ],
                 "sideSwitch": false,
-                "planted": false,
+                "planted": true,
                 "buys": [
                   "full",
-                  "full"
+                  "eco"
                 ],
                 "clutch": {
-                  "opponents": 2,
+                  "opponents": 4,
                   "won": false
                 },
                 "highlight": "ZywOo",
@@ -8682,295 +8138,64 @@
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 14,
-                      "deaths": 18
+                      "kills": 20,
+                      "deaths": 12
                     },
                     {
                       "id": "ropz",
-                      "kills": 14,
-                      "deaths": 20
-                    },
-                    {
-                      "id": "mezii",
-                      "kills": 33,
+                      "kills": 9,
                       "deaths": 15
                     },
                     {
+                      "id": "mezii",
+                      "kills": 13,
+                      "deaths": 13
+                    },
+                    {
                       "id": "flameZ",
-                      "kills": 9,
-                      "deaths": 14
+                      "kills": 2,
+                      "deaths": 13
                     },
                     {
                       "id": "apEX",
                       "kills": 9,
-                      "deaths": 14
+                      "deaths": 10
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
+                      "kills": 13,
+                      "deaths": 11
+                    },
+                    {
+                      "id": "rain",
+                      "kills": 18,
+                      "deaths": 11
+                    },
+                    {
+                      "id": "GuardiaN",
+                      "kills": 6,
+                      "deaths": 9
+                    },
+                    {
+                      "id": "olofmeister",
                       "kills": 10,
-                      "deaths": 16
-                    },
-                    {
-                      "id": "rain",
-                      "kills": 35,
-                      "deaths": 18
-                    },
-                    {
-                      "id": "GuardiaN",
-                      "kills": 12,
-                      "deaths": 14
-                    },
-                    {
-                      "id": "olofmeister",
-                      "kills": 13,
-                      "deaths": 15
+                      "deaths": 11
                     },
                     {
                       "id": "karrigan",
-                      "kills": 11,
-                      "deaths": 16
+                      "kills": 16,
+                      "deaths": 11
                     }
                   ]
                 }
               },
               {
-                "number": 25,
+                "number": 18,
                 "score": [
-                  12,
-                  13
-                ],
-                "winnerSide": "B",
-                "sides": [
-                  "CT",
-                  "TR"
-                ],
-                "sideSwitch": false,
-                "planted": true,
-                "buys": [
-                  "full",
-                  "full"
-                ],
-                "clutch": null,
-                "highlight": "rain",
-                "scoreboard": {
-                  "a": [
-                    {
-                      "id": "ZywOo",
-                      "kills": 14,
-                      "deaths": 19
-                    },
-                    {
-                      "id": "ropz",
-                      "kills": 15,
-                      "deaths": 21
-                    },
-                    {
-                      "id": "mezii",
-                      "kills": 34,
-                      "deaths": 15
-                    },
-                    {
-                      "id": "flameZ",
-                      "kills": 9,
-                      "deaths": 15
-                    },
-                    {
-                      "id": "apEX",
-                      "kills": 9,
-                      "deaths": 14
-                    }
-                  ],
-                  "b": [
-                    {
-                      "id": "NiKo",
-                      "kills": 10,
-                      "deaths": 17
-                    },
-                    {
-                      "id": "rain",
-                      "kills": 38,
-                      "deaths": 18
-                    },
-                    {
-                      "id": "GuardiaN",
-                      "kills": 12,
-                      "deaths": 14
-                    },
-                    {
-                      "id": "olofmeister",
-                      "kills": 13,
-                      "deaths": 15
-                    },
-                    {
-                      "id": "karrigan",
-                      "kills": 11,
-                      "deaths": 17
-                    }
-                  ]
-                }
-              },
-              {
-                "number": 26,
-                "score": [
-                  12,
-                  14
-                ],
-                "winnerSide": "B",
-                "sides": [
-                  "CT",
-                  "TR"
-                ],
-                "sideSwitch": false,
-                "planted": true,
-                "buys": [
-                  "full",
-                  "full"
-                ],
-                "clutch": null,
-                "highlight": "rain",
-                "scoreboard": {
-                  "a": [
-                    {
-                      "id": "ZywOo",
-                      "kills": 14,
-                      "deaths": 20
-                    },
-                    {
-                      "id": "ropz",
-                      "kills": 15,
-                      "deaths": 22
-                    },
-                    {
-                      "id": "mezii",
-                      "kills": 36,
-                      "deaths": 15
-                    },
-                    {
-                      "id": "flameZ",
-                      "kills": 9,
-                      "deaths": 15
-                    },
-                    {
-                      "id": "apEX",
-                      "kills": 9,
-                      "deaths": 15
-                    }
-                  ],
-                  "b": [
-                    {
-                      "id": "NiKo",
-                      "kills": 11,
-                      "deaths": 17
-                    },
-                    {
-                      "id": "rain",
-                      "kills": 40,
-                      "deaths": 19
-                    },
-                    {
-                      "id": "GuardiaN",
-                      "kills": 12,
-                      "deaths": 14
-                    },
-                    {
-                      "id": "olofmeister",
-                      "kills": 13,
-                      "deaths": 16
-                    },
-                    {
-                      "id": "karrigan",
-                      "kills": 11,
-                      "deaths": 17
-                    }
-                  ]
-                }
-              },
-              {
-                "number": 27,
-                "score": [
-                  12,
-                  15
-                ],
-                "winnerSide": "B",
-                "sides": [
-                  "CT",
-                  "TR"
-                ],
-                "sideSwitch": false,
-                "planted": true,
-                "buys": [
-                  "full",
-                  "full"
-                ],
-                "clutch": {
-                  "opponents": 2,
-                  "won": false
-                },
-                "highlight": "karrigan",
-                "scoreboard": {
-                  "a": [
-                    {
-                      "id": "ZywOo",
-                      "kills": 15,
-                      "deaths": 21
-                    },
-                    {
-                      "id": "ropz",
-                      "kills": 17,
-                      "deaths": 23
-                    },
-                    {
-                      "id": "mezii",
-                      "kills": 36,
-                      "deaths": 16
-                    },
-                    {
-                      "id": "flameZ",
-                      "kills": 9,
-                      "deaths": 16
-                    },
-                    {
-                      "id": "apEX",
-                      "kills": 9,
-                      "deaths": 16
-                    }
-                  ],
-                  "b": [
-                    {
-                      "id": "NiKo",
-                      "kills": 11,
-                      "deaths": 18
-                    },
-                    {
-                      "id": "rain",
-                      "kills": 41,
-                      "deaths": 20
-                    },
-                    {
-                      "id": "GuardiaN",
-                      "kills": 13,
-                      "deaths": 14
-                    },
-                    {
-                      "id": "olofmeister",
-                      "kills": 14,
-                      "deaths": 17
-                    },
-                    {
-                      "id": "karrigan",
-                      "kills": 13,
-                      "deaths": 17
-                    }
-                  ]
-                }
-              },
-              {
-                "number": 28,
-                "score": [
-                  12,
-                  16
+                  6,
+                  12
                 ],
                 "winnerSide": "B",
                 "sides": [
@@ -8984,63 +8209,139 @@
                   "full"
                 ],
                 "clutch": {
-                  "opponents": 2,
+                  "opponents": 1,
                   "won": false
                 },
-                "highlight": "rain",
+                "highlight": "NiKo",
                 "scoreboard": {
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 15,
-                      "deaths": 22
+                      "kills": 22,
+                      "deaths": 13
                     },
                     {
                       "id": "ropz",
-                      "kills": 19,
-                      "deaths": 24
+                      "kills": 11,
+                      "deaths": 16
                     },
                     {
                       "id": "mezii",
-                      "kills": 36,
-                      "deaths": 17
+                      "kills": 13,
+                      "deaths": 14
                     },
                     {
                       "id": "flameZ",
-                      "kills": 10,
-                      "deaths": 17
+                      "kills": 2,
+                      "deaths": 14
                     },
                     {
                       "id": "apEX",
                       "kills": 9,
-                      "deaths": 17
+                      "deaths": 11
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 11,
-                      "deaths": 19
+                      "kills": 15,
+                      "deaths": 12
                     },
                     {
                       "id": "rain",
-                      "kills": 46,
-                      "deaths": 20
+                      "kills": 19,
+                      "deaths": 12
                     },
                     {
                       "id": "GuardiaN",
+                      "kills": 6,
+                      "deaths": 10
+                    },
+                    {
+                      "id": "olofmeister",
+                      "kills": 12,
+                      "deaths": 11
+                    },
+                    {
+                      "id": "karrigan",
+                      "kills": 16,
+                      "deaths": 12
+                    }
+                  ]
+                }
+              },
+              {
+                "number": 19,
+                "score": [
+                  6,
+                  13
+                ],
+                "winnerSide": "B",
+                "sides": [
+                  "TR",
+                  "CT"
+                ],
+                "sideSwitch": false,
+                "planted": false,
+                "buys": [
+                  "force",
+                  "full"
+                ],
+                "clutch": null,
+                "highlight": "rain",
+                "scoreboard": {
+                  "a": [
+                    {
+                      "id": "ZywOo",
+                      "kills": 22,
+                      "deaths": 13
+                    },
+                    {
+                      "id": "ropz",
+                      "kills": 11,
+                      "deaths": 16
+                    },
+                    {
+                      "id": "mezii",
                       "kills": 13,
                       "deaths": 14
                     },
                     {
+                      "id": "flameZ",
+                      "kills": 2,
+                      "deaths": 15
+                    },
+                    {
+                      "id": "apEX",
+                      "kills": 9,
+                      "deaths": 11
+                    }
+                  ],
+                  "b": [
+                    {
+                      "id": "NiKo",
+                      "kills": 15,
+                      "deaths": 12
+                    },
+                    {
+                      "id": "rain",
+                      "kills": 20,
+                      "deaths": 12
+                    },
+                    {
+                      "id": "GuardiaN",
+                      "kills": 6,
+                      "deaths": 10
+                    },
+                    {
                       "id": "olofmeister",
-                      "kills": 14,
-                      "deaths": 18
+                      "kills": 12,
+                      "deaths": 11
                     },
                     {
                       "id": "karrigan",
-                      "kills": 13,
-                      "deaths": 18
+                      "kills": 16,
+                      "deaths": 12
                     }
                   ]
                 }
@@ -9051,119 +8352,119 @@
                 {
                   "id": "ZywOo",
                   "nick": "ZywOo",
-                  "kills": 15,
-                  "deaths": 22,
-                  "assists": 5,
-                  "rating": 1.05,
-                  "kast": 0.607,
-                  "adr": 67
+                  "kills": 22,
+                  "deaths": 13,
+                  "assists": 4,
+                  "rating": 1.45,
+                  "kast": 0.842,
+                  "adr": 114
                 },
                 {
                   "id": "ropz",
                   "nick": "ropz",
-                  "kills": 19,
-                  "deaths": 24,
-                  "assists": 0,
-                  "rating": 1.07,
-                  "kast": 0.607,
+                  "kills": 11,
+                  "deaths": 16,
+                  "assists": 2,
+                  "rating": 1.06,
+                  "kast": 0.632,
                   "adr": 72
                 },
                 {
                   "id": "mezii",
                   "nick": "mezii",
-                  "kills": 36,
-                  "deaths": 17,
-                  "assists": 0,
-                  "rating": 1.55,
-                  "kast": 0.821,
-                  "adr": 118
+                  "kills": 13,
+                  "deaths": 14,
+                  "assists": 3,
+                  "rating": 1.14,
+                  "kast": 0.632,
+                  "adr": 78
                 },
                 {
                   "id": "flameZ",
                   "nick": "flameZ",
-                  "kills": 10,
-                  "deaths": 17,
+                  "kills": 2,
+                  "deaths": 15,
                   "assists": 6,
-                  "rating": 0.95,
-                  "kast": 0.714,
-                  "adr": 48
+                  "rating": 0.72,
+                  "kast": 0.579,
+                  "adr": 38
                 },
                 {
                   "id": "apEX",
                   "nick": "apEX",
                   "kills": 9,
-                  "deaths": 17,
-                  "assists": 8,
-                  "rating": 0.9,
-                  "kast": 0.571,
-                  "adr": 50
+                  "deaths": 11,
+                  "assists": 3,
+                  "rating": 1.04,
+                  "kast": 0.737,
+                  "adr": 53
                 }
               ],
               "b": [
                 {
                   "id": "NiKo",
                   "nick": "NiKo",
-                  "kills": 11,
-                  "deaths": 19,
-                  "assists": 8,
-                  "rating": 0.98,
-                  "kast": 0.75,
-                  "adr": 59
+                  "kills": 15,
+                  "deaths": 12,
+                  "assists": 3,
+                  "rating": 1.2,
+                  "kast": 0.632,
+                  "adr": 83
                 },
                 {
                   "id": "rain",
                   "nick": "rain",
-                  "kills": 46,
-                  "deaths": 20,
+                  "kills": 20,
+                  "deaths": 12,
                   "assists": 3,
-                  "rating": 1.91,
-                  "kast": 0.964,
-                  "adr": 157
+                  "rating": 1.53,
+                  "kast": 0.947,
+                  "adr": 104
                 },
                 {
                   "id": "GuardiaN",
                   "nick": "GuardiaN",
-                  "kills": 13,
-                  "deaths": 14,
-                  "assists": 8,
-                  "rating": 1.05,
-                  "kast": 0.786,
-                  "adr": 61
+                  "kills": 6,
+                  "deaths": 10,
+                  "assists": 3,
+                  "rating": 0.95,
+                  "kast": 0.737,
+                  "adr": 42
                 },
                 {
                   "id": "olofmeister",
                   "nick": "olofmeister",
-                  "kills": 14,
-                  "deaths": 18,
-                  "assists": 5,
-                  "rating": 0.98,
-                  "kast": 0.607,
-                  "adr": 63
+                  "kills": 12,
+                  "deaths": 11,
+                  "assists": 3,
+                  "rating": 1.12,
+                  "kast": 0.684,
+                  "adr": 75
                 },
                 {
                   "id": "karrigan",
                   "nick": "karrigan",
-                  "kills": 13,
-                  "deaths": 18,
-                  "assists": 6,
-                  "rating": 1.06,
-                  "kast": 0.75,
-                  "adr": 61
+                  "kills": 16,
+                  "deaths": 12,
+                  "assists": 3,
+                  "rating": 1.3,
+                  "kast": 0.895,
+                  "adr": 88
                 }
               ]
             }
           },
           {
-            "map": "Ancient",
+            "map": "Overpass",
             "score": [
-              3,
+              4,
               13
             ],
             "firstHalf": [
-              2,
-              10
+              3,
+              9
             ],
-            "totalRounds": 16,
+            "totalRounds": 17,
             "winnerSide": "B",
             "winnerName": "FaZe",
             "identity": {
@@ -9193,21 +8494,21 @@
                   "TR"
                 ],
                 "sideSwitch": false,
-                "planted": false,
+                "planted": true,
                 "buys": [
                   "pistol",
                   "pistol"
                 ],
                 "clutch": {
-                  "opponents": 3,
+                  "opponents": 1,
                   "won": false
                 },
-                "highlight": "GuardiaN",
+                "highlight": "karrigan",
                 "scoreboard": {
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 2,
+                      "kills": 0,
                       "deaths": 1
                     },
                     {
@@ -9217,7 +8518,7 @@
                     },
                     {
                       "id": "mezii",
-                      "kills": 0,
+                      "kills": 3,
                       "deaths": 1
                     },
                     {
@@ -9234,27 +8535,27 @@
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 0,
+                      "kills": 1,
                       "deaths": 1
                     },
                     {
                       "id": "rain",
-                      "kills": 0,
+                      "kills": 1,
                       "deaths": 1
                     },
                     {
                       "id": "GuardiaN",
-                      "kills": 4,
+                      "kills": 0,
                       "deaths": 1
                     },
                     {
                       "id": "olofmeister",
-                      "kills": 0,
-                      "deaths": 0
+                      "kills": 1,
+                      "deaths": 1
                     },
                     {
                       "id": "karrigan",
-                      "kills": 1,
+                      "kills": 2,
                       "deaths": 0
                     }
                   ]
@@ -9263,8 +8564,87 @@
               {
                 "number": 2,
                 "score": [
+                  0,
+                  2
+                ],
+                "winnerSide": "B",
+                "sides": [
+                  "CT",
+                  "TR"
+                ],
+                "sideSwitch": false,
+                "planted": true,
+                "buys": [
+                  "eco",
+                  "full"
+                ],
+                "clutch": {
+                  "opponents": 2,
+                  "won": false
+                },
+                "highlight": "olofmeister",
+                "scoreboard": {
+                  "a": [
+                    {
+                      "id": "ZywOo",
+                      "kills": 2,
+                      "deaths": 2
+                    },
+                    {
+                      "id": "ropz",
+                      "kills": 1,
+                      "deaths": 2
+                    },
+                    {
+                      "id": "mezii",
+                      "kills": 3,
+                      "deaths": 2
+                    },
+                    {
+                      "id": "flameZ",
+                      "kills": 1,
+                      "deaths": 2
+                    },
+                    {
+                      "id": "apEX",
+                      "kills": 0,
+                      "deaths": 2
+                    }
+                  ],
+                  "b": [
+                    {
+                      "id": "NiKo",
+                      "kills": 2,
+                      "deaths": 2
+                    },
+                    {
+                      "id": "rain",
+                      "kills": 2,
+                      "deaths": 2
+                    },
+                    {
+                      "id": "GuardiaN",
+                      "kills": 1,
+                      "deaths": 1
+                    },
+                    {
+                      "id": "olofmeister",
+                      "kills": 3,
+                      "deaths": 1
+                    },
+                    {
+                      "id": "karrigan",
+                      "kills": 2,
+                      "deaths": 1
+                    }
+                  ]
+                }
+              },
+              {
+                "number": 3,
+                "score": [
                   1,
-                  1
+                  2
                 ],
                 "winnerSide": "A",
                 "sides": [
@@ -9274,142 +8654,63 @@
                 "sideSwitch": false,
                 "planted": false,
                 "buys": [
-                  "eco",
+                  "force",
                   "force"
                 ],
                 "clutch": null,
-                "highlight": "ropz",
-                "scoreboard": {
-                  "a": [
-                    {
-                      "id": "ZywOo",
-                      "kills": 2,
-                      "deaths": 2
-                    },
-                    {
-                      "id": "ropz",
-                      "kills": 2,
-                      "deaths": 2
-                    },
-                    {
-                      "id": "mezii",
-                      "kills": 1,
-                      "deaths": 1
-                    },
-                    {
-                      "id": "flameZ",
-                      "kills": 0,
-                      "deaths": 1
-                    },
-                    {
-                      "id": "apEX",
-                      "kills": 0,
-                      "deaths": 2
-                    }
-                  ],
-                  "b": [
-                    {
-                      "id": "NiKo",
-                      "kills": 1,
-                      "deaths": 1
-                    },
-                    {
-                      "id": "rain",
-                      "kills": 1,
-                      "deaths": 2
-                    },
-                    {
-                      "id": "GuardiaN",
-                      "kills": 4,
-                      "deaths": 1
-                    },
-                    {
-                      "id": "olofmeister",
-                      "kills": 1,
-                      "deaths": 0
-                    },
-                    {
-                      "id": "karrigan",
-                      "kills": 1,
-                      "deaths": 1
-                    }
-                  ]
-                }
-              },
-              {
-                "number": 3,
-                "score": [
-                  2,
-                  1
-                ],
-                "winnerSide": "A",
-                "sides": [
-                  "CT",
-                  "TR"
-                ],
-                "sideSwitch": false,
-                "planted": true,
-                "buys": [
-                  "full",
-                  "eco"
-                ],
-                "clutch": {
-                  "opponents": 2,
-                  "won": false
-                },
-                "highlight": "ropz",
+                "highlight": "ZywOo",
                 "scoreboard": {
                   "a": [
                     {
                       "id": "ZywOo",
                       "kills": 3,
-                      "deaths": 3
+                      "deaths": 2
                     },
                     {
                       "id": "ropz",
-                      "kills": 5,
-                      "deaths": 2
+                      "kills": 2,
+                      "deaths": 3
                     },
                     {
                       "id": "mezii",
-                      "kills": 1,
-                      "deaths": 2
+                      "kills": 3,
+                      "deaths": 3
                     },
                     {
                       "id": "flameZ",
-                      "kills": 0,
+                      "kills": 1,
                       "deaths": 2
                     },
                     {
                       "id": "apEX",
-                      "kills": 1,
-                      "deaths": 3
+                      "kills": 0,
+                      "deaths": 2
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 1,
+                      "kills": 2,
                       "deaths": 2
                     },
                     {
                       "id": "rain",
-                      "kills": 1,
-                      "deaths": 3
-                    },
-                    {
-                      "id": "GuardiaN",
-                      "kills": 7,
+                      "kills": 3,
                       "deaths": 2
                     },
                     {
-                      "id": "olofmeister",
-                      "kills": 2,
+                      "id": "GuardiaN",
+                      "kills": 1,
                       "deaths": 1
                     },
                     {
+                      "id": "olofmeister",
+                      "kills": 3,
+                      "deaths": 2
+                    },
+                    {
                       "id": "karrigan",
-                      "kills": 1,
+                      "kills": 3,
                       "deaths": 2
                     }
                   ]
@@ -9421,7 +8722,7 @@
                   2,
                   2
                 ],
-                "winnerSide": "B",
+                "winnerSide": "A",
                 "sides": [
                   "CT",
                   "TR"
@@ -9430,66 +8731,63 @@
                 "planted": true,
                 "buys": [
                   "full",
-                  "full"
+                  "force"
                 ],
-                "clutch": {
-                  "opponents": 3,
-                  "won": false
-                },
-                "highlight": "karrigan",
+                "clutch": null,
+                "highlight": "ZywOo",
                 "scoreboard": {
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 3,
-                      "deaths": 4
-                    },
-                    {
-                      "id": "ropz",
-                      "kills": 7,
+                      "kills": 6,
                       "deaths": 2
                     },
                     {
+                      "id": "ropz",
+                      "kills": 2,
+                      "deaths": 4
+                    },
+                    {
                       "id": "mezii",
-                      "kills": 1,
+                      "kills": 3,
                       "deaths": 3
                     },
                     {
                       "id": "flameZ",
-                      "kills": 0,
+                      "kills": 1,
                       "deaths": 3
                     },
                     {
                       "id": "apEX",
-                      "kills": 1,
-                      "deaths": 4
+                      "kills": 0,
+                      "deaths": 2
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 1,
-                      "deaths": 3
+                      "kills": 2,
+                      "deaths": 2
                     },
                     {
                       "id": "rain",
-                      "kills": 2,
-                      "deaths": 4
+                      "kills": 4,
+                      "deaths": 3
                     },
                     {
                       "id": "GuardiaN",
-                      "kills": 8,
+                      "kills": 1,
                       "deaths": 2
                     },
                     {
                       "id": "olofmeister",
-                      "kills": 2,
-                      "deaths": 1
+                      "kills": 4,
+                      "deaths": 2
                     },
                     {
                       "id": "karrigan",
                       "kills": 3,
-                      "deaths": 2
+                      "deaths": 3
                     }
                   ]
                 }
@@ -9508,67 +8806,67 @@
                 "sideSwitch": false,
                 "planted": false,
                 "buys": [
-                  "eco",
+                  "full",
                   "full"
                 ],
                 "clutch": {
-                  "opponents": 3,
+                  "opponents": 2,
                   "won": false
                 },
-                "highlight": "GuardiaN",
+                "highlight": "rain",
                 "scoreboard": {
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 3,
-                      "deaths": 5
-                    },
-                    {
-                      "id": "ropz",
                       "kills": 9,
                       "deaths": 3
                     },
                     {
+                      "id": "ropz",
+                      "kills": 2,
+                      "deaths": 5
+                    },
+                    {
                       "id": "mezii",
-                      "kills": 1,
+                      "kills": 3,
                       "deaths": 4
                     },
                     {
                       "id": "flameZ",
-                      "kills": 0,
+                      "kills": 2,
                       "deaths": 4
                     },
                     {
                       "id": "apEX",
-                      "kills": 2,
-                      "deaths": 5
+                      "kills": 0,
+                      "deaths": 3
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 2,
-                      "deaths": 4
+                      "kills": 3,
+                      "deaths": 3
                     },
                     {
                       "id": "rain",
-                      "kills": 2,
-                      "deaths": 5
+                      "kills": 7,
+                      "deaths": 4
                     },
                     {
                       "id": "GuardiaN",
-                      "kills": 11,
-                      "deaths": 2
+                      "kills": 1,
+                      "deaths": 3
                     },
                     {
                       "id": "olofmeister",
-                      "kills": 3,
-                      "deaths": 1
+                      "kills": 5,
+                      "deaths": 2
                     },
                     {
                       "id": "karrigan",
                       "kills": 3,
-                      "deaths": 3
+                      "deaths": 4
                     }
                   ]
                 }
@@ -9590,61 +8888,64 @@
                   "eco",
                   "full"
                 ],
-                "clutch": null,
-                "highlight": "GuardiaN",
+                "clutch": {
+                  "opponents": 3,
+                  "won": false
+                },
+                "highlight": "NiKo",
                 "scoreboard": {
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 3,
-                      "deaths": 6
+                      "kills": 10,
+                      "deaths": 4
                     },
                     {
                       "id": "ropz",
-                      "kills": 9,
-                      "deaths": 4
+                      "kills": 2,
+                      "deaths": 6
                     },
                     {
                       "id": "mezii",
-                      "kills": 1,
-                      "deaths": 4
+                      "kills": 3,
+                      "deaths": 5
                     },
                     {
                       "id": "flameZ",
-                      "kills": 1,
+                      "kills": 2,
                       "deaths": 5
                     },
                     {
                       "id": "apEX",
-                      "kills": 2,
-                      "deaths": 5
+                      "kills": 1,
+                      "deaths": 4
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 2,
-                      "deaths": 5
+                      "kills": 5,
+                      "deaths": 3
                     },
                     {
                       "id": "rain",
-                      "kills": 2,
+                      "kills": 8,
                       "deaths": 5
                     },
                     {
                       "id": "GuardiaN",
-                      "kills": 14,
-                      "deaths": 2
+                      "kills": 1,
+                      "deaths": 3
                     },
                     {
                       "id": "olofmeister",
-                      "kills": 3,
-                      "deaths": 1
+                      "kills": 7,
+                      "deaths": 2
                     },
                     {
                       "id": "karrigan",
                       "kills": 3,
-                      "deaths": 3
+                      "deaths": 5
                     }
                   ]
                 }
@@ -9667,63 +8968,63 @@
                   "full"
                 ],
                 "clutch": {
-                  "opponents": 3,
+                  "opponents": 1,
                   "won": false
                 },
-                "highlight": "GuardiaN",
+                "highlight": "olofmeister",
                 "scoreboard": {
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 3,
-                      "deaths": 7
+                      "kills": 12,
+                      "deaths": 5
                     },
                     {
                       "id": "ropz",
-                      "kills": 9,
-                      "deaths": 5
+                      "kills": 2,
+                      "deaths": 7
                     },
                     {
                       "id": "mezii",
-                      "kills": 3,
-                      "deaths": 5
+                      "kills": 4,
+                      "deaths": 6
                     },
                     {
                       "id": "flameZ",
-                      "kills": 1,
+                      "kills": 2,
                       "deaths": 6
                     },
                     {
                       "id": "apEX",
                       "kills": 2,
-                      "deaths": 6
+                      "deaths": 5
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 2,
-                      "deaths": 5
+                      "kills": 6,
+                      "deaths": 4
                     },
                     {
                       "id": "rain",
-                      "kills": 4,
-                      "deaths": 5
+                      "kills": 8,
+                      "deaths": 6
                     },
                     {
                       "id": "GuardiaN",
-                      "kills": 17,
-                      "deaths": 2
+                      "kills": 2,
+                      "deaths": 3
                     },
                     {
                       "id": "olofmeister",
-                      "kills": 3,
-                      "deaths": 2
+                      "kills": 9,
+                      "deaths": 3
                     },
                     {
                       "id": "karrigan",
-                      "kills": 3,
-                      "deaths": 4
+                      "kills": 4,
+                      "deaths": 6
                     }
                   ]
                 }
@@ -9742,67 +9043,67 @@
                 "sideSwitch": false,
                 "planted": false,
                 "buys": [
-                  "full",
+                  "force",
                   "full"
                 ],
                 "clutch": {
-                  "opponents": 2,
+                  "opponents": 3,
                   "won": false
                 },
-                "highlight": "GuardiaN",
+                "highlight": "rain",
                 "scoreboard": {
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 5,
-                      "deaths": 8
+                      "kills": 14,
+                      "deaths": 6
                     },
                     {
                       "id": "ropz",
-                      "kills": 10,
-                      "deaths": 6
+                      "kills": 2,
+                      "deaths": 8
                     },
                     {
                       "id": "mezii",
-                      "kills": 3,
-                      "deaths": 6
+                      "kills": 4,
+                      "deaths": 7
                     },
                     {
                       "id": "flameZ",
-                      "kills": 1,
+                      "kills": 2,
                       "deaths": 7
                     },
                     {
                       "id": "apEX",
                       "kills": 2,
-                      "deaths": 7
+                      "deaths": 6
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 3,
+                      "kills": 6,
                       "deaths": 5
                     },
                     {
                       "id": "rain",
-                      "kills": 5,
+                      "kills": 13,
                       "deaths": 6
                     },
                     {
                       "id": "GuardiaN",
-                      "kills": 19,
-                      "deaths": 3
+                      "kills": 2,
+                      "deaths": 4
                     },
                     {
                       "id": "olofmeister",
-                      "kills": 3,
+                      "kills": 9,
                       "deaths": 3
                     },
                     {
                       "id": "karrigan",
                       "kills": 4,
-                      "deaths": 4
+                      "deaths": 6
                     }
                   ]
                 }
@@ -9830,55 +9131,55 @@
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 5,
-                      "deaths": 8
+                      "kills": 15,
+                      "deaths": 7
                     },
                     {
                       "id": "ropz",
-                      "kills": 10,
-                      "deaths": 6
+                      "kills": 2,
+                      "deaths": 9
                     },
                     {
                       "id": "mezii",
-                      "kills": 3,
-                      "deaths": 6
+                      "kills": 4,
+                      "deaths": 8
                     },
                     {
                       "id": "flameZ",
-                      "kills": 1,
+                      "kills": 2,
                       "deaths": 7
                     },
                     {
                       "id": "apEX",
                       "kills": 2,
-                      "deaths": 7
+                      "deaths": 6
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 3,
+                      "kills": 8,
                       "deaths": 5
                     },
                     {
                       "id": "rain",
-                      "kills": 5,
-                      "deaths": 6
+                      "kills": 14,
+                      "deaths": 7
                     },
                     {
                       "id": "GuardiaN",
-                      "kills": 19,
-                      "deaths": 3
+                      "kills": 2,
+                      "deaths": 4
                     },
                     {
                       "id": "olofmeister",
-                      "kills": 3,
+                      "kills": 9,
                       "deaths": 3
                     },
                     {
                       "id": "karrigan",
                       "kills": 4,
-                      "deaths": 4
+                      "deaths": 6
                     }
                   ]
                 }
@@ -9900,29 +9201,32 @@
                   "full",
                   "full"
                 ],
-                "clutch": null,
-                "highlight": "NiKo",
+                "clutch": {
+                  "opponents": 3,
+                  "won": false
+                },
+                "highlight": "rain",
                 "scoreboard": {
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 5,
+                      "kills": 16,
                       "deaths": 8
                     },
                     {
                       "id": "ropz",
-                      "kills": 10,
-                      "deaths": 6
+                      "kills": 2,
+                      "deaths": 10
                     },
                     {
                       "id": "mezii",
-                      "kills": 3,
-                      "deaths": 6
+                      "kills": 4,
+                      "deaths": 9
                     },
                     {
                       "id": "flameZ",
-                      "kills": 1,
-                      "deaths": 7
+                      "kills": 3,
+                      "deaths": 8
                     },
                     {
                       "id": "apEX",
@@ -9933,28 +9237,28 @@
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 3,
+                      "kills": 8,
                       "deaths": 5
                     },
                     {
                       "id": "rain",
-                      "kills": 5,
-                      "deaths": 6
+                      "kills": 18,
+                      "deaths": 7
                     },
                     {
                       "id": "GuardiaN",
-                      "kills": 19,
-                      "deaths": 3
+                      "kills": 2,
+                      "deaths": 5
                     },
                     {
                       "id": "olofmeister",
-                      "kills": 3,
+                      "kills": 10,
                       "deaths": 3
                     },
                     {
                       "id": "karrigan",
                       "kills": 4,
-                      "deaths": 4
+                      "deaths": 7
                     }
                   ]
                 }
@@ -9962,7 +9266,86 @@
               {
                 "number": 11,
                 "score": [
-                  2,
+                  3,
+                  8
+                ],
+                "winnerSide": "A",
+                "sides": [
+                  "CT",
+                  "TR"
+                ],
+                "sideSwitch": false,
+                "planted": false,
+                "buys": [
+                  "full",
+                  "full"
+                ],
+                "clutch": {
+                  "opponents": 1,
+                  "won": true
+                },
+                "highlight": "mezii",
+                "scoreboard": {
+                  "a": [
+                    {
+                      "id": "ZywOo",
+                      "kills": 16,
+                      "deaths": 9
+                    },
+                    {
+                      "id": "ropz",
+                      "kills": 2,
+                      "deaths": 11
+                    },
+                    {
+                      "id": "mezii",
+                      "kills": 7,
+                      "deaths": 10
+                    },
+                    {
+                      "id": "flameZ",
+                      "kills": 3,
+                      "deaths": 9
+                    },
+                    {
+                      "id": "apEX",
+                      "kills": 4,
+                      "deaths": 7
+                    }
+                  ],
+                  "b": [
+                    {
+                      "id": "NiKo",
+                      "kills": 8,
+                      "deaths": 6
+                    },
+                    {
+                      "id": "rain",
+                      "kills": 22,
+                      "deaths": 8
+                    },
+                    {
+                      "id": "GuardiaN",
+                      "kills": 2,
+                      "deaths": 6
+                    },
+                    {
+                      "id": "olofmeister",
+                      "kills": 10,
+                      "deaths": 4
+                    },
+                    {
+                      "id": "karrigan",
+                      "kills": 4,
+                      "deaths": 8
+                    }
+                  ]
+                }
+              },
+              {
+                "number": 12,
+                "score": [
+                  3,
                   9
                 ],
                 "winnerSide": "B",
@@ -9977,7 +9360,7 @@
                   "full"
                 ],
                 "clutch": {
-                  "opponents": 3,
+                  "opponents": 1,
                   "won": false
                 },
                 "highlight": "GuardiaN",
@@ -9985,134 +9368,55 @@
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 5,
-                      "deaths": 9
-                    },
-                    {
-                      "id": "ropz",
-                      "kills": 11,
-                      "deaths": 7
-                    },
-                    {
-                      "id": "mezii",
-                      "kills": 3,
-                      "deaths": 7
-                    },
-                    {
-                      "id": "flameZ",
-                      "kills": 3,
-                      "deaths": 7
-                    },
-                    {
-                      "id": "apEX",
-                      "kills": 2,
-                      "deaths": 8
-                    }
-                  ],
-                  "b": [
-                    {
-                      "id": "NiKo",
-                      "kills": 3,
-                      "deaths": 5
-                    },
-                    {
-                      "id": "rain",
-                      "kills": 5,
-                      "deaths": 7
-                    },
-                    {
-                      "id": "GuardiaN",
-                      "kills": 23,
-                      "deaths": 3
-                    },
-                    {
-                      "id": "olofmeister",
-                      "kills": 3,
-                      "deaths": 4
-                    },
-                    {
-                      "id": "karrigan",
-                      "kills": 4,
-                      "deaths": 5
-                    }
-                  ]
-                }
-              },
-              {
-                "number": 12,
-                "score": [
-                  2,
-                  10
-                ],
-                "winnerSide": "B",
-                "sides": [
-                  "CT",
-                  "TR"
-                ],
-                "sideSwitch": false,
-                "planted": true,
-                "buys": [
-                  "full",
-                  "full"
-                ],
-                "clutch": {
-                  "opponents": 4,
-                  "won": false
-                },
-                "highlight": "GuardiaN",
-                "scoreboard": {
-                  "a": [
-                    {
-                      "id": "ZywOo",
-                      "kills": 5,
+                      "kills": 19,
                       "deaths": 10
                     },
                     {
                       "id": "ropz",
-                      "kills": 11,
-                      "deaths": 8
+                      "kills": 2,
+                      "deaths": 12
                     },
                     {
                       "id": "mezii",
-                      "kills": 3,
-                      "deaths": 8
+                      "kills": 7,
+                      "deaths": 11
                     },
                     {
                       "id": "flameZ",
-                      "kills": 3,
-                      "deaths": 8
+                      "kills": 4,
+                      "deaths": 10
                     },
                     {
                       "id": "apEX",
-                      "kills": 3,
+                      "kills": 4,
                       "deaths": 8
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 3,
-                      "deaths": 5
-                    },
-                    {
-                      "id": "rain",
-                      "kills": 5,
+                      "kills": 8,
                       "deaths": 7
                     },
                     {
+                      "id": "rain",
+                      "kills": 23,
+                      "deaths": 9
+                    },
+                    {
                       "id": "GuardiaN",
-                      "kills": 26,
-                      "deaths": 3
+                      "kills": 4,
+                      "deaths": 6
                     },
                     {
                       "id": "olofmeister",
-                      "kills": 3,
-                      "deaths": 4
+                      "kills": 10,
+                      "deaths": 5
                     },
                     {
                       "id": "karrigan",
-                      "kills": 5,
-                      "deaths": 6
+                      "kills": 6,
+                      "deaths": 9
                     }
                   ]
                 }
@@ -10123,75 +9427,72 @@
                   3,
                   10
                 ],
-                "winnerSide": "A",
+                "winnerSide": "B",
                 "sides": [
                   "TR",
                   "CT"
                 ],
                 "sideSwitch": true,
-                "planted": true,
+                "planted": false,
                 "buys": [
                   "pistol",
                   "pistol"
                 ],
-                "clutch": {
-                  "opponents": 2,
-                  "won": true
-                },
-                "highlight": "mezii",
+                "clutch": null,
+                "highlight": "NiKo",
                 "scoreboard": {
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 5,
-                      "deaths": 11
+                      "kills": 20,
+                      "deaths": 10
                     },
                     {
                       "id": "ropz",
-                      "kills": 12,
-                      "deaths": 9
+                      "kills": 2,
+                      "deaths": 13
                     },
                     {
                       "id": "mezii",
                       "kills": 7,
-                      "deaths": 8
+                      "deaths": 12
                     },
                     {
                       "id": "flameZ",
-                      "kills": 3,
-                      "deaths": 9
+                      "kills": 4,
+                      "deaths": 11
                     },
                     {
                       "id": "apEX",
-                      "kills": 3,
-                      "deaths": 9
+                      "kills": 4,
+                      "deaths": 8
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 3,
-                      "deaths": 6
+                      "kills": 10,
+                      "deaths": 7
                     },
                     {
                       "id": "rain",
-                      "kills": 5,
-                      "deaths": 8
+                      "kills": 24,
+                      "deaths": 9
                     },
                     {
                       "id": "GuardiaN",
-                      "kills": 29,
-                      "deaths": 4
+                      "kills": 4,
+                      "deaths": 7
                     },
                     {
                       "id": "olofmeister",
-                      "kills": 3,
+                      "kills": 10,
                       "deaths": 5
                     },
                     {
                       "id": "karrigan",
                       "kills": 6,
-                      "deaths": 7
+                      "deaths": 9
                     }
                   ]
                 }
@@ -10210,64 +9511,67 @@
                 "sideSwitch": false,
                 "planted": true,
                 "buys": [
-                  "full",
-                  "eco"
+                  "eco",
+                  "force"
                 ],
-                "clutch": null,
-                "highlight": "GuardiaN",
+                "clutch": {
+                  "opponents": 1,
+                  "won": false
+                },
+                "highlight": "rain",
                 "scoreboard": {
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 5,
-                      "deaths": 12
+                      "kills": 21,
+                      "deaths": 11
                     },
                     {
                       "id": "ropz",
-                      "kills": 12,
-                      "deaths": 10
+                      "kills": 4,
+                      "deaths": 14
                     },
                     {
                       "id": "mezii",
                       "kills": 8,
-                      "deaths": 8
+                      "deaths": 13
                     },
                     {
                       "id": "flameZ",
                       "kills": 4,
-                      "deaths": 9
+                      "deaths": 12
                     },
                     {
                       "id": "apEX",
-                      "kills": 3,
-                      "deaths": 10
+                      "kills": 4,
+                      "deaths": 9
                     }
                   ],
                   "b": [
                     {
                       "id": "NiKo",
-                      "kills": 4,
-                      "deaths": 6
-                    },
-                    {
-                      "id": "rain",
-                      "kills": 5,
+                      "kills": 10,
                       "deaths": 8
                     },
                     {
+                      "id": "rain",
+                      "kills": 26,
+                      "deaths": 10
+                    },
+                    {
                       "id": "GuardiaN",
-                      "kills": 31,
-                      "deaths": 5
+                      "kills": 4,
+                      "deaths": 8
                     },
                     {
                       "id": "olofmeister",
-                      "kills": 3,
+                      "kills": 12,
                       "deaths": 5
                     },
                     {
                       "id": "karrigan",
-                      "kills": 6,
-                      "deaths": 8
+                      "kills": 7,
+                      "deaths": 10
                     }
                   ]
                 }
@@ -10275,8 +9579,166 @@
               {
                 "number": 15,
                 "score": [
-                  3,
+                  4,
+                  11
+                ],
+                "winnerSide": "A",
+                "sides": [
+                  "TR",
+                  "CT"
+                ],
+                "sideSwitch": false,
+                "planted": true,
+                "buys": [
+                  "full",
+                  "full"
+                ],
+                "clutch": {
+                  "opponents": 2,
+                  "won": true
+                },
+                "highlight": "ZywOo",
+                "scoreboard": {
+                  "a": [
+                    {
+                      "id": "ZywOo",
+                      "kills": 23,
+                      "deaths": 12
+                    },
+                    {
+                      "id": "ropz",
+                      "kills": 4,
+                      "deaths": 15
+                    },
+                    {
+                      "id": "mezii",
+                      "kills": 8,
+                      "deaths": 14
+                    },
+                    {
+                      "id": "flameZ",
+                      "kills": 5,
+                      "deaths": 12
+                    },
+                    {
+                      "id": "apEX",
+                      "kills": 4,
+                      "deaths": 10
+                    }
+                  ],
+                  "b": [
+                    {
+                      "id": "NiKo",
+                      "kills": 12,
+                      "deaths": 8
+                    },
+                    {
+                      "id": "rain",
+                      "kills": 27,
+                      "deaths": 11
+                    },
+                    {
+                      "id": "GuardiaN",
+                      "kills": 5,
+                      "deaths": 8
+                    },
+                    {
+                      "id": "olofmeister",
+                      "kills": 12,
+                      "deaths": 6
+                    },
+                    {
+                      "id": "karrigan",
+                      "kills": 7,
+                      "deaths": 11
+                    }
+                  ]
+                }
+              },
+              {
+                "number": 16,
+                "score": [
+                  4,
                   12
+                ],
+                "winnerSide": "B",
+                "sides": [
+                  "TR",
+                  "CT"
+                ],
+                "sideSwitch": false,
+                "planted": false,
+                "buys": [
+                  "full",
+                  "eco"
+                ],
+                "clutch": {
+                  "opponents": 1,
+                  "won": false
+                },
+                "highlight": "NiKo",
+                "scoreboard": {
+                  "a": [
+                    {
+                      "id": "ZywOo",
+                      "kills": 26,
+                      "deaths": 13
+                    },
+                    {
+                      "id": "ropz",
+                      "kills": 4,
+                      "deaths": 16
+                    },
+                    {
+                      "id": "mezii",
+                      "kills": 8,
+                      "deaths": 15
+                    },
+                    {
+                      "id": "flameZ",
+                      "kills": 5,
+                      "deaths": 13
+                    },
+                    {
+                      "id": "apEX",
+                      "kills": 5,
+                      "deaths": 11
+                    }
+                  ],
+                  "b": [
+                    {
+                      "id": "NiKo",
+                      "kills": 14,
+                      "deaths": 9
+                    },
+                    {
+                      "id": "rain",
+                      "kills": 29,
+                      "deaths": 12
+                    },
+                    {
+                      "id": "GuardiaN",
+                      "kills": 5,
+                      "deaths": 9
+                    },
+                    {
+                      "id": "olofmeister",
+                      "kills": 12,
+                      "deaths": 7
+                    },
+                    {
+                      "id": "karrigan",
+                      "kills": 8,
+                      "deaths": 11
+                    }
+                  ]
+                }
+              },
+              {
+                "number": 17,
+                "score": [
+                  4,
+                  13
                 ],
                 "winnerSide": "B",
                 "sides": [
@@ -10290,139 +9752,63 @@
                   "full"
                 ],
                 "clutch": {
-                  "opponents": 2,
+                  "opponents": 4,
                   "won": false
                 },
-                "highlight": "GuardiaN",
+                "highlight": "rain",
                 "scoreboard": {
                   "a": [
                     {
                       "id": "ZywOo",
-                      "kills": 5,
-                      "deaths": 13
+                      "kills": 27,
+                      "deaths": 14
                     },
                     {
                       "id": "ropz",
-                      "kills": 13,
-                      "deaths": 11
+                      "kills": 4,
+                      "deaths": 17
                     },
                     {
                       "id": "mezii",
                       "kills": 8,
-                      "deaths": 9
+                      "deaths": 16
                     },
                     {
                       "id": "flameZ",
                       "kills": 5,
+                      "deaths": 13
+                    },
+                    {
+                      "id": "apEX",
+                      "kills": 5,
+                      "deaths": 12
+                    }
+                  ],
+                  "b": [
+                    {
+                      "id": "NiKo",
+                      "kills": 14,
                       "deaths": 10
                     },
                     {
-                      "id": "apEX",
-                      "kills": 4,
-                      "deaths": 11
-                    }
-                  ],
-                  "b": [
-                    {
-                      "id": "NiKo",
-                      "kills": 4,
-                      "deaths": 6
-                    },
-                    {
                       "id": "rain",
-                      "kills": 5,
-                      "deaths": 9
+                      "kills": 32,
+                      "deaths": 12
                     },
                     {
                       "id": "GuardiaN",
-                      "kills": 36,
-                      "deaths": 5
+                      "kills": 5,
+                      "deaths": 9
                     },
                     {
                       "id": "olofmeister",
-                      "kills": 3,
-                      "deaths": 6
+                      "kills": 12,
+                      "deaths": 7
                     },
                     {
                       "id": "karrigan",
-                      "kills": 6,
-                      "deaths": 9
-                    }
-                  ]
-                }
-              },
-              {
-                "number": 16,
-                "score": [
-                  3,
-                  13
-                ],
-                "winnerSide": "B",
-                "sides": [
-                  "TR",
-                  "CT"
-                ],
-                "sideSwitch": false,
-                "planted": true,
-                "buys": [
-                  "full",
-                  "full"
-                ],
-                "clutch": null,
-                "highlight": "GuardiaN",
-                "scoreboard": {
-                  "a": [
-                    {
-                      "id": "ZywOo",
-                      "kills": 5,
-                      "deaths": 13
-                    },
-                    {
-                      "id": "ropz",
-                      "kills": 13,
+                      "kills": 9,
                       "deaths": 11
-                    },
-                    {
-                      "id": "mezii",
-                      "kills": 8,
-                      "deaths": 9
-                    },
-                    {
-                      "id": "flameZ",
-                      "kills": 5,
-                      "deaths": 11
-                    },
-                    {
-                      "id": "apEX",
-                      "kills": 4,
-                      "deaths": 11
-                    }
-                  ],
-                  "b": [
-                    {
-                      "id": "NiKo",
-                      "kills": 4,
-                      "deaths": 6
-                    },
-                    {
-                      "id": "rain",
-                      "kills": 5,
-                      "deaths": 9
-                    },
-                    {
-                      "id": "GuardiaN",
-                      "kills": 37,
-                      "deaths": 5
-                    },
-                    {
-                      "id": "olofmeister",
-                      "kills": 3,
-                      "deaths": 6
-                    },
-                    {
-                      "id": "karrigan",
-                      "kills": 6,
-                      "deaths": 9
                     }
                   ]
                 }
@@ -10433,104 +9819,104 @@
                 {
                   "id": "ZywOo",
                   "nick": "ZywOo",
-                  "kills": 5,
-                  "deaths": 13,
-                  "assists": 1,
-                  "rating": 0.83,
-                  "kast": 0.5,
-                  "adr": 43
+                  "kills": 27,
+                  "deaths": 14,
+                  "assists": 0,
+                  "rating": 1.77,
+                  "kast": 0.882,
+                  "adr": 143
                 },
                 {
                   "id": "ropz",
                   "nick": "ropz",
-                  "kills": 13,
-                  "deaths": 11,
-                  "assists": 0,
-                  "rating": 1.28,
-                  "kast": 0.75,
-                  "adr": 79
+                  "kills": 4,
+                  "deaths": 17,
+                  "assists": 1,
+                  "rating": 0.73,
+                  "kast": 0.353,
+                  "adr": 42
                 },
                 {
                   "id": "mezii",
                   "nick": "mezii",
                   "kills": 8,
-                  "deaths": 9,
+                  "deaths": 16,
                   "assists": 3,
-                  "rating": 1.02,
-                  "kast": 0.688,
-                  "adr": 58
+                  "rating": 0.95,
+                  "kast": 0.588,
+                  "adr": 65
                 },
                 {
                   "id": "flameZ",
                   "nick": "flameZ",
                   "kills": 5,
-                  "deaths": 11,
+                  "deaths": 13,
                   "assists": 3,
-                  "rating": 0.93,
-                  "kast": 0.75,
-                  "adr": 47
+                  "rating": 0.88,
+                  "kast": 0.588,
+                  "adr": 45
                 },
                 {
                   "id": "apEX",
                   "nick": "apEX",
-                  "kills": 4,
-                  "deaths": 11,
-                  "assists": 4,
-                  "rating": 0.87,
-                  "kast": 0.688,
-                  "adr": 43
+                  "kills": 5,
+                  "deaths": 12,
+                  "assists": 3,
+                  "rating": 0.85,
+                  "kast": 0.529,
+                  "adr": 46
                 }
               ],
               "b": [
                 {
                   "id": "NiKo",
                   "nick": "NiKo",
-                  "kills": 4,
-                  "deaths": 6,
-                  "assists": 5,
-                  "rating": 0.94,
-                  "kast": 0.75,
-                  "adr": 42
+                  "kills": 14,
+                  "deaths": 10,
+                  "assists": 4,
+                  "rating": 1.24,
+                  "kast": 0.706,
+                  "adr": 86
                 },
                 {
                   "id": "rain",
                   "nick": "rain",
-                  "kills": 5,
-                  "deaths": 9,
-                  "assists": 5,
-                  "rating": 0.97,
-                  "kast": 0.813,
-                  "adr": 52
+                  "kills": 32,
+                  "deaths": 12,
+                  "assists": 1,
+                  "rating": 2.08,
+                  "kast": 0.941,
+                  "adr": 167
                 },
                 {
                   "id": "GuardiaN",
                   "nick": "GuardiaN",
-                  "kills": 37,
-                  "deaths": 5,
-                  "assists": 0,
-                  "rating": 2.36,
-                  "kast": 1,
-                  "adr": 199
+                  "kills": 5,
+                  "deaths": 9,
+                  "assists": 8,
+                  "rating": 0.93,
+                  "kast": 0.706,
+                  "adr": 52
                 },
                 {
                   "id": "olofmeister",
                   "nick": "olofmeister",
-                  "kills": 3,
-                  "deaths": 6,
+                  "kills": 12,
+                  "deaths": 7,
                   "assists": 2,
-                  "rating": 0.88,
-                  "kast": 0.75,
-                  "adr": 32
+                  "rating": 1.13,
+                  "kast": 0.706,
+                  "adr": 76
                 },
                 {
                   "id": "karrigan",
                   "nick": "karrigan",
-                  "kills": 6,
-                  "deaths": 9,
-                  "assists": 6,
-                  "rating": 1,
-                  "kast": 0.688,
-                  "adr": 53
+                  "kills": 9,
+                  "deaths": 11,
+                  "assists": 8,
+                  "rating": 1.09,
+                  "kast": 0.765,
+                  "adr": 75
                 }
               ]
             }

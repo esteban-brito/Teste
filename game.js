@@ -1628,10 +1628,22 @@ function simularMapa(A,B,fA,fB,mapaForcado,leve,options){
 
 /* ┌─ PÓLVORA ─ série best-of (MD1 na suíça, MD3 nos playoffs) ─────────┐ */
 // série best-of; usa força do dia a cada mapa
+/* Numa série real NÃO se joga o mesmo mapa duas vezes. Antes cada mapa era sorteado dentro de
+   simularMapa, sem saber o que já tinha sido jogado: 21% das MD3 repetiam mapa e 1 em 200
+   chegava a jogar os três iguais. O sorteio passa a ser SEM REPOSIÇÃO, feito aqui, onde a série
+   conhece o histórico.
+
+   A ordem de consumo do RNG é preservada de propósito — forma de A, forma de B, mapa — e no
+   primeiro mapa o pool ainda tem os oito, então aquele sorteio continua bit a bit o mesmo.
+   Só o 2º e o 3º mapa mudam, que é exatamente onde estava o defeito. */
 function simularSerie(A,B,fdA,fdB,md,leve){
-  const need=Math.ceil(md/2);let wa=0,wb=0;const mapas=[];
+  const need=Math.ceil(md/2);let wa=0,wb=0;const mapas=[],jogados=[];
   while(wa<need&&wb<need){
-    const g=simularMapa(A,B,fdA(),fdB(),null,leve);
+    const formaA=fdA(),formaB=fdB();
+    const disponiveis=MAPAS_POOL.filter(m=>!jogados.includes(m));
+    const mapa=disponiveis[Math.floor(rndF()*disponiveis.length)];
+    jogados.push(mapa);
+    const g=simularMapa(A,B,formaA,formaB,mapa,leve);
     mapas.push(g);g.vencedor===A?wa++:wb++; // por referência: robusto a times homônimos
   }
   return {vencedor:wa>wb?A:B,vencedorNome:wa>wb?A.nome:B.nome,placarSerie:[wa,wb],mapas};
