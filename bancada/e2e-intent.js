@@ -53,7 +53,12 @@ function check(ok,label){ console.log(`  ${okMark(!!ok)} ${label}`); if(!ok)fail
     // acha jogadores pelo seletor real
     const opts=await page.$$eval("#loadSel option",os=>os.map(o=>({v:o.value,t:o.textContent})).filter(o=>o.v!==""));
     const pick=nome=>opts.find(o=>o.t.startsWith(nome+" "))?.v;
-    const idxA=pick("mezii")??opts[0].v, idxB=pick("NiKo")??opts.find(o=>o.v!==idxA).v;
+    // O jogador A precisa ter Role2 DIFERENTE do alvo, senão o calibrador responde "já atingido"
+    // e não há o que aplicar. Era o mezii até 28/07/2026; a padronização de funções o deixou em
+    // Entry/Support, tornando o alvo trivial. bLitz é IGL/Entry com utilitária 98 — Support é
+    // alcançável e não está cumprido. Se este teste voltar a falhar em #calibApply, é esta linha:
+    // escolha alguém cujo Role2 atual não seja Support.
+    const idxA=pick("bLitz")??opts[0].v, idxB=pick("NiKo")??opts.find(o=>o.v!==idxA).v;
 
     // ── EDITOR: rascunho por jogador, aplicação explícita, exportação e restauração ──
     const idxKenny=pick("kennyS"),idxNbk=pick("NBK-");

@@ -57,12 +57,25 @@
    ╚═══════════════════════════════════════════════════════════════════╝ */
 /* Perfil por função: somente AFIN (identidade da função) e crédito intrínseco.
    OVR e peso de rating pertencem ao playstyle no ZÊNITE, não à função. */
+/* AFINIDADE DE FUNÇÃO PADRONIZADA — três stats, na mesma escada 0,50 / 0,30 / 0,20 usada pelas
+   receitas de playstyle. Antes cada função tinha um formato próprio: o AWPer era decidido por um
+   stat só (sn .80), o Rifler espalhava por cinco até .03, e o Support por cinco até .05. Pesos
+   abaixo de .10 não decidiam nada — eram ruído carregado de calibragens antigas.
+
+   Cada função vira uma frase: o que ela EXIGE, o que a APOIA, e o que a COMPLETA. O que
+   distingue as cinco é o primeiro stat, não a forma da tabela.
+
+   O AWPer é a ÚNICA EXCEÇÃO, e ela é deliberada. Ele é a única função do CS definida por um
+   stat só: você joga de AWP ou não joga, sem meio-termo — ao contrário de fogo, entrada e
+   utilitária, que são graduais. Colocá-lo na escada foi testado e cobrou exatamente onde não
+   podia: o sh1ro deixava de ser AWPer e o Jame perdia a AWP, sendo os dois AWPers de carreira.
+   Padronizar ali apagaria uma assimetria que existe de verdade, então o sn dominante fica. */
 const ROLE_PERFIL={
-  AWPer:  {afin:{sn:.80,op:.12,fp:.05}},
-  Rifler: {afin:{fp:.44,op:.25,tr:.17,cl:.14,ut:.03}},
-  Entry:  {afin:{en:.56,op:.25,fp:.12,tr:.07}},
+  AWPer:  {afin:{sn:.80,op:.12,fp:.05}},   // exceção declarada: ver acima
+  Rifler: {afin:{fp:.50,op:.30,tr:.20}},
+  Entry:  {afin:{en:.50,op:.30,fp:.20}},
   Lurker: {afin:{cl:.50,op:.30,fp:.20}},
-  Support:{afin:{ut:.50,tr:.25,en:.12,fp:.08,op:.05},credito:3}};
+  Support:{afin:{ut:.50,tr:.30,en:.20},credito:3}};
 const CFG_AVALIACAO={OVR_MIN:5,OVR_MAX:22, // ⚙ balanceamento do PRISMA (afinidade/sub) + ZÊNITE (OVR)
   OVR_BASE:8.5,OVR_SPAN:10,RAT_BASE:1.0,RAT_K:8, // OVR = base(receita) + bônus(rating × ratingWeight do estilo)
   // COERÊNCIA stats×rating: os stats "prometem" um lift (COH_LIFT0 + COH_SLOPE·(rating-1)); o que passa
@@ -207,25 +220,44 @@ function riflerGeneralistBonus(p){
   const antiSpec=clamp(1-(specialty-C.RIFLER_GLUE_SPEC_START)/Math.max(1,C.RIFLER_GLUE_SPEC_RANGE),0,1);
   return base*antiSpec;
 }
+/* IDENTIDADE DE FUNÇÃO, DECLARADA. Antes cada função tinha um bloco de código próprio dentro de
+   roleAfinidade, com números mágicos soltos: o Entry tinha quatro linhas, o Rifler duas, o
+   Lurker e o Support uma cada. Era impossível comparar duas funções sem ler o corpo da função,
+   e adicionar uma sexta significava escrever mais um `if`.
+
+   Agora toda função declara os mesmos campos, e roleAfinidade é uma só para todas:
+
+     sinergia — precisa dos DOIS stats juntos, não de um grande. `min(a, melhor de b)`: um Entry
+                com entrada 90 e abertura 20 não é entry, é um jogador que corre.
+     limite   — um stat que não pode ultrapassar o apoio que o sustenta. Entrada sem abertura
+                nem fogo por trás é morte anunciada, não função.
+     piso     — abaixo deste valor não é essa função, por mais que o resto encaixe.
+     tipo     — `generalista` soma o bônus de equilíbrio (o Rifler é definido por não ter buraco,
+                não por um pico).
+
+   Os pesos são os mesmos de antes, na mesma ordem de operação: esta extração é de forma, não de
+   balanceamento, e o medidor prova zero mudança na classificação dos 85. */
+const ROLE_IDENT={
+  AWPer:{},
+  Rifler:{sinergia:[{a:"fp",b:["op"],w:.065},{a:"fp",b:["tr"],w:.02}],tipo:"generalista"},
+  Entry:{sinergia:[{a:"en",b:["op"],w:.025},{a:"en",b:["fp"],w:.015}],
+    limite:{stat:"en",por:["op","fp"],w:.25},
+    piso:{stats:["fp","tr"],valor:55,w:.22}},
+  Lurker:{sinergia:[{a:"cl",b:["op","fp"],w:.04}]},
+  Support:{sinergia:[{a:"ut",b:["tr"],w:.05}]}
+};
+const melhorDe=(p,stats)=>Math.max(...stats.map(k=>p[k]||0));
 function roleAfinidade(role,p){
   let score=dot(ROLE_PERFIL[role].afin,p)-dot(ROLE_CONTRA[role]||{},p)-roleRulePenalty(role,p);
   if(p.isIGL)score+=dot(IGL_ROLE_AFIN[role]||{},p);
-  if(role==="Entry"){
-    const en=p.en||0,op=p.op||0,fp=p.fp||0,apoio=Math.max(op,fp);
-    score+=.025*Math.min(en,op)+.015*Math.min(en,fp);
-    score-=.25*Math.max(0,en-apoio);
-    score-=.22*Math.max(0,55-Math.max(fp,p.tr||0));
-  }
-  if(role==="Lurker"){
-    const cl=p.cl||0,op=p.op||0,fp=p.fp||0;
-    score+=.04*Math.min(cl,Math.max(op,fp));
-  }
-  if(role==="Support"){
-    score+=.05*Math.min(p.ut||0,p.tr||0);
-  }
-  if(role==="Rifler"){
-    score+=.065*Math.min(p.fp||0,p.op||0)+.02*Math.min(p.fp||0,p.tr||0)+riflerGeneralistBonus(p);
-  }
+  const ident=ROLE_IDENT[role]||{};
+  // soma as parcelas positivas antes de aplicar, preservando a ordem de operação anterior
+  let ganho=0;
+  (ident.sinergia||[]).forEach(s=>{ganho+=s.w*Math.min(p[s.a]||0,melhorDe(p,s.b));});
+  if(ident.tipo==="generalista")ganho+=riflerGeneralistBonus(p);
+  score+=ganho;
+  if(ident.limite)score-=ident.limite.w*Math.max(0,(p[ident.limite.stat]||0)-melhorDe(p,ident.limite.por));
+  if(ident.piso)score-=ident.piso.w*Math.max(0,ident.piso.valor-melhorDe(p,ident.piso.stats));
   return score;
 }
 // afinidade do jogador por cada função (núcleo do PRISMA): atração por perfil,
@@ -264,17 +296,30 @@ const NM_AXES=[["fogo","Fogo"],["ent","Entrada"],["ab","Abertura"],["tr","Trade"
 // Cada receita possui direção de identidade (w, normalizada no uso) e ratingWeight.
 // ratingWeight=1 preserva o motor anterior; o calibrador pode aprender quanto o rating pesa
 // no OVR de cada estilo sem deixar rating decidir a identidade do playstyle.
+/* RECEITAS PADRONIZADAS. Todo playstyle é definido por EXATAMENTE TRÊS eixos, na mesma escada
+   0,50 / 0,30 / 0,20. Antes cada receita tinha um formato próprio — .506/.379/.115 convivia com
+   .50/.30/.20 e .610/.093/.093/.204 — e o Closer era decidido por só DOIS eixos, o que fazia
+   dele o estilo mais fácil de cair em cima de qualquer perfil com clutch e fogo.
+
+   A escada não é estética: os números quebrados eram cicatriz de calibrador, e ninguém
+   conseguia dizer o que separava .118 de .113. Com três eixos fixos, a receita vira uma frase
+   legível — "Closer é clutch, depois fogo, depois utilitária".
+
+   Os eixos em aberto (o 3º do Closer, do Spacetaker e do Facilitador, e a ordem do Cerebral)
+   foram decididos por MEDIÇÃO: as 32 combinações plausíveis foram avaliadas contra a
+   classificação aprovada dos 85, e escolheu-se a que melhor equilibra estabilidade e nitidez.
+   Ver docs/receitas-padronizadas-2026-07-28.md. */
 const NM_DEF={
-  Opener:{w:{ab:.506,fogo:.379,ent:.115},ratingWeight:1},
-  Spacetaker:{w:{ent:.610,fogo:.093,ab:.093,ut:.204},ratingWeight:1},
+  Opener:{w:{ab:.50,fogo:.30,ent:.20},ratingWeight:1},
+  Spacetaker:{w:{ent:.50,ut:.30,fogo:.20},ratingWeight:1},
   Trader:{w:{tr:.50,fogo:.30,ut:.20},ratingWeight:1},
-  Playmaker:{w:{fogo:.45,ab:.35,cl:.20},ratingWeight:1},
-  Infiltrador:{w:{cl:.46,ab:.34,fogo:.20},ratingWeight:1},
-  Baiter:{w:{tr:.50,cl:.30,fogo:.20},ovrW:{cl:.40,ut:.35,tr:.25},ratingWeight:1}, // ovrW: nível reflete clutch/utility que um baiter ainda entrega (não é o piso absoluto)
-  Closer:{w:{cl:.55,fogo:.45},ratingWeight:1.05},
-  Facilitador:{w:{ut:.593,tr:.176,ab:.118,fogo:.113},ovrW:{ut:.50,tr:.35,ent:.10,fogo:.05},ratingWeight:1},
-  Cerebral:{w:{ut:.40,ab:.30,cl:.30},ratingWeight:1},
-  Ancora:{w:{cl:.50,ut:.32,tr:.18},ratingWeight:1}};
+  Playmaker:{w:{fogo:.50,ab:.30,cl:.20},ratingWeight:1},
+  Infiltrador:{w:{cl:.50,ab:.30,fogo:.20},ratingWeight:1},
+  Baiter:{w:{tr:.50,cl:.30,fogo:.20},ovrW:{cl:.50,ut:.30,tr:.20},ratingWeight:1}, // ovrW: nível reflete clutch/utility que um baiter ainda entrega (não é o piso absoluto)
+  Closer:{w:{cl:.50,fogo:.30,ut:.20},ratingWeight:1.05},                          // 3º eixo: utilitária isola o duelo (smoke corta rotação, flash entra)
+  Facilitador:{w:{ut:.50,ent:.30,fogo:.20},ovrW:{ut:.50,tr:.30,ent:.20},ratingWeight:1}, // identidade: utilitária, tomar espaço, e só então fogo — o glue não é fragger
+  Cerebral:{w:{ut:.50,ab:.30,cl:.20},ratingWeight:1},
+  Ancora:{w:{cl:.50,ut:.30,tr:.20},ratingWeight:1}};
 // contraindicações por estilo — só eixos do s6 (o antigo sn era inerte: dobrado em fogo, diluía o resto).
 const STYLE_CONTRA={
   aggressive:{cl:.112,ut:.08},
@@ -1889,16 +1934,32 @@ const STAT_LABEL={fp:"Firepower",op:"Abertura",cl:"Clutch",ut:"Utilitário",en:"
 const STAT_VERSO_DEF=["fp","op","cl","ut"]; // Coringa (polivalente) e fallback
 // eixos da receita (espaço s6) → atributos da carta (espaço do jogador)
 const EIXO_ATTR={fogo:"fp",ent:"en",ab:"op",tr:"tr",cl:"cl",ut:"ut"};
-const statsDoEstilo=id=>{
+/* Ordem das stats no verso: Firepower SEMPRE em primeiro — é a leitura que todo mundo procura
+   antes de qualquer outra. Os demais entram por CONTRIBUIÇÃO deste jogador ao estilo dele:
+   peso do eixo na receita × o valor que ele tem naquele eixo.
+
+   É o mesmo produto que decide a classificação (a semelhança é um produto-escalar, e os
+   denominadores são constantes por jogador, então ordenar por peso×valor ordena por quanto
+   cada eixo empurrou o estilo). A carta passa a responder "por onde ESTE jogador expressa o
+   estilo" em vez de repetir o que a receita valoriza em tese: dois Closers saem em ordens
+   diferentes, um que fecha por clutch puro e outro que fecha no tiro.
+
+   Ordenar pelo valor cru seria outra coisa e estaria errado — 90 de fogo passaria à frente de
+   70 de clutch num Âncora, onde o fogo quase não define o estilo. */
+const statsDoEstilo=(id,e)=>{
   const rec=id==="joker"?null:STYLE_RECIPE(id);
   if(!rec)return STAT_VERSO_DEF;
   const pesos=rec.ovrW||rec.w; // ovrW quando existe: é o que o nível realmente pondera
-  return Object.entries(pesos).sort((a,b)=>b[1]-a[1]).map(([eixo])=>EIXO_ATTR[eixo]).filter(Boolean);
+  return Object.entries(pesos)
+    .map(([eixo,peso])=>({attr:EIXO_ATTR[eixo],contrib:peso*((e&&e[EIXO_ATTR[eixo]])||0)}))
+    .filter(x=>x.attr)
+    .sort((a,b)=>b.contrib-a.contrib)
+    .map(x=>x.attr);
 };
 const statBar=(lab,v)=>`<div class="statbar"><span class="sb-lab">${esc(lab)}</span><span class="sb-val">${Math.round(v||0)}</span></div>`;
 const backPlayer=p=>{const e=p._eng||{};const id=STYLE_ID(e.playstyle);
-  const base=statsDoEstilo(id);
-  const keys=["fp",...base.filter(k=>k!=="fp")].slice(0,4); // Firepower sempre 1º; os outros 3 na ordem de peso da receita
+  const base=statsDoEstilo(id,e);
+  const keys=["fp",...base.filter(k=>k!=="fp")].slice(0,4); // Firepower sempre 1º; os outros 3 por contribuição ao estilo
   return `<div class="cb-head">${esc(e.playstyle?STYLE_LABEL(id):(p.prim||""))}</div>`+
   `<div class="cb-stats">${keys.map(k=>statBar(STAT_LABEL[k],e[k])).join("")}</div>`;};
 // o que cada característica de treinador FAZ — objetivo, com os números reais do efeito no SINAPSE
