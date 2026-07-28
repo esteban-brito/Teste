@@ -46,6 +46,9 @@ catálogo não menciona o dado, aí sim ele não existe.
 
 ## Fontes de verdade atuais
 
+- `docs/p2-modularizacao-2026-07-28.md`: **ponto de retomada do ciclo P2** (modularização
+  por paridade) — o que já saiu, o que falta, os contratos descobertos, o mecanismo de
+  prova de consumo de RNG e as armadilhas. **Leia antes de continuar a extração.**
 - `src/data/catalog.mjs`: **índice de todo dado do projeto** — fonte, chave, cobertura e a
   fronteira cru × derivado do ADR 0002. Comece por aqui ao procurar um dado.
 - `docs/project-context.md`, seção **2-bis**: estado do ciclo de fidelidade da

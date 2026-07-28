@@ -22,6 +22,9 @@ const EXPORTS=[
   "ovrUnificado","CFG_NIVEL",
   // SINAPSE: química de elenco, força efetiva e característica do treinador
   "ovrTreinador","quimicaPlaystyles","derivaCaracteristica","CFG_QUIMICA",
+  // MARÉ: o checador precisa do gerador para provar CONSUMO de azar, não só valor
+  "gaussF","PERFIL_TIER","PERFIL_ROLE","centroOVR","formaPositiva","formaCaudaLivre",
+  "skillDuelo","fragPeso",
   // identidade e balanceamento: a bancada de perfis precisa ler playstyle e config sem duplicar tabelas
   "PLAYSTYLES","PLAYSTYLE_IDS","STYLE_ID","styleAgr","styleTraits","tierDe","MAPAS_POOL",
   "CFG_SIM","CFG_FA","CFG_CAMP","PERFIL_TIER","logistica","rndF",
