@@ -64,8 +64,11 @@ Estado registrado em 22 de julho de 2026:
 - R1, a auditoria individual aprofundada, está publicada no commit `b97b3d7`,
   sem alteração de motor ou balanceamento;
 - o ADR 0002 foi aceito e a trilha estrutural P1 começou: `ATRIBUTOS`,
-  `TIMES_DEF` e `PAISES_MAP` possuem cópias de migração em `src/data`, protegidas
-  por paridade integral no `npm run check`;
+  `TIMES_DEF` e os mapas de país possuem cópias de migração em `src/data`,
+  protegidas por paridade integral no `npm run check`. Em 28/07/2026 o
+  `PAISES_MAP` único virou `PAIS_JOGADOR` (por ID cru) e `PAIS_TREINADOR` (por
+  nome), separando espaços de nome que estavam misturados — mudança de contrato,
+  sem mudança de valor;
 - `bancada/times.js` e `bancada/snapshot.js` já consomem os novos módulos para
   dados crus; o snapshot deixou de manter um `new Function` próprio;
 - os ADRs 0004 e 0005 foram aceitos. `tools/add-team.js` agora projeta uma nova

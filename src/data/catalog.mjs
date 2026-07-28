@@ -38,10 +38,12 @@ export const FONTES={
   },
   paises:{
     arquivo:"src/data/countries.mjs",
-    exporta:"PAISES_MAP",
+    exporta:"PAIS_JOGADOR + PAIS_TREINADOR",
     espelho:"game.js (bloco legado)",
-    chave:"nome (NÃO o ID cru — divergência conhecida, ver DIVERGENCIAS)",
-    nota:"Cobre jogadores, treinadores e um nome de time usado como fallback."
+    chave:"PAIS_JOGADOR pelo ID cru; PAIS_TREINADOR pelo nome do treinador",
+    nota:"Duas tabelas desde 28/07/2026. Antes era uma só, misturando jogador, "+
+         "treinador e um nome de TIME — e a busca de jogador usava `nome`, o que "+
+         "deixava a chave `apEX_envy` morta no arquivo."
   }
 };
 
@@ -49,7 +51,7 @@ export const FONTES={
 export const JOGADOR_CRU={
   nome:     {tipo:"string",       cobertura:85, nota:"vira o ID quando não há `id`"},
   id:       {tipo:"string",       cobertura:8,  nota:"só nas 8 entradas de era duplicada"},
-  pais:     {tipo:"ISO3",         cobertura:40, nota:"PARCIAL no registro — os outros 45 vêm do PAISES_MAP. Use POOL.pais, que já resolve os 85."},
+  pais:     {tipo:"ISO3",         cobertura:40, nota:"PARCIAL no registro — os outros 45 vêm de PAIS_JOGADOR, indexado pelo ID cru. Use POOL.pais, que já resolve os 85."},
   fp:       {tipo:"inteiro 0-100",cobertura:85},
   en:       {tipo:"inteiro 0-100",cobertura:85},
   tr:       {tipo:"inteiro 0-100",cobertura:85},
@@ -70,7 +72,7 @@ export const ELENCO_CRU={
   colocacao: {tipo:"enum",    cobertura:17},
   jogadores: {tipo:"ID[5]",   cobertura:17, nota:"referencia jogadores pelo ID cru"},
   coach:     {tipo:"string",  cobertura:15, nota:"2 elencos não têm treinador (EnVyUs, Virtus.pro)"},
-  coachPais: {tipo:"ISO3",    cobertura:1,  nota:"inline só quando o treinador não está no PAISES_MAP"}
+  coachPais: {tipo:"ISO3",    cobertura:1,  nota:"inline; tem precedência sobre PAIS_TREINADOR"}
 };
 
 /** DERIVADO pelo domínio. Não é dado: não pode existir em `src/data`. (ADR 0002) */
@@ -106,24 +108,14 @@ export const TOTAIS={
 /** Divergências conhecidas — dívida declarada, não descoberta. */
 export const DIVERGENCIAS=[
   {
-    id:"pais-chave-dupla",
-    o_que:"`p.pais` indexa por registro; `PAISES_MAP` indexa por `nome`, não pelo ID cru.",
-    efeito:"Uma entrada de era (ex.: donk_kato24) só recebe país pelo registro; o mapa "+
-           "responderia pelo nick base. Foi a causa direta do erro de 28/07/2026.",
-    conserto:"Fase 1 do P2 — reindexar por ID cru."
-  },
-  {
     id:"camp-empacotado",
-    o_que:"`camp` guarda evento e ano numa string só.",
-    efeito:"Todo consumidor quebra com regex /^(.*?)\\s(\\d{4})$/.",
-    conserto:"Fase 1 do P2 — separar em evento+ano."
-  },
-  {
-    id:"pais-fallback-por-time",
-    o_que:"`PAISES_MAP` tem uma entrada com nome de TIME ('Outsiders'), usada como "+
-          "último fallback do país do treinador em check-raw-country-parity.js.",
-    efeito:"Mistura dois espaços de nome na mesma tabela.",
-    conserto:"Fase 1 do P2 — separar treinador de jogador."
+    o_que:"`camp` guarda evento e ano numa string só: 'IEM Katowice 2024'.",
+    efeito:"Dois fatos num campo. Medido em 28/07/2026: NENHUM consumidor separa os "+
+           "dois hoje — os 9 usos exibem a string inteira. Só uma carta com evento e "+
+           "ano estilizados à parte precisaria da divisão.",
+    conserto:"ADIADO de propósito. Dividir custa 17 registros × 3 fontes + 9 pontos de "+
+             "UI que a Fase 7 do P2 reescreve, por zero consumidor atual. Fazer quando "+
+             "houver um consumidor real, com a UI já modularizada."
   },
   {
     id:"sem-foto",

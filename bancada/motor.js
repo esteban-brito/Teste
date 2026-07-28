@@ -8,7 +8,7 @@ const {ROOT}=require("./common");
 const GAME_PATH=path.join(ROOT,"game.js");
 const UI_MARKER="// === UI START ===";
 const EXPORTS=[
-  "TEAMS","POOL","ATRIBUTOS","TIMES_DEF","PAISES_MAP",
+  "TEAMS","POOL","ATRIBUTOS","TIMES_DEF","PAIS_JOGADOR","PAIS_TREINADOR",
   "forcaTime","simularMapa","simularSerie","forcaDoDia","formaDoDia","sortearFormaCampanha",
   "avaliarJogador","aplicarAvaliacaoContextual","distribuirRoles","quimicaComposicao","combatProfile","exposureProfile","preservationValue","tradeContextProfile","assistContextProfile","fallenAngelsComponents","fallenAngels",
   "afinidades","roleAfinidade","rolePairReality","secondaryScore","roleStyleReality","STYLE_LABEL","styleScoreTable","nmOVR",

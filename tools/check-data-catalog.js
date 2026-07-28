@@ -13,7 +13,7 @@ const moduleUrl=file=>pathToFileURL(path.join(__dirname,"..","src","data",file))
 const idDe=p=>p.id||p.nome;
 
 async function main(){
-  const [cat,{ATRIBUTOS},{TIMES_DEF},{PAISES_MAP}]=await Promise.all([
+  const [cat,{ATRIBUTOS},{TIMES_DEF},{PAIS_JOGADOR,PAIS_TREINADOR}]=await Promise.all([
     import(moduleUrl("catalog.mjs")),
     import(moduleUrl("players.mjs")),
     import(moduleUrl("teams.mjs")),
@@ -64,7 +64,7 @@ async function main(){
   const paisesJogador=new Set(Object.values(X.POOL).map(p=>p.pais).filter(c=>c&&c!=="—"));
   const treinadores=TIMES_DEF.map(t=>t.coach).filter(Boolean);
   const paisesTreinador=new Set(TIMES_DEF.filter(t=>t.coach)
-    .map(t=>t.coachPais||PAISES_MAP[t.coach]||PAISES_MAP[t.nome]).filter(Boolean));
+    .map(t=>t.coachPais||PAIS_TREINADOR[t.coach]).filter(Boolean));
   const campeonatos=new Set(TIMES_DEF.map(t=>t.camp));
 
   const esperado={
@@ -87,8 +87,22 @@ async function main(){
   assert.equal(Object.keys(X.POOL).length,ATRIBUTOS.length,"POOL precisa indexar todos os IDs crus");
   ATRIBUTOS.forEach(p=>assert.ok(X.POOL[idDe(p)],`POOL não indexa "${idDe(p)}"`));
 
+  /* ── 5-bis. os espaços de nome do país seguem separados ────────────────
+     A tabela única de antes misturava jogador, treinador e um nome de TIME.
+     Esta trava impede a regressão: tabela de pessoa não aceita nome de time, e
+     PAIS_JOGADOR só aceita ID cru. */
+  const idsSet=new Set(ids);
+  const nomesDeTime=new Set(TIMES_DEF.map(t=>t.nome));
+  Object.keys(PAIS_JOGADOR).forEach(chave=>{
+    assert.ok(idsSet.has(chave),`PAIS_JOGADOR["${chave}"] não é um ID cru`);
+    assert.ok(!nomesDeTime.has(chave),`PAIS_JOGADOR["${chave}"] é nome de TIME`);
+  });
+  Object.keys(PAIS_TREINADOR).forEach(chave=>{
+    assert.ok(!nomesDeTime.has(chave),`PAIS_TREINADOR["${chave}"] é nome de TIME`);
+  });
+
   /* ── 6. as fontes declaradas existem e exportam o que o catálogo diz ───── */
-  const exportado={jogadores:ATRIBUTOS,elencos:TIMES_DEF,paises:PAISES_MAP};
+  const exportado={jogadores:ATRIBUTOS,elencos:TIMES_DEF,paises:PAIS_JOGADOR};
   for(const [chave,fonte] of Object.entries(FONTES)){
     assert.ok(exportado[chave],`FONTES.${chave} não tem export correspondente`);
     assert.ok(fonte.arquivo&&fonte.exporta&&fonte.chave,`FONTES.${chave} incompleta`);
@@ -97,10 +111,8 @@ async function main(){
   /* ── 7. cada divergência declarada continua sendo verdade ──────────────── */
   // Um conserto sem atualizar o catálogo é tão ruim quanto a divergência.
   const aindaVale={
-    "pais-chave-dupla":()=>ATRIBUTOS.some(p=>p.id&&!(p.id in PAISES_MAP)),
     "camp-empacotado":()=>TIMES_DEF.every(t=>/^(.*?)\s(\d{4})$/.test(t.camp))&&
       !("evento" in TIMES_DEF[0]),
-    "pais-fallback-por-time":()=>TIMES_DEF.some(t=>t.nome in PAISES_MAP),
     "sem-foto":()=>!camposCrusReais.has("foto")
   };
   DIVERGENCIAS.forEach(d=>{
