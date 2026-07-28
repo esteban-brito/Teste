@@ -820,7 +820,7 @@ const TEAMS=TIMES_DEF.map((t,i)=>{
     jogadores:t.jogadores.map(n=>{const j=POOL[n];
       return{
       id:"p"+(pid++),nick:j.nick,pais:j.pais,time:t.nome,tipo:"player",
-      ovr:j.ovr,prim:j.primario,sec:j.secundario,estrela:j.estrela,
+      ovr:j.ovr,prim:j.primario,sec:j.secundario,secForte:!!j.secForte,estrela:j.estrela,
       _eng:j /* objeto do motor (avaliação A/B/C) usado no cálculo de química */
     };}),
     treinador:t.coach?{id:"c"+i,nick:t.coach,pais:t.coachPais||PAISES_MAP[t.coach]||"—",time:t.nome,tipo:"coach", // coachPais inline: times novos não precisam mexer no PAISES_MAP
@@ -1921,7 +1921,7 @@ const cardClass=p=>p.tipo==="coach"?"coachcard coach-"+p.caracSlug:"card "+tierO
 
 const playerHTML=p=>`<div class="cmeta"><span>${esc(p.pais)}</span><span>${esc(p.time)}</span></div>
   <div class="ccore"><div class="ovr">${p.ovr}</div><div class="nick">${esc(p.nick)}</div><div class="starsig">${p.estrela?"STAR ★ PLAYER":""}</div></div>
-  <div class="roles"><span class="role prim" style="--rc:${ROLE_COR[p.prim]}">${esc(p.prim)}</span><span class="role sec">${esc(p.sec)}</span></div>`;
+  <div class="roles"><span class="role prim" style="--rc:${ROLE_COR[p.prim]}">${esc(p.prim)}</span><span class="role sec${p.secForte?" forte":""}" style="--rc:${ROLE_COR[p.sec]}" title="${p.secForte?"Segunda função de verdade: cobre o pilar por inteiro na química":"Segunda função nominal: cobre o pilar só em parte"}">${esc(p.sec)}</span></div>`;
 
 const coachHTML=p=>`<div class="coach-seal">Treinador</div>
   <div class="cmeta"><span>${esc(p.pais)}</span><span>${esc(p.time)}</span></div>
