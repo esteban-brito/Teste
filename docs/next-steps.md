@@ -541,6 +541,23 @@ As quatro etapas do ratchet de `perfis.js` estão ativas, e `npm run validate` f
 12/12 macro, 6/6 forma, 15/15 assinatura individual e 4/4 dificuldade. Nada acima é conserto;
 tudo é evolução deliberada.
 
+## 10-ter. Ideias medidas e ENCERRADAS (28/07/2026)
+
+Registradas para não voltarem como se fossem novas.
+
+- **Memória de série** (o mapa 2 reagir ao que aconteceu no mapa 1). Medida antes de virar
+  mecânica, com `bancada/serie.js`. O formato MD3 sozinho já dá 75% ao vencedor do mapa 1 — ele
+  precisa de 1 dos 2 seguintes, o outro precisa dos 2. O jogo entrega **79,2%** em confrontos
+  equilibrados e **81,9%** no geral, com gradiente correto por diferença de força (79% → 85%).
+  Ou seja: **a persistência já existe**, e vem da forma de campanha, que é sorteada uma vez e
+  vale a run inteira. Sem lacuna medida e sem fonte publicada para o número real, nenhuma faixa
+  foi criada e nenhuma mecânica entrou.
+- **Force contra um inimigo quebrado** (regra irmã da leitura de compra). Instrumentada: disparou
+  **zero vez em 62 mil rounds**. É quase impossível numa economia de soma zero — deduz-se que o
+  inimigo está quebrado porque ele perdeu o round anterior, mas se ele perdeu, eu ganhei, recebi
+  o prêmio e não estou de eco. O caso real que ela queria capturar já é coberto pela escada de
+  derrota. O achado está escrito em `decidirCompra`.
+
 ## 11. Regra de parada
 
 Se uma etapa revelar que o problema presumido não existe, registrar a evidência
