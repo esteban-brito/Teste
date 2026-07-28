@@ -94,7 +94,9 @@ function fixedMapScenario({id,seed,aIndex,bIndex,map,expectedScore}){
 
 function campaignSeriesScenario(){
   // Seed 9: a única razão de este cenário existir é exercitar o MAPA DECISIVO, que uma varrida
-  // 2-0 nunca alcança. A 9 devolve a série 1-2 em três mapas distintos, mesma cobertura.
+  // 2-0 nunca alcança. A 9 devolve a série 1-2 em três mapas.
+  // Os mapas agora são distintos por CONTRATO, não por sorte: desde 28/07/2026 a série sorteia
+  // sem reposição, porque numa MD3 real não se joga o mesmo mapa duas vezes.
   const id="campaign-best-of-three",seed=9,aIndex=4,bIndex=9;
   const X=loadEngines(),teams=buildCombatTeams(X);
   X.srand(seed);
@@ -104,7 +106,7 @@ function campaignSeriesScenario(){
   // Série de três mapas: cobre o mapa decisivo, que uma varrida 2-0 nunca alcança. A sequência
   // de mapas acompanha o novo sorteio de RNG; a cobertura é a mesma.
   assert.equal(result.placarSerie.join(","),"1,2",`${id}: ancora da serie mudou antes de atualizar o fixture`);
-  assert.equal(result.mapas.map(map=>map.mapa).join(","),"Nuke,Dust2,Ancient",`${id}: sequencia de mapas mudou antes de atualizar o fixture`);
+  assert.equal(result.mapas.map(map=>map.mapa).join(","),"Nuke,Train,Overpass",`${id}: sequencia de mapas mudou antes de atualizar o fixture`);
   return {
     id,kind:"campaign-series",seed,
     input:{...projectInput(a,b,aIndex,bIndex),bestOf:3,campaignForm:true},
