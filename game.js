@@ -264,17 +264,30 @@ const NM_AXES=[["fogo","Fogo"],["ent","Entrada"],["ab","Abertura"],["tr","Trade"
 // Cada receita possui direção de identidade (w, normalizada no uso) e ratingWeight.
 // ratingWeight=1 preserva o motor anterior; o calibrador pode aprender quanto o rating pesa
 // no OVR de cada estilo sem deixar rating decidir a identidade do playstyle.
+/* RECEITAS PADRONIZADAS. Todo playstyle é definido por EXATAMENTE TRÊS eixos, na mesma escada
+   0,50 / 0,30 / 0,20. Antes cada receita tinha um formato próprio — .506/.379/.115 convivia com
+   .50/.30/.20 e .610/.093/.093/.204 — e o Closer era decidido por só DOIS eixos, o que fazia
+   dele o estilo mais fácil de cair em cima de qualquer perfil com clutch e fogo.
+
+   A escada não é estética: os números quebrados eram cicatriz de calibrador, e ninguém
+   conseguia dizer o que separava .118 de .113. Com três eixos fixos, a receita vira uma frase
+   legível — "Closer é clutch, depois fogo, depois utilitária".
+
+   Os eixos em aberto (o 3º do Closer, do Spacetaker e do Facilitador, e a ordem do Cerebral)
+   foram decididos por MEDIÇÃO: as 32 combinações plausíveis foram avaliadas contra a
+   classificação aprovada dos 85, e escolheu-se a que melhor equilibra estabilidade e nitidez.
+   Ver docs/receitas-padronizadas-2026-07-28.md. */
 const NM_DEF={
-  Opener:{w:{ab:.506,fogo:.379,ent:.115},ratingWeight:1},
-  Spacetaker:{w:{ent:.610,fogo:.093,ab:.093,ut:.204},ratingWeight:1},
+  Opener:{w:{ab:.50,fogo:.30,ent:.20},ratingWeight:1},
+  Spacetaker:{w:{ent:.50,ut:.30,fogo:.20},ratingWeight:1},
   Trader:{w:{tr:.50,fogo:.30,ut:.20},ratingWeight:1},
-  Playmaker:{w:{fogo:.45,ab:.35,cl:.20},ratingWeight:1},
-  Infiltrador:{w:{cl:.46,ab:.34,fogo:.20},ratingWeight:1},
-  Baiter:{w:{tr:.50,cl:.30,fogo:.20},ovrW:{cl:.40,ut:.35,tr:.25},ratingWeight:1}, // ovrW: nível reflete clutch/utility que um baiter ainda entrega (não é o piso absoluto)
-  Closer:{w:{cl:.55,fogo:.45},ratingWeight:1.05},
-  Facilitador:{w:{ut:.593,tr:.176,ab:.118,fogo:.113},ovrW:{ut:.50,tr:.35,ent:.10,fogo:.05},ratingWeight:1},
-  Cerebral:{w:{ut:.40,ab:.30,cl:.30},ratingWeight:1},
-  Ancora:{w:{cl:.50,ut:.32,tr:.18},ratingWeight:1}};
+  Playmaker:{w:{fogo:.50,ab:.30,cl:.20},ratingWeight:1},
+  Infiltrador:{w:{cl:.50,ab:.30,fogo:.20},ratingWeight:1},
+  Baiter:{w:{tr:.50,cl:.30,fogo:.20},ovrW:{cl:.50,ut:.30,tr:.20},ratingWeight:1}, // ovrW: nível reflete clutch/utility que um baiter ainda entrega (não é o piso absoluto)
+  Closer:{w:{cl:.50,fogo:.30,ut:.20},ratingWeight:1.05},                          // 3º eixo: utilitária isola o duelo (smoke corta rotação, flash entra)
+  Facilitador:{w:{ut:.50,ent:.30,fogo:.20},ovrW:{ut:.50,tr:.30,ent:.20},ratingWeight:1}, // identidade: utilitária, tomar espaço, e só então fogo — o glue não é fragger
+  Cerebral:{w:{ut:.50,ab:.30,cl:.20},ratingWeight:1},
+  Ancora:{w:{cl:.50,ut:.30,tr:.20},ratingWeight:1}};
 // contraindicações por estilo — só eixos do s6 (o antigo sn era inerte: dobrado em fogo, diluía o resto).
 const STYLE_CONTRA={
   aggressive:{cl:.112,ut:.08},
