@@ -891,6 +891,10 @@ const CFG_SIM={D_MAPA:30,AMP_MAX:11,AMP_CONSIST:.7, // ⚙ balanceamento da PÓL
      da RETOMADA é o mais espremido: a 0,025 ele acrescenta pouco sobre o que a classe de compra
      já fazia, e é assim de propósito — a alternativa era deixar um gate na borda. */
   UTIL_PLANT:.025,UTIL_RETAKE:.025,
+  // Leitura do adversário na compra (ver decidirCompra). 0 desliga a regra e o motor volta a
+  // comprar cego ao inimigo, como antes — e sem consumir RNG a mais, então a prova de que ela
+  // está inerte é o golden bit a bit.
+  BUY_LE_FULL:1,
   EXP_KILL:1.15,EXP_OPEN:1.10,TRADE_CHANCE:.56,TRADE_CONTEXT:.15, // EXP_KILL comprime a distribuição de kills; TRADE_CHANCE menor = menos refrag = KPR/round ao real; EXP_OPEN: abertura é menos sobre fp puro
   // PARTICIPAÇÃO por FUNÇÃO (multiplica fragPeso): baixa/sobe o VOLUME de duelos do papel — mexe em kills
   // E mortes juntos (o AWPer real joga menos duelos mas ganha), então KPR e DPR caem sem distorcer o K/D.
@@ -1444,7 +1448,20 @@ const PRECO_RIFLE=2700; // AK-47: o preço do rifle que se dropa para o companhe
    caminho é o erro que drena a economia — por isso o force-buy aqui é decisão deliberada
    (leitura para negar o anti-eco, ou desespero em sequência de derrotas), nunca o estado
    padrão de quem está sem dinheiro. */
-function decidirCompra(dinheiro,armado,pistol,lossStreak,ehAwper){
+/* LEITURA DO ADVERSÁRIO. Um time não vê a carteira do outro — vê o que ele COMPROU no round
+   anterior e se ele ganhou. São as duas leituras que qualquer time profissional faz, e o motor
+   não fazia nenhuma: comprava igual contra um inimigo de rifle e contra um inimigo quebrado.
+
+   Determinísticas de propósito. No CS profissional elas são quase absolutas — ninguém tira cara
+   ou coroa para decidir se força contra um eco — e sem sorteio novo o consumo de RNG não muda,
+   o que deixa provar que, desligadas, o jogo é bit a bit o mesmo. */
+function leituraDoInimigo(leitura){
+  if(!leitura||!leitura.compra)return {armado:false,quebrado:false};
+  const c=leitura.compra;
+  // ele saiu de rifle E venceu: continua armado, e a arma sobrevive ao round
+  return {armado:(c==="full"||c==="awp")&&leitura.venceu};
+}
+function decidirCompra(dinheiro,armado,pistol,lossStreak,ehAwper,leitura){
   if(pistol)return {compras:dinheiro.map(()=>"pistol"),extra:[0,0,0,0,0]};
   const custoDe=(classe,i)=>armado[i]?CUSTO_REPOR[classe]:CUSTO[classe];
   const quantosPodem=classe=>dinheiro.reduce((n,m,i)=>n+(m>=custoDe(classe,i)?1:0),0);
@@ -1458,6 +1475,20 @@ function decidirCompra(dinheiro,armado,pistol,lossStreak,ehAwper){
   else if((lossStreak||0)>=3&&quantosPodem("force")>=4)nivel="force";
   // leitura: force ocasional vindo de poucas derrotas, para negar o anti-eco do rival
   else if((lossStreak||0)<=1&&quantosPodem("force")>=4&&rndF()<.30)nivel="force";
+
+  /* ——— LEITURA DO ADVERSÁRIO: corrige o nível decidido acima ———
+     NÃO COMPRE PELA METADE CONTRA UM FULL BUY. Forçar contra rifle perde o round E o seguinte,
+     porque a meia-compra some junto. Salvar inteiro e voltar com compra de verdade é o certo, e
+     era o erro que o motor cometia toda vez por não olhar para o outro lado.
+
+     A regra simétrica — "force contra um inimigo quebrado" — foi projetada, medida e DESCARTADA:
+     ela é quase impossível numa economia de soma zero. Deduzo que o inimigo está quebrado porque
+     ele perdeu o round anterior; mas se ele perdeu, eu ganhei, recebi o prêmio e não estou de
+     eco. Em 62 mil rounds a leitura casou com o meu eco zero vez. O caso real que ela queria
+     capturar — subir de save para force contra um time pobre — já é coberto pela escada de
+     derrota logo acima. */
+  const inim=leituraDoInimigo(leitura),C=CFG_SIM;
+  if(C.BUY_LE_FULL&&nivel==="force"&&inim.armado)nivel="eco";
 
   const compras=dinheiro.map((m,i)=>{
     if(nivel==="eco")return m>=custoDe("eco",i)?"eco":"pistol";
@@ -1552,6 +1583,8 @@ function simularMapa(A,B,fA,fB,mapaForcado,leve,options){
   const bonusCtA=C.LADO_CT+C.LADO_COMP*a.ctEdge,bonusTA=C.LADO_COMP*a.tEdge;
   const bonusCtB=C.LADO_CT+C.LADO_COMP*b.ctEdge,bonusTB=C.LADO_COMP*b.tEdge;
   let half1=null;
+  // o que cada lado comprou e se venceu no round ANTERIOR — é tudo que um time enxerga do outro
+  let compraAntA=null,compraAntB=null,venceuAntA=false,venceuAntB=false;
   // CS2 (MR12): vence quem chega a 13 na regulação. 12-12 → OT MR3 REPETÍVEL (real):
   // alvo 16; empate 15-15 → alvo 19; 18-18 → 22... (19-17, 22-20 são placares possíveis)
   let alvo=13;
@@ -1564,8 +1597,8 @@ function simularMapa(A,B,fA,fB,mapaForcado,leve,options){
     // OT (MR3): cada half de prorrogação começa com $10k por jogador (real CS2) → full buy garantido
     if(r>=25&&(r-25)%3===0){zerar(dinA,10000);zerar(dinB,10000);
       armadoA=[false,false,false,false,false];armadoB=[false,false,false,false,false];lsA=0;lsB=0;}
-    const planoA=decidirCompra(dinA,armadoA,pistol,lsA,awperA),comprasA=planoA.compras;
-    const planoB=decidirCompra(dinB,armadoB,pistol,lsB,awperB),comprasB=planoB.compras;
+    const planoA=decidirCompra(dinA,armadoA,pistol,lsA,awperA,{compra:compraAntB,venceu:venceuAntB}),comprasA=planoA.compras;
+    const planoB=decidirCompra(dinB,armadoB,pistol,lsB,awperB,{compra:compraAntA,venceu:venceuAntA}),comprasB=planoB.compras;
     pagarCompra(dinA,armadoA,comprasA,planoA.extra);pagarCompra(dinB,armadoB,comprasB,planoB.extra); // GASTA de cada carteira
     const buyA=compraDoTime(comprasA),buyB=compraDoTime(comprasB); // rótulo do time (relatório/telemetria)
     const poderA=comprasA.reduce((soma,c)=>soma+BUY[c],0)/5,poderB=comprasB.reduce((soma,c)=>soma+BUY[c],0)/5;
@@ -1592,6 +1625,8 @@ function simularMapa(A,B,fA,fB,mapaForcado,leve,options){
     if(venceA){pa++;sA++;sB=0;creditar(dinA,res.premioV);creditar(dinB,LOSS_BONUS[Math.min(lsB,4)]);lsB=Math.min(lsB+1,4);lsA=Math.max(0,lsA-1);}
     else{pb++;sB++;sA=0;creditar(dinB,res.premioV);creditar(dinA,LOSS_BONUS[Math.min(lsA,4)]);lsA=Math.min(lsA+1,4);lsB=Math.max(0,lsB-1);}
     if(pa===alvo-1&&pb===alvo-1)alvo+=3; // 12-12 → alvo 16 · 15-15 → 19 · 18-18 → 22 (OT repetível)
+    // guarda o que o adversário viu deste round: é o insumo da leitura de compra do próximo
+    compraAntA=buyA;compraAntB=buyB;venceuAntA=venceA;venceuAntB=!venceA;
     // bônus de plant (CS2): o T que plantou ganha $800 mesmo perdendo o round
     if(res.plantado){const tÉA=ladoA!=="CT"; if(tÉA){if(!venceA)creditar(dinA,C.PLANT_BONUS);}else{if(venceA)creditar(dinB,C.PLANT_BONUS);}}
     // recompensa por kill PELA ARMA de quem matou (CS2 real): AWP paga 100, SMG 600, rifle/pistola 300.
