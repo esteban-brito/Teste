@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Protótipo · carta draft9-0</title>
+<link rel="stylesheet" href="fonts.css">
+<style>
+/* ══════════════════════════════════════════════════════════════════════════
+   CARTA — frente e verso. Rascunho, desligado do jogo.
+
+   TUDO VEM DO MOTOR. Atributos, OVR, função e playstyle saem de
+   `avaliarJogador`. Time, cor, campeonato, ano e colocação saem de `TIMES_DEF`,
+   que cobre os 85 jogadores — 14 campeonatos reais, de 2014 a 2025.
+
+   (Eu tinha afirmado que `time` e `campeonato` não existiam. Existiam: o campo
+   se chama `camp` e traz evento e ano juntos, "IEM Katowice 2024". Procurei por
+   "campeonato" e só no game.js, não no repositório.)
+
+   PADRONIZAÇÃO. Um bloco de tokens em `.c` governa as DUAS faces: mesmo recuo,
+   mesmo passo vertical, mesma escala de texto, mesma tabela de raridade. A
+   diagonal do verso tem o MESMO ângulo físico da frente, derivado em CSS.
+
+   FRENTE: quem é e quanto vale.   VERSO: como joga.   Clique para virar.
+   ══════════════════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#07090e; --txt:#eaf1f8; --dim:#6c7d93; --line:#1f293d; --accent:#ff5a1f;
+  --ff:'Chakra Petch'; --fb:'Barlow Semi Condensed',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:radial-gradient(1200px 600px at 50% -10%,#121a26,transparent 65%),var(--bg);
+  color:var(--txt);font-family:var(--fb);padding:28px;min-height:100vh}
+h1{font-family:var(--ff);font-weight:700;letter-spacing:.06em;font-size:1.5rem}
+h1 b{color:var(--accent)}
+h2{font-family:var(--ff);font-weight:700;font-size:.95rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin:40px 0 4px;padding-top:16px;border-top:1px solid var(--line)}
+p.nota{color:var(--dim);font-size:.85rem;max-width:78ch;margin-bottom:18px;line-height:1.55}
+p.nota b{color:#b9c5d4}
+.fila{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.rot{color:var(--dim);font-size:.68rem;letter-spacing:.13em;text-transform:uppercase;margin-top:8px;text-align:center}
+
+/* ═══ GIRO ═════════════════════════════════════════════════════════════════ */
+.carta{perspective:1400px}
+.giro{position:relative;aspect-ratio:5/7;transform-style:preserve-3d;cursor:pointer;
+  transition:transform .62s cubic-bezier(.3,.85,.25,1)}
+.carta.virada .giro{transform:rotateY(180deg)}
+.carta:hover .giro{transform:translateY(-7px)}
+.carta.virada:hover .giro{transform:translateY(-7px) rotateY(180deg)}
+
+/* ═══ TOKENS — valem para as DUAS faces ════════════════════════════════════
+   Abaixo deste bloco não existe número solto. */
+.c{
+  position:absolute;inset:0;backface-visibility:hidden;border-radius:13px;overflow:hidden;
+  container-type:inline-size;font-family:var(--ff);isolation:isolate;background:#080b11;
+
+  --pad:9%;                                        /* recuo lateral, único */
+  --passo:5.2%;                                    /* passo do ritmo vertical */
+  --b1:4.6%;                                       /* rodapé   (linha 1) */
+  --b2:calc(var(--b1) + var(--passo));             /* função   (linha 2) */
+  --b3:calc(var(--b2) + var(--passo)*1.2);         /* nick     (linha 3) */
+
+  /* Alturas SEM unidade, para o ângulo das duas faces poder ser DERIVADO.
+     Antes eu escrevia --corte-v:21% com a conta "12×38/22" só no comentário:
+     mudar --placa ou --faixa desalinhava as faces em silêncio. Agora a conta
+     está no CSS e as duas diagonais não têm como divergir. */
+  --placa-n:38;                                    /* altura da placa (frente) */
+  --faixa-n:22;                                    /* altura da faixa  (verso) */
+  --corte-n:12;                                    /* inclinação na placa */
+  --placa:calc(var(--placa-n)*1%);
+  --faixa:calc(var(--faixa-n)*1%);
+  --corte:calc(var(--corte-n)*1%);
+  --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
+
+  --t1:33cqw;   /* OVR      */   --t3:6.2cqw;  /* função   */
+  --t4:4.4cqw;  /* contexto */
+  /* nick: --nick-esc é a razão por comprimento do nome, posta na .carta (fora das
+     duas faces) para que FRENTE e VERSO encolham juntos. */
+  --t2:calc(16cqw*var(--nick-esc,1));
+
+  box-shadow:inset 0 0 0 var(--aro) color-mix(in srgb,var(--m) var(--aro-a),transparent),var(--brilho)}
+.verso{transform:rotateY(180deg)}
+.giro:focus-visible{outline:2px solid var(--m);outline-offset:4px;border-radius:13px}
+
+/* ═══ TABELA DE RARIDADE ═══════════════════════════════════════════════════
+   Sempre as mesmas três colunas. Nova raridade = nova linha.
+   A faixa é por OVR puro: a flag `estrela` do motor é exatamente `ovr>=20`
+   (0 discordâncias em 85), então promover por estrela não moveria uma carta. */
+/*        cor              aro       opacidade    brilho                 OVR      n  */
+.t3{--m:#aab6c4; --aro:1px;   --aro-a:38%;  --brilho:0 0 0 0 transparent} /* ≤16    27 */
+.t2{--m:#3ec07e; --aro:1.5px; --aro-a:55%;  --brilho:0 0 0 0 transparent} /* 17-18  30 */
+.t1{--m:#ffbe00; --aro:2px;   --aro-a:72%;  --brilho:0 0 20px -13px var(--m)} /* 19  11 */
+.ts{--m:#ff5c6e; --aro:2px;   --aro-a:100%; --brilho:0 0 28px -11px var(--m)} /* 20  11 */
+.th{--m:#c9a6ff; --aro:2px;   --aro-a:0%;   --brilho:0 0 34px -10px var(--m)} /* 21+  6 */
+
+/* ═══ CAMADAS COMUNS ═══════════════════════════════════════════════════════ */
+.foto{position:absolute;inset:0;background-size:cover;background-position:50% 14%;z-index:0;
+  filter:grayscale(1) contrast(1.08) brightness(.92)}
+/* `color` preserva a luminância: o tier tinge sem apagar o rosto */
+.tinta{position:absolute;inset:0;z-index:1;background:var(--m);mix-blend-mode:color;opacity:.52}
+.vinheta{position:absolute;inset:0;z-index:2;
+  background:radial-gradient(120% 82% at 50% 30%,transparent 42%,rgba(4,6,11,.72) 100%)}
+/* luz de topo: a aresta que qualquer carta impressa pega */
+.vinheta::before{content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.16),transparent 18%)}
+/* grão de filme: quebra o degradê perfeito, que é o que denuncia CSS puro */
+.grao{position:absolute;inset:0;z-index:6;pointer-events:none;opacity:.055;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E")}
+.holo{position:absolute;inset:0;z-index:7;border-radius:inherit;padding:2px;pointer-events:none;
+  background:linear-gradient(125deg,#ff0040,#ff8a00,#ffe600,#39e639,#00c8ff,#7a3cff,#ff0040);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;animation:hue 7s linear infinite}
+@keyframes hue{to{filter:hue-rotate(360deg)}}
+
+/* ═══ FRENTE ═══════════════════════════════════════════════════════════════
+   PLACA e FIO compartilham a MESMA clip-path; o fio é um bloco 2px mais alto,
+   então sua aresta cai exatamente sobre a diagonal em qualquer tamanho. */
+.fio,.placa{position:absolute;left:0;right:0;bottom:0;
+  clip-path:polygon(0 var(--corte),100% 0,100% 100%,0 100%)}
+.fio{height:calc(var(--placa) + 2px);z-index:3;
+  background:linear-gradient(90deg,transparent,var(--m) 20%,var(--m) 76%,transparent)}
+.placa{height:var(--placa);z-index:4;
+  background:linear-gradient(178deg,color-mix(in srgb,var(--m) 22%,#070a10) 0%,#070a10 42%)}
+/* 1 · OVR sozinho no canto. -.055em é acerto ÓPTICO: algarismo grande tem folga
+      lateral própria e parece recuado demais alinhado pelo retângulo. */
+.ovr{position:absolute;left:var(--pad);top:5.5%;z-index:5;font-size:var(--t1);font-weight:700;
+  line-height:.78;letter-spacing:-.03em;color:#fff;margin-left:-.055em;
+  text-shadow:0 2px 20px rgba(0,0,0,.55)}
+.ovr small{display:block;font-size:3.9cqw;letter-spacing:.26em;font-weight:700;line-height:1;
+  color:var(--m);margin:.35em 0 0 .06em;text-shadow:none}
+/* 2 · nick sobre a placa sólida: contraste garantido em qualquer foto */
+.nick{position:absolute;left:var(--pad);right:var(--pad);bottom:var(--b3);z-index:5;
+  font-size:var(--t2);font-weight:700;line-height:1;letter-spacing:-.005em;
+  text-transform:uppercase;color:#f4f8fd;white-space:nowrap}
+/* 3 · o que ele FAZ, na cor do tier */
+.func{position:absolute;left:var(--pad);bottom:var(--b2);z-index:5;font-size:var(--t3);
+  font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--m)}
+/* contexto: UMA linha. Função secundária + TIME, os dois reais e cobrindo os 85
+   (o time vem de TIMES_DEF). Campeonato, ano e colocação ficam no verso. */
+.meta{position:absolute;left:var(--pad);right:var(--pad);bottom:var(--b1);z-index:5;
+  display:flex;justify-content:space-between;gap:6px;
+  font-size:var(--t4);letter-spacing:.16em;text-transform:uppercase;color:#71809a}
+.meta span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* canto superior direito: BANDEIRA do país. Campeonato e ano ficam só no verso —
+   aqui competiriam com o OVR, que é o que se lê primeiro.
+   Bandeira é SVG embutido, não emoji: o Windows não tem os glifos de bandeira e
+   renderiza "BR" no lugar de 🇧🇷.
+   O POOL resolve país para os 85 (p.pais || PAISES_MAP[nome]), então a bandeira
+   nunca falta — mas o canto tolera ausência sem quebrar nada. */
+.ed{position:absolute;right:var(--pad);top:6.5%;z-index:5;width:8cqw;aspect-ratio:3/2;
+  background-size:cover;background-position:50%;border-radius:.6cqw;
+  box-shadow:0 0 0 1px rgba(255,255,255,.22),0 1px 5px rgba(0,0,0,.5)}
+/* SEM FOTO: hoje 0 de 85 jogadores têm foto, então este estado precisa ser
+   declarado. A tinta sobe e a carta fica assumidamente gráfica em vez de
+   parecer quebrada. É um ESTADO, não o padrão do protótipo. */
+.sfoto .tinta{opacity:.80}
+.sfoto .foto{filter:grayscale(1) contrast(.9) brightness(.6)}
+
+/* ═══ VERSO ════════════════════════════════════════════════════════════════
+   A espinha é o PLAYSTYLE, e a receita fica visível: você vê POR QUE ele é
+   aquele estilo, com os pesos que o motor realmente usa. */
+.verso{background:linear-gradient(168deg,color-mix(in srgb,var(--m) 13%,#080b11),#06080d 58%)}
+/* faixa espelhada: mesma geometria da placa, mesmo ângulo físico */
+.vfio,.vfaixa{position:absolute;left:0;right:0;top:0;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - var(--corte-v)),0 100%)}
+.vfio{height:calc(var(--faixa) + 2px);z-index:3;
+  background:linear-gradient(90deg,transparent,var(--m) 20%,var(--m) 76%,transparent)}
+.vfaixa{height:var(--faixa);z-index:4;
+  background:linear-gradient(2deg,color-mix(in srgb,var(--m) 20%,#070a10) 0%,#070a10 48%)}
+/* O nick do verso deriva do MESMO --t2 da frente (que escala por comprimento).
+   Antes ele era 8.4cqw fixo e cortava com reticências: "pashaBiceps" encolhia na
+   frente e era cortado no verso — mesma informação, dois comportamentos. */
+.vnick{position:absolute;left:var(--pad);top:5.5%;z-index:5;font-size:calc(var(--t2)*.525);
+  font-weight:700;text-transform:uppercase;letter-spacing:-.01em;color:#f4f8fd;line-height:1;
+  max-width:60%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vovr{position:absolute;right:var(--pad);top:4.6%;z-index:5;text-align:right;line-height:1}
+.vovr b{font-size:9.6cqw;font-weight:700;color:#fff;letter-spacing:-.02em}
+.vovr small{display:block;font-size:3.4cqw;letter-spacing:.14em;color:var(--m);margin-top:.4em}
+/* a ESPINHA */
+.vestilo{position:absolute;left:var(--pad);right:var(--pad);top:27%;z-index:5}
+.vestilo small{display:block;font-size:3.6cqw;letter-spacing:.28em;color:#6c7d93;margin-bottom:.5em}
+.vestilo b{font-size:11cqw;font-weight:700;line-height:.95;color:var(--m);
+  text-transform:uppercase;letter-spacing:-.01em;display:block}
+/* a receita. justify-content:center absorve 3 ou 4 linhas sem reajuste — o motor
+   entrega 3 quando Firepower está na receita e 4 quando não está. */
+.vstats{position:absolute;left:var(--pad);right:var(--pad);top:47%;bottom:19%;z-index:5;
+  display:flex;flex-direction:column;justify-content:center;gap:2.6cqw}
+.st{display:grid;grid-template-columns:1fr auto auto;align-items:baseline;column-gap:1.8cqw}
+.st i{font-style:normal;font-size:4cqw;letter-spacing:.14em;text-transform:uppercase;color:#8494aa;
+  font-family:var(--fb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st em{font-style:normal;font-size:3.4cqw;letter-spacing:.06em;color:var(--m);opacity:.9}
+.st b{font-size:5.4cqw;font-weight:700;color:#fff;line-height:1}
+.trilho{grid-column:1/-1;height:1.5cqw;margin-top:1.1cqw;border-radius:99px;
+  background:rgba(255,255,255,.08);overflow:hidden}
+/* min-width segura o caso real: chopper tem Firepower 2 e FalleN 5. Sem isso a
+   barra some e parece defeito, quando na verdade é a informação. */
+.trilho u{display:block;height:100%;border-radius:99px;background:var(--m);min-width:3%}
+/* rodapé: o CAMPEONATO — é o que distingue duas cartas do mesmo jogador (donk
+   em Katowice 2024 e em Budapest 2025 são a mesma pessoa em eras diferentes).
+   Duas linhas porque "DreamHack Cluj-Napoca" não cabe dividindo a largura. */
+.vrod{position:absolute;left:var(--pad);right:var(--pad);bottom:var(--b1);z-index:5;
+  display:flex;flex-direction:column;gap:1cqw;text-transform:uppercase}
+.vrod b{font-size:4.9cqw;font-weight:700;letter-spacing:.03em;color:#e8eef6;line-height:1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vrod span{font-size:var(--t4);letter-spacing:.2em;color:var(--m);line-height:1}
+.vrod::before{content:"";position:absolute;left:0;right:0;bottom:calc(100% + 2.4cqw);
+  height:1px;background:linear-gradient(90deg,color-mix(in srgb,var(--m) 45%,transparent),transparent)}
+
+@media(prefers-reduced-motion:reduce){
+  .holo{animation:none}
+  .giro{transition:none}
+  .carta:hover .giro{transform:none}
+  .carta.virada:hover .giro{transform:rotateY(180deg)}
+}
+
+/* ═══ DENSIDADE COMPACTA ═══════════════════════════════════════════════════
+   Na lista o cartão é pequeno e o texto miúdo vira sujeira ilegível. Some por
+   container query, nas duas faces. Mesma carta, mesma classe. */
+@container (max-width:150px){
+  .meta,.ed,.vrod,.st em{display:none}
+  .c{--placa-n:32;--b2:6%;--b3:14%;--t2:calc(18cqw*var(--nick-esc,1));--t3:7cqw}
+  .vstats{bottom:6%}
+  .vestilo b{font-size:12.5cqw}
+}
+</style>
+</head>
+<body>
+<h1>Carta · <b>frente e verso</b></h1>
+<p class="nota">Rascunho, desligado do jogo. <b>Tudo vem do motor</b>: atributos e OVR de
+<code>avaliarJogador</code>; time, campeonato, ano e colocação de <code>TIMES_DEF</code>, que cobre
+os <b>85 de 85</b> jogadores em <b>14 campeonatos reais</b> (2014 a 2025). Eu tinha dito que esses
+campos não existiam — existiam, o campo se chama <code>camp</code> e traz evento e ano juntos.
+Frente: nome do time e bandeira. Verso: campeonato, ano e colocação. <b>Clique para virar.</b></p>
+
+<h2>as cinco raridades</h2>
+<p class="nota">Mesmo elenco de antes, com os valores de verdade. Faixa por <b>OVR puro</b>:
+≤16 · 17-18 · 19 · 20 · 21+. A pirâmide real fica <b>31,8% · 35,3% · 12,9% · 12,9% · 7,1%</b>.</p>
+<div class="fila" id="fTiers"></div>
+
+<h2>o verso: a espinha é o playstyle</h2>
+<p class="nota">A frente diz <b>quem é e quanto vale</b>; o verso diz <b>como joga</b>. A receita
+fica visível com os pesos que o motor usa de verdade — dá para ver <i>por que</i> ele é aquele
+estilo, não só o rótulo. Firepower sempre em primeiro; o resto por contribuição. No rodapé, o
+<b>campeonato, o ano e a colocação</b> — é o que distingue duas cartas do mesmo jogador: donk em
+<b>IEM Katowice 2024</b> e donk em <b>Budapest Major 2025</b> são a mesma pessoa em eras
+diferentes. Compare as duas primeiras.</p>
+<div class="fila" id="fVerso"></div>
+
+<h2>a mesma carta, três tamanhos</h2>
+<p class="nota">No jogo a carta é grande na roleta e pequena na lista. Abaixo de 150px o texto
+miúdo some sozinho, <b>nas duas faces</b>, e sobra o que importa.</p>
+<div class="fila" id="fTam"></div>
+
+<h2>contraste sobre foto real</h2>
+<p class="nota">Foto de verdade varia muito de luminância, e é aí que layout bonito quebra. A mesma
+carta sobre fundo <b>muito claro</b>, <b>médio</b> e <b>muito escuro</b>.</p>
+<div class="fila" id="fContraste"></div>
+
+<h2>nomes longos</h2>
+<p class="nota">O nick encolhe por comprimento em vez de ser cortado — e agora <b>as duas faces
+encolhem juntas</b>. Antes o verso tinha corpo fixo e cortava "pashaBiceps" com reticências
+enquanto a frente o encolhia: mesma informação, dois comportamentos. Vire estas para conferir.</p>
+<div class="fila" id="fNomes"></div>
+
+<h2>as 22 bandeiras</h2>
+<p class="nota">Cobrem <b>85 de 85</b> jogadores — o <code>POOL</code> do próprio jogo já resolve o
+país juntando <code>p.pais</code> com <code>PAISES_MAP</code>, um segundo mapa que eu não tinha
+achado. São 20 países de jogadores mais CAN e AUT, que só aparecem em treinador. Desenhadas em SVG
+embutido porque <b>emoji de bandeira não renderiza no Windows</b> (a fonte do sistema não tem os
+glifos; ele mostra "BR"). No tamanho real saem com ~14px, então o que lê é geometria e cor — as
+complexas são simplificadas de propósito. Abaixo, ampliadas e no tamanho da carta.</p>
+<div id="fBandeiras"></div>
+
+<h2>o estado "sem foto"</h2>
+<p class="nota">Hoje <b>0 de 85</b> jogadores têm foto, então isto precisa ser um estado declarado
+e não um remendo: a tinta do tier sobe e a carta fica assumidamente gráfica. À esquerda com foto,
+à direita a mesma carta sem.</p>
+<div class="fila" id="fSemFoto"></div>
+
+<h2>os casos que quebrariam o layout</h2>
+<p class="nota">Todos reais, achados medindo o motor: <b>IGL</b> tem <code>role2</code> nulo nos 17
+casos — a carta usa <code>combatRole</code>. <b>Coringa</b> não tem receita. <b>Firepower 2</b>
+fixado em primeiro deixaria uma barra invisível.</p>
+<div class="fila" id="fCasos"></div>
+
+<script>
+/* ── AMOSTRA REAL: gerada por `avaliarJogador`, não digitada ─────────────── */
+const D=[{"id":null,"n":"donk","o":22,"t":"th","f":"Rifler","f2":"Entry","p":"RUS","r":1.57,"tm":"Spirit","cr":"#b06cff","ev":"Budapest Major","an":2025,"c":"Top4","e":"Opener","s":[["fp","Firepower",0.3,100],["op","Abertura",0.5,96],["en","Entrada",0.2,42]]},{"id":null,"n":"s1mple","o":20,"t":"ts","f":"AWPer","f2":"Rifler","p":"UKR","r":1.47,"tm":"NAVI","cr":"#ffd400","ev":"Stockholm Major","an":2021,"c":"Campeao","e":"Opener","s":[["fp","Firepower",0.3,100],["op","Abertura",0.5,93],["en","Entrada",0.2,25]]},{"id":null,"n":"device","o":19,"t":"t1","f":"AWPer","f2":"Rifler","p":"DEN","r":1.32,"tm":"Astralis","cr":"#e2231a","ev":"IEM Katowice","an":2019,"c":"Campeao","e":"Playmaker","s":[["fp","Firepower",0.5,93],["op","Abertura",0.3,88],["cl","Clutch",0.2,39]]},{"id":null,"n":"gla1ve","o":18,"t":"t2","f":"IGL","f2":"Support","p":"DEN","r":1.05,"tm":"Astralis","cr":"#e2231a","ev":"IEM Katowice","an":2019,"c":"Campeao","e":"Facilitador","s":[["fp","Firepower",null,32],["ut","Utilitário",0.5,95],["en","Entrada",0.2,62],["tr","Trade",0.3,17]]},{"id":null,"n":"drop","o":14,"t":"t3","f":"Rifler","f2":"Support","p":"BRA","r":1.06,"tm":"FURIA","cr":"#00e676","ev":"Rio Major","an":2022,"c":"Top4","e":"Facilitador","s":[["fp","Firepower",null,52],["ut","Utilitário",0.5,52],["en","Entrada",0.2,55],["tr","Trade",0.3,34]]},{"id":null,"n":"chopper","o":16,"t":"t3","f":"IGL","f2":"Support","p":"RUS","r":0.85,"tm":"Spirit","cr":"#b06cff","ev":"Budapest Major","an":2025,"c":"Top4","e":"Cerebral","s":[["fp","Firepower",null,2],["ut","Utilitário",0.5,86],["cl","Clutch",0.2,70],["op","Abertura",0.3,31]]},{"id":null,"n":"Xyp9x","o":20,"t":"ts","f":"Lurker","f2":"Support","p":"DEN","r":1.29,"tm":"Astralis","cr":"#e2231a","ev":"IEM Katowice","an":2019,"c":"Campeao","e":"Closer","s":[["fp","Firepower",0.3,91],["cl","Clutch",0.5,87],["ut","Utilitário",0.2,91]]},{"id":null,"n":"olofmeister","o":16,"t":"t3","f":"Rifler","f2":"Entry","p":"SWE","r":1.27,"tm":"FaZe","cr":"#e43d30","ev":"ESL One New York","an":2017,"c":"Campeao","e":"Playmaker","s":[["fp","Firepower",0.5,79],["op","Abertura",0.3,36],["cl","Clutch",0.2,6]]},{"id":null,"n":"pashaBiceps","o":20,"t":"ts","f":"AWPer","f2":"Lurker","p":"POL","r":1.38,"tm":"Virtus.pro","cr":"#f0a020","ev":"EMS One Katowice","an":2014,"c":"Campeao","e":"Playmaker","s":[["fp","Firepower",0.5,88],["op","Abertura",0.3,92],["cl","Clutch",0.2,68]]},{"id":null,"n":"electroNic","o":20,"t":"ts","f":"Rifler","f2":"Entry","p":"RUS","r":1.28,"tm":"NAVI","cr":"#ffd400","ev":"Stockholm Major","an":2021,"c":"Campeao","e":"Playmaker","s":[["fp","Firepower",0.5,96],["op","Abertura",0.3,96],["cl","Clutch",0.2,62]]},{"id":null,"n":"ZywOo","o":20,"t":"ts","f":"AWPer","f2":"Rifler","p":"FRA","r":1.38,"tm":"Vitality","cr":"#f5d020","ev":"Budapest Major","an":2025,"c":"Campeao","e":"Playmaker","s":[["fp","Firepower",0.5,99],["op","Abertura",0.3,80],["cl","Clutch",0.2,49]]},{"id":"donk_kato24","n":"donk","o":22,"t":"th","f":"Rifler","f2":"Entry","p":"RUS","r":1.75,"tm":"Spirit","cr":"#7d8aa0","ev":"IEM Katowice","an":2024,"c":"Campeao","e":"Playmaker","s":[["fp","Firepower",0.5,100],["op","Abertura",0.3,97],["cl","Clutch",0.2,63]]},{"id":"NiKo_g2","n":"NiKo","o":14,"t":"t3","f":"Entry","f2":"Support","p":"BIH","r":1.05,"tm":"G2","cr":"#e4002b","ev":"IEM Sydney","an":2023,"c":"Top4","e":"Coringa","s":null},{"id":"FalleN_furia25","n":"FalleN","o":18,"t":"t2","f":"IGL","f2":"Support","p":"BRA","r":0.86,"tm":"FURIA","cr":"#1faa59","ev":"IEM Chengdu","an":2025,"c":"Campeao","e":"Facilitador","s":[["fp","Firepower",null,5],["ut","Utilitário",0.5,76],["en","Entrada",0.2,63],["tr","Trade",0.3,37]]},{"id":"apEX_envy","n":"apEX","o":17,"t":"t2","f":"Entry","f2":"Rifler","p":"FRA","r":1.11,"tm":"EnVyUs","cr":"#00b4a0","ev":"DreamHack Cluj-Napoca","an":2015,"c":"Campeao","e":"Opener","s":[["fp","Firepower",0.3,56],["op","Abertura",0.5,87],["en","Entrada",0.2,76]]}];
+
+/* Campeonato, ano, time e cor vêm de TIMES_DEF, que cobre os 85 jogadores.
+   O campo `camp` já traz evento E ano juntos ("IEM Katowice 2024"); o gerador
+   separa os dois. São 14 campeonatos reais, de 2014 a 2025. */
+const COLOC={Campeao:"Campeão",Final:"Vice",Top4:"Top 4",Top8:"Top 8",Grupos:"Grupos"};
+
+/* ── BANDEIRAS ────────────────────────────────────────────────────────────
+   SVG embutido, NÃO emoji: o Windows não tem os glifos de bandeira e renderiza
+   as duas letras no lugar do desenho.
+   São os 22 países que existem no motor: 20 dos jogadores (o POOL resolve país
+   para os 85, combinando `p.pais` com PAISES_MAP) mais CAN e AUT, que só
+   aparecem em treinador. Como a bandeira sai com ~14px de largura, o que lê é a
+   geometria e a cor — as complexas (USA, GBR, AUS, CAN, ISR, MNG, BIH, KAZ,
+   SVK, BLR) são simplificadas de propósito. */
+const F=(...p)=>"data:image/svg+xml,"+encodeURIComponent(
+  `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 20'>${p.join("")}</svg>`);
+const faixasH=(...c)=>c.map((cor,i)=>
+  `<rect y='${i*20/c.length}' width='30' height='${20/c.length}' fill='${cor}'/>`).join("");
+const faixasV=(...c)=>c.map((cor,i)=>
+  `<rect x='${i*30/c.length}' width='${30/c.length}' height='20' fill='${cor}'/>`).join("");
+// cruz nórdica: haste vertical deslocada para a tralha, como nas originais
+const nordica=(fundo,cruz,interna)=>
+  `<rect width='30' height='20' fill='${fundo}'/>`+
+  `<rect x='9' width='5' height='20' fill='${cruz}'/><rect y='7.5' width='30' height='5' fill='${cruz}'/>`+
+  (interna?`<rect x='10.5' width='2' height='20' fill='${interna}'/><rect y='9' width='30' height='2' fill='${interna}'/>`:"");
+
+const BANDEIRA={
+  POL:F(faixasH("#fff","#dc143c")),
+  UKR:F(faixasH("#0057b7","#ffd700")),
+  RUS:F(faixasH("#fff","#0039a6","#d52b1e")),
+  GER:F(faixasH("#000","#dd0000","#ffce00")),
+  LVA:F("<rect width='30' height='20' fill='#9e3039'/><rect y='8' width='30' height='4' fill='#fff'/>"),
+  DEN:F(nordica("#c8102e","#fff")),
+  SWE:F(nordica("#006aa7","#fecc00")),
+  NOR:F(nordica("#ef2b2d","#fff","#00205b")),
+  BRA:F("<rect width='30' height='20' fill='#009c3b'/>"+
+        "<path d='M15 2.4 27.6 10 15 17.6 2.4 10Z' fill='#ffdf00'/>"+
+        "<circle cx='15' cy='10' r='4.4' fill='#002776'/>"+
+        "<path d='M10.9 8.4a12 12 0 0 1 8.4 2.2 4.4 4.4 0 0 1-.3 1.3 11 11 0 0 0-8.4-2.2Z' fill='#fff'/>"),
+  GBR:F("<rect width='30' height='20' fill='#012169'/>"+
+        "<path d='M0 0 30 20M30 0 0 20' stroke='#fff' stroke-width='4'/>"+
+        "<path d='M0 0 30 20M30 0 0 20' stroke='#c8102e' stroke-width='2'/>"+
+        "<path d='M15 0v20M0 10h30' stroke='#fff' stroke-width='6.6'/>"+
+        "<path d='M15 0v20M0 10h30' stroke='#c8102e' stroke-width='4'/>"),
+  AUS:F("<rect width='30' height='20' fill='#012169'/>"+
+        "<path d='M0 0 15 10M15 0 0 10' stroke='#fff' stroke-width='2.4'/>"+
+        "<path d='M7.5 0v10M0 5h15' stroke='#fff' stroke-width='3.6'/>"+
+        "<path d='M7.5 0v10M0 5h15' stroke='#c8102e' stroke-width='2'/>"+
+        "<circle cx='21' cy='14' r='1.5' fill='#fff'/><circle cx='25' cy='6' r='1' fill='#fff'/>"+
+        "<circle cx='26' cy='12' r='1' fill='#fff'/><circle cx='22' cy='5' r='.9' fill='#fff'/>"),
+  BIH:F("<rect width='30' height='20' fill='#002395'/>"+
+        "<path d='M8 0 26 0 26 20Z' fill='#fecb00'/>"+
+        "<path d='M7 2h1.6l.5 1.5 1.5.5-1.5.5-.5 1.5-.5-1.5-1.5-.5 1.5-.5Z' fill='#fff'/>"+
+        "<circle cx='13' cy='9' r='1' fill='#fff'/><circle cx='17' cy='14' r='1' fill='#fff'/>"),
+  SVK:F(faixasH("#fff","#0b4ea2","#ee1c25")+
+        "<path d='M6 6h7v6c0 2.6-3.5 4-3.5 4S6 14.6 6 12Z' fill='#ee1c25' stroke='#fff' stroke-width='1'/>"),
+  KAZ:F("<rect width='30' height='20' fill='#00afca'/>"+
+        "<circle cx='16' cy='9' r='3.4' fill='#fec50c'/>"+
+        "<path d='M9 16h14' stroke='#fec50c' stroke-width='1.2'/>"),
+  AUT:F(faixasH("#ed2939","#fff","#ed2939")),
+  EST:F(faixasH("#0072ce","#000","#fff")),
+  FRA:F(faixasV("#002395","#fff","#ed2939")),
+  BLR:F("<rect width='30' height='20' fill='#c8313e'/>"+
+        "<rect y='13' width='30' height='7' fill='#4aa657'/>"+
+        "<rect width='5' height='20' fill='#fff'/>"+
+        "<path d='M1 2h3v2H1Zm0 5h3v2H1Zm0 5h3v2H1Zm0 5h3v2H1Z' fill='#c8313e'/>"),
+  CAN:F("<rect width='30' height='20' fill='#fff'/>"+
+        "<rect width='7.5' height='20' fill='#d52b1e'/><rect x='22.5' width='7.5' height='20' fill='#d52b1e'/>"+
+        "<path d='M15 4l1.2 3 2.4-1-.9 3.2 2.3.4-2.6 2.1.5 1.6-2.7-.7.3 3.4h-1l.3-3.4-2.7.7.5-1.6L10 9.6l2.3-.4L11.4 6l2.4 1Z' fill='#d52b1e'/>"),
+  ISR:F("<rect width='30' height='20' fill='#fff'/>"+
+        "<rect y='2.6' width='30' height='2.4' fill='#0038b8'/><rect y='15' width='30' height='2.4' fill='#0038b8'/>"+
+        "<path d='M15 6.6l3.2 5.6h-6.4Zm0 6.8l3.2-5.6h-6.4Z' fill='none' stroke='#0038b8' stroke-width='.9'/>"),
+  MNG:F(faixasV("#c4272f","#015197","#c4272f")+
+        "<circle cx='5' cy='6.4' r='1.5' fill='#f9cf02'/>"+
+        "<path d='M3.6 9.2h2.8v1H3.6Zm0 2h2.8v1H3.6Zm0 2h2.8v1H3.6Z' fill='#f9cf02'/>"),
+  // 13 listras e um cantão: o número certo importa mais que as 50 estrelas
+  USA:F("<rect width='30' height='20' fill='#fff'/>"+
+        Array.from({length:7},(_,i)=>`<rect y='${i*20/13*2}' width='30' height='${20/13}' fill='#b22234'/>`).join("")+
+        "<rect width='12' height='10.8' fill='#3c3b6e'/>"+
+        "<g fill='#fff'>"+[2,5,8].flatMap(y=>[2,5,8,11].map(x=>
+          `<circle cx='${x}' cy='${y}' r='.7'/>`)).join("")+"</g>")
+};
+
+/* silhueta com faixa tonal realista, para o tingimento ser julgado honestamente */
+const foto=luz=>"data:image/svg+xml,"+encodeURIComponent(
+`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 280'>
+<defs><radialGradient id='b' cx='50%' cy='22%' r='78%'>
+<stop offset='0' stop-color='hsl(215 18% ${18+luz*22}%)'/><stop offset='1' stop-color='hsl(215 22% ${5+luz*8}%)'/></radialGradient>
+<radialGradient id='p' cx='42%' cy='34%' r='62%'>
+<stop offset='0' stop-color='hsl(28 26% ${46+luz*30}%)'/><stop offset='1' stop-color='hsl(24 24% ${22+luz*18}%)'/></radialGradient></defs>
+<rect width='200' height='280' fill='url(%23b)'/>
+<path d='M28 280c0-56 33-88 72-88s72 32 72 88z' fill='hsl(220 20% ${10+luz*10}%)'/>
+<ellipse cx='100' cy='104' rx='40' ry='50' fill='url(%23p)'/>
+<path d='M60 92c2-32 20-46 40-46s38 14 40 46c-6-16-22-24-40-24s-34 8-40 24z' fill='hsl(220 18% ${7+luz*8}%)'/>
+<ellipse cx='86' cy='104' rx='4.5' ry='3' fill='hsl(220 16% ${12+luz*10}%)'/>
+<ellipse cx='114' cy='104' rx='4.5' ry='3' fill='hsl(220 16% ${12+luz*10}%)'/></svg>`);
+
+/* nome curto e nome longo ocupam a mesma caixa óptica. Razão, não tamanho: quem
+   aplica é a .carta, então as DUAS faces encolhem juntas. */
+const escNick=n=>n.length<=6?1:n.length<=9?.825:n.length<=12?.675:.5625;
+
+const frente=(d,o={})=>`<div class="c ${d.t} ${o.semFoto?"sfoto":""}">
+  <div class="foto" style="background-image:url('${foto(o.luz??.5)}')"></div>
+  <div class="tinta"></div><div class="vinheta"></div>
+  <div class="fio"></div><div class="placa"></div>
+  <div class="ovr">${d.o}<small>OVERALL</small></div>
+  ${d.p&&BANDEIRA[d.p]?`<div class="ed" style="background-image:url('${BANDEIRA[d.p]}')" title="${d.p}"></div>`:""}
+  <div class="nick">${d.n}</div>
+  <div class="func">${d.f}</div>
+  <div class="meta"><span>${d.f2||""}</span><span>${d.tm}</span></div>
+  <div class="grao"></div>${d.t==="th"?'<div class="holo"></div>':""}</div>`;
+
+const verso=d=>{
+  const linhas=d.s?d.s.map(([k,lab,peso,v])=>
+    `<div class="st"><i>${lab}</i><em>${peso?String(peso).replace("0.","."):""}</em><b>${v}</b>
+      <div class="trilho"><u style="width:${v}%"></u></div></div>`).join("")
+    /* Coringa não tem receita: é polivalente por definição. O verso diz isso em
+       vez de mostrar barras vazias. */
+    :`<div class="st"><i>polivalente — sem receita dominante</i><em></em><b>—</b></div>`;
+  return `<div class="c verso ${d.t}">
+  <div class="vfio"></div><div class="vfaixa"></div>
+  <div class="vnick">${d.n}</div>
+  <div class="vovr"><b>${d.o}</b><small>RTG ${d.r.toFixed(2)}</small></div>
+  <div class="vestilo"><small>PLAYSTYLE</small><b>${d.e}</b></div>
+  <div class="vstats">${linhas}</div>
+  <div class="vrod"><b>${d.ev}</b><span>${d.an} · ${COLOC[d.c]||d.c}</span></div>
+  <div class="grao"></div>${d.t==="th"?'<div class="holo"></div>':""}</div>`;
+};
+
+const carta=(d,o={})=>{const l=o.larg||196;return `<div>
+  <div class="carta" style="width:${l}px;--nick-esc:${escNick(d.n)}">
+    <div class="giro" tabindex="0" role="button" aria-label="Carta de ${d.n}, virar">
+      ${frente(d,o)}${verso(d)}</div></div>
+  <div class="rot" style="width:${l}px">${o.rot||d.f+(d.f2?" / "+d.f2:"")+" · "+d.e}</div></div>`;};
+
+const põe=(id,lista)=>document.getElementById(id).innerHTML=
+  lista.map(([d,o])=>carta(d,o||{})).join("");
+const P=n=>D.find(d=>d.n===n&&!d.id);
+const Pid=i=>D.find(d=>d.id===i);
+
+põe("fTiers",[[P("donk"),{luz:.55}],[P("s1mple"),{luz:.45}],[P("device"),{luz:.5}],
+  [P("gla1ve"),{luz:.4}],[P("drop"),{luz:.35}]]);
+/* as duas eras do donk lado a lado: mesma pessoa, campeonatos diferentes */
+põe("fVerso",[[Pid("donk_kato24"),{rot:"donk · Katowice 2024"}],[P("donk"),{rot:"donk · Budapest 2025"}],
+  [P("Xyp9x"),{rot:"Astralis 2019"}],[Pid("apEX_envy"),{rot:"EnVyUs 2015"}]]);
+põe("fTam",[[P("donk"),{larg:250,rot:"roleta · 250px"}],[P("donk"),{larg:196,rot:"padrão · 196px"}],
+  [P("donk"),{larg:120,rot:"lista · 120px"}]]);
+põe("fContraste",[[P("device"),{luz:1,rot:"foto muito clara"}],[P("device"),{luz:.5,rot:"foto média"}],
+  [P("device"),{luz:0,rot:"foto muito escura"}]]);
+põe("fNomes",[[P("drop"),{rot:"4 letras"}],[P("s1mple"),{rot:"6 letras"}],
+  [P("electroNic"),{rot:"10 letras"}],[P("pashaBiceps"),{rot:"11 letras"}],
+  [P("olofmeister"),{rot:"11 letras"}]]);
+põe("fSemFoto",[[P("device"),{rot:"com foto"}],[P("device"),{semFoto:1,rot:"sem foto (hoje: todos)"}],
+  [P("donk"),{semFoto:1,rot:"sem foto · holo"}]]);
+põe("fCasos",[[P("gla1ve"),{rot:"IGL · role2 nulo"}],[P("chopper"),{rot:"IGL · fp 2 · 4 stats"}],
+  [Pid("NiKo_g2"),{rot:"Coringa · sem receita"}],[P("olofmeister"),{rot:"clutch 6 · barra mínima"}]]);
+
+/* as 14 bandeiras: ampliadas para julgar o desenho, e no tamanho real (14px) */
+document.getElementById("fBandeiras").innerHTML=
+  `<div class="fila" style="gap:12px">`+Object.keys(BANDEIRA).map(c=>
+    `<div style="text-align:center">
+      <div style="width:66px;aspect-ratio:3/2;background:url('${BANDEIRA[c]}') 50%/cover;
+        border-radius:2px;box-shadow:0 0 0 1px rgba(255,255,255,.22)"></div>
+      <div style="width:66px;margin-top:7px;display:flex;justify-content:center">
+        <div style="width:14px;aspect-ratio:3/2;background:url('${BANDEIRA[c]}') 50%/cover;
+          border-radius:1px;box-shadow:0 0 0 1px rgba(255,255,255,.22)"></div></div>
+      <div class="rot" style="margin-top:5px">${c}</div></div>`).join("")+`</div>`;
+
+document.addEventListener("click",e=>{
+  const g=e.target.closest(".giro");if(g)g.parentElement.classList.toggle("virada");});
+document.addEventListener("keydown",e=>{
+  if(e.key!=="Enter"&&e.key!==" ")return;
+  const g=e.target.closest(".giro");if(g){e.preventDefault();g.parentElement.classList.toggle("virada");}});
+</script>
+</body>
+</html>
