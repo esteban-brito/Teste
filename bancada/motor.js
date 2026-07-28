@@ -13,6 +13,10 @@ const EXPORTS=[
   "avaliarJogador","aplicarAvaliacaoContextual","distribuirRoles","quimicaComposicao","combatProfile","exposureProfile","preservationValue","tradeContextProfile","assistContextProfile","fallenAngelsComponents","fallenAngels",
   "afinidades","roleAfinidade","rolePairReality","secondaryScore","roleStyleReality","STYLE_LABEL","styleScoreTable","nmOVR",
   "CFG_AVALIACAO","NM_DEF",
+  // tabelas de função: o checador de paridade compara valor a valor e ainda prova
+  // o comportamento sob tabela CALIBRADA (é o que o calibrador muta)
+  "ROLE_PERFIL","ROLE_CONTRA","IGL_ROLE_AFIN","ROLE_RULES","ROLES_COMBATE",
+  "classificar","roleSecundarioSeguro",
   // identidade e balanceamento: a bancada de perfis precisa ler playstyle e config sem duplicar tabelas
   "PLAYSTYLES","PLAYSTYLE_IDS","STYLE_ID","styleAgr","styleTraits","tierDe","MAPAS_POOL",
   "CFG_SIM","CFG_FA","CFG_CAMP","PERFIL_TIER","logistica","rndF",
