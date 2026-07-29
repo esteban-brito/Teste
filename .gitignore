@@ -17,6 +17,9 @@ __pycache__/
 /tmp/
 scratchpad/
 
+# Capturas do comparador visual: a prova é entre duas execuções, não versionada
+/visual-*/
+
 # Corpus IFCS: manifestos podem ser versionados; demos e derivados são externos
 /fidelity-corpus/raw/
 /fidelity-corpus/processed/
