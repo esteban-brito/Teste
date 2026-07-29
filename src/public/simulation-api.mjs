@@ -9,9 +9,9 @@ import {createMulberry32} from "../domain/simulation/random-source.mjs";
 import {formaDoDia as playerForm,sortearFormaCampanha as drawCampaignForm}
   from "../domain/simulation/player-form.mjs";
 import {forcaDoDia as teamForm} from "../domain/simulation/team-form.mjs";
-import {combatProfile} from "../domain/simulation/combat-profile.mjs";
+import {combatProfile as buildCombatProfile} from "../domain/simulation/combat-profile.mjs";
 import {skillDuelo,fragPeso} from "../domain/simulation/duel-weights.mjs";
-import {exposureProfile} from "../domain/simulation/exposure-profile.mjs";
+import {exposureProfile as buildExposureProfile} from "../domain/simulation/exposure-profile.mjs";
 import {preservationValue} from "../domain/simulation/preservation-value.mjs";
 import {tradeContextProfile} from "../domain/simulation/trade-context.mjs";
 import {assistContextProfile} from "../domain/simulation/assist-context.mjs";
@@ -23,17 +23,27 @@ import {TELEMETRY_SCHEMA_VERSION,telemetryTeam}
   from "../domain/simulation/simulation-telemetry.mjs";
 import {BUY,LOSS_BONUS,RECOMPENSA_ARMA,TETO_GRANA,PREMIO_VITORIA,PREMIO_OBJETIVO,
   decidirCompra,pagarCompra,compraDoTime} from "../domain/simulation/economy.mjs";
-import {fallenAngels as calculateRating} from "../domain/simulation/fallen-angels.mjs";
+import {fallenAngels as calculateRating,fallenAngelsComponents as calculateRatingComponents}
+  from "../domain/simulation/fallen-angels.mjs";
 import {simularMapa as runMap} from "../domain/simulation/map-simulation.mjs";
 import {simularSerie as runSeries} from "../domain/simulation/series-simulation.mjs";
 import {CFG_SIM,CFG_CAMP,CFG_FA,MAPA_LADO,MAPAS_POOL}
   from "../domain/simulation/simulation-config.mjs";
+import {coletarMarcos,atualizarRecordes,manchete,narrativaMVP}
+  from "../domain/narrative/game-memory.mjs";
 
 export {CFG_SIM,CFG_CAMP,CFG_FA,CFG_QUIMICA,MAPA_LADO,MAPAS_POOL,
   BUY,LOSS_BONUS,RECOMPENSA_ARMA,TETO_GRANA,PREMIO_VITORIA,PREMIO_OBJETIVO,
   TELEMETRY_SCHEMA_VERSION};
 
 export const logistica=(left,right,divisor)=>1/(1+Math.pow(10,(right-left)/divisor));
+export const combatProfile=player=>buildCombatProfile(player,CFG_SIM);
+export const exposureProfile=player=>buildExposureProfile(player,CFG_SIM);
+export const styleAgr=player=>styleAggression(player,CFG_SIM.STYLE_AGR);
+export const fallenAngels=event=>calculateRating(event,CFG_FA);
+export const fallenAngelsComponents=event=>calculateRatingComponents(event,CFG_FA);
+export {preservationValue,tradeContextProfile,assistContextProfile,
+  coletarMarcos,atualizarRecordes,manchete,narrativaMVP};
 
 export function createSimulationSession({pool=POOL,seed,cfg=CFG_SIM,cfgCamp=CFG_CAMP,
   cfgFa=CFG_FA,cfgQuimica=CFG_QUIMICA}={}){
@@ -42,7 +52,7 @@ export function createSimulationSession({pool=POOL,seed,cfg=CFG_SIM,cfgCamp=CFG_
   const sideMean=computeSideMean(players,cfg);
   const combatMeans=computeCombatMeans(players,
     {preservationValue,tradeContextProfile,assistContextProfile});
-  const profileFor=player=>combatProfile(player,cfg);
+  const profileFor=player=>buildCombatProfile(player,cfg);
   const prepDependencies={
     gaussian:rng.gaussF,
     playerForm:(player,gaussian)=>playerForm(player,gaussian,cfg),
@@ -51,7 +61,7 @@ export function createSimulationSession({pool=POOL,seed,cfg=CFG_SIM,cfgCamp=CFG_
     mapMultiplier:(player,map)=>mapMultiplier(player,map,cfg),
     sideAffinity:player=>sideAffinity(player,sideMean,cfg),
     styleAggression:player=>styleAggression(player,cfg.STYLE_AGR),
-    exposureProfile:player=>exposureProfile(player,cfg),
+    exposureProfile:player=>buildExposureProfile(player,cfg),
     preservationValue,tradeContextProfile,assistContextProfile,combatProfile:profileFor
   };
   const roundDependencies={cfg,random:rng.rndF,gaussian:rng.gaussF,...combatMeans,
