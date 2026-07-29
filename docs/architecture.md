@@ -45,7 +45,7 @@ não autorizam balanceamento implícito.
 ATRIBUTOS + TIMES_DEF
         |
         v
-PRISMA: afinidade -> role primário/secundário -> subarquétipo
+PRISMA: afinidade -> role primário/secundário -> papel de combate do IGL
         |
         v
 ZÊNITE: playstyle + OVR

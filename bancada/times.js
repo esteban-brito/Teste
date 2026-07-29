@@ -66,7 +66,7 @@ function validateTeamDef(team){
   if(igls>1)warn(`${team.nome}: ${igls} IGLs marcados`);
 
   if(team.coach&&!team.coachPais){
-    warn(`${team.nome}: treinador "${team.coach}" sem coachPais inline (caindo no PAISES_MAP)`);
+    warn(`${team.nome}: treinador "${team.coach}" sem coachPais inline (caindo no PAIS_TREINADOR)`);
   }
 }
 

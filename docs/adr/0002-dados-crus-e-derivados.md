@@ -21,7 +21,7 @@ motores:
   identidade/país do treinador;
 - mapas e demais metadados estáticos quando forem extraídos em etapa própria.
 
-Role, role secundário, playstyle, subarquétipo, OVR do jogador, característica
+Role, role secundário, playstyle, OVR do jogador, característica
 e OVR do card do treinador, química e força são derivados pela API do domínio.
 O nome e o país do treinador são dados crus; seus efeitos esportivos não são.
 

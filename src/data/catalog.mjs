@@ -5,7 +5,8 @@
    existentes não existiam — `time`, `campeonato+ano` e `país completo` — porque
    procurou num arquivo o que era pergunta sobre o projeto, chutou o nome do
    campo (`campeonato`, quando é `camp`) e tratou "não achei" como "não existe".
-   Os três estavam em `TIMES_DEF` e `PAISES_MAP`.
+   À época, os três estavam em `TIMES_DEF` e `PAISES_MAP`. Hoje os países
+   vivem em `PAIS_JOGADOR` e `PAIS_TREINADOR`, com chaves declaradas.
 
    Este arquivo é a resposta única a essa pergunta, e `tools/check-data-catalog.js`
    PROVA cada alegação contra a realidade. Um número aqui que não bate com o motor
@@ -68,7 +69,7 @@ export const JOGADOR_CRU={
 export const ELENCO_CRU={
   nome:      {tipo:"string",  cobertura:17},
   cor:       {tipo:"hex",     cobertura:17, nota:"identidade visual do time"},
-  camp:      {tipo:"string",  cobertura:17, nota:"EMPACOTA evento e ano: 'IEM Katowice 2024'. Fase 1 do P2 separa em evento+ano."},
+  camp:      {tipo:"string",  cobertura:17, nota:"EMPACOTA evento e ano: 'IEM Katowice 2024'. Separação adiada até existir consumidor real após a modularização da UI."},
   colocacao: {tipo:"enum",    cobertura:17},
   jogadores: {tipo:"ID[5]",   cobertura:17, nota:"referencia jogadores pelo ID cru"},
   coach:     {tipo:"string",  cobertura:15, nota:"2 elencos não têm treinador (EnVyUs, Virtus.pro)"},
@@ -89,7 +90,7 @@ export const JOGADOR_DERIVADO={
   style:      "ZÊNITE — tabela completa da classificação",
   estrela:    "ZÊNITE — exatamente ovr>=20"
   /* `pais` NÃO entra aqui: ele é cru (ver JOGADOR_CRU). O POOL apenas o COMPLETA
-     a partir do PAISES_MAP quando o registro não traz — isso é projeção de uma
+     a partir de PAIS_JOGADOR quando o registro não traz — isso é projeção de uma
      segunda fonte, não cálculo do domínio. O checador reprova a confusão. */
 };
 
