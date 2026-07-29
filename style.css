@@ -226,8 +226,11 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 /* luz de topo: a aresta que qualquer carta impressa pega */
 .c-vinheta::before{content:"";position:absolute;inset:0;
   background:linear-gradient(180deg,rgba(255,255,255,.16),transparent 18%)}
-/* grão de filme: quebra o degradê perfeito, que é o que denuncia CSS puro */
-.c-grao{position:absolute;inset:0;z-index:6;pointer-events:none;opacity:.055;mix-blend-mode:overlay;
+/* Grão de filme: quebra o degradê perfeito, que é o que denuncia CSS puro.
+   SEM mix-blend-mode. O blend obrigava cada carta a virar uma camada própria e
+   forçava recomposição do que estava atrás: custava 7 fps com 6 cartas na tela.
+   Em opacidade baixa sobre fundo escuro o resultado é praticamente o mesmo. */
+.c-grao{position:absolute;inset:0;z-index:6;pointer-events:none;opacity:.05;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E")}
 
 /* PLACA e FIO compartilham a MESMA clip-path; o fio é um bloco 2px mais alto,
@@ -408,8 +411,12 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 /* ╔══════════════ OVERLAYS DE TORNEIO · suíça e playoffs ══════════════╗ */
 .overlay[hidden]{display:none}
 .is-hidden{display:none!important}
+/* SEM backdrop-filter. O fundo é #080b10 OPACO, então o desfoque processava, a
+   cada quadro e em tela cheia, um fundo que ninguém consegue ver. Medido em
+   29/07/2026: era ele, sozinho, que segurava a partida ao vivo em 31 fps — sem
+   ele a mesma cena roda a 60. */
 .overlay{position:fixed;inset:0;z-index:50;background:#080b10;
-  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;flex-direction:column;animation:overlayIn .28s var(--ease)}
+  display:flex;flex-direction:column;animation:overlayIn .28s var(--ease)}
 @keyframes overlayIn{from{opacity:0;transform:scale(.99)}to{opacity:1;transform:scale(1)}}
 .overlay.fechando{animation:overlayOut .2s var(--ease) forwards;pointer-events:none}
 @keyframes overlayOut{to{opacity:0;transform:scale(.992)}}
@@ -755,17 +762,15 @@ a.rosterlink .rl-s{font-family:'Barlow Semi Condensed';font-weight:600;font-size
   color:var(--dim);text-transform:none}
 a.rosterlink .rl-ar{margin-left:auto;color:var(--dim);font-size:1.4rem;line-height:1;flex:none;transition:color .15s,transform .15s}
 a.rosterlink:hover .rl-ar{color:var(--accent);transform:translateX(3px)}
-/* — ARENA VIVA: dois feixes de refletor que varrem o palco lentíssimo (GPU: só transform).
-   html::before está livre (body::before/::after = grade + vinheta). Estático no mobile/reduced-motion. — */
-html::before{content:"";position:fixed;left:50%;top:-46vmax;width:220vmax;height:220vmax;z-index:-3;pointer-events:none;
-  transform-origin:50% 0;transform:translateX(-50%) rotate(-7deg);
-  opacity:.55;
+/* — ARENA: dois feixes de refletor sobre o palco.
+   ERAM 220vmax girando sem parar — numa tela 1080p, cerca de 17 milhões de
+   pixels de degradê cônico repintados continuamente. Custavam 8 fps parado, com
+   6 cartas na tela, e o movimento era lento demais para alguém notar. Agora são
+   fixos: o clima fica, a conta some. — */
+html::before{content:"";position:fixed;inset:-10% 0 0;z-index:-3;pointer-events:none;opacity:.55;
   background:
-    conic-gradient(from 176deg at 50% 0%,transparent 0 40.5%,rgba(255,110,47,.11) 45.5%,transparent 50.5%),
-    conic-gradient(from 156deg at 50% 0%,transparent 0 43.5%,rgba(57,211,255,.1) 47.5%,transparent 51.5%);
-  animation:arenaSweep 46s ease-in-out infinite alternate}
-@keyframes arenaSweep{to{transform:translateX(-50%) rotate(7deg)}}
-@media(max-width:640px){html::before{animation:none}} /* iPhone: feixes fixos (zero custo contínuo) */
+    radial-gradient(60% 55% at 22% 0%,rgba(255,110,47,.13),transparent 70%),
+    radial-gradient(60% 55% at 78% 0%,rgba(57,211,255,.11),transparent 70%)}
 body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.55;
   background-image:linear-gradient(rgba(124,156,196,.045) 1px,transparent 1px),
     linear-gradient(90deg,rgba(124,156,196,.045) 1px,transparent 1px);
@@ -875,7 +880,7 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,107,42,.45)}
 
 /* Movimento reduzido: silencia as animações contínuas desta camada */
 @media(prefers-reduced-motion:reduce){
-  .hud .v.bump,html::before,.picks .deal .cfront::before{animation:none!important}
+  .hud .v.bump,.picks .deal .cfront::before{animation:none!important}
   .card:hover,.coachcard:hover,.picks .card:hover,.picks .coachcard:hover,
   button.ghost:hover{transform:none!important}
 }
