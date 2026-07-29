@@ -55,35 +55,24 @@ O `npm run check` também compara o módulo estatístico compartilhado com as
 fórmulas legadas em 5.464 amostras determinísticas, incluindo vazios, extremos,
 quantis, imutabilidade da entrada e intervalo de confiança.
 
-As fronteiras puras R5.4 também fazem parte de `npm run check`: `combatProfile`
-é comparado em 261 perfis reais, wrappers e fallbacks; as onze parcelas de
-`fallenAngels` são comparadas em 2.048 eventos determinísticos. O golden e uma
-comparação pareada de desenvolvimento devem continuar exatamente idênticos em
-qualquer refatoração dessas fronteiras.
+Durante P2, checadores diferenciais compararam `combatProfile` (261 casos),
+`fallenAngels` (2.048 eventos), `exposureProfile` (175 casos),
+`preservationValue`, `tradeContextProfile` e `assistContextProfile` (174 casos
+cada), além de todas as fronteiras de avaliação e simulação. Eles foram
+aposentados quando a segunda implementação saiu de `game.js`: depois disso,
+comparar módulo e adapter seria comparar o módulo consigo mesmo.
 
-Depois de R5.5, a paridade de `combatProfile` também exige explicitamente que
-IGL use a função de combate classificada e que não-IGL preserve a primária. Os
-goldens Node e do laboratório foram atualizados somente após documentar as
-timelines alteradas em `docs/r5-effective-role-balance-2026-07-23.md`.
+A proteção permanente ficou distribuída entre:
 
-R5.6 acrescentou `exposureProfile` ao mesmo gate: 175 perfis reais, wrappers e
-fallbacks devem produzir pesos positivos, finitos e idênticos entre o adapter
-legado e o módulo puro. O teste também prova que a função efetiva diferencia
-IGL/Entry de IGL/AWPer no primeiro contato.
+- `tools/check-public-evaluation-api.js` e `check-public-simulation-api.js`, que
+  exercitam composição, identidade, determinismo e sessões isoladas;
+- `tools/check-random-source-contract.js`, com vetores Mulberry32 congelados;
+- snapshot do elenco e goldens completos de mapa/campanha;
+- regressões funcionais, auditoria de componentes, benchmarks estatísticos e E2E.
 
-O candidato de save acrescentou `preservationValue`: 174 entradas reais,
-wrappers e fallbacks devem produzir o mesmo valor finito e não negativo no
-módulo e no adapter. Esse contrato não autoriza interpretar o valor como arma ou
-inventário individual.
-
-R5.7a acrescentou `tradeContextProfile`: 174 entradas devem preservar por
-paridade os sinais finitos de prontidão e possibilidade de troca. O teste não
-credita trade ou KAST; essa decisão continua pertencendo ao evento do round.
-
-R5.7b acrescentou `assistContextProfile`: 174 entradas reais, wrappers e
-fallbacks devem preservar por paridade o sinal finito de utilidade. O teste não
-decide a assistência nem concede KAST; apenas protege a fronteira pura usada
-pelo evento.
+Os contratos semânticos continuam: IGL usa a função de combate classificada;
+não-IGL preserva a primária; preservação não significa inventário; prontidão de
+trade e utilidade disponível não concedem trade, assistência ou KAST sozinhas.
 
 `npm run audit:r5:rating` reconstrói as onze parcelas do FALLEnANGELs a partir
 da telemetria e exige igualdade com o rating final de cada player-map. A
@@ -99,10 +88,9 @@ determinístico e não reporta o candidato no holdout de auditoria.
 - A CI usa Node 20. Desenvolvedores em outra versão devem registrar divergências.
 
 O `docs/baseline.md` é um retrato histórico: sua contagem de 13 suítes corresponde
-à captura de 19 de julho de 2026, não à bancada atual. A última validação completa
-registrada, em 20 de julho de 2026, aprovou 17/17 suítes em 173,7 s, incluindo
-45.900 mapas e 941.838 rounds. Isso confirma regressão; não é
-uma nota IFCS oficial.
+à captura de 19 de julho de 2026, não à bancada atual. A validação final de P2,
+em 28 de julho de 2026, aprovou 24/24 suítes em 168,3 s. Isso confirma regressão;
+não é uma nota IFCS oficial.
 
 ## Validação do extrator IFCS
 

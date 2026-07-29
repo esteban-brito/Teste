@@ -174,5 +174,6 @@ o golden completo do simulador continua protegendo os mapas internamente.
 
 Busca, filtros, comparação e exportação pertencem à interface/aplicação.
 Percentis e intervalos são calculados pelo módulo estatístico puro a partir das
-amostras preservadas pela aplicação. Uma futura extração precisa preservar IDs,
-agenda, lados, seeds e resultados aprovados antes de remover os loaders legados.
+amostras preservadas pela aplicação. Qualquer nova extração precisa preservar
+IDs, agenda, lados, seeds e resultados aprovados antes de remover o código de
+origem da aplicação ou do sandbox.
