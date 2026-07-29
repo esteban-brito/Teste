@@ -37,6 +37,7 @@ export const PLAYSTYLES=Object.fromEntries(PLAYSTYLE_IDS.map(id=>
   [id,{label:STYLE_KEYS[id],traits:STYLE_TRAITS[id]}]));
 export {styleId};
 export const STYLE_ID=styleId;
+export const STYLE_RECIPE=id=>NM_DEF[STYLE_KEYS[id]];
 
 export function styleLabel(value){const id=styleId(value);return id==="joker"?"Coringa":(STYLE_KEYS[id]||id);}
 // Alias temporário para o contrato do sandbox durante a migração da Fase 5.

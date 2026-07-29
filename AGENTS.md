@@ -48,16 +48,18 @@ catálogo não menciona o dado, aí sim ele não existe.
 
 ## Fontes de verdade atuais
 
-- `docs/p2-modularizacao-2026-07-28.md`: **ponto de retomada do ciclo P2** (modularização
-  por paridade) — o que já saiu, o que falta, os contratos descobertos, o mecanismo de
-  prova de consumo de RNG e as armadilhas. **Leia antes de continuar a extração.**
+- `docs/p2-modularizacao-2026-07-28.md`: **relatório final do ciclo P2** (modularização
+  por paridade) — o que saiu, os contratos descobertos, o mecanismo de prova de
+  consumo de RNG e as armadilhas. **Leia antes de alterar os módulos extraídos.**
 - `src/data/catalog.mjs`: **índice de todo dado do projeto** — fonte, chave, cobertura e a
   fronteira cru × derivado do ADR 0002. Comece por aqui ao procurar um dado.
 - `docs/project-context.md`, seção **2-bis**: estado do ciclo de fidelidade da
   simulação (26-27/07/2026) — contratos novos, pendências abertas com causa medida
   e armadilhas. **Leia antes de tocar no simulador.**
-- `game.js`, antes de `// === UI START ===`: motores e dados executáveis.
-- `game.js`, depois do marcador: aplicação, estado e interface do jogo.
+- `src/public/evaluation-api.mjs`: composição pública de dados, avaliação e química.
+- `src/public/simulation-api.mjs`: composição pública de RNG, simulação e narrativa.
+- `game.js`: aplicação, estado, áudio e interface; não contém motores ou dados crus.
+- `bancada/motor.js`: ponte CommonJS fina para a mesma API pública.
 - `sandbox.html`: interface e algoritmo do calibrador.
 - `bancada/roster-snapshot.json`: classificação aprovada de cada ID de jogador.
 - `bancada/fidelity-score.js`: matemática e agregação do IFCS.
@@ -67,7 +69,7 @@ catálogo não menciona o dado, aí sim ele não existe.
   e operacional do IFCS; não substituem os contratos executáveis acima.
 - `elencos.html`: artefato gerado; não editar os dados embutidos manualmente.
 
-Essa disposição é legado. O destino arquitetural está em `docs/architecture.md`.
+A fronteira arquitetural vigente está detalhada em `docs/architecture.md`.
 
 **Quanto se pode andar de uma vez (revisto em 28/07/2026).** A regra antiga — "não antecipe
 várias etapas numa única mudança" — protegia contra mudança *não medida*, mas na prática também

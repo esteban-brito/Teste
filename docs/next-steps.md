@@ -430,11 +430,11 @@ já foram entregues em R2.
 
 ### P2 — modularização por paridade
 
-> **EM EXECUÇÃO desde 28/07/2026.** Fases 0–6 concluídas; Fase 7 (entrypoint do
-> jogo e último adapter Node) é a etapa final.
-> O estado detalhado, os contratos descobertos e o próximo passo concreto estão em
+> **CONCLUÍDO em 28/07/2026.** As Fases 0–7 foram fechadas sem alteração dos
+> resultados aprovados, do RNG ou do balanceamento. Jogo, sandbox, worker e
+> bancada usam a mesma API pública; o bloco duplicado de `game.js` foi removido.
+> O relatório detalhado e os contratos descobertos estão em
 > **`docs/p2-modularizacao-2026-07-28.md`** — leia-o antes de retomar.
-> Decisão do responsável: executar o P2 inteiro; as cartas ficam paradas até o fim.
 
 - aceitar ou revisar ADRs 0002 e 0004;
 - extrair primeiro APIs puras de avaliação;

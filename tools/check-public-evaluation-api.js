@@ -11,7 +11,7 @@ async function main(){
     assert.ok(A[name]&&typeof A[name]==="object",`${name} ausente da API pública`));
   ["avaliarJogador","aplicarAvaliacaoContextual","ovrUnificado","nmOVR","distribuirRoles",
     "forcaTime","rolePairReality","roleStyleReality","roleAfinidade","secondaryScore",
-    "styleScoreTable","STYLE_LABEL"].forEach(name=>assert.equal(typeof A[name],"function",`${name} ausente da API pública`));
+    "styleScoreTable","STYLE_LABEL","STYLE_RECIPE"].forEach(name=>assert.equal(typeof A[name],"function",`${name} ausente da API pública`));
   A.TEAMS.forEach(team=>team.jogadores.forEach(card=>assert.equal(card._eng,A.POOL[card._eng.id],`${team.nome}/${card.nick}: _eng perdeu identidade`)));
   [...A.PLAYSTYLE_IDS,"joker"].forEach(style=>
     assert.equal(A.styleLabel(style),A.STYLE_LABEL(style),`rótulo público de ${style} divergiu`));

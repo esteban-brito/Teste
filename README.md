@@ -63,7 +63,11 @@ da carta continua escolhendo/posicionando normalmente. As cartas usam proporçã
 draft9-0/
 ├── index.html            ← página principal do jogo
 ├── style.css             ← todos os estilos (tema, cartas, roleta, overlays)
-├── game.js               ← 6 motores + UI (toda a lógica)
+├── game.js               ← aplicação, estado e UI
+├── src/
+│   ├── data/             ← dados crus catalogados
+│   ├── domain/           ← avaliação, química, simulação, narrativa e estatística
+│   └── public/           ← APIs públicas compartilhadas pelos consumidores
 ├── elencos.html          ← base de elencos (página standalone)
 ├── sandbox.html          ← bancada de tuning + calibrador inteligente
 ├── calibrador-worker.js  ← Web Worker do calibrador (busca em paralelo)
@@ -73,7 +77,7 @@ draft9-0/
 ├── package.json · eslint.config.mjs   ← scripts e lint (dev; sem deps de runtime)
 ├── .github/workflows/    ← CI: valida (check + lint + bench) e faz deploy no Pages
 ├── bancada/              ← suíte de validação dos motores (Node)
-│   ├── motor.js · common.js       ← carregam os motores do game.js sem DOM
+│   ├── motor.js · common.js       ← ponte CommonJS para a API pública + utilitários
 │   ├── run.js                     ← roda a suíte inteira
 │   ├── times.js · realismo.js · rating.js   ← lint de dados + fidelidade
 │   ├── roster.js                  ← regenera elencos.html
@@ -92,9 +96,9 @@ draft9-0/
 
 ## Os 6 motores
 
-O `game.js` é dividido em duas camadas: **motor** (avaliação + simulação) e
-**UI** (roleta, elenco, torneio). Os motores formam um pipeline — a saída de
-um alimenta o próximo:
+O `game.js` contém a aplicação e a UI (roleta, elenco e torneio). Os motores
+vivem em `src/domain/` e são compostos por `src/public/simulation-api.mjs`; jogo,
+sandbox, worker e bancada usam essa mesma API. O pipeline é:
 
 ```
 atributos crus
