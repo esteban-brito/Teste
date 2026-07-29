@@ -37,7 +37,8 @@ parcelas somáveis; `player-form.mjs` descreve a forma individual e de campanha;
 química; `duel-weights.mjs` separa vitória do duelo de volume de frag;
 `economy.mjs` preserva decisão coletiva, loadout individual, carrego e drop de
 arma; e `map-simulation.mjs` orquestra troca de lados, OT, economia, combate,
-telemetria e placar de cada round por dependências explícitas. Enquanto
+telemetria e placar de cada round por dependências explícitas;
+`series-simulation.mjs` fecha séries sem repetir mapas. Enquanto
 o entrypoint clássico não migrar para módulos,
 `game.js` mantém adapters legados protegidos por paridade exata. Essas fronteiras
 não autorizam balanceamento implícito.
