@@ -34,11 +34,11 @@ O destino já estava decidido nas ADRs **0002**, **0004** e **0005** e sequencia
 | 2 | PRISMA · ZÊNITE (avaliação) | **concluída** — 5 módulos |
 | 3 | SINAPSE (química) | **concluída** — 1 módulo |
 | 4 | simulação, economia, rating | **concluída** — 6 de 6 fatias |
-| 5 | API pública + 6 consumidores Node | **em andamento** — 3 de 6 migrados |
-| 6 | worker e sandbox | pendente |
-| 7 | entrypoint do jogo, fim da duplicação | pendente |
+| 5 | API pública de avaliação + 3 consumidores Node | **concluída** |
+| 6 | API pública de simulação, worker e sandbox | **em andamento** — RNG extraído |
+| 7 | entrypoint do jogo + adapter Node, fim da duplicação | pendente |
 
-`npm run check` saiu de **19 para 33 checadores**. `npm run validate` fecha 24/24.
+`npm run check` saiu de **19 para 34 checadores**. `npm run validate` fecha 24/24.
 O motor executável de `game.js`, `roster-snapshot.json`, `simulation-golden.json` e
 `campaign-golden.json` seguem **intocados** — extração não muda resultado.
 
@@ -55,6 +55,7 @@ src/domain/chemistry/team-chemistry.mjs       química, forcaTime, treinador
 src/domain/simulation/player-form.mjs         MARÉ: formaDoDia, forma de campanha
 src/domain/simulation/team-form.mjs           MARÉ: forcaDoDia e consistência do time
 src/domain/simulation/duel-weights.mjs        skillDuelo, fragPeso
+src/domain/simulation/random-source.mjs       Mulberry32 isolado por sessão
 src/domain/simulation/economy.mjs             COFRE: decisão, carrego, drop e pagamento
 src/domain/simulation/map-simulation.mjs      PÓLVORA: mapa completo round a round
 src/domain/simulation/series-simulation.mjs   PÓLVORA: série sem repetição de mapas
@@ -128,16 +129,15 @@ identidade do vencedor, mapas únicos, próxima amostra do RNG e ordem das chama
 
 ## 6. Próximo passo concreto
 
-Continuar a **Fase 5**. `src/public/evaluation-api.mjs` já recompõe `POOL` e `TEAMS`
-com paridade exata, preserva a identidade de `_eng` e expõe as 30 propriedades
-calibráveis sem criar uma cópia divergente. `tools/verify-report.js`, o harness
-`bancada/worker-calibrador.js` e `bancada/calibrador-loader.js` já consomem essa
-composição sem ler nem executar um recorte de `game.js`. O worker real e o sandbox
-no navegador ainda são legados e pertencem à Fase 6.
+Continuar a **Fase 6**: compor a API pública de simulação e então migrar sandbox e
+worker. O primeiro pré-requisito já saiu: `random-source.mjs` reproduz Mulberry32
+bit a bit e isola o estado por sessão.
 
-Restam três consumidores Node do recorte legado: `bancada/motor.js`,
-`tools/check-engine-exports.js` e `tools/check-sandbox-engine.js`. Migrá-los um por
-vez, sem retirar uma guarda antes de seu contrato ter substituto explícito.
+Correção de classificação: `tools/check-engine-exports.js` e
+`tools/check-sandbox-engine.js` não são consumidores a migrar; são guardas do
+caminho legado e só podem ser retiradas quando sandbox/worker deixarem de recortar
+`game.js`. `bancada/motor.js` é o adapter de compatibilidade das suítes clássicas e
+fica para a Fase 7, depois de preparação e combate terem composição pública.
 
 ## 7. Armadilhas que já custaram tempo
 
