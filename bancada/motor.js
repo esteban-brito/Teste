@@ -8,11 +8,23 @@ const {ROOT}=require("./common");
 const GAME_PATH=path.join(ROOT,"game.js");
 const UI_MARKER="// === UI START ===";
 const EXPORTS=[
-  "TEAMS","POOL","ATRIBUTOS","TIMES_DEF","PAISES_MAP",
+  "TEAMS","POOL","ATRIBUTOS","TIMES_DEF","PAIS_JOGADOR","PAIS_TREINADOR",
   "forcaTime","simularMapa","simularSerie","forcaDoDia","formaDoDia","sortearFormaCampanha",
   "avaliarJogador","aplicarAvaliacaoContextual","distribuirRoles","quimicaComposicao","combatProfile","exposureProfile","preservationValue","tradeContextProfile","assistContextProfile","fallenAngelsComponents","fallenAngels",
   "afinidades","roleAfinidade","rolePairReality","secondaryScore","roleStyleReality","STYLE_LABEL","styleScoreTable","nmOVR",
   "CFG_AVALIACAO","NM_DEF",
+  // tabelas de função: o checador de paridade compara valor a valor e ainda prova
+  // o comportamento sob tabela CALIBRADA (é o que o calibrador muta)
+  "ROLE_PERFIL","ROLE_CONTRA","IGL_ROLE_AFIN","ROLE_RULES","ROLES_COMBATE",
+  "classificar","roleSecundarioSeguro",
+  // ZÊNITE: o checador compara a tabela de estilos posição a posição, não só o vencedor
+  "STYLE_CONTRA","nmStats6","stats7","styleMatch","badBaiterProfile","jokerProfile",
+  "ovrUnificado","CFG_NIVEL",
+  // SINAPSE: química de elenco, força efetiva e característica do treinador
+  "ovrTreinador","quimicaPlaystyles","derivaCaracteristica","CFG_QUIMICA",
+  // MARÉ: o checador precisa do gerador para provar CONSUMO de azar, não só valor
+  "gaussF","PERFIL_TIER","PERFIL_ROLE","centroOVR","formaPositiva","formaCaudaLivre",
+  "skillDuelo","fragPeso",
   // identidade e balanceamento: a bancada de perfis precisa ler playstyle e config sem duplicar tabelas
   "PLAYSTYLES","PLAYSTYLE_IDS","STYLE_ID","styleAgr","styleTraits","tierDe","MAPAS_POOL",
   "CFG_SIM","CFG_FA","CFG_CAMP","PERFIL_TIER","logistica","rndF",

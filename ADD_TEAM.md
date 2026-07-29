@@ -54,5 +54,5 @@ aparece automaticamente **na roleta do jogo** e **na Base de Elencos**.
 ## Invariantes garantidos
 
 - **Major sempre 16** (15 NPC + você), independente de quantos times existam — `iniciarTorneio` fatia `slice(0,15)`.
-- **País do treinador** pode ir inline (`coachPais`) no time — times novos não mexem no `PAISES_MAP`.
+- **País do treinador** pode ir inline (`coachPais`) no time — times novos não mexem no `PAIS_TREINADOR`.
 - **Base de Elencos** nunca desatualiza: é regenerada dos motores, não editada à mão.
