@@ -38,8 +38,7 @@ Atualização vigente de 28 de julho de 2026 (tem precedência sobre o registro
 histórico abaixo):
 
 - o ciclo **P2 de modularização por paridade está concluído**, Fases 0–7;
-- `game.js` caiu de 3.054 para 1.206 linhas e contém somente aplicação, estado,
-  áudio e UI;
+- `game.js` caiu de 3.054 para 1.121 linhas e contém somente aplicação, estado e UI;
 - dados e motores vivem em `src/data`, `src/domain` e `src/public`;
 - jogo, sandbox, worker e bancada usam `src/public/simulation-api.mjs`;
 - `bancada/motor.js` cria estado avaliado e sessão de RNG novos por carga, sem
@@ -894,8 +893,9 @@ Aceitação: goldens por seed idênticos e benchmarks dentro das faixas.
 
 **Risco:** moderado a arriscado.
 
-**Status:** não iniciada como ciclo próprio. O domínio saiu de `game.js`, mas as
-1.206 linhas restantes de estado, áudio, DOM e fluxo ainda podem ser decompostas.
+**Status:** iniciada em 29/07/2026. O domínio saiu de `game.js`; o primeiro efeito,
+Web Audio, vive em `src/application/audio.mjs` com teste isolado. As 1.121 linhas
+restantes de estado, DOM e fluxo ainda podem ser decompostas.
 
 - separar estado do draft, Major, áudio e futura carreira;
 - usar comandos/reducers pequenos sem framework obrigatório;

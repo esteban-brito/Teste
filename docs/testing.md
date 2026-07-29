@@ -27,6 +27,10 @@ faixas atuais são guardas de regressão, não uma nota de 0–100.
 
 `npm run validate` executa sintaxe, lint e as 24 suítes.
 
+`npm run check` inclui ainda `check-audio-module.js`, que usa um Web Audio falso
+para provar inicialização, volume mestre, desbloqueio iOS, síntese, mute e
+isolamento de instâncias sem depender de hardware ou de um navegador real.
+
 ## Suítes de forma (medição, não gate)
 
 `perfis.js`, `dificuldade.js` e a seção FORMA de `realismo.js` medem **distribuição**,
