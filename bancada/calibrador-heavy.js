@@ -16,7 +16,7 @@ console.log("— CALIBRADOR: CASOS PESADOS ISOLADOS —");
     // 6000ms (não 3000): este é o caso multiobjetivo MAIS pesado (AWPer trocando função E estilo).
     // A 3000ms fecha numa máquina rápida, mas o runner da CI é mais lento e a mesma janela de tempo
     // rende menos iterações → falha intermitente. 6000ms já foi provado estável na CI antes.
-    const api=loadCalibrator(),stabilityMs=6000;
+    const api=await loadCalibrator(),stabilityMs=6000;
     api.overrideBudget(stabilityMs);
     const runs=[];
     for(const seed of [17,7919,15838]){
@@ -31,7 +31,7 @@ console.log("— CALIBRADOR: CASOS PESADOS ISOLADOS —");
   {
     // ropz (Infiltrador) em vez de Jame: com AWP_LEAN curado o Jame JÁ chega Closer (reformulação vira
     // no-op/alreadyMet), então não exercitava o mecanismo. ropz→Closer faz trabalho real (recipe+síntese).
-    const api=loadCalibrator();api.loadByName("ropz");api.setMode("ia");
+    const api=await loadCalibrator();api.resetAll();api.loadByName("ropz");api.setMode("ia");
     let r=null,err=null;try{r=await api.reformulateStyleFromArchetype("Closer",{},null);}catch(e){err=e;}
     check(!err&&r&&r.ok&&api.STYLE_LABEL(r.after.playstyle)==="Closer",`ropz como arquétipo reaprende Closer${err?": "+err.message:r&&r.message?": "+r.message:""}`);
     if(r&&r.ok){
@@ -43,4 +43,4 @@ console.log("— CALIBRADOR: CASOS PESADOS ISOLADOS —");
   }
   console.log(failures?`✗ ${failures} caso(s) pesado(s) falharam`:"✓ casos pesados do calibrador ok");
   process.exitCode=failures?1:0;
-})();
+})().catch(error=>{console.error(error);process.exitCode=1;});

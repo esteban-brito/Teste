@@ -2,16 +2,16 @@
 
    O calibrador não importa o game.js: ele lê o arquivo como TEXTO, corta no marcador de UI e
    constrói o motor com `new Function(slice + "return {nome1,nome2,...};")()`. Ali cada nome é
-   uma REFERÊNCIA de identificador, não uma string — e a mesma lista está escrita três vezes,
-   literalmente igual, em três arquivos diferentes.
+   uma REFERÊNCIA de identificador, não uma string — e a mesma lista ainda está escrita duas
+   vezes, literalmente igual, no sandbox e no worker.
 
    Isso cria dois modos de falha que nada detectava:
-     1. alguém edita uma das listas e esquece as outras duas;
+     1. alguém edita uma das listas e esquece a outra;
      2. alguém remove um `const` do game.js e esquece as listas.
 
    Em ambos, `new Function` COMPILA — o erro só aparece na chamada, e com sintomas diferentes
-   por consumidor: a página do sandbox abre em branco, o worker devolve erro em todo job, e a
-   bancada morre no require. Esta guarda antecipa isso para o `npm run check`, que roda em
+   por consumidor: a página do sandbox abre em branco ou o worker devolve erro em todo job.
+   Esta guarda antecipa isso para o `npm run check`, que roda em
    segundos, em vez de aparecer no E2E três minutos depois. */
 const fs = require("fs");
 const path = require("path");
@@ -19,8 +19,7 @@ const path = require("path");
 const root = path.resolve(__dirname, "..");
 const CONSUMIDORES = [
   "sandbox.html",
-  "calibrador-worker.js",
-  path.join("bancada", "calibrador-loader.js")
+  "calibrador-worker.js"
 ];
 
 // A lista aparece no código-fonte como o literal `\nreturn {a,b,c};` dentro de uma string.
@@ -35,7 +34,7 @@ function listaDe(arquivo) {
 
 const listas = CONSUMIDORES.map(arquivo => ({ arquivo, nomes: listaDe(arquivo) }));
 
-// 1. as três listas têm que ser idênticas, na mesma ordem
+// 1. as listas têm que ser idênticas, na mesma ordem
 const referencia = listas[0];
 let falhas = 0;
 listas.slice(1).forEach(({ arquivo, nomes }) => {
