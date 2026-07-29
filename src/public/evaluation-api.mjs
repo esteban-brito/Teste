@@ -5,7 +5,7 @@ import {PAIS_JOGADOR,PAIS_TREINADOR} from "../data/countries.mjs";
 import {avaliarJogador,aplicarAvaliacaoContextual,ovrUnificado,nmOVR,
   CFG_PADRAO as CFG_OVR} from "../domain/evaluation/player-evaluation.mjs";
 import {distribuirRoles} from "../domain/evaluation/role-distribution.mjs";
-import {styleId} from "../domain/evaluation/style-identity.mjs";
+import {STYLE_TRAITS,styleId} from "../domain/evaluation/style-identity.mjs";
 import {NM_DEF,NM_COR,STYLE_CONTRA,STYLE_KEYS,PLAYSTYLE_IDS,NM_AXES,styleScoreTable,
   CFG_PADRAO as CFG_ESTILO} from "../domain/evaluation/style-score.mjs";
 import {ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,roleAfinidade,
@@ -32,6 +32,9 @@ export {ATRIBUTOS,TIMES_DEF,PAIS_JOGADOR,PAIS_TREINADOR,
   forcaTime,rolePairReality,roleStyleReality,roleAfinidade,secondaryScore,styleScoreTable,
   NM_DEF,NM_COR,STYLE_CONTRA,STYLE_KEYS,PLAYSTYLE_IDS,NM_AXES,
   ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES};
+
+export const PLAYSTYLES=Object.fromEntries(PLAYSTYLE_IDS.map(id=>
+  [id,{label:STYLE_KEYS[id],traits:STYLE_TRAITS[id]}]));
 
 export function styleLabel(value){const id=styleId(value);return id==="joker"?"Coringa":(STYLE_KEYS[id]||id);}
 // Alias temporário para o contrato do sandbox durante a migração da Fase 5.

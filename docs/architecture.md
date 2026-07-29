@@ -57,9 +57,11 @@ A primeira composição pública vive em `src/public/evaluation-api.mjs`. Ela mo
 preserva a referência compartilhada dos jogadores distribuídos e oferece uma
 visão única das configurações calibráveis. Os três consumidores Node de avaliação
 (`tools/verify-report.js`, harness de workers e loader do calibrador) já usam essa
-API sem recortar `game.js`. O sandbox e o bootstrap do worker real permanecem na
-fronteira legada da Fase 6; `bancada/motor.js` permanece como adapter das suítes
-clássicas até a composição pública de simulação estar completa.
+API sem recortar `game.js`. `src/public/simulation-api.mjs` compõe sobre ela uma
+sessão isolada de RNG e conecta preparação, combate, economia, mapa, série e rating
+a uma única configuração mutável. O sandbox e o bootstrap do worker real ainda
+precisam trocar o recorte legado por essa API; `bancada/motor.js` permanece como
+adapter das suítes clássicas até a Fase 7.
 
 ## Pipeline do domínio
 

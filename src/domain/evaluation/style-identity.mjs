@@ -57,14 +57,14 @@ export function styleClarity(player){
 }
 
 /** Ritmo de combate: direção do estilo × quão definido ele é. */
-export function styleAggression(player){
+export function styleAggression(player,scale=STYLE_AGGRESSION_SCALE){
   const source=player?._eng||player||{};
-  return styleTraits(source.playstyle).pace*styleClarity(source)*STYLE_AGGRESSION_SCALE;
+  return styleTraits(source.playstyle).pace*styleClarity(source)*scale;
 }
 
 /** Contribuição do estilo para a afinidade de lado, em pontos de força [CT, T]. */
-export function styleSideVector(player){
+export function styleSideVector(player,scale=STYLE_SIDE_SCALE){
   const source=player?._eng||player||{};
   const traits=styleTraits(source.playstyle);
-  return [traits.ct*STYLE_SIDE_SCALE.ct,traits.t*STYLE_SIDE_SCALE.t];
+  return [traits.ct*scale.ct,traits.t*scale.t];
 }
