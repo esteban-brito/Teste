@@ -51,10 +51,11 @@ do simulador sem DOM, relógio ou RNG. O adaptador
 `src/infrastructure/persistence/progress-store.mjs` guarda o resultado versionado,
 importa e exporta backup sem levar APIs do navegador para o domínio.
 
-Os primeiros renderizadores puros vivem em `src/ui/game/`: `card-view.mjs` monta
-frente e verso das cartas e `build-summary-view.mjs` apresenta os selos de
-química. Ambos produzem strings sem acessar DOM ou estado global e usam o escape
-central de `src/ui/shared/html.mjs`.
+Os renderizadores puros vivem em `src/ui/game/`: cartas, selos de química,
+identidade de times, Suíça/playoffs, placar/antessala e histórico/final de
+campanha. Eles produzem strings sem acessar DOM ou estado global e usam o escape
+central de `src/ui/shared/html.mjs`; `game.js` conserva apenas a aplicação dessas
+views aos elementos e a coordenação do fluxo.
 
 `random-source.mjs` encapsula o Mulberry32 em instâncias independentes, preservando
 as sequências uniforme e gaussiana bit a bit. A composição pública possui uma
@@ -145,8 +146,8 @@ extrator offline -> corpus derivado -> scorer IFCS
   por um singleton e uma factory sem dependência do estado esportivo.
 - `src/infrastructure/persistence/progress-store.mjs`: estado histórico versionado,
   localStorage e backup JSON, com factory verificável fora do navegador.
-- `src/ui/game/`: templates puros de cartas e do resumo de build, sem mutação de
-  DOM ou estado.
+- `src/ui/game/`: templates puros do draft, torneio, partida e histórico, sem
+  mutação de DOM ou estado.
 
 `S` e `TG` ainda são locais ao entrypoint e mutados por controllers e
 renderizadores. O destino é um store pequeno, sem framework, com estados de draft
