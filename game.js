@@ -3,20 +3,22 @@
 import * as PublicEngine from "./src/public/simulation-api.mjs";
 import {Audio} from "./src/application/audio.mjs";
 import {PROGRESSO} from "./src/infrastructure/persistence/progress-store.mjs";
+import {escapeHtml as esc} from "./src/ui/shared/html.mjs";
+import {createCardView} from "./src/ui/game/card-view.mjs";
+import {construirCartao} from "./src/ui/game/build-summary-view.mjs";
 const {TEAMS,POOL,forcaTime,simularMapa,simularSerie,forcaDoDia,
   sortearFormaCampanha,distribuirRoles,STYLE_LABEL,STYLE_ID,STYLE_RECIPE,CFG_SIM,
   logistica,srand,rndF,coletarMarcos,atualizarRecordes,manchete,narrativaMVP,
   RECORDE_LABELS}=PublicEngine;
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 const arred=value=>Math.floor(value+0.4);
-const ROLE_COR={IGL:"var(--r-igl)",AWPer:"var(--r-awper)",Entry:"var(--r-entry)",
-  Rifler:"var(--r-rifler)",Lurker:"var(--r-lurker)",Support:"var(--r-support)"};
 const SPIN_MS=2700; // giro mais rápido (era 4000)
 const WIN_INDEX=44;
 const rnd=n=>Math.floor(Math.random()*n);
 const pick=a=>a[rnd(a.length)];
-const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-const tierOf=o=>o>=22?"tier-h":o>=21?"tier-s":o>=18?"tier-1":o>=15?"tier-2":"tier-3";
+const {teamCardHTML,cardClass,cardHTML}=createCardView({
+  styleId:STYLE_ID,styleLabel:STYLE_LABEL,styleRecipe:STYLE_RECIPE,
+});
 
 const S={
   jogadores:Array(5).fill(null),
@@ -78,66 +80,6 @@ function setModoVirar(on){
   if(!on)limparFlips();
 }
 
-const teamCardHTML=(t,extra="")=>`<div class="tcard ${extra}" data-team="${esc(t.id)}" style="--col:${esc(t.cor)}">
-  <div class="tcoloc">${esc(t.coloc)}</div><div class="tname">${esc(t.nome)}</div><div class="tcamp">${esc(t.camp)}</div></div>`;
-
-const cardClass=p=>p.tipo==="coach"?"coachcard coach-"+p.caracSlug:"card "+tierOf(p.ovr);
-
-const playerHTML=p=>`<div class="cmeta"><span>${esc(p.pais)}</span><span>${esc(p.time)}</span></div>
-  <div class="ccore"><div class="ovr">${p.ovr}</div><div class="nick">${esc(p.nick)}</div><div class="starsig">${p.estrela?"STAR ★ PLAYER":""}</div></div>
-  <div class="roles"><span class="role prim" style="--rc:${ROLE_COR[p.prim]}">${esc(p.prim)}</span><span class="role sec${p.secForte?" forte":""}" style="--rc:${ROLE_COR[p.sec]}" title="${p.secForte?"Segunda função de verdade: cobre o pilar por inteiro na química":"Segunda função nominal: cobre o pilar só em parte"}">${esc(p.sec)}</span></div>`;
-
-const coachHTML=p=>`<div class="coach-seal">Treinador</div>
-  <div class="cmeta"><span>${esc(p.pais)}</span><span>${esc(p.time)}</span></div>
-  <div class="ccore"><div class="ovr">${p.ovr}</div><div class="nick">${esc(p.nick)}</div></div>
-  <div class="carac">${esc(p.carac)}</div>`;
-
-// ——— VERSO da carta: o PLAYSTYLE no topo e as 4 stats da receita dele embaixo ———
-// Mesma fonte que decide o OVR e a química, então o que a carta diz é o que o motor usa.
-const STAT_LABEL={fp:"Firepower",op:"Abertura",cl:"Clutch",ut:"Utilitário",en:"Entrada",tr:"Trade",sn:"AWP"};
-const STAT_VERSO_DEF=["fp","op","cl","ut"]; // Coringa (polivalente) e fallback
-// eixos da receita (espaço s6) → atributos da carta (espaço do jogador)
-const EIXO_ATTR={fogo:"fp",ent:"en",ab:"op",tr:"tr",cl:"cl",ut:"ut"};
-/* Ordem das stats no verso: Firepower SEMPRE em primeiro — é a leitura que todo mundo procura
-   antes de qualquer outra. Os demais entram por CONTRIBUIÇÃO deste jogador ao estilo dele:
-   peso do eixo na receita × o valor que ele tem naquele eixo.
-
-   É o mesmo produto que decide a classificação (a semelhança é um produto-escalar, e os
-   denominadores são constantes por jogador, então ordenar por peso×valor ordena por quanto
-   cada eixo empurrou o estilo). A carta passa a responder "por onde ESTE jogador expressa o
-   estilo" em vez de repetir o que a receita valoriza em tese: dois Closers saem em ordens
-   diferentes, um que fecha por clutch puro e outro que fecha no tiro.
-
-   Ordenar pelo valor cru seria outra coisa e estaria errado — 90 de fogo passaria à frente de
-   70 de clutch num Âncora, onde o fogo quase não define o estilo. */
-const statsDoEstilo=(id,e)=>{
-  const rec=id==="joker"?null:STYLE_RECIPE(id);
-  if(!rec)return STAT_VERSO_DEF;
-  const pesos=rec.ovrW||rec.w; // ovrW quando existe: é o que o nível realmente pondera
-  return Object.entries(pesos)
-    .map(([eixo,peso])=>({attr:EIXO_ATTR[eixo],contrib:peso*((e&&e[EIXO_ATTR[eixo]])||0)}))
-    .filter(x=>x.attr)
-    .sort((a,b)=>b.contrib-a.contrib)
-    .map(x=>x.attr);
-};
-const statBar=(lab,v)=>`<div class="statbar"><span class="sb-lab">${esc(lab)}</span><span class="sb-val">${Math.round(v||0)}</span></div>`;
-const backPlayer=p=>{const e=p._eng||{};const id=STYLE_ID(e.playstyle);
-  const base=statsDoEstilo(id,e);
-  const keys=["fp",...base.filter(k=>k!=="fp")].slice(0,4); // Firepower sempre 1º; os outros 3 por contribuição ao estilo
-  return `<div class="cb-head">${esc(e.playstyle?STYLE_LABEL(id):(p.prim||""))}</div>`+
-  `<div class="cb-stats">${keys.map(k=>statBar(STAT_LABEL[k],e[k])).join("")}</div>`;};
-// o que cada característica de treinador FAZ — objetivo, com os números reais do efeito no SINAPSE
-const CARAC_DESC={
-  Gestor:"Tolera +1 estrela no elenco. Penalidade por estrela extra: 7% → 4%.",
-  Desenvolvedor:"Reduz penalidades de elenco cru: 5% por jogador de OVR ≤14, até 18%.",
-  Estrategista:"Reduz penalidades de estrutura em 15% e de comando (IGL) em 30%.",
-  Motivador:"Reduz em 30% as penalidades de cobertura e saturação do elenco."};
-// verso do treinador: só o que a característica FAZ (o nome dela já está na frente da carta)
-const backCoach=p=>`<div class="cb-desc">${esc(CARAC_DESC[p.carac]||"")}</div>`;
-// jogador vira p/ as stats; treinador vira p/ o significado da característica. Faces giram em 3D.
-const cardHTML=p=>{const verso=p.tipo==="coach"?backCoach(p):backPlayer(p);const frente=p.tipo==="coach"?coachHTML(p):playerHTML(p);
-  return `<div class="cfaces"><div class="cface cfront">${frente}</div><div class="cface cback">${verso}</div></div>`;};
-
 function elencoCheio(){return S.jogadores.every(Boolean)&&!!S.treinador}
 
 function forcaTotal(){
@@ -169,24 +111,6 @@ function updateHud(){
   renderResultado();
 }
 
-/* ——— UI · cartão de build (selos + veredito; parseia os alertas do motor) ——— */
-const SELO_META={Comando:{ic:"◆",lab:"Comando"},AWP:{ic:"◎",lab:"AWP"},"Âncora":{ic:"◈",lab:"Âncora"},
-  Iniciativa:{ic:"▲",lab:"Iniciativa"},Estrutura:{ic:"◫",lab:"Estrutura"},Treinador:{ic:"★",lab:"Treinador"},
-  Estrelas:{ic:"✦",lab:"Egos"},Excesso:{ic:"⨯",lab:"Saturação"},Desenvolvimento:{ic:"✧",lab:"Lapidação"}};
-const pilarDe=t=>{for(const p of["Comando","AWP","Âncora","Iniciativa","Estrutura","Treinador","Estrelas","Desenvolvimento"])if(t.startsWith(p))return p;
-  if(/^\d+×/.test(t))return"Excesso";return"—";};
-const classificarSelo=t=>{let m=t.match(/\+(\d+)%/);if(m)return{tipo:"bonus",pct:+m[1]};
-  m=t.match(/−(\d+)%/);if(m)return{tipo:+m[1]>=12?"grave":"leve",pct:+m[1]};
-  if(/falta/.test(t))return{tipo:"neutro",pct:0};return{tipo:"forte",pct:0};};
-function construirCartao(alertas,dt){
-  const arr=[...alertas,dt!==0?`Treinador ${dt>0?"+":""}${dt}%`:"Treinador"];
-  const selos=arr.map(t=>{const c=classificarSelo(t),p=pilarDe(t),m=SELO_META[p]||{ic:"·",lab:p};return{...c,pilar:p,ic:m.ic,lab:m.lab};});
-  const val=s=>s.tipo==="forte"?"✓":s.tipo==="neutro"?"—":s.tipo==="bonus"?`+${s.pct}%`:`−${s.pct}%`;
-  const ord={grave:0,leve:1,bonus:2,neutro:3,forte:4};
-  selos.sort((a,b)=>ord[a.tipo]-ord[b.tipo]||b.pct-a.pct);
-  const html=selos.map(s=>`<span class="selo ${s.tipo}"><i>${s.ic}</i>${esc(s.lab)}<b>${val(s)}</b></span>`).join("");
-  return html;
-}
 function renderResultado(){
   const box=$("result");
   if(!elencoCheio()){box.hidden=true;return;}

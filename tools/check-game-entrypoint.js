@@ -15,10 +15,18 @@ assert.match(game,/import \{Audio\} from "\.\/src\/application\/audio\.mjs";/,
   "game.js não importa o efeito público de áudio");
 assert.match(game,/import \{PROGRESSO\} from "\.\/src\/infrastructure\/persistence\/progress-store\.mjs";/,
   "game.js não importa o adaptador de persistência");
+assert.match(game,/import \{escapeHtml as esc\} from "\.\/src\/ui\/shared\/html\.mjs";/,
+  "game.js não importa o escape HTML compartilhado");
+assert.match(game,/import \{createCardView\} from "\.\/src\/ui\/game\/card-view\.mjs";/,
+  "game.js não importa o renderizador de cartas");
+assert.match(game,/import \{construirCartao\} from "\.\/src\/ui\/game\/build-summary-view\.mjs";/,
+  "game.js não importa o renderizador do resumo de build");
 assert.doesNotMatch(game,/\bconst Audio\s*=\s*\{/,
   "game.js voltou a embutir o serviço de áudio");
 assert.doesNotMatch(game,/\bconst PROGRESSO\s*=\s*\{/,
   "game.js voltou a embutir o serviço de persistência");
+assert.doesNotMatch(game,/\bconst (?:ROLE_COR|STAT_LABEL|SELO_META)\s*=\s*\{/,
+  "game.js voltou a embutir templates ou metadados das cartas");
 assert.doesNotMatch(game,/\/\/ === UI START ===/,
   "game.js voltou a usar comentário como fronteira de API");
 assert.doesNotMatch(game,/\b(?:const ATRIBUTOS|function simularMapa|function avaliarJogador)\b/,
