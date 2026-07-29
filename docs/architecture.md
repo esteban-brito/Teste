@@ -35,6 +35,8 @@ disponível para assistência; `fallen-angels.mjs` decompõe o rating em
 parcelas somáveis; `player-form.mjs` descreve a forma individual e de campanha;
 `team-form.mjs` aplica à força efetiva a oscilação uniforme controlada pela
 química; `duel-weights.mjs` separa vitória do duelo de volume de frag;
+`team-preparation.mjs` monta os vetores de combate, afinidades de mapa e de lado
+com caches e gerador explícitos;
 `economy.mjs` preserva decisão coletiva, loadout individual, carrego e drop de
 arma; e `map-simulation.mjs` orquestra troca de lados, OT, economia, combate,
 telemetria e placar de cada round por dependências explícitas;
