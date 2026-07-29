@@ -37,6 +37,9 @@ parcelas somáveis; `player-form.mjs` descreve a forma individual e de campanha;
 química; `duel-weights.mjs` separa vitória do duelo de volume de frag;
 `team-preparation.mjs` monta os vetores de combate, afinidades de mapa e de lado
 com caches e gerador explícitos;
+`round-combat.mjs` resolve contatos, objetivo, save, clutch, assistências e KAST
+por dependências explícitas; `simulation-telemetry.mjs` observa esses eventos sem
+consumir RNG;
 `economy.mjs` preserva decisão coletiva, loadout individual, carrego e drop de
 arma; e `map-simulation.mjs` orquestra troca de lados, OT, economia, combate,
 telemetria e placar de cada round por dependências explícitas;
