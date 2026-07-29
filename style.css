@@ -129,167 +129,208 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .squad .lineup{display:contents}
 .lineup--coach{max-width:none}
 
-/* ╔══════════════ CARTAS · jogador e treinador ══════════════╗ */
-.card,.coachcard{position:relative;border-radius:10px;cursor:pointer;text-align:center;overflow:hidden;
-  display:flex;flex-direction:column;align-items:center;min-height:148px;aspect-ratio:5/7;
-  background:transparent;container-type:inline-size; /* o texto do verso escala com a LARGURA da carta (cqw): do celular mini à TV */
-  transition:box-shadow .16s var(--ease),border-color .14s,outline-color .14s,transform .22s var(--ease)}
-.card:hover,.coachcard:hover{box-shadow:0 0 0 1px var(--tcol,var(--cc-main,#fff))}
-/* textura + profundidade por tier */
-.card::before,.coachcard::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1}
-.card.tier-3::before{background:linear-gradient(180deg,rgba(198,208,219,.09),transparent 14%),radial-gradient(circle at 50% -25%,rgba(170,182,196,.08),transparent 58%),repeating-linear-gradient(100deg,rgba(198,208,219,.025) 0 1px,transparent 1px 4px)} /* prata escovada */
-.card.tier-2::before{background:linear-gradient(180deg,rgba(111,217,159,.1),transparent 14%),radial-gradient(circle at 50% -25%,rgba(62,192,126,.12),transparent 58%)}
-.card.tier-1::before{background:linear-gradient(180deg,rgba(255,224,51,.12),transparent 14%),radial-gradient(circle at 50% -25%,rgba(255,190,0,.14),transparent 58%),repeating-linear-gradient(135deg,rgba(255,190,0,.045) 0 3px,transparent 3px 7px)} /* ouro polido */
-.card.tier-s::before{background:linear-gradient(180deg,rgba(255,92,110,.14),transparent 14%),radial-gradient(circle at 50% -25%,rgba(255,45,72,.18),transparent 58%),repeating-linear-gradient(135deg,rgba(255,45,72,.05) 0 3px,transparent 3px 8px)} /* rubi lapidado */
-.coachcard::before{background:radial-gradient(circle at 50% -25%,color-mix(in srgb,var(--cc-main) 16%,transparent),transparent 58%),repeating-linear-gradient(135deg,color-mix(in srgb,var(--cc-main) 4%,transparent) 0 3px,transparent 3px 7px)}
-/* FRENTE PADRONIZADA (tamanhos em cqw = % da largura da carta): meta · OVR+nick · base.
-   Coach e player compartilham o mesmo esqueleto; tudo escala do celular-mini à TV sem colidir. */
-.card .cmeta,.coachcard .cmeta{position:absolute;top:clamp(5px,6cqw,8px);left:clamp(7px,8cqw,10px);right:clamp(7px,8cqw,10px);
-  display:flex;justify-content:space-between;gap:6px;font-family:var(--ff);font-size:clamp(6px,6.4cqw,9px);
-  font-weight:700;letter-spacing:.06em;z-index:4;color:var(--dim,#8593a6)}
-.cmeta span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.cmeta span:first-child{flex:none} /* país (3 letras) nunca encolhe; o time é que trunca se precisar */
-.starsig{height:.8em;line-height:.8em;text-align:center;
-  font-family:var(--ff);font-weight:700;font-size:clamp(7px,6.4cqw,11px);letter-spacing:.18em;text-transform:uppercase;
-  color:var(--tcol,#fff);opacity:.62;text-shadow:0 0 6px var(--tcol,#fff);white-space:nowrap;pointer-events:none;
-  margin-top:6px}
-.card .ccore,.coachcard .ccore{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  width:100%;padding:clamp(10px,12cqw,18px) 8px 4px;z-index:4;position:relative}
-.card .ovr,.coachcard .ovr{font-family:var(--ff);font-weight:700;font-size:clamp(30px,34cqw,58px);line-height:.82}
-.card .nick,.coachcard .nick{font-family:var(--ff);font-weight:700;font-size:clamp(12px,12cqw,21px);
-  margin-top:2px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.roles{display:flex;gap:clamp(3px,4cqw,5px);width:100%;z-index:4;position:relative;
-  padding:0 clamp(7px,8cqw,10px) clamp(8px,9cqw,12px)} /* simétrico (sem botão de virar na carta) */
-.role{flex:1;font-family:var(--ff);font-size:clamp(6px,6.2cqw,9px);letter-spacing:.03em;text-transform:uppercase;
-  font-weight:700;padding:clamp(3px,4cqw,5px) 2px;border-radius:clamp(4px,5cqw,6px);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.role.prim{color:var(--rc,#aab6c4);border:1px solid color-mix(in srgb,var(--rc,#aab6c4) 50%,transparent);
-  background:color-mix(in srgb,var(--rc,#aab6c4) 13%,transparent)}
-/* SEGUNDA FUNÇÃO — a carta mostrava as duas iguais, mas o motor não as trata assim. secForte
-   marca quem joga a segunda posição de verdade (pontua ≥82% do que pontua na primeira), e a
-   diferença é MECÂNICA: na química, uma segunda função forte cobre o pilar inteiro; a nominal
-   cobre só em parte. Quem monta elenco precisa enxergar isso antes de escolher.
-   Forte carrega a cor da função, sempre um degrau abaixo da primária. Nominal segue apagada. */
-.role.sec{color:#7a8696;border:1px solid rgba(120,135,155,.22);background:transparent}
-.role.sec.forte{color:color-mix(in srgb,var(--rc,#aab6c4) 72%,#dfe5ee);
-  border-color:color-mix(in srgb,var(--rc,#aab6c4) 32%,transparent);
-  background:color-mix(in srgb,var(--rc,#aab6c4) 6%,transparent)}
+/* ╔══════════════ CARTAS · jogador e treinador ══════════════╗
+   UM BLOCO DE TOKENS GOVERNA AS DUAS FACES: um recuo lateral (--pad), um passo
+   vertical (--passo) que gera a pilha inteira por calc, e quatro corpos de texto
+   numa razão de ~1,5. Abaixo deste bloco não existe número solto.
 
-/* cor de OVR+nome (--lit) e metadados (--dim) — cada tier só seta as vars */
-.card .ovr,.card .nick{color:var(--lit,#fff)}
+   Tudo em cqw (% da largura da carta) sobre container query: a MESMA carta serve
+   do celular de 2 colunas à TV, sem uma segunda folha de regras.
 
-/* Tier 3 — prata discreta, fundo escuro (detalhes legíveis) */
-.card.tier-3{border:1px solid rgba(170,182,196,.45);--tcol:var(--t3-silver);--lit:var(--t3-silver-lit);--dim:var(--t3-silver-dim)}
-.card.tier-3:hover{border-color:rgba(170,182,196,.6)}
+   A diagonal do verso DERIVA em CSS o mesmo ângulo físico da frente
+   (--corte-n × --placa-n / --faixa-n). Antes era um valor fixo com a conta só no
+   comentário, e mudar a altura da placa desalinhava as duas faces em silêncio. */
+.card,.coachcard{position:relative;border-radius:10px;cursor:pointer;overflow:hidden;
+  min-height:148px;aspect-ratio:5/7;background:#080b11;container-type:inline-size;
+  isolation:isolate;perspective:800px;-webkit-perspective:800px;
+  transition:box-shadow .16s var(--ease),transform .22s var(--ease);
 
-/* Tier 2 — verde imponente, fundo escuro */
-.card.tier-2{border:2px solid var(--t2-green);--tcol:var(--t2-green);--lit:var(--t2-green-lit);--dim:var(--t2-green-dim)}
-.card.tier-2:hover{border-color:var(--t2-green-lit)}
+  --pad:9%;                                        /* recuo lateral, único */
+  --passo:5.2%;                                    /* passo do ritmo vertical */
+  --b1:4.6%;                                       /* rodapé  (linha 1) */
+  --b2:calc(var(--b1) + var(--passo));             /* função  (linha 2) */
+  --b3:calc(var(--b2) + var(--passo)*1.2);         /* nick    (linha 3) */
 
-/* Tier 1 — dourado imponente, fundo escuro */
-.card.tier-1{border:2px solid var(--t1-gold);--tcol:var(--t1-gold);--lit:var(--t1-gold-lit);--dim:var(--t1-gold-dim)}
-.card.tier-1:hover{border-color:var(--t1-gold-lit)}
+  /* Alturas SEM unidade, para o ângulo das duas faces poder ser derivado. */
+  --placa-n:38;                                    /* altura da placa (frente) */
+  --faixa-n:22;                                    /* altura da faixa (verso) */
+  --corte-n:12;                                    /* inclinação na placa */
+  --placa:calc(var(--placa-n)*1%);
+  --faixa:calc(var(--faixa-n)*1%);
+  --corte:calc(var(--corte-n)*1%);
+  --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
 
-/* Tier S — única com fundo sólido */
-.card.tier-s{isolation:isolate;contain:paint;
-  background:linear-gradient(165deg,rgba(255,45,72,.28) 0%,var(--s-red-bg) 55%,rgba(120,16,32,.9) 100%);
-  border:2px solid var(--s-red);--tcol:var(--s-red);--lit:var(--s-red-lit);--dim:var(--s-red-dim)}
-.card.tier-s:hover{border-color:var(--s-red-lit)}
+  --t1:33cqw;                                      /* OVR      */
+  --t3:6.2cqw;                                     /* função   */
+  --t4:4.4cqw;                                     /* contexto */
+  /* nick: --nick-esc é a razão por comprimento do nome, posta no envelope das
+     duas faces para que FRENTE e VERSO encolham juntos. */
+  --t2:calc(16cqw*var(--nick-esc,1));
 
-/* Tier H — OVR 22, holográfico. RGB cicla via hue-rotate (matiz é circular: nunca tem salto) */
-.card.tier-h{isolation:isolate;contain:paint;
-  background:linear-gradient(165deg,rgba(255,255,255,.10) 0%,#0c0710 55%,rgba(40,20,60,.9) 100%);
-  border:2px solid transparent;--holo:linear-gradient(125deg,#ff0040,#ff8a00,#ffe600,#39e639,#00c8ff,#7a3cff,#ff0040);--tcol:#fff}
-.card.tier-h::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:5;padding:2px;
-  background:var(--holo);
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
-  animation:holoHue 6s linear infinite}
-.card.tier-h::before{background:radial-gradient(circle at 50% -25%,rgba(255,255,255,.16),transparent 60%)}
-.card.tier-h .ovr,.card.tier-h .nick,.card.tier-h .starsig{
-  background:var(--holo);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
-  animation:holoHue 6s linear infinite}
-.card.tier-h .starsig{text-shadow:none;opacity:.9}
-.card.tier-h .cmeta{color:#c9b8e0}
+  box-shadow:inset 0 0 0 var(--aro) color-mix(in srgb,var(--m) var(--aro-a),transparent),var(--brilho)}
+.card:hover,.coachcard:hover{
+  box-shadow:inset 0 0 0 var(--aro) var(--m),0 0 18px -6px var(--m)}
+
+/* ═══ TABELA DE RARIDADE ═══════════════════════════════════════════════════
+   Sempre as mesmas três colunas: cor, aro, brilho. Nova raridade = nova linha.
+   As FAIXAS (quais OVR caem em cada tier) vivem em `tierOf`, no card-view. */
+/*                      cor              aro         opacidade      brilho */
+.card.tier-3{--m:#aab6c4; --aro:1px;   --aro-a:38%;  --brilho:0 0 0 0 transparent}
+.card.tier-2{--m:#3ec07e; --aro:1.5px; --aro-a:55%;  --brilho:0 0 0 0 transparent}
+.card.tier-1{--m:#ffbe00; --aro:2px;   --aro-a:72%;  --brilho:0 0 20px -13px var(--m)}
+.card.tier-s{--m:#ff5c6e; --aro:2px;   --aro-a:100%; --brilho:0 0 28px -11px var(--m)}
+.card.tier-h{--m:#c9a6ff; --aro:2px;   --aro-a:0%;   --brilho:0 0 34px -10px var(--m)}
+/* O treinador não disputa a escala de OVR dos jogadores: a cor dele é a da
+   CARACTERÍSTICA, que é o que ele faz pelo time. */
+.coachcard{--m:var(--cc-main,var(--c-gestor)); --aro:2px; --aro-a:66%; --brilho:0 0 22px -12px var(--m)}
+.coach-gestor{--cc-main:var(--c-gestor)}
+.coach-estrategista{--cc-main:var(--c-estrategista)}
+.coach-desenvolvedor{--cc-main:var(--c-desenvolvedor)}
+.coach-motivador{--cc-main:var(--c-motivador)}
+
+/* Aro holográfico do tier mais alto. O matiz é circular, então nunca há salto. */
+.card.tier-h::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  z-index:7;padding:2px;
+  background:linear-gradient(125deg,#ff0040,#ff8a00,#ffe600,#39e639,#00c8ff,#7a3cff,#ff0040);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;animation:holoHue 7s linear infinite}
 @keyframes holoHue{to{filter:hue-rotate(360deg)}}
 
-/* Treinador — MESMO esqueleto do jogador, mas MOLDURA bem distinta: fundo colorido na cor da
-   característica, selo "TREINADOR" no topo, borda dupla e padrão diagonal reforçado. */
-/* Sem brilho interno: a camada Clean Matchday o desligou em 07/2026 e a fusão
-   preserva essa decisão. Reativá-lo é mudança de design, não de estrutura. */
-.coachcard{border:2px solid var(--cc-main,var(--t1-gold));isolation:isolate;contain:paint;
-  background:linear-gradient(165deg,color-mix(in srgb,var(--cc-main) 30%,#0b0e15) 0%,#0a0c12 58%,color-mix(in srgb,var(--cc-main) 16%,#0a0c12) 100%)}
-.coachcard::before{background:radial-gradient(circle at 50% -20%,color-mix(in srgb,var(--cc-main) 26%,transparent),transparent 60%),repeating-linear-gradient(135deg,color-mix(in srgb,var(--cc-main) 9%,transparent) 0 3px,transparent 3px 8px)}
-/* selo de topo: identifica a carta como treinador na hora */
-.coach-seal{position:absolute;top:0;left:0;right:0;z-index:5;text-align:center;font-family:var(--ff);font-weight:700;
-  text-transform:uppercase;letter-spacing:.22em;font-size:clamp(6px,6.2cqw,9px);padding:clamp(3px,3.6cqw,5px) 0;color:#0a0c12;
-  background:linear-gradient(90deg,var(--cc-dim),var(--cc-lit,var(--cc-main)),var(--cc-dim));
-  box-shadow:0 1px 0 color-mix(in srgb,var(--cc-main) 45%,transparent)}
-.coachcard .cmeta{top:clamp(19px,22cqw,28px);color:var(--cc-dim)} /* meta abaixo do selo */
-.coachcard .ccore{padding-top:clamp(26px,30cqw,40px)}              /* core abaixo de selo+meta */
-.coachcard .ovr{color:var(--cc-lit,var(--cc-main))}
-.coachcard .nick{color:var(--cc-lit,var(--cc-main))}
-.coachcard .carac{width:100%;padding:clamp(4px,5cqw,7px) clamp(6px,7cqw,9px);
-  margin-top:auto;font-family:var(--ff);font-size:clamp(6px,6.2cqw,9px);letter-spacing:.05em;text-transform:uppercase;
-  font-weight:700;border-radius:0;z-index:2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;
-  color:var(--cc-lit,var(--cc-main));border-top:1px solid color-mix(in srgb,var(--cc-main) 40%,transparent);
-  background:color-mix(in srgb,var(--cc-main) 14%,transparent)}
-.coachcard:hover{border-color:var(--cc-lit,var(--cc-main))}
-/* variantes por característica */
-.coach-gestor{--cc-main:var(--c-gestor);--cc-dim:var(--c-gestor-dim);--cc-lit:#e0c294}
-.coach-estrategista{--cc-main:var(--c-estrategista);--cc-dim:var(--c-estrategista-dim);--cc-lit:#7df0f0}
-.coach-desenvolvedor{--cc-main:var(--c-desenvolvedor);--cc-dim:var(--c-desenvolvedor-dim);--cc-lit:#85a9ff}
-.coach-motivador{--cc-main:var(--c-motivador);--cc-dim:var(--c-motivador-dim);--cc-lit:#ddc4ff}
-
-/* ——— CARTAS · flip frente/verso ——————————————————————
-   A moldura/tier fica em .card (intacta); só o CONTEÚDO gira em 3D dentro dela.
-   Virar é por MODO GLOBAL (botão no cabeçalho): a classe .flipped na carta gira as faces. */
-.card,.coachcard{perspective:800px;-webkit-perspective:800px}
-.cfaces{position:absolute;inset:0;z-index:2;transform-style:preserve-3d;-webkit-transform-style:preserve-3d;
-  border-radius:inherit;box-shadow:inset 0 1px 0 rgba(255,255,255,.09),inset 0 -1px 0 rgba(0,0,0,.55)} /* bisel metálico: relevo de colecionável em toda carta */
-/* brasão do tier: filete de luz no topo de toda carta (assinatura do design, frente e verso) */
-.cfaces::after{content:"";position:absolute;top:0;left:16%;right:16%;height:3px;z-index:6;pointer-events:none;
-  border-radius:0 0 4px 4px;background:linear-gradient(90deg,transparent,var(--tcol,var(--cc-main,#9fb2c8)),transparent);
-  box-shadow:0 0 10px -1px var(--tcol,var(--cc-main,#9fb2c8));opacity:.9}
-.coachcard .cfaces::after{display:none} /* o selo TREINADOR já é o brasão do coach */
-/* halo atrás do OVR: o número ganha palco */
-.ccore::before{content:"";position:absolute;left:50%;top:46%;width:78cqw;height:78cqw;z-index:-1;pointer-events:none;
-  transform:translate(-50%,-50%);border-radius:50%;
-  background:radial-gradient(circle,color-mix(in srgb,var(--tcol,var(--cc-main,#9fb2c8)) 16%,transparent),transparent 65%)}
-/* cada face gira independente; o que define o que aparece é a OPACIDADE (0/1).
-   assim nunca há sobreposição nem texto espelhado, mesmo se o Safari achatar o 3D. */
-.cface{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;border-radius:inherit;overflow:hidden;
-  backface-visibility:hidden;-webkit-backface-visibility:hidden;transition:transform .45s var(--ease),opacity .3s var(--ease)}
+/* ═══ FLIP ═════════════════════════════════════════════════════════════════
+   Cada face gira independente e o que define o que aparece é a OPACIDADE (0/1).
+   Assim nunca há sobreposição nem texto espelhado, mesmo se o Safari achatar o
+   3D. Virar é por modo global (botão no cabeçalho do elenco revelado). */
+.cfaces{position:absolute;inset:0;z-index:2;transform-style:preserve-3d;
+  -webkit-transform-style:preserve-3d;border-radius:inherit}
+.cface{position:absolute;inset:0;border-radius:inherit;overflow:hidden;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  transition:transform .45s var(--ease),opacity .3s var(--ease)}
 .cfront{transform:rotateY(0deg);opacity:1}
-.cback{transform:rotateY(180deg);opacity:0;justify-content:flex-start;gap:5px;padding:9px 8px 10px;
-  background:repeating-linear-gradient(45deg,rgba(255,255,255,.014) 0 1px,transparent 1px 7px),
-    repeating-linear-gradient(-45deg,rgba(255,255,255,.012) 0 1px,transparent 1px 7px),
-    linear-gradient(165deg,color-mix(in srgb,var(--tcol,#39d3ff) 24%,#0b0e15) 0%,#0a0c12 62%,#070910 100%); /* guilhochê fino de colecionável */
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tcol,#fff) 16%,transparent)}
-.coachcard .cback{justify-content:center} /* verso do treinador: descrição centralizada vertical (sobra simétrica) */
+.cback{transform:rotateY(180deg);opacity:0;
+  background:linear-gradient(168deg,color-mix(in srgb,var(--m) 13%,#080b11),#06080d 58%)}
 .card.flipped .cfront,.coachcard.flipped .cfront{transform:rotateY(-180deg);opacity:0}
 .card.flipped .cback,.coachcard.flipped .cback{transform:rotateY(0deg);opacity:1}
-/* o verso do treinador usa a cor da característica dele (mapeia --cc-* p/ os tokens do verso) */
-.coachcard{--tcol:var(--cc-main);--lit:var(--cc-lit,var(--cc-main));--dim:var(--cc-dim,var(--cc-main))}
-/* VERSO PADRONIZADO (tamanhos em cqw = % da largura da carta → idêntico em qualquer tela).
-   Jogador: estilo (sub-arquétipo) no topo + 4 stats. Treinador: só a descrição do efeito.
-   Sem botão na carta (virar é por modo global) → o verso usa a carta toda. */
-.cb-head{font-family:var(--ff);font-weight:700;font-size:clamp(9px,11cqw,16px);line-height:1.12;
-  letter-spacing:.01em;color:var(--lit,#fff);width:100%;text-align:left;padding:0 3px 5px 3px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis; /* nome do estilo SEMPRE em 1 linha (a fonte encolhe via JS se precisar) */
-  border-bottom:1px solid color-mix(in srgb,var(--tcol,#fff) 26%,transparent)}
-.cb-stats{display:flex;flex-direction:column;width:100%;flex:1;justify-content:space-evenly;margin-top:2px}
-.statbar{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:6cqw;padding:4cqw 1px;
-  border-bottom:1px solid color-mix(in srgb,var(--tcol,#888) 12%,transparent)}
-.statbar:last-child{border-bottom:none}
-/* verso do treinador: descrição objetiva do efeito, ocupando o corpo da carta */
-.cb-desc{font-family:'Barlow Semi Condensed',sans-serif;font-size:clamp(12px,13cqw,20px);line-height:1.32;font-weight:500;
-  color:var(--txt,#eaf1f8);text-align:left;width:100%;display:block;
-  padding:clamp(6px,6.5cqw,10px) clamp(7px,7.5cqw,11px)} /* largura cheia; altura = conteúdo; a fonte é ajustada via JS (fitText) p/ preencher o verso sem cortar */
-.sb-lab{font-family:var(--ff);font-weight:600;font-size:clamp(6px,6.4cqw,9px);letter-spacing:.06em;text-transform:uppercase;
-  color:var(--dim,#8593a6);text-align:left;line-height:1.05;overflow-wrap:break-word}
-.sb-val{font-family:var(--ff);font-weight:800;font-size:clamp(13px,15cqw,20px);font-variant-numeric:tabular-nums;
-  color:var(--lit,#fff);text-align:right;line-height:1}
 @media(prefers-reduced-motion:reduce){.cface{transition:none}}
+
+/* ═══ FRENTE ═══════════════════════════════════════════════════════════════
+   SEM FOTO é o estado de todos os 85 hoje, e é um estado DECLARADO, não um
+   remendo: o campo é gerado na cor da raridade em vez de ficar um retângulo
+   preto. Quando houver retrato, ele entra em `background-image` de .c-foto e
+   --tinta sobe para tingi-lo — mudança de dado, não redesenho. */
+.c-foto{position:absolute;inset:0;z-index:0;background-size:cover;background-position:50% 14%;
+  background-image:radial-gradient(118% 88% at 50% 16%,color-mix(in srgb,var(--m) 24%,#0e1421),#070a10 70%)}
+/* `color` preserva a luminância: o tier tinge o retrato sem apagar o rosto */
+.c-tinta{position:absolute;inset:0;z-index:1;background:var(--m);mix-blend-mode:color;opacity:var(--tinta,0)}
+.c-vinheta{position:absolute;inset:0;z-index:2;
+  background:radial-gradient(120% 82% at 50% 30%,transparent 42%,rgba(4,6,11,.72) 100%)}
+/* luz de topo: a aresta que qualquer carta impressa pega */
+.c-vinheta::before{content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.16),transparent 18%)}
+/* grão de filme: quebra o degradê perfeito, que é o que denuncia CSS puro */
+.c-grao{position:absolute;inset:0;z-index:6;pointer-events:none;opacity:.055;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* PLACA e FIO compartilham a MESMA clip-path; o fio é um bloco 2px mais alto,
+   então sua aresta cai exatamente sobre a diagonal em qualquer tamanho. */
+.c-fio,.c-placa{position:absolute;left:0;right:0;bottom:0;
+  clip-path:polygon(0 var(--corte),100% 0,100% 100%,0 100%)}
+.c-fio{height:calc(var(--placa) + 2px);z-index:3;
+  background:linear-gradient(90deg,transparent,var(--m) 20%,var(--m) 76%,transparent)}
+.c-placa{height:var(--placa);z-index:4;
+  background:linear-gradient(178deg,color-mix(in srgb,var(--m) 22%,#070a10) 0%,#070a10 42%)}
+
+/* 1 · OVR sozinho no canto. -.055em é acerto ÓPTICO: algarismo grande tem folga
+      lateral própria e parece recuado demais quando alinhado pelo retângulo.
+      O rótulo embaixo diz OVERALL no jogador e TREINADOR no treinador — é o
+      marcador de tipo, no único lugar que nunca some por falta de espaço. */
+.c-ovr{position:absolute;left:var(--pad);top:5.5%;z-index:5;font-family:var(--ff);
+  font-size:var(--t1);font-weight:700;line-height:.78;letter-spacing:-.03em;color:#fff;
+  margin-left:-.055em;text-shadow:0 2px 20px rgba(0,0,0,.55)}
+.c-ovr small{display:block;font-size:3.9cqw;letter-spacing:.26em;font-weight:700;line-height:1;
+  color:var(--m);margin:.35em 0 0 .06em;text-shadow:none;text-transform:uppercase}
+/* canto superior direito: BANDEIRA. Campeonato e ano ficam só no verso — aqui
+   competiriam com o OVR, que é o que se lê primeiro. */
+.c-flag{position:absolute;right:var(--pad);top:6.5%;z-index:5;width:8cqw;aspect-ratio:3/2;
+  background-size:cover;background-position:50%;border-radius:.6cqw;
+  box-shadow:0 0 0 1px rgba(255,255,255,.22),0 1px 5px rgba(0,0,0,.5)}
+/* 2 · nick sobre a placa SÓLIDA: o contraste de um degradê muda ao longo da
+      própria palavra, e é isso que cartas de coleção reais evitam. */
+.c-nick{position:absolute;left:var(--pad);right:var(--pad);bottom:var(--b3);z-index:5;
+  font-family:var(--ff);font-size:var(--t2);font-weight:700;line-height:1;letter-spacing:-.005em;
+  text-transform:uppercase;color:#f4f8fd;white-space:nowrap}
+/* 3 · o que ele FAZ, na cor do tier */
+.c-func{position:absolute;left:var(--pad);bottom:var(--b2);z-index:5;font-family:var(--ff);
+  font-size:var(--t3);font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--m)}
+/* contexto: UMA linha, apagada. Função secundária e time. */
+.c-meta{position:absolute;left:var(--pad);right:var(--pad);bottom:var(--b1);z-index:5;
+  display:flex;justify-content:space-between;gap:6px;font-family:var(--ff);
+  font-size:var(--t4);letter-spacing:.16em;text-transform:uppercase;color:#71809a}
+.c-meta span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+
+/* ═══ VERSO ════════════════════════════════════════════════════════════════
+   A espinha é o PLAYSTYLE, e a receita fica visível: dá para ver POR QUE ele é
+   aquele estilo, com os pesos que o motor usa de verdade. */
+.c-vfio,.c-vfaixa{position:absolute;left:0;right:0;top:0;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - var(--corte-v)),0 100%)}
+.c-vfio{height:calc(var(--faixa) + 2px);z-index:3;
+  background:linear-gradient(90deg,transparent,var(--m) 20%,var(--m) 76%,transparent)}
+.c-vfaixa{height:var(--faixa);z-index:4;
+  background:linear-gradient(2deg,color-mix(in srgb,var(--m) 20%,#070a10) 0%,#070a10 48%)}
+/* O nick do verso deriva do MESMO --t2 da frente, que escala por comprimento:
+   sem isso um nome longo encolhia numa face e era cortado na outra. */
+.c-vnick{position:absolute;left:var(--pad);top:5.5%;z-index:5;font-family:var(--ff);
+  font-size:calc(var(--t2)*.525);font-weight:700;text-transform:uppercase;letter-spacing:-.01em;
+  color:#f4f8fd;line-height:1;max-width:60%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-vovr{position:absolute;right:var(--pad);top:4.6%;z-index:5;text-align:right;line-height:1;
+  font-family:var(--ff)}
+.c-vovr b{font-size:9.6cqw;font-weight:700;color:#fff;letter-spacing:-.02em}
+.c-vovr small{display:block;font-size:3.4cqw;letter-spacing:.14em;color:var(--m);margin-top:.4em;
+  text-transform:uppercase}
+.c-vestilo{position:absolute;left:var(--pad);right:var(--pad);top:27%;z-index:5;font-family:var(--ff)}
+.c-vestilo small{display:block;font-size:3.6cqw;letter-spacing:.28em;color:#6c7d93;margin-bottom:.5em;
+  text-transform:uppercase}
+.c-vestilo b{font-size:11cqw;font-weight:700;line-height:.95;color:var(--m);text-transform:uppercase;
+  letter-spacing:-.01em;display:block}
+/* justify-content:center absorve 3 ou 4 linhas sem reajuste — o motor entrega 3
+   quando Firepower já está na receita e 4 quando não está. */
+.c-vstats{position:absolute;left:var(--pad);right:var(--pad);top:47%;bottom:19%;z-index:5;
+  display:flex;flex-direction:column;justify-content:center;gap:2.6cqw}
+.c-st{display:grid;grid-template-columns:1fr auto auto;align-items:baseline;column-gap:1.8cqw}
+.c-st i{font-style:normal;font-size:4cqw;letter-spacing:.14em;text-transform:uppercase;color:#8494aa;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-st em{font-style:normal;font-size:3.4cqw;letter-spacing:.06em;color:var(--m);opacity:.9;
+  font-family:var(--ff)}
+.c-st b{font-family:var(--ff);font-size:5.4cqw;font-weight:700;color:#fff;line-height:1}
+.c-trilho{grid-column:1/-1;height:1.5cqw;margin-top:1.1cqw;border-radius:99px;
+  background:rgba(255,255,255,.08);overflow:hidden}
+/* min-width segura o caso real: chopper tem Firepower 2. Sem isso a barra some e
+   parece defeito, quando na verdade ela É a informação. */
+.c-trilho u{display:block;height:100%;border-radius:99px;background:var(--m);min-width:3%}
+/* rodapé do verso: o CAMPEONATO. É o que distingue duas cartas do mesmo jogador
+   — donk em Katowice 2024 e em Budapest 2025 são a mesma pessoa em eras
+   diferentes. Duas linhas porque "DreamHack Cluj-Napoca" não cabe dividindo. */
+.c-vrod{position:absolute;left:var(--pad);right:var(--pad);bottom:var(--b1);z-index:5;
+  display:flex;flex-direction:column;gap:1cqw;text-transform:uppercase;font-family:var(--ff)}
+.c-vrod b{font-size:4.9cqw;font-weight:700;letter-spacing:.03em;color:#e8eef6;line-height:1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-vrod span{font-size:var(--t4);letter-spacing:.2em;color:var(--m);line-height:1}
+.c-vrod::before{content:"";position:absolute;left:0;right:0;bottom:calc(100% + 2.4cqw);
+  height:1px;background:linear-gradient(90deg,color-mix(in srgb,var(--m) 45%,transparent),transparent)}
+/* verso do treinador: a descrição objetiva do efeito ocupa o corpo da carta */
+.c-vdesc{position:absolute;left:var(--pad);right:var(--pad);top:44%;bottom:7%;z-index:5;
+  font-family:'Barlow Semi Condensed',sans-serif;font-size:5.6cqw;line-height:1.32;font-weight:500;
+  color:#c9d4e2;display:flex;align-items:center}
+
+/* ═══ DENSIDADE COMPACTA ═══════════════════════════════════════════════════
+   Na grade de 2 colunas do celular a carta fica pequena e o texto miúdo vira
+   sujeira ilegível. Ele some por container query, nas DUAS faces. Mesma carta,
+   mesma classe — não é uma segunda carta. */
+@container (max-width:150px){
+  .c-meta,.c-flag,.c-vrod,.c-st em{display:none}
+  .card,.coachcard{--placa-n:32;--b2:6%;--b3:14%;--t2:calc(18cqw*var(--nick-esc,1));--t3:7cqw}
+  .c-vstats{bottom:6%}
+  .c-vestilo b{font-size:12.5cqw}
+}
 
 .slot{border:1px dashed rgba(52,65,85,.5);border-radius:10px;min-height:148px;aspect-ratio:5/7;
   background:#0b1018;display:flex;align-items:center;justify-content:center}
@@ -299,17 +340,16 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .slot.coach.avail{border-color:rgba(255,200,50,.5)}
 .slot.avail .ph{color:var(--accent)} .slot.coach.avail .ph{color:var(--t1-gold)}
 .card.dim,.coachcard.dim{pointer-events:none}
-/* carta travada: já escolhida (mesma carta) OU jogador já presente na line (.dup) */
+/* Carta travada: já escolhida (mesma carta) ou jogador já presente na line
+   (.dup). Dessaturar a carta inteira substitui a lista de `!important` que a
+   versão anterior precisava para forçar cor em cada filho — inclusive para
+   neutralizar o texto holográfico, que ficava transparente e sumia. */
 .picks .card.taken,.picks .coachcard.taken,.picks .card.dup{
-  border-color:rgba(90,100,115,.4)!important;background:#0c0f16!important;opacity:.55;pointer-events:none;position:relative}
-.picks .card.taken *,.picks .coachcard.taken *,.picks .card.dup *{color:#5c6878!important;border-color:rgba(90,100,115,.25)!important;background:transparent!important}
-/* neutraliza texto holográfico (tier-h), senão o nome/OVR fica transparente e a carta parece sumir */
-.picks .card.taken .ovr,.picks .card.taken .nick,.picks .card.taken .starsig,
-.picks .card.dup .ovr,.picks .card.dup .nick,.picks .card.dup .starsig{
-  -webkit-text-fill-color:#5c6878!important;color:#5c6878!important;background:none!important;animation:none!important}
-/* etiqueta sobreposta — anula a máscara/padding herdados do tier-h, senão o rótulo some */
+  pointer-events:none;filter:grayscale(1) brightness(.5);
+  box-shadow:inset 0 0 0 1px rgba(90,100,115,.45)}
+/* etiqueta sobreposta; vence o aro holográfico por especificidade */
 .picks .card.taken::after,.picks .coachcard.taken::after,.picks .card.dup::after{
-  position:absolute;inset:0;z-index:7;display:flex;align-items:center;justify-content:center;
+  position:absolute;inset:0;z-index:8;display:flex;align-items:center;justify-content:center;
   font-family:var(--ff);font-size:.6rem;font-weight:700;letter-spacing:.18em;color:#9aa6b6;
   background:rgba(8,10,16,.72);-webkit-mask:none;mask:none;padding:0;animation:none}
 .picks .card.taken::after,.picks .coachcard.taken::after{content:"NO ELENCO"}
@@ -676,7 +716,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 
 @media(prefers-reduced-motion:reduce){
   .result,.deal,.land,.track{animation:none!important;transition:none!important}
-  .card.tier-h::after,.card.tier-h .ovr,.card.tier-h .nick,.card.tier-h .starsig{animation:none!important}
+  .card.tier-h::after{animation:none!important}
   .overlay{animation:none!important}
   .series.ativa,.champion .cup-tag{animation:none!important}
   .rs-cell.pop,.sb-score .bump,.sb-score .flash-ct,.sb-score .flash-tr,.rs-cell.key::after{animation:none!important}
