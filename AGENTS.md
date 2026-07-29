@@ -7,12 +7,33 @@ de profissionalização e a visão do modo Carreira de Jogador. Leia também
 laboratório e balanceamento. Leia ainda `docs/architecture.md`, `docs/testing.md`
 e `docs/glossary.md` antes de alterar os motores.
 
-## Escopo e branch
+## Escopo, autonomia e branch
 
 - A branch de trabalho é `sandbox-test`.
-- `main` é intocável durante a profissionalização estrutural.
-- Não faça push, merge ou alteração de branch sem pedido explícito do responsável.
-- Preserve mudanças preexistentes e confirme `git status` antes e depois do trabalho.
+- O responsável concede autorização persistente para trabalhar com autonomia na
+  profissionalização do repositório nessa branch. Depois de ler o contexto e
+  confirmar o estado real, escolha e execute a próxima fatia segura sem pedir
+  permissão a cada arquivo ou etapa.
+- Essa autonomia inclui investigar todo o repositório; criar, editar, mover,
+  renomear e remover código, testes, documentação e pastas versionadas; executar
+  ferramentas; criar commits coerentes; e fazer push de checkpoints verdes para
+  `origin/sandbox-test`.
+- O push para `sandbox-test` e o deploy automático de Pages disparado por ele
+  estão autorizados quando as validações pertinentes estiverem verdes. Não é
+  necessário renovar essa autorização em cada sessão.
+- Limpeza é trabalho autorizado: remova legado, duplicações e arquivos órfãos
+  quando busca de consumidores, histórico e testes demonstrarem que são
+  dispensáveis. Prefira uma remoção rastreável em commit próprio e não preserve
+  dívida morta apenas por cautela abstrata.
+- Não interrompa uma sequência segura apenas para perguntar se pode continuar.
+  Pare quando houver uma decisão de produto genuinamente aberta, conflito com
+  mudanças do usuário, credencial/custo externo não autorizado ou falha que não
+  possa ser explicada e corrigida dentro do escopo.
+- `main` permanece intocável durante a profissionalização. Merge em `main`,
+  troca/criação/remoção de branch, force-push, reescrita de histórico publicado
+  e release manual exigem pedido explícito do responsável.
+- Preserve mudanças preexistentes do usuário, inclua nos commits somente o
+  trabalho pertinente e confirme `git status` antes e depois do trabalho.
 
 ## Regra mais importante
 
@@ -86,17 +107,22 @@ travava migração estrutural que é totalmente verificável. Os dois casos são
 
 - **Mudança não medida** (balanceamento, dados, regra nova) continua indo em fatia pequena, uma
   família de parâmetros por vez, com comparação pareada. Aqui a cautela é a única defesa.
-- **Migração estrutural provada por paridade** pode ir em fatias maiores, desde que cada fatia
-  feche o invariante completo: snapshot idêntico, golden bit a bit, `validate` 24/24 e consumo de
-  RNG inalterado. Refatoração não muda resultado — se mudou, é bug da refatoração, e a fatia
-  volta atrás.
+- **Migração estrutural provada por paridade** pode ir em fatias maiores. Cada
+  checkpoint deve fechar os invariantes pertinentes à superfície alterada,
+  conforme a matriz abaixo. Se tocar em motor, API compartilhada ou RNG, isso
+  inclui snapshot idêntico, golden bit a bit, `validate` 24/24 e consumo de RNG
+  inalterado. Se tocar somente em aplicação/UI, use as guardas centrais e o E2E;
+  rode a validação integral ao encerrar um marco amplo. Refatoração não muda
+  resultado — se mudou, é bug da refatoração, e a fatia volta atrás.
 
 O que não muda: fatia estrutural e fatia de balanceamento nunca dividem o mesmo commit, e um
 número vermelho nunca é contornado ajustando golden ou relaxando suíte.
 
 ## Validação obrigatória
 
-Instale o lockfile com `npm ci`. Para uma alteração documental, rode pelo menos
+Quando as dependências ainda não estiverem instaladas ou o lockfile tiver mudado,
+instale-as com `npm ci`. Não reinstale nem repita uma suíte longa sem mudança na
+superfície coberta. Para uma alteração documental, rode pelo menos
 `npm run check`. Para código:
 
 ```text
@@ -111,7 +137,9 @@ npm run test:e2e          # se tocar no jogo ou na interface do calibrador
 ```
 
 `npm run test:all` e `npm run bench` executam as mesmas 24 suítes, na ordem
-histórica. O benchmark completo é demorado; não reduza amostras ou limites para
+histórica. Use `npm run validate` para alterações em motores/APIs compartilhadas
+e para fechar marcos estruturais amplos. O benchmark completo é demorado; agrupe
+mudanças coerentes antes de executá-lo, mas não reduza amostras ou limites para
 obter um resultado verde.
 
 ## Snapshot e arquivos gerados

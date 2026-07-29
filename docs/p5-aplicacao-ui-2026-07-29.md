@@ -11,9 +11,11 @@
 ## 1. Decisão do responsável e estado seguro
 
 O responsável interrompeu conscientemente a continuação do P5 porque a próxima
-parte importante exigiria aproximadamente uma a duas horas. **Não retome essa
-refatoração automaticamente ao abrir uma nova sessão.** Primeiro leia os arquivos
-obrigatórios e espere um pedido explícito para continuar.
+parte importante exigiria aproximadamente uma a duas horas. Esse foi o motivo
+histórico deste handoff, não um bloqueio permanente. Em 29/07/2026, o responsável
+concedeu a autorização persistente registrada em `AGENTS.md`: numa nova sessão,
+leia os arquivos obrigatórios, confirme o estado real e retome autonomamente a
+próxima fatia segura, sem esperar uma nova permissão para cada etapa.
 
 O jogo está funcional e o repositório está num ponto seguro. O trabalho restante
 é importante para a futura Carreira de Jogador e para manutenção, mas não é uma
@@ -386,7 +388,7 @@ permanece separado.
 - mover CSS junto com controladores;
 - apagar arquivo apenas porque parece antigo ou duplicado.
 
-## 11. Próxima fatia recomendada — somente quando autorizada
+## 11. Próxima fatia recomendada
 
 A próxima mudança deve separar **somente estado**, sem mover controladores no
 mesmo commit.
@@ -502,9 +504,10 @@ Rode benchmark, fidelity ou calibrator quando a matriz de `AGENTS.md` exigir.
 Nunca reduza amostras para ganhar tempo. Nunca atualize snapshot/golden para fazer
 uma refatoração passar.
 
-Um futuro agente não deve presumir que a autorização de push desta conversa ainda
-vale. A regra persistente é a do `AGENTS.md`: confirme o pedido do responsável
-antes de push, merge ou troca de branch.
+A regra persistente é a do `AGENTS.md`: commits e push de checkpoints verdes para
+`sandbox-test`, inclusive o deploy automático de Pages, estão autorizados sem
+nova confirmação. Merge em `main`, mudança de branch, force-push e reescrita de
+histórico continuam exigindo pedido explícito.
 
 ## 16. Critério de encerramento do P5
 
@@ -518,5 +521,5 @@ O P5 pode ser considerado estruturalmente encerrado quando:
 - o fluxo completo continuar verde no E2E;
 - documentação e inventário de arquivos refletirem a árvore real.
 
-Até lá, o P5 está **em andamento, pausado num checkpoint verde** — não bloqueado e
-não abandonado.
+Até lá, o P5 está **em andamento, num checkpoint verde e autorizado a prosseguir**
+pela próxima fatia segura — não bloqueado e não abandonado.
