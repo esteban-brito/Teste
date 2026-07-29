@@ -35,10 +35,10 @@ O destino já estava decidido nas ADRs **0002**, **0004** e **0005** e sequencia
 | 3 | SINAPSE (química) | **concluída** — 1 módulo |
 | 4 | simulação, economia, rating | **concluída** — 6 de 6 fatias |
 | 5 | API pública de avaliação + 3 consumidores Node | **concluída** |
-| 6 | API pública de simulação, worker e sandbox | **em andamento** — RNG extraído |
+| 6 | API pública de simulação, worker e sandbox | **em andamento** — RNG e preparação extraídos |
 | 7 | entrypoint do jogo + adapter Node, fim da duplicação | pendente |
 
-`npm run check` saiu de **19 para 34 checadores**. `npm run validate` fecha 24/24.
+`npm run check` saiu de **19 para 35 checadores**. `npm run validate` fecha 24/24.
 O motor executável de `game.js`, `roster-snapshot.json`, `simulation-golden.json` e
 `campaign-golden.json` seguem **intocados** — extração não muda resultado.
 
@@ -56,6 +56,7 @@ src/domain/simulation/player-form.mjs         MARÉ: formaDoDia, forma de campan
 src/domain/simulation/team-form.mjs           MARÉ: forcaDoDia e consistência do time
 src/domain/simulation/duel-weights.mjs        skillDuelo, fragPeso
 src/domain/simulation/random-source.mjs       Mulberry32 isolado por sessão
+src/domain/simulation/team-preparation.mjs    mapa, lado e vetores de entrada do combate
 src/domain/simulation/economy.mjs             COFRE: decisão, carrego, drop e pagamento
 src/domain/simulation/map-simulation.mjs      PÓLVORA: mapa completo round a round
 src/domain/simulation/series-simulation.mjs   PÓLVORA: série sem repetição de mapas
@@ -126,12 +127,15 @@ normais, OT repetido, telemetria, modo leve e mapa sorteado, além da próxima
 amostra do RNG e de uma chamada a `combateRound` por round.
 `tools/check-series-simulation-parity.js` compara séries MD1, MD3 e MD5 completas,
 identidade do vencedor, mapas únicos, próxima amostra do RNG e ordem das chamadas.
+`tools/check-team-preparation-parity.js` cobre os 17 times nos 8 mapas e entradas
+incompletas, compara inclusive os caches `_mapBase`/`_lado` e exige o mesmo estado
+do RNG depois das cinco formas individuais.
 
 ## 6. Próximo passo concreto
 
-Continuar a **Fase 6**: compor a API pública de simulação e então migrar sandbox e
-worker. O primeiro pré-requisito já saiu: `random-source.mjs` reproduz Mulberry32
-bit a bit e isola o estado por sessão.
+Continuar a **Fase 6** pela fronteira de combate (`combateRound`), último motor que
+ainda impede a composição da API pública de simulação. RNG e preparação já têm
+paridade exata; depois do combate, compor a API e migrar worker e sandbox.
 
 Correção de classificação: `tools/check-engine-exports.js` e
 `tools/check-sandbox-engine.js` não são consumidores a migrar; são guardas do
