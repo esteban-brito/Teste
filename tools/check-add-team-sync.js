@@ -1,4 +1,4 @@
-/* Caracteriza a projeção múltipla e o rollback de tools/add-team.js sem
+/* Caracteriza a projeção modular e o rollback de tools/add-team.js sem
    modificar os arquivos do repositório. */
 const assert=require("node:assert/strict");
 const fs=require("node:fs");
@@ -26,7 +26,6 @@ function projectionText(source,fragment,anchor){
 
 function testProjection(){
   const sources={
-    game:fs.readFileSync(path.join(ROOT,"game.js"),"utf8"),
     players:fs.readFileSync(path.join(ROOT,"src","data","players.mjs"),"utf8"),
     teams:fs.readFileSync(path.join(ROOT,"src","data","teams.mjs"),"utf8")
   };
@@ -36,9 +35,7 @@ function testProjection(){
   const projected=projectSources(sources,time,jogadores,keys);
 
   assert.equal(warnings.length,0,"fixture de sincronização não deveria gerar avisos");
-  assert.ok(projected.game.includes(projectionText(sources.game,projected.fragments.players,PLAYER_ANCHOR)),"jogadores ausentes da projeção legada");
   assert.ok(projected.players.includes(projectionText(sources.players,projected.fragments.players,PLAYER_ANCHOR)),"jogadores ausentes do módulo");
-  assert.ok(projected.game.includes(projectionText(sources.game,projected.fragments.team,TEAM_ANCHOR)),"elenco ausente da projeção legada");
   assert.ok(projected.teams.includes(projectionText(sources.teams,projected.fragments.team,TEAM_ANCHOR)),"elenco ausente do módulo");
   assert.equal(keys.length,5);
 

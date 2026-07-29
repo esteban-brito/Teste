@@ -11,8 +11,9 @@ Comando:
 node bancada/auditoria.js --deep --cycles 8
 ```
 
-A auditoria usa o motor executável de `game.js` por `bancada/motor.js`, agenda
-round-robin determinística e o contrato Mulberry32 existente. A execução cobriu:
+A auditoria foi executada originalmente pelo motor de `game.js`; hoje
+`bancada/motor.js` compõe a mesma API pública de simulação. A agenda round-robin
+determinística e o contrato Mulberry32 permanecem. A execução cobriu:
 
 - 85 IDs e 17 times;
 - 16 adversários por jogador;

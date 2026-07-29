@@ -141,7 +141,7 @@ function buildCurrent(){
       campaignSeriesScenario()
     ]
   };
-  // Valores saem de um contexto vm; JSON remove prototipos cross-realm sem arredondar numeros.
+  // JSON normaliza o contrato observável sem arredondar números.
   return plain(current);
 }
 

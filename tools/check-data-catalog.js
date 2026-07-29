@@ -7,7 +7,7 @@
 const assert=require("node:assert/strict");
 const path=require("node:path");
 const {pathToFileURL}=require("node:url");
-const {X}=require("../bancada/motor");
+const {POOL}=require("../src/public/evaluation-api.mjs");
 
 const moduleUrl=file=>pathToFileURL(path.join(__dirname,"..","src","data",file)).href;
 const idDe=p=>p.id||p.nome;
@@ -52,7 +52,7 @@ async function main(){
   }
 
   /* ── 3. os derivados existem mesmo no POOL ─────────────────────────────── */
-  const amostra=X.POOL[Object.keys(X.POOL)[0]];
+  const amostra=POOL[Object.keys(POOL)[0]];
   for(const campo of Object.keys(JOGADOR_DERIVADO)){
     assert.ok(campo in amostra,
       `catálogo declara "${campo}" como derivado, mas o POOL não o produz`);
@@ -61,7 +61,7 @@ async function main(){
   /* ── 4. totais ─────────────────────────────────────────────────────────── */
   const ids=ATRIBUTOS.map(idDe);
   const nomes=ATRIBUTOS.map(p=>p.nome);
-  const paisesJogador=new Set(Object.values(X.POOL).map(p=>p.pais).filter(c=>c&&c!=="—"));
+  const paisesJogador=new Set(Object.values(POOL).map(p=>p.pais).filter(c=>c&&c!=="—"));
   const treinadores=TIMES_DEF.map(t=>t.coach).filter(Boolean);
   const paisesTreinador=new Set(TIMES_DEF.filter(t=>t.coach)
     .map(t=>t.coachPais||PAIS_TREINADOR[t.coach]).filter(Boolean));
@@ -84,8 +84,8 @@ async function main(){
 
   /* ── 5. invariantes de identidade (docs/architecture.md §Dados e identidade) */
   assert.equal(new Set(ids).size,ids.length,"IDs crus precisam ser únicos");
-  assert.equal(Object.keys(X.POOL).length,ATRIBUTOS.length,"POOL precisa indexar todos os IDs crus");
-  ATRIBUTOS.forEach(p=>assert.ok(X.POOL[idDe(p)],`POOL não indexa "${idDe(p)}"`));
+  assert.equal(Object.keys(POOL).length,ATRIBUTOS.length,"POOL precisa indexar todos os IDs crus");
+  ATRIBUTOS.forEach(p=>assert.ok(POOL[idDe(p)],`POOL não indexa "${idDe(p)}"`));
 
   /* ── 5-bis. os espaços de nome do país seguem separados ────────────────
      A tabela única de antes misturava jogador, treinador e um nome de TIME.
