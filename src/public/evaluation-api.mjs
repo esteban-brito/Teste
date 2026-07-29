@@ -2,13 +2,19 @@
 import {ATRIBUTOS} from "../data/players.mjs";
 import {TIMES_DEF} from "../data/teams.mjs";
 import {PAIS_JOGADOR,PAIS_TREINADOR} from "../data/countries.mjs";
-import {avaliarJogador,CFG_PADRAO as CFG_OVR} from "../domain/evaluation/player-evaluation.mjs";
+import {avaliarJogador,aplicarAvaliacaoContextual,ovrUnificado,nmOVR,
+  CFG_PADRAO as CFG_OVR} from "../domain/evaluation/player-evaluation.mjs";
 import {distribuirRoles} from "../domain/evaluation/role-distribution.mjs";
 import {styleId} from "../domain/evaluation/style-identity.mjs";
-import {NM_DEF,STYLE_CONTRA,STYLE_KEYS,CFG_PADRAO as CFG_ESTILO} from "../domain/evaluation/style-score.mjs";
-import {ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,CFG_PADRAO as CFG_AFINIDADE} from "../domain/evaluation/role-affinity.mjs";
+import {NM_DEF,NM_COR,STYLE_CONTRA,STYLE_KEYS,PLAYSTYLE_IDS,NM_AXES,styleScoreTable,
+  CFG_PADRAO as CFG_ESTILO} from "../domain/evaluation/style-score.mjs";
+import {ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,roleAfinidade,
+  CFG_PADRAO as CFG_AFINIDADE} from "../domain/evaluation/role-affinity.mjs";
 import {CFG_PADRAO as CFG_CLASSIFICACAO} from "../domain/evaluation/role-classification.mjs";
-import {ovrTreinador,derivaCaracteristica} from "../domain/chemistry/team-chemistry.mjs";
+import {rolePairReality} from "../domain/evaluation/role-pair-reality.mjs";
+import {roleStyleReality} from "../domain/evaluation/role-style-reality.mjs";
+import {secondaryScore} from "../domain/evaluation/secondary-score.mjs";
+import {ovrTreinador,derivaCaracteristica,forcaTime} from "../domain/chemistry/team-chemistry.mjs";
 
 const CARAC_SLUG={Gestor:"gestor",Estrategista:"estrategista",Desenvolvedor:"desenvolvedor",Motivador:"motivador"};
 const CARAC_COR={Gestor:"var(--c-gestor)",Estrategista:"var(--c-estrategista)",Desenvolvedor:"var(--c-desenvolvedor)",Motivador:"var(--c-motivador)"};
@@ -21,10 +27,15 @@ for(const cfg of [CFG_OVR,CFG_AFINIDADE,CFG_ESTILO,CFG_CLASSIFICACAO]){
     get:()=>cfg[key],set:value=>{cfg[key]=value;}});
 }
 
-export {ATRIBUTOS,TIMES_DEF,PAIS_JOGADOR,PAIS_TREINADOR,avaliarJogador,
-  NM_DEF,STYLE_CONTRA,ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES};
+export {ATRIBUTOS,TIMES_DEF,PAIS_JOGADOR,PAIS_TREINADOR,
+  avaliarJogador,aplicarAvaliacaoContextual,ovrUnificado,nmOVR,distribuirRoles,
+  forcaTime,rolePairReality,roleStyleReality,roleAfinidade,secondaryScore,styleScoreTable,
+  NM_DEF,NM_COR,STYLE_CONTRA,STYLE_KEYS,PLAYSTYLE_IDS,NM_AXES,
+  ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES};
 
 export function styleLabel(value){const id=styleId(value);return id==="joker"?"Coringa":(STYLE_KEYS[id]||id);}
+// Alias temporário para o contrato do sandbox durante a migração da Fase 5.
+export const STYLE_LABEL=styleLabel;
 
 export function buildEvaluationState({atributos=ATRIBUTOS,timesDef=TIMES_DEF,
   paisJogador=PAIS_JOGADOR,paisTreinador=PAIS_TREINADOR}={}){

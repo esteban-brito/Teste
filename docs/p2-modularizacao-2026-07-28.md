@@ -34,7 +34,7 @@ O destino já estava decidido nas ADRs **0002**, **0004** e **0005** e sequencia
 | 2 | PRISMA · ZÊNITE (avaliação) | **concluída** — 5 módulos |
 | 3 | SINAPSE (química) | **concluída** — 1 módulo |
 | 4 | simulação, economia, rating | **concluída** — 6 de 6 fatias |
-| 5 | API pública + 6 consumidores Node | **em andamento** — 1 de 6 migrado |
+| 5 | API pública + 6 consumidores Node | **em andamento** — 3 de 6 migrados |
 | 6 | worker e sandbox | pendente |
 | 7 | entrypoint do jogo, fim da duplicação | pendente |
 
@@ -130,12 +130,12 @@ identidade do vencedor, mapas únicos, próxima amostra do RNG e ordem das chama
 
 Continuar a **Fase 5**. `src/public/evaluation-api.mjs` já recompõe `POOL` e `TEAMS`
 com paridade exata, preserva a identidade de `_eng` e expõe as 30 propriedades
-calibráveis sem criar uma cópia divergente. `tools/verify-report.js` é o primeiro
-dos seis consumidores Node migrado: ele já não lê nem executa um recorte de
-`game.js`.
+calibráveis sem criar uma cópia divergente. `tools/verify-report.js`, o harness
+`bancada/worker-calibrador.js` e `bancada/calibrador-loader.js` já consomem essa
+composição sem ler nem executar um recorte de `game.js`. O worker real e o sandbox
+no navegador ainda são legados e pertencem à Fase 6.
 
-Restam cinco consumidores do recorte legado: `bancada/motor.js`,
-`bancada/calibrador-loader.js`, `bancada/worker-calibrador.js`,
+Restam três consumidores Node do recorte legado: `bancada/motor.js`,
 `tools/check-engine-exports.js` e `tools/check-sandbox-engine.js`. Migrá-los um por
 vez, sem retirar uma guarda antes de seu contrato ter substituto explícito.
 

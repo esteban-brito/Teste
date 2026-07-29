@@ -7,6 +7,12 @@ async function main(){
   assert.deepEqual(plain(A.POOL),plain(X.POOL),"POOL público divergiu do legado");
   assert.deepEqual(plain(A.TEAMS),plain(X.TEAMS),"TEAMS públicos divergiram do legado");
   assert.deepEqual(plain(A.CFG_AVALIACAO),plain(X.CFG_AVALIACAO),"CFG_AVALIACAO público incompleto");
+  ["NM_DEF","STYLE_CONTRA","PLAYSTYLE_IDS",
+    "ROLE_PERFIL","ROLE_CONTRA","IGL_ROLE_AFIN","ROLE_RULES"].forEach(name=>
+    assert.deepEqual(plain(A[name]),plain(X[name]),`${name} público divergiu do legado`));
+  ["avaliarJogador","aplicarAvaliacaoContextual","ovrUnificado","nmOVR","distribuirRoles",
+    "forcaTime","rolePairReality","roleStyleReality","roleAfinidade","secondaryScore",
+    "styleScoreTable","STYLE_LABEL"].forEach(name=>assert.equal(typeof A[name],"function",`${name} ausente da API pública`));
   A.TEAMS.forEach(team=>team.jogadores.forEach(card=>assert.equal(card._eng,A.POOL[card._eng.id],`${team.nome}/${card.nick}: _eng perdeu identidade`)));
   [...X.PLAYSTYLE_IDS,"joker"].forEach(style=>assert.equal(A.styleLabel(style),X.STYLE_LABEL(style),`rótulo público de ${style} divergiu`));
   const novo=A.buildEvaluationState();assert.notEqual(novo.POOL,A.POOL,"rebuild precisa criar estado novo");

@@ -1,7 +1,6 @@
 /* bancada/calibrador-loader.js - carrega o calibrador real de sandbox.html em Node.
-   Carrega game.js + o <script> de sandbox.html do mesmo jeito que o navegador faria
-   (fetch->new Function na pagina; aqui, leitura de arquivo->new Function), sem duplicar
-   nenhuma logica - mesma tecnica usada por calibrador-worker.js.
+   Injeta a API pública de avaliação no <script> do sandbox, sem recortar game.js e sem
+   duplicar lógica. A simulação do sandbox continua no E2E até a migração da Fase 6.
    Cobre 2 regressoes ja corrigidas (deltasFor vazando teto, compareCalibration ignorando
    custo ponderado) e roda uma bateria pequena de buscas ponta-a-ponta pra garantir que
    nunca lanca excecao e que "ok=true" bate o objetivo de verdade.
@@ -10,20 +9,15 @@
 */
 const fs=require("fs");
 const path=require("path");
+const {pathToFileURL}=require("url");
 const {ROOT}=require("./common");
 
-const GAME_PATH=path.join(ROOT,"game.js");
 const SANDBOX_PATH=path.join(ROOT,"sandbox.html");
+let calibratorPromise=null;
 
-function loadCalibrator(){
-  const gameSrc=fs.readFileSync(GAME_PATH,"utf8");
+async function buildCalibrator(){
+  const E=await import(pathToFileURL(path.join(ROOT,"src","public","evaluation-api.mjs")).href);
   const sandboxSrc=fs.readFileSync(SANDBOX_PATH,"utf8");
-  const linhas=gameSrc.split("\n");
-  let cut=linhas.findIndex(l=>l.includes("// === UI START ==="));
-  if(cut<0)cut=linhas.findIndex(l=>l.includes("document.getElementById"));
-  if(cut<0)throw new Error("marcador de UI nao encontrado em game.js");
-  const engineSlice=linhas.slice(0,cut).join("\n");
-  const E=new Function(engineSlice+"\nreturn {avaliarJogador,aplicarAvaliacaoContextual,distribuirRoles,forcaTime,ovrUnificado,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,STYLE_CONTRA,MAPAS_POOL,MAPA_LADO,srand,simularMapa,forcaDoDia,TEAMS,nmOVR,styleScoreTable,roleAfinidade,secondaryScore,NM_DEF,NM_COR,STYLE_LABEL,PLAYSTYLE_IDS,PLAYSTYLES,NM_AXES,STYLE_KEYS};")();
 
   const m=sandboxSrc.match(/<script>([\s\S]*)<\/script>/);
   if(!m)throw new Error("nao encontrei o <script> do sandbox.html");
@@ -83,5 +77,11 @@ return {
   return api;
 }
 
+// Os módulos públicos são singletons por processo; uma única sessão torna esse
+// compartilhamento explícito e evita criar wrappers que parecem isolados sem ser.
+function loadCalibrator(){
+  if(!calibratorPromise)calibratorPromise=buildCalibrator();
+  return calibratorPromise;
+}
 
 module.exports={loadCalibrator};

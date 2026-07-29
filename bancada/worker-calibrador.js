@@ -1,8 +1,8 @@
 /* bancada/worker-calibrador.js - exercita o Web Worker real do calibrador em worker_threads.
    Valida bootstrap, isolamento, partição do espaço e cancelamento cooperativo sem duplicar
    a lógica do calibrador. O wrapper só adapta self/fetch/postMessage para o Node. */
-const fs=require("fs");
 const path=require("path");
+const {pathToFileURL}=require("url");
 const {Worker}=require("worker_threads");
 const {ROOT,okMark}=require("./common");
 
@@ -28,13 +28,9 @@ try{
 }catch(error){parentPort.postMessage({type:"boot-error",error:error.stack||String(error)});}
 `;
 
-function engineSlot(nick){
-  const source=fs.readFileSync(path.join(ROOT,"game.js"),"utf8");
-  const lines=source.split("\n");
-  const cut=lines.findIndex(line=>line.includes("// === UI START ==="));
-  const engine=new Function(lines.slice(0,cut).join("\n")+"\nreturn {TEAMS};")();
+function engineSlot(teams,nick){
   let found=null;
-  engine.TEAMS.some((team,ti)=>team.jogadores.some((player,pi)=>{
+  teams.some((team,ti)=>team.jogadores.some((player,pi)=>{
     if(player._eng.nick!==nick)return false;
     found={ti,pi,state:{...player._eng}};
     return true;
@@ -81,7 +77,8 @@ function check(value,label){
 
 (async()=>{
   console.log("— WEB WORKERS DO CALIBRADOR —");
-  const b1tPartition=engineSlot("b1t");
+  const {TEAMS}=await import(pathToFileURL(path.join(ROOT,"src","public","evaluation-api.mjs")).href);
+  const b1tPartition=engineSlot(TEAMS,"b1t");
   const workers=[spawnWorker(),spawnWorker()];
   try{
     await Promise.all(workers.map(worker=>worker.ready));
@@ -99,7 +96,7 @@ function check(value,label){
     await Promise.all(workers.map(worker=>worker.terminate()));
   }
 
-  const b1t=engineSlot("b1t"),cancelWorker=spawnWorker();
+  const b1t=engineSlot(TEAMS,"b1t"),cancelWorker=spawnWorker();
   try{
     await cancelWorker.ready;
     const jobId="cancel-"+Date.now();

@@ -12,7 +12,8 @@ function check(ok,label){
 }
 
 console.log("— CALIBRADOR INTELIGENTE (sandbox.html) —");
-const api=loadCalibrator();
+(async()=>{
+const api=await loadCalibrator();
 
 // achado #1 (corrigido): deltasFor nao pode devolver deltas acima do teto pedido.
 {
@@ -79,7 +80,6 @@ const CASOS=[
 const budgetMs=+(process.env.CALIB_MS||1500);
 api.overrideBudget(budgetMs);
 
-(async()=>{
   for(const caso of CASOS){
     api.loadByName(caso.nome);
     api.setMode(caso.mode);
@@ -260,4 +260,4 @@ api.overrideBudget(budgetMs);
   }
   console.log(failures?`✗ ${failures} checagem(ns) do calibrador falharam`:"✓ calibrador ok");
   process.exitCode=failures?1:0;
-})();
+})().catch(error=>{console.error(error);process.exitCode=1;});

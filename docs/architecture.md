@@ -46,9 +46,11 @@ não autorizam balanceamento implícito.
 A primeira composição pública vive em `src/public/evaluation-api.mjs`. Ela monta
 `POOL` e `TEAMS` a partir dos dados crus e dos módulos PRISMA, ZÊNITE e SINAPSE,
 preserva a referência compartilhada dos jogadores distribuídos e oferece uma
-visão única das configurações calibráveis. `tools/verify-report.js` já consome
-essa API sem recortar `game.js`; os cinco consumidores Node restantes continuam
-legados até serem migrados com uma prova equivalente.
+visão única das configurações calibráveis. `tools/verify-report.js`, o harness
+Node dos workers e o loader Node do calibrador já consomem essa API sem recortar
+`game.js`; os três consumidores Node restantes continuam legados até serem
+migrados com uma prova equivalente. O sandbox e o bootstrap do worker real
+permanecem na fronteira legada da Fase 6.
 
 ## Pipeline do domínio
 
