@@ -1,5 +1,5 @@
 /* bancada/roster.js - regenera os dados embutidos em elencos.html.
-   Fonte unica: motores carregados de game.js. */
+   Fonte única: composição pública carregada por bancada/motor.js. */
 const fs=require("fs");
 const path=require("path");
 const {X}=require("./motor");

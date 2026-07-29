@@ -570,7 +570,7 @@ function buildDeepAuditSync(cycles=DEFAULT_DEEP_CYCLES,options={}){
     diagnosticOnly:true,
     passFailThresholds:[],
     method:{
-      source:"game.js via bancada/motor.js",rngContract:"mulberry32-v1",baseSeed:DEEP_BASE_SEED,
+      source:"src/public/simulation-api.mjs via bancada/motor.js",rngContract:"mulberry32-v1",baseSeed:DEEP_BASE_SEED,
       cycles,teams:T.length,players:players.length,pairingsPerCycle:pairs.length,maps:pairs.length*cycles,
       mapsPerPlayer:(T.length-1)*cycles,mapRotation:MAPS,orientationPolicy:"odd cycles swap every pairing",
       seedPolicy:"base + imul(cycle + 1, 0x9e3779b1) + imul(pair + 1, 0x85ebca6b)",

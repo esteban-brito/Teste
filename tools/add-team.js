@@ -15,7 +15,6 @@ const path=require("path");
 const {execFileSync}=require("child_process");
 const {ROOT,ATTRS}=require("../bancada/common");
 
-const GAME=path.join(ROOT,"game.js");
 const PLAYERS_MODULE=path.join(ROOT,"src","data","players.mjs");
 const TEAMS_MODULE=path.join(ROOT,"src","data","teams.mjs");
 const ROSTER_OUTPUT=path.join(ROOT,"elencos.html");
@@ -146,12 +145,12 @@ function validateInput(time,players,warnings){
   });
 }
 
-function existingPlayerIds(game){
-  return new Set([...game.matchAll(/\{(?:id:"([^"]+)",)?nome:"([^"]+)"/g)].map(match=>match[1]||match[2]));
+function existingPlayerIds(source){
+  return new Set([...source.matchAll(/\{(?:id:"([^"]+)",)?nome:"([^"]+)"/g)].map(match=>match[1]||match[2]));
 }
 
-function assignPlayerKeys(players,teamName,game,warnings){
-  const existing=existingPlayerIds(game);
+function assignPlayerKeys(players,teamName,source,warnings){
+  const existing=existingPlayerIds(source);
   const teamSlug=slug(teamName);
   return players.map(player=>{
     let key=player.nick;
@@ -194,9 +193,7 @@ function projectSources(sources,time,players,keys){
   const playersBlock=players.map(player=>playerLine(player,time)).join("\n");
   const teamBlock=teamLine(time,keys);
   const playerProjection=`  // ——— ${time.nome} · ${time.camp} (${time.colocacao}) ———\n${playersBlock}`;
-  const gameWithPlayers=injectAtAnchor(sources.game,PLAYER_ANCHOR,playerProjection,"game.js");
   return {
-    game:injectAtAnchor(gameWithPlayers,TEAM_ANCHOR,teamBlock,"game.js"),
     players:injectAtAnchor(sources.players,PLAYER_ANCHOR,playerProjection,"src/data/players.mjs"),
     teams:injectAtAnchor(sources.teams,TEAM_ANCHOR,teamBlock,"src/data/teams.mjs"),
     fragments:{players:playerProjection,team:teamBlock}
@@ -204,11 +201,9 @@ function projectSources(sources,time,players,keys){
 }
 
 function runPostChecks(){
-  execFileSync(process.execPath,["--check",GAME],{stdio:"inherit"});
   [
-    "check-raw-player-parity.js",
-    "check-raw-team-parity.js",
-    "check-raw-country-parity.js"
+    "check-data-catalog.js",
+    "check-public-evaluation-api.js"
   ].forEach(filename=>{
     execFileSync(process.execPath,[path.join(ROOT,"tools",filename)],{stdio:"inherit"});
   });
@@ -246,8 +241,7 @@ function transactionalWrite(entries,validate,protectedPaths=[]){
 function applyProjection(projected){
   transactionalWrite([
     {path:PLAYERS_MODULE,content:projected.players},
-    {path:TEAMS_MODULE,content:projected.teams},
-    {path:GAME,content:projected.game}
+    {path:TEAMS_MODULE,content:projected.teams}
   ],runPostChecks,[ROSTER_OUTPUT]);
 }
 
@@ -281,7 +275,6 @@ function main(){
   validateInput(time,jogadores,warnings);
 
   const sources={
-    game:fs.readFileSync(GAME,"utf8"),
     players:fs.readFileSync(PLAYERS_MODULE,"utf8"),
     teams:fs.readFileSync(TEAMS_MODULE,"utf8")
   };
