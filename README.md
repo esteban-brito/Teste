@@ -68,6 +68,7 @@ draft9-0/
 │   ├── data/             ← dados crus catalogados
 │   ├── domain/           ← avaliação, química, simulação, narrativa e estatística
 │   ├── application/      ← efeitos e serviços da aplicação no navegador
+│   ├── infrastructure/   ← adaptadores de navegador e persistência
 │   └── public/           ← APIs públicas compartilhadas pelos consumidores
 ├── elencos.html          ← base de elencos (página standalone)
 ├── sandbox.html          ← bancada de tuning + calibrador inteligente

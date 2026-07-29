@@ -47,7 +47,9 @@ o worker e a bancada já usam módulos públicos; não existe mais bloco de dom�
 duplicado em `game.js`. Essas fronteiras não autorizam balanceamento implícito.
 
 `src/domain/narrative/game-memory.mjs` deriva marcos, recordes e textos da saída
-do simulador sem DOM, relógio ou RNG; a persistência continua na aplicação.
+do simulador sem DOM, relógio ou RNG. O adaptador
+`src/infrastructure/persistence/progress-store.mjs` guarda o resultado versionado,
+importa e exporta backup sem levar APIs do navegador para o domínio.
 
 `random-source.mjs` encapsula o Mulberry32 em instâncias independentes, preservando
 as sequências uniforme e gaussiana bit a bit. A composição pública possui uma
@@ -136,11 +138,13 @@ extrator offline -> corpus derivado -> scorer IFCS
 - `TG`: campeonato, suíça, playoffs e resultados.
 - `src/application/audio.mjs`: contexto Web Audio e preferência de mute, expostos
   por um singleton e uma factory sem dependência do estado esportivo.
+- `src/infrastructure/persistence/progress-store.mjs`: estado histórico versionado,
+  localStorage e backup JSON, com factory verificável fora do navegador.
 
 `S` e `TG` ainda são locais ao entrypoint e mutados por controllers e
 renderizadores. O destino é um store pequeno, sem framework, com estados de draft
-e torneio separados e efeitos explícitos para DOM e timers; áudio já cruzou essa
-fronteira.
+e torneio separados e efeitos explícitos para DOM e timers; áudio e persistência
+já cruzaram essa fronteira.
 
 ## Dados e identidade
 

@@ -83,7 +83,7 @@ export default [
     },
   },
   {
-    files: ["src/application/**/*.mjs"],
+    files: ["src/application/**/*.mjs", "src/infrastructure/**/*.mjs"],
     languageOptions: {
       sourceType: "module",
       globals: browserGlobals,
