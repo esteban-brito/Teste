@@ -28,6 +28,8 @@ const EXPORTS=[
   // COFRE: decisão, aplicação e tabelas precisam ser comparadas sem reinterpretar a economia
   "BUY","CUSTO","CUSTO_REPOR","RECOMPENSA_ARMA","PREMIO_VITORIA","PREMIO_OBJETIVO","LOSS_BONUS","TETO_GRANA","PRECO_RIFLE",
   "leituraDoInimigo","decidirCompra","pagarCompra","compraDoTime",
+  // orquestração de mapa: dependências explícitas para a prova da fatia round a round
+  "prepTime","telemetryTeam","TELEMETRY_SCHEMA_VERSION","combateRound","MAPA_LADO",
   // identidade e balanceamento: a bancada de perfis precisa ler playstyle e config sem duplicar tabelas
   "PLAYSTYLES","PLAYSTYLE_IDS","STYLE_ID","styleAgr","styleTraits","tierDe","MAPAS_POOL",
   "CFG_SIM","CFG_FA","CFG_CAMP","PERFIL_TIER","logistica","rndF",
