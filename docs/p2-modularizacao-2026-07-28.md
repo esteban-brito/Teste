@@ -35,10 +35,10 @@ O destino já estava decidido nas ADRs **0002**, **0004** e **0005** e sequencia
 | 3 | SINAPSE (química) | **concluída** — 1 módulo |
 | 4 | simulação, economia, rating | **concluída** — 6 de 6 fatias |
 | 5 | API pública de avaliação + 3 consumidores Node | **concluída** |
-| 6 | API pública de simulação, worker e sandbox | **em andamento** — RNG e preparação extraídos |
+| 6 | API pública de simulação, worker e sandbox | **em andamento** — motores extraídos; composição pendente |
 | 7 | entrypoint do jogo + adapter Node, fim da duplicação | pendente |
 
-`npm run check` saiu de **19 para 35 checadores**. `npm run validate` fecha 24/24.
+`npm run check` saiu de **19 para 36 checadores**. `npm run validate` fecha 24/24.
 O motor executável de `game.js`, `roster-snapshot.json`, `simulation-golden.json` e
 `campaign-golden.json` seguem **intocados** — extração não muda resultado.
 
@@ -57,6 +57,8 @@ src/domain/simulation/team-form.mjs           MARÉ: forcaDoDia e consistência 
 src/domain/simulation/duel-weights.mjs        skillDuelo, fragPeso
 src/domain/simulation/random-source.mjs       Mulberry32 isolado por sessão
 src/domain/simulation/team-preparation.mjs    mapa, lado e vetores de entrada do combate
+src/domain/simulation/round-combat.mjs        relógio, duelos, objetivo, save e stats do round
+src/domain/simulation/simulation-telemetry.mjs identidade observável sem efeito esportivo
 src/domain/simulation/economy.mjs             COFRE: decisão, carrego, drop e pagamento
 src/domain/simulation/map-simulation.mjs      PÓLVORA: mapa completo round a round
 src/domain/simulation/series-simulation.mjs   PÓLVORA: série sem repetição de mapas
@@ -130,12 +132,15 @@ identidade do vencedor, mapas únicos, próxima amostra do RNG e ordem das chama
 `tools/check-team-preparation-parity.js` cobre os 17 times nos 8 mapas e entradas
 incompletas, compara inclusive os caches `_mapBase`/`_lado` e exige o mesmo estado
 do RNG depois das cinco formas individuais.
+`tools/check-round-combat-parity.js` compara rounds consecutivos com estado
+acumulado e recompõe mapas completos com o novo combate; resultado, mutações,
+telemetria e próxima amostra do RNG precisam coincidir.
 
 ## 6. Próximo passo concreto
 
-Continuar a **Fase 6** pela fronteira de combate (`combateRound`), último motor que
-ainda impede a composição da API pública de simulação. RNG e preparação já têm
-paridade exata; depois do combate, compor a API e migrar worker e sandbox.
+Continuar a **Fase 6** pela composição da API pública de simulação. RNG,
+preparação, combate, economia, mapa e série já têm paridade exata; agora falta
+conectá-los numa sessão única e então migrar worker e sandbox.
 
 Correção de classificação: `tools/check-engine-exports.js` e
 `tools/check-sandbox-engine.js` não são consumidores a migrar; são guardas do

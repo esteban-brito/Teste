@@ -430,8 +430,8 @@ já foram entregues em R2.
 
 ### P2 — modularização por paridade
 
-> **EM EXECUÇÃO desde 28/07/2026.** Fases 0–5 concluídas; Fase 6 com RNG e
-> preparação extraídos, combate e composição pública ainda pendentes.
+> **EM EXECUÇÃO desde 28/07/2026.** Fases 0–5 concluídas; Fase 6 com os motores
+> extraídos e a composição pública, worker e sandbox ainda pendentes.
 > O estado detalhado, os contratos descobertos e o próximo passo concreto estão em
 > **`docs/p2-modularizacao-2026-07-28.md`** — leia-o antes de retomar.
 > Decisão do responsável: executar o P2 inteiro; as cartas ficam paradas até o fim.
