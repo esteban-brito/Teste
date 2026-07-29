@@ -134,11 +134,13 @@ extrator offline -> corpus derivado -> scorer IFCS
 
 - `S`: draft, cartas escolhidas, treinador e interação da roleta.
 - `TG`: campeonato, suíça, playoffs e resultados.
-- `Audio`: contexto Web Audio e preferências de som.
+- `src/application/audio.mjs`: contexto Web Audio e preferência de mute, expostos
+  por um singleton e uma factory sem dependência do estado esportivo.
 
-Esses objetos são globais ao script e mutados por controllers e renderizadores.
-O destino é um store pequeno, sem framework, com estados de draft e torneio
-separados e efeitos explícitos para DOM, timers e áudio.
+`S` e `TG` ainda são locais ao entrypoint e mutados por controllers e
+renderizadores. O destino é um store pequeno, sem framework, com estados de draft
+e torneio separados e efeitos explícitos para DOM e timers; áudio já cruzou essa
+fronteira.
 
 ## Dados e identidade
 

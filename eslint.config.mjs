@@ -83,6 +83,17 @@ export default [
     },
   },
   {
+    files: ["src/application/**/*.mjs"],
+    languageOptions: {
+      sourceType: "module",
+      globals: browserGlobals,
+    },
+    rules: {
+      ...commonRules,
+      "no-unused-vars": ["warn", { args: "none", varsIgnorePattern: "^_" }],
+    },
+  },
+  {
     files: ["calibrador-worker.js"],
     languageOptions: {
       globals: {

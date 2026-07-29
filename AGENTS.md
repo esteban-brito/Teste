@@ -58,7 +58,8 @@ catálogo não menciona o dado, aí sim ele não existe.
   e armadilhas. **Leia antes de tocar no simulador.**
 - `src/public/evaluation-api.mjs`: composição pública de dados, avaliação e química.
 - `src/public/simulation-api.mjs`: composição pública de RNG, simulação e narrativa.
-- `game.js`: aplicação, estado, áudio e interface; não contém motores ou dados crus.
+- `src/application/audio.mjs`: efeito Web Audio isolado; não conhece estado esportivo.
+- `game.js`: aplicação, estado e interface; não contém motores ou dados crus.
 - `bancada/motor.js`: ponte CommonJS fina para a mesma API pública.
 - `sandbox.html`: interface e algoritmo do calibrador.
 - `bancada/roster-snapshot.json`: classificação aprovada de cada ID de jogador.

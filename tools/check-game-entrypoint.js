@@ -11,6 +11,10 @@ assert.match(html,/<script\s+type="module"\s+src="game\.js\?v=DEV"><\/script>/,
   "index.html não carrega game.js como módulo ES");
 assert.match(game,/import \* as PublicEngine from "\.\/src\/public\/simulation-api\.mjs";/,
   "game.js não importa a API pública");
+assert.match(game,/import \{Audio\} from "\.\/src\/application\/audio\.mjs";/,
+  "game.js não importa o efeito público de áudio");
+assert.doesNotMatch(game,/\bconst Audio\s*=\s*\{/,
+  "game.js voltou a embutir o serviço de áudio");
 assert.doesNotMatch(game,/\/\/ === UI START ===/,
   "game.js voltou a usar comentário como fronteira de API");
 assert.doesNotMatch(game,/\b(?:const ATRIBUTOS|function simularMapa|function avaliarJogador)\b/,
