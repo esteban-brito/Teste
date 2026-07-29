@@ -39,6 +39,8 @@
    (a partida) → ESTADO + UI (roleta, elenco, suíça, playoffs, reprodutor).
    Convenção: nomes e comentários em pt-BR; helpers curtos no topo de cada bloco.
    ════════════════════════════════════════════════════════════════════ */
+import * as PublicEngine from "./src/public/simulation-api.mjs";
+
 /* ── CONTRATOS (o dado que circula entre os motores) ────────────────────
    @typedef {Object} Eng  — jogador avaliado (POOL[id]; vive em carta._eng)
      atributos crus: fp,en,tr,op,cl,sn,ut (0-100) · rating (HLTV real) · isIGL
@@ -1843,6 +1845,10 @@ function narrativaMVP(campanha){
    ║  acima; daqui pra baixo é apresentação (DOM/áudio/animação).        ║
    ╚═══════════════════════════════════════════════════════════════════╝ */
 // === UI START ===
+{
+const {TEAMS,POOL,forcaTime,simularMapa,simularSerie,forcaDoDia,
+  sortearFormaCampanha,distribuirRoles,STYLE_LABEL,STYLE_ID,CFG_SIM,logistica,srand,rndF,
+  coletarMarcos,atualizarRecordes,manchete,narrativaMVP}=PublicEngine;
 const SPIN_MS=2700; // giro mais rápido (era 4000)
 const WIN_INDEX=44;
 const rnd=n=>Math.floor(Math.random()*n);
@@ -2932,6 +2938,12 @@ function pararReproducao(){MP.ativo=false;MP.gen++;clearTimeout(MP.timer);MATCH.
 /* ——— UI · orquestração da partida —————————————————— */
 // MATCH guarda a série em andamento do jogador
 const MATCH={A:null,B:null,md:1,mapaIdx:0,vA:0,vB:0,contexto:"",onSerieFim:null};
+if(new window.URLSearchParams(location.search).get("e2e")==="1"){
+  Object.defineProperty(window,"__DRAFT9_E2E__",{
+    configurable:true,
+    value:Object.freeze({srand,getMatch:()=>MATCH,forcaDoDia,simularMapa})
+  });
+}
 
 function abrirPartida(meuTime,adversario,md,contexto,onSerieFim){
   pararReproducao(); // garante que nenhuma reprodução anterior continue rodando
@@ -3037,3 +3049,4 @@ idleTrack();
 renderLineup();
 renderPicks();
 updateSpinUI();
+}

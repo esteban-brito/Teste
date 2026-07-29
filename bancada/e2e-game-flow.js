@@ -2,7 +2,7 @@
    Percorre roleta, montagem do elenco, suíça, playoffs e tela final pela UI real.
    A seleção de seed apenas torna o caminho vencedor reproduzível; não altera pesos,
    dados, quantidade de chamadas ao RNG do produto nem resultados persistidos. */
-/* global TransitionEvent, srand, MATCH, forcaDoDia, simularMapa */
+/* global TransitionEvent */
 const http=require("http");
 const path=require("path");
 const {spawn}=require("child_process");
@@ -57,9 +57,10 @@ async function draftCoach(page){
 // reinicia o Mulberry32; a seed escolhida é reinstalada antes de a UI simular o mapa real.
 async function seedWinningMap(page){
   return page.evaluate(()=>{
+    const {srand,getMatch,forcaDoDia,simularMapa}=window.__DRAFT9_E2E__;
     for(let seed=1;seed<=500;seed++){
       srand(seed);
-      const A=MATCH.A,B=MATCH.B;
+      const {A,B}=getMatch();
       const fdA=forcaDoDia(A.ef,A.quim),fdB=forcaDoDia(B.ef,B.quim);
       const tA={...A.time,nome:A.nome,cor:A.cor,meu:A.meu};
       const tB={...B.time,nome:B.nome,cor:B.cor,meu:B.meu};
@@ -124,7 +125,7 @@ async function finishUserSeries(page){
       }
     });
 
-    await page.goto(`http://127.0.0.1:${port}/index.html`,{waitUntil:"load",timeout:20000});
+    await page.goto(`http://127.0.0.1:${port}/index.html?e2e=1`,{waitUntil:"load",timeout:20000});
     for(let slot=0;slot<5;slot++)await draftPlayer(page,slot);
     await draftCoach(page);
 
