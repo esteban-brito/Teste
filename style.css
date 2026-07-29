@@ -13,8 +13,9 @@
    é o lugar para ajustes visuais sem mexer nas regras estruturais acima.
    ════════════════════════════════════════════════════════════════════ */
 :root{
-  --bg:#07090e; --panel2:#141b2b; --line:#1f293d;
-  --txt:#eaf1f8; --dim:#6c7d93; --accent:#ff5a1f; --cyan:#39d3ff;
+  --bg:#080b10; --panel2:#111826; --panel3:#151f2f; --line:#2c394e;
+  --txt:#f2f6fb; --dim:#94a3b8; --accent:#ff6b2a; --cyan:#4bd7ff;
+  --radius:10px;
   --s-red:#ff2d48; --s-red-lit:#ff5c6e; --s-red-dim:#c43b50; --s-red-bg:#18060c;
   --t1-gold:#ffbe00; --t1-gold-lit:#ffe033; --t1-gold-dim:#c8960a;
   --t2-green:#3ec07e; --t2-green-lit:#6fd99f; --t2-green-dim:#2e8a5c;
@@ -122,9 +123,6 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .squad{position:relative;display:grid;grid-template-columns:repeat(6,1fr);gap:8px;border-radius:16px;
   border:1px solid #20283a;padding:10px;background:linear-gradient(180deg,#0b0e15,#090c12);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
-.squad::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:0;
-  padding:6px;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
-  background:repeating-linear-gradient(45deg,rgba(255,255,255,.04) 0 2px,transparent 2px 5px),repeating-linear-gradient(-45deg,rgba(0,0,0,.35) 0 2px,transparent 2px 5px)}
 .squad>*{position:relative;z-index:1}
 .squad .lineup{display:contents}
 .lineup--coach{max-width:none}
@@ -337,7 +335,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .stat-l{font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:600;margin-top:5px}
 .stat--chem .stat-v{color:var(--cyan)}
 .stat--eff{border-color:rgba(255,90,31,.4)}
-.stat--eff .stat-v{color:var(--accent);text-shadow:0 0 20px rgba(255,90,31,.35)}
+.stat--eff .stat-v{color:var(--accent)}
 .alertbox{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .selo{display:inline-flex;align-items:center;gap:6px;font-family:var(--ff);font-size:.62rem;font-weight:600;letter-spacing:.03em;padding:5px 9px 5px 7px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);color:var(--dim)}
 .selo i{font-style:normal;font-size:.72rem;opacity:.85;line-height:1}
@@ -738,8 +736,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
           mask:radial-gradient(120% 92% at 50% 0%,#000 26%,transparent 76%)}
 body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:radial-gradient(145% 125% at 50% 38%,transparent 56%,rgba(0,0,0,.55) 100%)}
-.wrap{position:relative;animation:wrapIn .55s var(--ease) both}
-@keyframes wrapIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.wrap{position:relative}
 
 /* — CABEÇALHO-HERÓI: marca centrada, estilo abertura de transmissão de Major — */
 header{position:relative;border-bottom:none;border-radius:18px;margin-bottom:20px;
@@ -750,9 +747,6 @@ header{position:relative;border-bottom:none;border-radius:18px;margin-bottom:20p
     linear-gradient(180deg,rgba(22,30,48,.65),rgba(11,14,21,.5));
   -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 18px 40px -26px rgba(0,0,0,.9)}
-header::after{content:"";position:absolute;left:8%;right:8%;bottom:-1px;height:2px;border-radius:2px;
-  background:linear-gradient(90deg,transparent,var(--accent) 22%,#ffb37a 50%,var(--accent) 78%,transparent);
-  box-shadow:0 0 16px rgba(255,90,31,.55)}
 .logo{font-size:clamp(2.1rem,8vw,3rem);letter-spacing:.12em;line-height:1}
 .logo b{text-shadow:0 0 26px rgba(255,90,31,.6),0 0 5px rgba(255,90,31,.45)}
 .logo span{letter-spacing:.34em;margin-top:7px;font-size:.6rem}
@@ -784,13 +778,7 @@ button.ghost,.flipmode{border-radius:999px}
   transform:rotate(45deg);background:linear-gradient(135deg,#ff8a4a,var(--accent));
   box-shadow:0 0 9px rgba(255,90,31,.65)}
 
-/* — Botões: varredura de brilho + relevo — */
-button.roll{position:relative;overflow:hidden;box-shadow:0 8px 22px -8px rgba(255,90,31,.65)}
-button.roll::after{content:"";position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;
-  background:linear-gradient(110deg,transparent 36%,rgba(255,255,255,.42) 50%,transparent 64%);
-  transform:translateX(-130%)}
-button.roll:hover::after{animation:btnSheen .7s var(--ease)}
-@keyframes btnSheen{to{transform:translateX(130%)}}
+/* — Botões: relevo — */
 button.ghost{transition:transform .12s var(--ease),border-color .14s,background .14s,box-shadow .14s}
 button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,90,31,.4);
   box-shadow:0 8px 20px -10px rgba(0,0,0,.7)}
@@ -801,23 +789,8 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,90,31,.4);
 .picks .card:not(.taken):not(.dup):hover,.picks .coachcard:not(.taken):hover{
   transform:perspective(760px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateY(-6px) scale(1.03);
   z-index:5}
-/* foil: reflexo especular que acompanha a posição do ponteiro sobre a carta */
-.picks .card:not(.taken):not(.dup) .cfront::after,.picks .coachcard:not(.taken) .cfront::after{
-  content:"";position:absolute;inset:0;pointer-events:none;z-index:5;opacity:0;transition:opacity .25s;
-  background:radial-gradient(230px circle at var(--mx,50%) var(--my,42%),rgba(255,255,255,.17),rgba(255,255,255,.05) 34%,transparent 62%);
-  mix-blend-mode:screen}
-.picks .card:not(.taken):not(.dup):hover .cfront::after,.picks .coachcard:not(.taken):hover .cfront::after{opacity:1}
 .winner-pill{box-shadow:0 0 16px -4px currentColor}
-
-/* — Slots vazios: respiração que convida ao preenchimento — */
-.slot.avail{animation:slotInvite 1.7s ease-in-out infinite}
-@keyframes slotInvite{0%,100%{box-shadow:0 0 0 0 transparent}
-  50%{box-shadow:0 0 0 3px rgba(255,90,31,.12),0 0 20px rgba(255,90,31,.16)}}
-.slot.coach.avail{animation:slotInviteCoach 1.7s ease-in-out infinite}
-@keyframes slotInviteCoach{0%,100%{box-shadow:0 0 0 0 transparent}
-  50%{box-shadow:0 0 0 3px rgba(255,200,50,.14),0 0 20px rgba(255,200,50,.18)}}
 .slot .ph{transition:transform .25s var(--ease)}
-.slot:hover .ph{transform:scale(1.12)}
 
 /* — Roleta MARQUISE LED: moldura de letreiro, trilhos de luz e agulha laser — */
 .roulette{min-height:118px;border-radius:18px;border-color:rgba(255,138,74,.3);
@@ -826,11 +799,6 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,90,31,.4);
   background:linear-gradient(0deg,rgba(255,90,31,.08),transparent 30%),
     radial-gradient(120% 180% at 50% -60%,#1b2436 0%,#0c1119 60%)}
 .viewport{padding:22px 0}
-/* trilhos de LED nas bordas do letreiro */
-.viewport::before,.viewport::after{content:"";position:absolute;left:16px;right:16px;height:3px;z-index:3;
-  border-radius:2px;pointer-events:none;
-  background:repeating-linear-gradient(90deg,rgba(255,150,70,.5) 0 5px,rgba(255,150,70,.06) 5px 16px)}
-.viewport::before{top:7px}.viewport::after{bottom:7px}
 .track{min-height:86px}
 .tcard{height:86px;box-shadow:0 10px 22px -14px rgba(0,0,0,.8)} /* cards da fita maiores, descolados do chão */
 .marker{background:linear-gradient(180deg,#ffd9c4,var(--accent) 30%,var(--accent) 70%,#ffd9c4);
@@ -840,15 +808,12 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,90,31,.4);
 .section-tag{font-size:clamp(.78rem,2.6vw,.94rem);color:var(--txt);letter-spacing:.28em;margin:24px 0 10px}
 .section-tag::after{height:2px;background:linear-gradient(90deg,rgba(255,90,31,.45),var(--line) 45%,transparent)}
 
-/* — Análise: força efetiva com pulso premium — */
+/* — Análise: força efetiva com halo de destaque — */
 .stat{transition:border-color .2s,box-shadow .2s,transform .2s var(--ease)}
-.stat:hover{transform:translateY(-2px);box-shadow:0 12px 26px -16px rgba(0,0,0,.8)}
 .stat--eff{position:relative;overflow:hidden}
 .stat--eff::before{content:"";position:absolute;inset:0;pointer-events:none;
   background:radial-gradient(circle at 50% 125%,rgba(255,90,31,.16),transparent 62%)}
-.stat--eff .stat-v{position:relative;animation:effPulse 3s ease-in-out infinite}
-@keyframes effPulse{0%,100%{text-shadow:0 0 20px rgba(255,90,31,.35)}
-  50%{text-shadow:0 0 30px rgba(255,90,31,.62)}}
+.stat--eff .stat-v{position:relative}
 
 /* — Overlays de torneio: título com brilho de acento — */
 .overlay-title::before{box-shadow:0 0 14px var(--accent)}
@@ -859,26 +824,11 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,90,31,.4);
   linear-gradient(180deg,rgba(20,27,43,.75),transparent)}
 .sb-score{letter-spacing:.01em;text-shadow:0 2px 18px rgba(0,0,0,.6)}
 .rs-cell{width:16px;height:16px;border-radius:4px}
-.rs-cell.ct{box-shadow:0 0 7px rgba(74,130,255,.55),inset 0 1px 0 rgba(255,255,255,.25)}
-.rs-cell.tr{box-shadow:0 0 7px rgba(255,170,40,.55),inset 0 1px 0 rgba(255,255,255,.25)}
 .pm-versus{font-size:1.8rem;color:var(--accent);text-shadow:0 0 24px rgba(255,90,31,.5)}
-
-/* — CAMPEÃO: chuva de brilho dourada (CSS puro, só na tela de título) — */
-.final-overlay.is-champ .final-glow::after{content:"";position:absolute;inset:-20% 0 0;pointer-events:none;
-  background-image:radial-gradient(2px 2px at 22% 18%,rgba(255,214,120,.85),transparent 60%),
-    radial-gradient(1.6px 1.6px at 66% 6%,rgba(255,236,170,.7),transparent 60%),
-    radial-gradient(2.4px 2.4px at 84% 30%,rgba(255,200,80,.75),transparent 60%),
-    radial-gradient(1.4px 1.4px at 40% 44%,rgba(255,224,140,.6),transparent 60%),
-    radial-gradient(2px 2px at 10% 58%,rgba(255,214,120,.6),transparent 60%);
-  background-size:340px 340px;animation:sparkleFall 13s linear infinite}
-@keyframes sparkleFall{to{transform:translateY(340px)}}
 
 /* ════ LINGUAGEM v46 NOS OVERLAYS: herói/brasa no topo, pills, brasões e trilhos LED ════ */
 /* cabeçalho dos overlays = mesma faixa de brasa do herói */
 .overlay-head{position:relative;border-bottom:1px solid rgba(124,156,196,.14)}
-.overlay-head::after{content:"";position:absolute;left:8%;right:8%;bottom:-1px;height:2px;border-radius:2px;
-  background:linear-gradient(90deg,transparent,var(--accent) 22%,#ffb37a 50%,var(--accent) 78%,transparent);
-  box-shadow:0 0 16px rgba(255,90,31,.5)}
 .overlay-title{font-size:clamp(1.3rem,3.4vw,1.7rem);letter-spacing:.08em}
 /* colunas da suíça viram pills */
 .swiss-colhead{border-radius:999px}
@@ -953,29 +903,15 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,90,31,.4);
 
 /* Movimento reduzido: silencia as animações contínuas desta camada */
 @media(prefers-reduced-motion:reduce){
-  .wrap,.hud .v.bump,.slot.avail,.slot.coach.avail,.stat--eff .stat-v,
-  button.roll:hover::after{animation:none!important}
-  html::before,.picks .deal .cfront::before,.final-overlay.is-champ .final-glow::after{animation:none!important}
-  .picks .card .cfront::after,.picks .coachcard .cfront::after{display:none}
+  .hud .v.bump,html::before,.picks .deal .cfront::before{animation:none!important}
   .card:hover,.coachcard:hover,.picks .card:hover,.picks .coachcard:hover,
-  .stat:hover,button.ghost:hover{transform:none!important}
+  button.ghost:hover{transform:none!important}
 }
 
 /* ==========================================================================
    Clean Matchday refinement
    Final cascade layer for the main game: quieter, denser, easier to scan.
    ========================================================================== */
-:root{
-  --bg:#080b10;
-  --panel2:#111826;
-  --panel3:#151f2f;
-  --line:#2c394e;
-  --txt:#f2f6fb;
-  --dim:#94a3b8;
-  --accent:#ff6b2a;
-  --cyan:#4bd7ff;
-  --radius:10px;
-}
 body{
   padding:16px max(16px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
   background:linear-gradient(180deg,#090d14 0%,#070a0f 100%);
@@ -985,7 +921,6 @@ html::before,body::before,body::after{
 }
 .wrap{
   max-width:1180px;
-  animation:none;
 }
 header{
   flex-direction:row;
@@ -1001,9 +936,6 @@ header{
   box-shadow:none;
   -webkit-backdrop-filter:none;
   backdrop-filter:none;
-}
-header::after{
-  display:none;
 }
 .logo{
   font-size:clamp(1.55rem,4vw,2.18rem);
@@ -1075,9 +1007,6 @@ header::after{
 .viewport{
   padding:16px 0;
 }
-.viewport::before,.viewport::after{
-  display:none;
-}
 .track{
   min-height:78px;
 }
@@ -1100,9 +1029,6 @@ button.roll{
   box-shadow:none;
   letter-spacing:.1em;
 }
-button.roll::after{
-  display:none;
-}
 button.ghost,.flipmode{
   border-radius:8px;
   background:#0c121b;
@@ -1122,9 +1048,6 @@ button.ghost:hover{
   border-color:rgba(148,163,184,.18);
   box-shadow:none;
 }
-.squad::before{
-  display:none;
-}
 .card,.coachcard{
   border-radius:10px;
   box-shadow:none;
@@ -1135,19 +1058,12 @@ button.ghost:hover{
 .picks .card:not(.taken):not(.dup):hover,.picks .coachcard:not(.taken):hover{
   transform:translateY(-3px);
 }
-.picks .card:not(.taken):not(.dup) .cfront::after,.picks .coachcard:not(.taken) .cfront::after{
-  display:none;
-}
 .slot{
   border-radius:10px;
   background:#0b1018;
 }
 .slot.avail,.slot.coach.avail{
-  animation:none;
   background:#0f1723;
-}
-.slot:hover .ph{
-  transform:none;
 }
 .result{
   margin-top:14px;
@@ -1160,14 +1076,6 @@ button.ghost:hover{
   background:#0d131d;
   border:1px solid rgba(148,163,184,.18);
   box-shadow:none;
-}
-.stat:hover{
-  transform:none;
-  box-shadow:none;
-}
-.stat--eff .stat-v{
-  animation:none;
-  text-shadow:none;
 }
 .alertbox{
   gap:7px;
@@ -1208,9 +1116,6 @@ footer{
 .overlay-head{
   background:#111826;
 }
-.overlay-head::after{
-  display:none;
-}
 .overlay-title::before{
   box-shadow:none;
 }
@@ -1232,10 +1137,6 @@ footer{
 .rs-cell{
   width:14px;
   height:14px;
-  box-shadow:none!important;
-}
-.final-overlay.is-champ .final-glow::after{
-  display:none;
 }
 @media(max-width:760px){
   body{
