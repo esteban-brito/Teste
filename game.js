@@ -2,6 +2,7 @@
    Dados, avaliação e simulação entram exclusivamente pela API pública. */
 import * as PublicEngine from "./src/public/simulation-api.mjs";
 import {Audio} from "./src/application/audio.mjs";
+import {PROGRESSO} from "./src/infrastructure/persistence/progress-store.mjs";
 const {TEAMS,POOL,forcaTime,simularMapa,simularSerie,forcaDoDia,
   sortearFormaCampanha,distribuirRoles,STYLE_LABEL,STYLE_ID,STYLE_RECIPE,CFG_SIM,
   logistica,srand,rndF,coletarMarcos,atualizarRecordes,manchete,narrativaMVP,
@@ -595,23 +596,6 @@ function iniciarTorneio(){
   TG.campanha={mapasV:0,mapasD:0,ratings:{},jornada:[],fim:null};
   sortearFormaCampanha(TG.times); // semeia o "humor" da run: cada Major joga diferente
 }
-/* ─── PROGRESSO — memória persistente entre campanhas (localStorage, blindado) ───
-   Storage indisponível (modo privado/quota) = jogo funciona normal, só não lembra.
-   Schema versionado: migrações futuras leem `versao`. Nada aqui toca a simulação. */
-const PROGRESSO={
-  KEY:"draft90.progresso.v1",
-  dados:null,
-  vazio(){return {versao:1,titulos:[],recordes:{},contadores:{campanhas:0,titulos:0,invictos:0}};},
-  valido(d){return d&&d.versao===1&&Array.isArray(d.titulos)&&d.recordes&&d.contadores;},
-  carregar(){let d;try{d=JSON.parse(localStorage.getItem(this.KEY));}catch{d=null;}
-    this.dados=this.valido(d)?d:this.vazio();},
-  salvar(){try{localStorage.setItem(this.KEY,JSON.stringify(this.dados));}catch{/* sem storage: segue sem memória */}},
-  exportar(){const blob=new window.Blob([JSON.stringify(this.dados,null,1)],{type:"application/json"});
-    const a=document.createElement("a");a.href=window.URL.createObjectURL(blob);a.download="draft9-0-progresso.json";
-    document.body.appendChild(a);a.click();window.URL.revokeObjectURL(a.href);a.remove();},
-  importar(texto){let d;try{d=JSON.parse(texto);}catch{return false;}
-    if(!this.valido(d))return false;this.dados=d;this.salvar();return true;}
-};
 PROGRESSO.carregar();
 const dataHoje=()=>new Date().toISOString().slice(0,10);
 // banner de manchete + celebração de recordes no fim do mapa (some no início do próximo)

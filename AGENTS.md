@@ -59,6 +59,8 @@ catálogo não menciona o dado, aí sim ele não existe.
 - `src/public/evaluation-api.mjs`: composição pública de dados, avaliação e química.
 - `src/public/simulation-api.mjs`: composição pública de RNG, simulação e narrativa.
 - `src/application/audio.mjs`: efeito Web Audio isolado; não conhece estado esportivo.
+- `src/infrastructure/persistence/progress-store.mjs`: progresso versionado,
+  localStorage e backup JSON; falhas de storage não interrompem o jogo.
 - `game.js`: aplicação, estado e interface; não contém motores ou dados crus.
 - `bancada/motor.js`: ponte CommonJS fina para a mesma API pública.
 - `sandbox.html`: interface e algoritmo do calibrador.

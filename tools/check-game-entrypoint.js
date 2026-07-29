@@ -13,8 +13,12 @@ assert.match(game,/import \* as PublicEngine from "\.\/src\/public\/simulation-a
   "game.js não importa a API pública");
 assert.match(game,/import \{Audio\} from "\.\/src\/application\/audio\.mjs";/,
   "game.js não importa o efeito público de áudio");
+assert.match(game,/import \{PROGRESSO\} from "\.\/src\/infrastructure\/persistence\/progress-store\.mjs";/,
+  "game.js não importa o adaptador de persistência");
 assert.doesNotMatch(game,/\bconst Audio\s*=\s*\{/,
   "game.js voltou a embutir o serviço de áudio");
+assert.doesNotMatch(game,/\bconst PROGRESSO\s*=\s*\{/,
+  "game.js voltou a embutir o serviço de persistência");
 assert.doesNotMatch(game,/\/\/ === UI START ===/,
   "game.js voltou a usar comentário como fronteira de API");
 assert.doesNotMatch(game,/\b(?:const ATRIBUTOS|function simularMapa|function avaliarJogador)\b/,

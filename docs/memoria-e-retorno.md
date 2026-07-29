@@ -26,8 +26,9 @@ Entregue nesta etapa:
   Contratos em `bancada/memoria.js` (grupo regression): determinismo total, perspectiva do
   meu time, merge só quando supera, prioridade de manchetes (clutch 1v3+ > OT > virada >
   carry > atropelo > equilíbrio > padrão).
-- **`PROGRESSO`** (camada UI): localStorage versionado (`draft90.progresso.v1`), blindado
-  (modo privado/quota ⇒ jogo segue sem memória), com exportar/importar backup JSON.
+- **`PROGRESSO`** (`src/infrastructure/persistence/progress-store.mjs`): localStorage
+  versionado (`draft90.progresso.v1`), blindado (modo privado/quota ⇒ jogo segue sem
+  memória), com exportar/importar backup JSON e contrato isolado.
 - **Captura**: `registrarPartida` alimenta recordes (kills/rating/ADR num mapa, clutch ≥1v2,
   margem, virada) e exibe a **manchete** do mapa com chips de recorde novo;
   `telaFinal` grava campanha/título (elenco, treinador, MVP, invicto 💎) e mostra a
