@@ -6,9 +6,9 @@
 > (emblemas), e o CSS entrou em `style.css` — commits `c1ecdee` e `8a12250`. O que
 > mudou de lá para cá está na **seção 10**.
 >
-> Artefato histórico: `prototipo-cartas.html` (raiz, autocontido, desligado do
-> jogo). Abra no navegador e clique numa carta para virar. Ele **não é mais fonte
-> de verdade**: quando divergir do jogo, o jogo está certo.
+> `prototipo-cartas.html` deixou de ser protótipo e virou o **laboratório de
+> cartas** — ver a seção 11. Ele importa o código real, então não pode mais
+> divergir do jogo.
 
 ## 1. A direção escolhida
 
@@ -160,3 +160,63 @@ pode cair em `tier-3`).
 
 O resto deste documento (hierarquia da frente, playstyle como espinha do verso,
 tokens, bandeiras e os casos que quebram layout) continua valendo como escrito.
+
+## 11. O laboratório de cartas (29/07/2026)
+
+`prototipo-cartas.html` era autocontido — cópia do CSS, das bandeiras, dos dados e
+da escala de nome — e apodreceu no dia em que as cartas foram ligadas ao jogo. Agora
+ele **importa** `style.css`, `src/ui/game/card-view.mjs`, `src/ui/shared/flags.mjs` e
+`src/ui/shared/role-emblems.mjs`: zero cópia, 85 jogadores e 15 treinadores reais.
+
+```text
+npm run serve   →   http://127.0.0.1:5173/prototipo-cartas.html
+```
+
+Precisa de servidor: módulo ES não carrega por `file://`.
+
+O que ele tem: um botão **Proposta** (tecla `P`) que liga o bloco `#proposta` e faz o
+A/B contra o jogo atual; **verso**, **escala de cinza**, **cinco larguras reais**
+(250/188/176/130/120 px) e **simulação de daltonismo**; a escada de raridade isolando
+só o OVR; a matriz de 30 combinações raridade × função; os casos que quebram; os 17
+elencos completos; emblemas e bandeiras ampliados.
+
+E tem o **medidor de encaixe**, que é a parte que não é gosto: ele compara texto
+contra caixa em todas as cartas da página e reprova por número. Toda mudança de design
+de carta entra aqui primeiro; ao ser aprovada, migra para `style.css`/`card-view.mjs`.
+
+### A regressão que o medidor achou
+
+**A escala de nome estava morta no jogo.** `--t2` era declarado em `.card`, mas
+`card-view` põe `--nick-esc` em `.cfaces`, que é **filha** — e substituição de custom
+property acontece no elemento onde a propriedade é declarada, então `var(--nick-esc,1)`
+sempre caía no fallback 1. Os 100 nicks renderizavam a 16cqw. No protótipo antigo
+funcionava porque lá a razão vivia em `.carta`, um **ancestral**; a relação inverteu na
+migração e nenhuma guarda mede encaixe.
+
+Resultado medido: `olofmeister` e `pashaBiceps` passavam **28 px** da borda e eram
+cortados no meio da letra; `electroNic`, `Skadoodle` e `controlez` também estouravam.
+A densidade compacta ainda **aumentava** a fonte (18cqw), o que reabria o estouro a
+120 px mesmo com a razão viva.
+
+| largura | estouros hoje | com a proposta |
+|---|---:|---:|
+| 250 · 188 · 176 px | 14 | **0** |
+| 130 · 120 px | 22 | **0** |
+
+### Propostas no laboratório, aguardando aprovação
+
+| id | o que é | natureza |
+|---|---|---|
+| P1 | `--t2` declarado onde `--nick-esc` existe; compacto para de crescer o nick | conserto |
+| P3 | característica do treinador com razão própria (`Desenvolvedor` estourava 16 px, 26 px a 120 px) | conserto |
+| P4 | escada de raridade legível em cinza: 0–4 marcas + peso de aro + fio normalizado | design |
+| P5 | campo da função com menos croma; emblema mais presente | design |
+| P6 | treinador sai da escada: moldura neutra e fio segmentado | design |
+| P8 | `:hover` para de exibir o aro de opacidade cheia de outra faixa | conserto |
+| P9 | carta declarando "sem treinador" no lugar do buraco na grade | design |
+
+Os números que sustentam P4 e P5: a luminância das cinco faixas é quase o inverso da
+escada (`s 0,300 < 2 0,402 < 3 0,460 < h 0,469 < 1 0,581`), e **as seis** cores de
+função caem a ≤30° de matiz de alguma cor de raridade — IGL×tier-3 a 4°, AWPer×holo a
+5°, Rifler×tier-1 a 6°. Não há como separar por matiz (cinco matizes já cobrem a roda),
+então raridade fica com a saturação e a contagem; função fica com a forma.
