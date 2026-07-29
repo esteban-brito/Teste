@@ -43,14 +43,18 @@ o entrypoint clássico não migrar para módulos,
 `game.js` mantém adapters legados protegidos por paridade exata. Essas fronteiras
 não autorizam balanceamento implícito.
 
+`random-source.mjs` encapsula o Mulberry32 em instâncias independentes, preservando
+as sequências uniforme e gaussiana bit a bit. A composição pública de simulação
+deve possuir uma instância por sessão e passá-la explicitamente aos motores.
+
 A primeira composição pública vive em `src/public/evaluation-api.mjs`. Ela monta
 `POOL` e `TEAMS` a partir dos dados crus e dos módulos PRISMA, ZÊNITE e SINAPSE,
 preserva a referência compartilhada dos jogadores distribuídos e oferece uma
-visão única das configurações calibráveis. `tools/verify-report.js`, o harness
-Node dos workers e o loader Node do calibrador já consomem essa API sem recortar
-`game.js`; os três consumidores Node restantes continuam legados até serem
-migrados com uma prova equivalente. O sandbox e o bootstrap do worker real
-permanecem na fronteira legada da Fase 6.
+visão única das configurações calibráveis. Os três consumidores Node de avaliação
+(`tools/verify-report.js`, harness de workers e loader do calibrador) já usam essa
+API sem recortar `game.js`. O sandbox e o bootstrap do worker real permanecem na
+fronteira legada da Fase 6; `bancada/motor.js` permanece como adapter das suítes
+clássicas até a composição pública de simulação estar completa.
 
 ## Pipeline do domínio
 
