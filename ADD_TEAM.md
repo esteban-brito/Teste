@@ -1,7 +1,7 @@
 # Adicionar um time ao draft9-0
 
 O terreno foi preparado pra que adicionar um time seja **colar o texto → 1 comando → revisar → publicar**.
-Os motores (PRISMA·ZÊNITE) calculam OVR, funções e sub-arquétipo a partir dos atributos crus — nunca se escreve OVR/role na mão.
+Os motores (PRISMA·ZÊNITE) calculam OVR, funções e playstyle a partir dos atributos crus — nunca se escreve OVR/role na mão.
 
 ## 1. Escreva o time (texto simples)
 
@@ -35,7 +35,7 @@ computados de cada time — use isso pra revisar se os overalls/funções ficara
 ## 3. Valide e prepare a publicação
 
 ```
-npm run validate         # sintaxe + lint + todas as 17 suítes
+npm run validate         # sintaxe + lint + todas as 24 suítes
 ```
 
 Depois, faça um commit exclusivo para o novo time. Push, PR, merge e deploy só
@@ -49,7 +49,7 @@ aparece automaticamente **na roleta do jogo** e **na Base de Elencos**.
 | `tools/add-team.js` | cola texto → insere no game.js + regenera elencos + lint |
 | `bancada/roster.js` | regenera o `const DATA` do elencos.html a partir dos motores (fonte única) |
 | `bancada/times.js`  | lint: atributos 0–100, IDs únicos, ≥1 IGL, país do treinador, invariante do Major, resumo por time |
-| `bancada/run.js`    | orquestra as 17 suítes de dados, regressão, calibrador, benchmark, IFCS e E2E |
+| `bancada/run.js`    | orquestra as 24 suítes de dados, regressão, calibrador, benchmark, IFCS e E2E |
 
 ## Invariantes garantidos
 

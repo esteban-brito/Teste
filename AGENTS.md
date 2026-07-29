@@ -24,7 +24,7 @@ Uma refatoração deve preservar:
 - ordem das operações, clamps e arredondamentos;
 - quantidade e ordem das chamadas ao RNG;
 - dados de jogadores, times e treinadores;
-- classificações de role, role secundário, playstyle, subarquétipo e OVR;
+- classificações de role, role secundário, playstyle e OVR;
 - química, força efetiva, rating e regras do torneio.
 
 Mudanças deliberadas nesses itens exigem trabalho e commit separados, descritos
@@ -39,7 +39,9 @@ cada alegação e reprova a suíte quando o catálogo envelhece, então ele não
 Isso existe por causa de um erro real (28/07/2026): um agente afirmou três vezes que dados
 existentes não existiam — `time`, `campeonato+ano` e `país completo` — porque procurou **num
 arquivo** o que era pergunta sobre **o projeto**, chutou o nome do campo (`campeonato`, quando é
-`camp`) e tratou "não achei" como "não existe". Os três estavam em `TIMES_DEF` e `PAISES_MAP`.
+`camp`) e tratou "não achei" como "não existe". À época, os três estavam em
+`TIMES_DEF` e `PAISES_MAP`; hoje os países vivem nas tabelas de chave declarada
+`PAIS_JOGADOR` e `PAIS_TREINADOR`.
 
 Regra: `grep` num arquivo não responde "isto existe no projeto?". O catálogo responde. Se o
 catálogo não menciona o dado, aí sim ele não existe.

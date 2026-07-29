@@ -33,14 +33,14 @@ O destino já estava decidido nas ADRs **0002**, **0004** e **0005** e sequencia
 | 1 | normalizar país (`camp` adiado) | **concluída** |
 | 2 | PRISMA · ZÊNITE (avaliação) | **concluída** — 5 módulos |
 | 3 | SINAPSE (química) | **concluída** — 1 módulo |
-| 4 | simulação, economia, rating | **em andamento** — 2 de ~5 fatias |
+| 4 | simulação, economia, rating | **em andamento** — 4 de 6 fatias |
 | 5 | API pública + 6 consumidores Node | pendente |
 | 6 | worker e sandbox | pendente |
 | 7 | entrypoint do jogo, fim da duplicação | pendente |
 
-`npm run check` saiu de **19 para 28 checadores**. `npm run validate` fecha 24/24.
-`game.js`, `roster-snapshot.json`, `simulation-golden.json` e `campaign-golden.json`
-seguem **intocados** — extração não muda resultado.
+`npm run check` saiu de **19 para 30 checadores**. `npm run validate` fecha 24/24.
+O motor executável de `game.js`, `roster-snapshot.json`, `simulation-golden.json` e
+`campaign-golden.json` seguem **intocados** — extração não muda resultado.
 
 ### Módulos extraídos neste ciclo
 
@@ -53,7 +53,9 @@ src/domain/evaluation/player-evaluation.mjs   nmOVR, ovrUnificado, avaliarJogado
 src/domain/evaluation/role-distribution.mjs   distribuirRoles (passe de time)
 src/domain/chemistry/team-chemistry.mjs       química, forcaTime, treinador
 src/domain/simulation/player-form.mjs         MARÉ: formaDoDia, forma de campanha
+src/domain/simulation/team-form.mjs           MARÉ: forcaDoDia e consistência do time
 src/domain/simulation/duel-weights.mjs        skillDuelo, fragPeso
+src/domain/simulation/economy.mjs             COFRE: decisão, carrego, drop e pagamento
 ```
 
 ## 3. Contratos descobertos — leia antes de tocar no bloco
@@ -110,13 +112,16 @@ funciona porque o módulo recebe o gerador por parâmetro** — os dois caminhos
 compartilham o mesmo `gaussF`, então não há dois estados para sincronizar.
 
 Está aplicado e verde em `tools/check-player-form-parity.js`.
+`tools/check-team-form-parity.js` aplica a mesma prova à amostra uniforme de
+`forcaDoDia` e também exige exatamente uma chamada ao gerador por avaliação.
+`tools/check-economy-parity.js` cobre os caminhos determinísticos e o force
+ocasional de `decidirCompra`, compara a próxima amostra do RNG e ainda prova a
+mutação das carteiras por `pagarCompra`.
 
 ## 6. Próximo passo concreto
 
 Terminar a **Fase 4**. Falta o pedaço grande, e ele deve ir em fatias pequenas:
 
-- `forcaDoDia` (consome azar);
-- a economia: `decidirCompra` e o cofre;
 - `simularMapa` — o núcleo round a round, a maior e mais arriscada;
 - `simularSerie`.
 

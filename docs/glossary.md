@@ -2,7 +2,7 @@
 
 ## Motores
 
-- **PRISMA:** classifica role primário, role secundário e subarquétipo.
+- **PRISMA:** classifica role primário, role secundário e papel de combate do IGL.
 - **ZÊNITE:** classifica playstyle e calcula OVR.
 - **SINAPSE:** calcula química, treinador e força efetiva do elenco.
 - **MARÉ:** aplica forma diária e forma de campanha.
@@ -22,7 +22,6 @@
   contar integralmente na composição.
 - **Combat role:** role usado por um IGL para avaliação de combate.
 - **Playstyle:** padrão universal calculado a partir de seis eixos.
-- **Subarquétipo:** leitura mais específica dentro da role.
 - **OVR:** nota inteira de 5 a 22 produzida pelo ZÊNITE.
 - **Reality cost:** custo de plausibilidade de um par role/role ou
   role/playstyle.

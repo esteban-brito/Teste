@@ -443,7 +443,7 @@ function finalizePlayers(playerAccumulators){
       id:player.id,nick:player.nick,teamIndex:player.teamIndex,teamId:X.TEAMS[player.teamIndex].id,
       team:player.team,role:player.role,secondaryRole:player.secondaryRole,
       rolePair:player.rolePair,combatRole:player.combatRole,effectiveCombatRole:player.effectiveCombatRole,
-      playstyle:player.playstyle,subarchetype:player.subarchetype,
+      playstyle:player.playstyle,
       ovr:player.ovr,realRating:player.realRating,simRating:rates.rating,
       ratingDelta:rounded(rates.rating-player.realRating),kpr:rates.kpr,dpr:rates.dpr,apr:rates.apr,
       kastPercent:rates.kastPercent,adr:rates.adr,

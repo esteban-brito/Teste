@@ -8,8 +8,8 @@
       atributos crus
           │
       ┌───▼──── PRISMA ───────┐  refrata o jogador: função (role) + 2ª função
-      │  classificar / sub /  │  + sub-arquétipo + lado (CT/T). Sem gates: tudo
-      │  distribuirRoles      │  por afinidade contínua. Decide QUEM é o jogador.
+      │  classificar / sub /  │  + papel de combate do IGL. Sem gates: tudo por
+      │  distribuirRoles      │  afinidade contínua. Decide QUEM é o jogador.
       └───┬───────────────────┘
       ┌───▼──── ZÊNITE ───────┐  condensa identidade + atributos + rating HLTV
       │  ovrUnificado         │  num ÚNICO número numa escala só (OVR 5–22).
@@ -19,7 +19,7 @@
       │  quimicaComposicao    │  saturação, egos, treinador → QUÍMICA e FORÇA
       │  forcaTime            │  EFETIVA. Decide quanto o time RENDE junto.
       └───┬───────────────────┘
-      ┌───▼──── MARÉ ─────────┐  o "humor competitivo": rating × OVR × perfil
+      ┌───▼──── MARÉ ─────────┐  o "humor competitivo": OVR × perfil
       │  formaDoDia           │  → a forma da noite/campanha que oscila e MOVE
       │  sortearFormaCampanha │  o combate. É o motor de variância do roguelike.
       └───┬───────────────────┘
@@ -1046,7 +1046,7 @@ function fallenAngels(ev){const c=fallenAngelsComponents(ev);
 
 /* ╔═══════════════════════════════════════════════════════════════════╗
    ║  MARÉ — forma do dia e de campanha (o motor de variância)          ║
-   ║  A inspiração da noite (rating × OVR × perfil) que MOVE o combate:  ║
+   ║  A inspiração da noite (OVR × perfil) que MOVE o combate:           ║
    ║  craque oscila pouco e tem piso alto; role player é streaky. É o    ║
    ║  que faz cada run do roguelike ser diferente sem deslocar a média.  ║
    ╚═══════════════════════════════════════════════════════════════════╝ */
@@ -1148,8 +1148,6 @@ function fragPeso(j){const a=j._eng||j;const C=CFG_SIM;const fp=a.fp??60,ovr=j.o
   return (C.FRAG_FP_BASE+fp)*(1+(ovr-13)*C.FRAG_OVR)*nivelMult*profile.fragMultiplier;}
 
 // prepara um time pro combate: skills (com forma da noite), clutch e acumulador de stats
-// agressão de playstyle derivada do sub-arquétipo: quão na frente o jogador joga o round
-// (abre duelos e se expõe) vs quão posicional/clutcher ele é. Escala pela definição do arquétipo.
 // agressão de combate = ritmo do PLAYSTYLE × quão definido ele é. Quem joga na frente
 // abre duelos e se expõe; quem joga posicional espera. Fonte única: traits.pace.
 function styleAgr(j){const a=j?._eng||j||{};

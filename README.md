@@ -99,8 +99,8 @@ um alimenta o próximo:
 ```
 atributos crus
     │
-    ├── PRISMA ─────── classifica o jogador: função + sub-arquétipo + lado
-    │                  (CT/T). Tudo por afinidade contínua.
+    ├── PRISMA ─────── classifica o jogador: função principal/secundária
+    │                  e papel de combate do IGL. Tudo por afinidade contínua.
     │
     ├── ZÊNITE ─────── condensa identidade + atributos + rating num ÚNICO
     │                  número (OVR 5–22). Curva logística, sem cliffs.
@@ -108,7 +108,7 @@ atributos crus
     ├── SINAPSE ────── lê o elenco: cobertura de pilares, saturação, egos,
     │                  treinador → química (50–100%) e força efetiva.
     │
-    ├── MARÉ ────────── "humor competitivo": rating × OVR × perfil → forma
+    ├── MARÉ ────────── "humor competitivo": OVR × perfil → forma
     │                  da noite/campanha. Motor de variância do roguelike.
     │
     ├── PÓLVORA ────── combate round a round: duelos, vantagem de homem,

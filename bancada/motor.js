@@ -25,6 +25,9 @@ const EXPORTS=[
   // MARÉ: o checador precisa do gerador para provar CONSUMO de azar, não só valor
   "gaussF","PERFIL_TIER","PERFIL_ROLE","centroOVR","formaPositiva","formaCaudaLivre",
   "skillDuelo","fragPeso",
+  // COFRE: decisão, aplicação e tabelas precisam ser comparadas sem reinterpretar a economia
+  "BUY","CUSTO","CUSTO_REPOR","RECOMPENSA_ARMA","PREMIO_VITORIA","PREMIO_OBJETIVO","LOSS_BONUS","TETO_GRANA","PRECO_RIFLE",
+  "leituraDoInimigo","decidirCompra","pagarCompra","compraDoTime",
   // identidade e balanceamento: a bancada de perfis precisa ler playstyle e config sem duplicar tabelas
   "PLAYSTYLES","PLAYSTYLE_IDS","STYLE_ID","styleAgr","styleTraits","tierDe","MAPAS_POOL",
   "CFG_SIM","CFG_FA","CFG_CAMP","PERFIL_TIER","logistica","rndF",

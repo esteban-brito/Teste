@@ -32,7 +32,12 @@ atributos, lado e fase; `preservation-value.mjs` calcula o valor abstrato usado
 na decisão coletiva de save; `trade-context.mjs` expõe prontidão coletiva e
 possibilidade de troca da vítima; `assist-context.mjs` expõe a utilidade
 disponível para assistência; `fallen-angels.mjs` decompõe o rating em
-parcelas somáveis. Enquanto o entrypoint clássico não migrar para módulos,
+parcelas somáveis; `player-form.mjs` descreve a forma individual e de campanha;
+`team-form.mjs` aplica à força efetiva a oscilação uniforme controlada pela
+química; `duel-weights.mjs` separa vitória do duelo de volume de frag; e
+`economy.mjs` preserva decisão coletiva, loadout individual, carrego e drop de
+arma. Enquanto
+o entrypoint clássico não migrar para módulos,
 `game.js` mantém adapters legados protegidos por paridade exata. Essas fronteiras
 não autorizam balanceamento implícito.
 
@@ -42,7 +47,7 @@ não autorizam balanceamento implícito.
 ATRIBUTOS + TIMES_DEF
         |
         v
-PRISMA: afinidade -> role primário/secundário -> subarquétipo
+PRISMA: afinidade -> role primário/secundário -> papel de combate do IGL
         |
         v
 ZÊNITE: playstyle + OVR
