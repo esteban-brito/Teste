@@ -40,39 +40,6 @@ const roulette=$("roulette"),track=$("track"),picksEl=$("picks"),lineupEl=$("lin
 const hintEl=$("hint"),spinwrap=$("spinwrap"),picksTag=$("picksTag"),picksNote=$("picksNote"),winnerPill=$("winnerPill");
 const hint=t=>{hintEl.textContent=t};
 
-// AUTO-FIT do verso do treinador: ajusta a fonte da descrição p/ o MAIOR tamanho que
-// preenche a carta sem cortar (cada texto tem comprimento diferente). Mede o .cb-desc
-// (que tem o tamanho da carta via .cback position:absolute) e faz busca binária.
-function fitText(el,min,max){
-  const avail=el.parentElement.clientHeight;         // altura útil do verso (.cback); el cresce com o conteúdo
-  if(!avail)return;
-  el.style.fontSize=max+"px";
-  if(el.scrollHeight<=avail)return;                  // já cabe no máximo
-  let lo=min,hi=max;
-  for(let i=0;i<14;i++){const m=(lo+hi)/2;el.style.fontSize=m+"px";
-    if(el.scrollHeight<=avail)lo=m;else hi=m;}
-  el.style.fontSize=lo+"px";
-}
-// encolhe a fonte de um título até caber em UMA linha (parte do tamanho do CSS; só reduz se precisar).
-function fitOneLine(el){
-  el.style.fontSize="";                               // volta ao tamanho do CSS (clamp por largura da carta)
-  if(el.scrollWidth<=el.clientWidth)return;           // já cabe em 1 linha → mantém o tamanho cheio
-  const css=parseFloat(getComputedStyle(el).fontSize)||16;
-  let lo=8,hi=css;
-  for(let i=0;i<12;i++){const m=(lo+hi)/2;el.style.fontSize=m+"px";
-    if(el.scrollWidth<=el.clientWidth)lo=m;else hi=m;}
-  el.style.fontSize=lo+"px";
-}
-function ajustarVersos(){
-  document.querySelectorAll(".cb-desc").forEach(el=>{if(el.clientHeight)fitText(el,10,28);});      // treinador: preenche a altura
-  document.querySelectorAll(".cb-head").forEach(el=>{if(el.clientWidth)fitOneLine(el);});            // jogador: nome do estilo em 1 linha
-}
-let _fitRaf;const reajustar=()=>{cancelAnimationFrame(_fitRaf);_fitRaf=requestAnimationFrame(ajustarVersos);};
-addEventListener("resize",reajustar);
-// re-ajusta quando a fonte web (Barlow) termina de carregar: no mobile ela chega DEPOIS do
-// 1º ajuste, mudando a métrica do texto → sem isto, sobra/falta espaço (FOUT).
-if(document.fonts&&document.fonts.ready)document.fonts.ready.then(ajustarVersos);
-
 // MODO VIRAR: quando ativo, clicar numa carta VIRA (frente/verso) em vez de selecioná-la.
 let modoVirar=false;
 const limparFlips=()=>document.querySelectorAll(".card.flipped,.coachcard.flipped").forEach(c=>c.classList.remove("flipped"));
@@ -287,7 +254,7 @@ function renderLineup(){
   S.justPlaced=null;
   if(S.sel)iluminarSlots();
   updateHud();
-  ajustarVersos();
+
 }
 
 function renderPicks(){
@@ -316,7 +283,7 @@ function renderPicks(){
     return`<div class="${cardClass(p)} deal${trava}" data-pick="${esc(p.id)}" ${preso||dup?"":'tabindex="0"'}
       style="--sel:${esc(S.drawn.cor)};animation-delay:${i*55}ms">${cardHTML(p)}</div>`;
   }).join("");
-  ajustarVersos();
+
 }
 
 function iluminarSlots(){

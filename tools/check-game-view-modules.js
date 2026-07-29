@@ -35,22 +35,55 @@ async function main(){
   assert.equal(view.cardClass({tipo:"coach",caracSlug:"estrategista"}),"coachcard coach-estrategista",
     "classe visual do treinador mudou");
 
-  const playerHtml=view.cardHTML({tipo:"player",ovr:22,pais:"<BR>",time:"A&B",nick:'N"ick',estrela:true,
-    prim:"AWPer",sec:"Support",secForte:true,
-    _eng:{playstyle:"Closer",fp:90,op:60,cl:80,ut:50}});
-  assert.ok(playerHtml.includes("&lt;BR&gt;")&&playerHtml.includes("A&amp;B")&&playerHtml.includes("N&quot;ick"),
-    "campos da carta deixaram de escapar HTML");
-  assert.ok(playerHtml.includes("STAR ★ PLAYER")&&playerHtml.includes("role sec forte"),
-    "estrela ou função secundária forte sumiu da carta");
+  const playerHtml=view.cardHTML({tipo:"player",ovr:22,pais:"BRA",time:"A&B",nick:'N"ick',estrela:true,
+    camp:"<Major> 2024",coloc:"Campeao",prim:"AWPer",sec:"Support",secForte:true,
+    _eng:{playstyle:"Closer",rating:1.28,fp:90,op:60,cl:80,ut:50}});
+  assert.ok(playerHtml.includes("A&amp;B")&&playerHtml.includes("N&quot;ick")&&
+    playerHtml.includes("&lt;Major&gt; 2024"),"campos da carta deixaram de escapar HTML");
+  // Frente: três níveis de leitura e só três, mais o rodapé de contexto.
+  assert.ok(playerHtml.includes('<div class="c-ovr">22<small>Overall</small>')&&
+    playerHtml.includes('<div class="c-func">AWPer</div>')&&
+    playerHtml.includes('<div class="c-nick">N&quot;ick</div>'),"hierarquia da frente da carta mudou");
+  assert.ok(playerHtml.includes('<span>Support</span><span>A&amp;B</span>'),"rodapé de contexto da frente mudou");
+  assert.ok(!playerHtml.includes("STAR")&&!playerHtml.includes("★"),"o selo de estrela voltou à carta");
+  // A camada de foto existe e está vazia: quando houver retrato é mudança de dado.
+  assert.ok(playerHtml.includes('class="c-foto"')&&playerHtml.includes('class="c-tinta"'),
+    "camada de foto saiu da carta");
+  // Bandeira é SVG embutido, nunca emoji (o Windows não tem os glifos).
+  assert.ok(playerHtml.includes('class="c-flag"')&&playerHtml.includes("data:image/svg+xml"),
+    "bandeira da carta mudou de mecanismo");
+  // Nick escala por RAZÃO, aplicada no envelope das duas faces — em vez de
+  // reticências na frente e ajuste por medição de DOM no verso.
+  assert.ok(playerHtml.includes('class="cfaces" style="--nick-esc:1"'),"escala do nick de nome curto mudou");
+  const nomesLongos=[["curto",1],["pashaBicep",0.675],["pashaBiceps",0.675],["nomeMuitoComprido",0.5625]];
+  nomesLongos.forEach(([nick,esperado])=>{
+    const html=view.cardHTML({tipo:"coach",ovr:15,pais:"DEN",time:"T",nick,carac:"Gestor",caracSlug:"gestor"});
+    assert.ok(html.includes(`--nick-esc:${esperado}`),`escala do nick mudou para "${nick}"`);
+  });
+  // Verso: playstyle como espinha, receita visível, campeonato no rodapé.
   assert.ok(playerHtml.includes("Closer &lt;elite&gt;"),"label do playstyle mudou ou deixou de ser escapado");
+  assert.ok(playerHtml.includes("RTG 1.28")&&playerHtml.includes("Campeão"),"rodapé do verso mudou");
   const statPositions=["Firepower","Clutch","Utilitário","Abertura"].map(label=>playerHtml.indexOf(label));
   assert.ok(statPositions.every(position=>position>=0)&&statPositions.every((position,index)=>index===0||position>statPositions[index-1]),
     "ordem peso × valor das estatísticas do verso mudou");
+  assert.ok(playerHtml.includes("<em>.5</em>")&&playerHtml.includes('<u style="width:80%">'),
+    "peso da receita ou trilho da estatística mudou");
   assert.deepEqual(recipeCalls,["closer"],"receita do playstyle deixou de ser consultada uma vez");
+  // Coringa não tem receita: o verso diz isso em vez de mostrar barras vazias.
+  const jokerHtml=view.cardHTML({tipo:"player",ovr:17,pais:"BRA",time:"T",nick:"j",camp:"C 2020",coloc:"Top4",
+    prim:"Rifler",sec:"Entry",_eng:{playstyle:"Coringa",rating:1,fp:70,op:60,cl:50,ut:40}});
+  assert.ok(jokerHtml.includes("Firepower")&&jokerHtml.includes("Abertura")&&!jokerHtml.includes("<em>."),
+    "verso do Coringa deixou de cair nas estatísticas padrão sem peso");
 
-  const coachHtml=view.cardHTML({tipo:"coach",ovr:18,pais:"BR",time:"SK",nick:"zonic",carac:"Gestor",caracSlug:"gestor"});
-  assert.ok(coachHtml.includes("Treinador")&&coachHtml.includes("Tolera +1 estrela")&&coachHtml.includes("7% → 4%"),
-    "frente ou descrição do treinador mudou");
+  // Treinador: MESMO esqueleto, cor da característica, e o rótulo do OVR é o
+  // marcador de tipo — é o único ponto que não some por falta de espaço.
+  const coachHtml=view.cardHTML({tipo:"coach",ovr:18,pais:"DEN",time:"SK",nick:"zonic",carac:"Gestor",caracSlug:"gestor"});
+  assert.ok(coachHtml.includes('<div class="c-ovr">18<small>Treinador</small>')&&
+    coachHtml.includes('<div class="c-func">Gestor</div>'),"frente do treinador mudou");
+  assert.ok(coachHtml.includes("Tolera +1 estrela")&&coachHtml.includes("7% → 4%"),
+    "descrição do efeito do treinador mudou");
+  assert.ok(!coachHtml.includes("c-vstats")&&coachHtml.includes("c-vdesc"),
+    "verso do treinador deixou de ser a descrição do efeito");
 
   const summary=construirCartao(["Comando +8%","AWP falta","Âncora −12%","2× Rifler −5%"],0);
   const order=["selo grave","selo leve","selo bonus","selo neutro"].map(marker=>summary.indexOf(marker));
