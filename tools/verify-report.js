@@ -1,19 +1,19 @@
-/* tools/verify-report.js — confere se um relatório do sandbox foi aplicado FIELMENTE no game.js.
+/* tools/verify-report.js — confere se um relatório do sandbox foi aplicado FIELMENTE na API pública.
    Uso: node tools/verify-report.js <relatorio.txt>
    Lê a seção "MUDANCAS FINAIS NO MOTOR" (valores) e "INTENCOES MONITORADAS" (classificações
-   esperadas), carrega o game.js atual e checa: (1) cada peso bate o alvo do relatório; (2) cada
+   esperadas), carrega o motor atual e checa: (1) cada peso bate o alvo do relatório; (2) cada
    jogador monitorado está classificado como o relatório diz. Só leitura — não altera nada.
    Pega na hora o tipo de erro que já nos mordeu (empate por arredondamento, valor mal editado). */
 const fs=require("fs");
 const path=require("path");
+const {pathToFileURL}=require("url");
 const {ROOT}=require("../bancada/common");
 
 const reportPath=process.argv[2];
 if(!reportPath){console.error("uso: node tools/verify-report.js <relatorio.txt>");process.exit(2);}
 
-const src=fs.readFileSync(path.join(ROOT,"game.js"),"utf8").split("\n");
-const cut=src.findIndex(l=>l.includes("// === UI START ==="));
-const E=new Function(src.slice(0,cut).join("\n")+"\nreturn {avaliarJogador,STYLE_LABEL,TEAMS,NM_DEF,CFG_AVALIACAO,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,STYLE_CONTRA};")();
+async function main(){
+const E=await import(pathToFileURL(path.join(ROOT,"src","public","evaluation-api.mjs")).href);
 const ROOTS={NM_DEF:E.NM_DEF,CFG_AVALIACAO:E.CFG_AVALIACAO,ROLE_CONTRA:E.ROLE_CONTRA,IGL_ROLE_AFIN:E.IGL_ROLE_AFIN,ROLE_RULES:E.ROLE_RULES,STYLE_CONTRA:E.STYLE_CONTRA};
 
 function getByPath(p){
@@ -25,7 +25,7 @@ function getByPath(p){
 function classify(nome){
   const pl=E.TEAMS.flatMap(t=>t.jogadores).map(j=>j._eng).find(e=>e.nome===nome);
   if(!pl)return null;const ev=E.avaliarJogador({...pl});
-  return {r1:ev.role1||ev.combatRole,r2:ev.role2||ev.secundario,style:E.STYLE_LABEL(ev.playstyle),ovr:Math.round(ev.ovr)};
+  return {r1:ev.role1||ev.combatRole,r2:ev.role2||ev.secundario,style:E.styleLabel(ev.playstyle),ovr:Math.round(ev.ovr)};
 }
 
 const txt=fs.readFileSync(reportPath,"utf8").split("\n");
@@ -38,7 +38,7 @@ for(const l of txt){
   if(!m)continue;
   const [,p,,to]=m,cur=getByPath(p),target=+to;
   const ok=cur!=null&&Math.abs(cur-target)<5e-4;
-  if(!ok){fails++;console.log(`  ✗ ${p}: game.js=${cur} esperado=${target}`);}
+  if(!ok){fails++;console.log(`  ✗ ${p}: motor=${cur} esperado=${target}`);}
 }
 
 // (2) intenções: bloco "nome (time)" + linha "Atual: R1 / R2 · Style · OVR N"
@@ -56,3 +56,5 @@ for(let i=0;i<txt.length;i++){
 
 console.log(fails?`\n✗ ${fails} divergência(s) — relatório NÃO aplicado fielmente`:"\n✓ relatório aplicado fielmente");
 process.exit(fails?1:0);
+}
+main().catch(error=>{console.error(error);process.exit(1);});

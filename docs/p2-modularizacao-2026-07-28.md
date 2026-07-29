@@ -34,11 +34,11 @@ O destino já estava decidido nas ADRs **0002**, **0004** e **0005** e sequencia
 | 2 | PRISMA · ZÊNITE (avaliação) | **concluída** — 5 módulos |
 | 3 | SINAPSE (química) | **concluída** — 1 módulo |
 | 4 | simulação, economia, rating | **concluída** — 6 de 6 fatias |
-| 5 | API pública + 6 consumidores Node | pendente |
+| 5 | API pública + 6 consumidores Node | **em andamento** — 1 de 6 migrado |
 | 6 | worker e sandbox | pendente |
 | 7 | entrypoint do jogo, fim da duplicação | pendente |
 
-`npm run check` saiu de **19 para 32 checadores**. `npm run validate` fecha 24/24.
+`npm run check` saiu de **19 para 33 checadores**. `npm run validate` fecha 24/24.
 O motor executável de `game.js`, `roster-snapshot.json`, `simulation-golden.json` e
 `campaign-golden.json` seguem **intocados** — extração não muda resultado.
 
@@ -58,6 +58,7 @@ src/domain/simulation/duel-weights.mjs        skillDuelo, fragPeso
 src/domain/simulation/economy.mjs             COFRE: decisão, carrego, drop e pagamento
 src/domain/simulation/map-simulation.mjs      PÓLVORA: mapa completo round a round
 src/domain/simulation/series-simulation.mjs   PÓLVORA: série sem repetição de mapas
+src/public/evaluation-api.mjs                 composição pública de dados + avaliação
 ```
 
 ## 3. Contratos descobertos — leia antes de tocar no bloco
@@ -127,9 +128,16 @@ identidade do vencedor, mapas únicos, próxima amostra do RNG e ordem das chama
 
 ## 6. Próximo passo concreto
 
-Começar a **Fase 5**: definir a API pública dos módulos extraídos e migrar os seis
-consumidores Node um por vez. A duplicação só começa a morrer depois que cada
-consumidor deixa de carregar o bloco legado por marcador.
+Continuar a **Fase 5**. `src/public/evaluation-api.mjs` já recompõe `POOL` e `TEAMS`
+com paridade exata, preserva a identidade de `_eng` e expõe as 30 propriedades
+calibráveis sem criar uma cópia divergente. `tools/verify-report.js` é o primeiro
+dos seis consumidores Node migrado: ele já não lê nem executa um recorte de
+`game.js`.
+
+Restam cinco consumidores do recorte legado: `bancada/motor.js`,
+`bancada/calibrador-loader.js`, `bancada/worker-calibrador.js`,
+`tools/check-engine-exports.js` e `tools/check-sandbox-engine.js`. Migrá-los um por
+vez, sem retirar uma guarda antes de seu contrato ter substituto explícito.
 
 ## 7. Armadilhas que já custaram tempo
 

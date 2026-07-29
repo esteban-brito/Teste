@@ -43,6 +43,13 @@ o entrypoint clássico não migrar para módulos,
 `game.js` mantém adapters legados protegidos por paridade exata. Essas fronteiras
 não autorizam balanceamento implícito.
 
+A primeira composição pública vive em `src/public/evaluation-api.mjs`. Ela monta
+`POOL` e `TEAMS` a partir dos dados crus e dos módulos PRISMA, ZÊNITE e SINAPSE,
+preserva a referência compartilhada dos jogadores distribuídos e oferece uma
+visão única das configurações calibráveis. `tools/verify-report.js` já consome
+essa API sem recortar `game.js`; os cinco consumidores Node restantes continuam
+legados até serem migrados com uma prova equivalente.
+
 ## Pipeline do domínio
 
 ```text
