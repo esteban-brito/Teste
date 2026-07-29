@@ -61,6 +61,8 @@ catálogo não menciona o dado, aí sim ele não existe.
 - `src/application/audio.mjs`: efeito Web Audio isolado; não conhece estado esportivo.
 - `src/infrastructure/persistence/progress-store.mjs`: progresso versionado,
   localStorage e backup JSON; falhas de storage não interrompem o jogo.
+- `src/ui/game/card-view.mjs` e `build-summary-view.mjs`: HTML puro das cartas
+  e do resumo de química; escaping compartilhado em `src/ui/shared/html.mjs`.
 - `game.js`: aplicação, estado e interface; não contém motores ou dados crus.
 - `bancada/motor.js`: ponte CommonJS fina para a mesma API pública.
 - `sandbox.html`: interface e algoritmo do calibrador.

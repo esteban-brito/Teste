@@ -69,7 +69,8 @@ draft9-0/
 │   ├── domain/           ← avaliação, química, simulação, narrativa e estatística
 │   ├── application/      ← efeitos e serviços da aplicação no navegador
 │   ├── infrastructure/   ← adaptadores de navegador e persistência
-│   └── public/           ← APIs públicas compartilhadas pelos consumidores
+│   ├── public/           ← APIs públicas compartilhadas pelos consumidores
+│   └── ui/               ← renderizadores e utilitários puros de interface
 ├── elencos.html          ← base de elencos (página standalone)
 ├── sandbox.html          ← bancada de tuning + calibrador inteligente
 ├── calibrador-worker.js  ← Web Worker do calibrador (busca em paralelo)
