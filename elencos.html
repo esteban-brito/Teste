@@ -275,8 +275,10 @@ const ROLE={
 const CARAC={Estrategista:"#2fd6d6",Gestor:"#c9a36a",Desenvolvedor:"#4a82ff",Motivador:"#c79bff"};
 const CAMPEAO=t=>/campe/i.test(t.coloc||"");
 
+/* Mesmas faixas de `tierOf` em src/ui/game/card-view.mjs. Se as duas divergirem,
+   o mesmo jogador aparece com raridades diferentes na carta e nesta lista. */
 function tierVars(o){
-  const t=o>=22?"22":o>=21?"21":o>=18?"18":o>=15?"15":"14";
+  const t=o>=21?"22":o>=20?"21":o>=19?"18":o>=17?"15":"14";
   return `--tbg:var(--t${t});--tink:var(--t${t}i)`;
 }
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}

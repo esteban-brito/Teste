@@ -28,6 +28,7 @@
    ela que descreve o que ele faz pelo time. */
 import {escapeHtml as esc} from "../shared/html.mjs";
 import {bandeiraDe} from "../shared/flags.mjs";
+import {emblemaDe,EMBLEMA_TREINADOR,slugFuncao} from "../shared/role-emblems.mjs";
 
 const STAT_LABEL={fp:"Firepower",op:"Abertura",cl:"Clutch",ut:"Utilitário",en:"Entrada",tr:"Trade",sn:"AWP"};
 const DEFAULT_BACK_STATS=["fp","op","cl","ut"];
@@ -39,7 +40,13 @@ const COACH_DESCRIPTION={
   Estrategista:"Reduz penalidades de estrutura em 15% e de comando (IGL) em 30%.",
   Motivador:"Reduz em 30% as penalidades de cobertura e saturação do elenco."};
 
-const tierOf=ovr=>ovr>=22?"tier-h":ovr>=21?"tier-s":ovr>=18?"tier-1":ovr>=15?"tier-2":"tier-3";
+/* Faixas de raridade, por OVR puro. A pirâmide anterior punha 87% dos 85
+   jogadores em verde ou ouro, então a raridade quase não dizia nada — quatro
+   cartas de um mesmo elenco saíam idênticas. Esta distribui de verdade:
+   27 · 30 · 11 · 11 · 6 jogadores, do mais comum ao mais raro.
+   Promover por `estrela` foi descartado por medição: a flag é exatamente
+   ovr>=20, com zero discordâncias em 85 — não moveria uma única carta. */
+const tierOf=ovr=>ovr>=21?"tier-h":ovr>=20?"tier-s":ovr>=19?"tier-1":ovr>=17?"tier-2":"tier-3";
 
 /* Nome curto e nome longo ocupam a mesma caixa óptica. É RAZÃO, não tamanho:
    quem a aplica é o envelope das duas faces, então frente e verso encolhem
@@ -55,13 +62,18 @@ export function createCardView({styleId,styleLabel,styleRecipe}){
   const teamCardHTML=(team,extra="")=>`<div class="tcard ${extra}" data-team="${esc(team.id)}" style="--col:${esc(team.cor)}">
   <div class="tcoloc">${esc(team.coloc)}</div><div class="tname">${esc(team.nome)}</div><div class="tcamp">${esc(team.camp)}</div></div>`;
 
-  const cardClass=card=>card.tipo==="coach"?"coachcard coach-"+card.caracSlug:"card "+tierOf(card.ovr);
+  /* Duas classes, dois canais: `tier-*` pinta a moldura (raridade) e `fn-*`
+     pinta o campo (função). Elas não se sobrepõem em nenhuma propriedade. */
+  const cardClass=card=>card.tipo==="coach"
+    ?`coachcard coach-${card.caracSlug}`
+    :`card ${tierOf(card.ovr)} fn-${slugFuncao(card.prim)}`;
 
   /* Frente compartilhada. `rotulo` é o texto sob o OVR e serve de MARCADOR DE
      TIPO: é o único ponto da carta que nunca some por falta de espaço, então é
      ali que "Treinador" aparece. `destaque` é a função primária do jogador ou a
      característica do treinador; `contexto` é o par do rodapé. */
-  const frenteHtml=(card,rotulo,destaque,contexto)=>`${camadasDeFundo}
+  const frenteHtml=(card,rotulo,destaque,contexto,emblema)=>`${camadasDeFundo}
+  <div class="c-emblema">${emblema}</div>
   <div class="c-fio"></div><div class="c-placa"></div>
   <div class="c-ovr">${card.ovr}<small>${rotulo}</small></div>
   ${bandeiraHtml(card.pais)}
@@ -70,8 +82,8 @@ export function createCardView({styleId,styleLabel,styleRecipe}){
   <div class="c-meta"><span>${esc(contexto[0])}</span><span>${esc(contexto[1])}</span></div>
   <div class="c-grao"></div>`;
 
-  const playerFront=card=>frenteHtml(card,"Overall",card.prim,[card.sec||"",card.time]);
-  const coachFront=card=>frenteHtml(card,"Treinador",card.carac,["",card.time]);
+  const playerFront=card=>frenteHtml(card,"Overall",card.prim,[card.sec||"",card.time],emblemaDe(card.prim));
+  const coachFront=card=>frenteHtml(card,"Treinador",card.carac,["",card.time],EMBLEMA_TREINADOR);
 
   /* Firepower permanece primeiro. As outras estatísticas são ordenadas pela
      contribuição peso × valor usada na classificação do playstyle. */
