@@ -34,7 +34,9 @@ possibilidade de troca da vítima; `assist-context.mjs` expõe a utilidade
 disponível para assistência; `fallen-angels.mjs` decompõe o rating em
 parcelas somáveis; `player-form.mjs` descreve a forma individual e de campanha;
 `team-form.mjs` aplica à força efetiva a oscilação uniforme controlada pela
-química; e `duel-weights.mjs` separa vitória do duelo de volume de frag. Enquanto
+química; `duel-weights.mjs` separa vitória do duelo de volume de frag; e
+`economy.mjs` preserva decisão coletiva, loadout individual, carrego e drop de
+arma. Enquanto
 o entrypoint clássico não migrar para módulos,
 `game.js` mantém adapters legados protegidos por paridade exata. Essas fronteiras
 não autorizam balanceamento implícito.
