@@ -7,6 +7,7 @@ const {ROOT}=require("./common");
 
 const GAME_PATH=path.join(ROOT,"game.js");
 const UI_MARKER="// === UI START ===";
+const PUBLIC_ENGINE_IMPORT='import * as PublicEngine from "./src/public/simulation-api.mjs";';
 const EXPORTS=[
   "TEAMS","POOL","ATRIBUTOS","TIMES_DEF","PAIS_JOGADOR","PAIS_TREINADOR",
   "forcaTime","simularMapa","simularSerie","forcaDoDia","formaDoDia","sortearFormaCampanha",
@@ -37,7 +38,8 @@ const EXPORTS=[
 ];
 
 function loadEngines(){
-  const source=fs.readFileSync(GAME_PATH,"utf8").split("\n");
+  const source=fs.readFileSync(GAME_PATH,"utf8").split("\n")
+    .filter(line=>line.trim()!==PUBLIC_ENGINE_IMPORT);
   let cut=source.findIndex(line=>line.includes(UI_MARKER));
   if(cut<0)cut=source.findIndex(line=>line.includes("document.getElementById"));
   if(cut<0)throw new Error(`marcador de UI nao encontrado em ${GAME_PATH}`);

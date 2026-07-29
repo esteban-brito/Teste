@@ -77,6 +77,12 @@ export default [
     },
   },
   {
+    files: ["game.js"],
+    languageOptions: {
+      sourceType: "module",
+    },
+  },
+  {
     files: ["calibrador-worker.js"],
     languageOptions: {
       globals: {

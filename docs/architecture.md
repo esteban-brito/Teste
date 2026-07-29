@@ -3,15 +3,16 @@
 ## Estado atual
 
 O draft9-0 é uma aplicação estática, sem backend e sem dependências de runtime.
-`index.html` carrega `style.css` e `game.js`. O arquivo `game.js` contém duas
-regiões separadas pelo marcador `// === UI START ===`:
+`index.html` carrega `style.css` e `game.js` como módulo ES. A aplicação em
+`game.js` importa `src/public/simulation-api.mjs`; durante a transição final o
+arquivo ainda contém duas regiões separadas pelo marcador `// === UI START ===`:
 
 1. motores, dados e simulação;
 2. estado, renderização, eventos e fluxo do jogo.
 
-O sandbox e o worker do calibrador importam `src/public/simulation-api.mjs`. A
-bancada Node clássica ainda recorta a primeira região de `game.js`, portanto o
-marcador permanece temporariamente como API implícita apenas nesse adapter.
+Jogo, sandbox e worker do calibrador importam `src/public/simulation-api.mjs`. A
+primeira região de `game.js` não atende mais a UI e permanece temporariamente
+somente porque a bancada Node clássica ainda a recorta como referência de paridade.
 
 O IFCS é infraestrutura de validação offline, não parte do runtime. O scorer e o
 contrato de corpus são módulos Node puros em `bancada/`; o extrator Python/Awpy
@@ -43,10 +44,9 @@ consumir RNG;
 `economy.mjs` preserva decisão coletiva, loadout individual, carrego e drop de
 arma; e `map-simulation.mjs` orquestra troca de lados, OT, economia, combate,
 telemetria e placar de cada round por dependências explícitas;
-`series-simulation.mjs` fecha séries sem repetir mapas. Enquanto
-o entrypoint clássico não migrar para módulos,
-`game.js` mantém adapters legados protegidos por paridade exata. Essas fronteiras
-não autorizam balanceamento implícito.
+`series-simulation.mjs` fecha séries sem repetir mapas. O entrypoint já migrou para
+módulos; o bloco legado de `game.js` está isolado como referência até a retirada do
+último adapter Node. Essas fronteiras não autorizam balanceamento implícito.
 
 `src/domain/narrative/game-memory.mjs` deriva marcos, recordes e textos da saída
 do simulador sem DOM, relógio ou RNG; a persistência continua na aplicação.
@@ -62,8 +62,9 @@ visão única das configurações calibráveis. Os três consumidores Node de av
 (`tools/verify-report.js`, harness de workers e loader do calibrador) já usam essa
 API sem recortar `game.js`. `src/public/simulation-api.mjs` compõe sobre ela uma
 sessão isolada de RNG e conecta preparação, combate, economia, mapa, série e rating
-a uma única configuração mutável. Sandbox e worker real já usam essa composição;
-`bancada/motor.js` permanece como adapter das suítes clássicas até a Fase 7.
+a uma única configuração mutável. Jogo, sandbox e worker real já usam essa
+composição; `bancada/motor.js` permanece como último adapter das suítes clássicas
+até o fechamento da Fase 7.
 
 ## Pipeline do domínio
 
