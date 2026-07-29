@@ -35,10 +35,10 @@ O destino já estava decidido nas ADRs **0002**, **0004** e **0005** e sequencia
 | 3 | SINAPSE (química) | **concluída** — 1 módulo |
 | 4 | simulação, economia, rating | **concluída** — 6 de 6 fatias |
 | 5 | API pública de avaliação + 3 consumidores Node | **concluída** |
-| 6 | API pública de simulação, worker e sandbox | **em andamento** — API pronta; 2 consumidores pendentes |
-| 7 | entrypoint do jogo + adapter Node, fim da duplicação | pendente |
+| 6 | API pública de simulação, worker e sandbox | **concluída** |
+| 7 | entrypoint do jogo + adapter Node, fim da duplicação | **próxima** |
 
-`npm run check` saiu de **19 para 37 checadores**. `npm run validate` fecha 24/24.
+`npm run check` saiu de **19 para 36 checadores**. `npm run validate` fecha 24/24.
 O motor executável de `game.js`, `roster-snapshot.json`, `simulation-golden.json` e
 `campaign-golden.json` seguem **intocados** — extração não muda resultado.
 
@@ -143,15 +143,15 @@ RNG, além de comparar todas as configurações públicas com o legado.
 
 ## 6. Próximo passo concreto
 
-Continuar a **Fase 6** migrando `calibrador-worker.js` e `sandbox.html` para
-`src/public/simulation-api.mjs`. A composição já tem paridade exata; depois dos
-dois consumidores, as guardas das listas duplicadas podem ser removidas.
+Continuar pela **Fase 7**: migrar o entrypoint do jogo e, depois, substituir
+`bancada/motor.js` pela API pública. Sandbox e worker já importam
+`src/public/simulation-api.mjs`; a lista duplicada de 30 exports e sua guarda foram
+removidas.
 
-Correção de classificação: `tools/check-engine-exports.js` e
-`tools/check-sandbox-engine.js` não são consumidores a migrar; são guardas do
-caminho legado e só podem ser retiradas quando sandbox/worker deixarem de recortar
-`game.js`. `bancada/motor.js` é o adapter de compatibilidade das suítes clássicas e
-fica para a Fase 7, depois de preparação e combate terem composição pública.
+`tools/check-sandbox-engine.js` agora impede regressão: exige a importação pública
+nos dois consumidores e reprova qualquer retorno do recorte de `game.js`.
+`bancada/motor.js` é o último adapter de compatibilidade e fica para depois do
+entrypoint, para manter uma referência legada durante a migração do jogo.
 
 ## 7. Armadilhas que já custaram tempo
 

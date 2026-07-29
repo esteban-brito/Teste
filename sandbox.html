@@ -1,10 +1,10 @@
 ﻿<!DOCTYPE html>
 <!--
   draft9-0 - Laboratório de Stats & Motores — bancada de tuning.
-   Carrega os MOTORES do próprio game.js ao vivo (fatia antes do DOM) e recalcula
+   Carrega a API pública dos motores e recalcula
    OVR/função em tempo real. Também deixa editar os PESOS/FÓRMULAS dos motores
    (afinidade, OVR por função, curva, IGL) e ver o efeito no jogador
-   e no elenco inteiro. Os ajustes feitos aqui continuam isolados: nada é salvo no game.js.
+   e no elenco inteiro. Os ajustes feitos aqui continuam isolados: nada é salvo no jogo.
 -->
 <html lang="pt-BR">
 <head>
@@ -732,7 +732,7 @@ select:focus-visible,input:focus-visible{box-shadow:0 0 0 2px var(--cyan)}
   <div id="app" class="loading">Carregando os motores do jogo…</div>
 </div>
 <footer>
-  Cálculo idêntico ao do jogo (motores lidos do game.js ao vivo). Ao carregar um jogador de um time, o papel mostrado é o
+  Cálculo idêntico ao do jogo (mesma API pública de motores). Ao carregar um jogador de um time, o papel mostrado é o
   <b>real do time</b> (com o teto de 1 AWPer e o cap-2). <b>Isolado:</b> mudanças feitas aqui não são salvas — é uma bancada.
 </footer>
 
@@ -781,15 +781,7 @@ function invalidateAllTeamEval(){teamEvalCache.clear();}
 const state={nome:"", fp:70,en:50,tr:50,op:50,cl:50,sn:20,ut:55, rating:1.10, isIGL:false, colocacao:"Campeao"};
 
 async function carregarMotores(){
-  const res=await fetch("game.js?nc="+Date.now());
-  if(!res.ok)throw new Error(`game.js não carregou (${res.status})`);
-  const src=await res.text();
-  const linhas=src.split("\n");
-  let cut=linhas.findIndex(l=>l.includes("// === UI START ==="));
-  if(cut<0)cut=linhas.findIndex(l=>l.includes("document.getElementById"));
-  if(cut<0)throw new Error("não encontrei o início da camada de UI em game.js");
-  const slice=linhas.slice(0,cut).join("\n");
-  E=new Function(slice+"\nreturn {avaliarJogador,aplicarAvaliacaoContextual,distribuirRoles,forcaTime,ovrUnificado,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,STYLE_CONTRA,MAPAS_POOL,MAPA_LADO,srand,simularMapa,forcaDoDia,TEAMS,nmOVR,styleScoreTable,roleAfinidade,secondaryScore,NM_DEF,NM_COR,STYLE_LABEL,PLAYSTYLE_IDS,PLAYSTYLES,NM_AXES,STYLE_KEYS};")();
+  E=await import("./src/public/simulation-api.mjs?nc="+Date.now());
   ["avaliarJogador","distribuirRoles","forcaTime","simularMapa","forcaDoDia","srand","TEAMS"].forEach(k=>{if(!E[k])throw new Error(`motor ausente: ${k}`);});
   DEF={ROLE:clone(E.ROLE_PERFIL),NM:clone(E.NM_DEF),NM_COR:clone(E.NM_COR),CONTRA:clone(E.ROLE_CONTRA),IGL:clone(E.IGL_ROLE_AFIN),RULES:clone(E.ROLE_RULES),STYLE_CONTRA:clone(E.STYLE_CONTRA),CFG:clone(E.CFG_AVALIACAO)};
   // aliases locais para as funções/dados importados do motor (evita E.xxx em toda a UI)
