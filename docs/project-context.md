@@ -40,6 +40,9 @@ histórico abaixo):
 - o handoff operacional do ciclo P5 está em
   `docs/p5-aplicacao-ui-2026-07-29.md`; ele registra commits, validações, contratos
   dos estados restantes e a próxima fatia segura;
+- `AGENTS.md` registra autorização persistente para o agente executar a próxima
+  fatia segura, limpar legado comprovadamente dispensável, criar commits e fazer
+  push de checkpoints verdes para `sandbox-test` sem renovar a permissão;
 - o ciclo **P2 de modularização por paridade está concluído**, Fases 0–7;
 - `game.js` caiu de 3.054 para 938 linhas e contém somente aplicação, estado e UI;
 - dados e motores vivem em `src/data`, `src/domain` e `src/public`;
@@ -363,7 +366,8 @@ assinaturas por função.
 ### Entradas principais
 
 - `index.html` carrega `style.css` e `game.js` como módulo ES.
-- `game.js` contém aplicação, estado, áudio e UI e importa a composição pública.
+- `game.js` contém aplicação, estado e UI e importa a composição pública; áudio
+  vive em `src/application/audio.mjs`.
 - `src/data`, `src/domain` e `src/public` contêm dados, motores e APIs compartilhadas.
 - `sandbox.html` é a bancada visual de tuning, auditoria e calibração.
 - `calibrador-worker.js` paraleliza a busca do calibrador.
@@ -674,8 +678,8 @@ profunda R1 foi executada duas vezes após R2 e preservou exatamente SHA-256
 
 O balanceamento deliberado está documentado em
 `docs/rating-balance-2026-07-20.md`. As mudanças posteriores de tabela foram
-apenas de interface e teste E2E; qualquer trabalho novo continua sujeito à
-autorização explícita de push.
+apenas de interface e teste E2E. A política vigente de autonomia, commits e push
+está em `AGENTS.md`.
 
 ## 7. Sistema de testes, CI e deploy
 
@@ -756,7 +760,8 @@ Prioridades definidas pelo responsável, nesta ordem:
 
 ## 9. Estrutura de pastas final sugerida
 
-Esta é direção, não autorização para mover tudo de uma vez:
+Esta é uma direção arquitetural, não um mandato para mover tudo cegamente de uma
+vez. A autonomia de `AGENTS.md` permite avançar em fatias coerentes e verificadas:
 
 ```text
 src/
@@ -902,8 +907,9 @@ Aceitação: goldens por seed idênticos e benchmarks dentro das faixas.
 Os templates puros vivem em `src/ui/game/`, com escaping centralizado.
 Cartas, química, times, Suíça/playoffs, partida, final e Hall já usam essa
 fronteira. As 938 linhas restantes de estado, DOM e fluxo ainda podem ser
-decompostas. O ciclo está pausado num checkpoint verde por decisão do responsável;
-retomada e contratos exatos estão em `docs/p5-aplicacao-ui-2026-07-29.md`.
+decompostas. O ciclo está num checkpoint verde e sua continuação autônoma está
+autorizada; retomada e contratos exatos estão em
+`docs/p5-aplicacao-ui-2026-07-29.md`.
 
 - separar estado do draft e do Major; áudio já está isolado, e a futura carreira
   terá estado próprio;
@@ -1288,6 +1294,8 @@ interface, refatoração e balanceamento.
 
 - leia `AGENTS.md` e este documento antes de editar;
 - verifique branch, status e mudanças do usuário;
+- escolha e execute a próxima fatia segura sem pedir nova permissão para cada
+  etapa; commits e push para `sandbox-test` seguem a autorização de `AGENTS.md`;
 - não trate recomendações deste arquivo como comportamento já implementado;
 - não invente resposta para decisões marcadas como abertas;
 - não proponha reescrita completa;

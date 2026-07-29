@@ -225,11 +225,12 @@ node tools/add-team.js caminho/do/time.txt
 # 3. Valide:
 npm run validate
 
-# 4. Faça um commit separado. Push e deploy somente com autorização do responsável.
+# 4. Faça um commit separado. Checkpoints verdes podem ser publicados em sandbox-test.
 ```
 
-O gerador insere os 5 jogadores e o time no `game.js`, regenera a base de
-elencos e roda o lint. Veja `ADD_TEAM.md` para o formato completo.
+O gerador insere os 5 jogadores em `src/data/players.mjs`, o time em
+`src/data/teams.mjs`, regenera a base de elencos e roda as validações. Veja
+`ADD_TEAM.md` para o formato completo e `AGENTS.md` para a política de publicação.
 
 ## Suíte de validação (bancada)
 

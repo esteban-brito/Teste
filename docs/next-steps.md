@@ -3,7 +3,8 @@
 > Fonte canônica dos próximos passos aprovada em 21 de julho de 2026 e
 > sincronizada com o estado publicado em 22 de julho de 2026.
 > Este documento registra o raciocínio que deve sobreviver entre sessões. Ele
-> não autoriza balanceamento imediato e não substitui `AGENTS.md`.
+> não é ordem para antecipar balanceamento fora da sequência medida e não
+> substitui a autonomia nem as guardas de `AGENTS.md`.
 
 ## 1. Estado publicado na origem deste plano
 
@@ -416,7 +417,8 @@ própria com `fonte` por jogador é pré-requisito honesto de qualquer nota IFCS
 8. atualizar documentação no mesmo ciclo;
 9. manter commits de teste, balanceamento e documentação com responsabilidades
    distinguíveis;
-10. push e deploy somente com autorização explícita.
+10. publicar checkpoints verdes em `sandbox-test` conforme a autorização
+    persistente de `AGENTS.md`; merge em `main` continua exigindo pedido explícito.
 
 ## 7. Etapas posteriores de profissionalização
 
