@@ -181,11 +181,14 @@ sandbox.html + calibrador-worker.js + bancada/motor.js
   -> a mesma src/public/simulation-api.mjs
 ```
 
-Arquivos grandes que permanecem:
+Arquivos grandes que permanecem (medidos em `8a12250`, 29/07/2026):
 
-- `game.js`: 938 linhas no commit-base deste handoff;
-- `sandbox.html`: 4.205 linhas;
-- `style.css`: 1.291 linhas.
+- `game.js`: **888 linhas** — eram 938 no commit-base deste handoff (`57f5699`); a
+  diferença saiu da remoção do tilt morto em `458c6b4`;
+- `sandbox.html`: 4.205 linhas, inalterado;
+- `style.css`: **971 linhas** — eram 1.291 antes da fusão das camadas de cascata
+  (`3a221e2`, `832017b`), que removeu duplicação e CSS morto sem mudança visual,
+  provada pelo comparador de `tools/visual-regression.js`.
 
 Tamanho não é autorização para dividir ou apagar. `sandbox.html` ainda possui
 dívida própria do P6; `style.css` não deve ser reorganizado junto com estado ou
@@ -215,22 +218,33 @@ química, simulação, scorer, corpus, worker ou busca. O último `validate` int
 do fechamento P2 permanece 24/24. Ao tocar uma área, siga a matriz obrigatória do
 `AGENTS.md`; não use esta justificativa para pular uma suíte pertinente.
 
-## 7. Mapa das 938 linhas restantes de `game.js`
+## 7. Mapa das 888 linhas restantes de `game.js`
 
-Linhas aproximadas no commit `57f5699` — confira novamente se o arquivo avançou:
+Linhas medidas no commit `8a12250` (29/07/2026) — confira novamente se o arquivo
+avançou. O mapa anterior era do commit-base `57f5699` e tinha uma faixa de tilt que
+**não existe mais**: `458c6b4` removeu o efeito, e não há nenhuma ocorrência de
+`tilt` em `game.js` ou `style.css`.
 
 ```text
-1–25    imports, contratos públicos, constantes e criação da view de cartas
-26–42   estado S do draft e referências DOM principais
-43–138  layout de cartas, flip, HUD e resultado de química
-143–430 roleta, seleção, lineup, picks, troca e reset do draft
-431–486 tilt e wiring de ponteiro/teclado
-487–520 criação do time do usuário e início do Major
-521–597 progresso de campanha, manchete e tela final
-598–720 Suíça, playoffs e overlays
-735–838 reprodução cinematográfica de mapa e scoreboard
-839–895 orquestração de série MATCH
-896–937 reinício, Hall, importação e inicialização final
+1–24    imports, contratos públicos, constantes e criação da view de cartas
+26–41   estado S do draft, sessão de giro e referências DOM principais
+43–51   modo virar (frente/verso das cartas)
+53–108  elenco cheio, HUD com count-up, resultado de química e trava do giro
+110–158 roleta: offset medido no DOM, parada, fita idle, aborto e revelação
+160–245 sortear: fita, transição, tick sonoro e explosão de vitória
+247–302 lineup, picks e iluminação de slots
+304–386 seleção, colocação, troca e reset do draft
+388–435 wiring de botões e delegação de click/keydown
+437–469 criação do time do usuário e início do Major
+470–522 progresso, manchete, registro de partida e fim de campanha
+523–547 tela final
+548–611 Suíça (pareamento, anti-rematch, resolução dos NPCs)
+613–669 playoffs: seeds, avanço de fase e bracket
+671–683 abrir/fechar overlays e wiring do torneio
+685–787 reprodução cinematográfica de mapa e scoreboard
+789–845 orquestração de série MATCH e ponte E2E
+846–880 reinício, Hall, importação e visibilidade da seção do Major
+882–888 desbloqueio de áudio no primeiro gesto e inicialização final
 ```
 
 O próximo problema não é a quantidade de linhas isoladamente. É que quatro
@@ -478,7 +492,7 @@ Não resta uma lista aprovada de arquivos para deletar. A próxima auditoria dev
 - `sandbox.html` ainda é grande e possui loader inline legado;
 - persistência atual serve ao histórico do modo existente; uma Carreira exigirá
   contrato próprio, migrations e IDs persistentes conforme `project-context`;
-- `game.js` ter 938 linhas não significa que todas devam sair.
+- `game.js` ter 888 linhas não significa que todas devam sair.
 
 ## 15. Validação e disciplina ao retomar
 

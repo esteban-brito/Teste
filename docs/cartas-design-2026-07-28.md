@@ -1,10 +1,14 @@
 # Cartas de jogador — design aprovado (28/07/2026)
 
-> Artefato: `prototipo-cartas.html` (raiz, autocontido, **desligado do jogo**).
-> Abra no navegador e clique numa carta para virar.
+> **Estado: LIGADO AO JOGO em 29/07/2026**, depois do P2, como o responsável havia
+> decidido. O design executável vive em `src/ui/game/card-view.mjs`, com
+> `src/ui/shared/flags.mjs` (bandeiras) e `src/ui/shared/role-emblems.mjs`
+> (emblemas), e o CSS entrou em `style.css` — commits `c1ecdee` e `8a12250`. O que
+> mudou de lá para cá está na **seção 10**.
 >
-> **Estado: aprovado, aguardando o fim do P2 para ser ligado ao jogo.** Decisão do
-> responsável — ligar antes significaria refazer o trabalho depois da modularização.
+> Artefato histórico: `prototipo-cartas.html` (raiz, autocontido, desligado do
+> jogo). Abra no navegador e clique numa carta para virar. Ele **não é mais fonte
+> de verdade**: quando divergir do jogo, o jogo está certo.
 
 ## 1. A direção escolhida
 
@@ -76,6 +80,11 @@ A proposta inicial era "estrela promove um degrau". Foi **descartada por mediç�
 flag `estrela` do motor é exatamente `ovr>=20`, com **zero discordâncias em 85** — a
 promoção não moveria uma única carta.
 
+**Reconferido em 29/07/2026, já com as cartas ligadas ao jogo:** `tierOf`
+(`src/ui/game/card-view.mjs`) aplica exatamente estes cortes e a distribuição medida
+nos 85 é a desta tabela. As duas medições da flag também continuam idênticas
+(17 jogadores com `estrela`, 17 com `ovr>=20`, zero discordâncias).
+
 O **selo ★ foi removido** a pedido do responsável ("achei bem feio").
 
 ## 6. Bandeiras
@@ -104,17 +113,50 @@ As 15 cartas do protótipo saíram de `avaliarJogador` e `TIMES_DEF`, conferidas
 **zero divergências**. Nada é digitado. Foi assim que apareceu que o s1mple é OVR 20
 e não 21, como um rascunho anterior afirmava.
 
-## 9. O que falta
+## 9. O que falta — situação em 29/07/2026
 
-1. **Ligar ao jogo** (`game.js` + `style.css`) — depois do P2. Os tokens pagam aqui:
-   entram no `style.css` como um bloco só.
-2. **Carta de TREINADOR.** O jogo já tem (`coachHTML`/`backCoach`, com `nick`, `pais`,
-   `time`, `ovr`, `carac`, `caracCor`) e ela **não foi desenhada**. Do jeito que está,
-   continuaria feia no meio das novas.
-3. **Fotos.** Não existem e não há campo para guardá-las. É a única lacuna de dados
-   real que a varredura do repositório confirmou. Decisão de produto pendente.
-4. **Daltonismo** — a raridade é comunicada só por cor; a espessura do aro ajuda
-   pouco. Prata (t3) contra roxo (holo) é o par mais arriscado. Não testado.
-5. **Duplicados na roleta** — 8 jogadores têm duas eras. Se a roleta puder entregar
-   as duas, as frentes ficam quase iguais e só o verso as distingue. É regra de jogo
-   que ainda não existe.
+1. ~~**Ligar ao jogo**~~ **FEITO** (`c1ecdee`). Os tokens pagaram o que prometiam:
+   entraram no `style.css` como um bloco só.
+2. ~~**Carta de TREINADOR**~~ **FEITA** no mesmo commit, e pelo mesmo esqueleto das
+   outras. Duas diferenças declaradas: a cor vem da **característica**, não da
+   raridade, porque ele não disputa a escala de OVR dos jogadores; e a característica
+   ocupa o lugar da função primária, já que é ela que descreve o que ele faz pelo
+   time. O emblema é a prancheta e o verso descreve o efeito da característica.
+3. **Fotos — CONTINUA ABERTO.** A camada existe e está vazia (`.c-foto`): 0 de 85
+   jogadores têm retrato e não há campo para guardá-lo. O estado "sem foto" é
+   declarado, não remendo — a tinta da raridade sobe e a carta fica assumidamente
+   gráfica. `src/data/catalog.mjs` registra isso em `DIVERGENCIAS` (`sem-foto`).
+   Decisão de produto pendente; quando as fotos existirem, é mudança de dado, não
+   redesenho.
+4. ~~**Daltonismo**~~ **RESOLVIDO** (`8a12250`) pelo emblema de função: seis
+   silhuetas no mesmo grid 24×24, forma independente de cor, que também diferencia na
+   grade de 2 colunas do celular. `tools/check-game-view-modules.js` exige as seis
+   silhuetas distintas.
+5. **Duplicados na roleta — CONTINUA ABERTO, como questão visual.** 8 jogadores têm
+   duas eras e as duas frentes ficam quase iguais; só o rodapé (time) e o verso
+   (campeonato, ano, colocação) as distinguem. O que já existe, e é **anterior a este
+   documento**, é a regra de LINE: `game.js` bloqueia o mesmo nick duas vezes no seu
+   elenco (classe `dup`) e o Major remove um NPC com sobreposição de nicks. Falta
+   decidir se a apresentação deve distinguir as eras na própria frente.
+
+## 10. O que mudou ao ligar ao jogo (29/07/2026)
+
+**A carta ganhou um segundo canal.** O design de 28/07 comunicava uma coisa por cor —
+a raridade. No elenco do MongolZ isso produzia quatro cartas praticamente iguais
+(17, 17, 17, 16, todas na mesma faixa), e foi o que o responsável apontou jogando.
+Agora são dois canais, e eles não disputam nenhuma propriedade:
+
+| classe | canal | pinta |
+|---|---|---|
+| `tier-*` | **raridade** | moldura: aro, brilho, fio, placa e o rótulo do OVR |
+| `fn-*` | **função** | campo: cor de fundo, nome da função e o emblema ao fundo |
+
+**As faixas vivem no código, em dois lugares que precisam andar juntos.** `tierOf`
+em `src/ui/game/card-view.mjs` é a fonte; `elencos.html` mantém a própria cópia
+(`tierVars`) porque é template gerado. Se as duas divergirem, o **mesmo jogador
+aparece com cor diferente em duas telas** — o comentário está escrito nos dois
+arquivos. O guarda de views cobre as bordas (20 não pode cair em `tier-1`, 17 não
+pode cair em `tier-3`).
+
+O resto deste documento (hierarquia da frente, playstyle como espinha do verso,
+tokens, bandeiras e os casos que quebram layout) continua valendo como escrito.

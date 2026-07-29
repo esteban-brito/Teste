@@ -44,7 +44,9 @@ histórico abaixo):
   fatia segura, limpar legado comprovadamente dispensável, criar commits e fazer
   push de checkpoints verdes para `sandbox-test` sem renovar a permissão;
 - o ciclo **P2 de modularização por paridade está concluído**, Fases 0–7;
-- `game.js` caiu de 3.054 para 938 linhas e contém somente aplicação, estado e UI;
+- `game.js` caiu de 3.054 para **888 linhas** — 1.206 ao fim do P2, 938 depois das
+  primeiras fatias do P5 e 888 após a remoção do tilt morto — e contém somente
+  aplicação, estado e UI;
 - dados e motores vivem em `src/data`, `src/domain` e `src/public`;
 - jogo, sandbox, worker e bancada usam `src/public/simulation-api.mjs`;
 - `bancada/motor.js` cria estado avaliado e sessão de RNG novos por carga, sem
@@ -906,7 +908,7 @@ Aceitação: goldens por seed idênticos e benchmarks dentro das faixas.
 `src/infrastructure/persistence/progress-store.mjs`, ambos com testes isolados.
 Os templates puros vivem em `src/ui/game/`, com escaping centralizado.
 Cartas, química, times, Suíça/playoffs, partida, final e Hall já usam essa
-fronteira. As 938 linhas restantes de estado, DOM e fluxo ainda podem ser
+fronteira. As **888 linhas** restantes de estado, DOM e fluxo ainda podem ser
 decompostas. O ciclo está num checkpoint verde e sua continuação autônoma está
 autorizada; retomada e contratos exatos estão em
 `docs/p5-aplicacao-ui-2026-07-29.md`.
