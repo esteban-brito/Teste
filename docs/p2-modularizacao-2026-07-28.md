@@ -35,10 +35,10 @@ O destino já estava decidido nas ADRs **0002**, **0004** e **0005** e sequencia
 | 3 | SINAPSE (química) | **concluída** — 1 módulo |
 | 4 | simulação, economia, rating | **concluída** — 6 de 6 fatias |
 | 5 | API pública de avaliação + 3 consumidores Node | **concluída** |
-| 6 | API pública de simulação, worker e sandbox | **em andamento** — motores extraídos; composição pendente |
+| 6 | API pública de simulação, worker e sandbox | **em andamento** — API pronta; 2 consumidores pendentes |
 | 7 | entrypoint do jogo + adapter Node, fim da duplicação | pendente |
 
-`npm run check` saiu de **19 para 36 checadores**. `npm run validate` fecha 24/24.
+`npm run check` saiu de **19 para 37 checadores**. `npm run validate` fecha 24/24.
 O motor executável de `game.js`, `roster-snapshot.json`, `simulation-golden.json` e
 `campaign-golden.json` seguem **intocados** — extração não muda resultado.
 
@@ -59,10 +59,12 @@ src/domain/simulation/random-source.mjs       Mulberry32 isolado por sessão
 src/domain/simulation/team-preparation.mjs    mapa, lado e vetores de entrada do combate
 src/domain/simulation/round-combat.mjs        relógio, duelos, objetivo, save e stats do round
 src/domain/simulation/simulation-telemetry.mjs identidade observável sem efeito esportivo
+src/domain/simulation/simulation-config.mjs   configuração única de simulação, mapa e rating
 src/domain/simulation/economy.mjs             COFRE: decisão, carrego, drop e pagamento
 src/domain/simulation/map-simulation.mjs      PÓLVORA: mapa completo round a round
 src/domain/simulation/series-simulation.mjs   PÓLVORA: série sem repetição de mapas
 src/public/evaluation-api.mjs                 composição pública de dados + avaliação
+src/public/simulation-api.mjs                 composição por sessão de todos os motores
 ```
 
 ## 3. Contratos descobertos — leia antes de tocar no bloco
@@ -135,12 +137,15 @@ do RNG depois das cinco formas individuais.
 `tools/check-round-combat-parity.js` compara rounds consecutivos com estado
 acumulado e recompõe mapas completos com o novo combate; resultado, mutações,
 telemetria e próxima amostra do RNG precisam coincidir.
+`tools/check-public-simulation-api.js` fecha a composição inteira com mapas,
+séries, forma de campanha, identidade de objetos e duas sessões independentes de
+RNG, além de comparar todas as configurações públicas com o legado.
 
 ## 6. Próximo passo concreto
 
-Continuar a **Fase 6** pela composição da API pública de simulação. RNG,
-preparação, combate, economia, mapa e série já têm paridade exata; agora falta
-conectá-los numa sessão única e então migrar worker e sandbox.
+Continuar a **Fase 6** migrando `calibrador-worker.js` e `sandbox.html` para
+`src/public/simulation-api.mjs`. A composição já tem paridade exata; depois dos
+dois consumidores, as guardas das listas duplicadas podem ser removidas.
 
 Correção de classificação: `tools/check-engine-exports.js` e
 `tools/check-sandbox-engine.js` não são consumidores a migrar; são guardas do

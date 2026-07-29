@@ -7,7 +7,7 @@ const WIN_PROBABILITY={"5v5":.50,"5v4":.74,"5v3":.88,"5v2":.95,"5v1":.99,
   "1v5":.01,"1v4":.05,"1v3":.13,"1v2":.27,"1v1":.50};
 const ECO_MULTIPLIER={full:{full:1,force:.9,eco:.62,pistol:.55},force:{full:1.18,force:1,eco:.78,pistol:.68},
   eco:{full:1.6,force:1.3,eco:1,pistol:.85},pistol:{full:1.55,force:1.25,eco:.95,pistol:1}};
-const CONFIG={BASE:.614,W_EK:.385,W_SURV:.160,W_KAST:.240,W_MULTI:.042,W_SWING:.10,PESO_MORTE:.95,PESO_OPEN:.216,
+export const CFG_PADRAO={BASE:.614,W_EK:.385,W_SURV:.160,W_KAST:.240,W_MULTI:.042,W_SWING:.10,PESO_MORTE:.95,PESO_OPEN:.216,
   W_ADR:.0019,ADR_REF:76,W_TRADE:.075,OPEN_D_W:.6,IMP_OVR:.012,IGL_SIS:.015};
 
 const winProbability=(mine,opponent)=>mine<=0?0:opponent<=0?1:
@@ -16,8 +16,8 @@ const killSwing=(mine,opponent)=>winProbability(mine,opponent-1)-winProbability(
 const deathSwing=(mine,opponent)=>winProbability(mine-1,opponent)-winProbability(mine,opponent);
 const ecoMultiplier=(killerBuy,victimBuy)=>(ECO_MULTIPLIER[killerBuy]&&ECO_MULTIPLIER[killerBuy][victimBuy])||1;
 
-export function fallenAngelsComponents(event){
-  const C=CONFIG,R=event.totalRounds||1;
+export function fallenAngelsComponents(event,cfg=CFG_PADRAO){
+  const C=cfg,R=event.totalRounds||1;
   const ekpr=event.kills.reduce((sum,kill)=>sum+ecoMultiplier(kill.buyMatador,kill.buyVitima),0)/R;
   const survPR=1-(event.mortes.length/R);
   const kast=(event.roundsKAST||0)/R;
@@ -46,8 +46,8 @@ export function fallenAngelsComponents(event){
   };
 }
 
-export function fallenAngels(event){
-  const components=fallenAngelsComponents(event);
+export function fallenAngels(event,cfg=CFG_PADRAO){
+  const components=fallenAngelsComponents(event,cfg);
   return components.base+components.economyAdjustedKills+components.survival+components.kast+
     components.multikill+components.swing+components.opening+components.damage+components.trade+
     components.system;
