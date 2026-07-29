@@ -1,7 +1,11 @@
 # ADR 0005: projeção legada de dados durante a migração
 
-- Status: aceito
+- Status: superado — migração concluída em 2026-07-28
 - Data: 2026-07-20
+
+> Conclusão: jogo, sandbox, worker e bancada passaram a consumir os módulos
+> públicos. Os blocos incorporados foram removidos; `tools/add-team.js` escreve
+> somente em `src/data/players.mjs` e `src/data/teams.mjs`.
 
 ## Contexto
 

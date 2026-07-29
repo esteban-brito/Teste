@@ -1,8 +1,8 @@
 # P2 — modularização por paridade: estado e retomada (28/07/2026)
 
-> **Leia este arquivo antes de continuar o P2.** Ele é o ponto de retomada do ciclo
-> de modularização e registra o que já saiu, o que falta, os contratos descobertos
-> e as armadilhas que já custaram tempo.
+> **Leia este arquivo antes de alterar os módulos extraídos.** Ele é o relatório
+> final do ciclo P2 e registra o que saiu, como a paridade foi provada, os contratos
+> descobertos e as armadilhas que já custaram tempo.
 
 ## 1. Por que este ciclo existe
 
@@ -36,12 +36,19 @@ O destino já estava decidido nas ADRs **0002**, **0004** e **0005** e sequencia
 | 4 | simulação, economia, rating | **concluída** — 6 de 6 fatias |
 | 5 | API pública de avaliação + 3 consumidores Node | **concluída** |
 | 6 | API pública de simulação, worker e sandbox | **concluída** |
-| 7 | entrypoint do jogo + adapter Node, fim da duplicação | **em andamento** — entrypoint migrado |
+| 7 | entrypoint do jogo + adapter Node, fim da duplicação | **concluída** |
 
-`npm run check` saiu de **19 para 38 checadores**. `npm run validate` fecha 24/24.
-A UI de `game.js` já consome a API pública; o bloco antigo permanece temporariamente
-apenas como referência de paridade. `roster-snapshot.json`, `simulation-golden.json`
-e `campaign-golden.json` seguem **intocados** — extração não muda resultado.
+Durante a migração, `npm run check` cresceu de **19 para 38 checadores** de
+paridade. Depois da remoção da segunda implementação, os diferenciais transitórios
+foram aposentados e o comando ficou com **10 guardas permanentes**; comparar o
+módulo consigo mesmo não seria teste. As 24 suítes continuam no `validate`.
+
+`game.js` caiu de 3.054 para 1.206 linhas e agora contém somente aplicação e UI.
+`roster-snapshot.json`, `simulation-golden.json` e `campaign-golden.json` seguem
+**intocados** — modularização não mudou resultado.
+
+Validação final: `npm run validate` verde em **24/24 suítes** (168,3 s), com
+amostras e limites integrais, sem atualizar snapshot ou golden.
 
 ### Módulos extraídos neste ciclo
 
@@ -122,48 +129,35 @@ Se batem, os dois consumiram exatamente a mesma quantidade de azar. **Isso só
 funciona porque o módulo recebe o gerador por parâmetro** — os dois caminhos
 compartilham o mesmo `gaussF`, então não há dois estados para sincronizar.
 
-Está aplicado e verde em `tools/check-player-form-parity.js`.
-`tools/check-team-form-parity.js` aplica a mesma prova à amostra uniforme de
-`forcaDoDia` e também exige exatamente uma chamada ao gerador por avaliação.
-`tools/check-economy-parity.js` cobre os caminhos determinísticos e o force
-ocasional de `decidirCompra`, compara a próxima amostra do RNG e ainda prova a
-mutação das carteiras por `pagarCompra`.
-`tools/check-map-simulation-parity.js` compara o resultado completo de mapas
-normais, OT repetido, telemetria, modo leve e mapa sorteado, além da próxima
-amostra do RNG e de uma chamada a `combateRound` por round.
-`tools/check-series-simulation-parity.js` compara séries MD1, MD3 e MD5 completas,
-identidade do vencedor, mapas únicos, próxima amostra do RNG e ordem das chamadas.
-`tools/check-team-preparation-parity.js` cobre os 17 times nos 8 mapas e entradas
-incompletas, compara inclusive os caches `_mapBase`/`_lado` e exige o mesmo estado
-do RNG depois das cinco formas individuais.
-`tools/check-round-combat-parity.js` compara rounds consecutivos com estado
-acumulado e recompõe mapas completos com o novo combate; resultado, mutações,
-telemetria e próxima amostra do RNG precisam coincidir.
-`tools/check-public-simulation-api.js` fecha a composição inteira com mapas,
-séries, forma de campanha, identidade de objetos e duas sessões independentes de
-RNG, além de comparar todas as configurações públicas com o legado.
+Esse mecanismo foi aplicado durante a migração a forma individual e coletiva,
+economia, preparação, combate, mapa e série. A última execução diferencial verde
+cobriu 37 mapas, 4 séries, 128 rounds sequenciais, 17 times × 8 mapas e a próxima
+amostra do RNG em cada fronteira.
 
-## 6. Próximo passo concreto
+Depois que todos os consumidores migraram, esses checadores foram removidos junto
+com a referência antiga: sem duas implementações eles seriam tautológicos. A
+proteção permanente ficou em `tools/check-random-source-contract.js` (vetores
+Mulberry32 congelados), `tools/check-public-simulation-api.js` (determinismo e
+sessões isoladas), goldens completos, regressões, benchmarks e E2E.
 
-Concluir a **Fase 7**: o entrypoint do jogo já carrega
-`src/public/simulation-api.mjs` como módulo ES e a UI usa exclusivamente seus
-contratos. Falta substituir `bancada/motor.js` pela API pública e então remover o
-bloco legado de `game.js`.
+## 6. Encerramento e próximo passo
 
-`tools/check-sandbox-engine.js` agora impede regressão: exige a importação pública
-nos dois consumidores e reprova qualquer retorno do recorte de `game.js`.
-`tools/check-game-entrypoint.js` impede regressão no consumidor principal.
-`bancada/motor.js` é o último adapter de compatibilidade; nesta transição ele ainda
-mantém a referência legada usada pelos checadores de paridade.
+O ciclo P2 está concluído. `tools/check-game-entrypoint.js` impede o retorno do
+marcador e do domínio embutido; `tools/check-sandbox-engine.js` impede que sandbox
+ou worker voltem a recortar `game.js`; `bancada/motor.js` compõe a API pública com
+estado e RNG novos por carga.
+
+O próximo trabalho estrutural não é outra extração do simulador. É uma decisão de
+produto/arquitetura separada: decompor os 1.206 trechos restantes de aplicação,
+estado, áudio e DOM em módulos menores, sempre sem misturar balanceamento.
 
 ## 7. Armadilhas que já custaram tempo
 
-- **Arrays entre realms.** O motor legado roda em `vm`, então seus arrays e objetos
-  têm outro `prototype` e `assert.deepStrictEqual` reprova mesmo com conteúdo
-  idêntico. Todo checador precisa normalizar com
-  `plain=v=>JSON.parse(JSON.stringify(v))` antes de comparar.
-- **`bancada/motor.js` tem uma lista de EXPORTS.** Um nome que não estiver lá volta
-  `undefined` no checador e o erro aparece como `"undefined" is not valid JSON`.
+- **Arrays entre realms (histórico).** O motor legado rodava em `vm`, então seus
+  arrays e objetos tinham outro `prototype`. Isso exigiu normalização JSON durante
+  a prova; a causa desapareceu com a retirada do loader.
+- **Lista manual de exports (histórico).** O adapter antigo omitia contratos em
+  silêncio. A ponte atual consome diretamente a API pública e não mantém lista.
 - **PowerShell come aspas** em `node -e` com strings aninhadas. Para script com
   aspas, escreva um arquivo no scratchpad e rode `node arquivo.js`.
 - **Não comparar contra `POOL`** para checar classificação individual: o `POOL` já

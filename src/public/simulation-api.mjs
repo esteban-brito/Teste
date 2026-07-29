@@ -29,7 +29,7 @@ import {simularMapa as runMap} from "../domain/simulation/map-simulation.mjs";
 import {simularSerie as runSeries} from "../domain/simulation/series-simulation.mjs";
 import {CFG_SIM,CFG_CAMP,CFG_FA,MAPA_LADO,MAPAS_POOL}
   from "../domain/simulation/simulation-config.mjs";
-import {coletarMarcos,atualizarRecordes,manchete,narrativaMVP}
+import {RECORD_LABELS,coletarMarcos,atualizarRecordes,manchete,narrativaMVP}
   from "../domain/narrative/game-memory.mjs";
 
 export {CFG_SIM,CFG_CAMP,CFG_FA,CFG_QUIMICA,MAPA_LADO,MAPAS_POOL,
@@ -43,7 +43,8 @@ export const styleAgr=player=>styleAggression(player,CFG_SIM.STYLE_AGR);
 export const fallenAngels=event=>calculateRating(event,CFG_FA);
 export const fallenAngelsComponents=event=>calculateRatingComponents(event,CFG_FA);
 export {preservationValue,tradeContextProfile,assistContextProfile,
-  coletarMarcos,atualizarRecordes,manchete,narrativaMVP};
+  coletarMarcos,atualizarRecordes,manchete,narrativaMVP,RECORD_LABELS,
+  RECORD_LABELS as RECORDE_LABELS};
 
 export function createSimulationSession({pool=POOL,seed,cfg=CFG_SIM,cfgCamp=CFG_CAMP,
   cfgFa=CFG_FA,cfgQuimica=CFG_QUIMICA}={}){

@@ -34,7 +34,26 @@ roadmap for concluída.
 
 ## 2. Ponto exato de retomada
 
-Estado registrado em 22 de julho de 2026:
+Atualização vigente de 28 de julho de 2026 (tem precedência sobre o registro
+histórico abaixo):
+
+- o ciclo **P2 de modularização por paridade está concluído**, Fases 0–7;
+- `game.js` caiu de 3.054 para 1.206 linhas e contém somente aplicação, estado,
+  áudio e UI;
+- dados e motores vivem em `src/data`, `src/domain` e `src/public`;
+- jogo, sandbox, worker e bancada usam `src/public/simulation-api.mjs`;
+- `bancada/motor.js` cria estado avaliado e sessão de RNG novos por carga, sem
+  `vm`, recorte de texto ou lista manual de exports;
+- `tools/add-team.js` escreve apenas nos dois módulos crus e regenera
+  `elencos.html` de forma transacional;
+- os 28 checadores diferenciais de migração foram aposentados depois da última
+  prova verde; os contratos permanentes são API pública, vetores congelados de
+  RNG, catálogo, snapshot, goldens, regressão, benchmark e E2E;
+- nenhuma etapa desse ciclo alterou dados, classificação, `CFG_*`, RNG,
+  balanceamento, snapshot ou goldens.
+- validação final do ciclo: `npm run validate`, 24/24 suítes em 168,3 s.
+
+Registro histórico de 22 de julho de 2026:
 
 - produto: **draft9-0**, jogo estático de navegador sobre Counter-Strike;
 - repositório: `esteban-brito/Teste`;
@@ -341,9 +360,9 @@ assinaturas por função.
 
 ### Entradas principais
 
-- `index.html` carrega `style.css` e `game.js`.
-- `game.js` contém dados, motores, aplicação e UI, separados apenas pelo marcador
-  `// === UI START ===`.
+- `index.html` carrega `style.css` e `game.js` como módulo ES.
+- `game.js` contém aplicação, estado, áudio e UI e importa a composição pública.
+- `src/data`, `src/domain` e `src/public` contêm dados, motores e APIs compartilhadas.
 - `sandbox.html` é a bancada visual de tuning, auditoria e calibração.
 - `calibrador-worker.js` paraleliza a busca do calibrador.
 - `elencos.html` é um artefato gerado a partir dos dados e motores.
@@ -392,9 +411,8 @@ dados crus
   -> progressão da campanha/interface
 ```
 
-O sandbox, a bancada Node e o worker ainda recortam ou avaliam fonte para
-reutilizar motores. Esse contrato implícito é uma dívida técnica importante.
-O destino aceito é ES Modules nativos com exports nomeados, migrados por paridade.
+Jogo, sandbox, bancada Node e worker reutilizam motores por módulos públicos.
+Nenhum deles recorta ou avalia `game.js`.
 
 ## 5. Motores e invariantes que não podem mudar por acidente
 
@@ -820,9 +838,8 @@ Aceitação: nenhuma classificação, estatística ou sequência aprovada muda.
 
 **Risco:** seguro a moderado.
 
-**Status:** em andamento. ADR 0002 aceito; jogadores, elencos e países extraídos
-sob paridade; lint, snapshot e `add-team` já usam a nova fronteira. Os blocos de
-`game.js` continuam necessários para consumidores clássicos.
+**Status:** concluída. ADR 0002 aceito; jogadores, elencos e países são fontes
+modulares únicas. Lint, snapshot, `add-team`, jogo e bancada usam essa fronteira.
 
 - aceitar ou revisar ADR 0002;
 - extrair dados crus sem extrair fórmulas no mesmo commit;
@@ -836,10 +853,8 @@ Aceitação: snapshot e artefato gerado idênticos.
 
 **Risco:** moderado.
 
-**Status:** iniciada. ADR 0004 aceito; `rolePairReality`, `secondaryScore` e
-`roleStyleReality` são as primeiras funções puras extraídas. As duas regras de
-realidade possuem um consumidor Node migrado; o restante de PRISMA/ZÊNITE ainda
-permanece em `game.js`.
+**Status:** concluída. ADR 0004 aceito; PRISMA e ZÊNITE foram extraídos, compostos
+por `src/public/evaluation-api.mjs` e consumidos por todos os caminhos.
 
 - aceitar ou revisar ADR 0004;
 - extrair primeiro funções puras de roles, secundário, playstyles e OVR;
@@ -852,6 +867,8 @@ Aceitação: paridade de todos os 85 jogadores e mesmos outputs por seed.
 
 **Risco:** moderado.
 
+**Status:** concluída por paridade em `src/domain/chemistry/team-chemistry.mjs`.
+
 - isolar composição, pilares, sinergias, conflitos e treinador;
 - tornar entrada/saída explícitas;
 - adicionar unitários para clamps, saturações e mitigadores;
@@ -862,6 +879,9 @@ Aceitação: mesmas químicas e forças para fixtures representativas e snapshot
 ### Etapa P4 — RNG, simulação e rating
 
 **Risco:** arriscado.
+
+**Status:** concluída por paridade; RNG, forma, preparação, combate, economia,
+mapa, série, telemetria e rating compõem `src/public/simulation-api.mjs`.
 
 - injetar adapter do Mulberry32 sem mudar consumo;
 - preservar os golden tests já capturados de eventos completos;
@@ -874,6 +894,9 @@ Aceitação: goldens por seed idênticos e benchmarks dentro das faixas.
 
 **Risco:** moderado a arriscado.
 
+**Status:** não iniciada como ciclo próprio. O domínio saiu de `game.js`, mas as
+1.206 linhas restantes de estado, áudio, DOM e fluxo ainda podem ser decompostas.
+
 - separar estado do draft, Major, áudio e futura carreira;
 - usar comandos/reducers pequenos sem framework obrigatório;
 - tornar timers, DOM, áudio e persistência efeitos explícitos;
@@ -884,6 +907,9 @@ Aceitação: E2E completo do jogo principal sem regressão visual ou funcional.
 ### Etapa P6 — sandbox, calibrador e workers
 
 **Risco:** arriscado.
+
+**Status:** parcialmente concluída. Sandbox e worker usam a API pública; a
+separação interna da UI do calibrador e o loader do script inline ainda são dívida.
 
 - fazer sandbox importar módulos públicos;
 - separar UI da busca e da análise de colaterais;
@@ -1201,18 +1227,14 @@ A fonte canônica da sequência é `docs/next-steps.md`. Ordem resumida:
 4. R4: auditar AWPer, sobrevivência e playstyle por critérios numéricos;
 5. R5/R6: balancear somente se houver evidência e validar integralmente;
 6. aprimorar usabilidade do laboratório;
-7. continuar a modularização por paridade: P1 possui dados e projeção legada;
-   P2 deve começar por uma única fronteira pura do PRISMA;
+7. P2 concluído; decidir separadamente se a próxima fatia estrutural será a
+   decomposição de estado/DOM de `game.js` ou a limpeza interna do calibrador;
 8. completar corpus e primeira nota IFCS oficial;
 9. preparar Carreira de Jogador sobre APIs estáveis, RNG contratado e save
    versionado.
 
-`secondaryScore` e `roleStyleReality` já foram caracterizadas e extraídas sem
-puxar `afinidades`, distribuição contextual ou classificação completa. Antes da
-próxima extração estrutural, caracterizar uma única nova fronteira pura do PRISMA
-e manter a mudança isolada.
-`game.js` permanece fonte executável para consumidores clássicos; a projeção do
-ADR 0005 impede divergência em novas adições. A próxima fatia de R3 deve ampliar
+O domínio e os dados de `game.js` já foram removidos; o ADR 0005 foi superado e
+novas adições entram apenas pelos módulos crus. A próxima fatia de R3 deve ampliar
 o contrato MD3 sem misturar a trilha estrutural. Antes de congelar thresholds de cauda ou
 ranking, revisar a baseline atual. Cada etapa deve ser um commit pequeno ou uma
 sequência curta com responsabilidade verificável; não misturar auditoria,
@@ -1220,8 +1242,9 @@ interface, refatoração e balanceamento.
 
 ## 14. Dívidas e riscos conhecidos
 
-- `game.js` e `sandbox.html` são grandes e concentram responsabilidades;
-- sandbox, Node e worker dependem de loaders frágeis por texto;
+- `game.js` e `sandbox.html` ainda concentram estado e responsabilidades de UI;
+- o loader do calibrador ainda avalia o script inline de `sandbox.html`; jogo,
+  bancada e worker já não dependem de loaders por texto;
 - estado global mistura domínio, aplicação e efeitos;
 - não existe ainda persistência versionada adequada para uma carreira;
 - goldens completos do simulador por seed existem; qualquer mudança deliberada

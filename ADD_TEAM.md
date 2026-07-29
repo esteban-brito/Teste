@@ -28,8 +28,9 @@ NOME | CAMPEONATO | Colocação: Vice-campeão | Treinador: kakafu | País (Trei
 node tools/add-team.js caminho/do/time.txt
 ```
 
-Ele insere os 5 jogadores e o time no `game.js` (âncoras `//@jogadores` e `//@times`),
-regenera a Base de Elencos (`elencos.html`) e roda o **lint**, que imprime o resumo com os OVRs
+Ele insere os 5 jogadores em `src/data/players.mjs` e o time em
+`src/data/teams.mjs`, regenera a Base de Elencos (`elencos.html`) e roda as
+guardas públicas e o **lint**, que imprime o resumo com os OVRs
 computados de cada time — use isso pra revisar se os overalls/funções ficaram como esperado.
 
 ## 3. Valide e prepare a publicação
@@ -46,8 +47,8 @@ aparece automaticamente **na roleta do jogo** e **na Base de Elencos**.
 
 | Arquivo | O quê |
 |---|---|
-| `tools/add-team.js` | cola texto → insere no game.js + regenera elencos + lint |
-| `bancada/roster.js` | regenera o `const DATA` do elencos.html a partir dos motores (fonte única) |
+| `tools/add-team.js` | cola texto → insere nos módulos de dados + regenera elencos + valida |
+| `bancada/roster.js` | regenera o `const DATA` do elencos.html a partir da API pública |
 | `bancada/times.js`  | lint: atributos 0–100, IDs únicos, ≥1 IGL, país do treinador, invariante do Major, resumo por time |
 | `bancada/run.js`    | orquestra as 24 suítes de dados, regressão, calibrador, benchmark, IFCS e E2E |
 

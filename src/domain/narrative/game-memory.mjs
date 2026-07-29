@@ -40,7 +40,7 @@ export function coletarMarcos(game){
     comeback:comeback?{v:comeback}:null};
 }
 
-const RECORD_LABELS={kills:"kills num mapa",rating:"rating num mapa",adr:"ADR num mapa",
+export const RECORD_LABELS={kills:"kills num mapa",rating:"rating num mapa",adr:"ADR num mapa",
   clutch:"clutch vencido",margem:"maior margem",comeback:"maior virada"};
 
 export function atualizarRecordes(records,milestones,context){

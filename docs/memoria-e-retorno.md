@@ -21,7 +21,7 @@
 
 Entregue nesta etapa:
 
-- **Núcleo puro** (região de motor do `game.js`, exportado à bancada): `coletarMarcos`,
+- **Núcleo puro** (`src/domain/narrative/game-memory.mjs`, exposto pela API pública): `coletarMarcos`,
   `atualizarRecordes`, `manchete`, `narrativaMVP`, `perspectivaDoMapa`, `maiorClutchDoLado`.
   Contratos em `bancada/memoria.js` (grupo regression): determinismo total, perspectiva do
   meu time, merge só quando supera, prioridade de manchetes (clutch 1v3+ > OT > virada >

@@ -67,7 +67,8 @@ são justamente os casos em que o sub contradizia o playstyle.
 ### Extração pura
 
 A identidade foi extraída para `src/domain/evaluation/style-identity.mjs`, com paridade
-integral provada por `tools/check-style-identity-parity.js` (178 comparações, incluindo
+integral provada pelo checador diferencial histórico
+`check-style-identity-parity.js` (178 comparações, aposentado com o legado, incluindo
 entradas nulas, estilos desconhecidos e rótulos legados). `exposure-profile.mjs` passou a
 consumi-la em vez de reimplementar a agressão do sub.
 
