@@ -33,12 +33,12 @@ O destino já estava decidido nas ADRs **0002**, **0004** e **0005** e sequencia
 | 1 | normalizar país (`camp` adiado) | **concluída** |
 | 2 | PRISMA · ZÊNITE (avaliação) | **concluída** — 5 módulos |
 | 3 | SINAPSE (química) | **concluída** — 1 módulo |
-| 4 | simulação, economia, rating | **em andamento** — 5 de 6 fatias |
+| 4 | simulação, economia, rating | **concluída** — 6 de 6 fatias |
 | 5 | API pública + 6 consumidores Node | pendente |
 | 6 | worker e sandbox | pendente |
 | 7 | entrypoint do jogo, fim da duplicação | pendente |
 
-`npm run check` saiu de **19 para 31 checadores**. `npm run validate` fecha 24/24.
+`npm run check` saiu de **19 para 32 checadores**. `npm run validate` fecha 24/24.
 O motor executável de `game.js`, `roster-snapshot.json`, `simulation-golden.json` e
 `campaign-golden.json` seguem **intocados** — extração não muda resultado.
 
@@ -57,6 +57,7 @@ src/domain/simulation/team-form.mjs           MARÉ: forcaDoDia e consistência 
 src/domain/simulation/duel-weights.mjs        skillDuelo, fragPeso
 src/domain/simulation/economy.mjs             COFRE: decisão, carrego, drop e pagamento
 src/domain/simulation/map-simulation.mjs      PÓLVORA: mapa completo round a round
+src/domain/simulation/series-simulation.mjs   PÓLVORA: série sem repetição de mapas
 ```
 
 ## 3. Contratos descobertos — leia antes de tocar no bloco
@@ -121,17 +122,14 @@ mutação das carteiras por `pagarCompra`.
 `tools/check-map-simulation-parity.js` compara o resultado completo de mapas
 normais, OT repetido, telemetria, modo leve e mapa sorteado, além da próxima
 amostra do RNG e de uma chamada a `combateRound` por round.
+`tools/check-series-simulation-parity.js` compara séries MD1, MD3 e MD5 completas,
+identidade do vencedor, mapas únicos, próxima amostra do RNG e ordem das chamadas.
 
 ## 6. Próximo passo concreto
 
-Terminar a **Fase 4**. Falta o pedaço grande, e ele deve ir em fatias pequenas:
-
-- `simularSerie`.
-
-Regra para cada fatia: gerador por parâmetro, checador comparando **valor e
-consumo de azar**, e `simulation-golden.json` bit a bit antes de comitar.
-
-Depois vêm as Fases 5–7, que é onde a duplicação finalmente morre.
+Começar a **Fase 5**: definir a API pública dos módulos extraídos e migrar os seis
+consumidores Node um por vez. A duplicação só começa a morrer depois que cada
+consumidor deixa de carregar o bloco legado por marcador.
 
 ## 7. Armadilhas que já custaram tempo
 
