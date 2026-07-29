@@ -9,9 +9,9 @@ regiões separadas pelo marcador `// === UI START ===`:
 1. motores, dados e simulação;
 2. estado, renderização, eventos e fluxo do jogo.
 
-O sandbox carrega o texto de `game.js` e avalia a primeira região. O worker e a
-bancada Node repetem esse mecanismo. Portanto, o marcador funciona hoje como
-uma API implícita e frágil.
+O sandbox e o worker do calibrador importam `src/public/simulation-api.mjs`. A
+bancada Node clássica ainda recorta a primeira região de `game.js`, portanto o
+marcador permanece temporariamente como API implícita apenas nesse adapter.
 
 O IFCS é infraestrutura de validação offline, não parte do runtime. O scorer e o
 contrato de corpus são módulos Node puros em `bancada/`; o extrator Python/Awpy
@@ -49,8 +49,8 @@ o entrypoint clássico não migrar para módulos,
 não autorizam balanceamento implícito.
 
 `random-source.mjs` encapsula o Mulberry32 em instâncias independentes, preservando
-as sequências uniforme e gaussiana bit a bit. A composição pública de simulação
-deve possuir uma instância por sessão e passá-la explicitamente aos motores.
+as sequências uniforme e gaussiana bit a bit. A composição pública possui uma
+instância por sessão e a passa explicitamente aos motores.
 
 A primeira composição pública vive em `src/public/evaluation-api.mjs`. Ela monta
 `POOL` e `TEAMS` a partir dos dados crus e dos módulos PRISMA, ZÊNITE e SINAPSE,
@@ -59,9 +59,8 @@ visão única das configurações calibráveis. Os três consumidores Node de av
 (`tools/verify-report.js`, harness de workers e loader do calibrador) já usam essa
 API sem recortar `game.js`. `src/public/simulation-api.mjs` compõe sobre ela uma
 sessão isolada de RNG e conecta preparação, combate, economia, mapa, série e rating
-a uma única configuração mutável. O sandbox e o bootstrap do worker real ainda
-precisam trocar o recorte legado por essa API; `bancada/motor.js` permanece como
-adapter das suítes clássicas até a Fase 7.
+a uma única configuração mutável. Sandbox e worker real já usam essa composição;
+`bancada/motor.js` permanece como adapter das suítes clássicas até a Fase 7.
 
 ## Pipeline do domínio
 

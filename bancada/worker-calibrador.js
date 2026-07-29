@@ -10,11 +10,13 @@ const WRAPPER=`
 const {parentPort,workerData}=require("worker_threads");
 const fs=require("fs");
 const path=require("path");
+const {pathToFileURL}=require("url");
 const {performance}=require("perf_hooks");
 global.self=globalThis;
 self.navigator={hardwareConcurrency:2};
 self.performance=performance;
 self.postMessage=message=>parentPort.postMessage(message);
+self.__engineModuleUrl=pathToFileURL(path.join(workerData.root,"src","public","simulation-api.mjs")).href;
 global.fetch=async url=>{
   const file=String(url).split("?")[0];
   try{return new Response(fs.readFileSync(path.join(workerData.root,file)),{status:200});}

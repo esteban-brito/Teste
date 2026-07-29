@@ -1,8 +1,8 @@
 /* calibrador-worker.js
  * Roda a busca do Calibrador Inteligente fora da thread principal, em paralelo com outros
- * workers iguais a este. NAO duplica a logica do motor/calibrador: busca o proprio
- * sandbox.html (mesma origem) e reaproveita o script dele, exatamente como carregarMotores()
- * ja faz com game.js - o worker roda o MESMO codigo-fonte, so que numa cópia isolada,
+ * workers iguais a este. NAO duplica a logica do motor/calibrador: importa a API
+ * pública e busca o próprio sandbox.html para reaproveitar o script do calibrador.
+ * O worker roda o MESMO código-fonte, só que numa cópia isolada,
  * evitando ter duas versoes da mesma logica pra manter sincronizadas.
  *
  * Protocolo (postMessage):
@@ -15,24 +15,14 @@ let apiPromise = null;
 const cancelledJobs = new Set();
 
 async function bootstrap() {
-  const [gameRes, sandboxRes] = await Promise.all([
-    fetch("game.js?nc=" + Date.now()),
-    fetch("sandbox.html?nc=" + Date.now()),
+  const engineUrl = self.__engineModuleUrl ||
+    "./src/public/simulation-api.mjs?nc=" + Date.now();
+  const [E, sandboxRes] = await Promise.all([
+    import(engineUrl),
+    fetch("sandbox.html?nc=" + Date.now())
   ]);
-  if (!gameRes.ok) throw new Error("game.js nao carregou (" + gameRes.status + ")");
   if (!sandboxRes.ok) throw new Error("sandbox.html nao carregou (" + sandboxRes.status + ")");
-  const gameSrc = await gameRes.text();
   const sandboxSrc = await sandboxRes.text();
-
-  const linhas = gameSrc.split("\n");
-  let cut = linhas.findIndex((l) => l.includes("// === UI START ==="));
-  if (cut < 0) cut = linhas.findIndex((l) => l.includes("document.getElementById"));
-  if (cut < 0) throw new Error("nao encontrei o inicio da camada de UI em game.js");
-  const engineSlice = linhas.slice(0, cut).join("\n");
-  const E = new Function(
-    engineSlice +
-      "\nreturn {avaliarJogador,aplicarAvaliacaoContextual,distribuirRoles,forcaTime,ovrUnificado,rolePairReality,roleStyleReality,CFG_AVALIACAO,ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,STYLE_CONTRA,MAPAS_POOL,MAPA_LADO,srand,simularMapa,forcaDoDia,TEAMS,nmOVR,styleScoreTable,roleAfinidade,secondaryScore,NM_DEF,NM_COR,STYLE_LABEL,PLAYSTYLE_IDS,PLAYSTYLES,NM_AXES,STYLE_KEYS};"
-  )();
 
   const m = sandboxSrc.match(/<script>([\s\S]*)<\/script>/);
   if (!m) throw new Error("nao encontrei o <script> do sandbox.html");
