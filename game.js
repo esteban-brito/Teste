@@ -6,11 +6,14 @@ import {PROGRESSO} from "./src/infrastructure/persistence/progress-store.mjs";
 import {escapeHtml as esc} from "./src/ui/shared/html.mjs";
 import {createCardView} from "./src/ui/game/card-view.mjs";
 import {construirCartao} from "./src/ui/game/build-summary-view.mjs";
+import {liveTeamHeaderHtml,prematchTeamHtml} from "./src/ui/game/team-view.mjs";
+import {swissBoardHtml,bracketSubtitle,bracketBoardHtml} from "./src/ui/game/tournament-view.mjs";
+import {scoreboardSideHtml} from "./src/ui/game/match-view.mjs";
+import {headlineHtml,campaignFinalView,campaignScoreHtml,hallView} from "./src/ui/game/history-view.mjs";
 const {TEAMS,POOL,forcaTime,simularMapa,simularSerie,forcaDoDia,
   sortearFormaCampanha,distribuirRoles,STYLE_LABEL,STYLE_ID,STYLE_RECIPE,CFG_SIM,
   logistica,srand,rndF,coletarMarcos,atualizarRecordes,manchete,narrativaMVP,
   RECORDE_LABELS}=PublicEngine;
-const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 const arred=value=>Math.floor(value+0.4);
 const SPIN_MS=2700; // giro mais rápido (era 4000)
 const WIN_INDEX=44;
@@ -483,13 +486,7 @@ document.addEventListener("keydown",e=>{
 
 /* ——— UI · telas de torneio (suíça + playoffs) —————— */
 const efT=t=>forcaTime(t.jogadores.map(j=>j._eng),t.treinador?.carac,t.treinador?.ovr);
-const mono=nome=>nome.replace(/[^A-Za-z0-9]/g,"").slice(0,2).toUpperCase();
 const TG={};
-
-function chip(t,perdedor){
-  if(!t)return `<div class="team-chip"><div class="team-mono" style="background:#2a3346">?</div><span class="tn">—</span></div>`;
-  return `<div class="team-chip${perdedor?" loser":""}"><div class="team-mono" style="background:${t.cor||"#888"}">${mono(t.nome)}</div><span class="tn">${esc(t.nome)}</span></div>`;
-}
 // monta o objeto-time do jogador a partir do elenco montado
 function montarMeuTime(){
   const cartas=S.jogadores.filter(Boolean);
@@ -526,8 +523,7 @@ const dataHoje=()=>new Date().toISOString().slice(0,10);
 function mostrarManchete(jogo,novosRecordes){
   const el=$("manchetePosMapa");if(!el)return;
   const h=manchete(jogo);
-  const chips=(novosRecordes||[]).map(n=>`<span class="rec-chip">🏆 ${esc(n.nick?n.nick+" · ":"")}${n.v} ${esc(n.label)}</span>`).join("");
-  el.innerHTML=`<span class="manchete-tag">MANCHETE</span><span class="manchete-tx">${esc(h.texto)}</span>${chips?`<span class="manchete-recs">${chips}</span>`:""}`;
+  el.innerHTML=headlineHtml(h,novosRecordes);
   el.hidden=false;
 }
 // registra os mapas de uma partida jogada pelo jogador (acumula rating por jogador do seu time)
@@ -579,37 +575,24 @@ function telaFinal(){
   const meuTime=TG.times&&TG.times.find(t=>t.meu);
   const jogs=(meuTime&&meuTime.time&&meuTime.time.jogadores)||[];
   const roster={};jogs.forEach(j=>{if(j&&j._eng)roster[j._eng.nick]=j._eng;});
-  const ROLE={Entry:{a:"ENT",c:"var(--r-entry)"},Rifler:{a:"RIF",c:"var(--r-rifler)"},AWPer:{a:"AWP",c:"var(--r-awper)"},Lurker:{a:"LUR",c:"var(--r-lurker)"},Support:{a:"SUP",c:"var(--r-support)"},IGL:{a:"IGL",c:"var(--r-igl)"}};
-  const fx=r=>r>=1.15?"r-top":r>=0.95?"r-mid":"r-low";
-  const barW=r=>Math.round(clamp((r-.6)/1.4,0,1)*100);
   const rt=Object.entries(c.ratings).map(([nick,e])=>({nick,r:e.r.reduce((a,b)=>a+b,0)/e.r.length,k:e.k,d:e.d,a:e.a||0,best:Math.max.apply(null,e.r)})).sort((a,b)=>b.r-a.r);
   const mvp=rt[0];
-  $("finalTitulo").textContent=campeao?"CAMPEÃO DO MAJOR":"FIM DA CAMPANHA";
-  const selos=campeao?(c.mapasD===0?["CAMPEÃO","9-0 INVICTO"]:["CAMPEÃO"]):["ELIMINADO"];
-  $("finalSelos").innerHTML=selos.map(x=>`<span class="selo-final${x.indexOf("INVICTO")>=0?" selo-gold":""}">${esc(x)}</span>`).join("");
-  if(mvp){const e=roster[mvp.nick]||{};const rl=ROLE[e.primario]||{a:"",c:"#6c7d93"};
-    const nv=narrativaMVP(c); // arco da campanha em texto (puro, determinístico)
+  const view=campaignFinalView({campaign:c,champion:campeao,ranking:rt,roster,
+    narrative:mvp?narrativaMVP(c):null}); // arco da campanha em texto (puro, determinístico)
+  $("finalTitulo").textContent=view.title;
+  $("finalSelos").innerHTML=view.sealsHtml;
+  if(view.mvpHtml!==null){
     $("finalMvpCard").style.display="";
-    $("finalMvpCard").innerHTML=`<div class="mvp-badge">MVP</div>`+
-      `<div class="mvp-id">${e.pais?`<span class="mvp-flag">${esc(e.pais)}</span>`:""}<span class="mvp-nick">${esc(mvp.nick)}</span>`+
-      `${rl.a?`<span class="mvp-role" style="--rc:${rl.c}">${rl.a}</span>`:""}${e.ovr!=null?`<span class="mvp-ovr">OVR ${e.ovr}</span>`:""}</div>`+
-      `<div class="mvp-stats">${mvp.k} / ${mvp.d} / ${mvp.a} <span>K·D·A</span></div>`+
-      `<div class="mvp-rate ${fx(mvp.r)}">${mvp.r.toFixed(2)}</div>`+
-      (nv?`<div class="mvp-narrativa">${esc(nv.texto)}</div>`:"");
+    $("finalMvpCard").innerHTML=view.mvpHtml;
   } else $("finalMvpCard").style.display="none";
   registrarCampanhaNoProgresso(c,campeao,rt,roster); // MEMÓRIA: campanha entra no Hall da Fama
-  const jor=c.jornada||[];
-  $("finalJornada").innerHTML=jor.length?`<div class="sec-lbl">A JORNADA</div><div class="jor-tiles">`+jor.map(m=>`<div class="jt ${m.venc?"jt-w":"jt-l"}"><span class="jt-adv">${esc(String(m.adv||"").slice(0,4))}</span><span class="jt-sc">${m.meu}-${m.dele}</span></div>`).join("")+`</div>`:"";
-  $("finalRatings").innerHTML=`<div class="sec-lbl">ELENCO</div>`+rt.map((pp,i)=>{const e=roster[pp.nick]||{};const rl=ROLE[e.primario]||{a:"",c:"#6c7d93"};const md=i===0?"md-g":i===1?"md-s":i===2?"md-b":"";
-    return `<div class="fr-row${i===0?" mvp":""}"><span class="fr-pos ${md}">${i+1}</span><span class="fr-role"${rl.a?` style="--rc:${rl.c}"`:""}>${rl.a}</span><span class="fr-nick">${esc(pp.nick)}</span><span class="fr-ovr">${e.ovr!=null?e.ovr:""}</span><span class="fr-bar"><i style="width:${barW(pp.r)}%"></i></span><span class="fr-rate ${fx(pp.r)}">${pp.r.toFixed(2)}</span></div>`;}).join("");
-  const bestMap=rt.reduce((mx,pp)=>Math.max(mx,pp.best||0),0);
-  const margem=jor.filter(m=>m.venc).reduce((mx,m)=>Math.max(mx,m.meu-m.dele),0);
-  const recs=[[`${c.mapasV}-${c.mapasD}`,"mapas"]];if(bestMap)recs.push([bestMap.toFixed(2),"melhor mapa"]);if(margem)recs.push(["+"+margem,"maior margem"]);
-  $("finalRec").innerHTML=recs.map(r=>`<div class="rec"><span class="rec-v">${r[0]}</span><span class="rec-l">${r[1]}</span></div>`).join("");
+  $("finalJornada").innerHTML=view.journeyHtml;
+  $("finalRatings").innerHTML=view.ratingsHtml;
+  $("finalRec").innerHTML=view.recordsHtml;
   const ov=$("finalOverlay");ov.classList.remove("is-champ","is-elim");ov.classList.add(campeao?"is-champ":"is-elim");
   abrir("finalOverlay");
   Audio.init();campeao?Audio.fanfare():Audio.derrota();
-  const pl=$("finalPlacar");const draw=v=>{pl.innerHTML=`<b>${v}</b><span>—</span><b>${c.mapasD}</b>`;};
+  const pl=$("finalPlacar");const draw=v=>{pl.innerHTML=campaignScoreHtml(v,c.mapasD);};
   let n=0;draw(0);const passo=()=>{if(n<c.mapasV){n++;draw(n);setTimeout(passo,80);}};setTimeout(passo,300);
 }
 function suicaCompleta(){return TG.times&&TG.classificados.length>=8;}
@@ -671,23 +654,7 @@ function avancarSuica(){
 }
 function renderSwiss(){
   $("suicaSub").textContent=suicaCompleta()?"· classificação definida":`· rodada ${TG.rodada}`;
-  const records=["0-0","1-0","0-1","2-0","1-1","0-2","2-1","1-2","2-2"];
-  let html="";
-  records.forEach(rec=>{
-    const [v,d]=rec.split("-").map(Number);
-    const grupo=TG.times.filter(t=>t.v===v&&t.d===d&&t.vivo);
-    if(!grupo.length)return;
-    html+=`<div class="swiss-col"><div class="swiss-colhead neutral">${v}:${d}</div>`+
-      grupo.map(t=>`<div class="match${t.meu?" mine":""}">${chip(t)}</div>`).join("")+`</div>`;
-  });
-  // classificados (verde) e eliminados (vermelho)
-  html+=`<div class="swiss-col"><div class="swiss-colhead qual">Classificados</div>`+
-    Array.from({length:8},(_,i)=>{const t=TG.classificados[i];
-      return `<div class="qualified-slot${t?"":" empty"}${t?.meu?" mine":""}">${t?chip(t):'<span class="tn empty-tn">—</span>'}</div>`;}).join("")+`</div>`;
-  html+=`<div class="swiss-col"><div class="swiss-colhead elim">Eliminados</div>`+
-    Array.from({length:8},(_,i)=>{const t=TG.eliminados[i];
-      return `<div class="qualified-slot elim-slot${t?"":" empty"}${t?.meu?" mine":""}">${t?chip(t):'<span class="tn empty-tn">—</span>'}</div>`;}).join("")+`</div>`;
-  $("swissBoard").innerHTML=html;
+  $("swissBoard").innerHTML=swissBoardHtml(TG);
   // controles: avançar some quando acaba; botão de ir aos playoffs aparece SÓ aqui, após classificação
   $("suicaAvancar").hidden=suicaCompleta();
   $("suicaPlayoffs").hidden=!suicaCompleta();
@@ -744,40 +711,10 @@ function avancarPlayoff(){
     aplicar();renderBracket();
   }
 }
-function serieEl(a,b,key,fase,faseAtual){
-  const P=TG.playoffs,r=P&&P.res[key];
-  const pendente=!a||!b;
-  const aWin=r&&r.vencedorSeed===a,bWin=r&&r.vencedorSeed===b;
-  const ativa=!pendente&&!r&&fase===faseAtual;
-  return `<div class="series${(a?.meu||b?.meu)?" mine":""}${r?" done":""}${ativa?" ativa":""}">
-    <div class="series-row${aWin?" win":""}${r&&!aWin?" lose":""}">${chip(a)}<span class="sc">${r?r.placarSerie[0]:""}</span></div>
-    <div class="series-sep"></div>
-    <div class="series-row${bWin?" win":""}${r&&!bWin?" lose":""}">${chip(b)}<span class="sc">${r?r.placarSerie[1]:""}</span></div></div>`;
-}
 function renderBracket(){
   const P=TG.playoffs;
-  $("playoffSub").textContent=P.campeao?"· campeão coroado":["· quartas de final","· semifinais","· grande final"][P.fase]||"";
-  $("bracketBoard").innerHTML=`
-    <div class="bracket-round">
-      <div class="bracket-round-title">Quartas</div>
-      ${P.quartas.map((p,i)=>serieEl(p[0],p[1],"q"+i,0,P.fase)).join("")}
-    </div>
-    <div class="bracket-round">
-      <div class="bracket-round-title">Semifinais</div>
-      ${serieEl(P.semi[0],P.semi[1],"s0",1,P.fase)}
-      ${serieEl(P.semi[2],P.semi[3],"s1",1,P.fase)}
-    </div>
-    <div class="bracket-round">
-      <div class="bracket-round-title">Final</div>
-      ${serieEl(P.final[0],P.final[1],"f",2,P.fase)}
-    </div>
-    <div class="bracket-round champ-col">
-      <div class="bracket-round-title">Campeão</div>
-      <div class="champion${P.campeao?" crowned":""}">
-        ${P.campeao?`<div class="cup-tag">CAMPEÃO</div>${chip(P.campeao)}<div class="champ-tag">${P.campeao.meu?"VOCÊ É CAMPEÃO":"Campeão do Major"}</div>`
-          :`<div class="cup-tag dim">—</div><div class="champ-wait">aguardando…</div>`}
-      </div>
-    </div>`;
+  $("playoffSub").textContent=bracketSubtitle(P);
+  $("bracketBoard").innerHTML=bracketBoardHtml(P);
   $("playoffAvancar").hidden=!!P.campeao;
 }
 
@@ -800,8 +737,6 @@ $("playoffAvancar").onclick=avancarPlayoff;
 const RITMO={base:260,troca:1000,inicio:500};
 const MP={ativo:false,timer:null,onFim:null,gen:0,jogo:null,ctx:""};
 
-function monoChip(nome,cor){return `<div class="team-mono" style="background:${cor||"#888"}">${mono(nome)}</div>`;}
-
 function reproduzirMapa(jogo,A,B,contexto){
   // invalida qualquer reprodução anterior: cancela timer e incrementa a geração
   clearTimeout(MP.timer);
@@ -812,8 +747,8 @@ function reproduzirMapa(jogo,A,B,contexto){
   const aMine=!!A.meu,bMine=!!B.meu;
   $("sbTeamA").className="sb-team sb-a"+(aMine?" mine":"");
   $("sbTeamB").className="sb-team sb-b"+(bMine?" mine":"");
-  $("sbTeamA").innerHTML=monoChip(A.nome,A.cor)+`<div class="sb-info"><span class="sb-name">${esc(A.nome)}</span>${A.camp?`<span class="sb-camp">${esc(A.camp)}</span>`:""}<span class="sb-side ct" id="sideA">CT</span></div>`;
-  $("sbTeamB").innerHTML=monoChip(B.nome,B.cor)+`<div class="sb-info"><span class="sb-name">${esc(B.nome)}</span>${B.camp?`<span class="sb-camp">${esc(B.camp)}</span>`:""}<span class="sb-side tr" id="sideB">TR</span></div>`;
+  $("sbTeamA").innerHTML=liveTeamHeaderHtml(A,"ct","sideA");
+  $("sbTeamB").innerHTML=liveTeamHeaderHtml(B,"tr","sideB");
   $("sbScoreA").textContent="0";$("sbScoreB").textContent="0";
   $("sbMap").textContent=jogo.mapa;$("sbProgress").style.width="0%";
   const bm=$("manchetePosMapa");if(bm){bm.hidden=true;bm.innerHTML="";} // manchete é do mapa FECHADO
@@ -850,22 +785,10 @@ function addCelula(rd,lado,strip){
 }
 // monta a tabela inicial do scoreboard (10 jogadores, K-D zerado)
 function montarScoreboard(jogo){
-  const linha=(s,meu)=>`<div class="ls-row${meu?" mine":""}" data-nick="${esc(s.nick)}">
-    <span class="ls-nick">${esc(s.nick)}</span>
-    <span class="ls-kd-val"><b>0</b> <s>/</s> 0</span>
-    <span class="ls-kast">–</span>
-    <span class="ls-adr">–</span>
-    <span class="ls-rate">–</span></div>`;
-  const head=(nome,meu,lado,cor)=>`<div class="ls-head">
-    <span class="ls-team-id"><span class="ls-mono" style="background:${esc(cor||"#888")}">${esc(mono(nome))}</span><span class="ls-team">${esc(nome)}</span><span class="ls-side-tag ${lado}">${lado.toUpperCase()}</span></span>
-    <span class="ls-col">K–D</span>
-    <span class="ls-col">KAST</span>
-    <span class="ls-col">ADR</span>
-    <span class="ls-col">Rating</span></div>`;
   $("lsSideA").className="ls-side"+(jogo.meuA?" mine":"");
   $("lsSideB").className="ls-side"+(jogo.meuB?" mine":"");
-  $("lsSideA").innerHTML=head(jogo.nomeA,jogo.meuA,"ct",jogo.corA)+jogo.statsA.map(s=>linha(s,jogo.meuA)).join("");
-  $("lsSideB").innerHTML=head(jogo.nomeB,jogo.meuB,"tr",jogo.corB)+jogo.statsB.map(s=>linha(s,jogo.meuB)).join("");
+  $("lsSideA").innerHTML=scoreboardSideHtml({name:jogo.nomeA,mine:jogo.meuA,side:"ct",color:jogo.corA,stats:jogo.statsA});
+  $("lsSideB").innerHTML=scoreboardSideHtml({name:jogo.nomeB,mine:jogo.meuB,side:"tr",color:jogo.corB,stats:jogo.statsB});
   // cacheia linhas e células uma vez (evita re-query a cada round)
   const cacheLado=sideId=>[...$(sideId).querySelectorAll(".ls-row")].map(r=>({row:r,kd:r.querySelector(".ls-kd-val"),kast:r.querySelector(".ls-kast"),adr:r.querySelector(".ls-adr"),rate:r.querySelector(".ls-rate")}));
   MP.sb={A:cacheLado("lsSideA"),B:cacheLado("lsSideB")};
@@ -935,10 +858,8 @@ function mostrarAntessala(){
   const {A,B,contexto,md}=MATCH;
   if(!A||!B)return; // proteção: par incompleto
   $("prematchCtx").textContent=contexto+(md>1?" · melhor de "+md:" · 1 mapa");
-  const teamCard=(t)=>`<div class="team-mono" style="background:${t.cor||"#888"};width:74px;height:74px;font-size:1.5rem;border-radius:18px">${mono(t.nome)}</div>
-    <div class="pm-name">${esc(t.nome)}</div>${t.camp?`<div class="pm-camp">${esc(t.camp)}</div>`:""}<div class="pm-ef">força <b>${t.ef}</b></div>`;
-  $("pmTeamA").className="pm-team"+(A.meu?" mine":"");$("pmTeamA").innerHTML=teamCard(A);
-  $("pmTeamB").className="pm-team"+(B.meu?" mine":"");$("pmTeamB").innerHTML=teamCard(B);
+  $("pmTeamA").className="pm-team"+(A.meu?" mine":"");$("pmTeamA").innerHTML=prematchTeamHtml(A);
+  $("pmTeamB").className="pm-team"+(B.meu?" mine":"");$("pmTeamB").innerHTML=prematchTeamHtml(B);
 }
 function iniciarMapaDaSerie(){
   if(MATCH.rodando)return; // já tem um mapa em curso — ignora clique repetido
@@ -989,22 +910,10 @@ function jogarNovamente(){
 $("finalVoltar").onclick=jogarNovamente;
 /* ─── HALL DA FAMA — render + wiring (lê PROGRESSO; nunca simula nada) ─── */
 function renderHall(){
-  const P=PROGRESSO.dados,c=P.contadores;
-  $("hallContadores").innerHTML=[[c.titulos,"títulos"],[c.invictos,"9-0 invictos"],[c.campanhas,"campanhas"]]
-    .map(([v,l])=>`<div class="rec"><span class="rec-v">${v}</span><span class="rec-l">${l}</span></div>`).join("");
-  const tits=[...P.titulos].reverse();
-  $("hallTitulos").innerHTML=tits.length
-    ?`<div class="sec-lbl">TÍTULOS</div>`+tits.map(t=>`<div class="hall-titulo">
-        <span class="hall-selos">🏆${t.invicto?"<b class=\"hall-inv\">💎 9-0</b>":""}</span>
-        <span class="hall-info"><b>${esc(t.placar)}</b> · ${esc(t.data||"")}${t.mvp?` · MVP ${esc(t.mvp.nick)} (${t.mvp.media.toFixed(2)})`:""}</span>
-        <span class="hall-elenco">${(t.elenco||[]).map(esc).join(" · ")}${t.treinador?` — coach ${esc(t.treinador)}`:""}</span>
-      </div>`).join("")
-    :`<div class="hall-vazio">Sua história começa no primeiro título. A roleta está esperando.</div>`;
-  const recs=Object.entries(P.recordes);
-  $("hallRecordes").innerHTML=recs.length
-    ?`<div class="sec-lbl">RECORDES DO CLUBE</div><div class="hall-recgrid">`+recs.map(([chave,r])=>
-      `<div class="hall-rec"><span class="hall-rec-v">${chave==="rating"?r.v.toFixed(2):r.v}</span><span class="hall-rec-l">${esc(RECORDE_LABELS[chave]||chave)}</span><span class="hall-rec-m">${r.nick?esc(r.nick)+" · ":""}vs ${esc(r.adv||"?")}${r.mapa?" · "+esc(r.mapa):""}${r.data?" · "+esc(r.data):""}</span></div>`).join("")+`</div>`
-    :"";
+  const view=hallView(PROGRESSO.dados,RECORDE_LABELS);
+  $("hallContadores").innerHTML=view.countersHtml;
+  $("hallTitulos").innerHTML=view.titlesHtml;
+  $("hallRecordes").innerHTML=view.recordsHtml;
 }
 $("hallBtn").onclick=e=>{e.preventDefault();renderHall();abrir("hallOverlay");};
 $("hallFechar").onclick=()=>fechar("hallOverlay");

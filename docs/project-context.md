@@ -38,7 +38,7 @@ Atualização vigente de 28 de julho de 2026 (tem precedência sobre o registro
 histórico abaixo):
 
 - o ciclo **P2 de modularização por paridade está concluído**, Fases 0–7;
-- `game.js` caiu de 3.054 para 1.029 linhas e contém somente aplicação, estado e UI;
+- `game.js` caiu de 3.054 para 938 linhas e contém somente aplicação, estado e UI;
 - dados e motores vivem em `src/data`, `src/domain` e `src/public`;
 - jogo, sandbox, worker e bancada usam `src/public/simulation-api.mjs`;
 - `bancada/motor.js` cria estado avaliado e sessão de RNG novos por carga, sem
@@ -897,7 +897,9 @@ Aceitação: goldens por seed idênticos e benchmarks dentro das faixas.
 `src/application/audio.mjs` e o progresso versionado em
 `src/infrastructure/persistence/progress-store.mjs`, ambos com testes isolados.
 Os primeiros templates puros vivem em `src/ui/game/`, com escaping centralizado.
-As 1.029 linhas restantes de estado, DOM e fluxo ainda podem ser decompostas.
+Cartas, química, times, Suíça/playoffs, partida, final e Hall já usam essa
+fronteira. As 938 linhas restantes de estado, DOM e fluxo ainda podem ser
+decompostas.
 
 - separar estado do draft, Major, áudio e futura carreira;
 - usar comandos/reducers pequenos sem framework obrigatório;

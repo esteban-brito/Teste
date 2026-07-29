@@ -21,12 +21,22 @@ assert.match(game,/import \{createCardView\} from "\.\/src\/ui\/game\/card-view\
   "game.js não importa o renderizador de cartas");
 assert.match(game,/import \{construirCartao\} from "\.\/src\/ui\/game\/build-summary-view\.mjs";/,
   "game.js não importa o renderizador do resumo de build");
+assert.match(game,/import \{liveTeamHeaderHtml,prematchTeamHtml\} from "\.\/src\/ui\/game\/team-view\.mjs";/,
+  "game.js não importa a view compartilhada de times");
+assert.match(game,/import \{swissBoardHtml,bracketSubtitle,bracketBoardHtml\} from "\.\/src\/ui\/game\/tournament-view\.mjs";/,
+  "game.js não importa a view do torneio");
+assert.match(game,/import \{scoreboardSideHtml\} from "\.\/src\/ui\/game\/match-view\.mjs";/,
+  "game.js não importa a view da partida");
+assert.match(game,/import \{headlineHtml,campaignFinalView,campaignScoreHtml,hallView\} from "\.\/src\/ui\/game\/history-view\.mjs";/,
+  "game.js não importa a view de campanha e Hall");
 assert.doesNotMatch(game,/\bconst Audio\s*=\s*\{/,
   "game.js voltou a embutir o serviço de áudio");
 assert.doesNotMatch(game,/\bconst PROGRESSO\s*=\s*\{/,
   "game.js voltou a embutir o serviço de persistência");
 assert.doesNotMatch(game,/\bconst (?:ROLE_COR|STAT_LABEL|SELO_META)\s*=\s*\{/,
   "game.js voltou a embutir templates ou metadados das cartas");
+assert.doesNotMatch(game,/\b(?:function (?:chip|serieEl|monoChip)|const mono\s*=)/,
+  "game.js voltou a embutir templates ou identidade visual de times");
 assert.doesNotMatch(game,/\/\/ === UI START ===/,
   "game.js voltou a usar comentário como fronteira de API");
 assert.doesNotMatch(game,/\b(?:const ATRIBUTOS|function simularMapa|function avaliarJogador)\b/,

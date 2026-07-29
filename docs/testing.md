@@ -34,8 +34,8 @@ isolamento de instâncias sem depender de hardware ou de um navegador real.
 `check-progress-store.js` cobre schema, fallback sem storage, save, importação,
 download do backup e isolamento de instâncias com adaptadores falsos de navegador.
 
-`check-game-view-modules.js` congela escaping, tiers, frente e verso das cartas,
-ordem das estatísticas de playstyle e prioridade dos selos de química sem DOM.
+`check-game-view-modules.js` congela escaping, cartas, tiers, selos, identidade
+dos times, Suíça, playoffs, placar, antessala, campanha final e Hall sem DOM.
 
 ## Suítes de forma (medição, não gate)
 
