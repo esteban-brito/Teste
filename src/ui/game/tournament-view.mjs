@@ -1,6 +1,18 @@
 import {teamChipHtml} from "./team-view.mjs";
 
 const SWISS_RECORDS=["0-0","1-0","0-1","2-0","1-1","0-2","2-1","1-2","2-2"];
+const SWISS_FINAL_SLOTS=8;
+
+/* Coluna de destino da Suíça (classificados ou eliminados). Mostra apenas os
+   times que já chegaram: reservar as oito vagas enchia metade da tela de caixas
+   vazias na rodada 0. O contador no cabeçalho preserva quantas faltam. */
+function finalColumnHtml(label,headClass,slotClass,teams){
+  const filled=teams.map(team=>
+    `<div class="qualified-slot${slotClass}${team.meu?" mine":""}">${teamChipHtml(team)}</div>`).join("");
+  return `<div class="swiss-col"><div class="swiss-colhead ${headClass}">${label}`+
+    `<b class="swiss-count">${teams.length}/${SWISS_FINAL_SLOTS}</b></div>`+
+    (filled||`<div class="swiss-col-vazio">nenhum ainda</div>`)+`</div>`;
+}
 
 export function swissBoardHtml({times,classificados,eliminados}){
   let html="";
@@ -11,12 +23,8 @@ export function swissBoardHtml({times,classificados,eliminados}){
     html+=`<div class="swiss-col"><div class="swiss-colhead neutral">${wins}:${losses}</div>`+
       group.map(team=>`<div class="match${team.meu?" mine":""}">${teamChipHtml(team)}</div>`).join("")+`</div>`;
   });
-  html+=`<div class="swiss-col"><div class="swiss-colhead qual">Classificados</div>`+
-    Array.from({length:8},(_,index)=>{const team=classificados[index];
-      return `<div class="qualified-slot${team?"":" empty"}${team?.meu?" mine":""}">${team?teamChipHtml(team):'<span class="tn empty-tn">—</span>'}</div>`;}).join("")+`</div>`;
-  html+=`<div class="swiss-col"><div class="swiss-colhead elim">Eliminados</div>`+
-    Array.from({length:8},(_,index)=>{const team=eliminados[index];
-      return `<div class="qualified-slot elim-slot${team?"":" empty"}${team?.meu?" mine":""}">${team?teamChipHtml(team):'<span class="tn empty-tn">—</span>'}</div>`;}).join("")+`</div>`;
+  html+=finalColumnHtml("Classificados","qual","",classificados);
+  html+=finalColumnHtml("Eliminados","elim"," elim-slot",eliminados);
   return html;
 }
 

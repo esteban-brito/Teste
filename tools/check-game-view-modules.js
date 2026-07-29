@@ -78,8 +78,14 @@ async function main(){
   const swiss=tournamentView.swissBoardHtml({times:[alpha,beta],classificados:[alpha],eliminados:[beta]});
   assert.ok(swiss.includes("swiss-colhead neutral\">0:0")&&swiss.includes("match mine")&&swiss.includes("A&amp;B"),
     "grupos ativos da Suíça mudaram");
-  assert.equal((swiss.match(/qualified-slot/g)||[]).length,16,"Suíça deixou de reservar 8 classificados e 8 eliminados");
+  // As colunas finais mostram só quem já chegou; o contador guarda quantas vagas faltam.
+  assert.equal((swiss.match(/qualified-slot/g)||[]).length,2,"colunas finais da Suíça voltaram a reservar vagas vazias");
   assert.ok(swiss.includes("qualified-slot mine")&&swiss.includes("elim-slot"),"slots finais da Suíça mudaram");
+  assert.ok(swiss.includes(">Classificados<b class=\"swiss-count\">1/8</b>")&&
+    swiss.includes(">Eliminados<b class=\"swiss-count\">1/8</b>"),"contador das colunas finais da Suíça mudou");
+  const vazia=tournamentView.swissBoardHtml({times:[alpha],classificados:[],eliminados:[]});
+  assert.ok(!vazia.includes("qualified-slot")&&(vazia.match(/swiss-col-vazio/g)||[]).length===2&&
+    vazia.includes(">Classificados<b class=\"swiss-count\">0/8</b>"),"coluna final vazia da Suíça mudou");
 
   const seeds=Array.from({length:8},(_,index)=>({nome:`T${index}`,cor:`#00${index}`,meu:index===0}));
   const playoffs={quartas:[[seeds[0],seeds[7]],[seeds[3],seeds[4]],[seeds[1],seeds[6]],[seeds[2],seeds[5]]],

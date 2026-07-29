@@ -37,6 +37,38 @@ download do backup e isolamento de instâncias com adaptadores falsos de navegad
 `check-game-view-modules.js` congela escaping, cartas, tiers, selos, identidade
 dos times, Suíça, playoffs, placar, antessala, campanha final e Hall sem DOM.
 
+## Comparador visual (não é suíte, é instrumento)
+
+`tools/visual-regression.js` fotografa o jogo em 3 larguras × 7 estados (inicial,
+cartas, versos, elenco completo, suíça, antessala e mapa ao vivo) e compara duas
+execuções pixel a pixel. Ele existe porque o E2E prova que os elementos existem e
+que o fluxo funciona, mas nenhuma suíte percebia se algo tinha ficado feio.
+
+```bash
+npm run visual:capturar -- visual-antes
+# aplique a mudança
+npm run visual:capturar -- visual-depois
+npm run visual:comparar -- visual-antes visual-depois
+```
+
+`comparar` sai com código 1 se houver diferença e informa a caixa envolvente e a
+primeira cor divergente, o suficiente para localizar a região.
+
+Determinismo depende de três travas descritas no cabeçalho do arquivo: `Math.random`
+substituído antes dos scripts da página (a roleta não usa o RNG semeado), `srand`
+fixado pela ponte `?e2e=1` antes da fase suíça, e todas as animações congeladas no
+mesmo quadro — com atraso `-10s`, para que as animações de entrada fiquem no quadro
+FINAL e não no primeiro. Antes de confiar num resultado, rode duas capturas sem
+mudar nada: a diferença tem de ser zero.
+
+**Não há imagens de referência versionadas.** Guardar PNGs no Git faria de toda
+mudança de design deliberada um commit de binários; a prova é sempre entre duas
+execuções da mesma sessão, e as pastas de saída são ignoradas pelo Git.
+
+Em 29/07/2026 este instrumento pegou três mudanças visuais silenciosas durante a
+fusão das camadas de cascata do `style.css` — nenhuma delas visível na leitura do
+código, todas prontas para ir ao ar.
+
 ## Suítes de forma (medição, não gate)
 
 `perfis.js`, `dificuldade.js` e a seção FORMA de `realismo.js` medem **distribuição**,
