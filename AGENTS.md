@@ -98,6 +98,10 @@ catálogo não menciona o dado, aí sim ele não existe.
 - `docs/realism-methodology.md` e `docs/fidelity-corpus.md`: protocolo científico
   e operacional do IFCS; não substituem os contratos executáveis acima.
 - `elencos.html`: artefato gerado; não editar os dados embutidos manualmente.
+- `prototipo-cartas.html`: **laboratório de cartas** — importa `style.css` e os
+  módulos de UI reais, tem medidor de encaixe, escala de cinza, daltonismo e um
+  bloco `#proposta` para A/B. Mudança de design de carta entra aqui antes do jogo.
+  Abrir por servidor: `npm run serve` → `/prototipo-cartas.html`.
 
 A fronteira arquitetural vigente está detalhada em `docs/architecture.md`.
 
