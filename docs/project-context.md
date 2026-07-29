@@ -34,9 +34,12 @@ roadmap for concluída.
 
 ## 2. Ponto exato de retomada
 
-Atualização vigente de 28 de julho de 2026 (tem precedência sobre o registro
+Atualização vigente de 29 de julho de 2026 (tem precedência sobre o registro
 histórico abaixo):
 
+- o handoff operacional do ciclo P5 está em
+  `docs/p5-aplicacao-ui-2026-07-29.md`; ele registra commits, validações, contratos
+  dos estados restantes e a próxima fatia segura;
 - o ciclo **P2 de modularização por paridade está concluído**, Fases 0–7;
 - `game.js` caiu de 3.054 para 938 linhas e contém somente aplicação, estado e UI;
 - dados e motores vivem em `src/data`, `src/domain` e `src/public`;
@@ -896,12 +899,14 @@ Aceitação: goldens por seed idênticos e benchmarks dentro das faixas.
 **Status:** iniciada em 29/07/2026. O domínio saiu de `game.js`; Web Audio vive em
 `src/application/audio.mjs` e o progresso versionado em
 `src/infrastructure/persistence/progress-store.mjs`, ambos com testes isolados.
-Os primeiros templates puros vivem em `src/ui/game/`, com escaping centralizado.
+Os templates puros vivem em `src/ui/game/`, com escaping centralizado.
 Cartas, química, times, Suíça/playoffs, partida, final e Hall já usam essa
 fronteira. As 938 linhas restantes de estado, DOM e fluxo ainda podem ser
-decompostas.
+decompostas. O ciclo está pausado num checkpoint verde por decisão do responsável;
+retomada e contratos exatos estão em `docs/p5-aplicacao-ui-2026-07-29.md`.
 
-- separar estado do draft, Major, áudio e futura carreira;
+- separar estado do draft e do Major; áudio já está isolado, e a futura carreira
+  terá estado próprio;
 - usar comandos/reducers pequenos sem framework obrigatório;
 - tornar timers, DOM, áudio e persistência efeitos explícitos;
 - impedir que renderização escreva regras de domínio.
