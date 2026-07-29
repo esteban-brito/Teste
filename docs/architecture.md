@@ -48,6 +48,9 @@ o entrypoint clássico não migrar para módulos,
 `game.js` mantém adapters legados protegidos por paridade exata. Essas fronteiras
 não autorizam balanceamento implícito.
 
+`src/domain/narrative/game-memory.mjs` deriva marcos, recordes e textos da saída
+do simulador sem DOM, relógio ou RNG; a persistência continua na aplicação.
+
 `random-source.mjs` encapsula o Mulberry32 em instâncias independentes, preservando
 as sequências uniforme e gaussiana bit a bit. A composição pública possui uma
 instância por sessão e a passa explicitamente aos motores.

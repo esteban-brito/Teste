@@ -8,7 +8,7 @@ import {distribuirRoles} from "../domain/evaluation/role-distribution.mjs";
 import {STYLE_TRAITS,styleId} from "../domain/evaluation/style-identity.mjs";
 import {NM_DEF,NM_COR,STYLE_CONTRA,STYLE_KEYS,PLAYSTYLE_IDS,NM_AXES,styleScoreTable,
   CFG_PADRAO as CFG_ESTILO} from "../domain/evaluation/style-score.mjs";
-import {ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,roleAfinidade,
+import {ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES,roleAfinidade,afinidades,
   CFG_PADRAO as CFG_AFINIDADE} from "../domain/evaluation/role-affinity.mjs";
 import {CFG_PADRAO as CFG_CLASSIFICACAO} from "../domain/evaluation/role-classification.mjs";
 import {rolePairReality} from "../domain/evaluation/role-pair-reality.mjs";
@@ -29,12 +29,14 @@ for(const cfg of [CFG_OVR,CFG_AFINIDADE,CFG_ESTILO,CFG_CLASSIFICACAO]){
 
 export {ATRIBUTOS,TIMES_DEF,PAIS_JOGADOR,PAIS_TREINADOR,
   avaliarJogador,aplicarAvaliacaoContextual,ovrUnificado,nmOVR,distribuirRoles,
-  forcaTime,rolePairReality,roleStyleReality,roleAfinidade,secondaryScore,styleScoreTable,
+  forcaTime,rolePairReality,roleStyleReality,roleAfinidade,afinidades,secondaryScore,styleScoreTable,
   NM_DEF,NM_COR,STYLE_CONTRA,STYLE_KEYS,PLAYSTYLE_IDS,NM_AXES,
   ROLE_PERFIL,ROLE_CONTRA,IGL_ROLE_AFIN,ROLE_RULES};
 
 export const PLAYSTYLES=Object.fromEntries(PLAYSTYLE_IDS.map(id=>
   [id,{label:STYLE_KEYS[id],traits:STYLE_TRAITS[id]}]));
+export {styleId};
+export const STYLE_ID=styleId;
 
 export function styleLabel(value){const id=styleId(value);return id==="joker"?"Coringa":(STYLE_KEYS[id]||id);}
 // Alias temporário para o contrato do sandbox durante a migração da Fase 5.

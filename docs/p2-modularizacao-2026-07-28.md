@@ -38,7 +38,7 @@ O destino já estava decidido nas ADRs **0002**, **0004** e **0005** e sequencia
 | 6 | API pública de simulação, worker e sandbox | **concluída** |
 | 7 | entrypoint do jogo + adapter Node, fim da duplicação | **próxima** |
 
-`npm run check` saiu de **19 para 36 checadores**. `npm run validate` fecha 24/24.
+`npm run check` saiu de **19 para 37 checadores**. `npm run validate` fecha 24/24.
 O motor executável de `game.js`, `roster-snapshot.json`, `simulation-golden.json` e
 `campaign-golden.json` seguem **intocados** — extração não muda resultado.
 
@@ -63,6 +63,7 @@ src/domain/simulation/simulation-config.mjs   configuração única de simulaç�
 src/domain/simulation/economy.mjs             COFRE: decisão, carrego, drop e pagamento
 src/domain/simulation/map-simulation.mjs      PÓLVORA: mapa completo round a round
 src/domain/simulation/series-simulation.mjs   PÓLVORA: série sem repetição de mapas
+src/domain/narrative/game-memory.mjs          marcos, recordes e narrativa sem RNG
 src/public/evaluation-api.mjs                 composição pública de dados + avaliação
 src/public/simulation-api.mjs                 composição por sessão de todos os motores
 ```
