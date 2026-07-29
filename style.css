@@ -160,6 +160,8 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   --corte:calc(var(--corte-n)*1%);
   --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
 
+  --r:var(--r-rifler);   /* piso do canal de função; a tabela .fn-* sobrescreve */
+
   --t1:33cqw;                                      /* OVR      */
   --t3:6.2cqw;                                     /* função   */
   --t4:4.4cqw;                                     /* contexto */
@@ -170,6 +172,16 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   box-shadow:inset 0 0 0 var(--aro) color-mix(in srgb,var(--m) var(--aro-a),transparent),var(--brilho)}
 .card:hover,.coachcard:hover{
   box-shadow:inset 0 0 0 var(--aro) var(--m),0 0 18px -6px var(--m)}
+
+/* ═══ DOIS CANAIS ══════════════════════════════════════════════════════════
+   A carta comunica DUAS coisas, e cada uma tem seu território. Elas não
+   disputam nenhuma propriedade:
+
+     --m  RARIDADE → moldura: aro, brilho, fio, placa e o rótulo do OVR.
+     --r  FUNÇÃO   → campo: fundo, nome da função e o emblema ao fundo.
+
+   Antes a cor dizia só a raridade, e quatro jogadores da mesma faixa viravam
+   quatro cartas idênticas na linha do elenco revelado. */
 
 /* ═══ TABELA DE RARIDADE ═══════════════════════════════════════════════════
    Sempre as mesmas três colunas: cor, aro, brilho. Nova raridade = nova linha.
@@ -182,11 +194,24 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .card.tier-h{--m:#c9a6ff; --aro:2px;   --aro-a:0%;   --brilho:0 0 34px -10px var(--m)}
 /* O treinador não disputa a escala de OVR dos jogadores: a cor dele é a da
    CARACTERÍSTICA, que é o que ele faz pelo time. */
-.coachcard{--m:var(--cc-main,var(--c-gestor)); --aro:2px; --aro-a:66%; --brilho:0 0 22px -12px var(--m)}
+.coachcard{--m:var(--cc-main,var(--c-gestor)); --aro:2px; --aro-a:66%; --brilho:0 0 22px -12px var(--m);
+  --r:var(--cc-main,var(--c-gestor))}
 .coach-gestor{--cc-main:var(--c-gestor)}
 .coach-estrategista{--cc-main:var(--c-estrategista)}
 .coach-desenvolvedor{--cc-main:var(--c-desenvolvedor)}
 .coach-motivador{--cc-main:var(--c-motivador)}
+
+/* ═══ TABELA DE FUNÇÃO ═════════════════════════════════════════════════════
+   Uma linha por função. As cores são dessaturadas de propósito: elas ocupam a
+   maior área da carta e não podem competir com a moldura, que é o sinal de
+   raridade. O EMBLEMA é o que sustenta a leitura quando a carta é pequena ou
+   quem olha não distingue as cores — forma é independente de cor. */
+.fn-igl{--r:var(--r-igl)}
+.fn-awper{--r:var(--r-awper)}
+.fn-entry{--r:var(--r-entry)}
+.fn-rifler{--r:var(--r-rifler)}
+.fn-lurker{--r:var(--r-lurker)}
+.fn-support{--r:var(--r-support)}
 
 /* Aro holográfico do tier mais alto. O matiz é circular, então nunca há salto. */
 .card.tier-h::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
@@ -218,7 +243,13 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    preto. Quando houver retrato, ele entra em `background-image` de .c-foto e
    --tinta sobe para tingi-lo — mudança de dado, não redesenho. */
 .c-foto{position:absolute;inset:0;z-index:0;background-size:cover;background-position:50% 14%;
-  background-image:radial-gradient(118% 88% at 50% 16%,color-mix(in srgb,var(--m) 24%,#0e1421),#070a10 70%)}
+  background-image:radial-gradient(118% 88% at 50% 16%,color-mix(in srgb,var(--r) 26%,#0e1421),#070a10 72%)}
+/* EMBLEMA DA FUNÇÃO: silhueta grande e apagada ao fundo do campo. É o que
+   diferencia duas cartas da mesma raridade sem acrescentar mais uma cor, e o
+   que continua legível na grade de 2 colunas do celular. */
+.c-emblema{position:absolute;left:50%;top:38%;width:52cqw;height:52cqw;z-index:1;
+  transform:translate(-50%,-50%);color:var(--r);opacity:.16;pointer-events:none}
+.c-emblema svg{width:100%;height:100%;display:block}
 /* `color` preserva a luminância: o tier tinge o retrato sem apagar o rosto */
 .c-tinta{position:absolute;inset:0;z-index:1;background:var(--m);mix-blend-mode:color;opacity:var(--tinta,0)}
 .c-vinheta{position:absolute;inset:0;z-index:2;
@@ -263,7 +294,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   text-transform:uppercase;color:#f4f8fd;white-space:nowrap}
 /* 3 · o que ele FAZ, na cor do tier */
 .c-func{position:absolute;left:var(--pad);bottom:var(--b2);z-index:5;font-family:var(--ff);
-  font-size:var(--t3);font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--m)}
+  font-size:var(--t3);font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--r)}
 /* contexto: UMA linha, apagada. Função secundária e time. */
 .c-meta{position:absolute;left:var(--pad);right:var(--pad);bottom:var(--b1);z-index:5;
   display:flex;justify-content:space-between;gap:6px;font-family:var(--ff);

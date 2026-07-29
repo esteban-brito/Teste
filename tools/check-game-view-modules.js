@@ -29,9 +29,18 @@ async function main(){
     `<div class="tcard dim" data-team="a&quot;b" style="--col:#f00">
   <div class="tcoloc">1º</div><div class="tname">A&amp;B</div><div class="tcamp">&lt;Major&gt;</div></div>`,
     "template do time mudou");
-  assert.deepEqual([22,21,18,15,14].map(ovr=>view.cardClass({tipo:"player",ovr})),
-    ["card tier-h","card tier-s","card tier-1","card tier-2","card tier-3"],
-    "tiers visuais das cartas mudaram");
+  // Duas classes, dois canais: tier-* pinta a moldura, fn-* pinta o campo.
+  assert.deepEqual([21,20,19,17,16].map(ovr=>view.cardClass({tipo:"player",ovr,prim:"AWPer"})),
+    ["card tier-h fn-awper","card tier-s fn-awper","card tier-1 fn-awper",
+      "card tier-2 fn-awper","card tier-3 fn-awper"],
+    "faixas de raridade ou canal de função da carta mudaram");
+  // As bordas das faixas: 20 não pode cair em tier-1 nem 17 em tier-3.
+  assert.equal(view.cardClass({tipo:"player",ovr:20,prim:"IGL"}),"card tier-s fn-igl","borda 20/19 mudou");
+  assert.equal(view.cardClass({tipo:"player",ovr:17,prim:"Support"}),"card tier-2 fn-support","borda 17/16 mudou");
+  assert.deepEqual(["IGL","AWPer","Entry","Rifler","Lurker","Support"]
+    .map(role=>view.cardClass({tipo:"player",ovr:18,prim:role}).split(" ")[2]),
+  ["fn-igl","fn-awper","fn-entry","fn-rifler","fn-lurker","fn-support"],
+  "slug de função da carta mudou");
   assert.equal(view.cardClass({tipo:"coach",caracSlug:"estrategista"}),"coachcard coach-estrategista",
     "classe visual do treinador mudou");
 
@@ -46,6 +55,8 @@ async function main(){
     playerHtml.includes('<div class="c-nick">N&quot;ick</div>'),"hierarquia da frente da carta mudou");
   assert.ok(playerHtml.includes('<span>Support</span><span>A&amp;B</span>'),"rodapé de contexto da frente mudou");
   assert.ok(!playerHtml.includes("STAR")&&!playerHtml.includes("★"),"o selo de estrela voltou à carta");
+  assert.ok(playerHtml.includes('class="c-emblema"')&&playerHtml.includes("<svg viewBox=\"0 0 24 24\""),
+    "emblema da função sumiu da carta");
   // A camada de foto existe e está vazia: quando houver retrato é mudança de dado.
   assert.ok(playerHtml.includes('class="c-foto"')&&playerHtml.includes('class="c-tinta"'),
     "camada de foto saiu da carta");
@@ -69,6 +80,13 @@ async function main(){
   assert.ok(playerHtml.includes("<em>.5</em>")&&playerHtml.includes('<u style="width:80%">'),
     "peso da receita ou trilho da estatística mudou");
   assert.deepEqual(recipeCalls,["closer"],"receita do playstyle deixou de ser consultada uma vez");
+  // Emblema por função: seis silhuetas distintas. É o que diferencia duas cartas
+  // da mesma raridade sem depender de cor — e o que cobre o daltonismo.
+  const silhuetas=new Set(["IGL","AWPer","Entry","Rifler","Lurker","Support"].map(role=>
+    view.cardHTML({tipo:"player",ovr:18,pais:"BRA",time:"T",nick:"n",camp:"C 2020",coloc:"Top4",
+      prim:role,sec:"Entry",_eng:{playstyle:"Closer",rating:1,fp:1,op:1,cl:1,ut:1}})
+      .match(/<div class="c-emblema">(.*?)<\/div>/s)[1]));
+  assert.equal(silhuetas.size,6,"duas funções passaram a compartilhar o mesmo emblema");
   // Coringa não tem receita: o verso diz isso em vez de mostrar barras vazias.
   const jokerHtml=view.cardHTML({tipo:"player",ovr:17,pais:"BRA",time:"T",nick:"j",camp:"C 2020",coloc:"Top4",
     prim:"Rifler",sec:"Entry",_eng:{playstyle:"Coringa",rating:1,fp:70,op:60,cl:50,ut:40}});
