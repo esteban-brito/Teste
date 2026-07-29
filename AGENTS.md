@@ -48,6 +48,10 @@ catálogo não menciona o dado, aí sim ele não existe.
 
 ## Fontes de verdade atuais
 
+- `docs/p5-aplicacao-ui-2026-07-29.md`: **ponto de retomada operacional do P5** —
+  commits publicados, arquitetura atual, validações, contratos exatos de `S`,
+  `TG`, `MP` e `MATCH`, trabalho adiado e próxima fatia segura. **Leia antes de
+  alterar aplicação, estado ou UI do jogo.**
 - `docs/p2-modularizacao-2026-07-28.md`: **relatório final do ciclo P2** (modularização
   por paridade) — o que saiu, os contratos descobertos, o mecanismo de prova de
   consumo de RNG e as armadilhas. **Leia antes de alterar os módulos extraídos.**

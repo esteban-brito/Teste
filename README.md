@@ -16,6 +16,8 @@ O mapa técnico e as regras para mudanças estão em:
 - [`AGENTS.md`](AGENTS.md): invariantes, branch, validação e disciplina de commits;
 - [`docs/project-context.md`](docs/project-context.md): ponto de retomada, roadmap
   de profissionalização e visão do modo Carreira de Jogador;
+- [`docs/p5-aplicacao-ui-2026-07-29.md`](docs/p5-aplicacao-ui-2026-07-29.md):
+  checkpoint operacional da modularização de aplicação/estado/UI;
 - [`docs/next-steps.md`](docs/next-steps.md): sequência aprovada para auditoria
   individual, variância, modo campanha, balanceamento condicional e retomada;
 - [`docs/architecture.md`](docs/architecture.md): fluxo de dados e fronteiras;
