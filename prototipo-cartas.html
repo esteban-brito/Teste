@@ -161,28 +161,28 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
 
 /* ── 1 · a escada, em seis numeros por faixa ──────────────────────────────── */
 .proposta .card.p-t1{--m:#c9d2dd; --m-ink:#e8eef6;
-  --fio-cor:#aab4c2; --fio-a:30%;  --wash-cor:#c9d2dd; --wash:7%;  --emb-op:.22;
+  --fio-cor:#aab4c2; --fio-a:30%;  --wash-cor:#c9d2dd; --wash:7%; 
   --aro:1px;   --aro-a:26%}
 .proposta .card.p-t2{--m:#1f7a4d; --m-ink:#3ec07e;
-  --fio-cor:#3ec07e; --fio-a:55%;  --wash-cor:#3ec07e; --wash:11%; --emb-op:.24;
+  --fio-cor:#3ec07e; --fio-a:55%;  --wash-cor:#3ec07e; --wash:11%;
   --aro:1.5px; --aro-a:60%}
 .proposta .card.p-t3{--m:#d4a017; --m-ink:#e8c34a;
-  --fio-cor:#e8c34a; --fio-a:70%;  --wash-cor:#e8c34a; --wash:17%; --emb-op:.27;
+  --fio-cor:#e8c34a; --fio-a:70%;  --wash-cor:#e8c34a; --wash:17%;
   --aro:2px;   --aro-a:80%}
 /* As tres de topo entregam a moldura para a borda cromada. Manter o aro interno
    junto produziria dois aneis concentricos — foi um defeito da primeira versao. */
 .proposta .card.p-t4{--m:#ffbe00; --m-ink:#ffd24a;
-  --fio-cor:#ffd24a; --fio-a:86%;  --wash-cor:#ffbe00; --wash:26%; --emb-op:.30;
+  --fio-cor:#ffd24a; --fio-a:86%;  --wash-cor:#ffbe00; --wash:26%;
   --aro:0;     --aro-a:0%}
 /* O sangue usa carmim CLARO no fio e no banho para nao afundar abaixo do ambar.
    A cor profunda continua onde ela importa: na borda e na placa. */
 .proposta .card.p-t5{--m:#c4162c; --m-ink:#ff7a86;
-  --fio-cor:#ff6b7a; --fio-a:100%; --wash-cor:#ff3d52; --wash:34%; --emb-op:.32;
+  --fio-cor:#ff6b7a; --fio-a:100%; --wash-cor:#ff3d52; --wash:34%;
   --aro:0;     --aro-a:0%}
 /* Tinta propria: o prisma usava #e8eef6, exatamente a mesma da faixa branca — o
    piso e o teto escreviam igual. O periwinkle mantem o parentesco com o foil. */
 .proposta .card.p-t6{--m:#cfd8ff; --m-ink:#b8c6ff;
-  --fio-cor:#e6ecff; --fio-a:100%; --wash-cor:#9fb4ff; --wash:30%; --emb-op:.28;
+  --fio-cor:#e6ecff; --fio-a:100%; --wash-cor:#9fb4ff; --wash:30%;
   --aro:0;     --aro-a:0%}
 
 /* ── 2 · superficies ─────────────────────────────────────────────────────────
@@ -275,26 +275,23 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
 .proposta .card.p-rank .cfront .c-func,
 .proposta .coachcard .cfront .c-func{letter-spacing:.15em;color:var(--r-ink)}
 
-/* ── 5 · emblema: mesma opacidade nao era mesmo peso ──────────────────────────
-   Dois ajustes independentes.
+/* ── 5 · o campo fica VAZIO, esperando a foto ─────────────────────────────────
+   Os emblemas de funcao saem, e com eles a prancheta do treinador. O motivo e
+   de produto: o centro da carta e o lugar do retrato, e um simbolo grande atras
+   de um rosto vira sujeira. A camada `.c-foto` ja existe e ja esta preparada —
+   quando houver retrato ele entra ali como `background-image` e o banho da
+   raridade o tinge por cima. E mudanca de dado, nao redesenho.
 
-   POR FAIXA: opacidade fixa de 23% fazia o emblema sumir sobre o campo escuro
-   do sangue e pesar demais sobre o campo claro do ouro. Agora ela acompanha o
-   banho de cada faixa.
+   O QUE SE PERDE, E POR QUE E ACEITAVEL. O emblema era o canal de funcao que
+   nao dependia de cor — a cobertura de daltonismo registrada no design de
+   28/07. Ele foi necessario enquanto o nome da funcao era pequeno e
+   dessaturado. Hoje o nome e o segundo elemento mais forte da frente, em cor
+   viva, e palavra escrita nao depende de visao de cor nenhuma. A cobertura
+   mudou de canal; ela nao desapareceu.
 
-   POR FUNCAO: os seis foram desenhados no mesmo grid 24x24 com o mesmo traco,
-   mas massa optica nao e traco — a cruz do Support e a lua do Lurker sao formas
-   cheias e dominavam, enquanto as tres barras do Rifler quase sumiam. Traco e
-   escala compensam por CSS, sem tocar no SVG: a fonte continua unica. */
-.proposta .card.p-rank .c-emblema{opacity:var(--emb-op,.23)}
-.proposta .card.fn-rifler  .c-emblema svg{stroke-width:2.7}
-.proposta .card.fn-igl     .c-emblema svg{stroke-width:2.2}
-.proposta .card.fn-entry   .c-emblema svg{stroke-width:2.1}
-.proposta .card.fn-awper   .c-emblema svg{stroke-width:1.9}
-.proposta .card.fn-support .c-emblema svg{stroke-width:1.6}
-.proposta .card.fn-lurker  .c-emblema svg{stroke-width:1.5}
-.proposta .card.fn-support .c-emblema,
-.proposta .card.fn-lurker  .c-emblema{transform:translate(-50%,-50%) scale(.86)}
+   As regras de opacidade por faixa e de massa optica por funcao saem junto:
+   sem emblema elas nao tem alvo. `--emb-op` tambem some da tabela da escada. */
+.proposta .c-emblema{display:none}
 
 /* ── 6 · carta de IGL ────────────────────────────────────────────────────────
    A carta de comando tem de ser diferente de todas. A primeira tentativa somou
@@ -327,32 +324,8 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
 .proposta .card.cr-lurker {--cr:#22d3ee}
 .proposta .card.cr-support{--cr:#16c9b0}
 
-/* O degrau nasce no mesmo ponto em que a diagonal comeca, entao ele acompanha
-   `--corte` e nao vira um numero solto. A face de tras espelha o recorte pelo
-   mesmo motivo que ela ja espelhava a diagonal. */
-.proposta .card.fn-igl .cfront .c-fio,
-.proposta .card.fn-igl .cfront .c-placa{
-  clip-path:polygon(0 calc(var(--corte)*2.1), 27% calc(var(--corte)*2.1),
-    31% var(--corte), 100% 0, 100% 100%, 0 100%)}
-.proposta .card.fn-igl .cback .c-vfio,
-.proposta .card.fn-igl .cback .c-vfaixa{
-  clip-path:polygon(0 0, 100% 0, 100% calc(100% - var(--corte-v)),
-    31% calc(100% - var(--corte-v)), 27% 100%, 0 100%)}
-
 .proposta .card.fn-igl[data-cr] .cfront .c-meta span:first-child{
   color:var(--cr,#9ba9bb);font-weight:700}
-/* Reativar a linha de contexto no compacto nao basta: o medidor reprovou
-   "colisao funcao/contexto" nas quatro larguras estreitas. La o corpo da funcao
-   sobe para 8,2cqw e a folga entre as duas linhas e de apenas 1,4% da carta —
-   e exatamente por isso que a linha some para todo mundo. A carta de IGL abre o
-   proprio ritmo para caber o que so ela precisa mostrar; o nick sobe junto,
-   porque `--b3` deriva de `--b2`. O time sai: nesta largura ele ja aparece no
-   cabecalho do elenco, e a funcao de combate nao aparece em lugar nenhum. */
-@container (max-width:150px){
-  .proposta .card.fn-igl .cfaces{--b2:10.5%}
-  .proposta .card.fn-igl .c-meta{display:flex}
-  .proposta .card.fn-igl .c-meta span:last-child{display:none}
-}
 
 /* ── 7 · carta de treinador ──────────────────────────────────────────────────
    Ele PRECISA ser outro objeto, nao um jogador sem OVR. Tres mudancas
@@ -363,8 +336,12 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
      2 MOLDURA SEGMENTADA em vez de aro continuo, na mesma lingua do fio
        tracejado que ele ja tinha — e o oposto exato da borda cromada continua
        das faixas de topo.
-     3 EMBLEMA COMO MARCA D'AGUA: a prancheta sai do centro, cresce e sangra
-       pela direita, em vez de ficar centralizada como o emblema de funcao.
+     3 TIPO DECLARADO EM ALTO: "TREINADOR" ocupa o unico slot da carta que nunca
+       some por falta de espaco, e nele o treinador ganha corpo e cor propria.
+       Nenhum jogador escreve nada ali alem de "OVERALL".
+
+   A prancheta como marca d'agua foi retirada junto com os emblemas de funcao: o
+   centro da carta e o lugar do retrato.
 
    A cor continua vindo da CARACTERISTICA, nunca de raridade: ele nao disputa a
    escala de OVR dos jogadores. Mas ele passa a receber um banho nessa cor —
@@ -398,9 +375,13 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
     color-mix(in srgb,var(--r) 86%,transparent) 0 3.4cqw,transparent 3.4cqw 6.2cqw);
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
   -webkit-mask-composite:xor;mask-composite:exclude}
-.proposta .coachcard .c-emblema{
-  width:74cqw;height:74cqw;left:auto;right:-16%;top:34%;
-  transform:translateY(-50%);opacity:.17}
+/* O marcador de tipo: e a unica palavra que declara o que a carta e, e no
+   treinador ela passa a ter corpo e a cor da caracteristica. Nos jogadores esse
+   slot diz sempre "OVERALL", em cinza — o contraste entre os dois e o que faz a
+   carta se anunciar antes de qualquer leitura. */
+.proposta .coachcard .c-ovr small{
+  font-size:4.6cqw;letter-spacing:.2em;
+  color:color-mix(in srgb,var(--r-ink) 82%,#fff)}
 /* A caracteristica do treinador chega a 13 letras ("DESENVOLVEDOR") e ocupa o
    mesmo lugar da funcao do jogador, que tem no maximo 7 ("SUPPORT"). Com o corpo
    maior ela estourava a caixa nas quatro larguras compactas. A razao que resolve
@@ -412,13 +393,34 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
    caso — ele compara texto com texto e texto com caixa, nunca texto com faixa
    decorativa. Lacuna anotada.
 
-   A descricao tambem ganha o corpo e a familia da carta: ela ocupava duas linhas
-   e deixava ~40% do verso vazio, e era o unico ponto da carta em Barlow. */
-.proposta .coachcard .cback .c-vestilo{top:31%}
+   A DESCRICAO E O CONTEUDO DO VERSO DO TREINADOR — ela e para ele o que as
+   quatro barras de atributo sao para o jogador, e estava tratada como legenda:
+   corpo menor que o de qualquer stat, cinza-azulado apagado e a unica
+   tipografia em Barlow na carta inteira. Agora ela ocupa o espaco que e dela.
+
+   Corpo de 5,6 para 6,8cqw, tinta de #dde5ef para #eef4fa e entrelinha de 1,32
+   para 1,4. O ganho de altura vem de BAIXO, nao de cima: subir o topo da caixa
+   para 43% colidiu com o rotulo da caracteristica nas cinco larguras estreitas —
+   la o nome da caracteristica desce ate ~44% da carta. A caixa cresce entao pelo
+   rodape, de `bottom:22%` para `18%`. O medidor cobre os dois riscos: colisao
+   pelo teste `caracteristica/descricao` e falta de espaco por
+   `conteudoVertical`. */
+.proposta .coachcard .cback .c-vestilo{top:30%}
 .proposta .coachcard .cback .c-vdesc{
-  top:47%;font-family:var(--ff);font-size:clamp(9px,5.6cqw,13px);
-  line-height:1.32;font-weight:600;letter-spacing:.01em;color:#dde5ef;
+  top:48%;bottom:18%;font-family:var(--ff);font-size:clamp(10px,6.8cqw,15px);
+  line-height:1.4;font-weight:600;letter-spacing:.005em;color:#eef4fa;
   align-items:center}
+/* Nas duas larguras mais estreitas o campeonato quebra em DUAS linhas — "IEM
+   Katowice 2019" nao cabe numa so — e o rodape cresce para cima contra a
+   descricao. O medidor reprovou por "colisao descricao/campeonato". A densidade
+   compacta recebe entao os proprios numeros, como ja acontece com o resto da
+   carta: caixa mais alta e corpo menor, porque ali o espaco e o limite e nao a
+   legibilidade. O ganho de tamanho e real onde ha espaco — no desktop a
+   descricao vai de 9,8px para 12,8px. */
+@container (max-width:150px){
+  .proposta .coachcard .cback .c-vdesc{
+    top:46%;bottom:21%;font-size:clamp(8px,6cqw,12px);line-height:1.34}
+}
 </style>
 </head>
 <body>
