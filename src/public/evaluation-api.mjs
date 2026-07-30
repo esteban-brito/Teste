@@ -60,7 +60,9 @@ export function buildEvaluationState({atributos=ATRIBUTOS,timesDef=TIMES_DEF,
         time:t.nome,camp:t.camp,coloc:t.colocacao,tipo:"player",ovr:j.ovr,prim:j.primario,sec:j.secundario,
         secForte:!!j.secForte,estrela:j.estrela,_eng:j};}),
       treinador:t.coach?{id:`c${i}`,nick:t.coach,pais:t.coachPais||paisTreinador[t.coach]||"—",
-        time:t.nome,tipo:"coach",ovr:ovrTreinador(somaOVR,t.colocacao),carac,
+        // A era pertence ao elenco e é projetada nas duas categorias de carta.
+        // Isso padroniza o rodapé sem duplicar ou transformar o dado cru `camp`.
+        time:t.nome,camp:t.camp,coloc:t.colocacao,tipo:"coach",ovr:ovrTreinador(somaOVR,t.colocacao),carac,
         caracCor:CARAC_COR[carac],caracSlug:CARAC_SLUG[carac]}:null};
   });
   return {POOL:pool,TEAMS:teams};

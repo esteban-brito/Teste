@@ -144,15 +144,106 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       `${largura}px · tokens da densidade ${compacta?"compacta":"completa"} realmente aplicados`);
     }
 
-    /* O laboratório é a bancada da próxima mudança. As propostas ainda não
-       aprovadas não podem apodrecer enquanto o jogo evolui. */
+    /* A classe de proposta fica vazia depois da promoção. Ainda assim, ligá-la
+       não pode degradar o design publicado nem as guardas da próxima hipótese. */
     await page.check("#cProposta");
     for(const largura of LARGURAS){
       await page.selectOption("#cLargura",largura);await page.waitForTimeout(80);
       const audit=await page.evaluate(()=>window.__LAB_MEDIR());
       check(audit.falhas.length===0,
-        `${largura}px · proposta continua sem falha geométrica${audit.falhas.length?` (${audit.falhas[0].campo})`:""}`);
+        `${largura}px · design publicado continua sem falha geométrica${audit.falhas.length?` (${audit.falhas[0].campo})`:""}`);
+
+      const standards=await page.evaluate(()=>{
+        const cards=[...document.querySelectorAll(".card,.coachcard")];
+        const visible=element=>element&&getComputedStyle(element).display!=="none"&&
+          getComputedStyle(element).visibility!=="hidden";
+        const px=element=>parseFloat(getComputedStyle(element).fontSize);
+        const minimums=[[".c-vnick",10],[".c-vestilo small",7],[".c-st i",7],[".c-st b",9],
+          [".c-vrod b",8],[".c-vrod span",7],[".c-vdesc",8]];
+        const tooSmall=minimums.flatMap(([selector,minimum])=>
+          [...document.querySelectorAll(selector)].filter(element=>visible(element)&&px(element)<minimum-.05)
+            .map(element=>({selector,size:px(element),minimum,text:element.textContent.trim()})));
+        const footers=cards.map(card=>card.querySelector(".c-vrod"));
+        const missingFooter=footers.filter(footer=>!visible(footer)||!footer.textContent.trim()).length;
+        const ratingNodes=document.querySelectorAll(".c-vovr").length;
+        const weightNodes=document.querySelectorAll(".c-st em").length;
+        const externalShadows=cards.filter(card=>{
+          const shadow=getComputedStyle(card).boxShadow;
+          return shadow!=="none"&&!/\binset\s*$/.test(shadow);
+        }).length;
+
+        const parseColor=value=>{
+          const numbers=(value.match(/[\d.]+/g)||[]).map(Number);
+          if(value.startsWith("color(srgb"))return numbers.slice(0,3).map(number=>number*255);
+          return numbers.slice(0,3);
+        };
+        const luminance=color=>{
+          const linear=color.map(channel=>{const value=channel/255;
+            return value<=.04045?value/12.92:((value+.055)/1.055)**2.4;});
+          return .2126*linear[0]+.7152*linear[1]+.0722*linear[2];
+        };
+        const background=luminance([8,13,20]);
+        const contrastSelectors=[".c-ovr small",".c-func",".c-meta",".c-vnick",".c-vestilo small",
+          ".c-vestilo b",".c-st i",".c-st b",".c-vrod b",".c-vrod span",".c-vdesc"];
+        const lowContrast=contrastSelectors.flatMap(selector=>
+          [...document.querySelectorAll(selector)].filter(visible).map(element=>{
+            const foreground=luminance(parseColor(getComputedStyle(element).color));
+            const ratio=(Math.max(foreground,background)+.05)/(Math.min(foreground,background)+.05);
+            return {selector,ratio,text:element.textContent.trim()};
+          }).filter(result=>result.ratio<4.5));
+        return {missingFooter,ratingNodes,weightNodes,externalShadows,tooSmall,lowContrast};
+      });
+      check(standards.missingFooter===0&&standards.ratingNodes===0&&standards.weightNodes===0,
+        `${largura}px · verso reserva espaço só para identidade, stats e campeonato`+
+        (standards.missingFooter?` (${standards.missingFooter} rodapé(s) ausente(s))`:"")+
+        (standards.ratingNodes?` (${standards.ratingNodes} rating(s) ainda no HTML)`:"")+
+        (standards.weightNodes?` (${standards.weightNodes} peso(s) ainda no HTML)`:""));
+      check(standards.tooSmall.length===0&&standards.lowContrast.length===0,
+        `${largura}px · texto importante respeita tamanho mínimo e contraste 4,5:1`+
+        (standards.tooSmall.length?` (1º: ${standards.tooSmall[0].selector} ${standards.tooSmall[0].size}px)`:"")+
+        (standards.lowContrast.length?` (1º contraste: ${standards.lowContrast[0].selector} `+
+          `${standards.lowContrast[0].ratio.toFixed(2)}:1)`:""));
+      check(standards.externalShadows===0,
+        `${largura}px · nenhuma carta projeta halo externo`+
+        (standards.externalShadows?` (${standards.externalShadows} falha(s))`:""));
     }
+
+    await page.selectOption("#cLargura","188");
+    const motion=await page.locator(".card").first().evaluate(card=>{
+      const face=getComputedStyle(card.querySelector(".cface")),cardStyle=getComputedStyle(card);
+      const holo=getComputedStyle(card,"::after").animationName;
+      card.classList.add("deal");const deal=getComputedStyle(card);
+      const dealAnimation=card.getAnimations().find(animation=>animation.animationName==="cardDealEditorial");
+      const dealState={name:deal.animationName,duration:deal.animationDuration,
+        frames:dealAnimation?.effect.getKeyframes()||[]};
+      dealAnimation?.cancel();card.classList.remove("deal");
+      card.classList.add("land");const land=getComputedStyle(card);
+      const landAnimation=card.getAnimations().find(animation=>animation.animationName==="cardLandEditorial");
+      const landState={name:land.animationName,duration:land.animationDuration,
+        frames:landAnimation?.effect.getKeyframes()||[]};
+      landAnimation?.cancel();card.classList.remove("land");
+      return {cardProperty:cardStyle.transitionProperty,cardDuration:cardStyle.transitionDuration,
+        faceProperty:face.transitionProperty,faceDuration:face.transitionDuration,holo,
+        deal:dealState,land:landState};
+    });
+    const cleanFrames=[...motion.deal.frames,...motion.land.frames].every(frame=>{
+      const transform=frame.transform||"";
+      const scales=[...transform.matchAll(/scale\(([^)]+)\)/g)].map(match=>Number(match[1]));
+      return !frame.boxShadow&&!/rotate/i.test(transform)&&scales.every(scale=>scale<=1);
+    });
+    check(motion.cardProperty==="transform"&&motion.cardDuration==="0.18s"&&
+      motion.faceProperty==="transform, opacity"&&motion.faceDuration==="0.36s, 0.18s"&&
+      motion.holo==="none"&&motion.deal.name==="cardDealEditorial"&&motion.deal.duration==="0.4s"&&
+      motion.land.name==="cardLandEditorial"&&motion.land.duration==="0.28s"&&cleanFrames,
+    "cartas usam movimento curto, estático e limitado a transform/opacity"+
+      (motion.holo!=="none"?` (holo: ${motion.holo})`:""));
+    const proposalCard=page.locator(".card").first();
+    await proposalCard.hover();await page.waitForTimeout(220);
+    const hover=await proposalCard.evaluate(card=>({shadow:getComputedStyle(card).boxShadow,
+      transform:getComputedStyle(card).transform}));
+    check(/\binset\s*$/.test(hover.shadow)&&hover.transform!=="none",
+      "hover eleva discretamente sem reintroduzir halo externo");
+    await page.mouse.move(0,0);
     await page.uncheck("#cProposta");
 
     /* Clique e teclado têm de manter classe visual, ponteiro e aria-hidden em
@@ -184,8 +275,8 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     "movimento reduzido desliga flip e holografia contínua");
     await page.emulateMedia({reducedMotion:"no-preference"});
 
-    /* As provas sintéticas rodam a 188px porque abaixo de 150px a densidade compacta
-       ESCONDE o rodapé do verso (`.c-vrod`), e caixa oculta não mede nada. */
+    /* As provas sintéticas rodam a 188px para terem ampla folga entre defeito
+       injetado e variação subpixel entre plataformas. */
     await page.selectOption("#cLargura","188");
     await page.waitForTimeout(120);
 
@@ -202,18 +293,18 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     });
     check(detecta===true,"medidor detecta um nome que não cabe (prova de que ele mede)");
 
-    /* E a distinção também é testada: campo com reticências declaradas entra no
-       relatório, nunca na reprovação. Sem esta prova, a suíte volta a ficar vermelha
-       em outra plataforma por uma decisão de design. */
+    /* E a distinção também é testada: um nome de atributo com reticências
+       declaradas entra no relatório, nunca na reprovação. O campeonato deixou de
+       usar reticências e agora precisa permanecer integralmente legível. */
     const separa=await page.evaluate(()=>{
-      const rodape=document.querySelector(".card .c-vrod b");
-      if(!rodape)return null;
-      const original=rodape.textContent;
-      rodape.textContent="CAMPEONATO DE NOME ABSURDAMENTE LONGO 2026";
+      const stat=document.querySelector(".card .c-st i");
+      if(!stat)return null;
+      const original=stat.textContent;
+      stat.textContent="ATRIBUTO IMPOSSIVELMENTE LONGO";
       const {falhas,reticencias}=window.__LAB_MEDIR();
-      rodape.textContent=original;
-      return {reprovou:falhas.some(f=>f.campo.startsWith("campeonato")),
-        relatou:reticencias.some(f=>f.campo.startsWith("campeonato"))};
+      stat.textContent=original;
+      return {reprovou:falhas.some(f=>f.campo.startsWith("stat")),
+        relatou:reticencias.some(f=>f.campo.startsWith("stat"))};
     });
     check(separa&&separa.relatou&&!separa.reprovou,
       "campo com reticências declaradas é relatado, não reprovado");
@@ -248,6 +339,8 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
         front:card.querySelector(".cfront")?.getAttribute("aria-hidden"),
         back:card.querySelector(".cback")?.getAttribute("aria-hidden"),
         placaN:getComputedStyle(faces).getPropertyValue("--placa-n").trim(),
+        shadow:getComputedStyle(card).boxShadow,
+        sheen:getComputedStyle(card.querySelector(".cfront"),"::before").content,
         ratio:rect.width/rect.height,left:rect.left,right:rect.right};
     }));
     check(gameCards.length>=5&&gameCards.every(card=>card.role==="button"&&card.tabIndex===0),
@@ -255,6 +348,8 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     check(gameCards.every(card=>card.face==="front"&&card.front==="false"&&
       card.back==="true"&&card.placaN==="32"),
       "jogo real inicia na frente e aplica densidade compacta no celular");
+    check(gameCards.every(card=>/\binset\s*$/.test(card.shadow)&&card.sheen==="none"),
+      "jogo real não reintroduz halo ou varredura de luz na entrada das cartas");
     const gamePage=await page.evaluate(()=>({scrollWidth:document.documentElement.scrollWidth,
       clientWidth:document.documentElement.clientWidth}));
     const gameGeometry=gameCards.every(card=>Math.abs(card.ratio-5/7)<.01&&

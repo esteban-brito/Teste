@@ -11,11 +11,11 @@
    degradê muda ao longo da própria palavra. É o que cartas de coleção reais
    fazem, e é o que sustenta o dia em que houver foto atrás.
 
-   O VERSO tem o playstyle como espinha, com a receita visível: dá para ver POR
-   QUE ele é aquele estilo, com os pesos que o motor usa de verdade. Firepower
-   vem sempre primeiro; o resto por contribuição (peso × valor). Por isso o verso
-   mostra 3 ou 4 estatísticas — 3 quando Firepower já está na receita — e o
-   layout centraliza para absorver os dois casos sem reajuste.
+   O VERSO tem o playstyle como espinha. Firepower vem sempre primeiro; o resto
+   continua ordenado pela contribuição real (peso × valor), sem expor pesos de
+   receita ou repetir OVR/rating. Assim o espaço serve aos atributos e à era.
+   São 3 ou 4 estatísticas — 3 quando Firepower já está na receita — e o layout
+   centraliza para absorver os dois casos sem reajuste.
 
    A CAMADA DE FOTO EXISTE E ESTÁ VAZIA. Hoje 0 de 85 jogadores têm retrato e não
    há campo para guardá-lo. O estado "sem foto" é declarado, não um remendo: a
@@ -103,17 +103,15 @@ export function createCardView({styleId,styleLabel,styleRecipe}){
         contrib:weight*((enginePlayer&&enginePlayer[AXIS_ATTRIBUTE[axis]])||0)}))
       .filter(item=>item.attr)
       .sort((a,b)=>b.contrib-a.contrib);
-    const pesoDe=attr=>{const achou=ordenadas.find(item=>item.attr===attr);return achou?achou.weight:null;};
     const chaves=["fp",...ordenadas.map(item=>item.attr).filter(attr=>attr!=="fp")].slice(0,4);
-    return chaves.map(attr=>({attr,peso:pesoDe(attr)}));
+    return chaves.map(attr=>({attr}));
   };
 
   /* min-width no trilho segura o caso real: chopper tem Firepower 2. Sem isso a
      barra some e parece defeito, quando na verdade ela É a informação. */
-  const statHtml=({attr,peso},enginePlayer)=>{
+  const statHtml=({attr},enginePlayer)=>{
     const valor=Math.round(enginePlayer[attr]||0);
-    const pesoTexto=peso==null?"":String(Number(peso.toFixed(2))).replace(/^0\./,".");
-    return `<div class="c-st"><i>${esc(STAT_LABEL[attr])}</i><em>${pesoTexto}</em><b>${valor}</b>`+
+    return `<div class="c-st"><i>${esc(STAT_LABEL[attr])}</i><b>${valor}</b>`+
       `<div class="c-trilho"><u style="width:${valor}%"></u></div></div>`;
   };
 
@@ -125,6 +123,11 @@ export function createCardView({styleId,styleLabel,styleRecipe}){
     return enginePlayer.playstyle?styleLabel(styleId(enginePlayer.playstyle)):(card.prim||"");
   };
 
+  /* Jogador e treinador compartilham o mesmo rodapé de era. O campeonato nunca
+     é dividido em evento/ano: `camp` é a string canônica já existente no dado. */
+  const rodapeVerso=card=>`<div class="c-vrod"><b>${esc(card.camp||"")}</b>`+
+    `<span>${esc(COLOCACAO_LABEL[card.coloc]||card.coloc||"")}</span></div>`;
+
   const backPlayer=card=>{
     const enginePlayer=card._eng||{};
     const id=styleId(enginePlayer.playstyle);
@@ -133,21 +136,19 @@ export function createCardView({styleId,styleLabel,styleRecipe}){
        vez de mostrar barras vazias. */
     const linhas=receita
       ? receita.map(item=>statHtml(item,enginePlayer)).join("")
-      : DEFAULT_BACK_STATS.map(attr=>statHtml({attr,peso:null},enginePlayer)).join("");
-    const rating=typeof enginePlayer.rating==="number"?enginePlayer.rating.toFixed(2):"—";
+      : DEFAULT_BACK_STATS.map(attr=>statHtml({attr},enginePlayer)).join("");
     return `<div class="c-vfio"></div><div class="c-vfaixa"></div>
   <div class="c-vnick">${esc(card.nick)}</div>
-  <div class="c-vovr"><b>${card.ovr}</b><small>RTG ${rating}</small></div>
   <div class="c-vestilo"><small>Playstyle</small><b>${esc(rotuloVerso(card))}</b></div>
   <div class="c-vstats">${linhas}</div>
-  <div class="c-vrod"><b>${esc(card.camp||"")}</b><span>${esc(COLOCACAO_LABEL[card.coloc]||card.coloc||"")}</span></div>
+  ${rodapeVerso(card)}
   <div class="c-grao"></div>`;};
 
   const backCoach=card=>`<div class="c-vfio"></div><div class="c-vfaixa"></div>
   <div class="c-vnick">${esc(card.nick)}</div>
-  <div class="c-vovr"><b>${card.ovr}</b><small>Overall</small></div>
   <div class="c-vestilo"><small>Característica</small><b>${esc(card.carac)}</b></div>
   <div class="c-vdesc">${esc(COACH_DESCRIPTION[card.carac]||"")}</div>
+  ${rodapeVerso(card)}
   <div class="c-grao"></div>`;
 
   const cardHTML=card=>{
