@@ -196,9 +196,15 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
 .proposta .card.p-rank .cfront .c-foto{
   background-image:linear-gradient(158deg,
     color-mix(in srgb,var(--wash-cor) var(--wash),#101722),#080d14 54%,#05080d)}
+/* A PLACA TAMBEM SAI DE `--wash-cor`, e nao de `--m`. Ela tinha ficado de fora
+   da calibragem e invertia duas vezes: a placa da carta comum era 18% MAIS CLARA
+   que a da verde, e a do sangue 57% mais escura que a do ouro. Com a cor
+   calibrada a escada volta a subir — 0,0101 · 0,0116 · 0,0203 · 0,0344 — e o
+   sangue (0,0252) fica acima do ambar, que e a condicao que importa nas tres
+   faixas em que a borda carrega o sinal. */
 .proposta .card.p-rank .cfront .c-placa{
   background:linear-gradient(178deg,
-    color-mix(in srgb,var(--m) calc(var(--wash)*.8),#0a0f17),#070a10 40%)}
+    color-mix(in srgb,var(--wash-cor) calc(var(--wash)*.8),#0a0f17),#070a10 40%)}
 .proposta .card.p-rank .cback{
   background:linear-gradient(168deg,
     color-mix(in srgb,var(--wash-cor) calc(var(--wash)*.6),#080b11),#06080d 58%)}
@@ -317,7 +323,8 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
    A linha de contexto some na densidade compacta, e para o IGL ela deixa de
    sumir: sem ela a funcao de combate desapareceria no celular, e ela e a metade
    da identidade desta carta. O entalhe continua valendo em qualquer largura. */
-.proposta .card.cr-igl    {--cr:#4d9bff}
+/* Nao existe `cr-igl`: a funcao de COMBATE de um IGL nunca e IGL. A regra
+   existia por simetria da tabela e nao casava com nenhuma carta das 152. */
 .proposta .card.cr-awper  {--cr:#b070ff}
 .proposta .card.cr-entry  {--cr:#ff7d4d}
 .proposta .card.cr-rifler {--cr:#ff5fd0}
@@ -368,13 +375,31 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
     color-mix(in srgb,var(--r) 12%,#101722),#080d14 54%,#05080d)}
 .proposta .coachcard .cback{
   background:linear-gradient(168deg,color-mix(in srgb,var(--r) 8%,#080b11),#06080d 58%)}
+/* A SEGMENTACAO PRECISA SER A 45°, NAO A 90°. Com o gradiente horizontal as
+   arestas de cima e de baixo ficavam tracejadas e as laterais SOLIDAS — uma
+   repeticao no eixo x nao produz alternancia ao percorrer uma faixa vertical.
+   A moldura tinha duas linguagens na mesma peca. Na diagonal as quatro arestas
+   recebem o mesmo passo. */
 .proposta .coachcard::after{
   content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
   z-index:7;padding:1.6px;
-  background:repeating-linear-gradient(90deg,
-    color-mix(in srgb,var(--r) 86%,transparent) 0 3.4cqw,transparent 3.4cqw 6.2cqw);
+  background:repeating-linear-gradient(45deg,
+    color-mix(in srgb,var(--r) 86%,transparent) 0 3.4cqw,transparent 3.4cqw 6.4cqw);
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
   -webkit-mask-composite:xor;mask-composite:exclude}
+/* O fio segmentado e a moldura segmentada sao a MESMA ideia e estavam com cor e
+   passo diferentes: o fio saia de `--m` com passo 6,4cqw e a moldura de `--r`
+   com 6,2cqw. Agora falam a mesma lingua. */
+.proposta .coachcard .c-fio,
+.proposta .coachcard .c-vfio{
+  background:repeating-linear-gradient(90deg,
+    color-mix(in srgb,var(--r) 86%,transparent) 0 3.4cqw,transparent 3.4cqw 6.4cqw)}
+/* O treinador nao tem funcao secundaria, entao o primeiro vao da linha de
+   contexto nascia VISIVEL E VAZIO nas 15 cartas — um elemento sem conteudo na
+   arvore de acessibilidade. Ele sai, e o alinhamento a direita preserva a
+   posicao do time, que e onde ela esta em toda carta de jogador. */
+.proposta .coachcard .cfront .c-meta{justify-content:flex-end}
+.proposta .coachcard .cfront .c-meta span:first-child{display:none}
 /* O marcador de tipo: e a unica palavra que declara o que a carta e, e no
    treinador ela passa a ter corpo e a cor da caracteristica. Nos jogadores esse
    slot diz sempre "OVERALL", em cinza — o contraste entre os dois e o que faz a
