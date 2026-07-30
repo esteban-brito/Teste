@@ -107,7 +107,9 @@ async function finishUserSeries(page){
 
 (async()=>{
   console.log("— E2E: JOGO PRINCIPAL (draft + Major completo) —");
-  const port=5900+Math.floor(Math.random()*300);
+  /* 5900–6199 incluía a porta 6000, bloqueada pelo Chromium como unsafe. O
+     sorteio raro derrubava o CI antes de abrir o jogo, sem testar produto algum. */
+  const port=7000+Math.floor(Math.random()*300);
   const server=spawn(process.execPath,[path.join(__dirname,"..","tools","serve-static.js")],
     {env:{...process.env,PORT:String(port)},stdio:"ignore"});
   let browser=null;

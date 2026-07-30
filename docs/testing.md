@@ -45,6 +45,10 @@ Virar, seleção normal, `prefers-reduced-motion` e ausência de hover preso em
 dispositivos touch. Casos sintéticos garantem que o detector não esteja sempre
 verde e separam falha real de reticências deliberadas.
 
+Os servidores efêmeros dos E2E devem usar faixas aceitas pelo Chromium. O fluxo
+principal usa 7000–7299; a faixa antiga 5900–6199 incluía a porta 6000, que o
+navegador bloqueia com `ERR_UNSAFE_PORT` antes de qualquer teste de produto.
+
 ## Comparador visual (não é suíte, é instrumento)
 
 `tools/visual-regression.js` fotografa o jogo em 3 larguras × 7 estados (inicial,
