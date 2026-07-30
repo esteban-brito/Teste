@@ -164,7 +164,8 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   --corte:calc(var(--corte-n)*1%);
   --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
 
-  --r:var(--r-rifler);   /* piso do canal de função; a tabela .fn-* sobrescreve */
+  /* piso dos dois canais de função; a tabela .fn-* sobrescreve os dois juntos */
+  --r:var(--r-rifler); --r-ink:var(--r-rifler);
 
   --t1:33cqw;                                      /* OVR      */
   --t3:6.2cqw;                                     /* função   */
@@ -180,29 +181,43 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
     transform:translateY(-2px)}
 }
 
-/* ═══ DOIS CANAIS ══════════════════════════════════════════════════════════
+/* ═══ DOIS CANAIS, QUATRO TOKENS ═══════════════════════════════════════════
    A carta comunica DUAS coisas, e cada uma tem seu território. Elas não
    disputam nenhuma propriedade:
 
-     --m  RARIDADE → moldura: aro, marcas, fio, placa e o rótulo do OVR.
-     --r  FUNÇÃO   → campo: fundo, nome da função e o emblema ao fundo.
+     RARIDADE → moldura: aro, marcas, fio, placa e o rótulo do OVR.
+     FUNÇÃO   → campo: fundo, nome da função e o emblema ao fundo.
 
    Antes a cor dizia só a raridade, e quatro jogadores da mesma faixa viravam
-   quatro cartas idênticas na linha do elenco revelado. */
+   quatro cartas idênticas na linha do elenco revelado.
+
+   CADA CANAL TEM PINTURA E TINTA SEPARADAS, e a razão é medida, não estética:
+
+     --m / --r          PINTURA — aro, fio, placa, campo, emblema. Sem exigência
+                        de contraste: é grafismo, não leitura.
+     --m-ink / --r-ink  TINTA — todo texto que o canal colore. Precisa passar
+                        4,5:1 contra #080d14, e `bancada/e2e-cartas.js` reprova
+                        quem não passa.
+
+   Um token só para as duas funções impedia metade das cores possíveis. Contra
+   o fundo da carta, `#8b0f1d` (sangue) dá 2,03:1 e `#1f7a4d` (verde escuro) dá
+   3,66:1 — reprovam como texto, mas são exatamente as molduras desejadas. Com o
+   par, a moldura fica escura e a tinta é uma variante clara da MESMA cor. É o
+   mesmo padrão dos trios `--s-red`/`--s-red-lit`/`--s-red-dim` do `:root`. */
 
 /* ═══ TABELA DE RARIDADE ═══════════════════════════════════════════════════
    Cor, contagem, fio e aro formam a escada sem depender de brilho externo.
    As FAIXAS (quais OVR caem em cada tier) vivem em `tierOf`, no card-view. */
-.card.tier-3{--m:#8b98a8; --marcas:0; --fio-a:52%;  --aro:1px;   --aro-a:42%}
-.card.tier-2{--m:#3ec07e; --marcas:1; --fio-a:76%;  --aro:1.5px; --aro-a:64%}
-.card.tier-1{--m:#ffbe00; --marcas:2; --fio-a:88%;  --aro:2px;   --aro-a:82%}
-.card.tier-s{--m:#ff5c6e; --marcas:3; --fio-a:100%; --aro:2px;   --aro-a:100%}
-.card.tier-h{--m:#c9a6ff; --marcas:4; --fio-a:100%; --aro:2px;   --aro-a:72%}
+.card.tier-3{--m:#8b98a8; --m-ink:#8b98a8; --marcas:0; --fio-a:52%;  --aro:1px;   --aro-a:42%}
+.card.tier-2{--m:#3ec07e; --m-ink:#3ec07e; --marcas:1; --fio-a:76%;  --aro:1.5px; --aro-a:64%}
+.card.tier-1{--m:#ffbe00; --m-ink:#ffbe00; --marcas:2; --fio-a:88%;  --aro:2px;   --aro-a:82%}
+.card.tier-s{--m:#ff5c6e; --m-ink:#ff5c6e; --marcas:3; --fio-a:100%; --aro:2px;   --aro-a:100%}
+.card.tier-h{--m:#c9a6ff; --m-ink:#c9a6ff; --marcas:4; --fio-a:100%; --aro:2px;   --aro-a:72%}
 /* O treinador não disputa a escala de OVR dos jogadores: a cor dele é a da
    CARACTERÍSTICA, que é o que ele faz pelo time. A moldura neutra o coloca fora
    da escada de raridade; o fio segmentado declara sua categoria. */
-.coachcard{--m:#93a0b2; --aro:1.5px; --aro-a:54%;
-  --r:var(--cc-main,var(--c-gestor))}
+.coachcard{--m:#93a0b2; --m-ink:#93a0b2; --aro:1.5px; --aro-a:54%;
+  --r:var(--cc-main,var(--c-gestor)); --r-ink:var(--cc-main,var(--c-gestor))}
 .coach-gestor{--cc-main:var(--c-gestor)}
 .coach-estrategista{--cc-main:var(--c-estrategista)}
 .coach-desenvolvedor{--cc-main:var(--c-desenvolvedor)}
@@ -213,12 +228,12 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    maior área da carta e não podem competir com a moldura, que é o sinal de
    raridade. O EMBLEMA é o que sustenta a leitura quando a carta é pequena ou
    quem olha não distingue as cores — forma é independente de cor. */
-.fn-igl{--r:var(--r-igl)}
-.fn-awper{--r:var(--r-awper)}
-.fn-entry{--r:var(--r-entry)}
-.fn-rifler{--r:var(--r-rifler)}
-.fn-lurker{--r:var(--r-lurker)}
-.fn-support{--r:var(--r-support)}
+.fn-igl{--r:var(--r-igl); --r-ink:var(--r-igl)}
+.fn-awper{--r:var(--r-awper); --r-ink:var(--r-awper)}
+.fn-entry{--r:var(--r-entry); --r-ink:var(--r-entry)}
+.fn-rifler{--r:var(--r-rifler); --r-ink:var(--r-rifler)}
+.fn-lurker{--r:var(--r-lurker); --r-ink:var(--r-lurker)}
+.fn-support{--r:var(--r-support); --r-ink:var(--r-support)}
 
 /* Marcas de raridade: contagem permanece legível sem cor e em cartas compactas. */
 .card::before{content:"";position:absolute;top:2.6cqw;right:var(--pad);z-index:6;
@@ -303,7 +318,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   font-size:var(--t1);font-weight:700;line-height:.78;letter-spacing:-.03em;color:#fff;
   margin-left:-.055em;text-shadow:0 2px 20px rgba(0,0,0,.55)}
 .c-ovr small{display:block;font-size:3.9cqw;letter-spacing:.26em;font-weight:700;line-height:1;
-  color:color-mix(in srgb,var(--m) 88%,#fff);margin:.35em 0 0 .06em;
+  color:color-mix(in srgb,var(--m-ink) 88%,#fff);margin:.35em 0 0 .06em;
   text-shadow:none;text-transform:uppercase}
 /* canto superior direito: BANDEIRA. Campeonato e ano ficam só no verso — aqui
    competiriam com o OVR, que é o que se lê primeiro. */
@@ -318,7 +333,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 /* 3 · o que ele FAZ, na cor do tier */
 .c-func{position:absolute;left:var(--pad);bottom:var(--b2);z-index:5;font-family:var(--ff);
   font-size:var(--t3);font-weight:700;letter-spacing:.2em;text-transform:uppercase;
-  color:color-mix(in srgb,var(--r) 84%,#fff)}
+  color:color-mix(in srgb,var(--r-ink) 84%,#fff)}
 /* contexto: UMA linha, apagada. Função secundária e time. */
 .c-meta{position:absolute;left:var(--pad);right:var(--pad);bottom:var(--b1);z-index:5;
   display:flex;justify-content:space-between;gap:6px;font-family:var(--ff);
@@ -350,8 +365,8 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 /* Mesma razão do nick, pelo mesmo motivo: "Desenvolvedor" é palavra única, não
    quebra linha e transbordava 16px no desktop e 26px a 120px, onde era cortada. */
 .c-vestilo b{font-size:clamp(10px,calc(11cqw*var(--carac-esc,1)),24px);font-weight:700;line-height:.95;
-  color:var(--m);text-transform:uppercase;letter-spacing:-.01em;display:block}
-.coachcard .c-vestilo b{color:var(--r)}
+  color:var(--m-ink);text-transform:uppercase;letter-spacing:-.01em;display:block}
+.coachcard .c-vestilo b{color:var(--r-ink)}
 /* justify-content:center absorve 3 ou 4 linhas sem reajuste — o motor entrega 3
    quando Firepower já está na receita e 4 quando não está. */
 .c-vstats{position:absolute;left:var(--pad);right:var(--pad);top:43.5%;bottom:22%;z-index:5;
@@ -366,7 +381,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 /* min-width segura o caso real: chopper tem Firepower 2. Sem isso a barra some e
    parece defeito, quando na verdade ela É a informação. */
 .c-trilho u{display:block;height:100%;border-radius:99px;
-  background:color-mix(in srgb,var(--m) 88%,#fff);min-width:3%}
+  background:color-mix(in srgb,var(--m-ink) 88%,#fff);min-width:3%}
 /* rodapé do verso: o CAMPEONATO. É o que distingue duas cartas do mesmo jogador
    — donk em Katowice 2024 e em Budapest 2025 são a mesma pessoa em eras
    diferentes. Duas linhas porque "DreamHack Cluj-Napoca" não cabe dividindo. */
@@ -376,7 +391,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   color:#f0f4f8;line-height:1.08;white-space:normal;overflow:visible;text-overflow:clip;
   overflow-wrap:anywhere;text-wrap:balance}
 .c-vrod span{font-size:clamp(7px,4.3cqw,9px);letter-spacing:.16em;
-  color:color-mix(in srgb,var(--m) 86%,#fff);line-height:1}
+  color:color-mix(in srgb,var(--m-ink) 86%,#fff);line-height:1}
 .c-vrod::before{content:"";position:absolute;left:0;right:0;bottom:calc(100% + 2.4cqw);
   height:1px;background:color-mix(in srgb,var(--m) 38%,transparent)}
 /* verso do treinador: a descrição objetiva do efeito ocupa o corpo da carta */
