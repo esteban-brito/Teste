@@ -175,14 +175,17 @@ npm run serve   →   http://127.0.0.1:5173/prototipo-cartas.html
 Precisa de servidor: módulo ES não carrega por `file://`.
 
 O que ele tem: um botão **Proposta** (tecla `P`) que liga o bloco `#proposta` e faz o
-A/B contra o jogo atual; **verso**, **escala de cinza**, **cinco larguras reais**
-(250/188/176/130/120 px) e **simulação de daltonismo**; a escada de raridade isolando
-só o OVR; a matriz de 30 combinações raridade × função; os casos que quebram; os 17
-elencos completos; emblemas e bandeiras ampliados.
+A/B contra o jogo atual; **verso**, **escala de cinza**, **oito larguras** — as cinco
+reais (250/188/176/130/120 px) e a costura compacta (151/150/149 px) — e **simulação
+de daltonismo**; a escada de raridade isolando só o OVR; a matriz de 30 combinações
+raridade × função; os casos que quebram; os 17 elencos completos; emblemas e
+bandeiras ampliados.
 
-E tem o **medidor de encaixe**, que é a parte que não é gosto: ele compara texto
-contra caixa em todas as cartas da página e reprova por número. Toda mudança de design
-de carta entra aqui primeiro; ao ser aprovada, migra para `style.css`/`card-view.mjs`.
+E tem o **medidor de geometria**, que é a parte que não é gosto: ele mede texto
+contra caixa, recorte vertical e colisão entre regiões em todas as cartas da página,
+e reprova por número. Reticências explicitamente declaradas continuam sendo estado
+válido e aparecem no relatório sem virar falso positivo. Toda mudança de design de
+carta entra aqui primeiro; ao ser aprovada, migra para `style.css`/`card-view.mjs`.
 
 ### A regressão que o medidor achou
 
@@ -211,13 +214,44 @@ A densidade compacta ainda **aumentava** a fonte (18cqw), o que reabria o estour
 | P3 | rótulo do verso ganha `--carac-esc` pela mesma lógica | `style.css` + `card-view.mjs` |
 | P8 | `:hover` deixa de exibir o aro de opacidade cheia de outra faixa | `style.css` |
 
-Prova permanente: **`bancada/e2e-cartas.js`** (grupo `test:e2e`, ~3 s) chama o próprio
-medidor do laboratório com a proposta desligada e exige zero estouros nas cinco
-larguras. Ele também prova que sabe acusar, injetando um nome impossível. Com isso a
-bancada foi de 24 para **25 suítes**.
+Prova permanente: **`bancada/e2e-cartas.js`** (grupo `test:e2e`) chama o próprio
+medidor do laboratório nos estados publicado e proposta e exige zero falhas nas
+oito larguras. Ele também prova que sabe acusar, injetando nome e colisão impossíveis,
+e que não confunde reticências declaradas com quebra. Com isso a bancada foi de 24
+para **25 suítes**.
 
 `tools/check-game-view-modules.js` congela as duas razões no atributo, então mudar
 `escalaNick`/`escalaCarac` sem intenção reprova o `check`.
+
+### Endurecimento promovido ao jogo (30/07/2026)
+
+Uma auditoria de estados reais encontrou três defeitos que a prova anterior ainda
+não alcançava:
+
+1. a densidade compacta nunca ativava. `.card` declarava o próprio container e a
+   regra tentava alterar a própria `.card`; container queries só selecionam
+   descendentes do container. Os tokens compactos agora vivem em `.cfaces` e a
+   costura 151/150/149 px é testada explicitamente;
+2. frente e verso permaneciam simultaneamente na árvore interativa, embora uma face
+   estivesse visualmente escondida. `setCardFlipped` agora sincroniza classe,
+   `data-face`, `aria-hidden` e `pointer-events`; cartas acionáveis expõem semântica
+   de botão e respondem a Enter/Espaço;
+3. regras de `:hover` podiam permanecer presas depois de um toque. Efeitos de hover
+   agora só existem quando o dispositivo declara `hover: hover` e ponteiro fino.
+
+O E2E abre também o jogo real em viewport móvel: verifica proporção, overflow,
+densidade compacta, modo Virar, reset ao sair do modo e seleção normal. Em contextos
+separados, prova `prefers-reduced-motion` e emulação touch. Essas guardas endurecem a
+interface sem alterar dados, OVR, raridade, balanceamento ou o conteúdo das cartas.
+
+A comparação visual pareada antes/depois fotografou 21 estados. Mudaram somente os
+seis estados com cartas compactas em celular/tablet; as outras 15 capturas ficaram
+idênticas, incluindo todo o desktop e todas as telas posteriores sem cartas. A
+inspeção das seis diferenças confirmou que elas ficam dentro das próprias cartas e
+correspondem à ativação da densidade compacta antes inerte.
+
+Fechamento do marco: `npm run validate`, **25/25 suítes verdes** em 198,2 s, sem
+alteração de snapshot, golden, RNG, dados ou balanceamento.
 
 ### Propostas de design ainda no laboratório
 

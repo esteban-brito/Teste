@@ -2,6 +2,7 @@
    Dados, avaliação e simulação entram exclusivamente pela API pública. */
 import * as PublicEngine from "./src/public/simulation-api.mjs";
 import {Audio} from "./src/application/audio.mjs";
+import {setCardFlipped} from "./src/application/card-face.mjs";
 import {PROGRESSO} from "./src/infrastructure/persistence/progress-store.mjs";
 import {escapeHtml as esc} from "./src/ui/shared/html.mjs";
 import {createCardView} from "./src/ui/game/card-view.mjs";
@@ -42,7 +43,7 @@ const hint=t=>{hintEl.textContent=t};
 
 // MODO VIRAR: quando ativo, clicar numa carta VIRA (frente/verso) em vez de selecioná-la.
 let modoVirar=false;
-const limparFlips=()=>document.querySelectorAll(".card.flipped,.coachcard.flipped").forEach(c=>c.classList.remove("flipped"));
+const limparFlips=()=>document.querySelectorAll(".card.flipped,.coachcard.flipped").forEach(c=>setCardFlipped(c,false));
 function setModoVirar(on){
   modoVirar=on;
   const b=$("flipModeBtn");
@@ -246,10 +247,10 @@ function sortear(){
 
 function renderLineup(){
   lineupEl.innerHTML=S.jogadores.map((j,i)=>j
-    ?`<div class="${cardClass(j)}${S.justPlaced===String(i)?" land":""}" data-move="${i}" tabindex="0">${cardHTML(j)}</div>`
+    ?`<div class="${cardClass(j)}${S.justPlaced===String(i)?" land":""}" data-move="${i}" data-face="front" role="button" tabindex="0">${cardHTML(j)}</div>`
     :`<div class="slot" data-slot="${i}"><span class="ph">+</span></div>`).join("");
   lineupCoach.innerHTML=S.treinador
-    ?`<div class="${cardClass(S.treinador)}${S.justPlaced==="coach"?" land":""}" data-move="coach" tabindex="0">${cardHTML(S.treinador)}</div>`
+    ?`<div class="${cardClass(S.treinador)}${S.justPlaced==="coach"?" land":""}" data-move="coach" data-face="front" role="button" tabindex="0">${cardHTML(S.treinador)}</div>`
     :`<div class="slot coach" data-slot="coach"><span class="ph">★</span></div>`;
   S.justPlaced=null;
   if(S.sel)iluminarSlots();
@@ -280,7 +281,7 @@ function renderPicks(){
     const preso=S.taken.has(p.id);
     const dup=!preso&&p.tipo!=="coach"&&nicksNaLine.has(p.nick);
     const trava=preso?" taken":dup?" dup":"";
-    return`<div class="${cardClass(p)} deal${trava}" data-pick="${esc(p.id)}" ${preso||dup?"":'tabindex="0"'}
+    return`<div class="${cardClass(p)} deal${trava}" data-pick="${esc(p.id)}" data-face="front" role="button" ${preso||dup?'aria-disabled="true"':'tabindex="0"'}
       style="--sel:${esc(S.drawn.cor)};animation-delay:${i*55}ms">${cardHTML(p)}</div>`;
   }).join("");
 
@@ -398,7 +399,7 @@ $("flipModeBtn").onclick=()=>{setModoVirar(!modoVirar);
 document.addEventListener("click",e=>{
   if(e.target.closest("#mutebtn,#rollbtn,#respinbtn,#resetbtn,#flipModeBtn"))return; // botões têm handler próprio
   // MODO VIRAR ativo: qualquer carta clicada VIRA (frente/verso), sem selecionar/posicionar
-  if(modoVirar){const c=e.target.closest(".card,.coachcard");if(c){c.classList.toggle("flipped");return;}}
+  if(modoVirar){const c=e.target.closest(".card,.coachcard");if(c){setCardFlipped(c,!c.classList.contains("flipped"));return;}}
   if(S.spinning)return;                                                 // trava interação durante o giro
   const pickEl=e.target.closest("[data-pick]");
   if(pickEl&&picksEl.contains(pickEl)&&!pickEl.classList.contains("taken")&&!pickEl.classList.contains("dup")&&S.drawn){
@@ -427,7 +428,7 @@ document.addEventListener("click",e=>{
 document.addEventListener("keydown",e=>{
   if(e.key!=="Enter"&&e.key!==" ")return;
   if(S.spinning)return;
-  if(modoVirar){const c=e.target.closest(".card,.coachcard");if(c){e.preventDefault();c.classList.toggle("flipped");return;}}
+  if(modoVirar){const c=e.target.closest(".card,.coachcard");if(c){e.preventDefault();setCardFlipped(c,!c.classList.contains("flipped"));return;}}
   const alvo=e.target.closest("[data-pick]:not(.taken):not(.dup),[data-move],.slot.avail");
   if(!alvo)return;
   e.preventDefault();

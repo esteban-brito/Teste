@@ -21,6 +21,15 @@ O jogo está funcional e o repositório está num ponto seguro. O trabalho resta
 é importante para a futura Carreira de Jogador e para manutenção, mas não é uma
 emergência para o jogo atual.
 
+Atualização de 30/07/2026: o endurecimento das cartas levou `game.js` de 888 para
+889 linhas — um import de aplicação — e acrescentou um contrato pequeno a
+`src/application/card-face.mjs`:
+`setCardFlipped(card, showBack)` é a única operação que sincroniza a classe visual,
+`data-face` e `aria-hidden`. O E2E de cartas cobre teclado, touch, reduced motion,
+densidade compacta e geometria; detalhes em `docs/cartas-design-2026-07-28.md`,
+seção 11. O marco fechou com `npm run validate` verde, 25/25 suítes em 198,2 s.
+Isso não muda a próxima fatia estrutural segura descrita neste handoff.
+
 Estado funcional que precede este handoff:
 
 - branch: `sandbox-test`;

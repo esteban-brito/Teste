@@ -1,4 +1,4 @@
-/* Contrato dos renderizadores HTML puros extraídos do entrypoint do jogo. */
+/* Contrato dos renderizadores HTML puros e da interação acessível das cartas. */
 const assert=require("node:assert/strict");
 const path=require("node:path");
 const {pathToFileURL}=require("node:url");
@@ -6,10 +6,11 @@ const {pathToFileURL}=require("node:url");
 const moduleUrl=(...parts)=>pathToFileURL(path.join(__dirname,"..","src","ui",...parts)).href;
 
 async function main(){
-  const [{escapeHtml},{createCardView},{construirCartao},teamView,tournamentView,
+  const [{escapeHtml},{createCardView},{setCardFlipped},{construirCartao},teamView,tournamentView,
     {scoreboardSideHtml},historyView]=await Promise.all([
     import(moduleUrl("shared","html.mjs")),
     import(moduleUrl("game","card-view.mjs")),
+    import(pathToFileURL(path.join(__dirname,"..","src","application","card-face.mjs")).href),
     import(moduleUrl("game","build-summary-view.mjs")),
     import(moduleUrl("game","team-view.mjs")),
     import(moduleUrl("game","tournament-view.mjs")),
@@ -72,6 +73,25 @@ async function main(){
   // o encaixe real; aqui congela-se o contrato do atributo.
   assert.ok(playerHtml.includes('class="cfaces" style="--nick-esc:1;--carac-esc:0.8"'),
     "razões de escala do envelope das duas faces mudaram");
+  assert.ok(playerHtml.includes('class="cface cfront" aria-hidden="false"')&&
+    playerHtml.includes('class="cface cback" aria-hidden="true"'),
+  "faces da carta deixaram de declarar qual participa da acessibilidade");
+  assert.equal(typeof setCardFlipped,"function","controle único de face da carta sumiu");
+  const classes=new Set();
+  const atributos={front:{},back:{}};
+  const face=name=>({setAttribute:(key,value)=>{atributos[name][key]=value;}});
+  const fakeCard={
+    classList:{toggle:(name,on)=>on?classes.add(name):classes.delete(name)},dataset:{},
+    querySelector:selector=>selector===".cfront"?face("front"):selector===".cback"?face("back"):null,
+  };
+  assert.equal(setCardFlipped(fakeCard,true),true);
+  assert.ok(classes.has("flipped")&&fakeCard.dataset.face==="back"&&
+    atributos.front["aria-hidden"]==="true"&&atributos.back["aria-hidden"]==="false",
+  "virar a carta deixou classe, estado visual e acessibilidade dessincronizados");
+  assert.equal(setCardFlipped(fakeCard,false),false);
+  assert.ok(!classes.has("flipped")&&fakeCard.dataset.face==="front"&&
+    atributos.front["aria-hidden"]==="false"&&atributos.back["aria-hidden"]==="true",
+  "desvirar a carta deixou classe, estado visual e acessibilidade dessincronizados");
   const nomesLongos=[["curto",1],["pashaBicep",0.675],["pashaBiceps",0.675],["nomeMuitoComprido",0.5625]];
   nomesLongos.forEach(([nick,esperado])=>{
     const html=view.cardHTML({tipo:"coach",ovr:15,pais:"DEN",time:"T",nick,carac:"Gestor",caracSlug:"gestor"});
