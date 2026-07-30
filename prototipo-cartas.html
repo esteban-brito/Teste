@@ -193,9 +193,39 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
   background:linear-gradient(90deg,transparent,
     color-mix(in srgb,var(--fio-cor) var(--fio-a),transparent) 20%,
     color-mix(in srgb,var(--fio-cor) var(--fio-a),transparent) 76%,transparent)}
-.proposta .card.p-rank .cfront .c-foto{
-  background-image:linear-gradient(158deg,
-    color-mix(in srgb,var(--wash-cor) var(--wash),#101722),#080d14 54%,#05080d)}
+/* ── O CAMPO COM RETRATO ──────────────────────────────────────────────────────
+   Quatro camadas numa unica propriedade, e a ordem importa: em `background-image`
+   a PRIMEIRA da lista pinta por cima.
+
+     1 ESCURECIMENTO DO TOPO. O OVR e a bandeira ficam direto sobre o campo, sem
+       placa por baixo. Contra um fundo escuro isso sempre funcionou; contra um
+       rosto claro, nao. O escurecimento garante a faixa de leitura seja qual for
+       a foto — e o que impede a guarda de contraste de virar mentira, porque ela
+       calcula contra um fundo fixo e nao sabe que ha um retrato ali.
+     2 BANHO DA RARIDADE. Ele morava no proprio gradiente do campo. Com a foto
+       ocupando o campo, o banho precisa subir para cima dela, senao a escada
+       inteira que calibramos desaparece na carta que tem retrato.
+     3 O RETRATO, por `--foto`.
+     4 O GRADIENTE BASE, o estado "sem foto".
+
+   O FALLBACK E AUTOMATICO E NAO PRECISA DE JAVASCRIPT. Se `--foto` nao existir
+   ela resolve para `none` e a camada some; se a URL falhar, o navegador descarta
+   a camada. Nos dois casos o gradiente base aparece — que e exatamente o estado
+   "sem foto" que a carta ja tinha. Com 100 retratos a cobertura parcial e o
+   cenario realista, e nenhuma carta pode parecer quebrada por falta de imagem. */
+.proposta .card.p-rank .cfront .c-foto,
+.proposta .coachcard .cfront .c-foto{
+  background-image:
+    linear-gradient(180deg,rgba(3,6,11,.90) 0%,rgba(3,6,11,.74) 14%,
+      rgba(3,6,11,.48) 26%,rgba(3,6,11,.14) 36%,transparent 46%),
+    linear-gradient(158deg,
+      color-mix(in srgb,var(--wash-cor,var(--r)) var(--wash,12%),transparent),
+      transparent 56%),
+    var(--foto,none),
+    linear-gradient(158deg,
+      color-mix(in srgb,var(--wash-cor,var(--r)) var(--wash,12%),#101722),#080d14 54%,#05080d);
+  background-size:auto,auto,cover,auto;
+  background-position:50% 0,50% 0,50% 12%,50% 0}
 /* A PLACA TAMBEM SAI DE `--wash-cor`, e nao de `--m`. Ela tinha ficado de fora
    da calibragem e invertia duas vezes: a placa da carta comum era 18% MAIS CLARA
    que a da verde, e a do sangue 57% mais escura que a do ouro. Com a cor
@@ -370,9 +400,9 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
   background:linear-gradient(178deg,color-mix(in srgb,var(--r) 16%,#0a0f17),#070a10 46%)}
 .proposta .coachcard .c-vfaixa{
   background:linear-gradient(2deg,color-mix(in srgb,var(--r) 14%,#0a0f17),#070a10 48%)}
-.proposta .coachcard .cfront .c-foto{
-  background-image:linear-gradient(158deg,
-    color-mix(in srgb,var(--r) 12%,#101722),#080d14 54%,#05080d)}
+/* O campo do treinador e a MESMA regra do jogador — ele entra nela pelos padroes
+   `var(--wash-cor,var(--r))` e `var(--wash,12%)`. Uma regra separada aqui
+   sobrescreveria a lista de camadas e o treinador ficaria sem retrato. */
 .proposta .coachcard .cback{
   background:linear-gradient(168deg,color-mix(in srgb,var(--r) 8%,#080b11),#06080d 58%)}
 /* A SEGMENTACAO PRECISA SER A 45°, NAO A 90°. Com o gradiente horizontal as
@@ -568,6 +598,20 @@ const RANK="p-rank";
 const tierProposto=ovr=>ovr>=22?"p-t6":ovr>=21?"p-t5":ovr>=20?"p-t4"
   :ovr>=18?"p-t3":ovr>=15?"p-t2":"p-t1";
 
+/* RETRATOS — fatia vertical, um elenco por vez.
+   A chave é o ID CRU (`_eng.id` no jogador, nome no treinador), nunca o `id` do
+   card, que é sequencial e existe só para o DOM. Ver `docs/architecture.md`
+   §Dados e identidade: `donk` e `donk_kato24` são a mesma pessoa em duas eras e
+   precisam poder ter retratos diferentes.
+
+   Enquanto isto for hipótese de laboratório a lista vive aqui. Ao promover para
+   o jogo ela vira um campo do dado cru — e aí `src/data/catalog.mjs` declara a
+   cobertura e `tools/check-data-catalog.js` passa a provar o número. */
+const FOTOS=new Set(["donk_kato24"]);
+const idCru=carta=>carta.tipo==="coach"?carta.nick:(carta._eng&&carta._eng.id)||carta.nick;
+const fotoDe=carta=>FOTOS.has(idCru(carta))
+  ?`--foto:url('fotos/${encodeURIComponent(idCru(carta))}.webp')`:"";
+
 const item=(html,rot)=>`<div class="lab-item">${html}<div class="lab-rot">${rot}</div></div>`;
 /* O IGL nunca é só IGL: os 17 têm função de combate real no motor (karrigan →
    Entry, Jame → AWPer, gla1ve → Support). Ela já existe em `carta.sec`, mas hoje
@@ -577,8 +621,9 @@ const item=(html,rot)=>`<div class="lab-item">${html}<div class="lab-rot">${rot}
 const cartaHtml=carta=>{
   const combate=carta.tipo!=="coach"&&carta.prim==="IGL"?(carta.sec||""):"";
   const cls=cardClass(carta)+(combate?` cr-${slugFuncao(combate)}`:"");
+  const foto=fotoDe(carta);
   return `<div class="${cls}" data-nick="${esc(carta.nick)}" data-ovr="${carta.ovr}"`+
-    (combate?` data-cr="${esc(combate)}"`:"")+
+    (combate?` data-cr="${esc(combate)}"`:"")+(foto?` style="${foto}"`:"")+
     ` data-face="front" role="button" tabindex="0">${cardHTML(carta)}</div>`;
 };
 
