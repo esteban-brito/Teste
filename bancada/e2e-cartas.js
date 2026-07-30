@@ -80,18 +80,33 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     const proposta=await page.isChecked("#cProposta");
     check(!proposta,"medição roda com a proposta desligada (estado publicado do jogo)");
 
+    /* O QUE REPROVA E O QUE NÃO REPROVA. Reprova texto que VAZA a caixa ou é
+       decapitado — nick, função e rótulo do verso, que não têm reticências. NÃO
+       reprova campo com `text-overflow:ellipsis` declarado no CSS (campeonato, nick
+       do verso, nome de stat): ali cortar é a decisão de design, e "DreamHack
+       Cluj-Napoca 2015" não caberia em fonte nenhuma. Essa distinção existe porque a
+       primeira versão desta suíte reprovou a CI sem defeito algum: a métrica da
+       fonte no Linux é alguns pixels mais larga que no Windows e cruzou o limite das
+       reticências lá, não aqui. Estouro real tem folga de dezenas de pixels, então
+       não é sensível a plataforma. */
     for(const largura of LARGURAS){
       await page.selectOption("#cLargura",largura);
       await page.waitForTimeout(120);
-      const {total,falhas}=await page.evaluate(()=>window.__LAB_MEDIR());
+      const {total,falhas,reticencias}=await page.evaluate(()=>window.__LAB_MEDIR());
       check(falhas.length===0,
         `${largura}px · ${total} cartas sem estouro de texto`+
+        (reticencias.length?` (${reticencias.length} com reticências declaradas)`:"")+
         (falhas.length?` — ${falhas.length} falha(s), 1ª: ${falhas[0].nick} `+
           `${falhas[0].campo} "${falhas[0].texto}" falta ${falhas[0].falta}px`:""));
       if(falhas.length)for(const falha of falhas.slice(0,8))
         console.log(`      ${falha.nick} · ${falha.campo} · "${falha.texto}" · `+
           `falta ${falha.falta}px · passa a borda ${falha.passa>0?falha.passa+"px":"—"}`);
     }
+
+    /* As provas sintéticas rodam a 188px porque abaixo de 150px a densidade compacta
+       ESCONDE o rodapé do verso (`.c-vrod`), e caixa oculta não mede nada. */
+    await page.selectOption("#cLargura","188");
+    await page.waitForTimeout(120);
 
     /* O medidor precisa ser capaz de ACUSAR: sem esta prova, "zero estouros" pode
        significar apenas que a medição parou de funcionar. */
@@ -105,6 +120,22 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       return falhas.some(f=>f.campo.startsWith("nick"));
     });
     check(detecta===true,"medidor detecta um nome que não cabe (prova de que ele mede)");
+
+    /* E a distinção também é testada: campo com reticências declaradas entra no
+       relatório, nunca na reprovação. Sem esta prova, a suíte volta a ficar vermelha
+       em outra plataforma por uma decisão de design. */
+    const separa=await page.evaluate(()=>{
+      const rodape=document.querySelector(".card .c-vrod b");
+      if(!rodape)return null;
+      const original=rodape.textContent;
+      rodape.textContent="CAMPEONATO DE NOME ABSURDAMENTE LONGO 2026";
+      const {falhas,reticencias}=window.__LAB_MEDIR();
+      rodape.textContent=original;
+      return {reprovou:falhas.some(f=>f.campo.startsWith("campeonato")),
+        relatou:reticencias.some(f=>f.campo.startsWith("campeonato"))};
+    });
+    check(separa&&separa.relatou&&!separa.reprovou,
+      "campo com reticências declaradas é relatado, não reprovado");
 
     const limpo=await page.evaluate(()=>window.__LAB_MEDIR().falhas.length);
     check(limpo===0,"medição volta a zero depois da prova sintética");

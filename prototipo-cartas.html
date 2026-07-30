@@ -446,12 +446,13 @@ function medirTexto(el){
    função pelo navegador — a suíte é o portão, e o laboratório é o instrumento; duas
    medições diferentes para a mesma pergunta é o que produz desacordo silencioso. */
 function medirCartas(){
-  const falhas=[];
+  const falhas=[];        /* corte NÃO intencional: o texto vaza ou é decapitado */
+  const reticencias=[];   /* corte DECLARADO no CSS (`text-overflow:ellipsis`) */
   let total=0;
   for(const carta of todasAsCartas()){
     total++;
     const cx=carta.getBoundingClientRect();
-    const registrar=(el,nome,falta)=>falhas.push({nick:carta.dataset.nick||"—",campo:nome,
+    const registrar=(lista,el,nome,falta)=>lista.push({nick:carta.dataset.nick||"—",campo:nome,
       texto:el.textContent.trim(),falta:+falta.toFixed(1),
       passa:+(el.getBoundingClientRect().left+medirTexto(el)-cx.right).toFixed(1),
       fonte:getComputedStyle(el).fontSize});
@@ -460,7 +461,7 @@ function medirCartas(){
     const fixa=(sel,nome)=>{
       const el=carta.querySelector(sel);if(!el)return;
       const falta=medirTexto(el)-el.clientWidth;
-      if(falta>.5)registrar(el,nome,falta);
+      if(falta>.5)registrar(falhas,el,nome,falta);
     };
     /* caixa que ENCOLHE para o conteúdo (só `left`): ela nunca "transborda" de si
        mesma — o que importa é se a aresta direita passa do recuo da carta. */
@@ -468,13 +469,17 @@ function medirCartas(){
       const el=carta.querySelector(sel);if(!el)return;
       const recuo=cx.width*0.09;                    /* --pad, o mesmo dos dois lados */
       const excesso=el.getBoundingClientRect().right-(cx.right-recuo);
-      if(excesso>.5)registrar(el,nome,excesso);
+      if(excesso>.5)registrar(falhas,el,nome,excesso);
     };
-    /* caixa com reticências: aqui o navegador já cortou, e quem acusa é o scroll. */
+    /* Caixa com `text-overflow:ellipsis`: aqui cortar É a decisão de design — o
+       campeonato "DreamHack Cluj-Napoca 2015" não caberia em fonte nenhuma, e o
+       CSS declara as reticências. Isso vira RELATÓRIO, nunca reprovação: foi o que
+       reprovou a CI sem existir defeito, porque a métrica da fonte no Linux é ~7px
+       mais larga que no Windows e cruzou o limite lá e não aqui. */
     const cortada=(sel,nome)=>{
       const el=carta.querySelector(sel);if(!el)return;
       const falta=el.scrollWidth-el.clientWidth;
-      if(falta>.5)registrar(el,nome,falta);
+      if(falta>.5)registrar(reticencias,el,nome,falta);
     };
     fixa(".c-nick","nick (frente)");
     solta(".c-func","função (frente)");
@@ -482,19 +487,23 @@ function medirCartas(){
     cortada(".c-vnick","nick (verso)");
     cortada(".c-vrod b","campeonato (verso)");
     for(const st of carta.querySelectorAll(".c-st i"))
-      if(st.scrollWidth-st.clientWidth>.5)registrar(st,"stat (verso)",st.scrollWidth-st.clientWidth);
+      if(st.scrollWidth-st.clientWidth>.5)
+        registrar(reticencias,st,"stat (verso)",st.scrollWidth-st.clientWidth);
   }
   const largura=Math.round(todasAsCartas()[0]?.getBoundingClientRect().width||0);
-  return {total,largura,falhas};
+  return {total,largura,falhas,reticencias};
 }
 window.__LAB_MEDIR=medirCartas;
 
 function medir(){
-  const {total,largura,falhas}=medirCartas();
+  const {total,largura,falhas,reticencias}=medirCartas();
   const cabeca=`<b>${total}</b> cartas medidas a <b>${largura}px</b> · `+
     (falhas.length
       ?`<span class="lab-ruim">${falhas.length} estouro(s)</span>`
-      :`<span class="lab-ok">nenhum estouro</span>`);
+      :`<span class="lab-ok">nenhum estouro</span>`)+
+    (reticencias.length
+      ?` · ${reticencias.length} campo(s) com reticências, que é o comportamento declarado
+         (campeonato longo, nick do verso, nome de stat)`:"");
   const tabela=falhas.length?`<table><tr><th>carta</th><th>campo</th><th>texto</th>
     <th>falta</th><th>passa a borda</th><th>fonte</th></tr>`+
     falhas.map(f=>`<tr><td>${f.nick}</td><td>${f.campo}</td><td>${f.texto}</td>
