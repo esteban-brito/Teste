@@ -330,7 +330,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .c-nick{position:absolute;left:var(--pad);right:var(--pad);bottom:var(--b3);z-index:5;
   font-family:var(--ff);font-size:var(--t2);font-weight:700;line-height:1;letter-spacing:-.005em;
   text-transform:uppercase;color:#f4f8fd;white-space:nowrap}
-/* 3 · o que ele FAZ, na cor do tier */
+/* 3 · o que ele FAZ, na cor da função */
 .c-func{position:absolute;left:var(--pad);bottom:var(--b2);z-index:5;font-family:var(--ff);
   font-size:var(--t3);font-weight:700;letter-spacing:.2em;text-transform:uppercase;
   color:color-mix(in srgb,var(--r-ink) 84%,#fff)}

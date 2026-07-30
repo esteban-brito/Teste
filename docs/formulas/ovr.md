@@ -1,6 +1,8 @@
 # OVR — ZÊNITE
 
-Fonte executável atual: `nmOVR`, `ovrUnificado` e `iglOvr` em `game.js`.
+Fonte executável atual: `nmOVR`, `ovrUnificado` e `iglOvr` em
+`src/domain/evaluation/player-evaluation.mjs`, compostos pela API pública em
+`src/public/evaluation-api.mjs`.
 
 ## Qualidade de atributos
 
@@ -55,4 +57,3 @@ de fraggers.
 - normalização por soma dos pesos é obrigatória;
 - clamps e arredondamento ocorrem nos pontos atuais;
 - o snapshot de 85 IDs protege o resultado final.
-

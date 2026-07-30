@@ -405,7 +405,7 @@ assinaturas por função.
 ATRIBUTOS + TIMES_DEF
         |
         v
-PRISMA: afinidades -> role principal/secundário -> subarquétipo
+PRISMA: afinidades -> role principal/secundário -> papel de combate do IGL
         |
         v
 ZÊNITE: identidade + atributos + rating -> playstyle + OVR
@@ -1248,32 +1248,26 @@ Não presumir respostas sem conversar:
 11. Qual deve ser a faixa de OVR inicial e o ritmo desejado de progressão?
 12. Falha esportiva pode encerrar a carreira ou sempre há recuperação?
 
-## 13. Primeiro conjunto de trabalho recomendado ao retomar
+## 13. Frentes atuais ao retomar
 
-A fonte canônica da sequência é `docs/next-steps.md`. Ordem resumida:
+`docs/next-steps.md` preserva o plano histórico que originou R1–R6/P1–P6; os
+handoffs especializados mais novos definem a retomada operacional atual:
 
-1. R1 concluída: auditoria individual profunda sem tocar no motor ou
-   balanceamento;
-2. R2 concluída: desempenho, duas funções, distribuições, diagnóstico,
-   comparação e CSV individual no sandbox, usando matemática compartilhada com
-   R1;
-3. R3 em andamento: a MD3 isolada já está implementada; a próxima fatia deve
-   comparar a distribuição entre muitas campanhas;
-4. R4: auditar AWPer, sobrevivência e playstyle por critérios numéricos;
-5. R5/R6: balancear somente se houver evidência e validar integralmente;
-6. aprimorar usabilidade do laboratório;
-7. P2 concluído; decidir separadamente se a próxima fatia estrutural será a
-   decomposição de estado/DOM de `game.js` ou a limpeza interna do calibrador;
-8. completar corpus e primeira nota IFCS oficial;
-9. preparar Carreira de Jogador sobre APIs estáveis, RNG contratado e save
-   versionado.
+1. **cartas, produto visual:** o jogo continua no Tactical Editorial publicado;
+   a proposta de seis faixas e retratos está somente em `#proposta`. O próximo
+   passo é decidir o enquadramento padrão e completar a fatia da Spirit antes de
+   qualquer promoção. Fonte: `docs/cartas-design-2026-07-28.md` §12;
+2. **P5, estrutura:** separar somente criação/reset de `S`, `TG`, `MP` e `MATCH`,
+   preservando forma, identidade e quirks. Fonte:
+   `docs/p5-aplicacao-ui-2026-07-29.md` §11;
+3. **IFCS:** o corpus profissional continua parcial; não existe nota oficial;
+4. **Carreira de Jogador:** permanece uma frente posterior, dependente das
+   decisões de produto abertas e de estado/save próprios.
 
-O domínio e os dados de `game.js` já foram removidos; o ADR 0005 foi superado e
-novas adições entram apenas pelos módulos crus. A próxima fatia de R3 deve ampliar
-o contrato MD3 sem misturar a trilha estrutural. Antes de congelar thresholds de cauda ou
-ranking, revisar a baseline atual. Cada etapa deve ser um commit pequeno ou uma
-sequência curta com responsabilidade verificável; não misturar auditoria,
-interface, refatoração e balanceamento.
+R1–R6 e P2 são contexto histórico, não uma fila ainda por executar. O domínio e
+os dados de `game.js` já foram removidos; novas adições entram pelos módulos crus.
+Cada frente deve manter responsabilidade verificável e nunca misturar interface,
+refatoração, dados e balanceamento no mesmo commit.
 
 ## 14. Dívidas e riscos conhecidos
 

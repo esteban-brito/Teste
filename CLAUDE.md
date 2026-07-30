@@ -11,8 +11,9 @@ já entendidos ou declare o trabalho pronto sem prova suficiente.
 2. Leia `docs/project-context.md` e `docs/next-steps.md`.
 3. Antes de tocar aplicação, estado ou UI, leia
    `docs/p5-aplicacao-ui-2026-07-29.md`.
-4. Antes de tocar cartas, leia a seção 11 de
-   `docs/cartas-design-2026-07-28.md` e `docs/testing.md`.
+4. Antes de tocar cartas, leia as seções 11 (design publicado) e 12 (proposta
+   ativa, ainda não promovida) de `docs/cartas-design-2026-07-28.md`, além de
+   `docs/testing.md`.
 5. Antes de procurar qualquer dado do projeto, leia `src/data/catalog.mjs`.
 
 Branch de trabalho: `sandbox-test`. `main` permanece intocável sem pedido

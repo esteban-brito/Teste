@@ -3,6 +3,11 @@
 > **Leia este arquivo antes de alterar os módulos extraídos.** Ele é o relatório
 > final do ciclo P2 e registra o que saiu, como a paridade foi provada, os contratos
 > descobertos e as armadilhas que já custaram tempo.
+>
+> **Recorte temporal:** as pendências da seção 9 descrevem o fechamento do P2.
+> O estado operacional posterior está em `docs/project-context.md`, no handoff do
+> P5 e na seção 12 do documento de cartas; não trate aquela lista histórica como
+> fila atual.
 
 ## 1. Por que este ciclo existe
 
@@ -172,20 +177,22 @@ a string inteira. Dividir custaria 17 registros × 3 fontes + 9 pontos de UI que
 Fase 7 reescreve, por zero consumidor atual. Fazer quando houver um consumidor real,
 com a UI já modularizada.
 
-## 9. Fora do P2, mas pendente
+## 9. Fora do P2 no fechamento do ciclo
 
-- **Cartas.** Design aprovado e documentado em **`docs/cartas-design-2026-07-28.md`**;
-  o artefato é `prototipo-cartas.html`. **Não ligar ao jogo antes do P2 terminar** —
-  decisão do responsável, para não fazer o trabalho duas vezes.
+- **Cartas.** No fechamento, o design aprovado vivia em
+  **`docs/cartas-design-2026-07-28.md`** e `prototipo-cartas.html`, aguardando o
+  fim do P2. Essa condição já foi cumprida: o Tactical Editorial foi publicado;
+  uma proposta posterior permanece ativa apenas no laboratório (§12).
 
 ### A ordem de longo prazo
 
-**P2 → cartas ligadas ao jogo → P6 (Modo Carreira).** A ordem não é arbitrária: o P6
-está bloqueado em `docs/next-steps.md` por *"somente após uma API estável de avaliação,
-contrato de RNG e save versionado"* — o P2 é literalmente o pré-requisito do Carreira,
-e as cartas vêm antes dele por serem a camada que o jogador toca.
-- **Fotos de jogador não existem** e não há campo para elas. É a única lacuna de
-  dados real que a varredura confirmou.
+**P2 → cartas ligadas ao jogo → Carreira.** Essa era a ordem de dependência: API
+estável de avaliação, contrato de RNG e save versionado antes da Carreira. P2 e
+o primeiro design publicado de cartas já foram entregues; a Carreira continua
+posterior e ainda exige estado/save próprios e decisões de produto.
+- **Fotos no dado cru ainda não existem.** O laboratório possui um único ativo
+  independente (`fotos/donk_kato24.webp`), mas jogadores e treinadores não têm
+  campo de retrato em `src/data`.
 - **Faixa de dificuldade em revisão.** O invicto do elenco draftado está em 3,8%,
   abaixo do piso de 4%. O gate está rebaixado a relatório com o motivo escrito em
   `bancada/dificuldade.js`. É conversa pendente com o responsável, com o número

@@ -151,9 +151,9 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
    texto e precisa passar 4,5:1 contra #080d14. E o que deixa a moldura ser
    sangue #8b0f1d (2,03:1, reprovaria como texto) com tinta #ff7a86 (7,77:1).
 
-   AS MARCAS DE RARIDADE SAIRAM. Elas contavam a faixa, mas a faixa e funcao
-   direta do OVR e o OVR ja e o maior elemento da carta. O emblema de funcao
-   permanece: funcao nao e derivavel de numero nenhum.
+   AS MARCAS DE RARIDADE E OS EMBLEMAS DE FUNCAO SAIRAM. As marcas contavam a
+   faixa, mas ela e funcao direta do OVR e o OVR ja e o maior elemento da carta.
+   A funcao permanece escrita em destaque; o centro pertence ao retrato.
 
    SEM ANIMACAO, SEM HALO EXTERNO, SEM TEXTURA, SEM `mix-blend-mode` — este
    ultimo obriga cada carta a virar camada propria e ja custou 7 fps com seis
@@ -200,8 +200,8 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
      1 ESCURECIMENTO DO TOPO. O OVR e a bandeira ficam direto sobre o campo, sem
        placa por baixo. Contra um fundo escuro isso sempre funcionou; contra um
        rosto claro, nao. O escurecimento garante a faixa de leitura seja qual for
-       a foto — e o que impede a guarda de contraste de virar mentira, porque ela
-       calcula contra um fundo fixo e nao sabe que ha um retrato ali.
+       a foto. A guarda de contraste agora amostra os pixels reais dessas zonas;
+       o escurecimento e o que permite que a medicao passe para qualquer retrato.
      2 BANHO DA RARIDADE. Ele morava no proprio gradiente do campo. Com a foto
        ocupando o campo, o banho precisa subir para cima dela, senao a escada
        inteira que calibramos desaparece na carta que tem retrato.
@@ -238,7 +238,7 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
 .proposta .card.p-rank .cback{
   background:linear-gradient(168deg,
     color-mix(in srgb,var(--wash-cor) calc(var(--wash)*.6),#080b11),#06080d 58%)}
-/* as marcas contavam o que o OVR ja diz; o pseudo fica livre para a insignia de IGL */
+/* as marcas contavam o que o OVR ja diz; o pseudo nao e reaproveitado */
 .proposta .card::before{display:none}
 
 /* ── 3 · bordas das tres faixas de topo ──────────────────────────────────────
@@ -283,9 +283,10 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
 
    AS CORES SAO VIVAS, e o motivo e estrutural. Elas eram dessaturadas de
    proposito porque pintavam o CAMPO — a maior area da carta — e nao podiam
-   competir com a moldura. Mas a raridade tomou o campo: hoje a funcao ocupa
-   apenas o nome e o emblema. Sem area nao ha competicao, e o que sobrava era um
-   rotulo apagado. A saturacao vai de 31-49% para 56-89%. */
+   competir com a moldura. Mas a raridade tomou o campo: hoje a funcao ocupa o
+   nome escrito e, nos IGLs, a linha existente da funcao de combate. Sem area nao
+   ha competicao, e o que sobrava era um rotulo apagado. A saturacao vai de
+   31-49% para 56-89%. */
 .proposta .card.fn-igl    {--r:#4d9bff; --r-ink:#4d9bff}
 .proposta .card.fn-awper  {--r:#b070ff; --r-ink:#b070ff}
 .proposta .card.fn-entry  {--r:#ff7d4d; --r-ink:#ff7d4d}
@@ -311,12 +312,13 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
 .proposta .card.p-rank .cfront .c-func,
 .proposta .coachcard .cfront .c-func{letter-spacing:.15em;color:var(--r-ink)}
 
-/* ── 5 · o campo fica VAZIO, esperando a foto ─────────────────────────────────
+/* ── 5 · o campo pertence ao retrato ──────────────────────────────────────────
    Os emblemas de funcao saem, e com eles a prancheta do treinador. O motivo e
    de produto: o centro da carta e o lugar do retrato, e um simbolo grande atras
-   de um rosto vira sujeira. A camada `.c-foto` ja existe e ja esta preparada —
-   quando houver retrato ele entra ali como `background-image` e o banho da
-   raridade o tinge por cima. E mudanca de dado, nao redesenho.
+   de um rosto vira sujeira. A camada `.c-foto` recebe `--foto` quando a carta
+   declara um retrato, e o banho da raridade o tinge por cima. Sem `--foto`, o
+   fallback grafico continua inteiro. Promover isso e mudanca de dado, nao
+   redesenho.
 
    O QUE SE PERDE, E POR QUE E ACEITAVEL. O emblema era o canal de funcao que
    nao dependia de cor — a cobertura de daltonismo registrada no design de
@@ -330,29 +332,13 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
 .proposta .c-emblema{display:none}
 
 /* ── 6 · carta de IGL ────────────────────────────────────────────────────────
-   A carta de comando tem de ser diferente de todas. A primeira tentativa somou
-   DOIS elementos novos — uma bracadeira vertical na aresta esquerda e um filete
-   ao lado da funcao de combate — e as duas foram reprovadas: a listra briga com
-   a borda cromada nas faixas de topo, e o filete e mais um traco numa carta que
-   ja tinha traco demais.
+   A carta de IGL e estruturalmente igual as demais por decisao do responsavel.
+   Bracadeira, filete e entalhe foram testados e reprovados; nao reintroduzir.
 
-   A diferenca agora nao ACRESCENTA nada: ela MUDA a forma do que ja existe.
-
-     ENTALHE NA PLACA. A placa do nome tem um corte diagonal unico — e a
-     assinatura da carta de jogador. Na carta de IGL esse corte ganha um degrau,
-     e a peca inteira muda de silhueta nas duas faces. Nao e cor, nao e tinta,
-     nao e elemento novo: e a mesma placa com outro recorte. Por isso sobrevive
-     a 120px, ao cinza e ao daltonismo, e nao disputa nada com a borda.
-
-     FUNCAO DE COMBATE COLORIDA. Os 17 IGLs tem funcao de combate real
-     classificada pelo motor — IGL nunca e so IGL. Ela ja vivia na linha de
-     contexto, em cinza; agora usa a cor da propria funcao. Continua no MESMO
-     elemento de sempre, que o medidor ja mede — nenhum texto novo em
-     pseudo-elemento, que o medidor nao alcancaria.
-
-   A linha de contexto some na densidade compacta, e para o IGL ela deixa de
-   sumir: sem ela a funcao de combate desapareceria no celular, e ela e a metade
-   da identidade desta carta. O entalhe continua valendo em qualquer largura. */
+   Os 17 IGLs tem funcao de combate real classificada pelo motor. Ela continua
+   no MESMO elemento de contexto e recebe a cor da propria funcao, sem novo no,
+   pseudo-elemento ou excecao de densidade. Role principal, role de combate e
+   texto existente carregam a identidade sem criar outra silhueta. */
 /* Nao existe `cr-igl`: a funcao de COMBATE de um IGL nunca e IGL. A regra
    existia por simetria da tabela e nao casava com nenhuma carta das 152. */
 .proposta .card.cr-awper  {--cr:#b070ff}

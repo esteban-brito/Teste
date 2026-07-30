@@ -18,10 +18,10 @@ O mapa técnico e as regras para mudanças estão em:
   de profissionalização e visão do modo Carreira de Jogador;
 - [`docs/p5-aplicacao-ui-2026-07-29.md`](docs/p5-aplicacao-ui-2026-07-29.md):
   checkpoint operacional da modularização de aplicação/estado/UI;
-- [`docs/next-steps.md`](docs/next-steps.md): sequência aprovada para auditoria
-  individual, variância, modo campanha, balanceamento condicional e retomada;
+- [`docs/next-steps.md`](docs/next-steps.md): plano histórico, decisões e backlog
+  de auditoria individual, variância, campanha e balanceamento condicional;
 - [`docs/architecture.md`](docs/architecture.md): fluxo de dados e fronteiras;
-- [`docs/testing.md`](docs/testing.md): 24 suítes e comandos por camada;
+- [`docs/testing.md`](docs/testing.md): 25 suítes e comandos por camada;
 - [`docs/rating-balance-2026-07-20.md`](docs/rating-balance-2026-07-20.md): auditoria sem curadoria e comparação antes/depois;
 - [`docs/fidelity-corpus.md`](docs/fidelity-corpus.md): coleta e auditoria do corpus IFCS;
 - [`docs/fidelity-target.json`](docs/fidelity-target.json): alvo histórico
@@ -40,10 +40,18 @@ npm run validate
 
 ## Como jogar
 
-Abra <https://esteban-brito.github.io/Teste/> — ou baixe e abra o
-`index.html` em qualquer navegador moderno. Não precisa instalar nada: o jogo é
-só HTML, CSS e JavaScript estáticos. Mantenha os três arquivos (`index.html`,
-`style.css`, `game.js`) na mesma pasta.
+Abra <https://esteban-brito.github.io/Teste/>. Para executar uma cópia local,
+mantenha a árvore inteira do repositório e sirva-a por HTTP, porque os módulos ES
+não devem ser carregados diretamente por `file://`:
+
+```bash
+npm ci
+npm run serve
+# abra http://127.0.0.1:5173/
+```
+
+O jogo continua estático e sem build ou dependências de runtime; Node e
+Playwright existem somente para desenvolvimento e validação.
 
 1. **Sorteie um time** na roleta.
 2. **Escolha 1 carta** (jogador ou treinador) do time sorteado por rodada.
@@ -75,6 +83,7 @@ draft9-0/
 │   └── ui/               ← renderizadores e utilitários puros de interface
 ├── elencos.html          ← base de elencos (página standalone)
 ├── sandbox.html          ← bancada de tuning + calibrador inteligente
+├── prototipo-cartas.html ← laboratório A/B que usa os módulos e o CSS reais
 ├── calibrador-worker.js  ← Web Worker do calibrador (busca em paralelo)
 ├── fonts.css + fonts/    ← fontes auto-hospedadas (Chakra Petch + Barlow, sem CDN)
 ├── og-image.png · robots.txt · .gitignore
@@ -129,20 +138,24 @@ atributos crus
 
 ### Onde mexer no balanceamento
 
-Os números ficam concentrados em blocos `CFG_*` no topo do `game.js`:
+Os números não vivem mais em `game.js`. As fontes executáveis estão nos módulos
+de domínio e são compostas pelas APIs públicas:
 
-| Bloco | O que controla |
+| Fonte | O que controla |
 |---|---|
-| `ROLE_PERFIL` | Pesos de **afinidade** (classificação) e **OVR** (nível) por função |
-| `CFG_AVALIACAO` | Curva `core → OVR` (logística, satura em 22), regras do IGL |
-| `CFG_QUIMICA` | Penalidades por falta de role, saturação, egos; mitigadores do treinador |
-| `CFG_SIM` | Simulação: lados, economia, momentum, mapas |
-| `CFG_FA` | Rating estilo HLTV: pesos de kill, sobrevivência, KAST, impacto por função |
+| `src/domain/evaluation/role-affinity.mjs` | `ROLE_PERFIL`, contraindicações e afinidade por função |
+| `src/domain/evaluation/player-evaluation.mjs` + módulos vizinhos | curva de OVR, regras do IGL, classificação e playstyles; `CFG_AVALIACAO` é a fachada pública composta |
+| `src/domain/chemistry/team-chemistry.mjs` | composição, conflitos, treinador, química e força efetiva |
+| `src/domain/simulation/simulation-config.mjs` | `CFG_SIM`, forma de campanha e rating pós-combate (`CFG_FA`) |
+
+Qualquer alteração nesses valores é balanceamento: exige fatia e commit próprios,
+comparação estatística e as duas guardas acumuladas descritas em `AGENTS.md`.
 
 ## A bancada de tuning (sandbox)
 
-O `sandbox.html` é um laboratório independente que carrega os motores do
-`game.js` ao vivo e permite editar:
+O `sandbox.html` é um laboratório independente que importa
+`src/public/simulation-api.mjs`, a mesma composição usada por jogo, worker e
+bancada, e permite editar:
 
 - **Atributos de um jogador** (sliders) e ver o efeito no OVR, função e playstyle
 - **Pesos dos motores** (curva, afinidade, química, simulação, rating)
@@ -155,11 +168,10 @@ rating com as mesmas faixas dos benchmarks. Intervalos de 95% distinguem
 oscilação de amostra de desvio material; métricas raras sem observações
 suficientes ficam pendentes no diagnóstico legado do sandbox.
 
-O painel de desvios mostra todos os jogadores que participaram: dez no confronto
+O painel individual mostra todos os jogadores que participaram: dez no confronto
 A × B e até os 85 na amostra da liga. Ele mantém rating histórico, média
-simulada, delta e quantidade de mapas, ordenados por desvio absoluto. Média,
-mediana, desvio-padrão, percentis e intervalo individual ainda pertencem à
-próxima etapa documentada em [`docs/next-steps.md`](docs/next-steps.md).
+simulada, delta, quantidade de mapas, mediana, desvio-padrão, P5/P95, faixa
+recorrente P10–P90, extremos e IC95%, com comparação e exportação CSV.
 
 Esse painel não é a nota científica IFCS. No IFCS, falta de volume no corpus
 real impede publicar a nota; falta de uma saída exigida do simulador recebe zero
@@ -171,23 +183,11 @@ de impacto mostra o que mudou. Nada é salvo nem aplicado ao jogo — é isolado
 
 ### Playstyles universais
 
-10 estilos que servem pra qualquer função, cada um com uma "receita" de pesos:
-
-| Estilo | Foco | Rating peso |
-|---|---|---|
-| Agressivo | Entrada + abertura | 40% |
-| Spacetaker | Abertura + fogo + entrada | 52% |
-| Trader | Trade + fogo + utilitário | 48% |
-| Playmaker | Fogo + abertura | 60% |
-| Infiltrador | Clutch + abertura + fogo | 52% |
-| Baiter | Trade + clutch + fogo | 32% |
-| Clutcher | Clutch + fogo | 52% |
-| Suporte | Utilitário + trade + abertura | 40% |
-| Cerebral | Abertura + utilitário + clutch | 52% |
-| Âncora | Clutch + utilitário + trade | 45% |
-
-**Coringa** (joker): 5 de 7 stats acima do piso (`pisoMin`). Tolerância 1
-stat fraco. Spread máximo controlável.
+Dez estilos normais e o Coringa competem por receitas gerais, sem bônus por
+função. Rating histórico afeta nível/OVR, nunca a identidade do estilo. As
+receitas, gates e invariantes atuais ficam em
+[`docs/formulas/playstyles.md`](docs/formulas/playstyles.md) e na fonte executável
+`src/domain/evaluation/style-score.mjs`; não são duplicados aqui para evitar drift.
 
 ### Química (SINAPSE)
 
@@ -246,7 +246,7 @@ A pasta `bancada/` contém uma suíte de validação que roda no Node.js:
 | `abertura.js` | Nenhum peso negativo pode entrar no sorteio do duelo de abertura |
 | `sweep.test.js` | Varredura pareada e intervalo de proporção: braços isolados, valor restaurado, Wilson conferido |
 | `campanha-major.js` | Não é suíte: é o Major replicado fora da UI, usado pela dificuldade e pelas varreduras |
-| `run.js` | Roda as 24 suítes; aceita grupos de dados, regressão, calibrador, benchmark, fidelidade e E2E |
+| `run.js` | Roda as 25 suítes; aceita grupos de dados, regressão, calibrador, benchmark, fidelidade e E2E |
 
 ```bash
 npm run test:data          # integridade dos dados
@@ -255,8 +255,8 @@ npm run test:calibrator    # calibrador e workers
 npm run test:benchmark     # realismo + assists + KDA + rating + perfis + dificuldade
 npm run test:fidelity      # scorer e contrato do corpus IFCS
 npm run test:e2e           # calibrador, aba Simular e jogo principal no navegador
-npm run test:all           # todas as 24 suítes
-npm run validate           # check + lint + todas as 24 suítes
+npm run test:all           # todas as 25 suítes
+npm run validate           # check + lint + todas as 25 suítes
 npm run score:fidelity -- caminho/entrada.json  # calcula um relatório IFCS
 npm run corpus:fidelity -- --template  # modelo do manifesto auditável
 ```
