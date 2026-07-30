@@ -1,10 +1,11 @@
 # Cartas de jogador — design aprovado (28/07/2026)
 
-> **Estado: LIGADO AO JOGO em 29/07/2026**, depois do P2, como o responsável havia
-> decidido. O design executável vive em `src/ui/game/card-view.mjs`, com
+> **Estado: LIGADO AO JOGO em 29/07/2026 e refinado em 30/07/2026**, depois do
+> P2, como o responsável havia decidido. O design executável vive em
+> `src/ui/game/card-view.mjs`, com
 > `src/ui/shared/flags.mjs` (bandeiras) e `src/ui/shared/role-emblems.mjs`
 > (emblemas), e o CSS entrou em `style.css` — commits `c1ecdee` e `8a12250`. O que
-> mudou de lá para cá está na **seção 10**.
+> mudou de lá para cá está nas **seções 10 e 11**.
 >
 > `prototipo-cartas.html` deixou de ser protótipo e virou o **laboratório de
 > cartas** — ver a seção 11. Ele importa o código real, então não pode mais
@@ -40,13 +41,16 @@ Decisões que custaram iteração:
 
 ## 3. Verso — como joga
 
-A espinha é o **playstyle**, e a **receita fica visível** com os pesos que o motor
-realmente usa: dá para ver *por que* ele é Closer, não só o rótulo.
+A espinha é o **playstyle**. A receita continua determinando quais atributos entram
+e em que ordem, mas os pesos técnicos não são exibidos: o verso comunica o jogador,
+não a fórmula. OVR e rating também não se repetem no verso.
 
-- Firepower **sempre em primeiro**; os demais por contribuição ao estilo.
-  Mesma regra do `backPlayer` em `game.js` — fp é prefixado mesmo quando não está na
-  receita, e o conjunto é cortado em 4. Por isso o verso mostra **3 ou 4 stats**, e o
-  layout precisa aguentar os dois casos (por isso a lista centraliza).
+- Firepower **sempre em primeiro**; os demais por contribuição ao estilo
+  (`peso × valor`), com a mesma matemática anterior.
+  Mesma regra do `backPlayer` em `src/ui/game/card-view.mjs` — fp é prefixado
+  mesmo quando não está na receita, e o conjunto é cortado em 4. Por isso o verso
+  mostra **3 ou 4 stats**, e o layout precisa aguentar os dois casos (por isso a
+  lista centraliza).
 - Rodapé: **campeonato**, **ano** e **colocação**. É o que distingue duas cartas do
   mesmo jogador — donk em *IEM Katowice 2024* e donk em *Budapest Major 2025* são a
   mesma pessoa em eras diferentes.
@@ -56,13 +60,14 @@ realmente usa: dá para ver *por que* ele é Closer, não só o rótulo.
 - **Um bloco de tokens em `.c` governa as DUAS faces**: um recuo lateral (`--pad`),
   um passo vertical (`--passo`) que gera a pilha inteira por `calc`, e quatro corpos
   de texto numa razão de ~1,5.
-- **Raridade é uma tabela** de três colunas — cor, aro, brilho. Nova raridade = nova
-  linha.
+- **Raridade é uma tabela** de quatro sinais — cor, aro, fio e contagem de marcas.
+  Nova raridade = nova linha; nenhuma faixa depende de halo externo.
 - A diagonal do verso **deriva em CSS** o mesmo ângulo físico da frente
   (`--corte-n * --placa-n / --faixa-n`). Antes era um valor fixo com a conta só no
   comentário, e mudar a altura da placa desalinhava as faces em silêncio.
-- **Uma carta, duas densidades**: tudo é `cqw` sobre container query. Abaixo de 150px
-  o texto miúdo some sozinho, nas duas faces. Não são duas cartas.
+- **Uma carta, duas densidades**: tudo é `cqw` sobre container query. A 150px ou
+  menos, só o contexto secundário da frente pode sair; stats, playstyle,
+  campeonato e colocação permanecem visíveis. Não são duas cartas.
 
 ## 5. Faixas de raridade — decididas por medição
 
@@ -148,7 +153,7 @@ Agora são dois canais, e eles não disputam nenhuma propriedade:
 
 | classe | canal | pinta |
 |---|---|---|
-| `tier-*` | **raridade** | moldura: aro, brilho, fio, placa e o rótulo do OVR |
+| `tier-*` | **raridade** | moldura: aro, marcas, fio, placa e o rótulo do OVR |
 | `fn-*` | **função** | campo: cor de fundo, nome da função e o emblema ao fundo |
 
 **As faixas vivem no código, em dois lugares que precisam andar juntos.** `tierOf`
@@ -159,7 +164,8 @@ arquivos. O guarda de views cobre as bordas (20 não pode cair em `tier-1`, 17 n
 pode cair em `tier-3`).
 
 O resto deste documento (hierarquia da frente, playstyle como espinha do verso,
-tokens, bandeiras e os casos que quebram layout) continua valendo como escrito.
+tokens, bandeiras e os casos que quebram layout) continua valendo com o contrato
+de refinamento registrado ao fim da seção 11.
 
 ## 11. O laboratório de cartas (29/07/2026)
 
@@ -174,12 +180,13 @@ npm run serve   →   http://127.0.0.1:5173/prototipo-cartas.html
 
 Precisa de servidor: módulo ES não carrega por `file://`.
 
-O que ele tem: um botão **Proposta** (tecla `P`) que liga o bloco `#proposta` e faz o
-A/B contra o jogo atual; **verso**, **escala de cinza**, **oito larguras** — as cinco
-reais (250/188/176/130/120 px) e a costura compacta (151/150/149 px) — e **simulação
-de daltonismo**; a escada de raridade isolando só o OVR; a matriz de 30 combinações
-raridade × função; os casos que quebram; os 17 elencos completos; emblemas e
-bandeiras ampliados.
+O que ele tem: um botão **Proposta futura** (tecla `P`) que liga o bloco `#proposta`
+e faz o A/B contra o jogo atual; depois de uma promoção esse bloco fica vazio,
+para não manter uma segunda cópia do CSS. Também oferece **verso**, **escala de
+cinza**, **oito larguras** — as cinco reais (250/188/176/130/120 px) e a costura
+compacta (151/150/149 px) — e **simulação de daltonismo**; a escada de raridade
+isolando só o OVR; a matriz de 30 combinações raridade × função; os casos que
+quebram; os 17 elencos completos; emblemas e bandeiras ampliados.
 
 E tem o **medidor de geometria**, que é a parte que não é gosto: ele mede texto
 contra caixa, recorte vertical e colisão entre regiões em todas as cartas da página,
@@ -253,18 +260,44 @@ correspondem à ativação da densidade compacta antes inerte.
 Fechamento do marco: `npm run validate`, **25/25 suítes verdes** em 198,2 s, sem
 alteração de snapshot, golden, RNG, dados ou balanceamento.
 
-### Propostas de design ainda no laboratório
+### Tactical Editorial promovido ao jogo (30/07/2026)
 
-| id | o que é |
-|---|---|
-| P4 | escada de raridade legível em cinza: 0–4 marcas + peso de aro + fio normalizado |
-| P5 | campo da função com menos croma; emblema mais presente |
-| P6 | treinador sai da escada: moldura neutra e fio segmentado |
-| P9 | carta declarando "sem treinador" no lugar do buraco na grade |
-| — | emblema do Support deixa de ser um `+`, que é o glifo do slot vazio |
+O responsável pediu uma superfície mais limpa, profissional, legível e robusta,
+sem a luz atrás das cartas. A proposta foi montada e medida no laboratório antes
+de migrar para o jogo, no commit `bf5d5e5`.
 
-Os números que sustentam P4 e P5: a luminância das cinco faixas é quase o inverso da
-escada (`s 0,300 < 2 0,402 < 3 0,460 < h 0,469 < 1 0,581`), e **as seis** cores de
-função caem a ≤30° de matiz de alguma cor de raridade — IGL×tier-3 a 4°, AWPer×holo a
-5°, Rifler×tier-1 a 6°. Não há como separar por matiz (cinco matizes já cobrem a roda),
-então raridade fica com a saturação e a contagem; função fica com a forma.
+- **Sem luz decorativa:** cartas têm somente aro interno; hover não altera a
+  raridade, entrada não varre brilho e a holo é estática. Foram removidos halos,
+  pulsos e overshoot das animações da própria carta.
+- **Raridade padronizada:** P4 foi promovida. A escada usa 0–4 marcas, aro e fio
+  normalizados, por isso continua identificável em cinza e daltonismo.
+- **Dois canais realmente separados:** P5 foi promovida. A função usa forma e um
+  campo contido; a raridade concentra os sinais de moldura.
+- **Treinador como categoria:** P6 foi promovida. Moldura neutra e fio segmentado
+  evitam que um treinador pareça mais raro que um jogador holo. A característica
+  continua colorida e o verso recebe o mesmo rodapé de era.
+- **Verso editorial:** `.c-vovr`, RTG e pesos numéricos da receita deixaram de ser
+  renderizados. A seleção e a ordem dos stats continuam exatamente por
+  contribuição `peso × valor`; foi removido apenas o ruído visual.
+- **Era sempre legível:** campeonato e colocação aparecem em todas as cartas,
+  inclusive treinador e densidade compacta. O evento quebra linha em vez de
+  desaparecer ou usar reticências.
+- **Movimento curto:** hover 180 ms, flip 360 ms com fade de 180 ms, distribuição
+  400 ms e encaixe 280 ms, usando `cubic-bezier(.22,1,.36,1)`. Os keyframes usam
+  apenas `transform`/`opacity`, sem rotação nem escala acima de 1.
+
+P9 (inventar carta para elenco histórico sem treinador) e a troca do emblema do
+Support não foram promovidas: eram hipóteses fora deste refinamento e saíram do
+bloco ativo. Ausência de treinador continua sendo ausência real, sem dado fictício.
+O `#proposta` está vazio e reservado para a próxima hipótese.
+
+As guardas agora provam 145 cartas × 8 larguras: zero falha geométrica, conteúdo
+primário presente, fontes mínimas, contraste de pelo menos 4,5:1, nenhum halo e
+nenhum nó removido no HTML. A comparação pareada de 21 capturas mudou somente os
+três estados com cartas — frente, verso e elenco — nas três larguras; os outros 12
+estados permaneceram pixel a pixel idênticos. Inspeção manual aprovou as nove
+diferenças.
+
+Fechamento: `npm run validate`, **25/25 suítes verdes** em 182,2 s; snapshot,
+golden, RNG, tiers, dados crus e balanceamento intactos. CI e deploy do Pages:
+workflow `30527422214`, verde.

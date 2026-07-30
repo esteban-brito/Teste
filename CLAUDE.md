@@ -66,6 +66,21 @@ Regras não negociáveis:
    esteja sempre verde. Não as remova.
 10. O E2E precisa abrir também `index.html?e2e=1` em viewport móvel e provar
     proporção 5:7, ausência de overflow, modo Virar, reset e seleção normal.
+11. O verso não contém `.c-vovr`, RTG nem pesos numéricos da receita. O OVR
+    continua na frente e o rating continua no dado/motor; remover a exibição não
+    autoriza apagar ou recalibrar nenhuma dessas informações.
+12. Jogador e treinador compartilham `.c-vrod`. `camp` e `coloc` vêm da era do
+    elenco, precisam existir nas duas categorias e permanecem visíveis inclusive
+    na densidade compacta. Campeonato não usa reticências.
+13. Carta não projeta halo: o `box-shadow` da superfície é somente `inset`.
+    Também não há varredura de luz na entrada, holografia contínua, rotação ou
+    overshoot acima de escala 1 nas animações de distribuição/encaixe.
+14. Movimento usa os tokens centrais de `style.css`: hover 180 ms, flip 360 ms
+    com fade de 180 ms, distribuição 400 ms e encaixe 280 ms, todos com a curva
+    editorial. `prefers-reduced-motion` desliga transições e animações da carta.
+15. O E2E exige, nas oito larguras, rodapé em 100% das cartas, tamanhos mínimos,
+    contraste calculado de pelo menos 4,5:1 e ausência física dos nós removidos.
+    Não substitua essas provas por uma captura bonita.
 
 ## Ritual para qualquer mudança visual de carta
 
@@ -85,18 +100,24 @@ Os E2E usam servidores efêmeros. Não escolha faixas que incluam portas bloquea
 pelo Chromium: a porta 6000 gera `ERR_UNSAFE_PORT`. O fluxo principal usa
 7000–7299; a causa e a regra permanente estão em `docs/testing.md`.
 
-## Checkpoint comprovado de 30/07/2026
+## Checkpoint comprovado de 30/07/2026 — Tactical Editorial
 
-- `5ae9531`: densidade compacta corrigida, faces acessíveis, hover touch seguro e
-  laboratório ampliado;
-- `24f1aca`: flutuação de CI por porta insegura eliminada;
-- laboratório: 145 renderizações/casos, oito larguras, estado atual e proposta;
-- comparação visual: 21 capturas; apenas seis estados compactos de celular/tablet
-  mudaram, e as outras 15 permaneceram idênticas;
-- validação local: 25/25 suítes verdes;
-- CI e deploy: workflow `30523360771` verde;
-- nenhuma alteração em dados, OVR, raridade, snapshot, golden, RNG ou
-  balanceamento.
+- base preservada: `5ae9531` corrigiu a densidade compacta e a acessibilidade;
+  `24f1aca` eliminou a porta insegura da CI;
+- `bf5d5e5`: remove halos, varredura de luz, holografia contínua e overshoot;
+  padroniza raridade, treinador, frente, verso e movimento;
+- o verso deixa de renderizar OVR, RTG e pesos técnicos, mas preserva exatamente
+  a seleção e a ordem peso × valor dos atributos; campeonato e colocação passam
+  a ser obrigatórios também no treinador;
+- laboratório: 145 renderizações/casos e oito larguras; o bloco `#proposta` está
+  vazio depois da promoção, pronto para a próxima hipótese sem manter CSS duplo;
+- comparação visual: 21 capturas; mudaram somente frente, verso e elenco nas três
+  larguras (9 estados), enquanto os outros 12 estados ficaram pixel a pixel
+  idênticos;
+- validação local: `npm run validate`, 25/25 suítes verdes em 182,2 s;
+- CI e deploy: workflow `30527422214` verde;
+- nenhuma alteração em dados crus, OVR, tiers, snapshot, golden, consumo de RNG
+  ou balanceamento.
 
 Se o repositório tiver avançado, trate este checkpoint como histórico e confirme o
 estado real. As guardas executáveis e os documentos especializados continuam sendo
