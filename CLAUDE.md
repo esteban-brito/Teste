@@ -122,3 +122,31 @@ pelo Chromium: a porta 6000 gera `ERR_UNSAFE_PORT`. O fluxo principal usa
 Se o repositório tiver avançado, trate este checkpoint como histórico e confirme o
 estado real. As guardas executáveis e os documentos especializados continuam sendo
 a fonte de verdade.
+
+## Existe uma proposta visual ATIVA no laboratório (30/07/2026)
+
+**Antes de tocar em carta, leia a seção 12 de `docs/cartas-design-2026-07-28.md`.**
+O bloco `#proposta` de `prototipo-cartas.html` deixou de estar vazio: ele carrega
+uma hipótese completa — escada de seis faixas por OVR, bordas cromadas no 20/21/22,
+paleta de função reconstruída, treinador reformulado e a primeira fatia de retrato.
+
+O que uma sessão nova precisa saber antes de mexer:
+
+- **nada disso está no jogo.** Com a tecla `P` desligada, laboratório e jogo são
+  idênticos. O único arquivo de produto tocado foi `style.css`, e só para separar
+  pintura de tinta (`--m`/`--m-ink`, `--r`/`--r-ink`), com 21/21 capturas
+  provadas pixel a pixel idênticas;
+- **não reintroduza o que foi reprovado**: guilhoché, textura no campo, filete
+  duplo no topo, filete sob o nome da função, braçadeira ou entalhe na carta de
+  IGL. A carta de IGL é estruturalmente igual às outras de propósito;
+- **as marcas de raridade e os emblemas de função foram removidos** por decisão
+  do responsável — o OVR carrega o valor e o centro da carta é do retrato;
+- **fio, campo e placa saem de `--fio-cor`/`--wash-cor`, nunca de `--m` cru.**
+  Derivar qualquer um deles da cor estrutural reintroduz inversão de luminância
+  na escada, que já aconteceu duas vezes;
+- **promover exige mover cinco pontos juntos**: `tierOf` em `card-view.mjs`,
+  `tierVars` em `elencos.html`, `tools/check-game-view-modules.js`, o array
+  `TIERS` do laboratório e `CARTAS_ESPERADAS` em `bancada/e2e-cartas.js`;
+- **a guarda de contraste agora amostra pixel real** nas cartas com `--foto`,
+  porque o modelo de fundo fixo deixa de valer quando há retrato. Ela esconde o
+  texto antes de medir e tem duas provas sintéticas de que consegue reprovar.
