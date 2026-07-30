@@ -12,7 +12,17 @@ async function main(){
   ["avaliarJogador","aplicarAvaliacaoContextual","ovrUnificado","nmOVR","distribuirRoles",
     "forcaTime","rolePairReality","roleStyleReality","roleAfinidade","secondaryScore",
     "styleScoreTable","STYLE_LABEL","STYLE_RECIPE"].forEach(name=>assert.equal(typeof A[name],"function",`${name} ausente da API pública`));
-  A.TEAMS.forEach(team=>team.jogadores.forEach(card=>assert.equal(card._eng,A.POOL[card._eng.id],`${team.nome}/${card.nick}: _eng perdeu identidade`)));
+  A.TEAMS.forEach(team=>{
+    team.jogadores.forEach(card=>{
+      assert.equal(card._eng,A.POOL[card._eng.id],`${team.nome}/${card.nick}: _eng perdeu identidade`);
+      assert.equal(card.camp,team.camp,`${team.nome}/${card.nick}: campeonato saiu da era do elenco`);
+      assert.equal(card.coloc,team.coloc,`${team.nome}/${card.nick}: colocação saiu da era do elenco`);
+    });
+    if(team.treinador){
+      assert.equal(team.treinador.camp,team.camp,`${team.nome}/${team.treinador.nick}: campeonato não chegou à carta`);
+      assert.equal(team.treinador.coloc,team.coloc,`${team.nome}/${team.treinador.nick}: colocação não chegou à carta`);
+    }
+  });
   [...A.PLAYSTYLE_IDS,"joker"].forEach(style=>
     assert.equal(A.styleLabel(style),A.STYLE_LABEL(style),`rótulo público de ${style} divergiu`));
   const novo=A.buildEvaluationState();assert.notEqual(novo.POOL,A.POOL,"rebuild precisa criar estado novo");

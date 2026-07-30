@@ -31,11 +31,11 @@
    `#proposta`, que só vale com a classe `proposta` na raiz. Com o botão desligado
    você vê o jogo como está hoje; ligado, a proposta. Quando uma proposta for
    aprovada, ela migra para `style.css`/`card-view.mjs` — e este arquivo continua
-   sendo a bancada da PRÓXIMA.
+   sendo a bancada da PRÓXIMA. Sem hipótese ativa, os dois estados são idênticos.
 
    O MEDIDOR é a parte que não é gosto: ele mede texto contra caixa nas cartas da
    página e reprova por número. Foi ele que achou, em 29/07/2026, que a escala de
-   nome estava MORTA no jogo (ver a nota P1 no bloco da proposta).
+   nome estava morta no jogo e hoje protege geometria, hierarquia e conteúdo.
    ══════════════════════════════════════════════════════════════════════════ */
 body{padding:0 0 60px}
 .lab-topo{position:sticky;top:0;z-index:40;background:rgba(9,13,20,.94);
@@ -103,132 +103,20 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
   box-shadow:0 0 0 1px rgba(255,255,255,.22)}
 .lab-band .p{width:14px;aspect-ratio:3/2;border-radius:1px;background-size:cover;background-position:50%;
   box-shadow:0 0 0 1px rgba(255,255,255,.22)}
-/* carta de "elenco sem treinador" — marcação nova, proposta P9 */
-.lab-semcoach{position:relative;border-radius:10px;aspect-ratio:5/7;min-height:148px;
-  border:1px dashed rgba(148,163,184,.34);background:#0a0e16;container-type:inline-size;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5cqw;padding:9%}
-.lab-semcoach .t{font-family:var(--ff);font-weight:700;font-size:6.4cqw;letter-spacing:.16em;
-  text-transform:uppercase;color:#7b8798;text-align:center;line-height:1.2}
-.lab-semcoach .s{font-family:'Barlow Semi Condensed',sans-serif;font-size:5.6cqw;line-height:1.35;
-  color:#5b687b;text-align:center}
 </style>
 
 <style id="proposta">
-/* ══════════════════════════════════════════════════════════════════════════
-   PROPOSTA · vale só com a classe `proposta` na raiz
-   ──────────────────────────────────────────────────────────────────────────
-   Cada bloco abaixo é candidato a migrar para `style.css` sem a prefixação
-   `html.proposta`. Nada aqui inventa número sem motivo escrito.
-   ══════════════════════════════════════════════════════════════════════════ */
-
-/* ── JÁ PROMOVIDAS AO JOGO em 29/07/2026, e por isso não estão mais aqui ─────
-   P1 · a escala de nome estava MORTA: `--t2` era declarado em `.card`, mas o
-        card-view põe `--nick-esc` em `.cfaces`, que é FILHA — e substituição de
-        custom property acontece no elemento onde a propriedade é declarada,
-        então `var(--nick-esc,1)` sempre caía no fallback 1. Os 100 nicks
-        renderizavam a 16cqw; `olofmeister` e `pashaBiceps` eram cortados 28px
-        além da borda. Hoje `--t2` vive em `.cfaces`, e a densidade compacta
-        parou de CRESCER o texto (era 18cqw, o que reabria o corte a 120px).
-   P3 · o rótulo do verso ganhou `--carac-esc` pela mesma lógica: "Desenvolvedor"
-        transbordava 16px no desktop e 26px a 120px.
-   P8 · `:hover` deixou de usar `--m` puro, que exibia o aro de opacidade cheia
-        de outra faixa em qualquer carta.
-   O medidor abaixo é o que prova as três: com a proposta DESLIGADA ele tem de
-   dar zero estouros nas cinco larguras. Se der, alguma delas regrediu. */
-
-/* ── P4 · A ESCADA DE RARIDADE PASSA A EXISTIR SEM COR ──────────────────────
-   Medido: a luminância das cinco faixas é quase o INVERSO da escada.
-
-     escada     3(comum) → 2 → 1 → s → h(raro)
-     luminância 0,460     0,402  0,581  0,300  0,469     ordem real: s<2<3<h<1
-
-   A segunda faixa mais rara é a MAIS ESCURA de todas, e a mais comum é mais
-   clara que a holo. Em escala de cinza — e para quem não distingue cor — sobrava
-   só a espessura do aro, que saturava em 2px já no tier-1 e não crescia mais.
-   O emblema resolveu daltonismo para FUNÇÃO; raridade não tinha nada.
-
-   Não dá para consertar por matiz: cinco matizes já cobrem a roda, então
-   nenhuma cor de função fica a 60° de todas elas (medido: as seis colidem, a
-   pior a 4°). A saída é dar à raridade um canal que COR nenhuma carrega —
-   CONTAGEM. Zero a quatro marcas na aresta superior, mais peso de aro crescente.
-   Contar barras funciona em cinza, em daltonismo e a 120px. */
-html.proposta .card.tier-3{--m:#8b98a8; --marcas:0; --fio-a:52%; --aro:1px;   --aro-a:34%}
-html.proposta .card.tier-2{             --marcas:1; --fio-a:78%; --aro:1.5px; --aro-a:62%}
-html.proposta .card.tier-1{             --marcas:2; --fio-a:88%; --aro:2px;   --aro-a:82%}
-html.proposta .card.tier-s{             --marcas:3; --fio-a:100%;--aro:2.5px; --aro-a:100%}
-/* a holo ganha aro sólido também: hoje ela tem `--aro-a:0%` e depende só da
-   borda animada, então em `prefers-reduced-motion` ela perde metade do sinal */
-html.proposta .card.tier-h{             --marcas:4; --fio-a:100%;--aro:2.5px; --aro-a:64%}
-
-/* O FIO era o que mais lia, e brilhava na razão inversa: prata (comum, L=0,46)
-   saía mais luminoso que verde (L=0,40). Normalizar por alfa desacopla o brilho
-   do matiz e devolve a ordem. */
-html.proposta .c-fio{
-  background:linear-gradient(90deg,transparent,
-    color-mix(in srgb,var(--m) var(--fio-a,100%),transparent) 20%,
-    color-mix(in srgb,var(--m) var(--fio-a,100%),transparent) 76%,transparent)}
-html.proposta .c-vfio{
-  background:linear-gradient(90deg,transparent,
-    color-mix(in srgb,var(--m) var(--fio-a,100%),transparent) 20%,
-    color-mix(in srgb,var(--m) var(--fio-a,100%),transparent) 76%,transparent)}
-
-/* As MARCAS. `::before` da carta estava livre (`::after` é da holo e das
-   etiquetas NO ELENCO/JÁ NA LINE). Ficam na aresta de cima, à direita, acima da
-   bandeira — que começa em 6,5% da altura, então não há colisão. */
-/* Recuadas para o mesmo `--pad` da bandeira, e não na aresta: no canto o raio de
-   10px come a primeira marca, e na holo elas disputavam com a borda animada. */
-html.proposta .card::before{content:"";position:absolute;top:2.6cqw;right:var(--pad);z-index:6;
-  pointer-events:none;height:2.4cqw;width:calc(var(--marcas,0)*4.4cqw);
-  background:repeating-linear-gradient(90deg,
-    var(--m) 0 2.8cqw,transparent 2.8cqw 4.4cqw);
-  /* o contorno escuro é o que faz a marca existir em CINZA sobre a luz de topo */
-  filter:drop-shadow(0 .5px 1.5px rgba(0,0,0,.95))}
-
-/* ── P5 · OS DOIS CANAIS PARAM DE DISPUTAR O OLHO ───────────────────────────
-   O CSS já separava as propriedades, mas não a percepção: a função tinge o
-   campo com 26% de croma e cai no mesmo matiz da moldura em TODAS as seis
-   funções (IGL×tier-3 a 4°, AWPer×holo a 5°, Rifler×tier-1 a 6°). Se o matiz
-   não pode separar, então só um dos dois pode ser saturado — e quem tem de ser
-   é a raridade, porque é ela que hierarquiza. A função continua inteira: fica
-   com o emblema (forma, que cor nenhuma imita) e o rótulo. */
-html.proposta .c-foto{background-image:radial-gradient(118% 88% at 50% 16%,
-  color-mix(in srgb,var(--r) 13%,#0e1421),#070a10 72%)}
-html.proposta .c-emblema{opacity:.22}
-
-/* ── P6 · O TREINADOR DEIXA DE SER A CARTA MAIS ALTA DA LINHA ───────────────
-   Ele é a única carta em que `--m` e `--r` são a MESMA cor — exatamente o que a
-   regra dos dois canais proíbe para jogador. Resultado medido na tela: um
-   treinador de OVR 14 grita mais que um jogador de OVR 21 holo.
-   Ele não está acima da escada: está FORA dela. Então moldura neutra, e o fio
-   segmentado o marca como outra categoria em vez de outro degrau. */
-html.proposta .coachcard{--m:#93a0b2; --aro:1.5px; --aro-a:46%; --brilho:0 0 0 0 transparent}
-html.proposta .coachcard .c-fio{
-  background:repeating-linear-gradient(90deg,
-    color-mix(in srgb,var(--m) 85%,transparent) 0 3.4cqw,transparent 3.4cqw 6.4cqw)}
-
-/* ── P8 · HOVER PARA DE FALSIFICAR RARIDADE ─────────────────────────────────
-   A regra atual é `inset 0 0 0 var(--aro) var(--m)`, sem `--aro-a`: passar o
-   mouse levava qualquer carta ao aro de opacidade cheia, então uma comum
-   passava a exibir o aro de uma tier-s. Realce tem de ser relativo. */
-@media (hover:hover) and (pointer:fine){
-  html.proposta .card:hover,html.proposta .coachcard:hover{
-    box-shadow:inset 0 0 0 var(--aro) color-mix(in srgb,var(--m) calc(var(--aro-a,50%) + 24%),transparent),
-      0 0 18px -6px var(--m)}
-}
-
-/* ── P9 · ELENCO SEM TREINADOR TEM ESTADO, NÃO BURACO ───────────────────────
-   EnVyUs e Virtus.pro não têm treinador, então a linha de revelação entrega 5
-   cartas numa grade de 6 e termina num vazio. E isso não é cosmético: sem
-   treinador não existe nenhuma mitigação de química.
-   O desenho da carta vazia está no bloco do laboratório (`.lab-semcoach`),
-   porque ele é marcação nova — ao aprovar, nasce no jogo com o nome dele. */
+/* Nenhuma proposta ativa. O refinamento "Tactical Editorial" foi promovido ao
+   jogo em 30/07/2026; manter uma cópia aqui faria o laboratório divergir de
+   style.css. A próxima hipótese visual deve nascer neste bloco e só depois
+   migrar para o produto. */
 </style>
 </head>
 <body>
 <div class="lab-topo">
   <h1>Laboratório de <b>cartas</b> <span id="labInfo">carregando…</span></h1>
   <div class="lab-ctrl">
-    <label><input type="checkbox" id="cProposta"> Proposta</label>
+    <label><input type="checkbox" id="cProposta"> Proposta futura</label>
     <label><input type="checkbox" id="cEncaixe"> Encaixe medido</label>
     <div class="lab-sep"></div>
     <label><input type="checkbox" id="cVerso"> Verso</label>
@@ -238,6 +126,9 @@ html.proposta .coachcard .c-fio{
       <option value="188">188px · desktop (6 col)</option>
       <option value="250">250px · roleta</option>
       <option value="176">176px · celular 2 col</option>
+      <option value="151">151px · antes da costura</option>
+      <option value="150">150px · costura compacta</option>
+      <option value="149">149px · depois da costura</option>
       <option value="130">130px · celular 3 col</option>
       <option value="120">120px · tablet 3 col</option>
     </select>
@@ -274,34 +165,31 @@ html.proposta .coachcard .c-fio{
 
   <h2 class="lab">1 · a escada de raridade</h2>
   <p class="lab">Mesmo jogador, <b>só o OVR muda</b> — é síntese de vista, não dado do motor,
-  justamente para isolar a variável. Ligue <b>escala de cinza</b>: hoje a escada desaparece;
-  com a proposta, conta-se as marcas na aresta de cima. As faixas reais são
+  justamente para isolar a variável. Ligue <b>escala de cinza</b>: o design publicado preserva
+  a escada pelas marcas na aresta de cima, sem depender de glow. As faixas reais são
   <code>≤16 · 17–18 · 19 · 20 · 21+</code>, com <b>27 · 30 · 11 · 11 · 6</b> jogadores.</p>
   <div class="lab-grade" id="gEscada"></div>
 
   <h2 class="lab">2 · raridade × função — onde os dois canais colidiam</h2>
   <p class="lab">As 30 combinações. Procure a diagonal do desastre: <b>IGL em tier-3</b> (matizes a 4°),
   <b>AWPer em holo</b> (5°) e <b>Rifler em tier-1</b> (6°) — moldura e campo na mesma cor.
-  Com a proposta o campo perde croma e a moldura fica sendo a única coisa saturada.</p>
+  No design publicado, forma identifica função; aro e contagem identificam raridade. Nenhum halo é necessário.</p>
   <div class="lab-grade" id="gMatriz"></div>
 
   <h2 class="lab">3 · os casos que quebram o layout</h2>
-  <p class="lab">Todos reais, todos achados medindo. Os cinco nicks longos são os que o jogo
-  <b>corta no meio da letra</b> hoje; <code>Desenvolvedor</code> é a característica que estoura o
-  verso. Vire as cartas (botão <b>Verso</b>) para conferir os dois lados.</p>
+  <p class="lab">Todos reais, todos protegidos por medição. Vire as cartas para conferir nicks,
+  quatro atributos, descrições longas e campeonato em duas linhas nas menores larguras.</p>
   <div class="lab-grade" id="gCasos"></div>
 
   <h2 class="lab">4 · os 17 elencos, como aparecem no jogo</h2>
   <p class="lab">A linha de revelação inteira, na ordem real, com o treinador no fim.
-  <b>EnVyUs</b> e <b>Virtus.pro</b> não têm treinador: hoje sobra um buraco na grade de 6;
-  com a proposta, entra uma carta que declara o estado — que é informação de química, não enfeite.</p>
+  Aqui se verifica repetição, hierarquia e consistência entre jogador e treinador. Elencos históricos
+  sem treinador continuam sem uma carta inventada.</p>
   <div id="gElencos"></div>
 
   <h2 class="lab">5 · emblemas de função</h2>
-  <p class="lab">Ampliados e no tamanho real. O do <b>Support</b> é um <code>+</code> puro — o mesmo
-  glifo que o jogo usa como <b>placeholder de vaga vazia</b>, na mesma tela. A proposta troca por
-  uma nuvem de fumaça: silhueta sem reta nem círculo, que não colide com retículo, galões, seta,
-  rajada nem lua.</p>
+  <p class="lab">Ampliados e no tamanho real. Eles são o canal de função que continua íntegro em
+  escala de cinza e nas simulações de daltonismo.</p>
   <div class="lab-fila" id="gEmblemas"></div>
 
   <h2 class="lab">6 · as 22 bandeiras</h2>
@@ -330,18 +218,9 @@ const FUNCOES=["IGL","AWPer","Entry","Rifler","Lurker","Support"];
 const TIERS=[["tier-3","comum · ≤16",16],["tier-2","17–18",17],["tier-1","19",19],
   ["tier-s","20",20],["tier-h","raro · 21+",22]];
 
-/* Emblema proposto para o Support: fumaça. O `+` atual é o mesmo glifo do
-   placeholder de vaga vazia, e forma é o único canal que a função tem. */
-const EMBLEMA_SUPPORT_PROPOSTO=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" `+
-  `stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">`+
-  `<path d="M6.4 18.4A3.6 3.6 0 0 1 5.6 11.3 5.2 5.2 0 0 1 15 8.1a4.1 4.1 0 0 1 4.6 4.3 `+
-  `3.4 3.4 0 0 1-1.6 6H6.4Z"/></svg>`;
-
 const item=(html,rot)=>`<div class="lab-item">${html}<div class="lab-rot">${rot}</div></div>`;
 const cartaHtml=carta=>`<div class="${cardClass(carta)}" data-nick="${esc(carta.nick)}" `+
   `data-face="front" role="button" tabindex="0">${cardHTML(carta)}</div>`;
-const semTreinador=()=>`<div class="lab-semcoach"><div class="t">sem treinador</div>`+
-  `<div class="s">este elenco não teve um. Nenhuma penalidade de química é mitigada.</div></div>`;
 
 /* ── 1 · escada de raridade: mesmo jogador, só o OVR muda ─────────────────── */
 const base=porNick("device")||jogadores[0];
@@ -356,11 +235,11 @@ $("gMatriz").innerHTML=TIERS.flatMap(([,rot,ovr])=>FUNCOES.map(fn=>
 
 /* ── 3 · casos que quebram ────────────────────────────────────────────────── */
 const casos=[
-  ["olofmeister","11 letras · <em>hoje corta 28px</em>"],
-  ["pashaBiceps","11 letras · <em>hoje corta 28px</em>"],
-  ["electroNic","10 letras · <em>hoje corta 8px</em>"],
-  ["Skadoodle","9 letras · <em>hoje corta 4px</em>"],
-  ["controlez","9 letras · <em>hoje corta 1px</em>"],
+  ["olofmeister","11 letras · <em>stress de largura</em>"],
+  ["pashaBiceps","11 letras · <em>stress de largura</em>"],
+  ["electroNic","10 letras · <em>stress de largura</em>"],
+  ["Skadoodle","9 letras · <em>stress compacto</em>"],
+  ["controlez","9 letras · <em>stress compacto</em>"],
   ["chopper","IGL · <em>firepower 2</em>"],
 ];
 const coringa=jogadores.find(j=>STYLE_ID(j._eng.playstyle)==="joker");
@@ -369,14 +248,13 @@ const estrategista=treinadores.find(t=>t.carac==="Estrategista");
 $("gCasos").innerHTML=casos.map(([nick,rot])=>{
   const c=porNick(nick);return c?item(cartaHtml(c),`${nick}<br>${rot}`):"";}).join("")+
   (coringa?item(cartaHtml(coringa),`${coringa.nick}<br>Coringa · <em>sem receita</em>`):"")+
-  (desenvolvedor?item(cartaHtml(desenvolvedor),`${desenvolvedor.nick}<br><em>"Desenvolvedor" estoura o verso</em>`):"")+
-  (estrategista?item(cartaHtml(estrategista),`${estrategista.nick}<br><em>"Estrategista" estoura a 120px</em>`):"")+
-  item(semTreinador(),"estado proposto<br><em>elenco sem treinador</em>");
+  (desenvolvedor?item(cartaHtml(desenvolvedor),`${desenvolvedor.nick}<br><em>característica de 13 letras</em>`):"")+
+  (estrategista?item(cartaHtml(estrategista),`${estrategista.nick}<br><em>descrição + era compactas</em>`):"");
 
 /* ── 4 · os 17 elencos reais ──────────────────────────────────────────────── */
 $("gElencos").innerHTML=TEAMS.map(t=>{
   const cartas=t.jogadores.map(cartaHtml).join("")+
-    (t.treinador?cartaHtml(t.treinador):`<div data-vazio="1">${semTreinador()}</div>`);
+    (t.treinador?cartaHtml(t.treinador):"");
   return `<div class="lab-time"><h3>${t.nome} <i>${t.camp} · ${t.coloc}</i></h3>
     <div class="lab-grade">${cartas}</div></div>`;}).join("");
 
@@ -384,9 +262,7 @@ $("gElencos").innerHTML=TEAMS.map(t=>{
 const embCaixa=(svg,rot)=>`<div class="lab-emb"><div class="cx">${svg}</div>
   <div class="cx peq" style="padding:3px">${svg}</div><div class="lab-rot">${rot}</div></div>`;
 $("gEmblemas").innerHTML=Object.entries(EMBLEMA_FUNCAO).map(([fn,svg])=>
-  embCaixa(svg,fn+(fn==="Support"?"<br><em>colide com o slot vazio</em>":""))).join("")+
-  embCaixa(EMBLEMA_TREINADOR,"Treinador")+
-  embCaixa(EMBLEMA_SUPPORT_PROPOSTO,"Support<br><em>proposto</em>");
+  embCaixa(svg,fn)).join("")+embCaixa(EMBLEMA_TREINADOR,"Treinador");
 
 /* ── 6 · bandeiras ────────────────────────────────────────────────────────── */
 $("gBandeiras").innerHTML=Object.entries(BANDEIRA).map(([pais,src])=>
@@ -399,16 +275,6 @@ $("labInfo").textContent=`${jogadores.length} jogadores · ${treinadores.length}
 
 /* ══ CONTROLES ═══════════════════════════════════════════════════════════════ */
 const todasAsCartas=()=>[...document.querySelectorAll(".card,.coachcard")];
-
-/* O emblema vem do módulo real; a proposta é aplicada no DOM para não tocar no
-   jogo antes de você aprovar. Guarda o original para poder voltar. */
-function aplicarEmblemaSupport(ligado){
-  for(const c of document.querySelectorAll(".fn-support")){
-    const alvo=c.querySelector(".c-emblema");if(!alvo)continue;
-    if(!alvo.dataset.original)alvo.dataset.original=alvo.innerHTML;
-    alvo.innerHTML=ligado?EMBLEMA_SUPPORT_PROPOSTO:alvo.dataset.original;
-  }
-}
 
 /* Rede de segurança opcional: mede e ajusta em vez de estimar por comprimento.
    Serve para responder "o degrau por comprimento basta, ou precisa medir?" —
@@ -483,11 +349,9 @@ function medirCartas(){
       const excesso=el.getBoundingClientRect().right-(cx.right-recuo);
       if(excesso>TOL)registrar(falhas,el,nome,excesso);
     };
-    /* Caixa com `text-overflow:ellipsis`: aqui cortar É a decisão de design — o
-       campeonato "DreamHack Cluj-Napoca 2015" não caberia em fonte nenhuma, e o
-       CSS declara as reticências. Isso vira RELATÓRIO, nunca reprovação: foi o que
-       reprovou a CI sem existir defeito, porque a métrica da fonte no Linux é ~7px
-       mais larga que no Windows e cruzou o limite lá e não aqui. */
+    /* Caixa com `text-overflow:ellipsis`: contexto secundário e nome de atributo
+       podem truncar de propósito. Campeonato não passa por aqui: é informação
+       primária, quebra linha e precisa permanecer visível. */
     const cortada=(sel,nome)=>{
       const el=carta.querySelector(sel);if(!visivel(el))return;
       const falta=el.scrollWidth-el.clientWidth;
@@ -518,8 +382,7 @@ function medirCartas(){
     fixa(".c-nick","nick (frente)");
     solta(".c-func","função (frente)");
     fixa(".c-vestilo b","playstyle/característica (verso)");
-    cortada(".c-vnick","nick (verso)");
-    cortada(".c-vrod b","campeonato (verso)");
+    fixa(".c-vnick","nick (verso)");
     for(const [idx,meta] of [...carta.querySelectorAll(".c-meta span")].entries())
       if(visivel(meta)&&meta.scrollWidth-meta.clientWidth>TOL)
         registrar(reticencias,meta,idx?"time (frente)":"função secundária (frente)",meta.scrollWidth-meta.clientWidth);
@@ -529,7 +392,7 @@ function medirCartas(){
 
     const camposVerticais=[
       [".c-ovr","OVR (frente)"],[".c-nick","nick (frente)"],[".c-func","função (frente)"],
-      [".c-vnick","nick (verso)"],[".c-vovr","OVR (verso)"],
+      [".c-vnick","nick (verso)"],
       [".c-vestilo b","playstyle/característica (verso)"],[".c-vrod b","campeonato (verso)"],
       [".c-vrod span","colocação (verso)"],[".c-vdesc","descrição do treinador (verso)"],
     ];
@@ -543,10 +406,10 @@ function medirCartas(){
 
     colisao(".c-nick",".c-func","nick/função (frente)",true);
     colisao(".c-func",".c-meta","função/contexto (frente)",true);
-    colisao(".c-vnick",".c-vovr","nick/OVR (verso)");
     colisao(".c-vestilo b",".c-vstats","rótulo/stats (verso)",true);
     colisao(".c-vstats",".c-vrod","stats/campeonato (verso)",true);
     colisao(".c-vestilo b",".c-vdesc","característica/descrição (verso)",true);
+    colisao(".c-vdesc",".c-vrod","descrição/campeonato (verso)",true);
   }
   const largura=Math.round(todasAsCartas()[0]?.getBoundingClientRect().width||0);
   return {total,largura,falhas,reticencias};
@@ -561,7 +424,7 @@ function medir(){
       :`<span class="lab-ok">nenhuma falha geométrica</span>`)+
     (reticencias.length
       ?` · ${reticencias.length} campo(s) com reticências, que é o comportamento declarado
-         (campeonato longo, nick do verso, nome de stat)`:"");
+         (contexto secundário da frente ou nome de stat)`:"");
   const tabela=falhas.length?`<table><tr><th>carta</th><th>campo</th><th>texto</th>
     <th>falta</th><th>passa a borda</th><th>fonte</th></tr>`+
     falhas.map(f=>`<tr><td>${esc(f.nick)}</td><td>${esc(f.campo)}</td><td>${esc(f.texto)}</td>
@@ -578,9 +441,6 @@ function sincronizar(){
   const filtro=$("cDalton").value;
   document.body.style.filter=filtro?`url(#${filtro})`:"";
   for(const c of todasAsCartas())setCardFlipped(c,$("cVerso").checked);
-  for(const v of document.querySelectorAll("[data-vazio]"))
-    v.hidden=!$("cProposta").checked;
-  aplicarEmblemaSupport($("cProposta").checked);
   encaixeMedido($("cEncaixe").checked);
   medir();
 }

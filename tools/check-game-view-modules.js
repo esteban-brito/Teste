@@ -102,14 +102,17 @@ async function main(){
     const html=view.cardHTML({tipo:"coach",ovr:15,pais:"DEN",time:"T",nick:"c",carac,caracSlug:"gestor"});
     assert.ok(html.includes(`--carac-esc:${esperado}`),`escala do rótulo do verso mudou para "${carac}"`);
   });
-  // Verso: playstyle como espinha, receita visível, campeonato no rodapé.
+  // Verso: playstyle como espinha, atributos ordenados e era sempre presente.
   assert.ok(playerHtml.includes("Closer &lt;elite&gt;"),"label do playstyle mudou ou deixou de ser escapado");
-  assert.ok(playerHtml.includes("RTG 1.28")&&playerHtml.includes("Campeão"),"rodapé do verso mudou");
+  assert.ok(!playerHtml.includes("c-vovr")&&!playerHtml.includes("RTG")&&!playerHtml.includes("1.28"),
+    "OVR ou rating voltou a ocupar o verso do jogador");
+  assert.ok(playerHtml.includes("&lt;Major&gt; 2024")&&playerHtml.includes("Campeão"),
+    "campeonato ou colocação saiu do verso");
   const statPositions=["Firepower","Clutch","Utilitário","Abertura"].map(label=>playerHtml.indexOf(label));
   assert.ok(statPositions.every(position=>position>=0)&&statPositions.every((position,index)=>index===0||position>statPositions[index-1]),
     "ordem peso × valor das estatísticas do verso mudou");
-  assert.ok(playerHtml.includes("<em>.5</em>")&&playerHtml.includes('<u style="width:80%">'),
-    "peso da receita ou trilho da estatística mudou");
+  assert.ok(!playerHtml.includes("<em>")&&playerHtml.includes('<u style="width:80%">'),
+    "peso técnico voltou ao verso ou trilho da estatística mudou");
   assert.deepEqual(recipeCalls,["closer"],"receita do playstyle deixou de ser consultada uma vez");
   // Emblema por função: seis silhuetas distintas. É o que diferencia duas cartas
   // da mesma raridade sem depender de cor — e o que cobre o daltonismo.
@@ -124,11 +127,13 @@ async function main(){
   assert.ok(jokerHtml.includes("Firepower")&&jokerHtml.includes("Abertura")&&!jokerHtml.includes("<em>."),
     "verso do Coringa deixou de cair nas estatísticas padrão sem peso");
 
-  // Treinador: MESMO esqueleto, cor da característica, e o rótulo do OVR é o
-  // marcador de tipo — é o único ponto que não some por falta de espaço.
-  const coachHtml=view.cardHTML({tipo:"coach",ovr:18,pais:"DEN",time:"SK",nick:"zonic",carac:"Gestor",caracSlug:"gestor"});
+  // Treinador: mesmo esqueleto e mesmo rodapé de era; OVR existe só na frente.
+  const coachHtml=view.cardHTML({tipo:"coach",ovr:18,pais:"DEN",time:"SK",nick:"zonic",
+    camp:"ESL One Cologne 2016",coloc:"Campeao",carac:"Gestor",caracSlug:"gestor"});
   assert.ok(coachHtml.includes('<div class="c-ovr">18<small>Treinador</small>')&&
     coachHtml.includes('<div class="c-func">Gestor</div>'),"frente do treinador mudou");
+  assert.ok(!coachHtml.includes("c-vovr")&&coachHtml.includes("ESL One Cologne 2016")&&
+    coachHtml.includes("Campeão"),"verso do treinador perdeu padronização ou repetiu OVR");
   assert.ok(coachHtml.includes("Tolera +1 estrela")&&coachHtml.includes("7% → 4%"),
     "descrição do efeito do treinador mudou");
   assert.ok(!coachHtml.includes("c-vstats")&&coachHtml.includes("c-vdesc"),
