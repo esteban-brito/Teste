@@ -232,15 +232,22 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
    e Lurker era verde (#7fa882) sobre 39 cartas verdes. A paleta nova ocupa as
    seis familias que a raridade NAO usa, e todas passam contraste:
 
-     Entry   13°  coral     8,80:1      Lurker  194°  ciano    10,68:1
-     Support 180°  teal     8,35:1      IGL     216°  azul      7,67:1
-     AWPer   259°  violeta  7,56:1      Rifler  310°  magenta   9,15:1 */
-.proposta .card.fn-igl    {--r:#7a93b8; --r-ink:#7a93b8}
-.proposta .card.fn-awper  {--r:#9a86c4; --r-ink:#9a86c4}
-.proposta .card.fn-entry  {--r:#d98d78; --r-ink:#d98d78}
-.proposta .card.fn-rifler {--r:#cf8fc4; --r-ink:#cf8fc4}
-.proposta .card.fn-lurker {--r:#6fc0d8; --r-ink:#6fc0d8}
-.proposta .card.fn-support{--r:#5fa6a6; --r-ink:#5fa6a6}
+     Entry    16°  coral     7,69:1      Lurker  188°  ciano    10,78:1
+     Support 172°  teal      9,29:1      IGL     214°  azul      6,91:1
+     AWPer   267°  violeta   6,13:1      Rifler  318°  magenta   7,24:1
+
+   AS CORES SAO VIVAS, e o motivo e estrutural. Elas eram dessaturadas de
+   proposito porque pintavam o CAMPO — a maior area da carta — e nao podiam
+   competir com a moldura. Mas a raridade tomou o campo: hoje a funcao so ocupa
+   o nome e o emblame. Sem area, nao ha competicao, e o que sobrava era um rotulo
+   apagado. A saturacao vai de 31-49% para 56-89% e todas continuam acima de
+   4,5:1 (a mais baixa e o AWPer, 6,13:1). */
+.proposta .card.fn-igl    {--r:#4d9bff; --r-ink:#4d9bff}
+.proposta .card.fn-awper  {--r:#b070ff; --r-ink:#b070ff}
+.proposta .card.fn-entry  {--r:#ff7d4d; --r-ink:#ff7d4d}
+.proposta .card.fn-rifler {--r:#ff5fd0; --r-ink:#ff5fd0}
+.proposta .card.fn-lurker {--r:#22d3ee; --r-ink:#22d3ee}
+.proposta .card.fn-support{--r:#16c9b0; --r-ink:#16c9b0}
 
 /* ── EMBLEMA: mesma opacidade nao era mesmo peso ──────────────────────────────
    Os seis foram desenhados no mesmo grid 24x24 com o mesmo traco, mas massa
@@ -270,7 +277,7 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
    9,8% na densidade completa e 6% na compacta, a mesma formula serve as duas. */
 .proposta .card[class*="p-t"] .cfaces,
 .proposta .coachcard .cfaces{
-  --t3:7.4cqw; --b3:calc(var(--b2) + var(--passo)*1.75)}
+  --t3:7.4cqw; --b3:calc(var(--b2) + var(--passo)*1.45)}
 @container (max-width:150px){
   .proposta .card[class*="p-t"] .cfaces,
   .proposta .coachcard .cfaces{--t3:8.2cqw}
@@ -278,11 +285,13 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
 /* O TREINADOR ENTRA NA MESMA REGRA. A primeira tentativa promoveu so o nome de
    funcao do jogador e deixou a caracteristica do treinador sem filete — uma
    lacuna de padronizacao criada pelo proprio conserto de padronizacao. */
+/* O filete sob o nome foi REPROVADO pelo responsavel e saiu. Com cores vivas o
+   nome nao precisa de suporte grafico: a tinta e usada PURA, sem a mistura de
+   88% com branco que existia para socorrer cores dessaturadas e que, na pratica,
+   lavava justamente a cor que deveria identificar a funcao. */
 .proposta .card[class*="p-t"] .cfront .c-func,
 .proposta .coachcard .cfront .c-func{
-  letter-spacing:.16em;padding-bottom:1.5cqw;
-  color:color-mix(in srgb,var(--r-ink) 88%,#fff);
-  border-bottom:1.5px solid color-mix(in srgb,var(--r-ink) 62%,transparent)}
+  letter-spacing:.15em;color:var(--r-ink)}
 /* A funcao do JOGADOR tem no maximo 7 letras ("SUPPORT"); a caracteristica do
    TREINADOR chega a 13 ("DESENVOLVEDOR") e ocupa o mesmo lugar. Com o corpo
    maior, ela estourava a caixa a 150px e abaixo — o medidor reprovou nas quatro
@@ -310,6 +319,100 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
 .proposta .coachcard .cback .c-vdesc{
   font-family:var(--ff);font-size:clamp(9px,5.6cqw,13px);line-height:1.32;
   font-weight:600;letter-spacing:.01em;color:#dde5ef;align-items:center}
+
+/* ══ IGL ═══════════════════════════════════════════════════════════════════
+   A carta de comando tem de ser diferente de todas, e a diferenca escolhida e
+   VERDADEIRA, nao decorativa: os 17 IGLs do jogo tem uma funcao de combate real
+   classificada pelo motor. IGL nunca e so IGL.
+
+   Dois sinais, e nenhum disputa territorio com a raridade, que ocupa topo,
+   direita e base:
+
+     BRACADEIRA  faixa vertical na aresta esquerda, altura inteira. E diferenca
+                 de FORMA: sobrevive a 120px, ao cinza e ao daltonismo.
+     INSIGNIA    a funcao de combate promovida a rotulo proprio, na cor dela.
+
+   A insignia ocupa `.card::before`, que ficou livre quando as marcas de
+   raridade sairam, e por isso ela NAO some na densidade compacta — ao contrario
+   da linha de contexto, que some. O texto vem de `attr(data-cr)`: o dado ja
+   existe em `carta.sec` e nenhuma copia e criada. */
+.proposta .card.cr-igl{--cr:#4d9bff}
+.proposta .card.cr-awper{--cr:#b070ff}
+.proposta .card.cr-entry{--cr:#ff7d4d}
+.proposta .card.cr-rifler{--cr:#ff5fd0}
+.proposta .card.cr-lurker{--cr:#22d3ee}
+.proposta .card.cr-support{--cr:#16c9b0}
+
+/* bracadeira — frente e verso, na aresta que a raridade nao usa */
+.proposta .card.fn-igl .cfront .c-vinheta::before,
+.proposta .card.fn-igl .cback .c-grao::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:3.4%;pointer-events:none;
+  background:linear-gradient(180deg,
+    color-mix(in srgb,var(--r-ink) 92%,transparent),
+    color-mix(in srgb,var(--r-ink) 34%,transparent) 62%,
+    color-mix(in srgb,var(--r-ink) 78%,transparent))}
+
+/* insignia da funcao de combate, no lugar da linha de contexto */
+/* `top` e `right` PRECISAM ser zerados: eles vinham da regra das marcas de
+   raridade, que ocupava este mesmo pseudo-elemento. Sem o reset, a caixa fica
+   com as quatro ancoras definidas e se estica pela carta inteira — foi o que
+   jogou a insignia para o topo na primeira tentativa. */
+.proposta .card.fn-igl[data-cr]::before{
+  content:attr(data-cr);display:block;position:absolute;z-index:6;
+  top:auto;right:auto;left:var(--pad);bottom:var(--b1);
+  width:auto;height:auto;background:none;
+  font-family:var(--ff);font-size:var(--t4);font-weight:700;line-height:1;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--cr,#9ba9bb);
+  padding-left:2.6cqw;border-left:1.6px solid var(--cr,#9ba9bb)}
+.proposta .card.fn-igl[data-cr] .cfront .c-meta span:first-child{visibility:hidden}
+/* A insignia vive em `.card::before`, que pertence a CARTA e nao a uma face —
+   logo ela sobrevive ao flip e caia sobre o "CAMPEAO" do verso. O verso ja
+   identifica a funcao pelo playstyle; aqui ela some. */
+.proposta .card.fn-igl.flipped::before{display:none}
+
+/* ══ TREINADOR ═════════════════════════════════════════════════════════════
+   Ele PRECISA ser outro objeto, nao um jogador sem OVR. Tres mudancas
+   estruturais, todas de forma e nenhuma de cor:
+
+     1 BANDA RETA no lugar do corte diagonal. A diagonal e a assinatura da carta
+       de jogador; tirar o corte muda a silhueta da peca inteira, nas duas faces.
+     2 MOLDURA SEGMENTADA em vez de aro continuo, na mesma lingua do fio
+       tracejado que ele ja tinha — e o oposto exato da borda cromada continua
+       das faixas de topo.
+     3 EMBLEMA COMO MARCA D'AGUA: a prancheta sai do centro, cresce e sangra
+       pela direita, em vez de ficar centralizada como o emblema de funcao.
+
+   A cor continua vindo da CARACTERISTICA, nunca de raridade: ele nao disputa a
+   escala de OVR dos jogadores. */
+.proposta .coachcard .cfaces{--placa-n:44; --faixa-n:26;
+  --placa:calc(var(--placa-n)*1%); --faixa:calc(var(--faixa-n)*1%)}
+.proposta .coachcard .c-fio,
+.proposta .coachcard .c-placa,
+.proposta .coachcard .c-vfio,
+.proposta .coachcard .c-vfaixa{clip-path:none}
+.proposta .coachcard .c-placa{
+  background:linear-gradient(178deg,color-mix(in srgb,var(--r) 16%,#0a0f17),#070a10 46%)}
+.proposta .coachcard .c-vfaixa{
+  background:linear-gradient(2deg,color-mix(in srgb,var(--r) 14%,#0a0f17),#070a10 48%)}
+/* A banda reta subiu de 22% para 26% e passou a CORTAR o rotulo do verso, que
+   comeca em 24%. O ritmo do verso desce junto com a banda. O medidor nao pega
+   este caso: ele mede texto contra texto e texto contra caixa, nunca texto
+   contra faixa decorativa — anotado como lacuna da guarda. */
+.proposta .coachcard .cback .c-vestilo{top:31%}
+.proposta .coachcard .cback .c-vdesc{top:47%}
+/* moldura segmentada: o inverso da borda continua das faixas raras */
+.proposta .coachcard{--aro:0; --aro-a:0%}
+.proposta .coachcard::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  z-index:7;padding:1.6px;
+  background:repeating-linear-gradient(90deg,
+    color-mix(in srgb,var(--r) 86%,transparent) 0 3.4cqw,transparent 3.4cqw 6.2cqw);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude}
+/* prancheta como marca d'agua, sangrando pela direita */
+.proposta .coachcard .c-emblema{
+  width:74cqw;height:74cqw;left:auto;right:-16%;top:34%;
+  transform:translateY(-50%);opacity:.17}
 </style>
 </head>
 <body>
@@ -404,7 +507,7 @@ import {setCardFlipped} from "./src/application/card-face.mjs";
 import {createCardView} from "./src/ui/game/card-view.mjs";
 import {escapeHtml as esc} from "./src/ui/shared/html.mjs";
 import {BANDEIRA} from "./src/ui/shared/flags.mjs";
-import {EMBLEMA_FUNCAO,EMBLEMA_TREINADOR} from "./src/ui/shared/role-emblems.mjs";
+import {EMBLEMA_FUNCAO,EMBLEMA_TREINADOR,slugFuncao} from "./src/ui/shared/role-emblems.mjs";
 
 const {cardClass,cardHTML}=createCardView({
   styleId:STYLE_ID,styleLabel:STYLE_LABEL,styleRecipe:STYLE_RECIPE});
@@ -428,8 +531,18 @@ const tierProposto=ovr=>ovr>=22?"p-t6":ovr>=21?"p-t5":ovr>=20?"p-t4"
   :ovr>=18?"p-t3":ovr>=15?"p-t2":"p-t1";
 
 const item=(html,rot)=>`<div class="lab-item">${html}<div class="lab-rot">${rot}</div></div>`;
-const cartaHtml=carta=>`<div class="${cardClass(carta)}" data-nick="${esc(carta.nick)}" `+
-  `data-ovr="${carta.ovr}" data-face="front" role="button" tabindex="0">${cardHTML(carta)}</div>`;
+/* O IGL nunca é só IGL: os 17 têm função de combate real no motor (karrigan →
+   Entry, Jame → AWPer, gla1ve → Support). Ela já existe em `carta.sec`, mas hoje
+   só aparece na linha de contexto, que some na densidade compacta. O laboratório
+   a expõe como atributo e classe para o CSS poder promovê-la. Na promoção ao
+   jogo isto nasce em `card-view.mjs`. */
+const cartaHtml=carta=>{
+  const combate=carta.tipo!=="coach"&&carta.prim==="IGL"?(carta.sec||""):"";
+  const cls=cardClass(carta)+(combate?` cr-${slugFuncao(combate)}`:"");
+  return `<div class="${cls}" data-nick="${esc(carta.nick)}" data-ovr="${carta.ovr}"`+
+    (combate?` data-cr="${esc(combate)}"`:"")+
+    ` data-face="front" role="button" tabindex="0">${cardHTML(carta)}</div>`;
+};
 
 /* ── 1 · escada de raridade: mesmo jogador, só o OVR muda ─────────────────── */
 const base=porNick("device")||jogadores[0];
