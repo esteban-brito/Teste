@@ -54,6 +54,13 @@ const tierOf=ovr=>ovr>=21?"tier-h":ovr>=20?"tier-s":ovr>=19?"tier-1":ovr>=17?"ti
    por JavaScript no verso — mesma informação, dois comportamentos. */
 const escalaNick=nome=>nome.length<=6?1:nome.length<=9?.825:nome.length<=12?.675:.5625;
 
+/* O rótulo do verso — playstyle no jogador, característica no treinador — tem o
+   mesmo problema e recebe a mesma solução. "Desenvolvedor" é palavra única, não
+   quebra linha, e transbordava 16px no desktop e 26px a 120px, onde o navegador a
+   cortava. Degraus medidos contra os rótulos reais: `Infiltrador`, `Facilitador` e
+   `Estrategista` (11–12) e `Desenvolvedor` (13) são os únicos que não cabem. */
+const escalaCarac=texto=>texto.length<=10?1:texto.length<=12?.88:.8;
+
 const camadasDeFundo=`<div class="c-foto"></div><div class="c-tinta"></div><div class="c-vinheta"></div>`;
 const bandeiraHtml=pais=>{const fonte=bandeiraDe(pais);
   return fonte?`<div class="c-flag" style="background-image:url('${fonte}')" title="${esc(pais)}"></div>`:"";};
@@ -110,6 +117,14 @@ export function createCardView({styleId,styleLabel,styleRecipe}){
       `<div class="c-trilho"><u style="width:${valor}%"></u></div></div>`;
   };
 
+  /* Fonte única do rótulo do verso: o mesmo texto que a face mostra é o que decide
+     a razão de escala em `cardHTML`. Duas leituras divergentes reabririam o corte. */
+  const rotuloVerso=card=>{
+    if(card.tipo==="coach")return card.carac||"";
+    const enginePlayer=card._eng||{};
+    return enginePlayer.playstyle?styleLabel(styleId(enginePlayer.playstyle)):(card.prim||"");
+  };
+
   const backPlayer=card=>{
     const enginePlayer=card._eng||{};
     const id=styleId(enginePlayer.playstyle);
@@ -123,7 +138,7 @@ export function createCardView({styleId,styleLabel,styleRecipe}){
     return `<div class="c-vfio"></div><div class="c-vfaixa"></div>
   <div class="c-vnick">${esc(card.nick)}</div>
   <div class="c-vovr"><b>${card.ovr}</b><small>RTG ${rating}</small></div>
-  <div class="c-vestilo"><small>Playstyle</small><b>${esc(enginePlayer.playstyle?styleLabel(id):(card.prim||""))}</b></div>
+  <div class="c-vestilo"><small>Playstyle</small><b>${esc(rotuloVerso(card))}</b></div>
   <div class="c-vstats">${linhas}</div>
   <div class="c-vrod"><b>${esc(card.camp||"")}</b><span>${esc(COLOCACAO_LABEL[card.coloc]||card.coloc||"")}</span></div>
   <div class="c-grao"></div>`;};
@@ -139,7 +154,8 @@ export function createCardView({styleId,styleLabel,styleRecipe}){
     const coach=card.tipo==="coach";
     const front=coach?coachFront(card):playerFront(card);
     const back=coach?backCoach(card):backPlayer(card);
-    return `<div class="cfaces" style="--nick-esc:${escalaNick(card.nick)}">`+
+    return `<div class="cfaces" style="--nick-esc:${escalaNick(card.nick)};`+
+      `--carac-esc:${escalaCarac(rotuloVerso(card))}">`+
       `<div class="cface cfront">${front}</div><div class="cface cback">${back}</div></div>`;
   };
 

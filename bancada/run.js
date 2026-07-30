@@ -13,7 +13,7 @@ const SUITE_GROUPS={
   calibrator:["calibrador.js","calibrador-heavy.js","worker-calibrador.js"],
   benchmark:["realismo.js","assists.js","kda.js","rating.js","perfis.js","dificuldade.js"],
   fidelity:["fidelity-score.test.js","fidelity-corpus.test.js"],
-  e2e:["e2e-intent.js","e2e-simulation.js","e2e-game-flow.js"]
+  e2e:["e2e-intent.js","e2e-simulation.js","e2e-game-flow.js","e2e-cartas.js"]
 };
 SUITE_GROUPS.all=[
   ...SUITE_GROUPS.data,
