@@ -35,7 +35,9 @@ const {okMark,chromiumLaunchOptions}=require("./common");
    densidade compacta. Um bug de container query pode passar em 176 e 130 e
    ainda quebrar justamente na troca entre os dois layouts. */
 const LARGURAS=["250","188","176","151","150","149","130","120"];
-const CARTAS_ESPERADAS=145;   /* 85 jogadores + 15 treinadores + as sínteses do lab */
+/* 100 reais (85 jogadores + 15 treinadores) + 7 da escada (6 faixas + treinador)
+   + 36 da matriz (6 faixas × 6 funções) + 9 dos casos que quebram o layout. */
+const CARTAS_ESPERADAS=152;
 
 function waitServer(port,tries=50){
   return new Promise((resolve,reject)=>{

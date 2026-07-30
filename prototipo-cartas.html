@@ -106,10 +106,144 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
 </style>
 
 <style id="proposta">
-/* Nenhuma proposta ativa. O refinamento "Tactical Editorial" foi promovido ao
-   jogo em 30/07/2026; manter uma cópia aqui faria o laboratório divergir de
-   style.css. A próxima hipótese visual deve nascer neste bloco e só depois
-   migrar para o produto. */
+/* ══════════════════════════════════════════════════════════════════════════
+   PROPOSTA · ESCADA DE SEIS FAIXAS (30/07/2026)
+   ══════════════════════════════════════════════════════════════════════════
+
+   O QUE MUDA. A escada publicada tem cinco faixas cujo topo colapsa 21 e 22 no
+   mesmo "holo". A proposta separa os dois extremos e redistribui as bordas:
+
+     p-t1  ≤14   branca    5 jogadores   piso, sem ornamento
+     p-t2  15-17 verde    39 jogadores   a faixa de trabalho
+     p-t3  18-19 ambar    24 jogadores   primeiro sinal de valor
+     p-t4  20    ouro     11 jogadores   ouro cheio, com decalque
+     p-t5  21    sangue    2 jogadores   mesma arquitetura, carmim profundo
+     p-t6  22    prisma    4 jogadores   foil iridescente ESTATICO
+
+   AS MARCAS SAEM. Elas contavam a faixa, mas a faixa e funcao direta do OVR, e
+   o OVR ja e o maior elemento da carta. Contar o que o numero ao lado ja diz e
+   ruido. O emblema de funcao PERMANECE: funcao nao e derivavel de numero
+   nenhum, e e ele que sustenta daltonismo e escala pequena.
+
+   PINTURA E TINTA. Cada faixa declara o par: `--m` pinta moldura e ornamento,
+   `--m-ink` colore texto e precisa passar 4,5:1 contra #080d14. E o que deixa a
+   moldura ser sangue #8b0f1d (2,03:1, reprovaria como texto) com tinta #ff7a86
+   (7,77:1). Sem o par, a paleta inteira do topo seria impossivel.
+
+   AS TRES FAIXAS DE TOPO TOMAM O CAMPO, e isso e deliberado. O campo pertence a
+   funcao, mas 17 cartas em 85 chegam ao topo — e nelas o ponto E ser especial.
+   A funcao continua legivel pelo emblema ao fundo e pelo nome na tinta propria.
+
+   ONDE O ORNAMENTO VIVE. Sem tocar no HTML: `.c-vinheta::before` (z2) carrega
+   banho e guilhoche, atras da placa e do texto; `.c-vinheta::after` desenha o
+   filete duplo com losango no topo, onde nao existe conteudo. `.cfront::before`
+   NAO e usado — o E2E exige que ele continue `none`, porque era ali que morava
+   a varredura de luz removida em 30/07.
+
+   SEM ANIMACAO, SEM HALO, SEM BLEND. O foil do prisma e gradiente estatico. Nao
+   se usa `mix-blend-mode`: ele obriga cada carta a virar camada propria e ja
+   custou 7 fps com seis cartas na tela. */
+
+/* ── A ESCADA COMO TABELA DE SEIS NUMEROS ────────────────────────────────────
+   A primeira versao desta proposta so tratava as tres faixas de topo, e a prova
+   em escala de cinza reprovou na hora: 14, 16 e 19 eram a MESMA carta, e sao
+   68 dos 85 jogadores. Um degrau que so existe no topo nao e escada, e rampa
+   com degrau no fim.
+
+   Agora todo tratamento escala em cinco eixos, e cada faixa e uma linha:
+
+     --wash    banho da cor sobre o campo
+     --trama   guilhoche (a trama fina de cedula)
+     --filete  filete duplo no topo
+     --placa-m tinta da placa do nome
+     --aro/--aro-a/--fio-a  moldura, como ja era */
+.proposta .card.p-t1{--m:#c9d2dd; --m-ink:#e8eef6;
+  --wash:7%;  --trama:0%;   --filete:0;   --placa-m:8%;  --fio-a:34%; --aro:1px;   --aro-a:28%}
+.proposta .card.p-t2{--m:#1f7a4d; --m-ink:#3ec07e;
+  --wash:20%; --trama:0%;   --filete:0;   --placa-m:15%; --fio-a:82%; --aro:1.5px; --aro-a:70%}
+/* 18-19 sao "amarelas quase douradas": ganham cor, NAO ganham decalque. O
+   ornamento comeca no 20, que e onde o responsavel o pediu. Essa fronteira
+   estrutural separa t3 de t4 melhor do que qualquer diferenca de matiz — as
+   duas sao amarelas, e sob um banho de 25% dois amarelos viram o mesmo amarelo. */
+.proposta .card.p-t3{--m:#d4a017; --m-ink:#e8c34a;
+  --wash:22%; --trama:8%;  --filete:0;   --placa-m:18%; --fio-a:92%; --aro:2px;   --aro-a:86%}
+.proposta .card.p-t4{--m:#ffbe00; --m-ink:#ffd24a;
+  --wash:36%; --trama:26%; --filete:.80; --placa-m:28%; --fio-a:100%;--aro:2px;   --aro-a:100%}
+.proposta .card.p-t5{--m:#c4162c; --m-ink:#ff7a86;
+  --wash:40%; --trama:26%; --filete:.80; --placa-m:28%; --fio-a:100%;--aro:2px;   --aro-a:100%}
+.proposta .card.p-t6{--m:#cfd8ff; --m-ink:#e8eef6;
+  --wash:34%; --trama:26%; --filete:.90; --placa-m:26%; --fio-a:100%;--aro:2px;   --aro-a:92%}
+
+/* as marcas contavam o que o OVR ja diz */
+.proposta .card::before{display:none}
+
+/* ── BANHO E GUILHOCHE · uma regra, seis intensidades ─────────────────────────
+   O guilhoche e a trama fina de cedula: e o que separa "cor forte" de "carta
+   cara". Fica atras da placa, entao nunca disputa espaco com texto. */
+.proposta .card[class*="p-t"] .cfront .c-vinheta::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    repeating-linear-gradient(114deg,
+      color-mix(in srgb,var(--m) var(--trama,0%),transparent) 0 1px,
+      transparent 1px 7px),
+    radial-gradient(128% 96% at 16% 4%,
+      color-mix(in srgb,var(--m) var(--wash,0%),transparent),transparent 64%);
+  -webkit-mask:linear-gradient(#000 6%,rgba(0,0,0,.35) 46%,transparent 68%);
+          mask:linear-gradient(#000 6%,rgba(0,0,0,.35) 46%,transparent 68%)}
+
+/* ── FILETE DUPLO · a "certificacao" das faixas altas ─────────────────────────
+   Mora na faixa de 0 a 5% do topo, onde nao existe conteudo: o OVR comeca em
+   5,5% e a bandeira em 6,5%. Por isso nao entra em colisao em largura nenhuma. */
+.proposta .card[class*="p-t"] .cfront .c-vinheta::after{
+  content:"";position:absolute;left:var(--pad);right:var(--pad);top:2.6%;height:2.4cqw;
+  pointer-events:none;opacity:var(--filete,0);
+  background:
+    linear-gradient(var(--m),var(--m)) left top/100% 1px no-repeat,
+    linear-gradient(var(--m),var(--m)) left bottom/100% 1px no-repeat}
+
+/* ── PLACA, CAMPO E VERSO tambem escalam ─────────────────────────────────────── */
+.proposta .card[class*="p-t"] .cfront .c-placa{
+  background:linear-gradient(178deg,
+    color-mix(in srgb,var(--m) var(--placa-m,14%),#0a0f17),#070a10 40%)}
+.proposta .card[class*="p-t"] .cfront .c-foto{
+  background-image:linear-gradient(158deg,
+    color-mix(in srgb,var(--m) calc(var(--wash,0%)/2),#101722),#080d14 52%,#05080d)}
+.proposta .card[class*="p-t"] .cback{
+  background:linear-gradient(168deg,
+    color-mix(in srgb,var(--m) calc(var(--wash,0%)/2),#080b11),#06080d 58%)}
+
+/* ── SANGUE: a profundidade vem do campo escuro, nao de brilho ─────────────── */
+.proposta .card.p-t5 .cfront .c-foto{
+  background-image:linear-gradient(158deg,#2e0912,#0d0508 54%,#05080d)}
+
+/* ── PRISMA: foil iridescente, estatico ───────────────────────────────────────
+   O aro usa a mesma tecnica de mask-composite ja publicada no tier-h; o que
+   muda e que a iridescencia tambem entra no guilhoche e no filete, para o foil
+   parecer material e nao adesivo. */
+.proposta .card.p-t6::after{content:"";position:absolute;inset:0;border-radius:inherit;
+  pointer-events:none;z-index:7;padding:2px;
+  background:linear-gradient(125deg,#ff5f6d,#ffc371,#f7ff7a,#5cff9d,#5ce1ff,#a78bfa,#ff5f6d);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude}
+/* O primeiro foil puxava para o verde: a banda verde-amarela do espectro ocupa
+   o meio do campo, que e a maior area visivel. Aqui o espectro e reponderado —
+   magenta, ciano e violeta dominam, verde e amarelo entram so como passagem —
+   porque sao esses tres que o olho le como "iridescente" e nao como "colorido". */
+.proposta .card.p-t6 .cfront .c-vinheta::before{
+  background:
+    repeating-linear-gradient(114deg,rgba(255,255,255,.20) 0 1px,transparent 1px 7px),
+    linear-gradient(125deg,
+      rgba(255,58,142,.30) 0%,rgba(255,138,90,.20) 14%,rgba(247,255,122,.12) 26%,
+      rgba(92,255,157,.14) 38%,rgba(64,214,255,.30) 56%,rgba(120,120,255,.30) 74%,
+      rgba(198,110,255,.32) 100%)}
+.proposta .card.p-t6 .cfront .c-vinheta::after{
+  background:linear-gradient(90deg,#ff5f6d,#f7ff7a,#5ce1ff,#a78bfa) left top/100% 1px no-repeat,
+    linear-gradient(90deg,#a78bfa,#5ce1ff,#f7ff7a,#ff5f6d) left bottom/100% 1px no-repeat;
+  opacity:.85}
+.proposta .card.p-t6 .cfront .c-fio,
+.proposta .card.p-t6 .cback .c-vfio{
+  background:linear-gradient(90deg,transparent,#ff5f6d 16%,#f7ff7a 38%,#5cff9d 54%,
+    #5ce1ff 72%,#a78bfa 88%,transparent)}
 </style>
 </head>
 <body>
@@ -215,21 +349,30 @@ const jogadores=TEAMS.flatMap(t=>t.jogadores);
 const treinadores=TEAMS.map(t=>t.treinador).filter(Boolean);
 const porNick=nick=>jogadores.find(j=>j.nick===nick);
 const FUNCOES=["IGL","AWPer","Entry","Rifler","Lurker","Support"];
-const TIERS=[["tier-3","comum · ≤16",16],["tier-2","17–18",17],["tier-1","19",19],
-  ["tier-s","20",20],["tier-h","raro · 21+",22]];
+/* Amostras de OVR que separam as faixas das DUAS escadas ao mesmo tempo: a
+   publicada (≤16 · 17–18 · 19 · 20 · 21+) e a proposta (≤14 · 15–17 · 18–19 ·
+   20 · 21 · 22). Ligar a proposta mostra a mesma amostra reclassificada. */
+const TIERS=[["comum · ≤14 / ≤16",14],["15–17 / ≤16",16],["18–19 / 19",19],
+  ["20",20],["21",21],["raro · 22",22]];
+
+/* TAXONOMIA DA PROPOSTA. A faixa é função do OVR, então ela não pode nascer no
+   CSS: o laboratório marca cada carta com `p-tN` e o bloco `#proposta` pinta.
+   Assim o A/B cobre as 145 cartas da página, não uma vitrine à parte. */
+const tierProposto=ovr=>ovr>=22?"p-t6":ovr>=21?"p-t5":ovr>=20?"p-t4"
+  :ovr>=18?"p-t3":ovr>=15?"p-t2":"p-t1";
 
 const item=(html,rot)=>`<div class="lab-item">${html}<div class="lab-rot">${rot}</div></div>`;
 const cartaHtml=carta=>`<div class="${cardClass(carta)}" data-nick="${esc(carta.nick)}" `+
-  `data-face="front" role="button" tabindex="0">${cardHTML(carta)}</div>`;
+  `data-ovr="${carta.ovr}" data-face="front" role="button" tabindex="0">${cardHTML(carta)}</div>`;
 
 /* ── 1 · escada de raridade: mesmo jogador, só o OVR muda ─────────────────── */
 const base=porNick("device")||jogadores[0];
-$("gEscada").innerHTML=TIERS.map(([,rot,ovr])=>
+$("gEscada").innerHTML=TIERS.map(([rot,ovr])=>
   item(cartaHtml({...base,ovr}),`${rot}<br><em>OVR ${ovr}</em>`)).join("")+
   item(cartaHtml(treinadores[0]),"treinador<br><em>fora da escada</em>");
 
 /* ── 2 · matriz raridade × função ─────────────────────────────────────────── */
-$("gMatriz").innerHTML=TIERS.flatMap(([,rot,ovr])=>FUNCOES.map(fn=>
+$("gMatriz").innerHTML=TIERS.flatMap(([rot,ovr])=>FUNCOES.map(fn=>
   item(cartaHtml({...base,ovr,prim:fn,sec:fn==="IGL"?"Rifler":"IGL"}),
     `${fn}<br><em>${rot}</em>`))).join("");
 
@@ -433,8 +576,18 @@ function medir(){
   $("medidorSaida").innerHTML=cabeca+tabela;
 }
 
+/* A proposta reclassifica TODAS as cartas de jogador da página pelo OVR real.
+   O treinador fica fora: ele nunca disputou a escala de raridade. */
+function aplicarTaxonomia(ligado){
+  for(const carta of document.querySelectorAll(".card")){
+    carta.classList.remove("p-t1","p-t2","p-t3","p-t4","p-t5","p-t6");
+    if(ligado)carta.classList.add(tierProposto(Number(carta.dataset.ovr)||0));
+  }
+}
+
 function sincronizar(){
   raiz.classList.toggle("proposta",$("cProposta").checked);
+  aplicarTaxonomia($("cProposta").checked);
   document.body.classList.toggle("cinza",$("cCinza").checked);
   const larg=$("cLargura").value;
   document.body.style.setProperty("--lab-w",larg+"px");
