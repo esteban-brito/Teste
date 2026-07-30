@@ -121,37 +121,20 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
    `html.proposta`. Nada aqui inventa número sem motivo escrito.
    ══════════════════════════════════════════════════════════════════════════ */
 
-/* ── P1 · O NICK VOLTA A ENCOLHER (é conserto, não design) ──────────────────
-   `--t2` era declarado em `.card`, mas `--nick-esc` é posto pelo card-view em
-   `.cfaces`, que é FILHA. Substituição de custom property acontece no elemento
-   onde a propriedade é declarada, então `var(--nick-esc,1)` resolvia sempre
-   pelo fallback 1: a escala de nome estava MORTA no jogo — todos os 100 nicks
-   renderizavam a 16cqw. Medido em 29/07/2026: olofmeister e pashaBiceps passavam
-   28px da borda e eram cortados no meio da letra.
-
-   No protótipo antigo funcionava porque lá a razão era posta em `.carta`, um
-   ANCESTRAL de `.c`. A relação inverteu na migração e ninguém viu, porque
-   nenhuma guarda mede encaixe.
-
-   Conserto: declarar `--t2` onde `--nick-esc` existe. Uma linha, e as duas faces
-   voltam a encolher juntas — que é o comportamento que o design aprovou. */
-html.proposta .cfaces{--t2:calc(16cqw*var(--nick-esc,1))}
-/* E a densidade compacta para de CRESCER o nick. Era 18cqw: com a caixa menor e a
-   fonte maior, `Skadoodle` e `controlez` voltavam a estourar 4–6px a 120px mesmo
-   com a razão viva. Medido no medidor abaixo — 16cqw fecha as quatro larguras. */
-@container (max-width:150px){
-  html.proposta .cfaces{--t2:calc(16cqw*var(--nick-esc,1))}
-}
-
-/* ── P3 · A CARACTERÍSTICA DO TREINADOR TAMBÉM PRECISA CABER ────────────────
-   "Desenvolvedor" passa 16px da caixa no desktop e 26px no celular, onde é
-   cortada. É palavra única: não quebra linha, transborda. Mesma solução do
-   nick — razão por comprimento, aplicada pelo laboratório em `--carac-esc`. */
-html.proposta .c-vestilo b{font-size:calc(11cqw*var(--carac-esc,1))}
-/* mesmo motivo do nick: a densidade compacta crescia para 12,5cqw e estourava */
-@container (max-width:150px){
-  html.proposta .c-vestilo b{font-size:calc(11cqw*var(--carac-esc,1))}
-}
+/* ── JÁ PROMOVIDAS AO JOGO em 29/07/2026, e por isso não estão mais aqui ─────
+   P1 · a escala de nome estava MORTA: `--t2` era declarado em `.card`, mas o
+        card-view põe `--nick-esc` em `.cfaces`, que é FILHA — e substituição de
+        custom property acontece no elemento onde a propriedade é declarada,
+        então `var(--nick-esc,1)` sempre caía no fallback 1. Os 100 nicks
+        renderizavam a 16cqw; `olofmeister` e `pashaBiceps` eram cortados 28px
+        além da borda. Hoje `--t2` vive em `.cfaces`, e a densidade compacta
+        parou de CRESCER o texto (era 18cqw, o que reabria o corte a 120px).
+   P3 · o rótulo do verso ganhou `--carac-esc` pela mesma lógica: "Desenvolvedor"
+        transbordava 16px no desktop e 26px a 120px.
+   P8 · `:hover` deixou de usar `--m` puro, que exibia o aro de opacidade cheia
+        de outra faixa em qualquer carta.
+   O medidor abaixo é o que prova as três: com a proposta DESLIGADA ele tem de
+   dar zero estouros nas cinco larguras. Se der, alguma delas regrediu. */
 
 /* ── P4 · A ESCADA DE RARIDADE PASSA A EXISTIR SEM COR ──────────────────────
    Medido: a luminância das cinco faixas é quase o INVERSO da escada.
@@ -350,13 +333,6 @@ const EMBLEMA_SUPPORT_PROPOSTO=`<svg viewBox="0 0 24 24" fill="none" stroke="cur
   `<path d="M6.4 18.4A3.6 3.6 0 0 1 5.6 11.3 5.2 5.2 0 0 1 15 8.1a4.1 4.1 0 0 1 4.6 4.3 `+
   `3.4 3.4 0 0 1-1.6 6H6.4Z"/></svg>`;
 
-/* Razão da CARACTERÍSTICA/playstyle do verso, pela mesma lógica do nick: quem
-   aplica é o envelope das duas faces. Se aprovado, é o `card-view` que emite
-   `--carac-esc` junto com `--nick-esc`, e não este laboratório.
-   Degraus medidos contra o pior caso real: "Desenvolvedor" (13) precisa de .905
-   no desktop e .796 a 120px; "Estrategista" (12) precisa de .961 a 120px. */
-const escalaCarac=texto=>texto.length<=10?1:texto.length<=12?.88:.8;
-
 const item=(html,rot)=>`<div class="lab-item">${html}<div class="lab-rot">${rot}</div></div>`;
 const cartaHtml=carta=>`<div class="${cardClass(carta)}" data-nick="${carta.nick}">${cardHTML(carta)}</div>`;
 const semTreinador=()=>`<div class="lab-semcoach"><div class="t">sem treinador</div>`+
@@ -413,12 +389,6 @@ $("gBandeiras").innerHTML=Object.entries(BANDEIRA).map(([pais,src])=>
    <div class="p" style="background-image:url('${src}')"></div>
    <div class="lab-rot">${pais}</div></div>`).join("");
 
-/* aplica a razão da característica em tudo o que já está na página */
-for(const faces of document.querySelectorAll(".cfaces")){
-  const rotulo=faces.querySelector(".c-vestilo b");
-  if(rotulo)faces.style.setProperty("--carac-esc",String(escalaCarac(rotulo.textContent.trim())));
-}
-
 $("labInfo").textContent=`${jogadores.length} jogadores · ${treinadores.length} treinadores · `+
   `${TEAMS.length} elencos · código real, zero cópia`;
 
@@ -472,13 +442,17 @@ function medirTexto(el){
      · o nick cabe na caixa da frente?
      · a característica do treinador cabe no verso?
      · algum texto passa da borda da carta? */
-function medir(){
-  const falhas=[];
+/* `medirCartas` é a implementação ÚNICA. `bancada/e2e-cartas.js` chama esta mesma
+   função pelo navegador — a suíte é o portão, e o laboratório é o instrumento; duas
+   medições diferentes para a mesma pergunta é o que produz desacordo silencioso. */
+function medirCartas(){
+  const falhas=[];        /* corte NÃO intencional: o texto vaza ou é decapitado */
+  const reticencias=[];   /* corte DECLARADO no CSS (`text-overflow:ellipsis`) */
   let total=0;
   for(const carta of todasAsCartas()){
     total++;
     const cx=carta.getBoundingClientRect();
-    const registrar=(el,nome,falta)=>falhas.push({nick:carta.dataset.nick||"—",campo:nome,
+    const registrar=(lista,el,nome,falta)=>lista.push({nick:carta.dataset.nick||"—",campo:nome,
       texto:el.textContent.trim(),falta:+falta.toFixed(1),
       passa:+(el.getBoundingClientRect().left+medirTexto(el)-cx.right).toFixed(1),
       fonte:getComputedStyle(el).fontSize});
@@ -487,7 +461,7 @@ function medir(){
     const fixa=(sel,nome)=>{
       const el=carta.querySelector(sel);if(!el)return;
       const falta=medirTexto(el)-el.clientWidth;
-      if(falta>.5)registrar(el,nome,falta);
+      if(falta>.5)registrar(falhas,el,nome,falta);
     };
     /* caixa que ENCOLHE para o conteúdo (só `left`): ela nunca "transborda" de si
        mesma — o que importa é se a aresta direita passa do recuo da carta. */
@@ -495,13 +469,17 @@ function medir(){
       const el=carta.querySelector(sel);if(!el)return;
       const recuo=cx.width*0.09;                    /* --pad, o mesmo dos dois lados */
       const excesso=el.getBoundingClientRect().right-(cx.right-recuo);
-      if(excesso>.5)registrar(el,nome,excesso);
+      if(excesso>.5)registrar(falhas,el,nome,excesso);
     };
-    /* caixa com reticências: aqui o navegador já cortou, e quem acusa é o scroll. */
+    /* Caixa com `text-overflow:ellipsis`: aqui cortar É a decisão de design — o
+       campeonato "DreamHack Cluj-Napoca 2015" não caberia em fonte nenhuma, e o
+       CSS declara as reticências. Isso vira RELATÓRIO, nunca reprovação: foi o que
+       reprovou a CI sem existir defeito, porque a métrica da fonte no Linux é ~7px
+       mais larga que no Windows e cruzou o limite lá e não aqui. */
     const cortada=(sel,nome)=>{
       const el=carta.querySelector(sel);if(!el)return;
       const falta=el.scrollWidth-el.clientWidth;
-      if(falta>.5)registrar(el,nome,falta);
+      if(falta>.5)registrar(reticencias,el,nome,falta);
     };
     fixa(".c-nick","nick (frente)");
     solta(".c-func","função (frente)");
@@ -509,16 +487,23 @@ function medir(){
     cortada(".c-vnick","nick (verso)");
     cortada(".c-vrod b","campeonato (verso)");
     for(const st of carta.querySelectorAll(".c-st i"))
-      if(st.scrollWidth-st.clientWidth>.5)registrar(st,"stat (verso)",st.scrollWidth-st.clientWidth);
+      if(st.scrollWidth-st.clientWidth>.5)
+        registrar(reticencias,st,"stat (verso)",st.scrollWidth-st.clientWidth);
   }
   const largura=Math.round(todasAsCartas()[0]?.getBoundingClientRect().width||0);
-  const nota=$("cEncaixe").checked&&!$("cProposta").checked
-    ?` · <span class="lab-ruim">o encaixe medido depende de P1</span>: com a proposta desligada,
-       <code>--nick-esc</code> não tem efeito nenhum`:"";
+  return {total,largura,falhas,reticencias};
+}
+window.__LAB_MEDIR=medirCartas;
+
+function medir(){
+  const {total,largura,falhas,reticencias}=medirCartas();
   const cabeca=`<b>${total}</b> cartas medidas a <b>${largura}px</b> · `+
     (falhas.length
       ?`<span class="lab-ruim">${falhas.length} estouro(s)</span>`
-      :`<span class="lab-ok">nenhum estouro</span>`)+nota;
+      :`<span class="lab-ok">nenhum estouro</span>`)+
+    (reticencias.length
+      ?` · ${reticencias.length} campo(s) com reticências, que é o comportamento declarado
+         (campeonato longo, nick do verso, nome de stat)`:"");
   const tabela=falhas.length?`<table><tr><th>carta</th><th>campo</th><th>texto</th>
     <th>falta</th><th>passa a borda</th><th>fonte</th></tr>`+
     falhas.map(f=>`<tr><td>${f.nick}</td><td>${f.campo}</td><td>${f.texto}</td>

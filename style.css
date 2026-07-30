@@ -165,13 +165,14 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   --t1:33cqw;                                      /* OVR      */
   --t3:6.2cqw;                                     /* função   */
   --t4:4.4cqw;                                     /* contexto */
-  /* nick: --nick-esc é a razão por comprimento do nome, posta no envelope das
-     duas faces para que FRENTE e VERSO encolham juntos. */
-  --t2:calc(16cqw*var(--nick-esc,1));
 
   box-shadow:inset 0 0 0 var(--aro) color-mix(in srgb,var(--m) var(--aro-a),transparent),var(--brilho)}
+/* O REALCE É RELATIVO À FAIXA. Antes o hover usava `var(--m)` puro, ignorando
+   `--aro-a`: passar o ponteiro levava qualquer carta ao aro de opacidade cheia, e
+   uma comum passava a exibir o aro de uma tier-s. */
 .card:hover,.coachcard:hover{
-  box-shadow:inset 0 0 0 var(--aro) var(--m),0 0 18px -6px var(--m)}
+  box-shadow:inset 0 0 0 var(--aro) color-mix(in srgb,var(--m) calc(var(--aro-a,50%) + 24%),transparent),
+    0 0 18px -6px var(--m)}
 
 /* ═══ DOIS CANAIS ══════════════════════════════════════════════════════════
    A carta comunica DUAS coisas, e cada uma tem seu território. Elas não
@@ -225,8 +226,16 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    Cada face gira independente e o que define o que aparece é a OPACIDADE (0/1).
    Assim nunca há sobreposição nem texto espelhado, mesmo se o Safari achatar o
    3D. Virar é por modo global (botão no cabeçalho do elenco revelado). */
+/* AS RAZÕES DE TEXTO VIVEM AQUI, e não em `.card` — é onde `card-view` põe
+   `--nick-esc` e `--carac-esc`. A substituição de custom property acontece no
+   elemento em que a propriedade é DECLARADA: com `--t2` declarado em `.card`,
+   `var(--nick-esc,1)` resolvia pelo fallback 1 e a escala de nome ficava MORTA.
+   Medido em 29/07/2026: os 100 nicks renderizavam a 16cqw e `olofmeister` e
+   `pashaBiceps` eram cortados 28px além da borda. Declarar no envelope das duas
+   faces mantém o contrato original — frente e verso encolhem JUNTOS. */
 .cfaces{position:absolute;inset:0;z-index:2;transform-style:preserve-3d;
-  -webkit-transform-style:preserve-3d;border-radius:inherit}
+  -webkit-transform-style:preserve-3d;border-radius:inherit;
+  --t2:calc(16cqw*var(--nick-esc,1))}
 .cface{position:absolute;inset:0;border-radius:inherit;overflow:hidden;
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   transition:transform .45s var(--ease),opacity .3s var(--ease)}
@@ -323,8 +332,10 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .c-vestilo{position:absolute;left:var(--pad);right:var(--pad);top:27%;z-index:5;font-family:var(--ff)}
 .c-vestilo small{display:block;font-size:3.6cqw;letter-spacing:.28em;color:#6c7d93;margin-bottom:.5em;
   text-transform:uppercase}
-.c-vestilo b{font-size:11cqw;font-weight:700;line-height:.95;color:var(--m);text-transform:uppercase;
-  letter-spacing:-.01em;display:block}
+/* Mesma razão do nick, pelo mesmo motivo: "Desenvolvedor" é palavra única, não
+   quebra linha e transbordava 16px no desktop e 26px a 120px, onde era cortada. */
+.c-vestilo b{font-size:calc(11cqw*var(--carac-esc,1));font-weight:700;line-height:.95;
+  color:var(--m);text-transform:uppercase;letter-spacing:-.01em;display:block}
 /* justify-content:center absorve 3 ou 4 linhas sem reajuste — o motor entrega 3
    quando Firepower já está na receita e 4 quando não está. */
 .c-vstats{position:absolute;left:var(--pad);right:var(--pad);top:47%;bottom:19%;z-index:5;
@@ -361,9 +372,12 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    mesma classe — não é uma segunda carta. */
 @container (max-width:150px){
   .c-meta,.c-flag,.c-vrod,.c-st em{display:none}
-  .card,.coachcard{--placa-n:32;--b2:6%;--b3:14%;--t2:calc(18cqw*var(--nick-esc,1));--t3:7cqw}
+  .card,.coachcard{--placa-n:32;--b2:6%;--b3:14%;--t3:7cqw}
+  /* AQUI O TEXTO NÃO CRESCE. Era 18cqw para o nick e 12,5cqw para o estilo: com a
+     caixa menor e a fonte maior, `Skadoodle` e `controlez` voltavam a estourar
+     4–6px a 120px mesmo com a razão viva. Medido nas cinco larguras reais. */
+  .cfaces{--t2:calc(16cqw*var(--nick-esc,1))}
   .c-vstats{bottom:6%}
-  .c-vestilo b{font-size:12.5cqw}
 }
 
 .slot{border:1px dashed rgba(52,65,85,.5);border-radius:10px;min-height:148px;aspect-ratio:5/7;

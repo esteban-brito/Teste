@@ -203,17 +203,31 @@ A densidade compacta ainda **aumentava** a fonte (18cqw), o que reabria o estour
 | 250 · 188 · 176 px | 14 | **0** |
 | 130 · 120 px | 22 | **0** |
 
-### Propostas no laboratório, aguardando aprovação
+### Consertos já promovidos ao jogo (29/07/2026)
 
-| id | o que é | natureza |
+| id | o que foi | onde vive agora |
 |---|---|---|
-| P1 | `--t2` declarado onde `--nick-esc` existe; compacto para de crescer o nick | conserto |
-| P3 | característica do treinador com razão própria (`Desenvolvedor` estourava 16 px, 26 px a 120 px) | conserto |
-| P4 | escada de raridade legível em cinza: 0–4 marcas + peso de aro + fio normalizado | design |
-| P5 | campo da função com menos croma; emblema mais presente | design |
-| P6 | treinador sai da escada: moldura neutra e fio segmentado | design |
-| P8 | `:hover` para de exibir o aro de opacidade cheia de outra faixa | conserto |
-| P9 | carta declarando "sem treinador" no lugar do buraco na grade | design |
+| P1 | `--t2` declarado em `.cfaces`, onde `--nick-esc` existe; densidade compacta para de crescer o nick (era 18cqw) | `style.css` |
+| P3 | rótulo do verso ganha `--carac-esc` pela mesma lógica | `style.css` + `card-view.mjs` |
+| P8 | `:hover` deixa de exibir o aro de opacidade cheia de outra faixa | `style.css` |
+
+Prova permanente: **`bancada/e2e-cartas.js`** (grupo `test:e2e`, ~3 s) chama o próprio
+medidor do laboratório com a proposta desligada e exige zero estouros nas cinco
+larguras. Ele também prova que sabe acusar, injetando um nome impossível. Com isso a
+bancada foi de 24 para **25 suítes**.
+
+`tools/check-game-view-modules.js` congela as duas razões no atributo, então mudar
+`escalaNick`/`escalaCarac` sem intenção reprova o `check`.
+
+### Propostas de design ainda no laboratório
+
+| id | o que é |
+|---|---|
+| P4 | escada de raridade legível em cinza: 0–4 marcas + peso de aro + fio normalizado |
+| P5 | campo da função com menos croma; emblema mais presente |
+| P6 | treinador sai da escada: moldura neutra e fio segmentado |
+| P9 | carta declarando "sem treinador" no lugar do buraco na grade |
+| — | emblema do Support deixa de ser um `+`, que é o glifo do slot vazio |
 
 Os números que sustentam P4 e P5: a luminância das cinco faixas é quase o inverso da
 escada (`s 0,300 < 2 0,402 < 3 0,460 < h 0,469 < 1 0,581`), e **as seis** cores de

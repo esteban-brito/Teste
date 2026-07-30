@@ -65,11 +65,22 @@ async function main(){
     "bandeira da carta mudou de mecanismo");
   // Nick escala por RAZÃO, aplicada no envelope das duas faces — em vez de
   // reticências na frente e ajuste por medição de DOM no verso.
-  assert.ok(playerHtml.includes('class="cfaces" style="--nick-esc:1"'),"escala do nick de nome curto mudou");
+  // As DUAS razões saem no mesmo envelope: nick e rótulo do verso. Elas vivem em
+  // `.cfaces` porque `--t2` e a fonte do rótulo são declarados lá — declarar em
+  // `.card` fazia `var(--nick-esc,1)` cair no fallback e a escala morria em
+  // silêncio (o nick era cortado 28px além da borda). `bancada/e2e-cartas.js` mede
+  // o encaixe real; aqui congela-se o contrato do atributo.
+  assert.ok(playerHtml.includes('class="cfaces" style="--nick-esc:1;--carac-esc:0.8"'),
+    "razões de escala do envelope das duas faces mudaram");
   const nomesLongos=[["curto",1],["pashaBicep",0.675],["pashaBiceps",0.675],["nomeMuitoComprido",0.5625]];
   nomesLongos.forEach(([nick,esperado])=>{
     const html=view.cardHTML({tipo:"coach",ovr:15,pais:"DEN",time:"T",nick,carac:"Gestor",caracSlug:"gestor"});
     assert.ok(html.includes(`--nick-esc:${esperado}`),`escala do nick mudou para "${nick}"`);
+  });
+  // Rótulo do verso: 13+ caracteres não cabem a 100%, 11–12 cabem justos.
+  [["Gestor",1],["Estrategista",0.88],["Desenvolvedor",0.8]].forEach(([carac,esperado])=>{
+    const html=view.cardHTML({tipo:"coach",ovr:15,pais:"DEN",time:"T",nick:"c",carac,caracSlug:"gestor"});
+    assert.ok(html.includes(`--carac-esc:${esperado}`),`escala do rótulo do verso mudou para "${carac}"`);
   });
   // Verso: playstyle como espinha, receita visível, campeonato no rodapé.
   assert.ok(playerHtml.includes("Closer &lt;elite&gt;"),"label do playstyle mudou ou deixou de ser escapado");

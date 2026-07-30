@@ -114,7 +114,7 @@ travava migração estrutural que é totalmente verificável. Os dois casos são
 - **Migração estrutural provada por paridade** pode ir em fatias maiores. Cada
   checkpoint deve fechar os invariantes pertinentes à superfície alterada,
   conforme a matriz abaixo. Se tocar em motor, API compartilhada ou RNG, isso
-  inclui snapshot idêntico, golden bit a bit, `validate` 24/24 e consumo de RNG
+  inclui snapshot idêntico, golden bit a bit, `validate` 25/25 e consumo de RNG
   inalterado. Se tocar somente em aplicação/UI, use as guardas centrais e o E2E;
   rode a validação integral ao encerrar um marco amplo. Refatoração não muda
   resultado — se mudou, é bug da refatoração, e a fatia volta atrás.
@@ -140,7 +140,7 @@ npm run test:fidelity     # se tocar no scorer, corpus ou metodologia IFCS
 npm run test:e2e          # se tocar no jogo ou na interface do calibrador
 ```
 
-`npm run test:all` e `npm run bench` executam as mesmas 24 suítes, na ordem
+`npm run test:all` e `npm run bench` executam as mesmas 25 suítes, na ordem
 histórica. Use `npm run validate` para alterações em motores/APIs compartilhadas
 e para fechar marcos estruturais amplos. O benchmark completo é demorado; agrupe
 mudanças coerentes antes de executá-lo, mas não reduza amostras ou limites para

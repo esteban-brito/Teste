@@ -22,10 +22,10 @@ faixas atuais são guardas de regressão, não uma nota de 0–100.
 | `npm run test:e2e` | intent, simulation, game flow | calibrador, aba Simular e jogo principal no navegador |
 | `npm run test:r5` | comparador pareado R5 | hashes, cobertura, delta nulo e detecção sintética |
 | `npm run test:r5:tails` | guardas de cauda R5.2 | ratings extremos, forma positiva e ausência de massa nos limites antigos |
-| `npm run test:all` | as 24 suítes acima | validação completa na ordem histórica |
+| `npm run test:all` | as 25 suítes acima | validação completa na ordem histórica |
 | `npm run bench` | alias de `test:all` | compatibilidade com CI e fluxo legado |
 
-`npm run validate` executa sintaxe, lint e as 24 suítes.
+`npm run validate` executa sintaxe, lint e as 25 suítes.
 
 `npm run check` inclui ainda `check-audio-module.js`, que usa um Web Audio falso
 para provar inicialização, volume mestre, desbloqueio iOS, síntese, mute e
