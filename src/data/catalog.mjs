@@ -8,9 +8,10 @@
    À época, os três estavam em `TIMES_DEF` e `PAISES_MAP`. Hoje os países
    vivem em `PAIS_JOGADOR` e `PAIS_TREINADOR`, com chaves declaradas.
 
-   Este arquivo é a resposta única a essa pergunta, e `tools/check-data-catalog.js`
-   PROVA cada alegação contra a realidade. Um número aqui que não bate com o motor
-   reprova a suíte — então o catálogo não pode envelhecer em silêncio.
+   Este arquivo é a resposta única a essa pergunta. `tools/check-data-catalog.js`
+   prova os fatos executáveis — cobertura, chaves, fronteira cru × derivado,
+   totais e divergências. Notas narrativas e nomes de fonte continuam sujeitos a
+   revisão de código; por isso não devem carregar espelhos ou planos já removidos.
 
    COMO USAR. Antes de concluir que um dado não existe, leia este arquivo. Se ele
    não menciona o dado, aí sim ele não existe.
@@ -25,7 +26,6 @@ export const FONTES={
   jogadores:{
     arquivo:"src/data/players.mjs",
     exporta:"ATRIBUTOS",
-    espelho:"game.js (bloco legado, projetado por tools/add-team.js — ADR 0005)",
     chave:"id || nome",
     nota:"O ID explícito só existe quando o mesmo nick aparece em outra era. "+
          "Ver docs/architecture.md §Dados e identidade."
@@ -33,14 +33,12 @@ export const FONTES={
   elencos:{
     arquivo:"src/data/teams.mjs",
     exporta:"TIMES_DEF",
-    espelho:"game.js (bloco legado)",
     chave:"nome (não é único: 'Spirit' e 'FURIA' aparecem em duas eras)",
     nota:"É AQUI que moram time, cor, campeonato, ano, colocação e treinador."
   },
   paises:{
     arquivo:"src/data/countries.mjs",
     exporta:"PAIS_JOGADOR + PAIS_TREINADOR",
-    espelho:"game.js (bloco legado)",
     chave:"PAIS_JOGADOR pelo ID cru; PAIS_TREINADOR pelo nome do treinador",
     nota:"Duas tabelas desde 28/07/2026. Antes era uma só, misturando jogador, "+
          "treinador e um nome de TIME — e a busca de jogador usava `nome`, o que "+
@@ -114,14 +112,16 @@ export const DIVERGENCIAS=[
     efeito:"Dois fatos num campo. Medido em 28/07/2026: NENHUM consumidor separa os "+
            "dois hoje — os 9 usos exibem a string inteira. Só uma carta com evento e "+
            "ano estilizados à parte precisaria da divisão.",
-    conserto:"ADIADO de propósito. Dividir custa 17 registros × 3 fontes + 9 pontos de "+
-             "UI que a Fase 7 do P2 reescreve, por zero consumidor atual. Fazer quando "+
-             "houver um consumidor real, com a UI já modularizada."
+    conserto:"ADIADO de propósito. A UI já foi modularizada, mas nenhum consumidor separa "+
+              "evento e ano. Dividir exige migrar os 17 registros e todos os consumidores; "+
+              "fazer somente quando surgir uso real para os dois campos."
   },
   {
     id:"sem-foto",
-    o_que:"Não existe foto de jogador nem campo para guardá-la.",
-    efeito:"Qualquer carta com retrato depende de criar essa fonte primeiro.",
-    conserto:"fora do P2 — decisão de produto pendente."
+    o_que:"Não existe campo cru de retrato para jogador ou treinador.",
+    efeito:"O laboratório pode usar ativos isolados — hoje há `fotos/donk_kato24.webp` —, "+
+           "mas o jogo não pode projetá-los como dado sem criar essa fonte.",
+    conserto:"Na eventual promoção dos retratos, criar o campo cru, declarar sua cobertura "+
+             "neste catálogo e ampliar a guarda antes de ligar a UI."
   }
 ];

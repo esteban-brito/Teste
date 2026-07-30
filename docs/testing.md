@@ -96,23 +96,23 @@ Em 29/07/2026 este instrumento pegou três mudanças visuais silenciosas durante
 fusão das camadas de cascata do `style.css` — nenhuma delas visível na leitura do
 código, todas prontas para ir ao ar.
 
-## Suítes de forma (medição, não gate)
+## Suítes de forma e seus ratchets
 
 `perfis.js`, `dificuldade.js` e a seção FORMA de `realismo.js` medem **distribuição**,
 não média: assinatura por função e playstyle, sobreposição entre bandas de OVR,
 variância intra-jogador, peso do contexto, kills por round, método do round e
 probabilidade de campanha invicta.
 
-Elas rodam em modo relatório e não reprovam a suíte enquanto o problema que medem não
-for atacado — e cada critério vira gate quando a etapa que o resolve é entregue
-(ratchet `ETAPA_ATIVA`). Estado atual: `perfis.js` tem as etapas `rating`, `relogio` e
-`abertura` ativas, e só `distribuicao` (desvio intra-jogador, depende de momentum
-intra-mapa) espera `PERFIS_STRICT=1`; a seção FORMA de `realismo.js` ainda aceita
-`ECONOMIA_STRICT=1`; **`dificuldade.js` virou gate por padrão em 27/07/2026** e só volta
-a relatório com `DIFICULDADE_STRICT=0`. O retrato de referência que originou os alvos
-está em [`baseline-simulacao-2026-07-26.md`](baseline-simulacao-2026-07-26.md), e a
-calibração que fechou a dificuldade em
-[`dificuldade-invicto-2026-07-27.md`](dificuldade-invicto-2026-07-27.md).
+Cada critério vira gate quando a etapa que o resolve é entregue (ratchet
+`ETAPA_ATIVA`). Estado executável atual: as quatro etapas de `perfis.js` —
+`rating`, `relogio`, `abertura` e `distribuicao` — estão ativas. Na seção FORMA
+de `realismo.js`, relógio reprova por padrão; os critérios de economia continuam
+opt-in com `ECONOMIA_STRICT=1`. `dificuldade.js` voltou a relatório em 28/07/2026
+depois de a recuperação da guarda `Favorito gap 16+` levar o invicto do elenco
+draftado a 3,8%; seus alvos só reprovam com `DIFICULDADE_STRICT=1`. O histórico
+dos alvos está em [`baseline-simulacao-2026-07-26.md`](baseline-simulacao-2026-07-26.md),
+[`dificuldade-invicto-2026-07-27.md`](dificuldade-invicto-2026-07-27.md) e no
+cabeçalho executável de `bancada/dificuldade.js`.
 
 Toda calibração de constante passa por `bancada/sweep.js`: braços pareados pela mesma
 seed e agenda, valor restaurado mesmo após falha, e braço de controle obrigatório

@@ -4,7 +4,7 @@
    FRENTE: quem é e quanto vale.   VERSO: como joga.
 
    Três níveis de leitura na frente, e só três: OVR sozinho no canto, nick sobre
-   uma placa sólida, função primária na cor da raridade. O rodapé (função
+   uma placa sólida, função primária na cor da função. O rodapé (função
    secundária e time) é apagado de propósito — é contexto, não hierarquia.
 
    O nick sobre PLACA SÓLIDA, e não sobre degradê, porque o contraste de um
@@ -17,10 +17,11 @@
    São 3 ou 4 estatísticas — 3 quando Firepower já está na receita — e o layout
    centraliza para absorver os dois casos sem reajuste.
 
-   A CAMADA DE FOTO EXISTE E ESTÁ VAZIA. Hoje 0 de 85 jogadores têm retrato e não
-   há campo para guardá-lo. O estado "sem foto" é declarado, não um remendo: a
-   tinta da raridade sobe e a carta fica assumidamente gráfica. Quando as fotos
-   existirem, é mudança de dado — não redesenho.
+   NO DESIGN PUBLICADO, A CAMADA DE FOTO ESTÁ VAZIA. Hoje 0 de 85 jogadores têm
+   retrato no dado cru; o laboratório mantém um ativo isolado para a proposta
+   A/B. O estado "sem foto" é declarado, não um remendo: a tinta da raridade sobe
+   e a carta fica assumidamente gráfica. Promover fotos é mudança de dado — não
+   redesenho.
 
    O TREINADOR usa o MESMO esqueleto. A diferença é que a cor não vem da
    raridade e sim da característica dele, porque ele não disputa a escala de OVR

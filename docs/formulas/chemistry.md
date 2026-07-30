@@ -1,7 +1,9 @@
 # Química e força — SINAPSE
 
 Fonte executável atual: `quimicaPlaystyles`, `quimicaComposicao`,
-`ovrTreinador`, `derivaCaracteristica` e `forcaTime` em `game.js`.
+`ovrTreinador`, `derivaCaracteristica` e `forcaTime` em
+`src/domain/chemistry/team-chemistry.mjs`. A composição pública entra por
+`src/public/evaluation-api.mjs` e `src/public/simulation-api.mjs`.
 
 ## Composição
 
@@ -37,7 +39,8 @@ Conflitos:
 - pace médio abaixo de -0,15: -10%;
 - dois ou mais Infiltradores: -10%;
 - três ou mais estrelas: -15%. Estrela é uma classificação calculada por
-  `rating >= CFG_NIVEL.ESTRELA_MIN` (atualmente 1,30), nunca por nome.
+  `ovr >= CFG_NIVEL.ESTRELA_OVR` (atualmente 20), nunca por nome ou diretamente
+  pelo rating histórico.
 
 Coach pode acrescentar bônus ou reduzir conflitos. Coringa divide pela metade
 somente as penalidades de playstyle.

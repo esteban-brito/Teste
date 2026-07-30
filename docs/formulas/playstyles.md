@@ -1,6 +1,8 @@
 # Playstyles — ZÊNITE
 
-Fonte executável atual: `game.js`, de `NM_AXES` até `styleMatch`.
+Fonte executável atual: `NM_AXES`, receitas, gates e `styleMatch` em
+`src/domain/evaluation/style-score.mjs`; identidade e traços vivem em
+`src/domain/evaluation/style-identity.mjs`.
 
 ## Eixos
 
@@ -79,4 +81,3 @@ Os sete atributos são ordenados. Coringa exige:
 - Baiter e Coringa são avaliados antes das receitas normais;
 - ordem das receitas resolve empates e deve ser preservada;
 - `matchMargin` é a diferença entre primeiro e segundo score.
-

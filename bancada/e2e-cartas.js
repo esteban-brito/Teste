@@ -13,7 +13,7 @@
    nome permanentemente cortado é estável, logo invisível para ele. Faltava uma
    guarda que medisse GEOMETRIA.
 
-   COMO ELA MEDE. O laboratório (`prototipo-cartas.html`) renderiza 145 cartas
+   COMO ELA MEDE. O laboratório (`prototipo-cartas.html`) renderiza 152 cartas
    com os módulos e o CSS reais e expõe `window.__LAB_MEDIR`. Esta suíte chama a
    MESMA função no estado publicado e na proposta A/B, nas cinco larguras reais e
    nos três pontos da costura compacta. Mede largura, recorte vertical e colisão
@@ -105,10 +105,10 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       `nenhuma carta renderiza valor inválido${invalidText.length?`: ${invalidText[0]}`:""}`);
 
     /* O QUE REPROVA E O QUE NÃO REPROVA. Reprova texto que VAZA a caixa ou é
-       decapitado — nick, função e rótulo do verso, que não têm reticências. NÃO
-       reprova campo com `text-overflow:ellipsis` declarado no CSS (campeonato, nick
-       do verso, nome de stat): ali cortar é a decisão de design, e "DreamHack
-       Cluj-Napoca 2015" não caberia em fonte nenhuma. Essa distinção existe porque a
+       decapitado — nick, função, campeonato e rótulo do verso, que não têm
+       reticências. NÃO reprova contexto secundário ou nome de stat com
+       `text-overflow:ellipsis` declarado no CSS: ali cortar é decisão de design.
+       Essa distinção existe porque a
        primeira versão desta suíte reprovou a CI sem defeito algum: a métrica da
        fonte no Linux é alguns pixels mais larga que no Windows e cruzou o limite das
        reticências lá, não aqui. Estouro real tem folga de dezenas de pixels, então
@@ -146,14 +146,14 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       `${largura}px · tokens da densidade ${compacta?"compacta":"completa"} realmente aplicados`);
     }
 
-    /* A classe de proposta fica vazia depois da promoção. Ainda assim, ligá-la
-       não pode degradar o design publicado nem as guardas da próxima hipótese. */
+    /* A proposta A/B está ativa e ainda não foi promovida. Ela precisa cumprir as
+       mesmas guardas geométricas do estado publicado em todas as larguras. */
     await page.check("#cProposta");
     for(const largura of LARGURAS){
       await page.selectOption("#cLargura",largura);await page.waitForTimeout(80);
       const audit=await page.evaluate(()=>window.__LAB_MEDIR());
       check(audit.falhas.length===0,
-        `${largura}px · design publicado continua sem falha geométrica${audit.falhas.length?` (${audit.falhas[0].campo})`:""}`);
+        `${largura}px · proposta ativa sem falha geométrica${audit.falhas.length?` (${audit.falhas[0].campo})`:""}`);
 
       const standards=await page.evaluate(()=>{
         const cards=[...document.querySelectorAll(".card,.coachcard")];

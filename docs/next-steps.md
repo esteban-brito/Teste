@@ -1,10 +1,13 @@
 # Plano de retomada — fidelidade individual e evolução do laboratório
 
-> Fonte canônica dos próximos passos aprovada em 21 de julho de 2026 e
-> sincronizada com o estado publicado em 22 de julho de 2026.
-> Este documento registra o raciocínio que deve sobreviver entre sessões. Ele
-> não é ordem para antecipar balanceamento fora da sequência medida e não
-> substitui a autonomia nem as guardas de `AGENTS.md`.
+> Plano aprovado em 21 de julho de 2026 e sincronizado com o estado publicado em
+> 22 de julho. Ele preserva o raciocínio e a sequência histórica de R1–R6/P1–P6,
+> mas **não é mais o handoff operacional atual**: P2 e o ciclo funcional da
+> simulação avançaram depois dele. Para retomar hoje, use `docs/project-context.md`,
+> `docs/p2-modularizacao-2026-07-28.md`, `docs/p5-aplicacao-ui-2026-07-29.md` e,
+> para cartas, a seção 12 de `docs/cartas-design-2026-07-28.md`. O backlog e as
+> decisões de produto deste arquivo continuam válidos quando não forem
+> explicitamente superados por essas fontes mais novas.
 
 ## 1. Estado publicado na origem deste plano
 
@@ -500,24 +503,22 @@ Somente após uma API estável de avaliação, contrato de RNG e save versionado
 9. P5 — corpus e nota IFCS oficial;
 10. P6 — preparação e implementação incremental da carreira.
 
-## 9. Próxima ação concreta ao retomar
+## 9. Próxima ação concreta ao retomar — registro superado
 
-R1 e R2 estão concluídas e R3 começou pela MD3 isolada. A próxima fatia
-funcional é **distribuição entre muitas campanhas MD3**. Na trilha estrutural P2,
-`rolePairReality`, `secondaryScore` e
-`roleStyleReality` já foram extraídas por paridade; a próxima fronteira pura do
-PRISMA deve ser caracterizada antes de qualquer nova extração. Não misturar R3 e
-P2 na mesma mudança.
+Em 22/07/2026, a ação prevista aqui era escolher entre ampliar as campanhas MD3
+de R3 e continuar as extrações de P2. Esse ponto foi executado: a distribuição
+individual foi entregue, o ciclo funcional da simulação foi fechado e P2 foi
+concluído. **Não use mais R3 versus P2 como escolha operacional atual.**
 
-Primeiro passo operacional:
+Em 30/07/2026, as duas retomadas concretas documentadas são independentes:
 
-1. confirmar `sandbox-test`, `git status` e sincronização com o remoto;
-2. rodar `npm ci` e `npm run check`;
-3. ler `AGENTS.md`, `docs/project-context.md`, `docs/architecture.md`,
-   `docs/testing.md`, `docs/glossary.md` e este documento;
-4. escolher explicitamente entre a trilha funcional R3 e a trilha estrutural P2;
-5. preservar a baseline e apresentar evidência antes de congelar novos asserts;
-6. não tocar em `CFG_*`, receitas, pesos, thresholds atuais ou RNG incidentalmente.
+1. produto visual: proposta ativa de cartas, ainda só no laboratório, conforme
+   `docs/cartas-design-2026-07-28.md` §12;
+2. estrutura: extração exclusiva dos estados `S`, `TG`, `MP` e `MATCH`, conforme
+   `docs/p5-aplicacao-ui-2026-07-29.md` §11.
+
+Em qualquer uma, preserve a baseline e não toque incidentalmente em `CFG_*`,
+receitas, pesos, thresholds ou consumo de RNG.
 
 ## 10. Decisões ainda abertas
 
@@ -545,7 +546,7 @@ eles sem conversar com o responsável.
   `docs/utilitaria-2026-07-28.md`. Com ela, **o escopo original da simulação está fechado**.
 
 Estado da simulação em 28/07/2026, para calibrar a urgência: **nenhum critério em relatório**.
-As quatro etapas do ratchet de `perfis.js` estão ativas, e `npm run validate` fecha 24/24 —
+As quatro etapas do ratchet de `perfis.js` estão ativas, e `npm run validate` fecha 25/25 —
 12/12 macro, 6/6 forma, 15/15 assinatura individual e 4/4 dificuldade. Nada acima é conserto;
 tudo é evolução deliberada.
 

@@ -1,6 +1,10 @@
 # Roles e role secundário — PRISMA
 
-Fonte executável atual: `game.js`, de `ROLE_PERFIL` até `distribuirRoles`.
+Fontes executáveis atuais: afinidades em
+`src/domain/evaluation/role-affinity.mjs`, classificação em
+`role-classification.mjs`, realidade/secundário nos módulos próprios e
+distribuição contextual em `role-distribution.mjs`. A composição pública entra
+por `src/public/evaluation-api.mjs`.
 
 ## Afinidade
 
@@ -66,4 +70,3 @@ faz parte do comportamento e precisa manter a ordem de desempate.
 - realidade fica nos limites definidos;
 - distribuição não depende da ordem dos slots para escolher o melhor IGL;
 - pares paradoxais e cap de AWP têm casos unitários antes da extração.
-
