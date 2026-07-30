@@ -38,7 +38,7 @@ download do backup e isolamento de instâncias com adaptadores falsos de navegad
 dos times, Suíça, playoffs, placar, antessala, campanha final e Hall sem DOM.
 
 `bancada/e2e-cartas.js` é a guarda geométrica, visual e interativa das cartas.
-Mede 145 cartas em oito larguras, nos estados publicado e proposta, e reprova
+Mede 152 cartas em oito larguras, nos estados publicado e proposta, e reprova
 estouro horizontal, recorte vertical e colisão entre regiões. Em cada largura,
 também exige campeonato/colocação visíveis em jogador e treinador, ausência dos
 nós de rating e peso removidos do verso, tamanhos mínimos, contraste calculado de
@@ -49,6 +49,16 @@ teclado, reset do modo Virar, seleção normal, ausência da varredura de entrad
 `prefers-reduced-motion` e ausência de hover preso em dispositivos touch. Casos
 sintéticos garantem que o detector não esteja sempre verde e separam falha real
 de reticências deliberadas.
+
+Desde 30/07/2026 ela também **amostra pixel real** em toda carta que declara
+`--foto`. O contraste calculado acima assume um fundo fixo escuro, e esse modelo
+deixa de valer quando há retrato: o OVR e a bandeira ficam direto sobre o campo,
+sem placa por baixo, e cada foto traz o próprio padrão de luz. A guarda fotografa
+a carta **com o texto escondido** — sem isso o pixel mais claro da zona é o
+próprio número branco e a medição mede a si mesma —, varre as duas zonas e exige
+4,5:1 para texto branco. Duas provas sintéticas fecham o contrato: um retrato
+branco puro sem o escurecimento do campo reprova em 1:1, e com ele passa em
+4,82:1, que é a folga real do desenho contra o pior retrato concebível.
 
 Os servidores efêmeros dos E2E devem usar faixas aceitas pelo Chromium. O fluxo
 principal usa 7000–7299; a faixa antiga 5900–6199 incluía a porta 6000, que o

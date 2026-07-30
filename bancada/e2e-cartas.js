@@ -35,7 +35,9 @@ const {okMark,chromiumLaunchOptions}=require("./common");
    densidade compacta. Um bug de container query pode passar em 176 e 130 e
    ainda quebrar justamente na troca entre os dois layouts. */
 const LARGURAS=["250","188","176","151","150","149","130","120"];
-const CARTAS_ESPERADAS=145;   /* 85 jogadores + 15 treinadores + as sínteses do lab */
+/* 100 reais (85 jogadores + 15 treinadores) + 7 da escada (6 faixas + treinador)
+   + 36 da matriz (6 faixas × 6 funções) + 9 dos casos que quebram o layout. */
+const CARTAS_ESPERADAS=152;
 
 function waitServer(port,tries=50){
   return new Promise((resolve,reject)=>{
@@ -207,6 +209,104 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
         `${largura}px · nenhuma carta projeta halo externo`+
         (standards.externalShadows?` (${standards.externalShadows} falha(s))`:""));
     }
+
+    /* CONTRASTE SOBRE RETRATO — a checagem acima calcula contraste contra um
+       fundo FIXO escuro, e esse modelo deixa de valer na carta que tem foto: o
+       OVR e a bandeira ficam direto sobre o campo, sem placa por baixo, e cada
+       retrato traz o proprio padrao de luz. Um rosto claro ali reprovaria na
+       tela e passaria na guarda.
+
+       Aqui se mede o que esta PINTADO: fotografa a carta com o texto escondido,
+       varre as duas zonas e pega o pixel mais claro — o pior caso para texto
+       branco. Esconder o texto e obrigatorio; sem isso o pixel mais claro da
+       zona e o proprio numero e a medicao mede a si mesma. */
+    const ZONAS=[["OVR",.06,.04,.45,.22],["bandeira",.60,.03,.95,.16]];
+    for(const largura of ["250","130"]){
+      await page.selectOption("#cLargura",largura);
+      await page.waitForTimeout(140);
+      const comFoto=page.locator('.card[style*="--foto"],.coachcard[style*="--foto"]');
+      const quantas=await comFoto.count();
+      if(!quantas){
+        check(true,`${largura}px · nenhuma carta com retrato nesta pagina (nada a medir)`);
+        continue;
+      }
+      const piores=[];
+      for(let i=0;i<quantas;i++){
+        const carta=comFoto.nth(i);
+        const nick=await carta.evaluate(c=>c.dataset.nick||"—");
+        await carta.evaluate(c=>{for(const s of [".c-ovr",".c-flag"]){
+          const el=c.querySelector(s);if(el)el.style.visibility="hidden";}});
+        const png=await carta.screenshot();
+        await carta.evaluate(c=>{for(const s of [".c-ovr",".c-flag"]){
+          const el=c.querySelector(s);if(el)el.style.visibility="";}});
+        const medido=await page.evaluate(async([b64,zonas])=>{
+          const img=await new Promise(res=>{const i=new window.Image();i.onload=()=>res(i);
+            i.src="data:image/png;base64,"+b64;});
+          const cv=document.createElement("canvas");cv.width=img.width;cv.height=img.height;
+          const cx=cv.getContext("2d",{willReadFrequently:true});cx.drawImage(img,0,0);
+          const lum=c=>{const l=c.map(ch=>{const v=ch/255;
+            return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;});
+            return .2126*l[0]+.7152*l[1]+.0722*l[2];};
+          return zonas.map(([nome,x0,y0,x1,y1])=>{
+            const d=cx.getImageData(Math.round(img.width*x0),Math.round(img.height*y0),
+              Math.round(img.width*(x1-x0)),Math.round(img.height*(y1-y0))).data;
+            let maior=-1;
+            for(let p=0;p<d.length;p+=4){const L=lum([d[p],d[p+1],d[p+2]]);if(L>maior)maior=L;}
+            return {nome,razao:+((1.05)/(maior+.05)).toFixed(2)};
+          });
+        },[png.toString("base64"),ZONAS]);
+        for(const m of medido)if(m.razao<4.5)piores.push(`${nick} ${m.nome} ${m.razao}:1`);
+      }
+      check(piores.length===0,
+        `${largura}px · ${quantas} carta(s) com retrato mantem 4,5:1 no OVR e na bandeira`+
+        (piores.length?` — ${piores[0]}`:""));
+    }
+
+    /* PROVA DE QUE A MEDICAO ACUSA, e de qual e a margem real do escurecimento.
+       Sem ela, "nenhuma carta reprovou" pode significar apenas que a amostragem
+       parou de funcionar. Duas injecoes no mesmo pixel branco, o pior retrato
+       concebivel: com o escurecimento do campo, tem de PASSAR; sem ele, tem de
+       REPROVAR. A primeira mede a folga do desenho, a segunda mede o detector. */
+    await page.selectOption("#cLargura","250");
+    await page.waitForTimeout(140);
+    const prova=await page.evaluate(async()=>{
+      const carta=document.querySelector('.card[style*="--foto"]');
+      if(!carta)return null;
+      const foto=carta.querySelector(".cfront .c-foto");
+      const original=foto.style.backgroundImage;
+      const lum=c=>{const l=c.map(ch=>{const v=ch/255;
+        return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;});
+        return .2126*l[0]+.7152*l[1]+.0722*l[2];};
+      const medir=()=>{
+        const cs=getComputedStyle(foto);
+        /* recria as camadas num canvas do mesmo tamanho e amostra a zona do OVR */
+        const r=foto.getBoundingClientRect();
+        const cv=document.createElement("canvas");cv.width=Math.round(r.width);cv.height=Math.round(r.height);
+        const cx=cv.getContext("2d");
+        cx.fillStyle="#fff";cx.fillRect(0,0,cv.width,cv.height);
+        if(cs.backgroundImage.includes("linear-gradient")&&!cs.backgroundImage.startsWith("linear-gradient(rgb(255")){
+          const g=cx.createLinearGradient(0,0,0,cv.height);
+          g.addColorStop(0,"rgba(3,6,11,.90)");g.addColorStop(.14,"rgba(3,6,11,.74)");
+          g.addColorStop(.26,"rgba(3,6,11,.48)");g.addColorStop(.36,"rgba(3,6,11,.14)");
+          g.addColorStop(.46,"rgba(3,6,11,0)");
+          cx.fillStyle=g;cx.fillRect(0,0,cv.width,cv.height);
+        }
+        const d=cx.getImageData(Math.round(cv.width*.06),Math.round(cv.height*.04),
+          Math.round(cv.width*.39),Math.round(cv.height*.18)).data;
+        let maior=-1;
+        for(let p=0;p<d.length;p+=4){const L=lum([d[p],d[p+1],d[p+2]]);if(L>maior)maior=L;}
+        return +((1.05)/(maior+.05)).toFixed(2);
+      };
+      const comEscurecimento=medir();
+      foto.style.backgroundImage="linear-gradient(rgb(255,255,255),rgb(255,255,255))";
+      const semEscurecimento=medir();
+      foto.style.backgroundImage=original;
+      return {comEscurecimento,semEscurecimento};
+    });
+    check(prova&&prova.semEscurecimento<4.5,
+      `medicao acusa retrato sem escurecimento (${prova?prova.semEscurecimento:"?"}:1)`);
+    check(prova&&prova.comEscurecimento>=4.5,
+      `escurecimento aguenta o pior retrato possivel — branco puro (${prova?prova.comEscurecimento:"?"}:1)`);
 
     await page.selectOption("#cLargura","188");
     const motion=await page.locator(".card").first().evaluate(card=>{

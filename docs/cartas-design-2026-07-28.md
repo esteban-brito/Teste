@@ -301,3 +301,107 @@ diferenças.
 Fechamento: `npm run validate`, **25/25 suítes verdes** em 182,2 s; snapshot,
 golden, RNG, tiers, dados crus e balanceamento intactos. CI e deploy do Pages:
 workflow `30527422214`, verde.
+
+## 12. Proposta ativa no laboratório — NÃO promovida (30/07/2026)
+
+> **Leia esta seção antes de tocar em carta.** Existe uma hipótese visual COMPLETA
+> viva no bloco `#proposta` de `prototipo-cartas.html`. O jogo continua exibindo o
+> design publicado (Tactical Editorial, seção 11): com a tecla `P` desligada, o
+> laboratório e o jogo são idênticos. Nada abaixo está em `style.css`.
+
+### A escada de seis faixas
+
+Cinco faixas viram seis, e o topo deixa de colapsar 21 e 22 no mesmo holo:
+
+| classe | OVR | jogadores | tratamento |
+|---|---|---:|---|
+| `p-t1` | ≤14 | 5 | branca, piso, sem moldura especial |
+| `p-t2` | 15–17 | 39 | verde |
+| `p-t3` | 18–19 | 24 | âmbar, ainda sem borda |
+| `p-t4` | 20 | 11 | **borda dourada cromada** |
+| `p-t5` | 21 | 2 | **borda vermelho sangue** |
+| `p-t6` | 22 | 4 | **borda iridescente, estática** |
+
+A faixa é função do OVR, então não pode nascer no CSS: o laboratório marca cada
+carta com `p-rank` + `p-tN` e o bloco pinta. Ao promover, isso vira `tierOf` em
+`card-view.mjs` — e **cinco pontos precisam andar juntos**, ou o mesmo jogador
+aparece com raridade diferente em duas telas: `card-view.mjs` (`tierOf`),
+`elencos.html` (`tierVars`, cópia própria escrita à mão — só o bloco `DATA` é
+gerado), `tools/check-game-view-modules.js` (congela as strings de classe),
+`prototipo-cartas.html` (array `TIERS`) e `bancada/e2e-cartas.js`
+(`CARTAS_ESPERADAS`, hoje 152).
+
+### Decisões que custaram medição e não devem ser refeitas
+
+- **Vermelho não alcança a luminância do ouro sem deixar de ser vermelho.**
+  `#ff0000` puro dá 0,21 contra 0,58 do `#ffbe00`. Monotonicidade estrita de
+  brilho é impossível nesta paleta. A escada tem dois carregadores: luminância
+  nas três faixas sem borda (0,051 → 0,127 → 0,274, monotônica) e categoria nas
+  três com borda. O que importa é que 21 nunca pareça menos que 19.
+- **Pintura e tinta são tokens separados.** `--m`/`--r` pintam estrutura;
+  `--m-ink`/`--r-ink` colorem texto e precisam passar 4,5:1. É o que permite
+  moldura sangue `#8b0f1d` (2,03:1, reprovaria como texto) com tinta `#ff7a86`
+  (7,77:1). Fio, campo e placa saem de `--fio-cor`/`--wash-cor`, calibrados —
+  derivar qualquer um deles de `--m` cru reintroduz inversão na escada.
+- **As marcas de raridade saíram**, por decisão do responsável: a faixa é função
+  direta do OVR e o OVR já é o maior elemento da carta.
+- **Os emblemas de função saíram**, para dar o centro ao retrato. A cobertura de
+  daltonismo mudou de canal: o nome da função agora é o segundo elemento mais
+  forte da frente, em cor viva, e palavra escrita não depende de visão de cor.
+- **A paleta de função foi reconstruída** nas seis famílias que a raridade não
+  usa — coral 16°, teal 172°, ciano 188°, azul 214°, violeta 267°, magenta 318°.
+  Rifler estava em tan sobre cartas ouro e Lurker em verde sobre 39 cartas verdes.
+
+### Rejeitados pelo responsável — não reintroduzir
+
+Guilhoché e textura no campo; filete duplo no topo da carta; filete sob o nome da
+função; braçadeira vertical na carta de IGL; entalhe na placa do IGL. A carta de
+IGL é **estruturalmente idêntica** às demais: a diferença é só a escrita, role 1
+na cor dele e role 2, a função de combate, na cor dela.
+
+### Treinador
+
+Outro objeto, não um jogador sem OVR: banda **reta** no lugar da diagonal,
+moldura **segmentada a 45°** (a 90° as laterais saíam sólidas) e "TREINADOR" com
+corpo e cor da característica. A descrição do efeito é o conteúdo do verso dele —
+foi de 9,8px para 12,8px no desktop, com números próprios na densidade compacta.
+
+### Retratos — fatia vertical iniciada
+
+Existe **um** retrato: `fotos/donk_kato24.webp` (47 KB, 500×700). A chave é o
+**ID cru** (`_eng.id` no jogador, nome no treinador), nunca o `id` da carta, que
+é sequencial e só serve ao DOM — `donk` e `donk_kato24` são a mesma pessoa em
+eras diferentes e podem ter retratos diferentes.
+
+O campo é uma lista de quatro camadas numa propriedade só, e a ordem importa
+porque em `background-image` a primeira pinta por cima: escurecimento do topo ·
+banho da raridade · retrato · gradiente base. **O banho precisou subir para cima
+da foto**: ele morava no próprio gradiente do campo e desapareceria justamente
+nas cartas com retrato. O fallback é automático e não usa JavaScript — sem
+`--foto`, ou com URL quebrada, a camada some e o gradiente base aparece.
+
+**A guarda de contraste era cega a retrato**, e isso foi medido: com a foto do
+donk o pixel mais claro atrás do OVR dava 2,62:1 — reprovaria na tela e passava
+na guarda, que calcula contra um fundo fixo. Escurecimento por canto piorou (a
+bandeira caiu de 5,56 para 2,50) e foi descartado pela medição. A faixa de topo
+dimensionada pelo alvo levou o OVR a 7,02:1 e a bandeira a 12,32:1.
+`bancada/e2e-cartas.js` agora **amostra pixel real** em toda carta com `--foto`,
+escondendo o texto antes de medir — sem isso o pixel mais claro da zona é o
+próprio número branco. Duas provas sintéticas fecham: retrato branco puro sem
+escurecimento reprova em 1:1, com escurecimento passa em 4,82:1.
+
+### O que falta
+
+1. decidir o enquadramento padrão dos retratos, para as seis cartas de um elenco
+   parecerem um conjunto; hoje o recorte é escolhido a olho;
+2. os cinco retratos restantes de Spirit Katowice 2024 — `sh1ro_kato24`,
+   `zont1x`, `magixx`, `chopper_kato24` e `hally`;
+3. promover a proposta ao jogo, com os cinco pontos acima andando juntos,
+   `npm run visual:capturar` antes/depois e inspeção de cada captura alterada;
+4. na promoção, o retrato deixa de ser lista no laboratório e vira campo do dado
+   cru — `src/data/catalog.mjs` declara a cobertura e
+   `tools/check-data-catalog.js` passa a provar o número. Hoje o catálogo ainda
+   declara `sem-foto` em `DIVERGENCIAS`.
+
+Fechamento desta etapa: `npm run validate`, **25/25 suítes verdes** em 184,4 s.
+Nada de dado cru, OVR, tiers, snapshot, golden, RNG ou balanceamento foi tocado.
