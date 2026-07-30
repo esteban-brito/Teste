@@ -297,49 +297,62 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
 .proposta .card.fn-lurker  .c-emblema{transform:translate(-50%,-50%) scale(.86)}
 
 /* ── 6 · carta de IGL ────────────────────────────────────────────────────────
-   A carta de comando tem de ser diferente de todas, e a diferenca escolhida e
-   VERDADEIRA, nao decorativa: os 17 IGLs do jogo tem funcao de combate real
-   classificada pelo motor. IGL nunca e so IGL.
+   A carta de comando tem de ser diferente de todas. A primeira tentativa somou
+   DOIS elementos novos — uma bracadeira vertical na aresta esquerda e um filete
+   ao lado da funcao de combate — e as duas foram reprovadas: a listra briga com
+   a borda cromada nas faixas de topo, e o filete e mais um traco numa carta que
+   ja tinha traco demais.
 
-   Dois sinais, nenhum disputando territorio com a raridade, que ocupa topo,
-   direita e base:
+   A diferenca agora nao ACRESCENTA nada: ela MUDA a forma do que ja existe.
 
-     BRACADEIRA  faixa vertical na aresta esquerda, altura inteira, nas duas
-                 faces. E diferenca de FORMA: sobrevive a 120px, ao cinza e ao
-                 daltonismo.
-     INSIGNIA    a funcao de combate promovida a rotulo proprio, na cor dela.
+     ENTALHE NA PLACA. A placa do nome tem um corte diagonal unico — e a
+     assinatura da carta de jogador. Na carta de IGL esse corte ganha um degrau,
+     e a peca inteira muda de silhueta nas duas faces. Nao e cor, nao e tinta,
+     nao e elemento novo: e a mesma placa com outro recorte. Por isso sobrevive
+     a 120px, ao cinza e ao daltonismo, e nao disputa nada com a borda.
 
-   A insignia ocupa `.card::before`, livre desde que as marcas de raridade
-   sairam, e por isso NAO some na densidade compacta — ao contrario da linha de
-   contexto, que some. O texto vem de `attr(data-cr)`; o dado ja existe em
-   `carta.sec` e nenhuma copia e criada. */
+     FUNCAO DE COMBATE COLORIDA. Os 17 IGLs tem funcao de combate real
+     classificada pelo motor — IGL nunca e so IGL. Ela ja vivia na linha de
+     contexto, em cinza; agora usa a cor da propria funcao. Continua no MESMO
+     elemento de sempre, que o medidor ja mede — nenhum texto novo em
+     pseudo-elemento, que o medidor nao alcancaria.
+
+   A linha de contexto some na densidade compacta, e para o IGL ela deixa de
+   sumir: sem ela a funcao de combate desapareceria no celular, e ela e a metade
+   da identidade desta carta. O entalhe continua valendo em qualquer largura. */
 .proposta .card.cr-igl    {--cr:#4d9bff}
 .proposta .card.cr-awper  {--cr:#b070ff}
 .proposta .card.cr-entry  {--cr:#ff7d4d}
 .proposta .card.cr-rifler {--cr:#ff5fd0}
 .proposta .card.cr-lurker {--cr:#22d3ee}
 .proposta .card.cr-support{--cr:#16c9b0}
-.proposta .card.fn-igl .cfront .c-vinheta::before,
-.proposta .card.fn-igl .cback .c-grao::before{
-  content:"";position:absolute;left:0;top:0;bottom:0;width:3.4%;pointer-events:none;
-  background:linear-gradient(180deg,
-    color-mix(in srgb,var(--r-ink) 92%,transparent),
-    color-mix(in srgb,var(--r-ink) 34%,transparent) 62%,
-    color-mix(in srgb,var(--r-ink) 78%,transparent))}
-/* `top` e `right` PRECISAM ser zerados: vinham da regra das marcas de raridade,
-   que ocupava este mesmo pseudo-elemento. Sem o reset a caixa fica com as quatro
-   ancoras definidas e se estica pela carta inteira. */
-.proposta .card.fn-igl[data-cr]::before{
-  content:attr(data-cr);display:block;position:absolute;z-index:6;
-  top:auto;right:auto;left:var(--pad);bottom:var(--b1);
-  width:auto;height:auto;background:none;
-  font-family:var(--ff);font-size:var(--t4);font-weight:700;line-height:1;
-  letter-spacing:.16em;text-transform:uppercase;color:var(--cr,#9ba9bb);
-  padding-left:2.6cqw;border-left:1.6px solid var(--cr,#9ba9bb)}
-.proposta .card.fn-igl[data-cr] .cfront .c-meta span:first-child{visibility:hidden}
-/* A insignia pertence a CARTA, nao a uma face: ela sobrevivia ao flip e caia
-   sobre o "CAMPEAO" do verso. O verso ja identifica a funcao pelo playstyle. */
-.proposta .card.fn-igl.flipped::before{display:none}
+
+/* O degrau nasce no mesmo ponto em que a diagonal comeca, entao ele acompanha
+   `--corte` e nao vira um numero solto. A face de tras espelha o recorte pelo
+   mesmo motivo que ela ja espelhava a diagonal. */
+.proposta .card.fn-igl .cfront .c-fio,
+.proposta .card.fn-igl .cfront .c-placa{
+  clip-path:polygon(0 calc(var(--corte)*2.1), 27% calc(var(--corte)*2.1),
+    31% var(--corte), 100% 0, 100% 100%, 0 100%)}
+.proposta .card.fn-igl .cback .c-vfio,
+.proposta .card.fn-igl .cback .c-vfaixa{
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - var(--corte-v)),
+    31% calc(100% - var(--corte-v)), 27% 100%, 0 100%)}
+
+.proposta .card.fn-igl[data-cr] .cfront .c-meta span:first-child{
+  color:var(--cr,#9ba9bb);font-weight:700}
+/* Reativar a linha de contexto no compacto nao basta: o medidor reprovou
+   "colisao funcao/contexto" nas quatro larguras estreitas. La o corpo da funcao
+   sobe para 8,2cqw e a folga entre as duas linhas e de apenas 1,4% da carta —
+   e exatamente por isso que a linha some para todo mundo. A carta de IGL abre o
+   proprio ritmo para caber o que so ela precisa mostrar; o nick sobe junto,
+   porque `--b3` deriva de `--b2`. O time sai: nesta largura ele ja aparece no
+   cabecalho do elenco, e a funcao de combate nao aparece em lugar nenhum. */
+@container (max-width:150px){
+  .proposta .card.fn-igl .cfaces{--b2:10.5%}
+  .proposta .card.fn-igl .c-meta{display:flex}
+  .proposta .card.fn-igl .c-meta span:last-child{display:none}
+}
 
 /* ── 7 · carta de treinador ──────────────────────────────────────────────────
    Ele PRECISA ser outro objeto, nao um jogador sem OVR. Tres mudancas
