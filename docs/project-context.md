@@ -43,12 +43,17 @@ histórico abaixo):
 - `AGENTS.md` registra autorização persistente para o agente executar a próxima
   fatia segura, limpar legado comprovadamente dispensável, criar commits e fazer
   push de checkpoints verdes para `sandbox-test` sem renovar a permissão;
-- o endurecimento das cartas mede 145 cartas em oito larguras, nos estados atual e
-  proposta, incluindo recorte vertical e colisões. O jogo real prova teclado,
-  frente/verso, layout compacto, reduced motion e touch; o contrato detalhado está
-  em `docs/cartas-design-2026-07-28.md`, seção 11;
+- o refinamento **Tactical Editorial** das cartas está publicado em `bf5d5e5`:
+  sem halos ou varredura de luz, movimento curto, raridade por marcas, treinador
+  neutro e verso sem OVR/RTG/pesos visuais. Campeonato e colocação permanecem
+  visíveis em jogador e treinador, inclusive no compacto;
+- a guarda mede 145 cartas em oito larguras e também prova fontes mínimas,
+  contraste de 4,5:1, conteúdo obrigatório, ausência de halo, keyframes limpos,
+  teclado, frente/verso, reduced motion e touch. O contrato detalhado está em
+  `docs/cartas-design-2026-07-28.md`, seção 11;
 - validação integral desse marco: `npm run validate`, **25/25 suítes verdes** em
-  198,2 s; snapshot, golden, consumo de RNG e balanceamento permaneceram intactos;
+  182,2 s; snapshot, golden, consumo de RNG e balanceamento permaneceram intactos;
+- CI e deploy do commit `bf5d5e5`: workflow `30527422214`, verde;
 - o ciclo **P2 de modularização por paridade está concluído**, Fases 0–7;
 - `game.js` caiu de 3.054 para **889 linhas** — 1.206 ao fim do P2, 938 depois das
   primeiras fatias do P5, 888 após a remoção do tilt morto e uma linha de import

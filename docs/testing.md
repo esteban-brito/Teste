@@ -37,13 +37,18 @@ download do backup e isolamento de instâncias com adaptadores falsos de navegad
 `check-game-view-modules.js` congela escaping, cartas, tiers, selos, identidade
 dos times, Suíça, playoffs, placar, antessala, campanha final e Hall sem DOM.
 
-`bancada/e2e-cartas.js` é a guarda geométrica e interativa das cartas. Mede 145
-cartas em oito larguras, nos estados publicado e proposta, e reprova estouro
-horizontal, recorte vertical e colisão entre regiões. No jogo real, prova a
-costura do layout compacto, frente/verso acessível por teclado, reset do modo
-Virar, seleção normal, `prefers-reduced-motion` e ausência de hover preso em
-dispositivos touch. Casos sintéticos garantem que o detector não esteja sempre
-verde e separam falha real de reticências deliberadas.
+`bancada/e2e-cartas.js` é a guarda geométrica, visual e interativa das cartas.
+Mede 145 cartas em oito larguras, nos estados publicado e proposta, e reprova
+estouro horizontal, recorte vertical e colisão entre regiões. Em cada largura,
+também exige campeonato/colocação visíveis em jogador e treinador, ausência dos
+nós de rating e peso removidos do verso, tamanhos mínimos, contraste calculado de
+pelo menos 4,5:1 e nenhum halo externo. Congela ainda o contrato de movimento:
+tempos, propriedades, holografia estática e keyframes sem rotação, luz ou
+overshoot. No jogo real, prova a costura compacta, frente/verso acessível por
+teclado, reset do modo Virar, seleção normal, ausência da varredura de entrada,
+`prefers-reduced-motion` e ausência de hover preso em dispositivos touch. Casos
+sintéticos garantem que o detector não esteja sempre verde e separam falha real
+de reticências deliberadas.
 
 Os servidores efêmeros dos E2E devem usar faixas aceitas pelo Chromium. O fluxo
 principal usa 7000–7299; a faixa antiga 5900–6199 incluía a porta 6000, que o
