@@ -15,6 +15,8 @@ assert.match(game,/import \{Audio\} from "\.\/src\/application\/audio\.mjs";/,
   "game.js não importa o efeito público de áudio");
 assert.match(game,/import \{PROGRESSO\} from "\.\/src\/infrastructure\/persistence\/progress-store\.mjs";/,
   "game.js não importa o adaptador de persistência");
+assert.match(game,/import \{setCardFlipped\} from "\.\/src\/application\/card-face\.mjs";/,
+  "game.js não importa o controle acessível de face da carta");
 assert.match(game,/import \{escapeHtml as esc\} from "\.\/src\/ui\/shared\/html\.mjs";/,
   "game.js não importa o escape HTML compartilhado");
 assert.match(game,/import \{createCardView\} from "\.\/src\/ui\/game\/card-view\.mjs";/,

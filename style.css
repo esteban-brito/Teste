@@ -170,9 +170,13 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 /* O REALCE É RELATIVO À FAIXA. Antes o hover usava `var(--m)` puro, ignorando
    `--aro-a`: passar o ponteiro levava qualquer carta ao aro de opacidade cheia, e
    uma comum passava a exibir o aro de uma tier-s. */
-.card:hover,.coachcard:hover{
-  box-shadow:inset 0 0 0 var(--aro) color-mix(in srgb,var(--m) calc(var(--aro-a,50%) + 24%),transparent),
-    0 0 18px -6px var(--m)}
+/* Em toque, `:hover` pode ficar preso depois do tap. O realce só existe onde há
+   ponteiro fino com hover real; teclado continua usando `:focus-visible`. */
+@media (hover:hover) and (pointer:fine){
+  .card:hover,.coachcard:hover{
+    box-shadow:inset 0 0 0 var(--aro) color-mix(in srgb,var(--m) calc(var(--aro-a,50%) + 24%),transparent),
+      0 0 18px -6px var(--m)}
+}
 
 /* ═══ DOIS CANAIS ══════════════════════════════════════════════════════════
    A carta comunica DUAS coisas, e cada uma tem seu território. Elas não
@@ -239,11 +243,11 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .cface{position:absolute;inset:0;border-radius:inherit;overflow:hidden;
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   transition:transform .45s var(--ease),opacity .3s var(--ease)}
-.cfront{transform:rotateY(0deg);opacity:1}
-.cback{transform:rotateY(180deg);opacity:0;
+.cfront{transform:rotateY(0deg);opacity:1;pointer-events:auto}
+.cback{transform:rotateY(180deg);opacity:0;pointer-events:none;
   background:linear-gradient(168deg,color-mix(in srgb,var(--m) 13%,#080b11),#06080d 58%)}
-.card.flipped .cfront,.coachcard.flipped .cfront{transform:rotateY(-180deg);opacity:0}
-.card.flipped .cback,.coachcard.flipped .cback{transform:rotateY(0deg);opacity:1}
+.card.flipped .cfront,.coachcard.flipped .cfront{transform:rotateY(-180deg);opacity:0;pointer-events:none}
+.card.flipped .cback,.coachcard.flipped .cback{transform:rotateY(0deg);opacity:1;pointer-events:auto}
 @media(prefers-reduced-motion:reduce){.cface{transition:none}}
 
 /* ═══ FRENTE ═══════════════════════════════════════════════════════════════
@@ -372,11 +376,17 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    mesma classe — não é uma segunda carta. */
 @container (max-width:150px){
   .c-meta,.c-flag,.c-vrod,.c-st em{display:none}
-  .card,.coachcard{--placa-n:32;--b2:6%;--b3:14%;--t3:7cqw}
+  /* A regra precisa atingir um DESCENDENTE do contêiner consultado. Aplicá-la à
+     própria `.card` era inerte: container query não estiliza o contêiner com a
+     medida dele mesmo, então placa e ritmo compacto nunca entravam. As grandezas
+     derivadas também são redeclaradas para usar o novo `--placa-n`. */
+  .cfaces{--placa-n:32;--b2:6%;--b3:14%;--t3:7cqw;
+    --placa:calc(var(--placa-n)*1%);
+    --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
   /* AQUI O TEXTO NÃO CRESCE. Era 18cqw para o nick e 12,5cqw para o estilo: com a
      caixa menor e a fonte maior, `Skadoodle` e `controlez` voltavam a estourar
      4–6px a 120px mesmo com a razão viva. Medido nas cinco larguras reais. */
-  .cfaces{--t2:calc(16cqw*var(--nick-esc,1))}
+    --t2:calc(16cqw*var(--nick-esc,1))}
   .c-vstats{bottom:6%}
 }
 
@@ -843,10 +853,12 @@ body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opa
 button.ghost{transition:transform .12s var(--ease),border-color .14s,background .14s,box-shadow .14s}
 button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,107,42,.45)}
 
-/* — Cartas: elevação ao passar o ponteiro — */
-.lineup .card:hover,.lineup .coachcard:hover{transform:translateY(-4px)}
-.picks .card:not(.taken):not(.dup):hover,.picks .coachcard:not(.taken):hover{
-  transform:translateY(-3px);z-index:5}
+/* — Cartas: elevação só onde hover existe de verdade; no touch ela ficava presa — */
+@media (hover:hover) and (pointer:fine){
+  .lineup .card:hover,.lineup .coachcard:hover{transform:translateY(-4px)}
+  .picks .card:not(.taken):not(.dup):hover,.picks .coachcard:not(.taken):hover{
+    transform:translateY(-3px);z-index:5}
+}
 .winner-pill{box-shadow:0 0 16px -4px currentColor}
 .slot .ph{transition:transform .25s var(--ease)}
 

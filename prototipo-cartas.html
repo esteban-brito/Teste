@@ -210,9 +210,11 @@ html.proposta .coachcard .c-fio{
    A regra atual é `inset 0 0 0 var(--aro) var(--m)`, sem `--aro-a`: passar o
    mouse levava qualquer carta ao aro de opacidade cheia, então uma comum
    passava a exibir o aro de uma tier-s. Realce tem de ser relativo. */
-html.proposta .card:hover,html.proposta .coachcard:hover{
-  box-shadow:inset 0 0 0 var(--aro) color-mix(in srgb,var(--m) calc(var(--aro-a,50%) + 24%),transparent),
-    0 0 18px -6px var(--m)}
+@media (hover:hover) and (pointer:fine){
+  html.proposta .card:hover,html.proposta .coachcard:hover{
+    box-shadow:inset 0 0 0 var(--aro) color-mix(in srgb,var(--m) calc(var(--aro-a,50%) + 24%),transparent),
+      0 0 18px -6px var(--m)}
+}
 
 /* ── P9 · ELENCO SEM TREINADOR TEM ESTADO, NÃO BURACO ───────────────────────
    EnVyUs e Virtus.pro não têm treinador, então a linha de revelação entrega 5
@@ -310,7 +312,9 @@ html.proposta .card:hover,html.proposta .coachcard:hover{
 
 <script type="module">
 import {TEAMS,STYLE_ID,STYLE_LABEL,STYLE_RECIPE} from "./src/public/evaluation-api.mjs";
+import {setCardFlipped} from "./src/application/card-face.mjs";
 import {createCardView} from "./src/ui/game/card-view.mjs";
+import {escapeHtml as esc} from "./src/ui/shared/html.mjs";
 import {BANDEIRA} from "./src/ui/shared/flags.mjs";
 import {EMBLEMA_FUNCAO,EMBLEMA_TREINADOR} from "./src/ui/shared/role-emblems.mjs";
 
@@ -334,7 +338,8 @@ const EMBLEMA_SUPPORT_PROPOSTO=`<svg viewBox="0 0 24 24" fill="none" stroke="cur
   `3.4 3.4 0 0 1-1.6 6H6.4Z"/></svg>`;
 
 const item=(html,rot)=>`<div class="lab-item">${html}<div class="lab-rot">${rot}</div></div>`;
-const cartaHtml=carta=>`<div class="${cardClass(carta)}" data-nick="${carta.nick}">${cardHTML(carta)}</div>`;
+const cartaHtml=carta=>`<div class="${cardClass(carta)}" data-nick="${esc(carta.nick)}" `+
+  `data-face="front" role="button" tabindex="0">${cardHTML(carta)}</div>`;
 const semTreinador=()=>`<div class="lab-semcoach"><div class="t">sem treinador</div>`+
   `<div class="s">este elenco não teve um. Nenhuma penalidade de química é mitigada.</div></div>`;
 
@@ -436,6 +441,10 @@ function medirTexto(el){
   const r=document.createRange();r.selectNodeContents(el);
   return r.getBoundingClientRect().width;
 }
+function caixaDoTexto(el){
+  const r=document.createRange();r.selectNodeContents(el);
+  return r.getBoundingClientRect();
+}
 
 /* ══ MEDIDOR ═════════════════════════════════════════════════════════════════
    Mede o que a leitura de código não vê. Três perguntas:
@@ -448,28 +457,31 @@ function medirTexto(el){
 function medirCartas(){
   const falhas=[];        /* corte NÃO intencional: o texto vaza ou é decapitado */
   const reticencias=[];   /* corte DECLARADO no CSS (`text-overflow:ellipsis`) */
+  const TOL=.75;          /* ignora fração subpixel de rasterização entre plataformas */
   let total=0;
   for(const carta of todasAsCartas()){
     total++;
     const cx=carta.getBoundingClientRect();
-    const registrar=(lista,el,nome,falta)=>lista.push({nick:carta.dataset.nick||"—",campo:nome,
+    const visivel=el=>!!(el&&el.getClientRects().length&&getComputedStyle(el).visibility!=="hidden");
+    const registrar=(lista,el,nome,falta,passa=null)=>lista.push({nick:carta.dataset.nick||"—",campo:nome,
       texto:el.textContent.trim(),falta:+falta.toFixed(1),
-      passa:+(el.getBoundingClientRect().left+medirTexto(el)-cx.right).toFixed(1),
+      passa:+(passa==null?caixaDoTexto(el).right-cx.right:passa).toFixed(1),
       fonte:getComputedStyle(el).fontSize});
     /* caixa de largura FIXA (left+right ou max-width): o texto pode transbordar,
        então compara-se a largura do texto com a da caixa. */
     const fixa=(sel,nome)=>{
-      const el=carta.querySelector(sel);if(!el)return;
+      const el=carta.querySelector(sel);if(!visivel(el))return;
       const falta=medirTexto(el)-el.clientWidth;
-      if(falta>.5)registrar(falhas,el,nome,falta);
+      if(falta>TOL)registrar(falhas,el,nome,falta);
     };
     /* caixa que ENCOLHE para o conteúdo (só `left`): ela nunca "transborda" de si
        mesma — o que importa é se a aresta direita passa do recuo da carta. */
     const solta=(sel,nome)=>{
-      const el=carta.querySelector(sel);if(!el)return;
-      const recuo=cx.width*0.09;                    /* --pad, o mesmo dos dois lados */
+      const el=carta.querySelector(sel);if(!visivel(el))return;
+      const pad=getComputedStyle(carta).getPropertyValue("--pad").trim();
+      const recuo=pad.endsWith("%")?cx.width*parseFloat(pad)/100:parseFloat(pad)||0;
       const excesso=el.getBoundingClientRect().right-(cx.right-recuo);
-      if(excesso>.5)registrar(falhas,el,nome,excesso);
+      if(excesso>TOL)registrar(falhas,el,nome,excesso);
     };
     /* Caixa com `text-overflow:ellipsis`: aqui cortar É a decisão de design — o
        campeonato "DreamHack Cluj-Napoca 2015" não caberia em fonte nenhuma, e o
@@ -477,18 +489,64 @@ function medirCartas(){
        reprovou a CI sem existir defeito, porque a métrica da fonte no Linux é ~7px
        mais larga que no Windows e cruzou o limite lá e não aqui. */
     const cortada=(sel,nome)=>{
-      const el=carta.querySelector(sel);if(!el)return;
+      const el=carta.querySelector(sel);if(!visivel(el))return;
       const falta=el.scrollWidth-el.clientWidth;
-      if(falta>.5)registrar(reticencias,el,nome,falta);
+      if(falta>TOL)registrar(reticencias,el,nome,falta);
+    };
+    /* Largura correta ainda pode esconder uma falha vertical. Usa-se a CAIXA DE
+       LAYOUT, não a caixa óptica dos glifos: fontes têm overshoot legítimo de
+       alguns pixels e `Range` produziria centenas de falsos positivos. */
+    const vertical=(el,nome)=>{
+      if(!visivel(el)||!el.textContent.trim())return;
+      const box=el.getBoundingClientRect();
+      const fora=Math.max(cx.top-box.top,box.bottom-cx.bottom,0);
+      if(fora>TOL)registrar(falhas,el,`${nome} · fora da carta`,fora,box.bottom-cx.bottom);
+    };
+    const conteudoVertical=(el,nome)=>{
+      if(!visivel(el))return;
+      const corte=Math.max(el.scrollHeight-el.clientHeight,0);
+      if(corte>1.5)registrar(falhas,el,`${nome} · corte vertical`,corte,0);
+    };
+    const colisao=(selA,selB,nome,soVertical=false)=>{
+      const a=carta.querySelector(selA),b=carta.querySelector(selB);
+      if(!visivel(a)||!visivel(b))return;
+      const ar=a.getBoundingClientRect(),br=b.getBoundingClientRect();
+      const y=Math.min(ar.bottom,br.bottom)-Math.max(ar.top,br.top);
+      const x=Math.min(ar.right,br.right)-Math.max(ar.left,br.left);
+      if(y>TOL&&(soVertical||x>TOL))registrar(falhas,b,`colisão ${nome}`,Math.min(y,soVertical?y:x),0);
     };
     fixa(".c-nick","nick (frente)");
     solta(".c-func","função (frente)");
     fixa(".c-vestilo b","playstyle/característica (verso)");
     cortada(".c-vnick","nick (verso)");
     cortada(".c-vrod b","campeonato (verso)");
+    for(const [idx,meta] of [...carta.querySelectorAll(".c-meta span")].entries())
+      if(visivel(meta)&&meta.scrollWidth-meta.clientWidth>TOL)
+        registrar(reticencias,meta,idx?"time (frente)":"função secundária (frente)",meta.scrollWidth-meta.clientWidth);
     for(const st of carta.querySelectorAll(".c-st i"))
-      if(st.scrollWidth-st.clientWidth>.5)
+      if(visivel(st)&&st.scrollWidth-st.clientWidth>TOL)
         registrar(reticencias,st,"stat (verso)",st.scrollWidth-st.clientWidth);
+
+    const camposVerticais=[
+      [".c-ovr","OVR (frente)"],[".c-nick","nick (frente)"],[".c-func","função (frente)"],
+      [".c-vnick","nick (verso)"],[".c-vovr","OVR (verso)"],
+      [".c-vestilo b","playstyle/característica (verso)"],[".c-vrod b","campeonato (verso)"],
+      [".c-vrod span","colocação (verso)"],[".c-vdesc","descrição do treinador (verso)"],
+    ];
+    for(const [sel,nome] of camposVerticais)vertical(carta.querySelector(sel),nome);
+    for(const [idx,meta] of [...carta.querySelectorAll(".c-meta span")].entries())
+      vertical(meta,idx?"time (frente)":"função secundária (frente)");
+    for(const [idx,stat] of [...carta.querySelectorAll(".c-st i,.c-st b")].entries())
+      vertical(stat,`stat ${idx+1} (verso)`);
+    conteudoVertical(carta.querySelector(".c-vstats"),"estatísticas (verso)");
+    conteudoVertical(carta.querySelector(".c-vdesc"),"descrição do treinador (verso)");
+
+    colisao(".c-nick",".c-func","nick/função (frente)",true);
+    colisao(".c-func",".c-meta","função/contexto (frente)",true);
+    colisao(".c-vnick",".c-vovr","nick/OVR (verso)");
+    colisao(".c-vestilo b",".c-vstats","rótulo/stats (verso)",true);
+    colisao(".c-vstats",".c-vrod","stats/campeonato (verso)",true);
+    colisao(".c-vestilo b",".c-vdesc","característica/descrição (verso)",true);
   }
   const largura=Math.round(todasAsCartas()[0]?.getBoundingClientRect().width||0);
   return {total,largura,falhas,reticencias};
@@ -499,16 +557,16 @@ function medir(){
   const {total,largura,falhas,reticencias}=medirCartas();
   const cabeca=`<b>${total}</b> cartas medidas a <b>${largura}px</b> · `+
     (falhas.length
-      ?`<span class="lab-ruim">${falhas.length} estouro(s)</span>`
-      :`<span class="lab-ok">nenhum estouro</span>`)+
+      ?`<span class="lab-ruim">${falhas.length} falha(s) geométrica(s)</span>`
+      :`<span class="lab-ok">nenhuma falha geométrica</span>`)+
     (reticencias.length
       ?` · ${reticencias.length} campo(s) com reticências, que é o comportamento declarado
          (campeonato longo, nick do verso, nome de stat)`:"");
   const tabela=falhas.length?`<table><tr><th>carta</th><th>campo</th><th>texto</th>
     <th>falta</th><th>passa a borda</th><th>fonte</th></tr>`+
-    falhas.map(f=>`<tr><td>${f.nick}</td><td>${f.campo}</td><td>${f.texto}</td>
+    falhas.map(f=>`<tr><td>${esc(f.nick)}</td><td>${esc(f.campo)}</td><td>${esc(f.texto)}</td>
       <td class="lab-ruim">${f.falta}px</td><td>${f.passa>0?f.passa+"px":"—"}</td>
-      <td>${f.fonte}</td></tr>`).join("")+`</table>`:"";
+      <td>${esc(f.fonte)}</td></tr>`).join("")+`</table>`:"";
   $("medidorSaida").innerHTML=cabeca+tabela;
 }
 
@@ -519,7 +577,7 @@ function sincronizar(){
   document.body.style.setProperty("--lab-w",larg+"px");
   const filtro=$("cDalton").value;
   document.body.style.filter=filtro?`url(#${filtro})`:"";
-  for(const c of todasAsCartas())c.classList.toggle("flipped",$("cVerso").checked);
+  for(const c of todasAsCartas())setCardFlipped(c,$("cVerso").checked);
   for(const v of document.querySelectorAll("[data-vazio]"))
     v.hidden=!$("cProposta").checked;
   aplicarEmblemaSupport($("cProposta").checked);
@@ -533,10 +591,14 @@ $("bMedir").addEventListener("click",medir);
 /* clique numa carta vira só ela — como no jogo, sem sair do modo global */
 document.addEventListener("click",e=>{
   const c=e.target.closest(".card,.coachcard");
-  if(c)c.classList.toggle("flipped");
+  if(c)setCardFlipped(c,!c.classList.contains("flipped"));
 });
 /* P alterna a proposta: o A/B rápido é o que faz o laboratório valer */
 document.addEventListener("keydown",e=>{
+  const c=e.target.closest(".card,.coachcard");
+  if(c&&(e.key==="Enter"||e.key===" ")){
+    e.preventDefault();setCardFlipped(c,!c.classList.contains("flipped"));return;
+  }
   if(e.key!=="p"&&e.key!=="P")return;
   $("cProposta").checked=!$("cProposta").checked;sincronizar();
 });

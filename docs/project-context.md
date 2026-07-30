@@ -34,7 +34,7 @@ roadmap for concluída.
 
 ## 2. Ponto exato de retomada
 
-Atualização vigente de 29 de julho de 2026 (tem precedência sobre o registro
+Atualização vigente de 30 de julho de 2026 (tem precedência sobre o registro
 histórico abaixo):
 
 - o handoff operacional do ciclo P5 está em
@@ -43,9 +43,16 @@ histórico abaixo):
 - `AGENTS.md` registra autorização persistente para o agente executar a próxima
   fatia segura, limpar legado comprovadamente dispensável, criar commits e fazer
   push de checkpoints verdes para `sandbox-test` sem renovar a permissão;
+- o endurecimento das cartas mede 145 cartas em oito larguras, nos estados atual e
+  proposta, incluindo recorte vertical e colisões. O jogo real prova teclado,
+  frente/verso, layout compacto, reduced motion e touch; o contrato detalhado está
+  em `docs/cartas-design-2026-07-28.md`, seção 11;
+- validação integral desse marco: `npm run validate`, **25/25 suítes verdes** em
+  198,2 s; snapshot, golden, consumo de RNG e balanceamento permaneceram intactos;
 - o ciclo **P2 de modularização por paridade está concluído**, Fases 0–7;
-- `game.js` caiu de 3.054 para **888 linhas** — 1.206 ao fim do P2, 938 depois das
-  primeiras fatias do P5 e 888 após a remoção do tilt morto — e contém somente
+- `game.js` caiu de 3.054 para **889 linhas** — 1.206 ao fim do P2, 938 depois das
+  primeiras fatias do P5, 888 após a remoção do tilt morto e uma linha de import
+  no endurecimento das cartas — e contém somente
   aplicação, estado e UI;
 - dados e motores vivem em `src/data`, `src/domain` e `src/public`;
 - jogo, sandbox, worker e bancada usam `src/public/simulation-api.mjs`;
@@ -908,7 +915,7 @@ Aceitação: goldens por seed idênticos e benchmarks dentro das faixas.
 `src/infrastructure/persistence/progress-store.mjs`, ambos com testes isolados.
 Os templates puros vivem em `src/ui/game/`, com escaping centralizado.
 Cartas, química, times, Suíça/playoffs, partida, final e Hall já usam essa
-fronteira. As **888 linhas** restantes de estado, DOM e fluxo ainda podem ser
+fronteira. As **889 linhas** restantes de estado, DOM e fluxo ainda podem ser
 decompostas. O ciclo está num checkpoint verde e sua continuação autônoma está
 autorizada; retomada e contratos exatos estão em
 `docs/p5-aplicacao-ui-2026-07-29.md`.

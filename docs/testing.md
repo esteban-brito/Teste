@@ -19,7 +19,7 @@ faixas atuais são guardas de regressão, não uma nota de 0–100.
 | `npm run test:calibrator` | basic, heavy, worker | busca, intenção, custo e paralelismo |
 | `npm run test:benchmark` | realismo, assists, KDA, rating, perfis, dificuldade | fidelidade estatística dos motores, coerência de carta e dificuldade da campanha |
 | `npm run test:fidelity` | scorer e corpus IFCS | matemática, cobertura, caps, proveniência e auditoria |
-| `npm run test:e2e` | intent, simulation, game flow | calibrador, aba Simular e jogo principal no navegador |
+| `npm run test:e2e` | cards, intent, simulation, game flow | cartas, calibrador, aba Simular e jogo principal no navegador |
 | `npm run test:r5` | comparador pareado R5 | hashes, cobertura, delta nulo e detecção sintética |
 | `npm run test:r5:tails` | guardas de cauda R5.2 | ratings extremos, forma positiva e ausência de massa nos limites antigos |
 | `npm run test:all` | as 25 suítes acima | validação completa na ordem histórica |
@@ -36,6 +36,14 @@ download do backup e isolamento de instâncias com adaptadores falsos de navegad
 
 `check-game-view-modules.js` congela escaping, cartas, tiers, selos, identidade
 dos times, Suíça, playoffs, placar, antessala, campanha final e Hall sem DOM.
+
+`bancada/e2e-cartas.js` é a guarda geométrica e interativa das cartas. Mede 145
+cartas em oito larguras, nos estados publicado e proposta, e reprova estouro
+horizontal, recorte vertical e colisão entre regiões. No jogo real, prova a
+costura do layout compacto, frente/verso acessível por teclado, reset do modo
+Virar, seleção normal, `prefers-reduced-motion` e ausência de hover preso em
+dispositivos touch. Casos sintéticos garantem que o detector não esteja sempre
+verde e separam falha real de reticências deliberadas.
 
 ## Comparador visual (não é suíte, é instrumento)
 

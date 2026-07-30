@@ -156,7 +156,8 @@ export function createCardView({styleId,styleLabel,styleRecipe}){
     const back=coach?backCoach(card):backPlayer(card);
     return `<div class="cfaces" style="--nick-esc:${escalaNick(card.nick)};`+
       `--carac-esc:${escalaCarac(rotuloVerso(card))}">`+
-      `<div class="cface cfront">${front}</div><div class="cface cback">${back}</div></div>`;
+      `<div class="cface cfront" aria-hidden="false">${front}</div>`+
+      `<div class="cface cback" aria-hidden="true">${back}</div></div>`;
   };
 
   return {teamCardHTML,cardClass,cardHTML};

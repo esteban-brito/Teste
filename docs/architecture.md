@@ -144,6 +144,8 @@ extrator offline -> corpus derivado -> scorer IFCS
 - `TG`: campeonato, suíça, playoffs e resultados.
 - `src/application/audio.mjs`: contexto Web Audio e preferência de mute, expostos
   por um singleton e uma factory sem dependência do estado esportivo.
+- `src/application/card-face.mjs`: transição DOM de frente/verso que mantém classe,
+  estado e árvore de acessibilidade sincronizados; as views continuam puras.
 - `src/infrastructure/persistence/progress-store.mjs`: estado histórico versionado,
   localStorage e backup JSON, com factory verificável fora do navegador.
 - `src/ui/game/`: templates puros do draft, torneio, partida e histórico, sem
