@@ -159,14 +159,19 @@ extrator offline -> corpus derivado -> scorer IFCS
   estado e árvore de acessibilidade sincronizados; as views continuam puras.
 - `src/infrastructure/persistence/progress-store.mjs`: estado histórico versionado,
   localStorage e backup JSON, com factory verificável fora do navegador.
+- `src/application/draft/draft-state.mjs`,
+  `src/application/major/major-state.mjs` e
+  `src/application/match/match-state.mjs`: criação/reset dos estados mutáveis
+  com identidade e quirks preservados fora do entrypoint.
 - `src/ui/game/`: templates puros do draft, torneio, partida e histórico, sem
   mutação de DOM ou estado.
 
-`S`, `TG`, `MP` e `MATCH` ainda são locais ao entrypoint e mutados pelos
-controladores atuais. O destino é um store pequeno, sem framework, com estados de
-draft, torneio e partida separados e efeitos explícitos para DOM e timers; áudio
-e persistência já cruzaram essa fronteira. A forma e a identidade desses objetos
-estão congeladas em `docs/p5-aplicacao-ui-2026-07-29.md`.
+As instâncias `S`, `TG`, `MP` e `MATCH` continuam compostas e mutadas pelos
+controladores atuais no entrypoint, mas suas fábricas e resets já cruzaram a
+fronteira de aplicação. O destino é manter estados de draft, torneio e partida
+separados e tornar explícitos os efeitos de DOM e timers; áudio e persistência
+também já estão isolados. A forma e a identidade desses objetos estão congeladas
+em `docs/p5-aplicacao-ui-2026-07-29.md` e em `tools/check-game-state.js`.
 
 ## Dados e identidade
 
@@ -187,12 +192,12 @@ snapshots. Testes e artefatos persistentes devem usar o ID cru.
 ## Próxima evolução arquitetural
 
 R1–R3 e a modularização do domínio estão concluídos; a MD3 do laboratório usa os
-mesmos motores e continua protegida por `bancada/campaign-golden.json`. A próxima
-extração estrutural não é outro motor: é o estado da aplicação, na ordem exata do
-handoff P5.
+mesmos motores e continua protegida por `bancada/campaign-golden.json`. A primeira
+extração de estado da aplicação também foi concluída; a sequência restante segue
+a ordem exata do handoff P5.
 
-1. extrair somente criação/reset de `S`, `TG`, `MP` e `MATCH`, com guarda de
-   shape, identidade e quirks;
+1. ~~extrair criação/reset de `S`, `TG`, `MP` e `MATCH`~~ — concluído com guarda
+   de shape, identidade e quirks;
 2. mover controlador de draft/roleta em commit separado;
 3. mover controlador do Major;
 4. mover série/reprodução, preservando timers, callbacks e consumo de RNG;

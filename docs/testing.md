@@ -314,8 +314,8 @@ o balanceamento executável do produto.
 
 - retratos por lotes: validar arquivo/dado, rodar o E2E de cartas e inspecionar
   frente/verso nas oito larguras antes de publicar cada lote;
-- P5 estado: guarda unitária de shape, instâncias independentes, identidade dos
-  resets e campos deliberadamente ausentes antes de mover qualquer controlador;
+- P5 estado: `tools/check-game-state.js` já protege shape, instâncias
+  independentes, identidade dos resets e campos deliberadamente ausentes;
 - P5 controladores: E2E completo do jogo e golden/RNG pertinente a cada extração;
 - Carreira: testes de schema/migração do save, recálculo de derivados e um E2E da
   primeira temporada curta desde o criador até o encerramento;

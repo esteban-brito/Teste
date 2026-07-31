@@ -17,6 +17,12 @@ assert.match(game,/import \{PROGRESSO\} from "\.\/src\/infrastructure\/persisten
   "game.js não importa o adaptador de persistência");
 assert.match(game,/import \{setCardFlipped\} from "\.\/src\/application\/card-face\.mjs";/,
   "game.js não importa o controle acessível de face da carta");
+assert.match(game,/import \{createDraftState,resetDraftState\} from "\.\/src\/application\/draft\/draft-state\.mjs";/,
+  "game.js não importa o estado do draft");
+assert.match(game,/import \{createMajorState,resetMajorState\} from "\.\/src\/application\/major\/major-state\.mjs";/,
+  "game.js não importa o estado do Major");
+assert.match(game,/import \{createMapPlaybackState,createMatchState,resetMatchState\} from "\.\/src\/application\/match\/match-state\.mjs";/,
+  "game.js não importa os estados de reprodução e série");
 assert.match(game,/import \{escapeHtml as esc\} from "\.\/src\/ui\/shared\/html\.mjs";/,
   "game.js não importa o escape HTML compartilhado");
 assert.match(game,/import \{createCardView\} from "\.\/src\/ui\/game\/card-view\.mjs";/,
@@ -35,6 +41,10 @@ assert.doesNotMatch(game,/\bconst Audio\s*=\s*\{/,
   "game.js voltou a embutir o serviço de áudio");
 assert.doesNotMatch(game,/\bconst PROGRESSO\s*=\s*\{/,
   "game.js voltou a embutir o serviço de persistência");
+assert.doesNotMatch(game,/\bconst (?:S|TG|MP|MATCH)\s*=\s*\{/,
+  "game.js voltou a embutir um dos estados da aplicação");
+assert.doesNotMatch(game,/Object\.assign\(S,\s*\{jogadores:|Object\.assign\(MATCH,\s*\{A:|TG\.times=null;TG\.rodada=0;/,
+  "game.js voltou a embutir um reset de estado");
 assert.doesNotMatch(game,/\bconst (?:ROLE_COR|STAT_LABEL|SELO_META)\s*=\s*\{/,
   "game.js voltou a embutir templates ou metadados das cartas");
 assert.doesNotMatch(game,/\b(?:function (?:chip|serieEl|monoChip)|const mono\s*=)/,

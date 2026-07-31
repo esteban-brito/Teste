@@ -3,6 +3,9 @@
 import * as PublicEngine from "./src/public/simulation-api.mjs";
 import {Audio} from "./src/application/audio.mjs";
 import {setCardFlipped} from "./src/application/card-face.mjs";
+import {createDraftState,resetDraftState} from "./src/application/draft/draft-state.mjs";
+import {createMajorState,resetMajorState} from "./src/application/major/major-state.mjs";
+import {createMapPlaybackState,createMatchState,resetMatchState} from "./src/application/match/match-state.mjs";
 import {PROGRESSO} from "./src/infrastructure/persistence/progress-store.mjs";
 import {escapeHtml as esc} from "./src/ui/shared/html.mjs";
 import {createCardView} from "./src/ui/game/card-view.mjs";
@@ -24,15 +27,7 @@ const {teamCardHTML,cardClass,cardHTML}=createCardView({
   styleId:STYLE_ID,styleLabel:STYLE_LABEL,styleRecipe:STYLE_RECIPE,
 });
 
-const S={
-  jogadores:Array(5).fill(null),
-  treinador:null,
-  drawn:null,
-  taken:new Set(),
-  sel:null,
-  spinning:false,
-  justPlaced:null
-};
+const S=createDraftState();
 
 let spinSession=0;
 
@@ -376,8 +371,7 @@ function trocarCom(el){
 function resetar(){
   if((S.jogadores.some(Boolean)||S.treinador||S.drawn)&&!confirm("Resetar o elenco e perder o progresso?"))return;
   pararAnimacao();
-  Object.assign(S,{jogadores:Array(5).fill(null),treinador:null,drawn:null,sel:null,spinning:false});
-  S.taken.clear();
+  resetDraftState(S);
   limparHighlights();
   renderLineup();
   renderPicks();
@@ -437,7 +431,7 @@ document.addEventListener("keydown",e=>{
 
 /* ——— UI · telas de torneio (suíça + playoffs) —————— */
 const efT=t=>forcaTime(t.jogadores.map(j=>j._eng),t.treinador?.carac,t.treinador?.ovr);
-const TG={};
+const TG=createMajorState();
 // monta o objeto-time do jogador a partir do elenco montado
 function montarMeuTime(){
   const cartas=S.jogadores.filter(Boolean);
@@ -686,7 +680,7 @@ $("playoffAvancar").onclick=avancarPlayoff;
 /* ——— UI · reprodutor de partida (cinematográfico) ——— */
 // ritmo dos rounds: pulso legível e mais pausado (rounds correm devagar pra acompanhar)
 const RITMO={base:260,troca:1000,inicio:500};
-const MP={ativo:false,timer:null,onFim:null,gen:0,jogo:null,ctx:""};
+const MP=createMapPlaybackState();
 
 function reproduzirMapa(jogo,A,B,contexto){
   // invalida qualquer reprodução anterior: cancela timer e incrementa a geração
@@ -789,7 +783,7 @@ function pararReproducao(){MP.ativo=false;MP.gen++;clearTimeout(MP.timer);MATCH.
 
 /* ——— UI · orquestração da partida —————————————————— */
 // MATCH guarda a série em andamento do jogador
-const MATCH={A:null,B:null,md:1,mapaIdx:0,vA:0,vB:0,contexto:"",onSerieFim:null};
+const MATCH=createMatchState();
 if(new window.URLSearchParams(location.search).get("e2e")==="1"){
   Object.defineProperty(window,"__DRAFT9_E2E__",{
     configurable:true,
@@ -848,12 +842,11 @@ function jogarNovamente(){
   ["finalOverlay","playoffOverlay","suicaOverlay","matchOverlay"].forEach(fechar);
   pararReproducao();pararAnimacao();
   // zera torneio e partida
-  TG.times=null;TG.rodada=0;TG.classificados=[];TG.eliminados=[];TG.playoffs=null;TG.campanha=null;
-  Object.assign(MATCH,{A:null,B:null,md:1,mapaIdx:0,vA:0,vB:0,contexto:"",onSerieFim:null,rodando:false});
+  resetMajorState(TG);
+  resetMatchState(MATCH);
   Object.values(POOL).forEach(p=>{delete p._formaCamp;}); // nova run sorteia forma de campanha de novo
   // zera o elenco do zero — é o recomeço, sem confirmação
-  Object.assign(S,{jogadores:Array(5).fill(null),treinador:null,drawn:null,sel:null,spinning:false});
-  S.taken.clear();
+  resetDraftState(S);
   limparHighlights();renderLineup();renderPicks();idleTrack();updateSpinUI();atualizarMajorUI();renderResultado();
   hint("Sorteie um time e comece uma nova campanha rumo ao 9-0.");
   window.scrollTo(0,0);
