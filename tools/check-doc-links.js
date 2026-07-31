@@ -53,27 +53,40 @@ function ehCaminhoDeRepo(texto){
   return RAIZES.some(raiz=>texto.startsWith(raiz));
 }
 
-/** Extrai referências de um markdown: crases e links markdown, sem âncora. */
-function extrairReferencias(conteudo){
-  const achadas=new Set();
+/* As duas formas de citar resolvem de maneira DIFERENTE, e confundi-las esconde
+   link quebrado:
+
+   - crase (`docs/testing.md`) é convenção deste repositório e vale a partir da
+     raiz, venha de onde vier;
+   - link markdown ([x](baseline.md)) segue o padrão markdown e resolve a partir do
+     diretório do arquivo que o contém.
+
+   Tratar link markdown como se fosse relativo à raiz fazia
+   `docs/testing.md -> baseline-simulacao-2026-07-26.md` passar por engano: a string
+   crua não parece caminho de repositório e era descartada antes de qualquer teste. */
+function extrairReferencias(arquivo,conteudo){
+  const achadas=new Map();   // alvo resolvido -> texto original, para a mensagem de erro
   for(const [,cru] of conteudo.matchAll(/`([^`\n]+)`/g)){
-    if(ehCaminhoDeRepo(cru))achadas.add(cru);
+    if(ehCaminhoDeRepo(cru))achadas.set(cru,cru);
   }
+  const base=path.posix.dirname(arquivo.split(path.sep).join("/"));
   for(const [,alvo] of conteudo.matchAll(/\[[^\]]*\]\(([^)\s]+)\)/g)){
     if(/^(https?:|mailto:|#)/.test(alvo))continue;
     const semAncora=alvo.split("#")[0];
-    if(semAncora&&ehCaminhoDeRepo(semAncora))achadas.add(semAncora);
+    if(!semAncora||semAncora.endsWith("/"))continue;
+    if(!/\.[A-Za-z0-9]+$/.test(semAncora))continue;
+    if(/[`${}*?\s<>]/.test(semAncora))continue;
+    if(EXCECOES.has(semAncora))continue;
+    achadas.set(path.posix.normalize(path.posix.join(base,semAncora)),semAncora);
   }
-  return [...achadas];
+  return [...achadas.keys()];
 }
 
 /** `arquivos` é {caminho: conteúdo}; `existe` decide se um alvo está no repositório. */
 function referenciasQuebradas(arquivos,existe){
   const quebradas=[];
   for(const [arquivo,conteudo] of Object.entries(arquivos)){
-    for(const ref of extrairReferencias(conteudo)){
-      /* Referência de doc é sempre relativa à raiz do repositório, nunca ao arquivo:
-         é assim que os documentos deste projeto se citam. */
+    for(const ref of extrairReferencias(arquivo,conteudo)){
       if(!existe(ref))quebradas.push({arquivo,ref});
     }
   }
@@ -81,16 +94,24 @@ function referenciasQuebradas(arquivos,existe){
 }
 
 function autoteste(){
-  const morto={"docs/exemplo.md":"veja `src/ui/shared/role-emblems.mjs` e [x](docs/sumiu.md)"};
+  const morto={"docs/exemplo.md":"veja `src/ui/shared/role-emblems.mjs` e [x](sumiu.md)"};
   const achados=referenciasQuebradas(morto,()=>false);
   assert.equal(achados.length,2,"o checador precisa acusar referência inexistente");
-  const vivo={"docs/exemplo.md":"veja `docs/testing.md` e [x](AGENTS.md)"};
+  const vivo={"docs/exemplo.md":"veja `docs/testing.md` e [x](glossary.md)"};
   assert.deepEqual(referenciasQuebradas(vivo,()=>true),[],
     "o checador não pode acusar referência válida");
   /* Um span de crase que não é caminho não pode virar referência. */
   const ruido={"docs/exemplo.md":"use `npm run check`, a função `tierOf` e `CFG_SIM`"};
   assert.deepEqual(referenciasQuebradas(ruido,()=>false),[],
     "texto em crase que não é caminho não deve ser cobrado");
+  /* Link markdown resolve a partir do diretório do arquivo, não da raiz. Era esta
+     a confusão que deixava dois links de docs/testing.md passarem sem verificação. */
+  assert.deepEqual(extrairReferencias("docs/testing.md","[x](baseline.md)"),
+    ["docs/baseline.md"],"link markdown precisa resolver relativo ao arquivo");
+  assert.deepEqual(extrairReferencias("docs/ciclos/x.md","[x](../testing.md)"),
+    ["docs/testing.md"],"link markdown precisa resolver `..`");
+  assert.deepEqual(extrairReferencias("README.md","[x](docs/testing.md)"),
+    ["docs/testing.md"],"link da raiz continua resolvendo para docs/");
 }
 
 function main(){
@@ -120,8 +141,8 @@ function main(){
     for(const {arquivo,ref} of quebradas)console.error(`  ${arquivo} -> ${ref}`);
     assert.fail(`${quebradas.length} referência(s) de documentação apontam para arquivo inexistente`);
   }
-  const total=Object.values(arquivos)
-    .reduce((soma,conteudo)=>soma+extrairReferencias(conteudo).length,0);
+  const total=Object.entries(arquivos)
+    .reduce((soma,[arquivo,conteudo])=>soma+extrairReferencias(arquivo,conteudo).length,0);
   console.log(`doc links: ok (${Object.keys(arquivos).length} documentos · ${total} referências · `+
     `${REFERENCIAS_DECLARADAS.size} exceções declaradas)`);
 }
