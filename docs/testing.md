@@ -38,7 +38,8 @@ download do backup e isolamento de instâncias com adaptadores falsos de navegad
 dos times, Suíça, playoffs, placar, antessala, campanha final e Hall sem DOM.
 
 `bancada/e2e-cartas.js` é a guarda geométrica, visual e interativa das cartas.
-Mede 152 cartas em oito larguras, nos estados publicado e proposta, e reprova
+Mede 155 cartas — 152 da bancada-base e 3 candidatas de enquadramento — em oito
+larguras, nos estados publicado e proposta, e reprova
 estouro horizontal, recorte vertical e colisão entre regiões. Em cada largura,
 também exige campeonato/colocação visíveis em jogador e treinador, ausência dos
 nós de rating e peso removidos do verso, tamanhos mínimos, contraste calculado de

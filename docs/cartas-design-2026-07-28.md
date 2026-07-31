@@ -329,7 +329,7 @@ aparece com raridade diferente em duas telas: `card-view.mjs` (`tierOf`),
 `elencos.html` (`tierVars`, cópia própria escrita à mão — só o bloco `DATA` é
 gerado), `tools/check-game-view-modules.js` (congela as strings de classe),
 `prototipo-cartas.html` (array `TIERS`) e `bancada/e2e-cartas.js`
-(`CARTAS_ESPERADAS`, hoje 152).
+(`CARTAS_ESPERADAS`, hoje 155: 152 cartas-base + 3 enquadramentos).
 
 ### Decisões que custaram medição e não devem ser refeitas
 
@@ -390,10 +390,26 @@ escondendo o texto antes de medir — sem isso o pixel mais claro da zona é o
 próprio número branco. Duas provas sintéticas fecham: retrato branco puro sem
 escurecimento reprova em 1:1, com escurecimento passa em 4,82:1.
 
+### Enquadramento A/B/C — decisão aberta
+
+O bloco `0 · enquadramento do retrato` coloca a mesma carta real lado a lado em
+três recortes reproduzíveis, todos protegidos pela guarda:
+
+| opção | tamanho | posição | leitura |
+|---|---|---|---|
+| A | `100% auto` | `50% 12%` | contexto integral; mais camisa, rosto menor |
+| B | `116% auto` | `70% 28%` | **recomendado**; rosto e identidade equilibrados |
+| C | `132% auto` | `75% 30%` | close expressivo; menos camisa e contexto |
+
+As três foram inspecionadas em 250, 188 e 130 px. B manteve no pior caso 5,80:1
+atrás do OVR e 9,06:1 atrás da bandeira; portanto a decisão restante é estética,
+não uma exceção de legibilidade. A escolha pertence ao responsável e ainda não
+foi aplicada à carta real do elenco nem ao jogo.
+
 ### O que falta
 
-1. decidir o enquadramento padrão dos retratos, para as seis cartas de um elenco
-   parecerem um conjunto; hoje o recorte é escolhido a olho;
+1. escolher A, B ou C no bloco `0` do laboratório, para as seis cartas de um
+   elenco parecerem um conjunto; B é a recomendação medida;
 2. os cinco retratos restantes de Spirit Katowice 2024 — `sh1ro_kato24`,
    `zont1x`, `magixx`, `chopper_kato24` e `hally`;
 3. promover a proposta ao jogo, com os cinco pontos acima andando juntos,

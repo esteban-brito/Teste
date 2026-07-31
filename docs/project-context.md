@@ -47,7 +47,8 @@ histórico abaixo):
   sem halos ou varredura de luz, movimento curto, raridade por marcas, treinador
   neutro e verso sem OVR/RTG/pesos visuais. Campeonato e colocação permanecem
   visíveis em jogador e treinador, inclusive no compacto;
-- a guarda mede 152 cartas em oito larguras e também prova fontes mínimas,
+- a guarda mede 155 cartas (152 da bancada-base + 3 enquadramentos) em oito
+  larguras e também prova fontes mínimas,
   contraste de 4,5:1, conteúdo obrigatório, ausência de halo, keyframes limpos,
   teclado, frente/verso, reduced motion e touch. O contrato detalhado está em
   `docs/cartas-design-2026-07-28.md`, seção 11;
@@ -57,6 +58,9 @@ histórico abaixo):
   (`fotos/donk_kato24.webp`). O jogo continua no design publicado. Contrato,
   decisões medidas, hipóteses reprovadas e o que falta para promover estão na
   **seção 12** de `docs/cartas-design-2026-07-28.md`;
+- o bloco `0 · enquadramento do retrato` do laboratório mostra A/B/C sobre o
+  mesmo donk. B (116%, 70% 28%) é a recomendação medida, mas a escolha do
+  responsável continua aberta; não buscar os cinco retratos restantes antes dela;
 - validação integral desse marco: `npm run validate`, **25/25 suítes verdes** em
   182,2 s; snapshot, golden, consumo de RNG e balanceamento permaneceram intactos;
 - CI e deploy do commit `bf5d5e5`: workflow `30527422214`, verde;
