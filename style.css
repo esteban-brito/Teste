@@ -413,14 +413,14 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 @container (max-width:176px){
   .card .cfaces{--placa-n:26;--placa:calc(var(--placa-n)*1%);
     --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%)}
+  /* FreeType e DirectWrite diferem nas métricas horizontais. O tracking comum
+     protege nomes longos no intervalo em que a bandeira já divide o eixo. */
+  .card .c-identidade--player .c-nick{letter-spacing:-.025em}
 }
 @container (max-width:150px){
   .card .cfaces{--placa-n:28;--placa:calc(var(--placa-n)*1%);
     --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
-    --t2:clamp(13px,10.5cqw,27px);--t3:6.4cqw;--t4:4.8cqw}
-  /* FreeType e DirectWrite diferem pouco nas métricas horizontais. O tracking
-     compacto comum preserva o mesmo corpo e dá folga portátil ao maior nick. */
-  .card .c-identidade--player .c-nick{letter-spacing:-.025em}
+    --t2:clamp(12px,10cqw,27px);--t3:6.4cqw;--t4:4.8cqw}
   .card .c-identidade--player .c-meta{display:grid}
   .card .c-identidade--player .c-flag{display:block}
   .card .c-vstats{top:43%}
