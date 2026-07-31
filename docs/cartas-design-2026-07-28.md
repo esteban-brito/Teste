@@ -390,10 +390,13 @@ escondendo o texto antes de medir — sem isso o pixel mais claro da zona é o
 próprio número branco. Duas provas sintéticas fecham: retrato branco puro sem
 escurecimento reprova em 1:1, com escurecimento passa em 4,82:1.
 
-### Enquadramento A escolhido e campo ampliado
+### Enquadramento A escolhido e grade editorial refinada
 
 O bloco `0 · enquadramento e área do retrato` coloca a mesma carta real lado a
-lado em três recortes reproduzíveis, todos protegidos pela guarda:
+lado em quatro comparadores reproduzíveis, todos protegidos pela guarda: o A
+refinado, o A do checkpoint `369c480` como referência histórica e os recortes B
+e C. A referência é excluída somente do gate editorial novo; continua passando
+por geometria, contraste e acessibilidade como qualquer outra carta.
 
 | opção | tamanho | posição | leitura |
 |---|---|---|---|
@@ -407,22 +410,41 @@ exceção de legibilidade. Em 31/07/2026 o responsável escolheu **A**.
 
 Depois da escolha, o responsável pediu que a foto ocupasse mais da carta e que
 diagonal, nome e funções descessem como um conjunto. A composição passou a usar
-uma única pilha derivada por densidade:
+uma única pilha derivada por densidade. A primeira ampliação mostrou um limite
+que a guarda de colisão não capturava: a 188 px, a margem inferior caiu a 2,8% e
+restaram cerca de 4 px entre a ponta apertada da diagonal e a caixa do nick.
 
-| densidade | placa antes → proposta | contexto | função | nick |
+Em 31/07/2026 o A foi refinado sem voltar ao desenho publicado:
+
+| densidade | jogo → 1ª ampliação → refinado | margem inferior | função | nick |
 |---|---:|---:|---:|---:|
-| completa | `38% → 32%` | `2,8%` | `8%` | `15,54%` |
-| compacta | `32% → 29%` | oculto | `5%` | `12,54%` |
+| completa | `38% → 32% → 35%` | `3,5%` | `8,7%` | `16,24%` |
+| compacta | `32% → 29% → 31%` | `4%` | `5,5%` | `13,04%` |
 
 `--placa-n`, `--placa`, `--b1`, `--b2` e `--b3` governam todas as cartas de
 jogador, em vez de deslocamentos por nick ou retrato. `--corte-v` é recalculado
 com a nova altura, mantendo o ângulo físico da diagonal igual nas duas faces.
-Essa evolução continua apenas no laboratório até a conferência visual final.
+A foto continua ocupando mais área que no jogo publicado, mas frente e verso
+recuperam uma margem inferior comum e distância mensurável da diagonal.
+
+O verso passou a obedecer à hierarquia declarada desde o início deste documento.
+No A anterior, nick e playstyle mediam praticamente o mesmo a 188 px (`20,45` e
+`20,68` px). No refinado, o nick vira cabeçalho e o playstyle domina (`18,65` e
+`24,44` px no donk). O rodapé reserva a altura do pior campeonato real, de duas
+linhas, e ancora o conteúdo embaixo; assim o filete e o centro óptico dos três ou
+quatro stats deixam de mudar conforme o tamanho do nome do evento.
+
+O medidor agora cobre **156 cartas** e possui um segundo gate, além de corte e
+colisão: margem inferior nas duas faces, respiro contra as diagonais, igualdade
+de inclinação, hierarquia playstyle/nick, equilíbrio stats/era, eixo lateral
+compartilhado e alinhamento OVR/bandeira. Uma prova sintética degrada cada um dos
+nove contratos e confirma que todos reprovam. A proposta refinada fecha em zero
+falha geométrica e editorial nas oito larguras.
 
 ### O que falta
 
-1. conferir visualmente a composição ampliada do enquadramento A nas densidades
-   completa e compacta;
+1. conferir no Pages o A refinado contra a referência `369c480`, nas duas faces
+   e nas densidades completa e compacta;
 2. os cinco retratos restantes de Spirit Katowice 2024 — `sh1ro_kato24`,
    `zont1x`, `magixx`, `chopper_kato24` e `hally`;
 3. promover a proposta ao jogo, com os cinco pontos acima andando juntos,
@@ -432,5 +454,7 @@ Essa evolução continua apenas no laboratório até a conferência visual final
    `tools/check-data-catalog.js` passa a provar o número. Hoje o catálogo ainda
    declara `sem-foto` em `DIVERGENCIAS`.
 
-Fechamento desta etapa: `npm run validate`, **25/25 suítes verdes** em 184,4 s.
-Nada de dado cru, OVR, tiers, snapshot, golden, RNG ou balanceamento foi tocado.
+Fechamento da primeira ampliação: `npm run validate`, **25/25 suítes verdes** em
+184,4 s. Fechamento do refinamento editorial: `npm run validate`, **25/25 suítes
+verdes** em 186,1 s. Nada de dado cru, OVR, tiers, snapshot, golden, RNG ou
+balanceamento foi tocado.
