@@ -60,7 +60,7 @@ histórico abaixo):
   **seção 12** de `docs/cartas-design-2026-07-28.md`;
 - o responsável escolheu o enquadramento A (`100% auto`, `50% 12%`) no bloco `0`
   do laboratório. O A refinado preserva mais retrato que o jogo com placas de
-  35%/31%, recupera margem inferior, separa nick e playstyle no verso e fixa o
+  34%/30%, recupera margem inferior, separa nick e playstyle no verso e fixa o
   filete da era para campeonatos de uma ou duas linhas. O A de `369c480` permanece
   ao lado como referência; falta a conferência no Pages antes dos cinco retratos
   restantes;

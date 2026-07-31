@@ -166,8 +166,8 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     await page.check("#cProposta");
     const composicoes=[];
     for(const esperado of [
-      {largura:"250",placa:.35,contexto:.035,funcao:.087,nick:.1624},
-      {largura:"130",placa:.31,contexto:null,funcao:.055,nick:.1304},
+      {largura:"250",placa:.34,contexto:.035,funcao:.08,nick:.157},
+      {largura:"130",placa:.30,contexto:null,funcao:.045,nick:.121},
     ]){
       const {largura}=esperado;
       await page.selectOption("#cLargura",largura);await page.waitForTimeout(80);
@@ -196,12 +196,12 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
         return [card.dataset.enquadramento,{placa:fs.getPropertyValue("--placa-n").trim(),
           b1:fs.getPropertyValue("--b1").trim(),hierarquia:px(".c-vestilo b")/px(".c-vnick"),
           reserva:parseFloat(getComputedStyle(card.querySelector(".c-vrod")).minHeight)}];})));
-    check(comparacaoA.a?.placa==="35"&&comparacaoA.a?.b1==="3.5%"&&
+    check(comparacaoA.a?.placa==="34"&&comparacaoA.a?.b1==="3.5%"&&
       comparacaoA.a?.hierarquia>=1.14&&comparacaoA.a?.reserva>=26&&
       comparacaoA["a-anterior"]?.placa==="32"&&comparacaoA["a-anterior"]?.b1==="2.8%"&&
       comparacaoA["a-anterior"]?.hierarquia<1.05&&comparacaoA["a-anterior"]?.reserva===0,
     "comparador conserva o A anterior e isola placa, margem, hierarquia e reserva do refinado"+
-      (comparacaoA.a?.placa==="35"?"":` — ${JSON.stringify(comparacaoA)}`));
+      (comparacaoA.a?.placa==="34"?"":` — ${JSON.stringify(comparacaoA)}`));
     for(const largura of LARGURAS){
       await page.selectOption("#cLargura",largura);await page.waitForTimeout(80);
       const audit=await page.evaluate(()=>window.__LAB_MEDIR());
@@ -210,7 +210,9 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
         (audit.falhas.length?` (geometria: ${audit.falhas[0].campo} em `+
           `${audit.falhas[0].nick}, falta ${audit.falhas[0].falta}px, fonte `+
           `${audit.falhas[0].fonte})`:"")+
-        (audit.ritmo.length?` (grade: ${audit.ritmo[0].campo})`:""));
+        (audit.ritmo.length?` (grade: ${audit.ritmo[0].campo} em ${audit.ritmo[0].nick}, `+
+          `${audit.ritmo[0].atual}${audit.ritmo[0].unidade} / `+
+          `${audit.ritmo[0].regra} ${audit.ritmo[0].limite}${audit.ritmo[0].unidade})`:""));
 
       const standards=await page.evaluate(()=>{
         const cards=[...document.querySelectorAll(".card,.coachcard")];

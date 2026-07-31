@@ -416,14 +416,15 @@ restaram cerca de 4 px entre a ponta apertada da diagonal e a caixa do nick.
 
 Em 31/07/2026 o A foi refinado sem voltar ao desenho publicado:
 
-| densidade | jogo → 1ª ampliação → refinado | margem inferior | função | nick |
+| densidade | jogo → 1ª ampliação → refinado → ajuste atual | margem inferior | função | nick |
 |---|---:|---:|---:|---:|
-| completa | `38% → 32% → 35%` | `3,5%` | `8,7%` | `16,24%` |
-| compacta | `32% → 29% → 31%` | `4%` | `5,5%` | `13,04%` |
+| completa | `38% → 32% → 35% → 34%` | `3,5%` | `8%` | `15,7%` |
+| compacta | `32% → 29% → 31% → 30%` | `4%` | `4,5%` | `12,1%` |
 
 `--placa-n`, `--placa`, `--b1`, `--b2` e `--b3` governam todas as cartas de
-jogador, em vez de deslocamentos por nick ou retrato. `--corte-v` é recalculado
-com a nova altura, mantendo o ângulo físico da diagonal igual nas duas faces.
+jogador, em vez de deslocamentos por nick ou retrato. A função desce para perto
+do contexto, enquanto o nick conserva o intervalo maior pedido; `--corte-v` é
+recalculado com a nova altura e mantém o ângulo físico igual nas duas faces.
 A foto continua ocupando mais área que no jogo publicado, mas frente e verso
 recuperam uma margem inferior comum e distância mensurável da diagonal.
 
