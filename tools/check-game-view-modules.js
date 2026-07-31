@@ -121,6 +121,10 @@ async function main(){
     "OVR ou rating voltou a ocupar o verso do jogador");
   assert.ok(playerHtml.includes("&lt;Major&gt; 2024")&&playerHtml.includes("Campeão"),
     "campeonato ou colocação saiu do verso");
+  /* A linha de identidade existe para o verso não ser anônimo: virada a carta,
+     ainda se sabe quem joga e por quem. Função e time, escapados, na mesma ordem. */
+  assert.ok(/<div class="c-vid"><b>AWPer<\/b><span>A&amp;B<\/span><\/div>/.test(playerHtml),
+    "linha de identidade do verso (função · time) mudou ou saiu");
   const statPositions=["Firepower","Clutch","Utilitário","Abertura"].map(label=>playerHtml.indexOf(label));
   assert.ok(statPositions.every(position=>position>=0)&&statPositions.every((position,index)=>index===0||position>statPositions[index-1]),
     "ordem peso × valor das estatísticas do verso mudou");

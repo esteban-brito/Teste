@@ -106,8 +106,12 @@ export function createCardView({styleId,styleLabel,styleRecipe}){
     /* Coringa não tem receita por definição e usa o conjunto padrão. */
     const linhas=(receita||DEFAULT_BACK_STATS.map(attr=>({attr})))
       .map(item=>statHtml(item,enginePlayer)).join("");
+    /* A faixa superior do verso guardava só o nick e sobrava vazia. A linha de
+       identidade a preenche e torna o verso autossuficiente: virada a carta,
+       ainda se sabe QUEM joga e por QUEM. Função na cor dela, ecoando a frente. */
     return `<div class="c-vfio"></div><div class="c-vfaixa"></div>
   <div class="c-vnick">${esc(card.nick)}</div>
+  <div class="c-vid"><b>${esc(card.prim||"")}</b><span>${esc(card.time||"")}</span></div>
   <div class="c-vestilo"><small>Playstyle</small><b>${esc(rotuloVerso(card))}</b></div>
   <div class="c-vstats">${linhas}</div>
   ${rodapeVerso(card)}

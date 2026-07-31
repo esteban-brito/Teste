@@ -361,7 +361,12 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   color-mix(in srgb,var(--wash-cor) calc(var(--wash)*.6),#080b11),#06080d 58%)}
 
 /* Frente do jogador: nick e bandeira dividem o primeiro eixo; a função principal
-   separa essa identidade do contexto role/time, sem offsets individuais. */
+   separa essa identidade do contexto role/time, sem offsets individuais.
+
+   Tentativa descartada em 31/07/2026: descer a bandeira para o eixo da função,
+   dando ao nick a largura inteira. A linha da função ganhava contrapeso, mas a
+   bandeira colava no time e passava a ler como parte DELE, não do jogador. A
+   bandeira pertence ao mesmo bloco que o nick — é quem a pessoa é, não contexto. */
 .c-identidade--player{position:absolute;left:var(--pad);right:var(--pad);bottom:var(--b1);
   z-index:5;display:grid;grid-template-columns:minmax(0,1fr) auto;
   grid-template-areas:"nick flag" "func func" "meta meta";
@@ -379,15 +384,32 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .card .c-role2{justify-self:start}.card .c-team{justify-self:end;text-align:right}
 
 /* Verso do jogador: tipografia fixa e quatro trilhos em largura integral. */
-.card .c-vnick{top:6.5%;font-size:clamp(11px,10cqw,22px)}
-.card .c-vestilo{top:26%}
+.card .c-vnick{top:5.5%;font-size:clamp(11px,10cqw,22px)}
+/* Linha de identidade: ocupa a faixa que sobrava vazia sob o nick e devolve ao
+   verso o "quem" e o "por quem". Função na cor da função, time apagado — a mesma
+   hierarquia da frente, para as duas faces se reconhecerem. */
+.card .c-vid{position:absolute;left:var(--pad);right:var(--pad);top:15.5%;z-index:5;
+  display:flex;align-items:baseline;gap:clamp(3px,2.2cqw,6px);font-family:var(--ff);
+  font-size:clamp(6.5px,4.3cqw,9.5px);letter-spacing:.15em;text-transform:uppercase;
+  line-height:1;white-space:nowrap;overflow:hidden}
+.card .c-vid b{font-weight:700;color:var(--r-ink);flex:0 0 auto}
+.card .c-vid span{font-weight:500;color:#7d8a9c;min-width:0;overflow:hidden;
+  text-overflow:ellipsis}
+.card .c-vid span::before{content:"·";margin-right:clamp(3px,2.2cqw,6px);color:#46536a}
+.card .c-vestilo{top:27.5%}
 .card .c-vestilo b{font-size:var(--t-style)}
-.card .c-vstats{top:40.5%;bottom:21.5%;display:grid;
-  grid-template-rows:repeat(4,minmax(0,1fr));align-items:center;justify-items:stretch;
-  justify-content:stretch;gap:clamp(2px,1.6cqw,4px)}
+.card .c-vstats{top:42%;bottom:20.5%;display:grid;
+  grid-template-rows:1.24fr repeat(3,minmax(0,1fr));align-items:center;justify-items:stretch;
+  justify-content:stretch;gap:clamp(2px,1.5cqw,4px)}
 .card .c-st{width:100%;align-content:center}
 .card .c-st i{font-size:clamp(7.5px,5cqw,11px)}
 .card .c-st b{font-size:clamp(9.5px,6.2cqw,14px)}
+/* Firepower é sempre o primeiro slot e é a âncora da leitura. Ele fica maior e com
+   trilho mais grosso; sem isso os quatro trilhos leem como "quatro barras" e o 100
+   do Firepower some ao lado do 97 da Abertura. */
+.card .c-st:first-child i{font-size:clamp(8px,5.6cqw,12px);color:#d3dcea}
+.card .c-st:first-child b{font-size:clamp(11px,7.6cqw,17px)}
+.card .c-st:first-child .c-trilho{height:clamp(3px,2.3cqw,4.5px)}
 .card .c-vrod{bottom:6%;min-height:clamp(26px,16cqw,36px);justify-content:flex-end}
 
 /* Treinador continua sendo outra categoria, mas usa o mesmo sistema de eixos. */
@@ -434,7 +456,15 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
     --t2:clamp(12px,10cqw,27px);--t3:6.4cqw;--t4:4.8cqw}
   .card .c-identidade--player .c-meta{display:grid}
   .card .c-identidade--player .c-flag{display:block}
-  .card .c-vstats{top:43%}
+  /* No compacto a ênfase do Firepower cede: mantida cheia, ela empurra os quatro
+     trilhos contra o rótulo em cima e o rodapé embaixo. A hierarquia continua
+     legível com metade do salto. */
+  .card .c-vid{top:14.5%;font-size:clamp(6px,4.6cqw,8px);letter-spacing:.1em}
+  .card .c-vestilo{top:25.5%}
+  .card .c-vstats{top:41.5%;bottom:21.5%;gap:clamp(1.5px,1.2cqw,3px)}
+  .card .c-st:first-child i{font-size:clamp(7.5px,5.2cqw,11px)}
+  .card .c-st:first-child b{font-size:clamp(10px,6.6cqw,14px)}
+  .card .c-st:first-child .c-trilho{height:clamp(2.5px,1.8cqw,3.5px)}
   .coachcard .cfaces{--t3:8.2cqw}
   .coachcard .cback .c-vdesc{top:46%;bottom:21%;font-size:clamp(8px,6cqw,12px);line-height:1.34}
 }
