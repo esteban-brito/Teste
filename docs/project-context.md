@@ -58,9 +58,11 @@ histórico abaixo):
   (`fotos/donk_kato24.webp`). O jogo continua no design publicado. Contrato,
   decisões medidas, hipóteses reprovadas e o que falta para promover estão na
   **seção 12** de `docs/cartas-design-2026-07-28.md`;
-- o bloco `0 · enquadramento do retrato` do laboratório mostra A/B/C sobre o
-  mesmo donk. B (116%, 70% 28%) é a recomendação medida, mas a escolha do
-  responsável continua aberta; não buscar os cinco retratos restantes antes dela;
+- o responsável escolheu o enquadramento A (`100% auto`, `50% 12%`) no bloco `0`
+  do laboratório. A evolução seguinte amplia o campo do retrato: a placa cai de
+  38% para 32% na densidade completa e de 32% para 29% na compacta; diagonal,
+  nome e funções descem pela mesma pilha de tokens. Falta a conferência visual
+  final antes de buscar os cinco retratos restantes;
 - validação integral desse marco: `npm run validate`, **25/25 suítes verdes** em
   182,2 s; snapshot, golden, consumo de RNG e balanceamento permaneceram intactos;
 - CI e deploy do commit `bf5d5e5`: workflow `30527422214`, verde;
@@ -1258,9 +1260,10 @@ Não presumir respostas sem conversar:
 handoffs especializados mais novos definem a retomada operacional atual:
 
 1. **cartas, produto visual:** o jogo continua no Tactical Editorial publicado;
-   a proposta de seis faixas e retratos está somente em `#proposta`. O próximo
-   passo é decidir o enquadramento padrão e completar a fatia da Spirit antes de
-   qualquer promoção. Fonte: `docs/cartas-design-2026-07-28.md` §12;
+   a proposta de seis faixas e retratos está somente em `#proposta`. O
+   enquadramento A foi escolhido e sua composição vertical ampliada aguarda
+   conferência; depois vêm os outros cinco retratos da Spirit, antes de qualquer
+   promoção. Fonte: `docs/cartas-design-2026-07-28.md` §12;
 2. **P5, estrutura:** separar somente criação/reset de `S`, `TG`, `MP` e `MATCH`,
    preservando forma, identidade e quirks. Fonte:
    `docs/p5-aplicacao-ui-2026-07-29.md` §11;

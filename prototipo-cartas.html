@@ -224,7 +224,7 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
     var(--foto,none),
     linear-gradient(158deg,
       color-mix(in srgb,var(--wash-cor,var(--r)) var(--wash,12%),#101722),#080d14 54%,#05080d);
-  background-size:auto,auto,var(--foto-size,cover),auto;
+  background-size:auto,auto,var(--foto-size,100% auto),auto;
   background-position:50% 0,50% 0,var(--foto-x,50%) var(--foto-y,12%),50% 0}
 /* A PLACA TAMBEM SAI DE `--wash-cor`, e nao de `--m`. Ela tinha ficado de fora
    da calibragem e invertia duas vezes: a placa da carta comum era 18% MAIS CLARA
@@ -301,12 +301,24 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
 
    O corpo maior cobrou espaco: o medidor reprovou nas oito larguras com
    "colisao nick/funcao". A correcao e no RITMO, nao no tamanho — o nick sobe de
-   `passo*1,2` para `passo*1,45` acima da funcao. Como `--b2` vale 9,8% na
-   densidade completa e 6% na compacta, a mesma formula serve as duas. */
-.proposta .card.p-rank .cfaces,
+   `passo*1,2` para `passo*1,45` acima da funcao.
+
+   COMPOSICAO VERTICAL ESCOLHIDA. Depois de o responsavel escolher o enquadramento
+   A, o campo do retrato ganhou mais altura. Placa e pilha de identidade derivam
+   destes mesmos tokens: na densidade completa a placa desce de 38% para 32% e
+   todas as tres linhas descem 1,8 pp. A diagonal do verso e recalculada com a
+   mesma razao, portanto frente e verso continuam com o mesmo angulo fisico. */
+.proposta .card.p-rank .cfaces{
+  --placa-n:32; --placa:calc(var(--placa-n)*1%);
+  --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
+  --b1:2.8%; --b2:calc(var(--b1) + var(--passo));
+  --b3:calc(var(--b2) + var(--passo)*1.45); --t3:7.4cqw}
 .proposta .coachcard .cfaces{--t3:7.4cqw; --b3:calc(var(--b2) + var(--passo)*1.45)}
 @container (max-width:150px){
-  .proposta .card.p-rank .cfaces,
+  .proposta .card.p-rank .cfaces{
+    --placa-n:29; --placa:calc(var(--placa-n)*1%);
+    --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
+    --b2:5%; --b3:calc(var(--b2) + var(--passo)*1.45); --t3:8.2cqw}
   .proposta .coachcard .cfaces{--t3:8.2cqw}
 }
 .proposta .card.p-rank .cfront .c-func,
@@ -515,11 +527,11 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
       todas as cartas desta página e reprova por número, não por gosto.</div>
   </div>
 
-  <h2 class="lab">0 · enquadramento do retrato</h2>
-  <p class="lab">A mesma foto e a mesma carta em três recortes reproduzíveis. Ligue
-  <b>Proposta futura</b> no topo para comparar. A preserva contexto, B equilibra rosto e
-  camisa, C prioriza expressão. As três entram nas mesmas guardas de geometria e contraste;
-  nenhuma foi promovida ao jogo.</p>
+  <h2 class="lab">0 · enquadramento e área do retrato</h2>
+  <p class="lab">O enquadramento <b>A foi escolhido</b>. B e C permanecem ao lado como
+  registro da comparação. Na evolução de A, a diagonal e toda a pilha de identidade desceram
+  juntas para dar mais área à foto, com tokens próprios para as densidades completa e compacta.
+  Ligue <b>Proposta futura</b> no topo; nada deste bloco foi promovido ao jogo.</p>
   <div class="lab-grade" id="gRetratos"></div>
 
   <h2 class="lab">1 · a escada de raridade</h2>
@@ -606,10 +618,10 @@ const idCru=carta=>carta.tipo==="coach"?carta.nick:(carta._eng&&carta._eng.id)||
 const fotoDe=carta=>FOTOS.has(idCru(carta))
   ?`--foto:url('fotos/${encodeURIComponent(idCru(carta))}.webp')`:"";
 const ENQUADRAMENTOS=[
-  {id:"a",rot:"A · contexto integral",size:"100% auto",x:"50%",y:"12%",
-    nota:"mais camisa · rosto menor"},
-  {id:"b",rot:"B · retrato equilibrado",size:"116% auto",x:"70%",y:"28%",
-    nota:"recomendado · rosto + identidade"},
+  {id:"a",rot:"A · escolhido",size:"100% auto",x:"50%",y:"12%",
+    nota:"mais foto · contexto integral"},
+  {id:"b",rot:"B · alternativa",size:"116% auto",x:"70%",y:"28%",
+    nota:"registro · rosto maior"},
   {id:"c",rot:"C · close",size:"132% auto",x:"75%",y:"30%",
     nota:"expressão maior · menos camisa"},
 ];

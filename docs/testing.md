@@ -43,7 +43,8 @@ larguras, nos estados publicado e proposta, e reprova
 estouro horizontal, recorte vertical e colisão entre regiões. Em cada largura,
 também exige campeonato/colocação visíveis em jogador e treinador, ausência dos
 nós de rating e peso removidos do verso, tamanhos mínimos, contraste calculado de
-pelo menos 4,5:1 e nenhum halo externo. Congela ainda o contrato de movimento:
+pelo menos 4,5:1, nenhum halo externo e a composição vertical declarada do
+retrato nas densidades completa e compacta. Congela ainda o contrato de movimento:
 tempos, propriedades, holografia estática e keyframes sem rotação, luz ou
 overshoot. No jogo real, prova a costura compacta, frente/verso acessível por
 teclado, reset do modo Virar, seleção normal, ausência da varredura de entrada,

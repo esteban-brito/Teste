@@ -390,26 +390,39 @@ escondendo o texto antes de medir — sem isso o pixel mais claro da zona é o
 próprio número branco. Duas provas sintéticas fecham: retrato branco puro sem
 escurecimento reprova em 1:1, com escurecimento passa em 4,82:1.
 
-### Enquadramento A/B/C — decisão aberta
+### Enquadramento A escolhido e campo ampliado
 
-O bloco `0 · enquadramento do retrato` coloca a mesma carta real lado a lado em
-três recortes reproduzíveis, todos protegidos pela guarda:
+O bloco `0 · enquadramento e área do retrato` coloca a mesma carta real lado a
+lado em três recortes reproduzíveis, todos protegidos pela guarda:
 
 | opção | tamanho | posição | leitura |
 |---|---|---|---|
-| A | `100% auto` | `50% 12%` | contexto integral; mais camisa, rosto menor |
-| B | `116% auto` | `70% 28%` | **recomendado**; rosto e identidade equilibrados |
+| A | `100% auto` | `50% 12%` | **escolhido**; contexto integral e mais camisa |
+| B | `116% auto` | `70% 28%` | alternativa; rosto maior |
 | C | `132% auto` | `75% 30%` | close expressivo; menos camisa e contexto |
 
 As três foram inspecionadas em 250, 188 e 130 px. B manteve no pior caso 5,80:1
-atrás do OVR e 9,06:1 atrás da bandeira; portanto a decisão restante é estética,
-não uma exceção de legibilidade. A escolha pertence ao responsável e ainda não
-foi aplicada à carta real do elenco nem ao jogo.
+atrás do OVR e 9,06:1 atrás da bandeira; portanto nenhuma alternativa exigia
+exceção de legibilidade. Em 31/07/2026 o responsável escolheu **A**.
+
+Depois da escolha, o responsável pediu que a foto ocupasse mais da carta e que
+diagonal, nome e funções descessem como um conjunto. A composição passou a usar
+uma única pilha derivada por densidade:
+
+| densidade | placa antes → proposta | contexto | função | nick |
+|---|---:|---:|---:|---:|
+| completa | `38% → 32%` | `2,8%` | `8%` | `15,54%` |
+| compacta | `32% → 29%` | oculto | `5%` | `12,54%` |
+
+`--placa-n`, `--placa`, `--b1`, `--b2` e `--b3` governam todas as cartas de
+jogador, em vez de deslocamentos por nick ou retrato. `--corte-v` é recalculado
+com a nova altura, mantendo o ângulo físico da diagonal igual nas duas faces.
+Essa evolução continua apenas no laboratório até a conferência visual final.
 
 ### O que falta
 
-1. escolher A, B ou C no bloco `0` do laboratório, para as seis cartas de um
-   elenco parecerem um conjunto; B é a recomendação medida;
+1. conferir visualmente a composição ampliada do enquadramento A nas densidades
+   completa e compacta;
 2. os cinco retratos restantes de Spirit Katowice 2024 — `sh1ro_kato24`,
    `zont1x`, `magixx`, `chopper_kato24` e `hally`;
 3. promover a proposta ao jogo, com os cinco pontos acima andando juntos,
