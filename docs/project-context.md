@@ -40,6 +40,12 @@ roadmap for concluída.
 
 ## 2. Ponto exato de retomada
 
+**Atualização mais recente: sessão de 31/07/2026, encerrada em `9e06073`.** O
+resumo completo — limpeza, escada de raridade, refino do verso, Spirit de Katowice
+completa e as duas lições que custaram retrabalho — está na **seção 0 de
+`docs/retomada-2026-07-31.md`**. Leia-a antes do resto desta seção, que descreve o
+estado anterior.
+
 Atualização vigente de 31 de julho de 2026 (tem precedência sobre o registro
 histórico abaixo):
 
@@ -76,10 +82,10 @@ histórico abaixo):
 - validação integral da promoção: `npm run validate`, **25/25 suítes verdes** em
   184,2 s; snapshot, golden, consumo de RNG e balanceamento permaneceram intactos;
 - o ciclo **P2 de modularização por paridade está concluído**, Fases 0–7;
-- `game.js` caiu de 3.054 para **889 linhas** — 1.206 ao fim do P2, 938 depois das
+- `game.js` caiu de 3.054 para **882 linhas** — 1.206 ao fim do P2, 938 depois das
   primeiras fatias do P5, 888 após a remoção do tilt morto e uma linha de import
-  no endurecimento das cartas — e contém somente
-  aplicação, estado e UI;
+  no endurecimento das cartas; a extração da criação/reset dos quatro estados
+  fechou a conta atual — e o arquivo contém somente aplicação, controladores e UI;
 - dados e motores vivem em `src/data`, `src/domain` e `src/public`;
 - jogo, sandbox, worker e bancada usam `src/public/simulation-api.mjs`;
 - `bancada/motor.js` cria estado avaliado e sessão de RNG novos por carga, sem
@@ -947,13 +953,15 @@ Aceitação: goldens por seed idênticos e benchmarks dentro das faixas.
 `src/infrastructure/persistence/progress-store.mjs`, ambos com testes isolados.
 Os templates puros vivem em `src/ui/game/`, com escaping centralizado.
 Cartas, química, times, Suíça/playoffs, partida, final e Hall já usam essa
-fronteira. As **889 linhas** restantes de estado, DOM e fluxo ainda podem ser
-decompostas. O ciclo está num checkpoint verde e sua continuação autônoma está
-autorizada; retomada e contratos exatos estão em
-`docs/p5-aplicacao-ui-2026-07-29.md`.
+fronteira. A criação e o reset de `S`, `TG`, `MP` e `MATCH` vivem agora em
+`src/application/draft`, `src/application/major` e `src/application/match`, sob
+a guarda isolada `tools/check-game-state.js`; `game.js` ficou com **882 linhas**
+de controladores, DOM e fluxo ainda decomponíveis. O ciclo está num checkpoint
+verde e sua continuação autônoma está autorizada; retomada e contratos exatos
+estão em `docs/p5-aplicacao-ui-2026-07-29.md`.
 
-- separar estado do draft e do Major; áudio já está isolado, e a futura carreira
-  terá estado próprio;
+- extrair os controladores do draft, Major e partida, um por commit; áudio e
+  estados já estão isolados, e a futura carreira terá estado próprio;
 - usar comandos/reducers pequenos sem framework obrigatório;
 - tornar timers, DOM, áudio e persistência efeitos explícitos;
 - impedir que renderização escreva regras de domínio.
@@ -1276,13 +1284,12 @@ handoffs especializados mais novos definem a retomada operacional atual. Leia
 primeiro `docs/retomada-2026-07-31.md`:
 
 1. **biblioteca visual:** a carta A refinada já é a única implementação do jogo e
-   do laboratório. Receber e normalizar retratos por lotes coerentes de time/era,
-   começando pelos quatro jogadores restantes da Spirit de Katowice 2024, sem
-   criar exceções de runtime. Retrato de treinador exige extensão própria do
-   contrato de dados e não faz parte desse primeiro lote;
-2. **P5, estrutura:** separar somente criação/reset de `S`, `TG`, `MP` e `MATCH`,
-   preservando forma, identidade e quirks. Fonte:
-   `docs/p5-aplicacao-ui-2026-07-29.md` §11;
+   do laboratório, e a Spirit de Katowice 2024 já está completa. Receber e
+   normalizar os próximos retratos por lotes coerentes de time/era, sem criar
+   exceções de runtime;
+2. **P5, estrutura:** a criação/reset de `S`, `TG`, `MP` e `MATCH` já foi
+   extraída com shape, identidade e quirks protegidos. A próxima fatia é somente
+   o controlador de draft/roleta. Fonte: `docs/p5-aplicacao-ui-2026-07-29.md` §12;
 3. **pré-produção da Carreira:** fechar as decisões de produto e registrar ADR,
    schema de save e fluxo de telas antes de implementar comportamento definitivo;
 4. **fatia vertical da Carreira:** criador + save versionado + temporada curta,

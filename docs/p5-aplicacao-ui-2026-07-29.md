@@ -38,6 +38,13 @@ a execução `30652005186` ficou verde e `npm run validate` aprovou 25/25. O
 contrato final está em `docs/cartas-design-2026-07-28.md` §14 e a retomada geral
 em `docs/retomada-2026-07-31.md`. Isso também não altera a fatia estrutural P5.
 
+Atualização estrutural posterior de 31/07/2026: a primeira fatia recomendada
+deste handoff foi executada. Criação/reset de `S`, `TG`, `MP` e `MATCH` vivem em
+`src/application/draft`, `src/application/major` e `src/application/match`;
+`tools/check-game-state.js` protege shape, isolamento, identidade e quirks, e o
+checker do entrypoint impede reinlining. Nenhum controlador foi movido e
+`game.js` ficou com 882 linhas. A próxima fatia é somente draft/roleta (§12).
+
 Estado funcional que precede este handoff:
 
 - branch: `sandbox-test`;
@@ -243,12 +250,23 @@ do fechamento P2 era 24/24. A bancada atual acrescentou o E2E de cartas e possui
 Ao tocar uma área, siga a matriz obrigatória do `AGENTS.md`; não use esta
 justificativa para pular uma suíte pertinente.
 
-## 7. Mapa das 889 linhas restantes de `game.js`
+Na fatia de estado de 31/07/2026 passaram `npm run check`, `npm run lint`,
+`npm run test:data`, as 9 suítes de regressão e os 4 E2E em 85,4 s. Snapshot,
+golden e sequência do Mulberry32 permaneceram idênticos. A guarda nova também
+foi verificada reprovando quando `resetDraftState()` passou temporariamente a
+zerar `justPlaced`, antes da restauração do contrato correto.
+
+## 7. Mapa histórico das 889 linhas de `game.js`
 
 Linhas medidas no commit `8a12250` (29/07/2026) — confira novamente se o arquivo
 avançou. O mapa anterior era do commit-base `57f5699` e tinha uma faixa de tilt que
 **não existe mais**: `458c6b4` removeu o efeito, e não há nenhuma ocorrência de
 `tilt` em `game.js` ou `style.css`.
+
+Depois da extração exclusiva de estado descrita na atualização acima, o arquivo
+tem 882 linhas e as faixas abaixo deslocaram alguns números. O agrupamento de
+responsabilidades continua válido como mapa histórico; não use as linhas como
+endereços atuais sem conferir o arquivo.
 
 ```text
 1–24    imports, contratos públicos, constantes e criação da view de cartas
@@ -272,11 +290,14 @@ avançou. O mapa anterior era do commit-base `57f5699` e tinha uma faixa de tilt
 882–888 desbloqueio de áudio no primeiro gesto e inicialização final
 ```
 
-O próximo problema não é a quantidade de linhas isoladamente. É que quatro
-estados mutáveis e seus controladores continuam fechados sobre DOM, timers e
-callbacks no mesmo entrypoint.
+O próximo problema não é a quantidade de linhas isoladamente. As fábricas e
+resets já saíram, mas os controladores ainda fecham sobre as instâncias mutáveis,
+DOM, timers e callbacks no mesmo entrypoint.
 
-## 8. Contratos exatos dos estados restantes
+## 8. Contratos exatos dos estados extraídos
+
+As formas abaixo vivem agora nos três módulos listados na seção 11. Os
+controladores continuam mutando as mesmas instâncias compostas por `game.js`.
 
 ### 8.1 `S` — draft
 
@@ -401,7 +422,8 @@ Contratos sensíveis ainda em `game.js`:
 
 ### Importante antes da Carreira
 
-1. **Separar os quatro estados** sem mudar formas, identidades ou reset.
+1. ~~**Separar os quatro estados** sem mudar formas, identidades ou reset.~~
+   **Concluído em 31/07/2026.**
 2. **Extrair controladores**, um por vez: draft, Major e partida/reprodução.
 3. Tornar DOM, timers, áudio e persistência dependências explícitas desses
    controladores.
@@ -427,12 +449,11 @@ permanece separado.
 - mover CSS junto com controladores;
 - apagar arquivo apenas porque parece antigo ou duplicado.
 
-## 11. Próxima fatia recomendada
+## 11. Fatia de estado concluída
 
-A próxima mudança deve separar **somente estado**, sem mover controladores no
-mesmo commit.
+A mudança separou **somente estado**, sem mover controladores no mesmo commit.
 
-Estrutura sugerida, alinhada ao roadmap:
+Estrutura entregue, alinhada ao roadmap:
 
 ```text
 src/application/draft/draft-state.mjs
@@ -449,20 +470,21 @@ src/application/match/match-state.mjs
   resetMatchState(state)
 ```
 
-Regras dessa primeira fatia:
+Contratos cumpridos nessa primeira fatia:
 
-1. copie as formas exatas registradas na seção 8;
-2. preserve referências dos objetos e do `Set` nos resets;
-3. preserve a ausência inicial de `MATCH.rodando` e o `TG={}` inicial;
-4. não mova `sortear`, `avancarSuica`, `avancarPlayoff`, `reproduzirMapa` ou
-   `continuarPartida` ainda;
-5. crie uma guarda isolada, por exemplo `tools/check-game-state.js`, cobrindo
+1. as formas exatas registradas na seção 8 foram copiadas;
+2. referências dos objetos e do `Set` são preservadas nos resets;
+3. a ausência inicial de `MATCH.rodando` e o `TG={}` inicial foram preservados;
+4. `sortear`, `avancarSuica`, `avancarPlayoff`, `reproduzirMapa` e
+   `continuarPartida` continuam no entrypoint;
+5. `tools/check-game-state.js` cobre
    shapes, instâncias independentes, identidade após reset e os campos
    deliberadamente não tocados;
-6. inclua a guarda em `npm run check` e impeça reinlining no checker do entrypoint;
-7. atualize este handoff e `docs/project-context.md` no mesmo commit;
-8. rode `check`, lint, data, regression e E2E completo;
-9. só depois considere um controlador, em outro commit.
+6. a guarda integra `npm run check`, e o checker do entrypoint impede reinlining;
+7. este handoff e `docs/project-context.md` foram atualizados na mesma fatia;
+8. a matriz de validação de estado/controladores continua obrigatória antes do
+   commit;
+9. qualquer controlador permanece para outro commit.
 
 Estimativa dada ao responsável em 29/07/2026:
 
@@ -473,9 +495,9 @@ Estimativa dada ao responsável em 29/07/2026:
 
 Essa estimativa foi o motivo da pausa, não um bloqueio técnico.
 
-## 12. Sequência depois dos estados
+## 12. Próxima fatia e sequência dos controladores
 
-Se a fatia de estado estiver verde, a ordem recomendada é:
+A fatia de estado está verde. A ordem recomendada agora é:
 
 1. controlador do draft/roleta;
 2. controlador do Major (criação, Suíça e playoffs);
@@ -545,7 +567,7 @@ O roteiro original, que continua válido para a próxima vez:
 - `sandbox.html` ainda é grande e possui loader inline legado;
 - persistência atual serve ao histórico do modo existente; uma Carreira exigirá
   contrato próprio, migrations e IDs persistentes conforme `project-context`;
-- `game.js` ter 889 linhas não significa que todas devam sair.
+- `game.js` ter 882 linhas não significa que todas devam sair.
 
 ## 15. Validação e disciplina ao retomar
 
@@ -580,7 +602,8 @@ histórico continuam exigindo pedido explícito.
 
 O P5 pode ser considerado estruturalmente encerrado quando:
 
-- `S`, `TG`, `MP` e `MATCH` tiverem criação/reset testáveis fora do entrypoint;
+- ~~`S`, `TG`, `MP` e `MATCH` tiverem criação/reset testáveis fora do
+  entrypoint;~~ concluído;
 - draft, Major e partida tiverem controladores com dependências explícitas;
 - `game.js` atuar principalmente como composição e wiring de DOM;
 - nenhuma renderização recalcular regra esportiva;

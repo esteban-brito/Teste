@@ -39,9 +39,7 @@ const EXCECOES=new Set(["caminho/do/time.txt","caminho/entrada.json"]);
    pode apodrecer. */
 const REFERENCIAS_DECLARADAS=new Map([
   ["src/ui/shared/role-emblems.mjs",
-    "deletado em 673e205; a §11 de docs/cartas-design-2026-07-28.md o nomeia para dizer que saiu"],
-  ["tools/check-game-state.js",
-    "ainda não existe; a §11 de docs/p5-aplicacao-ui-2026-07-29.md o propõe como próxima guarda"]
+    "deletado em 673e205; a §11 de docs/cartas-design-2026-07-28.md o nomeia para dizer que saiu"]
 ]);
 
 function ehCaminhoDeRepo(texto){
