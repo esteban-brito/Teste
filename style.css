@@ -284,7 +284,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   --corte:calc(var(--corte-n)*1%);
   --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
   --b1:3.3%;--b2:5.8%;--b3:10.1%;--t3:6.2cqw;--t4:4.5cqw}
-.card .cfaces{--t2:clamp(13px,10.5cqw,27px);--t-style:clamp(14.5px,12.6cqw,27px);
+.card .cfaces,.coachcard .cfaces{--t2:clamp(13px,10.5cqw,27px);--t-style:clamp(14.5px,12.6cqw,27px);
   --t3:6.4cqw;--t4:4.8cqw;
   /* Respiro do verso. Entra IGUAL acima e abaixo da caixa de stats: aplicado de um
      lado só, ele mesmo destruiria a simetria que a caixa existe para garantir. */
@@ -358,7 +358,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .c-fio,.c-vfio{background:linear-gradient(90deg,transparent,
   color-mix(in srgb,var(--fio-cor,var(--m)) var(--fio-a),transparent) 20%,
   color-mix(in srgb,var(--fio-cor,var(--m)) var(--fio-a),transparent) 76%,transparent)}
-.card .c-placa{background:linear-gradient(178deg,
+.card .c-placa,.coachcard .c-placa{background:linear-gradient(178deg,
   color-mix(in srgb,var(--wash-cor) calc(var(--wash)*.8),#0a0f17),#070a10 40%)}
 .card .cback{background:linear-gradient(168deg,
   color-mix(in srgb,var(--wash-cor) calc(var(--wash)*.6),#080b11),#06080d 58%)}
@@ -373,11 +373,8 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .c-identidade--player,.c-identidade--coach{position:absolute;left:var(--pad);right:var(--pad);
   z-index:5;display:grid;grid-template-columns:minmax(0,1fr) auto;
   grid-template-areas:"nick flag" "func func" "meta meta";
-  column-gap:clamp(1px,1cqw,3px);row-gap:clamp(.6px,.45cqw,1.2px);align-items:end}
-.c-identidade--player{bottom:var(--b1)}
-/* A frente do treinador é o espelho vertical da frente do jogador: o mesmo
-   bloco editorial encosta no topo, enquanto o OVR troca o topo pela base. */
-.c-identidade--coach{top:var(--b1)}
+  column-gap:clamp(1px,1cqw,3px);row-gap:clamp(.6px,.45cqw,1.2px);align-items:end;
+  bottom:var(--b1)}
 .card .c-identidade--player .c-nick,.coachcard .c-identidade--coach .c-nick{
   grid-area:nick;position:static;inset:auto;
   min-width:0;font-size:var(--t2);line-height:.9;letter-spacing:-.005em;overflow:visible}
@@ -446,23 +443,18 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    linha começa sempre no mesmo y e a segunda cresce para o espaço reservado. */
 .card .c-vrod,.coachcard .c-vrod{top:86%;bottom:4%;min-height:0;justify-content:flex-start}
 
-/* Treinador: a única silhueta exclusiva é a moldura segmentada. Miolo, escala,
-   placa e verso usam a grade do jogador; na frente, os dois blocos são trocados
-   verticalmente sem criar uma segunda anatomia. */
-.coachcard{--wash-cor:var(--r);--wash:12%}
-.coachcard .cfaces{--placa-n:24;--faixa-n:22;
-  --placa:calc(var(--placa-n)*1%);--faixa:calc(var(--faixa-n)*1%);
-  --t2:clamp(13px,10.5cqw,27px);--t-style:clamp(14.5px,12.6cqw,27px);
-  --t3:6.4cqw;--t4:4.8cqw;--vfolga:clamp(2px,1.6cqw,4px)}
-.coachcard .c-fio,.coachcard .c-placa{top:0;bottom:auto;
-  clip-path:polygon(0 0,100% 0,100% 100%,0 calc(100% - var(--corte)))}
-/* O OVR inferior recebe o espelho exato da proteção escura usada pelo OVR dos
-   jogadores no topo. Sem esta camada, a roupa clara do retrato real de hally
-   derrubava o contraste para 2,14:1. */
-.coachcard .c-vinheta{background:linear-gradient(180deg,transparent 50%,
-  rgba(3,6,11,.45) 58%,rgba(3,6,11,.72) 68%,rgba(3,6,11,.86) 80%,rgba(3,6,11,.94) 100%)}
-.coachcard .c-placa{background:linear-gradient(2deg,
-  color-mix(in srgb,var(--r) 16%,#0a0f17),#070a10 46%)}
+/* Treinador: a única silhueta exclusiva é a moldura segmentada. Grade, escala,
+   placa, recorte e verso são os MESMOS da carta de jogador — a categoria se
+   anuncia por material e cor, nunca por geometria própria.
+
+   O espelho vertical foi tentado e descartado em 31/07/2026. Ele era exato no
+   papel (erro máximo de 0,1% em todos os eixos) e errado na tela, porque a carta
+   é simétrica e a fotografia não: o recorte de runtime `50% 12%` põe o rosto no
+   terço superior justamente porque a placa mora embaixo. Espelhá-la para o topo
+   cobria a cabeça de todo retrato, e o OVR, jogado sobre a roupa, só sobrevivia
+   com uma vinheta de 10:1 que apagava metade da foto. Nada disso comprava
+   distinção que a moldura serrilhada e a cor da característica já não dessem. */
+.coachcard{--wash-cor:var(--r);--wash:20%}
 .coachcard .c-vfaixa{background:linear-gradient(2deg,
   color-mix(in srgb,var(--r) 14%,#0a0f17),#070a10 48%)}
 .coachcard .cback{background:linear-gradient(168deg,
@@ -481,7 +473,6 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    verde porque nenhuma guarda de espelho olhava o eixo horizontal. */
 .coachcard .c-role2{display:none}
 .coachcard .c-team{grid-column:1/-1}
-.coachcard .c-ovr{top:auto;bottom:5.5%}
 .coachcard .c-ovr small{color:color-mix(in srgb,var(--r-ink) 82%,#fff)}
 .coachcard .c-vestilo b{font-size:calc(var(--t-style)*var(--carac-esc,1));color:var(--r-ink)}
 .coachcard .cback .c-vdesc{

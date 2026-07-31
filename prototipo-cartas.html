@@ -291,19 +291,9 @@ function medirCartas(){
     if(carta.classList.contains("coachcard")){
       treinadoresAuditados++;
       const ref=referenciaJogador,refCaixa=ref.getBoundingClientRect();
-      const identidade=carta.querySelector(".c-identidade--coach").getBoundingClientRect();
-      const refIdentidade=ref.querySelector(".c-identidade--player").getBoundingClientRect();
-      const ovr=carta.querySelector(".c-ovr").getBoundingClientRect();
-      const refOvr=ref.querySelector(".c-ovr").getBoundingClientRect();
       const placa=carta.querySelector(".c-placa").getBoundingClientRect();
       const refPlaca=ref.querySelector(".c-placa").getBoundingClientRect();
-      maximo("espelho frontal · identidade",
-        Math.abs((identidade.top-caixa.top)-(refCaixa.bottom-refIdentidade.bottom)),.35,.05);
-      maximo("espelho frontal · OVR",
-        Math.abs((caixa.bottom-ovr.bottom)-(refOvr.top-refCaixa.top)),.35,.05);
-      maximo("espelho frontal · altura da placa",Math.abs(placa.height-refPlaca.height),.35,.05);
-      maximo("espelho frontal · placa na borda",
-        Math.max(Math.abs(placa.top-caixa.top),Math.abs(refCaixa.bottom-refPlaca.bottom)),.35,.05);
+      maximo("grade compartilhada · altura da placa",Math.abs(placa.height-refPlaca.height),.35,.05);
 
       for(const [seletor,campo] of [[".c-vnick","nick"],[".c-vid","identidade"],
         [".c-vestilo","característica"],[".c-vrod","era"]]){
@@ -322,23 +312,34 @@ function medirCartas(){
       const refFaixa=ref.querySelector(".c-vfaixa").getBoundingClientRect();
       maximo("verso padronizado · altura da faixa",Math.abs(faixa.height-refFaixa.height),.35,.05);
 
-      /* O espelho do treinador é VERTICAL: o eixo horizontal precisa ser idêntico
-         ao do jogador. Sem esta bateria o medidor mediu só o eixo y e ficou verde
-         enquanto o time parava no meio da carta — a faixa declara duas colunas e,
-         com a função secundária oculta, o time caía sozinho na primeira. Cada
-         campo declara a borda que é seu contrato: quem nasce em `--pad` responde
-         pela esquerda, quem é ancorado por `justify-self:end` responde pela
-         direita, e a faixa inteira responde pelas duas. */
-      for(const [seletor,campo,borda] of [[".c-nick","nick","esquerda"],
-        [".c-func","característica","esquerda"],[".c-meta","faixa de contexto","ambas"],
-        [".c-flag","bandeira","direita"],[".c-team","time","direita"]]){
+      /* A frente do treinador é a MESMA da carta de jogador, não um espelho dela.
+         Cada campo declara as bordas que são seu contrato: quem nasce em `--pad`
+         responde pela esquerda, quem é ancorado por `justify-self:end` responde
+         pela direita, e a caixa que ocupa a largura inteira responde pelas duas.
+         Topo e base valem para todos, porque a grade é a mesma.
+
+         A bateria cobre os quatro lados de propósito. A versão anterior media só
+         o eixo vertical e ficou verde com o nome do time meia carta fora de
+         lugar; uma prova que enxerga um eixo só não prova padronização. */
+      for(const [seletor,campo,bordas] of [
+        [".c-placa","placa","esquerda direita topo base"],
+        [".c-identidade","identidade","esquerda direita topo base"],
+        [".c-ovr","OVR","esquerda topo base"],
+        [".c-nick","nick","esquerda direita topo base"],
+        [".c-func","característica","esquerda topo base"],
+        [".c-flag","bandeira","direita topo base"],
+        [".c-meta","faixa de contexto","esquerda direita topo base"],
+        [".c-team","time","direita topo base"]]){
         const atual=carta.querySelector(seletor),esperado=ref.querySelector(seletor);
         if(!visivel(atual)||!visivel(esperado))continue;
         const a=atual.getBoundingClientRect(),e=esperado.getBoundingClientRect();
-        if(borda!=="direita")maximo(`espelho horizontal · ${campo} (esquerda)`,
-          Math.abs((a.left-caixa.left)-(e.left-refCaixa.left)),.35,.05);
-        if(borda!=="esquerda")maximo(`espelho horizontal · ${campo} (direita)`,
-          Math.abs((caixa.right-a.right)-(refCaixa.right-e.right)),.35,.05);
+        const par={esquerda:[a.left-caixa.left,e.left-refCaixa.left],
+          direita:[caixa.right-a.right,refCaixa.right-e.right],
+          topo:[a.top-caixa.top,e.top-refCaixa.top],
+          base:[caixa.bottom-a.bottom,refCaixa.bottom-e.bottom]};
+        for(const borda of bordas.split(" "))
+          maximo(`grade compartilhada · ${campo} (${borda})`,
+            Math.abs(par[borda][0]-par[borda][1]),.35,.05);
       }
       if(!getComputedStyle(carta,"::after").backgroundImage.includes("repeating-linear-gradient"))
         registrarRitmo("moldura segmentada do treinador",0,1,"exato","estado");

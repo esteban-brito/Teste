@@ -776,7 +776,15 @@ fonte, não de layout.
 - **vermelho forte demais**: `Rifler` de `#ff2038` para `#f04a5e`. Contraste 4,5:1
   segue aprovado nas oito larguras.
 
-## 19. Treinador como espelho vertical da carta canônica — 31/07/2026
+## 19. Treinador: o espelho vertical, e por que ele foi descartado — 31/07/2026
+
+> **Estado vigente: as seções 19 e 19.1 descrevem uma direção REVERTIDA no mesmo
+> dia.** O contrato em vigor é a seção 19.2: a frente do treinador é idêntica à
+> do jogador. As duas seções abaixo ficam porque registram uma armadilha que
+> custou caro — uma geometria exata e visualmente errada, aprovada por guardas
+> que mediam um eixo só.
+
+### 19.0 A direção tentada
 
 A distinção anterior havia virado uma segunda anatomia: placa reta de 44%, corpos
 maiores e eixos próprios no verso. A direção aprovada é mais simples: **a carta do
@@ -827,3 +835,39 @@ pelas duas. Ela foi verificada **reprovando** antes da correção — 144
 apontamentos, 18 coaches × 8 larguras, todos e somente em `time (direita)`, o que
 também provou que os demais campos já espelhavam certo. A prova sintética do E2E
 reencena exatamente esse defeito devolvendo o time à primeira coluna.
+
+### 19.2 Contrato vigente: a frente do treinador é a frente do jogador
+
+Com o eixo horizontal enfim medido, ficou visível que o problema não era o
+alinhamento do time: era o espelho. Ele foi descartado no mesmo dia.
+
+**Por que um espelho exato dá uma carta errada.** A carta é simétrica; a
+fotografia não é. O recorte de runtime `100% auto · 50% 12%` põe o rosto no terço
+superior justamente porque a placa mora nos 24% de baixo. Espelhar a placa para o
+topo a coloca sobre a cabeça de **todo** retrato — não é defeito do retrato do
+hally, é consequência estrutural, e valeria para cada treinador que entrasse. O
+OVR, empurrado para a base sobre a roupa, só sobrevivia com uma vinheta de
+10,13:1 que apagava metade da foto. Precisar de 10:1 para um elemento existir
+onde está não é problema de contraste: é o elemento no lugar errado.
+
+E o espelho não comprava nada. A distinção de categoria já vinha da moldura
+serrilhada e da cor da característica, e nenhuma das duas depende do eixo.
+
+**O que vale agora.** Frente do treinador = frente do jogador, sem exceção
+geométrica: placa nos 24% de baixo com a identidade, OVR no topo, mesma vinheta,
+mesmo recorte. A categoria se anuncia por material e cor — moldura serrilhada a
+45°, fio serrilhado, `--r` vindo da característica e o rótulo `TREINADOR` sob o
+OVR. Medido no laboratório, os dois perfis frontais ficaram idênticos linha a
+linha, e o OVR do coach sobre o retrato real do hally passou a marcar 6,08:1 com
+a vinheta comum, sem nenhuma proteção extra.
+
+A duplicação também caiu: `.coachcard .cfaces` reescrevia à mão sete tokens que
+já existiam em `.cfaces`/`.card .cfaces`, e `.coachcard .c-placa` repetia o
+gradiente da placa com o ângulo invertido. Hoje o treinador entra nas mesmas
+regras e ajusta só `--wash`. Mudar um token do jogador não deixa mais o treinador
+para trás em silêncio.
+
+A guarda acompanhou: `espelho frontal` e `espelho horizontal` viraram uma bateria
+só, `grade compartilhada · <campo> (<borda>)`, que compara os **quatro** lados de
+oito campos contra a carta de jogador de referência, com as bordas que são
+contrato de cada campo declaradas item a item.
