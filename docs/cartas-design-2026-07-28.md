@@ -87,6 +87,14 @@ promoção não moveria uma única carta.
 nos 85 é a desta tabela. As duas medições da flag também continuam idênticas
 (17 jogadores com `estrela`, 17 com `ovr>=20`, zero discordâncias).
 
+> **Superado em 31/07/2026 — a tabela acima NÃO é mais o código.** A escada de cinco
+> faixas virou **seis** em `673e205`. `tierOf` hoje é:
+> `tier-6` ovr≥22 · `tier-5` ≥21 · `tier-4` ≥20 · `tier-3` 18–19 · `tier-2` 15–17 ·
+> `tier-1` ≤14. Repare que os cortes de baixo mudaram de verdade: o antigo `t2` era
+> 17–18 e hoje 17 e 18 caem em faixas diferentes. A escada vigente está na §12 e o
+> contrato final na §14. A conclusão sobre a flag `estrela` (promoção descartada por
+> não mover nenhuma carta) continua valendo.
+
 O **selo ★ foi removido** a pedido do responsável ("achei bem feio").
 
 ## 6. Bandeiras
@@ -188,6 +196,12 @@ cinza**, **oito larguras** — as cinco reais (250/188/176/130/120 px) e a costu
 compacta (151/150/149 px) — e **simulação de daltonismo**; a escada de raridade
 isolando só o OVR; a matriz de 30 combinações raridade × função; os casos que
 quebram; os 17 elencos completos; emblemas e bandeiras ampliados.
+
+> **Superado em 31/07/2026:** o botão **Proposta futura**, a tecla `P` e o bloco
+> `#proposta` foram **removidos** em `673e205` — o mecanismo de A/B não existe mais,
+> porque não há mais duas hipóteses a comparar. Os emblemas também saíram. O que
+> permanece: verso, escala de cinza, daltonismo, as oito larguras, a escada, a
+> matriz, os casos que quebram e os 17 elencos, agora sobre a carta única.
 
 E tem o **medidor de geometria**, que é a parte que não é gosto: ele mede texto
 contra caixa, recorte vertical e colisão entre regiões em todas as cartas da página,
@@ -299,16 +313,22 @@ três estados com cartas — frente, verso e elenco — nas três larguras; os o
 estados permaneceram pixel a pixel idênticos. Inspeção manual aprovou as nove
 diferenças.
 
+> **Superado em 31/07/2026:** os dois "agora" acima são de 30/07. O E2E mede hoje
+> **153 cartas** e o bloco `#proposta` **não existe mais** — não foi esvaziado, foi
+> removido junto com o comparador em `673e205`. Números vigentes na §14.
+
 Fechamento: `npm run validate`, **25/25 suítes verdes** em 182,2 s; snapshot,
 golden, RNG, tiers, dados crus e balanceamento intactos. CI e deploy do Pages:
 workflow `30527422214`, verde.
 
-## 12. Proposta ativa no laboratório — NÃO promovida (30/07/2026)
+## 12. Proposta que era ativa no laboratório em 30/07/2026 — depois PROMOVIDA
 
-> **Leia esta seção antes de tocar em carta.** Existe uma hipótese visual COMPLETA
-> viva no bloco `#proposta` de `prototipo-cartas.html`. O jogo continua exibindo o
-> design publicado (Tactical Editorial, seção 11): com a tecla `P` desligada, o
-> laboratório e o jogo são idênticos. Nada abaixo está em `style.css`.
+> **Superado em 31/07/2026 — leia como história, não como instrução.** O aviso
+> original dizia "existe uma hipótese viva no bloco `#proposta`… nada abaixo está em
+> `style.css`". Isso deixou de valer: a proposta **foi promovida** em `673e205`, a
+> escada de seis faixas descrita abaixo é hoje o `tierOf` de
+> `src/ui/game/card-view.mjs`, e `#proposta`, a tecla `P` e o comparador foram
+> removidos. O contrato vigente está na §14.
 
 ### A escada de seis faixas
 
