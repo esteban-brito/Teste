@@ -739,3 +739,39 @@ função, que o próprio `elencos.html` declara serem idênticas às da carta, e
 seis cortes de OVR. A cor de cada faixa não é cobrada — a lista pinta um selo com
 texto por cima e precisa de contraste próprio, então usa um tom da mesma família.
 Verificado que reprova: devolver o rosa à lista quebra a guarda.
+
+## 18. A guarda media a caixa, não o texto — 31/07/2026
+
+O responsável olhou o verso e disse que o bloco de stats **não estava centralizado**
+entre o playstyle e o campeonato. A guarda dizia 0,00 px de diferença. Ele estava
+certo e a guarda estava errada.
+
+**Causa.** `equilíbrio stats/era` media `getBoundingClientRect()` — a caixa. A caixa
+de `.c-st` inclui a faixa invisível acima do número (o valor tem corpo maior que o
+rótulo e a linha o centraliza), enquanto a caixa do playstyle não tem folga
+equivalente. Medindo o TEXTO RENDERIZADO por `Range`, a diferença real era de até
+**3,03 px** — uma assimetria visível atravessando uma guarda verde.
+
+É o mesmo defeito que a §17 corrigiu em outro lugar: **um medidor que não mede o
+que o olho vê é um medidor que aprova o errado.** A guarda passou a comparar, por
+`Range`, o fim do playstyle ao começo do rótulo do primeiro stat, e o fim do último
+trilho ao começo do campeonato.
+
+Resultado nas oito larguras, depois de recalibrar o `padding-top` contra a métrica
+correta: diferença entre **+1,16 e −0,97 px**, e idêntica entre as 135 cartas em
+cada largura. A tolerância da guarda é 1,5 px — o resíduo é artefato de métrica de
+fonte, não de layout.
+
+### Os outros pedidos do mesmo ciclo
+
+- **stats muito juntos**: `gap` de `clamp(2px,1.5cqw,4px)` para
+  `clamp(3.5px,2.8cqw,7.5px)`;
+- **DONK pequeno demais no verso**: `.c-vnick` de `clamp(11px,10cqw,22px)` para
+  `clamp(12px,11cqw,23px)`, e a linha de identidade de `clamp(6.5px,4.3cqw,9.5px)`
+  para `clamp(7.5px,5cqw,11px)`;
+- crescer só o nick reprovou a guarda `hierarquia playstyle/nick`, que exige o
+  playstyle ≥1,14× o nick. **A guarda estava certa** — o playstyle é a espinha do
+  verso. Cresceram os dois: `--t-style` foi para `clamp(15px,13.2cqw,27px)`, e a
+  razão fica entre 1,17 e 1,25 em todas as larguras;
+- **vermelho forte demais**: `Rifler` de `#ff2038` para `#f04a5e`. Contraste 4,5:1
+  segue aprovado nas oito larguras.

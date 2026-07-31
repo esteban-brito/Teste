@@ -6,7 +6,7 @@
 <title>Laboratório de cartas · draft9-0</title>
 <link rel="preload" href="fonts/chakra-petch-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="fonts.css">
-<link rel="stylesheet" href="style.css?v=3f6c869f">
+<link rel="stylesheet" href="style.css?v=03133ed9">
 <style>
 /* Laboratório fino: renderiza o componente e o CSS do jogo. Não há variante de
    design, cópia de dado ou ajuste por jogador neste arquivo. */
@@ -343,15 +343,21 @@ function medirCartas(){
     if(stats.length){
       const primeiro=stats[0].getBoundingClientRect(),ultimo=stats.at(-1).getBoundingClientRect();
       const statsBox=carta.querySelector(".c-vstats").getBoundingClientRect();
-      /* O filete acima do rodapé foi removido; a referência passa a ser o próprio
-         texto do campeonato, que é o que o olho compara. A tolerância cai de
-         "4px ou 2,5% da altura" para 1px porque a simetria agora é estrutural —
-         caixa ancorada entre playstyle e rodapé, conteúdo centrado —, não
-         calibrada por percentual. */
-      const campeonato=carta.querySelector(".c-vrod b").getBoundingClientRect();
-      const acima=primeiro.top-rotulo.getBoundingClientRect().bottom;
-      const abaixo=campeonato.top-ultimo.bottom;
-      maximo("equilíbrio stats/era",Math.abs(acima-abaixo),1);
+      /* Medir CAIXA aqui foi um erro real: a caixa de `.c-st` inclui a faixa
+         invisível acima do número, e a do playstyle não. Pela caixa o verso dava
+         0,00 px de diferença enquanto o olho via até 3 px — foi assim que uma
+         assimetria visível passou por uma guarda verde.
+
+         Agora os dois vãos são medidos entre TEXTOS RENDERIZADOS, por Range,
+         exatamente como o olho compara: do fim do playstyle ao começo do rótulo
+         do primeiro stat, e do fim do último trilho ao começo do campeonato. */
+      const fimDoPlaystyle=caixaDoTexto(rotulo).bottom;
+      const inicioDoPrimeiro=caixaDoTexto(stats[0].querySelector("i")).top;
+      const fimDoUltimo=stats.at(-1).querySelector(".c-trilho").getBoundingClientRect().bottom;
+      const inicioDaEra=caixaDoTexto(carta.querySelector(".c-vrod b")).top;
+      const acima=inicioDoPrimeiro-fimDoPlaystyle;
+      const abaixo=inicioDaEra-fimDoUltimo;
+      maximo("equilíbrio stats/era",Math.abs(acima-abaixo),1.5);
       const ocupacaoHorizontal=Math.min(...stats.map(stat=>{
         const statBox=stat.getBoundingClientRect();
         const trilhoBox=stat.querySelector(".c-trilho").getBoundingClientRect();

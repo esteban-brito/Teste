@@ -8,7 +8,8 @@ o trabalho de normalização acontece no asset antes de ele entrar no jogo.
 
 O contrato executável é:
 
-- campo cru `foto` contém somente um asset-id seguro, normalmente o ID cru da era;
+- campo cru `foto` contém um asset-id que **precisa ser idêntico ao ID cru** do
+  jogador (`id || nome`);
 - arquivo final em `fotos/<asset-id>.webp`;
 - proporção exata `5:7`, WebP, sRGB e fundo opaco;
 - mínimo aceito de `500×700`, alvo recomendado de `1000×1400`;
@@ -18,6 +19,24 @@ O contrato executável é:
 
 `tools/check-card-portraits.js`, executado por `npm run check`, prova formato,
 dimensões, peso, correspondência com os dados e ausência de arquivos órfãos.
+
+## A regra que sustenta o acervo em escala
+
+**Asset-id de jogador é igual ao ID cru. Sem exceção.**
+
+O ID cru já é único por era: `donk` é a Spirit de Budapest 2025 e `donk_kato24` é
+a de Katowice 2024. Amarrando o arquivo a ele, o nome do arquivo herda essa
+unicidade e **colar a foto de uma era noutra deixa de ser possível** — não apenas
+improvável. É o que permite o acervo crescer para dezenas de times e várias eras
+do mesmo nick sem virar loteria. O checador reprova a divergência com o motivo
+escrito.
+
+Para **treinador** o dado vive no elenco, não no treinador: `coachFoto`, ao lado de
+`coachPais`. O motivo é o mesmo — hally treina as duas Spirits, e preso ao elenco
+cada era declara (ou não) o seu retrato, sem herdar o da outra. Como treinador não
+tem ID cru, a regra é que `coachFoto` **comece pelo nome do treinador**; o sufixo
+distingue a era (`hally_kato24`). Isso prende o arquivo à pessoa e impede dar o
+retrato do hally ao sidde.
 
 ## Grade fotográfica
 
@@ -74,18 +93,32 @@ não devem ser inventados silenciosamente.
   transformação aplicada e arquivo final. Esse inventário não deve conter
   cookies, credenciais nem material privado.
 
-## Estado atual
+## Estado atual — 31/07/2026
 
-`donk_kato24` é o primeiro asset ligado ao dado cru e a referência visual
-canônica. A cobertura parcial é explícita em `src/data/catalog.mjs`; jogadores sem
-foto usam o fallback gráfico da mesma carta, sem layout alternativo.
+**A Spirit · IEM Katowice 2024 está completa**: `donk_kato24`, `sh1ro_kato24`,
+`zont1x`, `magixx`, `chopper_kato24` e o treinador `hally_kato24`. Cobertura de
+jogador: **5/85**. A outra Spirit, de Budapest 2025, continua sem nenhum retrato —
+e é assim que se confirma que a fronteira de era funciona.
 
-A próxima unidade recomendada é completar os jogadores da Spirit · IEM Katowice
-2024 com `sh1ro_kato24`, `zont1x`, `magixx` e `chopper_kato24`. Isso fecha o
-quinteto visual e permite julgar padronização entre poses diferentes antes de
-escalar o processo para os demais elencos.
+Jogadores sem foto usam o fallback gráfico da mesma carta, sem layout alternativo.
 
-O checker e o campo `foto` atuais cobrem somente `ATRIBUTOS`. Um retrato para o
-treinador `hally` exige uma extensão separada e testada do contrato de times,
-catálogo, projeção pública e verificador; até lá, não adicionar um asset órfão.
-O roteiro geral está em `docs/retomada-2026-07-31.md`.
+O contrato do treinador **existe** desde este lote: `coachFoto` no elenco,
+projetado por `src/public/evaluation-api.mjs` e cobrado pelo checador. A observação
+antiga de que "um retrato para hally exige extensão separada" está cumprida.
+
+### Registro do lote
+
+Origem: cinco arquivos AVIF 1200×800 (3:2) fornecidos pelo responsável, capturas de
+transmissão do IEM Katowice 2024. O maior recorte 5:7 possível numa fonte dessas é
+**570×798**, então não houve liberdade vertical — só horizontal. Cada recorte foi
+centrado no rosto e posicionado para deixar a marca d'água do HLTV (x<180, y>700)
+fora do quadro. Saída em 500×700, o mesmo formato do `donk_kato24`.
+
+Limitações honestas destas fontes, para quem for melhorá-las depois:
+
+- `hally`: o topo da cabeça fica a ~2% da altura, contra os 5–10% da grade. Como a
+  placa do treinador ocupa 44%, o enquadramento funciona nessa categoria — mas uma
+  fonte com mais ar acima seria melhor;
+- `chopper`: a origem é um close, então o rosto ocupa mais quadro que nos demais e
+  o queixo cai por volta de 63%, fora da faixa de 47–56%. Não há como abrir mais:
+  570×798 já é o campo de visão máximo dessa imagem.

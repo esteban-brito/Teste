@@ -59,7 +59,12 @@ export function buildEvaluationState({atributos=ATRIBUTOS,timesDef=TIMES_DEF,
       jogadores:t.jogadores.map(id=>{const j=pool[id];return {id:`p${pid++}`,nick:j.nick,pais:j.pais,foto:j.foto||"",
         time:t.nome,camp:t.camp,coloc:t.colocacao,tipo:"player",ovr:j.ovr,prim:j.primario,sec:j.secundario,
         secForte:!!j.secForte,estrela:j.estrela,_eng:j};}),
+      // `coachFoto` vive no ELENCO, não no treinador, pelo mesmo motivo que
+      // `coachPais`: o mesmo nome treina eras diferentes — hally aparece na Spirit
+      // de Katowice 2024 e na de Budapest 2025. Preso ao elenco, cada era declara
+      // (ou não) o seu retrato, e nenhuma herda o da outra por acidente.
       treinador:t.coach?{id:`c${i}`,nick:t.coach,pais:t.coachPais||paisTreinador[t.coach]||"—",
+        foto:t.coachFoto||"",
         // A era pertence ao elenco e é projetada nas duas categorias de carta.
         // Isso padroniza o rodapé sem duplicar ou transformar o dado cru `camp`.
         time:t.nome,camp:t.camp,coloc:t.colocacao,tipo:"coach",ovr:ovrTreinador(somaOVR,t.colocacao),carac,
