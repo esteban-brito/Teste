@@ -474,7 +474,13 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   -webkit-mask-composite:xor;mask-composite:exclude}
 .coachcard .c-fio,.coachcard .c-vfio{background:repeating-linear-gradient(90deg,
   color-mix(in srgb,var(--r) 86%,transparent) 0 3.4cqw,transparent 3.4cqw 6.4cqw)}
+/* O treinador não tem função secundária, então a faixa de contexto fica com um
+   item só. Ele precisa ocupar a linha inteira: sem isto o time permanece na
+   primeira das duas colunas e o `justify-self:end` da grade comum o ancora no
+   fim DELA — o nome parava a ~42% da largura, no meio da carta, com o medidor
+   verde porque nenhuma guarda de espelho olhava o eixo horizontal. */
 .coachcard .c-role2{display:none}
+.coachcard .c-team{grid-column:1/-1}
 .coachcard .c-ovr{top:auto;bottom:5.5%}
 .coachcard .c-ovr small{color:color-mix(in srgb,var(--r-ink) 82%,#fff)}
 .coachcard .c-vestilo b{font-size:calc(var(--t-style)*var(--carac-esc,1));color:var(--r-ink)}

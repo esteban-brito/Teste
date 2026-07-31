@@ -321,6 +321,25 @@ function medirCartas(){
       const faixa=carta.querySelector(".c-vfaixa").getBoundingClientRect();
       const refFaixa=ref.querySelector(".c-vfaixa").getBoundingClientRect();
       maximo("verso padronizado · altura da faixa",Math.abs(faixa.height-refFaixa.height),.35,.05);
+
+      /* O espelho do treinador é VERTICAL: o eixo horizontal precisa ser idêntico
+         ao do jogador. Sem esta bateria o medidor mediu só o eixo y e ficou verde
+         enquanto o time parava no meio da carta — a faixa declara duas colunas e,
+         com a função secundária oculta, o time caía sozinho na primeira. Cada
+         campo declara a borda que é seu contrato: quem nasce em `--pad` responde
+         pela esquerda, quem é ancorado por `justify-self:end` responde pela
+         direita, e a faixa inteira responde pelas duas. */
+      for(const [seletor,campo,borda] of [[".c-nick","nick","esquerda"],
+        [".c-func","característica","esquerda"],[".c-meta","faixa de contexto","ambas"],
+        [".c-flag","bandeira","direita"],[".c-team","time","direita"]]){
+        const atual=carta.querySelector(seletor),esperado=ref.querySelector(seletor);
+        if(!visivel(atual)||!visivel(esperado))continue;
+        const a=atual.getBoundingClientRect(),e=esperado.getBoundingClientRect();
+        if(borda!=="direita")maximo(`espelho horizontal · ${campo} (esquerda)`,
+          Math.abs((a.left-caixa.left)-(e.left-refCaixa.left)),.35,.05);
+        if(borda!=="esquerda")maximo(`espelho horizontal · ${campo} (direita)`,
+          Math.abs((caixa.right-a.right)-(refCaixa.right-e.right)),.35,.05);
+      }
       if(!getComputedStyle(carta,"::after").backgroundImage.includes("repeating-linear-gradient"))
         registrarRitmo("moldura segmentada do treinador",0,1,"exato","estado");
       if(![carta.querySelector(".c-flag"),carta.querySelector(".c-meta"),

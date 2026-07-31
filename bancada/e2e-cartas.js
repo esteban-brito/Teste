@@ -242,10 +242,19 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       descricao.style.top="55%";
       const verso=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
       descricao.style.top=descAntes;
+      /* Reencena o defeito real de 31/07/2026: com a função secundária oculta, o
+         time voltava a ocupar só a primeira das duas colunas e parava no meio da
+         carta. As guardas de espelho eram todas verticais e não viam nada. */
+      const time=coach.querySelector(".c-team"),colunaAntes=time.style.gridColumn;
+      time.style.gridColumn="1";
+      const horizontal=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
+      time.style.gridColumn=colunaAntes;
       return frente.includes("espelho frontal · identidade")&&
-        verso.includes("verso padronizado · início do corpo");
+        verso.includes("verso padronizado · início do corpo")&&
+        horizontal.includes("espelho horizontal · time (direita)");
     });
-    check(detectaEspelhoCoach,"medidor acusa coach fora do espelho frontal ou da grade do verso");
+    check(detectaEspelhoCoach,
+      "medidor acusa coach fora do espelho frontal, da grade do verso ou do eixo horizontal");
     check((await page.evaluate(()=>window.__LAB_MEDIR())).falhas.length===0&&
       (await page.evaluate(()=>window.__LAB_MEDIR())).ritmo.length===0,
     "medição volta ao verde depois das provas sintéticas");
