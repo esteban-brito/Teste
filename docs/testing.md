@@ -55,6 +55,12 @@ criar um falso estouro somente no Linux. O laboratório e o jogo fazem preload d
 subset latino usado pelos nicks; uma falha futura informa a fonte antes de
 atribuir o problema ao layout.
 
+Mesmo com a face correta carregada, FreeType/Linux mediu `olofmeister` 1,25 px
+mais largo que DirectWrite/Windows no limite de 120 px. A densidade compacta usa
+tracking universal de `-0.025em` — não ajuste individual — para absorver essa
+diferença sem reduzir o corpo. A comparação dessa correção deve alterar somente
+nicks frontais compactos; verso e larguras acima de 150 px ficam idênticos.
+
 O retrato de referência é fotografado com o OVR escondido para amostrar o pixel
 real mais claro da zona superior. Casos sintéticos provam que o medidor acusa
 texto impossível, colisão, reticência deliberada, conteúdo oculto, stat ausente e
