@@ -76,6 +76,21 @@ ao campo cru `foto`: ID seguro, arquivo WebP existente, proporção exata 5:7,
 resolução mínima, limite de peso e ausência de órfãos. O protocolo completo de
 entrada e normalização está em `docs/card-portraits.md`.
 
+`tools/check-doc-links.js`, também em `npm run check`, prova que todo caminho de
+arquivo citado na documentação existe de verdade. Ele nasceu de um caso real: em
+31/07/2026 a documentação ainda mandava ler `src/ui/shared/role-emblems.mjs`,
+deletado dias antes, e nada percebeu porque nada verificava. Cobre os 52 markdown
+versionados, em crase e em link markdown, e ignora deliberadamente caminhos dentro
+de código — ali o próprio import já falha.
+
+Duas saídas são declaradas, não descobertas. `EXCECOES` guarda placeholders de
+sintaxe (`caminho/do/time.txt`); `REFERENCIAS_DECLARADAS` guarda arquivos citados
+de propósito sem existir — um deletado que o histórico precisa nomear e uma guarda
+futura que um handoff propõe. Cada entrada exige motivo escrito, e o checador
+**reprova quando a exceção vira arquivo real**, para que a permissão não sobreviva
+à necessidade. O autoteste injeta corpus sintético com referência morta e exige que
+o medidor acuse: sem isso ele poderia ficar verde para sempre sem ninguém notar.
+
 Os servidores efêmeros dos E2E devem usar faixas aceitas pelo Chromium. O fluxo
 principal usa 7000–7299; a faixa antiga 5900–6199 incluía a porta 6000, que o
 navegador bloqueia com `ERR_UNSAFE_PORT` antes de qualquer teste de produto.
