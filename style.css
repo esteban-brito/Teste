@@ -141,19 +141,16 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   min-height:148px;aspect-ratio:5/7;background:#080b11;container-type:inline-size;
   isolation:isolate;perspective:800px;-webkit-perspective:800px;
   transition:transform var(--motion-card-fast) var(--ease-card);
-  --pad:9%;--passo:5.2%;--r:var(--r-rifler);--r-ink:var(--r-rifler);--t1:33cqw;
-  box-shadow:inset 0 0 0 var(--aro) color-mix(in srgb,var(--m) var(--aro-a),transparent)}
+  --pad:9%;--passo:5.2%;--r:var(--r-rifler);--r-ink:var(--r-rifler);--t1:33cqw}
 /* O hover movimenta a superfície, mas não altera raridade nem projeta luz. */
 /* Em toque, `:hover` pode ficar preso depois do tap. O realce só existe onde há
    ponteiro fino com hover real; teclado continua usando `:focus-visible`. */
 @media (hover:hover) and (pointer:fine){
-  .card:hover,.coachcard:hover{
-    box-shadow:inset 0 0 0 var(--aro) color-mix(in srgb,var(--m) var(--aro-a),transparent);
-    transform:translateY(-2px)}
+  .card:hover,.coachcard:hover{transform:translateY(-2px)}
 }
 
 /* A característica colore o treinador; ele não disputa a raridade dos jogadores. */
-.coachcard{--m:#93a0b2; --m-ink:#93a0b2; --aro:1.5px; --aro-a:54%;
+.coachcard{--m:#93a0b2; --m-ink:#93a0b2;
   --r:var(--cc-main,var(--c-gestor)); --r-ink:var(--cc-main,var(--c-gestor))}
 .coach-gestor{--cc-main:var(--c-gestor)}
 .coach-estrategista{--cc-main:var(--c-estrategista)}
@@ -290,30 +287,43 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .card .cfaces{--t2:clamp(13px,10.5cqw,27px);--t-style:clamp(14px,12.5cqw,26px);
   --t3:6.4cqw;--t4:4.8cqw}
 
-/* Seis faixas, sem classes auxiliares do laboratório. */
-.card.tier-1{--m:#c9d2dd;--m-ink:#e8eef6;--fio-cor:#aab4c2;--fio-a:30%;
-  --wash-cor:#c9d2dd;--wash:7%;--aro:1px;--aro-a:26%}
-.card.tier-2{--m:#1f7a4d;--m-ink:#3ec07e;--fio-cor:#3ec07e;--fio-a:55%;
-  --wash-cor:#3ec07e;--wash:11%;--aro:1.5px;--aro-a:60%}
-.card.tier-3{--m:#d4a017;--m-ink:#e8c34a;--fio-cor:#e8c34a;--fio-a:70%;
-  --wash-cor:#e8c34a;--wash:17%;--aro:2px;--aro-a:80%}
+/* Seis faixas com UMA mecânica de moldura: `--aro` dá a espessura, `--aro-pintura`
+   dá o material. As três primeiras usam cor chapada; as três últimas, cromado.
+
+   O anel vive no `::after` por necessidade, não por estilo. `box-shadow:inset` é
+   pintado ABAIXO dos filhos, e `.cfaces` cobre `inset:0` de forma opaca — então o
+   aro das faixas 1–3 era invisível desde que a carta ganhou faces. Na prática 14,
+   16 e 19 chegavam ao jogador como a mesma carta, separadas só por um tint de
+   7–17% e pelo rótulo OVERALL de 7px. A escada agora existe de fato. */
+.card.tier-1{--m:#c9d2dd;--m-ink:#e8eef6;--fio-cor:#aab4c2;--fio-a:42%;
+  --wash-cor:#c9d2dd;--wash:8%;--aro:1px;
+  --aro-pintura:color-mix(in srgb,#aab4c2 44%,transparent)}
+.card.tier-2{--m:#1f7a4d;--m-ink:#3ec07e;--fio-cor:#3ec07e;--fio-a:72%;
+  --wash-cor:#3ec07e;--wash:15%;--aro:1.5px;
+  --aro-pintura:color-mix(in srgb,#3ec07e 82%,transparent)}
+/* Cobre, não âmbar: a faixa 4 é ouro cromado e as duas colidiam a olho nu quando
+   ambas eram amarelas. O salto 19 → 20 é o momento em que a carta vira metálica,
+   e precisa ser óbvio. */
+.card.tier-3{--m:#a86a2a;--m-ink:#e0a05a;--fio-cor:#d98f45;--fio-a:88%;
+  --wash-cor:#c87b32;--wash:22%;--aro:2px;
+  --aro-pintura:color-mix(in srgb,#c87b32 96%,transparent)}
 .card.tier-4{--m:#ffbe00;--m-ink:#ffd24a;--fio-cor:#ffd24a;--fio-a:86%;
-  --wash-cor:#ffbe00;--wash:26%;--aro:0;--aro-a:0%}
+  --wash-cor:#ffbe00;--wash:26%;--aro:clamp(1.5px,1.15cqw,2.5px);
+  --aro-pintura:linear-gradient(152deg,#fff4cd 0%,#ffd05a 16%,#a2700f 38%,
+    #ffe9a3 56%,#e0a516 74%,#7d5606 88%,#ffdd7a 100%)}
 .card.tier-5{--m:#c4162c;--m-ink:#ff7a86;--fio-cor:#ff6b7a;--fio-a:100%;
-  --wash-cor:#ff3d52;--wash:34%;--aro:0;--aro-a:0%}
+  --wash-cor:#ff3d52;--wash:34%;--aro:clamp(1.5px,1.15cqw,2.5px);
+  --aro-pintura:linear-gradient(152deg,#ff9aa2 0%,#e0233c 16%,#5c0812 38%,
+    #ff7f8b 56%,#c4162c 74%,#3d050c 88%,#ff6273 100%)}
 .card.tier-6{--m:#cfd8ff;--m-ink:#b8c6ff;--fio-cor:#e6ecff;--fio-a:100%;
-  --wash-cor:#9fb4ff;--wash:30%;--aro:0;--aro-a:0%}
-.card.tier-4::after,.card.tier-5::after,.card.tier-6::after{
+  --wash-cor:#9fb4ff;--wash:30%;--aro:clamp(1.5px,1.15cqw,2.5px);
+  --aro-pintura:linear-gradient(152deg,#ff3a8e,#ff8a5a,#f7ff7a,#5cff9d,
+    #40d6ff,#7878ff,#c66eff,#ff3a8e)}
+.card::after{
   content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-  z-index:7;display:block;padding:clamp(1.5px,1.15cqw,2.5px);
+  z-index:7;display:block;padding:var(--aro,1px);background:var(--aro-pintura,transparent);
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
   -webkit-mask-composite:xor;mask-composite:exclude}
-.card.tier-4::after{background:linear-gradient(152deg,#fff4cd 0%,#ffd05a 16%,#a2700f 38%,
-  #ffe9a3 56%,#e0a516 74%,#7d5606 88%,#ffdd7a 100%)}
-.card.tier-5::after{background:linear-gradient(152deg,#ff9aa2 0%,#e0233c 16%,#5c0812 38%,
-  #ff7f8b 56%,#c4162c 74%,#3d050c 88%,#ff6273 100%)}
-.card.tier-6::after{background:linear-gradient(152deg,#ff3a8e,#ff8a5a,#f7ff7a,#5cff9d,
-  #40d6ff,#7878ff,#c66eff,#ff3a8e)}
 .card.tier-6 .c-fio,.card.tier-6 .c-vfio{
   background:linear-gradient(90deg,transparent,#ff3a8e 16%,#f7ff7a 38%,
     #5cff9d 54%,#40d6ff 72%,#c66eff 88%,transparent)}
@@ -381,7 +391,8 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .card .c-vrod{bottom:6%;min-height:clamp(26px,16cqw,36px);justify-content:flex-end}
 
 /* Treinador continua sendo outra categoria, mas usa o mesmo sistema de eixos. */
-.coachcard{--wash-cor:var(--r);--wash:12%;--aro:0;--aro-a:0%}
+/* O treinador tem moldura própria, segmentada a 45° — não entra na escada. */
+.coachcard{--wash-cor:var(--r);--wash:12%}
 .coachcard .cfaces{--placa-n:44;--faixa-n:26;
   --placa:calc(var(--placa-n)*1%);--faixa:calc(var(--faixa-n)*1%);
   --t2:calc(16cqw*var(--nick-esc,1));--t3:7.4cqw;
