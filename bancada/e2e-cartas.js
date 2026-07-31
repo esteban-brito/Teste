@@ -207,7 +207,9 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       const audit=await page.evaluate(()=>window.__LAB_MEDIR());
       check(audit.falhas.length===0&&audit.ritmo.length===0,
         `${largura}px · proposta sem falha geométrica ou editorial`+
-        (audit.falhas.length?` (geometria: ${audit.falhas[0].campo})`:"")+
+        (audit.falhas.length?` (geometria: ${audit.falhas[0].campo} em `+
+          `${audit.falhas[0].nick}, falta ${audit.falhas[0].falta}px, fonte `+
+          `${audit.falhas[0].fonte})`:"")+
         (audit.ritmo.length?` (grade: ${audit.ritmo[0].campo})`:""));
 
       const standards=await page.evaluate(()=>{

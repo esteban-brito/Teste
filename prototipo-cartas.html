@@ -343,6 +343,15 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
 .proposta .card.p-rank .cback .c-vestilo{top:26%}
 .proposta .card.p-rank .cback .c-vestilo b{
   font-size:clamp(10px,calc(13cqw*var(--carac-esc,1)),26px)}
+@container (max-width:150px){
+  /* A 120 px, Spacetaker tinha só 3,27 px de sobra com Chakra Petch e podia
+     cortar no rasterizador Linux. Playstyle e nick encolhem como um par: a
+     razão fica perto de 1,2 e sobra margem real entre plataformas. */
+  .proposta .card.p-rank .cback .c-vnick{
+    font-size:clamp(10px,calc(var(--t2)*.55),20px)}
+  .proposta .card.p-rank .cback .c-vestilo b{
+    font-size:clamp(10px,calc(12cqw*var(--carac-esc,1)),26px)}
+}
 
 /* O campeonato pode ocupar uma ou duas linhas. Sem uma reserva constante, o
    filete subia e descia conforme o evento e mudava o centro optico dos stats.
