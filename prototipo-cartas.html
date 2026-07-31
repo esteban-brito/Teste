@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Laboratório de cartas · draft9-0</title>
+<link rel="preload" href="fonts/chakra-petch-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="fonts.css">
 <link rel="stylesheet" href="style.css">
 <style>
@@ -367,6 +368,9 @@ document.addEventListener("keydown",evento=>{
   }
 });
 
+/* `ready` também resolve quando uma fonte falha. A carga explícita impede que a
+   primeira medição use silenciosamente uma fonte de fallback mais larga. */
+await document.fonts.load("700 16px 'Chakra Petch'","DONK OLOFMEISTER");
 await document.fonts.ready;
 sincronizar();
 </script>

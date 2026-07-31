@@ -48,6 +48,13 @@ O Donk é tanto a referência isolada quanto o molde visual usado pela escada de
 raridade e pela matriz de funções; os casos reais continuam cobrindo os 85
 jogadores sem alterar essa implementação.
 
+Antes da geometria, o E2E carrega explicitamente `Chakra Petch 700` e exige uma
+face disponível em `document.fonts`. `document.fonts.ready` sozinho não basta:
+ele também resolve quando a fonte falha, caso em que a métrica do fallback pode
+criar um falso estouro somente no Linux. O laboratório e o jogo fazem preload do
+subset latino usado pelos nicks; uma falha futura informa a fonte antes de
+atribuir o problema ao layout.
+
 O retrato de referência é fotografado com o OVR escondido para amostrar o pixel
 real mais claro da zona superior. Casos sintéticos provam que o medidor acusa
 texto impossível, colisão, reticência deliberada, conteúdo oculto, stat ausente e

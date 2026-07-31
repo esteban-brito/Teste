@@ -46,7 +46,16 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     page.on("console",message=>{if(message.type()==="error")errors.push(message.text());});
     await page.goto(`http://127.0.0.1:${port}/prototipo-cartas.html`,{waitUntil:"networkidle"});
     await page.waitForFunction(()=>typeof window.__LAB_MEDIR==="function",{timeout:15000});
-    await page.evaluate(()=>document.fonts.ready);
+    const fontState=await page.evaluate(async()=>{
+      const descriptor="700 16px 'Chakra Petch'",sample="DONK OLOFMEISTER";
+      const faces=await document.fonts.load(descriptor,sample);
+      await document.fonts.ready;
+      return {faces:faces.length,ready:document.fonts.check(descriptor,sample),status:document.fonts.status};
+    });
+    check(fontState.ready&&fontState.faces>0&&fontState.status==="loaded",
+      `fonte canônica carregada antes da geometria (${fontState.faces} face(s) · ${fontState.status})`);
+    if(!fontState.ready||fontState.faces===0)
+      throw new Error("Chakra Petch 700 indisponível; geometria com fallback não é comparável");
 
     const cartas=await page.locator(".card,.coachcard").count();
     check(cartas===CARTAS_ESPERADAS,
@@ -119,10 +128,11 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
             return shadow!=="none"&&!/\binset\s*$/.test(shadow);}).length};
       });
       const esperado=Number(largura)<=150?"28":Number(largura)<=176?"26":"24";
+      const primeiraFalha=resultado.audit.falhas[0],primeiroRitmo=resultado.audit.ritmo[0];
       check(resultado.audit.falhas.length===0&&resultado.audit.ritmo.length===0,
         `${largura}px · geometria e padrão aprovados em ${resultado.audit.auditadas} jogadores`+
-        (resultado.audit.falhas.length?` — ${resultado.audit.falhas[0].campo}`:"")+
-        (resultado.audit.ritmo.length?` — ${resultado.audit.ritmo[0].campo}`:""));
+        (primeiraFalha?` — ${primeiraFalha.nick}: ${primeiraFalha.campo} (${primeiraFalha.falta}px)`:"")+
+        (primeiroRitmo?` — ${primeiroRitmo.nick}: ${primeiroRitmo.campo} (${primeiroRitmo.atual}${primeiroRitmo.unidade})`:""));
       check(resultado.placa===esperado&&resultado.allVisible&&resultado.fourStats,
         `${largura}px · placa ${esperado}%, bandeira/roles/time visíveis e quatro stats`);
       check(Object.values(resultado.ranges).every(range=>range<=.05)&&resultado.individualScale===0,

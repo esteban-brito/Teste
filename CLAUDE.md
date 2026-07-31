@@ -82,6 +82,9 @@ Regras não negociáveis:
 15. O E2E exige, nas oito larguras, rodapé em 100% das cartas, tamanhos mínimos,
     contraste calculado de pelo menos 4,5:1 e ausência física dos nós removidos.
     Não substitua essas provas por uma captura bonita.
+16. A geometria só é comparável depois de `Chakra Petch 700` carregar de fato.
+    `document.fonts.ready` também resolve em falha; preserve o preload, a carga
+    explícita e a asserção de `document.fonts.check` do laboratório/E2E.
 
 ## Ritual para qualquer mudança visual de carta
 
