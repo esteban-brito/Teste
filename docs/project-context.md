@@ -60,10 +60,11 @@ histórico abaixo):
   **seção 12** de `docs/cartas-design-2026-07-28.md`;
 - o responsável escolheu o enquadramento A (`100% auto`, `50% 12%`) no bloco `0`
   do laboratório. O A refinado preserva mais retrato que o jogo com placas de
-  30%/27%, compacta e rebaixa a identidade frontal, separa nick e playstyle no
-  verso e sobe a era para um eixo inferior de 6%, estável em campeonatos de uma
-  ou duas linhas. O A de `369c480` permanece ao lado como referência; falta a
-  conferência no Pages antes dos cinco retratos restantes;
+  24%/22%, sem zoom (`100% auto`, `50% 12%`): placa, diagonal e identidade frontal
+  encolhem e descem como uma grade. No verso, nick e playstyle ficam separados e
+  a era sobe para um eixo inferior de 6%, estável em campeonatos de uma ou duas
+  linhas. O A de `369c480` permanece ao lado como referência; falta a conferência
+  no Pages antes dos cinco retratos restantes;
 - validação integral desse marco: `npm run validate`, **25/25 suítes verdes** em
   182,2 s; snapshot, golden, consumo de RNG e balanceamento permaneceram intactos;
 - validação integral do refinamento editorial do A: `npm run validate`, **25/25

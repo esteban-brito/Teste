@@ -90,7 +90,7 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       {id:"a-anterior",size:"100% auto",x:"50%",y:"12%"},
       {id:"b",size:"116% auto",x:"70%",y:"28%"},
       {id:"c",size:"132% auto",x:"75%",y:"30%"},
-    ]),"laboratório compara A refinado, A anterior e os dois enquadramentos históricos");
+    ]),"A refinado e A anterior mantêm o mesmo recorte sem zoom; B/C seguem históricos");
     check(await page.locator('#gRetratos .card[data-enquadramento="a-anterior"]'+
       '[data-layout-reference="true"]').count()===1,
     "composição anterior está marcada como referência, não como candidata");
@@ -166,8 +166,8 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     await page.check("#cProposta");
     const composicoes=[];
     for(const esperado of [
-      {largura:"250",placa:.30,contexto:.035,funcao:.072,nick:.132},
-      {largura:"130",placa:.27,contexto:null,funcao:.042,nick:.105},
+      {largura:"250",placa:.24,contexto:.033,funcao:.058,nick:.101},
+      {largura:"130",placa:.22,contexto:null,funcao:.035,nick:.085},
     ]){
       const {largura}=esperado;
       await page.selectOption("#cLargura",largura);await page.waitForTimeout(80);
@@ -197,14 +197,14 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
           b1:fs.getPropertyValue("--b1").trim(),hierarquia:px(".c-vestilo b")/px(".c-vnick"),
           reserva:parseFloat(getComputedStyle(card.querySelector(".c-vrod")).minHeight),
           rodape:parseFloat(getComputedStyle(card.querySelector(".c-vrod")).bottom)/card.offsetHeight}];})));
-    check(comparacaoA.a?.placa==="30"&&comparacaoA.a?.b1==="3.5%"&&
+    check(comparacaoA.a?.placa==="24"&&comparacaoA.a?.b1==="3.3%"&&
       comparacaoA.a?.hierarquia>=1.14&&comparacaoA.a?.reserva>=26&&
       Math.abs(comparacaoA.a?.rodape-.06)<.001&&
       comparacaoA["a-anterior"]?.placa==="32"&&comparacaoA["a-anterior"]?.b1==="2.8%"&&
       comparacaoA["a-anterior"]?.hierarquia<1.05&&comparacaoA["a-anterior"]?.reserva===0&&
       comparacaoA["a-anterior"]?.rodape<.03,
     "comparador isola foto, grade frontal e rodapé elevado do A refinado"+
-      (comparacaoA.a?.placa==="30"?"":` — ${JSON.stringify(comparacaoA)}`));
+      (comparacaoA.a?.placa==="24"?"":` — ${JSON.stringify(comparacaoA)}`));
     for(const largura of LARGURAS){
       await page.selectOption("#cLargura",largura);await page.waitForTimeout(80);
       const audit=await page.evaluate(()=>window.__LAB_MEDIR());
