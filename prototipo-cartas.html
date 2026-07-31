@@ -114,8 +114,8 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
 
    COMO O A/B FUNCIONA. A faixa e funcao do OVR, entao ela nao pode nascer no
    CSS. O laboratorio marca cada carta de jogador com `p-rank` mais `p-tN` pelo
-   OVR real, e este bloco pinta. Assim a hipotese cobre as 152 cartas da pagina
-   — inclusive os 17 elencos reais — e nao uma vitrine a parte.
+   OVR real, e este bloco pinta. Assim a hipotese cobre as 152 cartas-base da
+   pagina — inclusive os 17 elencos reais — e as 3 candidatas de enquadramento.
 
    AS SEIS FAIXAS
      p-t1  <=14   branca    5 jogadores   piso, sem moldura especial
@@ -224,8 +224,8 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
     var(--foto,none),
     linear-gradient(158deg,
       color-mix(in srgb,var(--wash-cor,var(--r)) var(--wash,12%),#101722),#080d14 54%,#05080d);
-  background-size:auto,auto,cover,auto;
-  background-position:50% 0,50% 0,50% 12%,50% 0}
+  background-size:auto,auto,var(--foto-size,cover),auto;
+  background-position:50% 0,50% 0,var(--foto-x,50%) var(--foto-y,12%),50% 0}
 /* A PLACA TAMBEM SAI DE `--wash-cor`, e nao de `--m`. Ela tinha ficado de fora
    da calibragem e invertia duas vezes: a placa da carta comum era 18% MAIS CLARA
    que a da verde, e a do sangue 57% mais escura que a do ouro. Com a cor
@@ -340,7 +340,7 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
    pseudo-elemento ou excecao de densidade. Role principal, role de combate e
    texto existente carregam a identidade sem criar outra silhueta. */
 /* Nao existe `cr-igl`: a funcao de COMBATE de um IGL nunca e IGL. A regra
-   existia por simetria da tabela e nao casava com nenhuma carta das 152. */
+   existia por simetria da tabela e nao casava com nenhuma das 155 cartas. */
 .proposta .card.cr-awper  {--cr:#b070ff}
 .proposta .card.cr-entry  {--cr:#ff7d4d}
 .proposta .card.cr-rifler {--cr:#ff5fd0}
@@ -515,6 +515,13 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
       todas as cartas desta página e reprova por número, não por gosto.</div>
   </div>
 
+  <h2 class="lab">0 · enquadramento do retrato</h2>
+  <p class="lab">A mesma foto e a mesma carta em três recortes reproduzíveis. Ligue
+  <b>Proposta futura</b> no topo para comparar. A preserva contexto, B equilibra rosto e
+  camisa, C prioriza expressão. As três entram nas mesmas guardas de geometria e contraste;
+  nenhuma foi promovida ao jogo.</p>
+  <div class="lab-grade" id="gRetratos"></div>
+
   <h2 class="lab">1 · a escada de raridade</h2>
   <p class="lab">Mesmo jogador, <b>só o OVR muda</b> — é síntese de vista, não dado do motor,
   justamente para isolar a variável. Ligue <b>escala de cinza</b>: o design publicado preserva
@@ -575,7 +582,8 @@ const TIERS=[["comum · ≤14 / ≤16",14],["15–17 / ≤16",16],["18–19 / 19
 
 /* TAXONOMIA DA PROPOSTA. A faixa é função do OVR, então ela não pode nascer no
    CSS: o laboratório marca cada carta e o bloco `#proposta` pinta. Assim o A/B
-   cobre as 152 cartas da página, não uma vitrine à parte.
+   cobre as 152 cartas-base e as 3 candidatas de enquadramento, não uma vitrine
+   estilizada fora das guardas.
    São duas classes por carta: `p-rank` é o marcador estável que os seletores de
    superfície usam, e `p-tN` carrega a faixa. Antes o CSS selecionava por
    `[class*="p-t"]`, que é mais lento e casa por acaso com qualquer classe que
@@ -597,6 +605,16 @@ const FOTOS=new Set(["donk_kato24"]);
 const idCru=carta=>carta.tipo==="coach"?carta.nick:(carta._eng&&carta._eng.id)||carta.nick;
 const fotoDe=carta=>FOTOS.has(idCru(carta))
   ?`--foto:url('fotos/${encodeURIComponent(idCru(carta))}.webp')`:"";
+const ENQUADRAMENTOS=[
+  {id:"a",rot:"A · contexto integral",size:"100% auto",x:"50%",y:"12%",
+    nota:"mais camisa · rosto menor"},
+  {id:"b",rot:"B · retrato equilibrado",size:"116% auto",x:"70%",y:"28%",
+    nota:"recomendado · rosto + identidade"},
+  {id:"c",rot:"C · close",size:"132% auto",x:"75%",y:"30%",
+    nota:"expressão maior · menos camisa"},
+];
+const estiloEnquadramento=frame=>
+  `--foto-size:${frame.size};--foto-x:${frame.x};--foto-y:${frame.y}`;
 
 const item=(html,rot)=>`<div class="lab-item">${html}<div class="lab-rot">${rot}</div></div>`;
 /* O IGL nunca é só IGL: os 17 têm função de combate real no motor (karrigan →
@@ -604,14 +622,25 @@ const item=(html,rot)=>`<div class="lab-item">${html}<div class="lab-rot">${rot}
    só aparece na linha de contexto, que some na densidade compacta. O laboratório
    a expõe como atributo e classe para o CSS poder promovê-la. Na promoção ao
    jogo isto nasce em `card-view.mjs`. */
-const cartaHtml=carta=>{
+const cartaHtml=(carta,estiloExtra="")=>{
   const combate=carta.tipo!=="coach"&&carta.prim==="IGL"?(carta.sec||""):"";
   const cls=cardClass(carta)+(combate?` cr-${slugFuncao(combate)}`:"");
   const foto=fotoDe(carta);
+  const estilo=[foto,estiloExtra].filter(Boolean).join(";");
   return `<div class="${cls}" data-nick="${esc(carta.nick)}" data-ovr="${carta.ovr}"`+
-    (combate?` data-cr="${esc(combate)}"`:"")+(foto?` style="${foto}"`:"")+
+    (combate?` data-cr="${esc(combate)}"`:"")+(estilo?` style="${estilo}"`:"")+
     ` data-face="front" role="button" tabindex="0">${cardHTML(carta)}</div>`;
 };
+
+/* ── 0 · enquadramento: uma variável por vez sobre o mesmo ativo real ─────── */
+const donkKato=jogadores.find(carta=>idCru(carta)==="donk_kato24");
+if(!donkKato)throw new Error("retrato-base donk_kato24 não encontrado");
+$("gRetratos").innerHTML=ENQUADRAMENTOS.map(frame=>
+  item(cartaHtml(donkKato,estiloEnquadramento(frame)),
+    `${frame.rot}<br><em>${frame.size} · ${frame.x} ${frame.y}</em><br>${frame.nota}`)).join("");
+$("gRetratos").querySelectorAll(".card").forEach((card,index)=>{
+  card.dataset.enquadramento=ENQUADRAMENTOS[index].id;
+});
 
 /* ── 1 · escada de raridade: mesmo jogador, só o OVR muda ─────────────────── */
 const base=porNick("device")||jogadores[0];

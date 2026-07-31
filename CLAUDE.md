@@ -151,3 +151,6 @@ O que uma sessão nova precisa saber antes de mexer:
 - **a guarda de contraste agora amostra pixel real** nas cartas com `--foto`,
   porque o modelo de fundo fixo deixa de valer quando há retrato. Ela esconde o
   texto antes de medir e tem duas provas sintéticas de que consegue reprovar.
+- **o enquadramento ainda é decisão aberta do responsável.** O bloco `0` do
+  laboratório mostra A/B/C com o mesmo donk; B (`116% auto`, `70% 28%`) é a
+  recomendação medida. Não completar os outros cinco retratos antes da escolha.

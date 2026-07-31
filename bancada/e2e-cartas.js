@@ -13,7 +13,7 @@
    nome permanentemente cortado é estável, logo invisível para ele. Faltava uma
    guarda que medisse GEOMETRIA.
 
-   COMO ELA MEDE. O laboratório (`prototipo-cartas.html`) renderiza 152 cartas
+   COMO ELA MEDE. O laboratório (`prototipo-cartas.html`) renderiza 155 cartas
    com os módulos e o CSS reais e expõe `window.__LAB_MEDIR`. Esta suíte chama a
    MESMA função no estado publicado e na proposta A/B, nas cinco larguras reais e
    nos três pontos da costura compacta. Mede largura, recorte vertical e colisão
@@ -36,8 +36,8 @@ const {okMark,chromiumLaunchOptions}=require("./common");
    ainda quebrar justamente na troca entre os dois layouts. */
 const LARGURAS=["250","188","176","151","150","149","130","120"];
 /* 100 reais (85 jogadores + 15 treinadores) + 7 da escada (6 faixas + treinador)
-   + 36 da matriz (6 faixas × 6 funções) + 9 dos casos que quebram o layout. */
-const CARTAS_ESPERADAS=152;
+   + 36 da matriz (6 faixas × 6 funções) + 9 casos de layout + 3 enquadramentos. */
+const CARTAS_ESPERADAS=155;
 
 function waitServer(port,tries=50){
   return new Promise((resolve,reject)=>{
@@ -79,6 +79,16 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     const cartas=await page.evaluate(()=>document.querySelectorAll(".card,.coachcard").length);
     check(cartas===CARTAS_ESPERADAS,
       `laboratório monta as ${CARTAS_ESPERADAS} cartas pelos módulos reais (viu ${cartas})`);
+    const framing=await page.locator("#gRetratos .card[data-enquadramento]").evaluateAll(cards=>
+      cards.map(card=>({id:card.dataset.enquadramento,
+        size:getComputedStyle(card).getPropertyValue("--foto-size").trim(),
+        x:getComputedStyle(card).getPropertyValue("--foto-x").trim(),
+        y:getComputedStyle(card).getPropertyValue("--foto-y").trim()})));
+    check(JSON.stringify(framing)===JSON.stringify([
+      {id:"a",size:"100% auto",x:"50%",y:"12%"},
+      {id:"b",size:"116% auto",x:"70%",y:"28%"},
+      {id:"c",size:"132% auto",x:"75%",y:"30%"},
+    ]),"laboratório expõe os três enquadramentos reproduzíveis do mesmo retrato");
     check(errors.length===0,`laboratório carrega sem erro de página${errors.length?": "+errors[0]:""}`);
 
     /* A proposta começa DESLIGADA: primeiro se prova o jogo publicado. */
