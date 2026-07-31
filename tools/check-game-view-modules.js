@@ -54,7 +54,10 @@ async function main(){
   assert.ok(playerHtml.includes('<div class="c-ovr">22<small>Overall</small>')&&
     playerHtml.includes('<div class="c-func">AWPer</div>')&&
     playerHtml.includes('<div class="c-nick">N&quot;ick</div>'),"hierarquia da frente da carta mudou");
-  assert.ok(playerHtml.includes('<span>Support</span><span>A&amp;B</span>'),"rodapé de contexto da frente mudou");
+  assert.ok(playerHtml.includes('class="c-identidade c-identidade--player"')&&
+    playerHtml.includes('<span class="c-role2">Support</span>')&&
+    playerHtml.includes('<span class="c-team">A&amp;B</span>'),
+  "estrutura de identidade da frente mudou");
   assert.ok(!playerHtml.includes("STAR")&&!playerHtml.includes("★"),"o selo de estrela voltou à carta");
   assert.ok(playerHtml.includes('class="c-emblema"')&&playerHtml.includes("<svg viewBox=\"0 0 24 24\""),
     "emblema da função sumiu da carta");
@@ -131,7 +134,8 @@ async function main(){
   const coachHtml=view.cardHTML({tipo:"coach",ovr:18,pais:"DEN",time:"SK",nick:"zonic",
     camp:"ESL One Cologne 2016",coloc:"Campeao",carac:"Gestor",caracSlug:"gestor"});
   assert.ok(coachHtml.includes('<div class="c-ovr">18<small>Treinador</small>')&&
-    coachHtml.includes('<div class="c-func">Gestor</div>'),"frente do treinador mudou");
+    coachHtml.includes('<div class="c-func">Gestor</div>')&&
+    coachHtml.includes('class="c-identidade c-identidade--coach"'),"frente do treinador mudou");
   assert.ok(!coachHtml.includes("c-vovr")&&coachHtml.includes("ESL One Cologne 2016")&&
     coachHtml.includes("Campeão"),"verso do treinador perdeu padronização ou repetiu OVR");
   assert.ok(coachHtml.includes("Tolera +1 estrela")&&coachHtml.includes("7% → 4%"),

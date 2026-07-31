@@ -322,6 +322,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   text-shadow:none;text-transform:uppercase}
 /* canto superior direito: BANDEIRA. Campeonato e ano ficam só no verso — aqui
    competiriam com o OVR, que é o que se lê primeiro. */
+.c-identidade{display:contents}
 .c-flag{position:absolute;right:var(--pad);top:6.5%;z-index:5;width:8cqw;aspect-ratio:3/2;
   background-size:cover;background-position:50%;border-radius:.6cqw;
   box-shadow:0 0 0 1px rgba(255,255,255,.22),0 1px 5px rgba(0,0,0,.5)}

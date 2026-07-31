@@ -80,18 +80,22 @@ export function createCardView({styleId,styleLabel,styleRecipe}){
      TIPO: é o único ponto da carta que nunca some por falta de espaço, então é
      ali que "Treinador" aparece. `destaque` é a função primária do jogador ou a
      característica do treinador; `contexto` é o par do rodapé. */
-  const frenteHtml=(card,rotulo,destaque,contexto,emblema)=>`${camadasDeFundo}
+  const frenteHtml=(card,rotulo,destaque,contexto,emblema,tipo)=>`${camadasDeFundo}
   <div class="c-emblema">${emblema}</div>
   <div class="c-fio"></div><div class="c-placa"></div>
   <div class="c-ovr">${card.ovr}<small>${rotulo}</small></div>
-  ${bandeiraHtml(card.pais)}
-  <div class="c-nick">${esc(card.nick)}</div>
-  <div class="c-func">${esc(destaque)}</div>
-  <div class="c-meta"><span>${esc(contexto[0])}</span><span>${esc(contexto[1])}</span></div>
+  <div class="c-identidade c-identidade--${tipo}">
+    ${bandeiraHtml(card.pais)}
+    <div class="c-nick">${esc(card.nick)}</div>
+    <div class="c-func">${esc(destaque)}</div>
+    <div class="c-meta"><span class="c-role2">${esc(contexto[0])}</span><span class="c-team">${esc(contexto[1])}</span></div>
+  </div>
   <div class="c-grao"></div>`;
 
-  const playerFront=card=>frenteHtml(card,"Overall",card.prim,[card.sec||"",card.time],emblemaDe(card.prim));
-  const coachFront=card=>frenteHtml(card,"Treinador",card.carac,["",card.time],EMBLEMA_TREINADOR);
+  const playerFront=card=>frenteHtml(card,"Overall",card.prim,[card.sec||"",card.time],
+    emblemaDe(card.prim),"player");
+  const coachFront=card=>frenteHtml(card,"Treinador",card.carac,["",card.time],
+    EMBLEMA_TREINADOR,"coach");
 
   /* Firepower permanece primeiro. As outras estatísticas são ordenadas pela
      contribuição peso × valor usada na classificação do playstyle. */
