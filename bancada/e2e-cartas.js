@@ -62,6 +62,8 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       `laboratório monta as ${CARTAS_ESPERADAS} cartas reais e sintéticas (viu ${cartas})`);
     check(await page.locator("#cProposta,#cEncaixe,[data-layout-reference]").count()===0,
       "laboratório não preserva variante A/B, referência velha ou ajuste individual");
+    check(await page.locator('link[rel="stylesheet"][href^="style.css"]').getAttribute("href")===
+      "style.css?v=DEV","laboratório participa do cache-busting do CSS canônico");
 
     const referencia=await page.locator('#gRetratos .card[data-enquadramento="canonical"]').evaluate(card=>{
       const faces=card.querySelector(".cfaces"),foto=card.querySelector(".c-foto"),style=getComputedStyle(foto);

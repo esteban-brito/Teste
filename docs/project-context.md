@@ -757,8 +757,9 @@ acelerar um resultado verde.
 5. check, lint e bancada completa;
 6. deploy da raiz em `gh-pages` apenas se a validação passar.
 
-O deploy aplica cache-busting de conteúdo a `style.css` e `game.js` no
-`index.html`. O sandbox é publicado como arquivo estático junto com o jogo.
+O deploy aplica cache-busting de conteúdo a `style.css` no `index.html` e no
+`prototipo-cartas.html`, além de `game.js` no `index.html`. O sandbox é publicado
+como arquivo estático junto com o jogo.
 
 ## 8. Objetivo de profissionalização
 
