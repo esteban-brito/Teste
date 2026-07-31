@@ -156,9 +156,34 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       `${largura}px · tokens da densidade ${compacta?"compacta":"completa"} realmente aplicados`);
     }
 
-    /* A proposta A/B está ativa e ainda não foi promovida. Ela precisa cumprir as
+    /* A proposta visual está ativa e ainda não foi promovida. Ela precisa cumprir as
        mesmas guardas geométricas do estado publicado em todas as larguras. */
     await page.check("#cProposta");
+    const composicoes=[];
+    for(const esperado of [
+      {largura:"250",placa:.32,contexto:.028,funcao:.08,nick:.1554},
+      {largura:"130",placa:.29,contexto:null,funcao:.05,nick:.1254},
+    ]){
+      const {largura}=esperado;
+      await page.selectOption("#cLargura",largura);await page.waitForTimeout(80);
+      const medido=await page.locator('#gRetratos .card[data-enquadramento="a"]').evaluate(card=>{
+        const faces=card.querySelector(".cfaces"),altura=faces.getBoundingClientRect().height;
+        const proporcao=selector=>{
+          const estilo=getComputedStyle(card.querySelector(selector));
+          return estilo.display==="none"?null:parseFloat(estilo.bottom)/altura;
+        };
+        return {placa:card.querySelector(".c-placa").getBoundingClientRect().height/altura,
+          contexto:proporcao(".c-meta"),funcao:proporcao(".c-func"),nick:proporcao(".c-nick")};
+      });
+      const campos=["placa","contexto","funcao","nick"];
+      composicoes.push({largura,medido,esperado,
+        ok:campos.every(campo=>esperado[campo]===null
+          ?medido[campo]===null:Math.abs(medido[campo]-esperado[campo])<.002)});
+    }
+    const composicaoOk=composicoes.every(item=>item.ok);
+    check(composicaoOk,
+      "proposta amplia o retrato e desce diagonal, nome e funções pela mesma composição"+
+      (composicaoOk?"":` — ${JSON.stringify(composicoes)}`));
     for(const largura of LARGURAS){
       await page.selectOption("#cLargura",largura);await page.waitForTimeout(80);
       const audit=await page.evaluate(()=>window.__LAB_MEDIR());
