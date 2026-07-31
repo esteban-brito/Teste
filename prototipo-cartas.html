@@ -309,24 +309,30 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
    guarda antiga passava, mas a composicao parecia comprimida.
 
    A grade refinada recupera margem e respiro sem voltar ao desenho publicado:
-   placa de 34% na densidade completa e 30% na compacta, ainda menores que os
+   placa de 30% na densidade completa e 27% na compacta, ainda menores que os
    38%/32% do jogo. `--b1` ancora frente e verso na mesma margem inferior;
    `--b2` aproxima funcao e contexto, enquanto `--b3` preserva um intervalo maior
-   para o nick. A pilha e unica por densidade, sem deslocamento por jogador. */
+   para o nick. Corpos e line-height tambem entram na grade: a pilha fica menor,
+   mais baixa e libera foto de verdade, sem deslocamento por jogador. */
 .proposta .card.p-rank .cfaces{
-  --placa-n:34; --placa:calc(var(--placa-n)*1%);
+  --placa-n:30; --placa:calc(var(--placa-n)*1%);
   --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
-  --b1:3.5%; --b2:8%; --b3:15.7%; --t3:7.4cqw}
+  --b1:3.5%; --b2:7.2%; --b3:13.2%; --t3:6.6cqw; --t4:4cqw}
 .proposta .coachcard .cfaces{--t3:7.4cqw; --b3:calc(var(--b2) + var(--passo)*1.45)}
 @container (max-width:150px){
   .proposta .card.p-rank .cfaces{
-    --placa-n:30; --placa:calc(var(--placa-n)*1%);
+    --placa-n:27; --placa:calc(var(--placa-n)*1%);
     --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
-    --b1:4%; --b2:4.5%; --b3:12.1%; --t3:8.2cqw}
+    --b1:4%; --b2:4.2%; --b3:10.5%; --t3:7.5cqw}
   .proposta .coachcard .cfaces{--t3:8.2cqw}
 }
 .proposta .card.p-rank .cfront .c-func,
 .proposta .coachcard .cfront .c-func{letter-spacing:.15em;color:var(--r-ink)}
+.proposta .card.p-rank:not([data-layout-reference="true"]) .cfront .c-nick{
+  font-size:calc(14cqw*var(--nick-esc,1))}
+.proposta .card.p-rank:not([data-layout-reference="true"]) .cfront .c-func,
+.proposta .card.p-rank:not([data-layout-reference="true"]) .cfront .c-meta{
+  line-height:1}
 
 /* OVR e bandeira passam a partir do mesmo eixo superior. A bandeira cresce meio
    ponto de largura: a mudanca e pequena, mas remove a aparencia de adesivo solto
@@ -354,10 +360,12 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
 
 /* O campeonato pode ocupar uma ou duas linhas. Sem uma reserva constante, o
    filete subia e descia conforme o evento e mudava o centro optico dos stats.
-   A caixa usa a altura do pior caso real e ancora o conteudo embaixo: filete,
-   stats e margem inferior ficam identicos em todas as cartas. */
-.proposta .card.p-rank .cback .c-vrod{
-  min-height:clamp(26px,16cqw,36px);justify-content:flex-end}
+   A caixa usa a altura do pior caso real e ancora o conteudo embaixo. O eixo de
+   6% tira campeonato e colocacao da borda; os stats sobem junto para preservar
+   o centro optico nas oito larguras. */
+.proposta .card.p-rank:not([data-layout-reference="true"]) .cback .c-vrod{
+  bottom:6%;min-height:clamp(26px,16cqw,36px);justify-content:flex-end}
+.proposta .card.p-rank:not([data-layout-reference="true"]) .cback .c-vstats{bottom:24%}
 
 /* REFERENCIA VISUAL, NAO CANDIDATO. O primeiro card do bloco 0 conserva os
    numeros de `369c480` para o A/B ser honesto. Ele e explicitamente excluido da
@@ -367,7 +375,7 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
   --placa-n:32;--placa:calc(var(--placa-n)*1%);
   --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
   --b1:2.8%;--b2:calc(var(--b1) + var(--passo));
-  --b3:calc(var(--b2) + var(--passo)*1.45)}
+  --b3:calc(var(--b2) + var(--passo)*1.45);--t3:7.4cqw;--t4:4.4cqw}
 .proposta #gRetratos .card[data-layout-reference="true"] .cfront .c-flag{
   top:6.5%;width:8cqw}
 .proposta #gRetratos .card[data-layout-reference="true"] .cback .c-vnick{
@@ -381,7 +389,7 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
   .proposta #gRetratos .card[data-layout-reference="true"] .cfaces{
     --placa-n:29;--placa:calc(var(--placa-n)*1%);
     --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
-    --b1:2.8%;--b2:5%;--b3:calc(var(--b2) + var(--passo)*1.45)}
+    --b1:2.8%;--b2:5%;--b3:calc(var(--b2) + var(--passo)*1.45);--t3:8.2cqw}
 }
 
 /* ── 5 · o campo pertence ao retrato ──────────────────────────────────────────

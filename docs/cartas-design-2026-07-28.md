@@ -418,8 +418,8 @@ Em 31/07/2026 o A foi refinado sem voltar ao desenho publicado:
 
 | densidade | jogo → 1ª ampliação → refinado → ajuste atual | margem inferior | função | nick |
 |---|---:|---:|---:|---:|
-| completa | `38% → 32% → 35% → 34%` | `3,5%` | `8%` | `15,7%` |
-| compacta | `32% → 29% → 31% → 30%` | `4%` | `4,5%` | `12,1%` |
+| completa | `38% → 32% → 35% → 34% → 30%` | `3,5%` | `7,2%` | `13,2%` |
+| compacta | `32% → 29% → 31% → 30% → 27%` | `4%` | `4,2%` | `10,5%` |
 
 `--placa-n`, `--placa`, `--b1`, `--b2` e `--b3` governam todas as cartas de
 jogador, em vez de deslocamentos por nick ou retrato. A função desce para perto
@@ -427,6 +427,11 @@ do contexto, enquanto o nick conserva o intervalo maior pedido; `--corte-v` é
 recalculado com a nova altura e mantém o ângulo físico igual nas duas faces.
 A foto continua ocupando mais área que no jogo publicado, mas frente e verso
 recuperam uma margem inferior comum e distância mensurável da diagonal.
+
+No verso, o rodapé deixa o eixo inferior de `3,5%` e passa a `6%`. A reserva de
+altura continua cobrindo campeonatos de uma ou duas linhas, enquanto o limite
+inferior dos stats sobe de `22%` para `24%`; campeonato, colocação, filete e stats
+se movem como uma grade única, não como correções por conteúdo.
 
 O verso passou a obedecer à hierarquia declarada desde o início deste documento.
 No A anterior, nick e playstyle mediam praticamente o mesmo a 188 px (`20,45` e
