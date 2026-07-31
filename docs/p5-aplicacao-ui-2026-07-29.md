@@ -497,7 +497,34 @@ de série.
 - total dessas duas consolidações: mais de 4.000 linhas removidas;
 - P5 moveu responsabilidades, mas não apagou assets, dados ou documentação útil.
 
-Não resta uma lista aprovada de arquivos para deletar. A próxima auditoria deve:
+### Auditoria de órfãos executada em 31/07/2026
+
+A auditoria pedida abaixo foi feita: grafo completo de imports (estáticos e
+dinâmicos) de todo arquivo versionado, cruzado com `package.json`, o workflow,
+referências em HTML e citações em documentação.
+
+Resultado:
+
+- **nenhum módulo órfão em `src/`** — tudo é alcançável por `game.js`,
+  `sandbox.html`, `prototipo-cartas.html` ou `bancada/motor.js`. As três
+  estatísticas (`sample-summary`, `paired-comparison`, `proportion-interval`) só
+  aparecem por `import()` dinâmico e `require` de `.mjs`; uma busca ingênua as
+  declara órfãs por engano;
+- **`bancada/classificacao.js` e `bancada/serie.js` NÃO são órfãos.** Eles se
+  declaram no cabeçalho como bancadas de trabalho fora do `run.js`, de propósito.
+  Não os remova por não aparecerem em `SUITE_GROUPS`;
+- removido `instalar-drop-iphone.sh`: instalador de uso único que entrou junto com
+  o próprio commit que ele criava (`9cbaf2e`) e cujos companheiros já haviam saído
+  em `838bf98`. Zero referências em qualquer arquivo versionado;
+- resíduo **não versionado** apagado do disco (≈422 MB): `tmp/` com 61 arquivos do
+  ciclo A/B de cartas e das capturas do experimento R5, e as quatro pastas
+  `visual-card-*`, que por contrato nunca são versionadas nem reutilizadas entre
+  sessões;
+- **não tocar:** `.venv-fidelity/` e `fidelity-corpus/raw/` somam ~1,4 GB mas são o
+  pipeline IFCS offline documentado; o `.dem` de `raw/` é a entrada selada em
+  `fidelity-corpus/parser-proof.json`.
+
+O roteiro original, que continua válido para a próxima vez:
 
 1. começar com `git status` e `rg --files`;
 2. conferir imports, scripts do `package.json`, referências HTML, docs e workflow;
