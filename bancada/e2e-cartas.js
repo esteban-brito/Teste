@@ -118,11 +118,26 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
             return {selector,ratio:(Math.max(foreground,background)+.05)/(Math.min(foreground,background)+.05)};})
           .filter(result=>result.ratio<4.5));
         const first=cards[0],faces=getComputedStyle(first.querySelector(".cfaces"));
+        const canonicalLayout=cards.every(card=>{
+          const box=card.getBoundingClientRect(),nick=card.querySelector(".c-nick").getBoundingClientRect();
+          const flag=card.querySelector(".c-flag").getBoundingClientRect();
+          const team=card.querySelector(".c-team").getBoundingClientRect();
+          const vstats=card.querySelector(".c-vstats").getBoundingClientRect();
+          const stats=[...card.querySelectorAll(".c-st")];
+          return Math.abs((flag.top+flag.bottom-nick.top-nick.bottom)/2)<=.4&&
+            team.top-flag.bottom+.05>=Math.max(6,box.width*.055)&&
+            vstats.height/box.height>=.35&&stats.every(stat=>{
+              const statBox=stat.getBoundingClientRect();
+              const trackBox=stat.querySelector(".c-trilho").getBoundingClientRect();
+              return statBox.width/vstats.width>=.995&&trackBox.width/vstats.width>=.995;
+            });
+        });
         return {audit,ranges,tooSmall,lowContrast,
           placa:faces.getPropertyValue("--placa-n").trim(),
           allVisible:cards.every(card=>visible(card.querySelector(".c-flag"))&&
             visible(card.querySelector(".c-role2"))&&visible(card.querySelector(".c-team"))),
           fourStats:cards.every(card=>card.querySelectorAll(".c-st").length===4),
+          canonicalLayout,
           individualScale:cards.filter(card=>/--(?:nick|carac)-esc/.test(card.querySelector(".cfaces").style.cssText)).length,
           externalShadow:cards.filter(card=>{const shadow=getComputedStyle(card).boxShadow;
             return shadow!=="none"&&!/\binset\s*$/.test(shadow);}).length};
@@ -133,8 +148,8 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
         `${largura}px · geometria e padrão aprovados em ${resultado.audit.auditadas} jogadores`+
         (primeiraFalha?` — ${primeiraFalha.nick}: ${primeiraFalha.campo} (${primeiraFalha.falta}px)`:"")+
         (primeiroRitmo?` — ${primeiroRitmo.nick}: ${primeiroRitmo.campo} (${primeiroRitmo.atual}${primeiroRitmo.unidade})`:""));
-      check(resultado.placa===esperado&&resultado.allVisible&&resultado.fourStats,
-        `${largura}px · placa ${esperado}%, bandeira/roles/time visíveis e quatro stats`);
+      check(resultado.placa===esperado&&resultado.allVisible&&resultado.fourStats&&resultado.canonicalLayout,
+        `${largura}px · identidade alinhada e quatro stats ocupam toda a grade`);
       check(Object.values(resultado.ranges).every(range=>range<=.05)&&resultado.individualScale===0,
         `${largura}px · tipografia idêntica entre todos os jogadores`);
       check(resultado.tooSmall.length===0&&resultado.lowContrast.length===0,
@@ -169,15 +184,18 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     const detectaPadrao=await page.evaluate(()=>{
       const card=document.querySelector(".card"),nick=card.querySelector(".c-nick"),flag=card.querySelector(".c-flag");
       const stat=card.querySelector(".c-st:last-child"),parent=stat.parentElement,next=stat.nextSibling;
-      const nickStyle=nick.style.cssText,flagStyle=flag.style.cssText;
-      nick.style.fontSize="8px";flag.style.display="none";stat.remove();
+      const firstStat=card.querySelector(".c-st"),nickStyle=nick.style.cssText;
+      const flagStyle=flag.style.cssText,firstStatStyle=firstStat.style.cssText;
+      nick.style.fontSize="8px";flag.style.display="none";firstStat.style.width="50%";stat.remove();
       const campos=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
-      nick.style.cssText=nickStyle;flag.style.cssText=flagStyle;parent.insertBefore(stat,next);
+      nick.style.cssText=nickStyle;flag.style.cssText=flagStyle;firstStat.style.cssText=firstStatStyle;
+      parent.insertBefore(stat,next);
       return campos;
     });
-    check(["conteúdo frontal sempre visível","quatro slots de estatística","tipografia única · nick"]
+    check(["conteúdo frontal sempre visível","quatro slots de estatística",
+      "ocupação horizontal dos stats","tipografia única · nick"]
       .every(campo=>detectaPadrao.includes(campo)),
-    "gate acusa conteúdo oculto, slot ausente e exceção tipográfica");
+    "gate acusa conteúdo oculto, trilho estreito, slot ausente e exceção tipográfica");
     check((await page.evaluate(()=>window.__LAB_MEDIR())).falhas.length===0&&
       (await page.evaluate(()=>window.__LAB_MEDIR())).ritmo.length===0,
     "medição volta ao verde depois das provas sintéticas");

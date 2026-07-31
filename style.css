@@ -287,7 +287,8 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   --corte:calc(var(--corte-n)*1%);
   --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
   --b1:3.3%;--b2:5.8%;--b3:10.1%;--t3:6.2cqw;--t4:4.5cqw}
-.card .cfaces{--t2:clamp(14px,11.5cqw,29px);--t-style:clamp(14px,12.5cqw,26px)}
+.card .cfaces{--t2:clamp(13px,10.5cqw,27px);--t-style:clamp(14px,12.5cqw,26px);
+  --t3:6.4cqw;--t4:4.8cqw}
 
 /* Seis faixas, sem classes auxiliares do laboratório. */
 .card.tier-1{--m:#c9d2dd;--m-ink:#e8eef6;--fio-cor:#aab4c2;--fio-a:30%;
@@ -349,29 +350,34 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .card .cback{background:linear-gradient(168deg,
   color-mix(in srgb,var(--wash-cor) calc(var(--wash)*.6),#080b11),#06080d 58%)}
 
-/* Frente do jogador: três linhas e duas colunas, sem offsets individuais. */
+/* Frente do jogador: nick e bandeira dividem o primeiro eixo; a função principal
+   separa essa identidade do contexto role/time, sem offsets individuais. */
 .c-identidade--player{position:absolute;left:var(--pad);right:var(--pad);bottom:var(--b1);
-  z-index:5;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-  grid-template-areas:"nick nick" "func flag" "meta meta";
-  row-gap:clamp(.6px,.45cqw,1.2px);align-items:end}
+  z-index:5;display:grid;grid-template-columns:minmax(0,1fr) auto;
+  grid-template-areas:"nick flag" "func func" "meta meta";
+  column-gap:clamp(1px,1cqw,3px);row-gap:clamp(.6px,.45cqw,1.2px);align-items:end}
 .card .c-identidade--player .c-nick{grid-area:nick;position:static;inset:auto;
-  font-size:var(--t2);line-height:.9;letter-spacing:-.005em;overflow:visible}
+  min-width:0;font-size:var(--t2);line-height:.9;letter-spacing:-.005em;overflow:visible}
 .card .c-identidade--player .c-func{grid-area:func;position:static;inset:auto;
   align-self:end;font-size:clamp(9px,var(--t3),14px);line-height:.95;letter-spacing:.13em;
   color:var(--r-ink);white-space:nowrap}
 .card .c-identidade--player .c-flag{grid-area:flag;position:static;inset:auto;
-  display:block;width:clamp(18px,10cqw,22px);justify-self:end;align-self:end}
+  display:block;width:clamp(13px,9.5cqw,22px);justify-self:end;align-self:center}
 .card .c-identidade--player .c-meta{grid-area:meta;position:static;inset:auto;
   display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;
   font-size:clamp(7px,var(--t4),10px);line-height:1;letter-spacing:.1em}
 .card .c-role2{justify-self:start}.card .c-team{justify-self:end;text-align:right}
 
-/* Verso do jogador: tipografia fixa e quatro slots reais em todas as cartas. */
+/* Verso do jogador: tipografia fixa e quatro trilhos em largura integral. */
 .card .c-vnick{top:6.5%;font-size:clamp(11px,10cqw,22px)}
 .card .c-vestilo{top:26%}
 .card .c-vestilo b{font-size:var(--t-style)}
-.card .c-vstats{top:43.5%;bottom:24%;display:grid;grid-template-rows:repeat(4,1fr);
-  align-items:center;gap:clamp(2px,2cqw,5px)}
+.card .c-vstats{top:40.5%;bottom:21.5%;display:grid;
+  grid-template-rows:repeat(4,minmax(0,1fr));align-items:center;justify-items:stretch;
+  justify-content:stretch;gap:clamp(2px,1.6cqw,4px)}
+.card .c-st{width:100%;align-content:center}
+.card .c-st i{font-size:clamp(7.5px,5cqw,11px)}
+.card .c-st b{font-size:clamp(9.5px,6.2cqw,14px)}
 .card .c-vrod{bottom:6%;min-height:clamp(26px,16cqw,36px);justify-content:flex-end}
 
 /* Treinador continua sendo outra categoria, mas usa o mesmo sistema de eixos. */
@@ -411,12 +417,13 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 @container (max-width:150px){
   .card .cfaces{--placa-n:28;--placa:calc(var(--placa-n)*1%);
     --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
-    --t2:clamp(13px,11.5cqw,29px);--t3:6.2cqw;--t4:4.5cqw}
+    --t2:clamp(13px,10.5cqw,27px);--t3:6.4cqw;--t4:4.8cqw}
   /* FreeType e DirectWrite diferem pouco nas métricas horizontais. O tracking
      compacto comum preserva o mesmo corpo e dá folga portátil ao maior nick. */
   .card .c-identidade--player .c-nick{letter-spacing:-.025em}
   .card .c-identidade--player .c-meta{display:grid}
   .card .c-identidade--player .c-flag{display:block}
+  .card .c-vstats{top:43%}
   .coachcard .cfaces{--t3:8.2cqw}
   .coachcard .cback .c-vdesc{top:46%;bottom:21%;font-size:clamp(8px,6cqw,12px);line-height:1.34}
 }
