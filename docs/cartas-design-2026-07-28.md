@@ -579,3 +579,52 @@ Fechamento remoto: execução `30652005186` verde, 25 suítes e deploy concluíd
 A comparação visual permaneceu restrita aos mesmos 9/21 estados com cartas. A
 retomada geral, o próximo lote de retratos e o roadmap recomendado estão em
 `docs/retomada-2026-07-31.md`.
+
+## 15. A escada volta a existir — 31/07/2026
+
+O responsável olhou a escada no laboratório e disse que 14, 16 e 19 estavam
+difíceis de diferenciar. Estavam mesmo, e não era percepção: **as três não tinham
+moldura nenhuma.**
+
+A causa é uma regra de pintura do CSS. O aro vinha de
+`box-shadow:inset` na superfície de `.card`, e sombra interna é pintada **abaixo
+dos filhos** do elemento. Desde que a carta ganhou faces, `.cfaces` cobre
+`inset:0` de forma opaca — então o aro de 1px/1,5px/2px das faixas 1–3 nunca
+chegou à tela. As faixas 4–6 escapavam por acidente: o cromado delas já morava num
+`::after` com `z-index:7`, acima das faces. Na prática, 14/16/19 chegavam ao
+jogador separadas apenas por um banho de 7–17% no retrato e pelo rótulo `OVERALL`
+de 7px.
+
+O conserto unifica as seis faixas numa mecânica só, no `::after`:
+
+| variável | papel |
+|---|---|
+| `--aro` | espessura do anel |
+| `--aro-pintura` | material: cor chapada nas faixas 1–3, cromado nas 4–6 |
+
+A escada resultante é **chapada até 19, metálica a partir de 20** — o salto para
+metálico passa a ser o momento visível da promoção:
+
+| faixa | OVR | anel |
+|---|---|---|
+| `tier-1` | ≤14 | 1px, cinza frio a 44% |
+| `tier-2` | 15–17 | 1,5px, verde a 82% |
+| `tier-3` | 18–19 | 2px, **cobre** a 96% |
+| `tier-4` | 20 | cromado ouro |
+| `tier-5` | 21 | cromado sangue |
+| `tier-6` | 22 | iridescente |
+
+A faixa 3 deixou de ser âmbar e virou cobre por um problema criado pelo próprio
+conserto: com anéis visíveis, âmbar e ouro cromado passaram a colidir a olho nu.
+Cobre abre esse par sem invadir as seis famílias de cor reservadas às funções — e
+a matriz de 36 combinações confirma que o anel de cobre não disputa com o coral do
+`Entry`, porque função é **texto** e raridade é **moldura**.
+
+O `box-shadow` morto saiu de `.card`, `.coachcard` e do `:hover`, junto com a
+variável `--aro-a` que só ele consumia. O treinador não entra na escada e mantém a
+moldura própria, segmentada a 45°.
+
+Validação: `npm run check` e `npm run lint` verdes; o E2E aprovou 153 cartas nas
+oito larguras, incluindo contraste 4,5:1 e ausência de halo externo; a comparação
+visual mudou **9 de 21** capturas, exatamente os estados que contêm cartas, e
+deixou as outras 12 pixel a pixel idênticas.

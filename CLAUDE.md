@@ -74,9 +74,14 @@ Regras não negociáveis:
 12. Jogador e treinador compartilham `.c-vrod`. `camp` e `coloc` vêm da era do
     elenco, precisam existir nas duas categorias e permanecem visíveis inclusive
     na densidade compacta. Campeonato não usa reticências.
-13. Carta não projeta halo: o `box-shadow` da superfície é somente `inset`.
-    Também não há varredura de luz na entrada, holografia contínua, rotação ou
-    overshoot acima de escala 1 nas animações de distribuição/encaixe.
+13. Carta não projeta halo: a superfície não tem `box-shadow` externo. O aro de
+    raridade vive em `.card::after`, dentro dos limites da carta, com `--aro`
+    (espessura) e `--aro-pintura` (material). **Não volte a usar
+    `box-shadow:inset` para isso**: `inset` é pintado abaixo dos filhos e
+    `.cfaces` cobre `inset:0` de forma opaca — foi assim que as faixas 1–3
+    ficaram sem moldura visível. Também não há varredura de luz na entrada,
+    holografia contínua, rotação ou overshoot acima de escala 1 nas animações de
+    distribuição/encaixe.
 14. Movimento usa os tokens centrais de `style.css`: hover 180 ms, flip 360 ms
     com fade de 180 ms, distribuição 400 ms e encaixe 280 ms, todos com a curva
     editorial. `prefers-reduced-motion` desliga transições e animações da carta.

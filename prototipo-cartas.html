@@ -156,7 +156,7 @@ const jogadores=TEAMS.flatMap(time=>time.jogadores);
 const treinadores=TEAMS.map(time=>time.treinador).filter(Boolean);
 const porNick=nick=>jogadores.find(jogador=>jogador.nick===nick);
 const FUNCOES=["IGL","AWPer","Entry","Rifler","Lurker","Support"];
-const TIERS=[["comum · ≤14",14],["verde · 15–17",16],["âmbar · 18–19",19],
+const TIERS=[["comum · ≤14",14],["verde · 15–17",16],["cobre · 18–19",19],
   ["ouro · 20",20],["sangue · 21",21],["prisma · 22",22]];
 
 const cartaHtml=carta=>`<div class="${cardClass(carta)}" data-nick="${esc(carta.nick)}"
