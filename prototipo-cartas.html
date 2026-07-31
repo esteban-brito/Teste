@@ -307,16 +307,29 @@ function medirCartas(){
       parseFloat(getComputedStyle(rotulo).fontSize)/parseFloat(getComputedStyle(vnick).fontSize),1.14,.005,"×");
     if(stats.length){
       const primeiro=stats[0].getBoundingClientRect(),ultimo=stats.at(-1).getBoundingClientRect();
+      const statsBox=carta.querySelector(".c-vstats").getBoundingClientRect();
       const linhaRodape=rodape.getBoundingClientRect().top-caixa.width*.024;
       const acima=primeiro.top-rotulo.getBoundingClientRect().bottom;
       const abaixo=linhaRodape-ultimo.bottom;
       maximo("equilíbrio stats/era",Math.abs(acima-abaixo),Math.max(4,caixa.height*.025));
+      const ocupacaoHorizontal=Math.min(...stats.map(stat=>{
+        const statBox=stat.getBoundingClientRect();
+        const trilhoBox=stat.querySelector(".c-trilho").getBoundingClientRect();
+        return Math.min(statBox.width,trilhoBox.width)/statsBox.width;
+      }));
+      minimo("ocupação horizontal dos stats",ocupacaoHorizontal,1,.005,"×");
+      minimo("ocupação vertical dos stats",100*statsBox.height/caixa.height,35,.05,"%");
     }
     const eixos=[nick,carta.querySelector(".c-func"),meta,vnick,estilo,carta.querySelector(".c-vstats"),rodape]
       .filter(visivel).map(elemento=>elemento.getBoundingClientRect().left-caixa.left);
     maximo("eixo lateral compartilhado",Math.max(...eixos)-Math.min(...eixos),.35,.05);
+    const flagBox=flag.getBoundingClientRect(),teamBox=team.getBoundingClientRect();
+    maximo("centro bandeira/nick",
+      Math.abs((flagBox.top+flagBox.bottom-nickBox.top-nickBox.bottom)/2),.35,.05);
+    minimo("separação bandeira/time",teamBox.top-flagBox.bottom,
+      Math.max(6,caixa.width*.055),.05);
     maximo("eixo direito bandeira/time",
-      Math.abs(flag.getBoundingClientRect().right-team.getBoundingClientRect().right),.35,.05);
+      Math.abs(flagBox.right-teamBox.right),.35,.05);
   }
 
   for(const [seletor,campo] of [[".c-nick","nick"],[".c-func","role principal"],
