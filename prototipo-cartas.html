@@ -343,10 +343,15 @@ function medirCartas(){
     if(stats.length){
       const primeiro=stats[0].getBoundingClientRect(),ultimo=stats.at(-1).getBoundingClientRect();
       const statsBox=carta.querySelector(".c-vstats").getBoundingClientRect();
-      const linhaRodape=rodape.getBoundingClientRect().top-caixa.width*.024;
+      /* O filete acima do rodapé foi removido; a referência passa a ser o próprio
+         texto do campeonato, que é o que o olho compara. A tolerância cai de
+         "4px ou 2,5% da altura" para 1px porque a simetria agora é estrutural —
+         caixa ancorada entre playstyle e rodapé, conteúdo centrado —, não
+         calibrada por percentual. */
+      const campeonato=carta.querySelector(".c-vrod b").getBoundingClientRect();
       const acima=primeiro.top-rotulo.getBoundingClientRect().bottom;
-      const abaixo=linhaRodape-ultimo.bottom;
-      maximo("equilíbrio stats/era",Math.abs(acima-abaixo),Math.max(4,caixa.height*.025));
+      const abaixo=campeonato.top-ultimo.bottom;
+      maximo("equilíbrio stats/era",Math.abs(acima-abaixo),1);
       const ocupacaoHorizontal=Math.min(...stats.map(stat=>{
         const statBox=stat.getBoundingClientRect();
         const trilhoBox=stat.querySelector(".c-trilho").getBoundingClientRect();
