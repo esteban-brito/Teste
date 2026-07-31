@@ -76,6 +76,21 @@ ao campo cru `foto`: ID seguro, arquivo WebP existente, proporção exata 5:7,
 resolução mínima, limite de peso e ausência de órfãos. O protocolo completo de
 entrada e normalização está em `docs/card-portraits.md`.
 
+`tools/check-doc-links.js`, também em `npm run check`, prova que todo caminho de
+arquivo citado na documentação existe de verdade. Ele nasceu de um caso real: em
+31/07/2026 a documentação ainda mandava ler `src/ui/shared/role-emblems.mjs`,
+deletado dias antes, e nada percebeu porque nada verificava. Cobre os 52 markdown
+versionados, em crase e em link markdown, e ignora deliberadamente caminhos dentro
+de código — ali o próprio import já falha.
+
+Duas saídas são declaradas, não descobertas. `EXCECOES` guarda placeholders de
+sintaxe (`caminho/do/time.txt`); `REFERENCIAS_DECLARADAS` guarda arquivos citados
+de propósito sem existir — um deletado que o histórico precisa nomear e uma guarda
+futura que um handoff propõe. Cada entrada exige motivo escrito, e o checador
+**reprova quando a exceção vira arquivo real**, para que a permissão não sobreviva
+à necessidade. O autoteste injeta corpus sintético com referência morta e exige que
+o medidor acuse: sem isso ele poderia ficar verde para sempre sem ninguém notar.
+
 Os servidores efêmeros dos E2E devem usar faixas aceitas pelo Chromium. O fluxo
 principal usa 7000–7299; a faixa antiga 5900–6199 incluía a porta 6000, que o
 navegador bloqueia com `ERR_UNSAFE_PORT` antes de qualquer teste de produto.
@@ -126,8 +141,8 @@ de `realismo.js`, relógio reprova por padrão; os critérios de economia contin
 opt-in com `ECONOMIA_STRICT=1`. `dificuldade.js` voltou a relatório em 28/07/2026
 depois de a recuperação da guarda `Favorito gap 16+` levar o invicto do elenco
 draftado a 3,8%; seus alvos só reprovam com `DIFICULDADE_STRICT=1`. O histórico
-dos alvos está em [`baseline-simulacao-2026-07-26.md`](baseline-simulacao-2026-07-26.md),
-[`dificuldade-invicto-2026-07-27.md`](dificuldade-invicto-2026-07-27.md) e no
+dos alvos está em [`baseline-simulacao-2026-07-26.md`](ciclos/baseline-simulacao-2026-07-26.md),
+[`dificuldade-invicto-2026-07-27.md`](ciclos/dificuldade-invicto-2026-07-27.md) e no
 cabeçalho executável de `bancada/dificuldade.js`.
 
 Toda calibração de constante passa por `bancada/sweep.js`: braços pareados pela mesma

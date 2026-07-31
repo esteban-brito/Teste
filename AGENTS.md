@@ -112,6 +112,16 @@ catálogo não menciona o dado, aí sim ele não existe.
 
 A fronteira arquitetural vigente está detalhada em `docs/architecture.md`.
 
+**`docs/` está separado por função desde 31/07/2026.** Na raiz ficam os documentos
+que orientam trabalho novo; em `docs/ciclos/` ficam os relatórios de ciclos
+encerrados — R5/R6, o ciclo de fidelidade da simulação e as auditorias isoladas.
+Evidência não é roteiro: nenhum arquivo de `docs/ciclos/` é ponto de retomada. Mas
+eles continuam sendo a justificativa medida das constantes do motor, então alterar
+uma constante sem ler o relatório que a produziu é desfazer trabalho comprovado. O
+índice está em `docs/ciclos/README.md`. `tools/check-doc-links.js`, no
+`npm run check`, prova que nenhuma referência da documentação aponta para arquivo
+inexistente.
+
 **Quanto se pode andar de uma vez (revisto em 28/07/2026).** A regra antiga — "não antecipe
 várias etapas numa única mudança" — protegia contra mudança *não medida*, mas na prática também
 travava migração estrutural que é totalmente verificável. Os dois casos são diferentes:
