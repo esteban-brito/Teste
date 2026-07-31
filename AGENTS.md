@@ -1,8 +1,10 @@
 # AGENTS.md
 
 Este arquivo orienta pessoas e agentes de IA que trabalham neste repositório.
-Comece por `docs/project-context.md`, que registra o ponto de retomada, roadmap
-de profissionalização e a visão do modo Carreira de Jogador. Leia também
+Comece por `docs/retomada-2026-07-31.md`, que registra o último checkpoint
+publicado, a carta canônica e a ordem recomendada das próximas grandes etapas.
+Depois leia `docs/project-context.md`, que mantém o roadmap de profissionalização
+e a visão do modo Carreira de Jogador. Leia também
 `docs/next-steps.md`, que registra a sequência aprovada para fidelidade individual,
 laboratório e balanceamento. Leia ainda `docs/architecture.md`, `docs/testing.md`
 e `docs/glossary.md` antes de alterar os motores.
@@ -69,6 +71,10 @@ catálogo não menciona o dado, aí sim ele não existe.
 
 ## Fontes de verdade atuais
 
+- `docs/retomada-2026-07-31.md`: **handoff geral mais recente** — checkpoint
+  publicado, contrato final das cartas, protocolo de retratos e ordem recomendada
+  entre biblioteca visual, P5, Carreira, P6/P7 e corpus IFCS. **Leia primeiro em
+  uma sessão sem memória.**
 - `docs/p5-aplicacao-ui-2026-07-29.md`: **ponto de retomada operacional do P5** —
   commits publicados, arquitetura atual, validações, contratos exatos de `S`,
   `TG`, `MP` e `MATCH`, trabalho adiado e próxima fatia segura. **Leia antes de

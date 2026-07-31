@@ -26,6 +26,27 @@
 - **Reality cost:** custo de plausibilidade de um par role/role ou
   role/playstyle.
 
+## Cartas e retratos
+
+- **Carta canônica:** única anatomia de frente/verso usada pelo jogo e pelo
+  laboratório; em 31/07/2026 é a A refinada com Donk como referência.
+- **Referência visual:** carta real usada para comparar proporção e ritmo. Ela
+  não recebe regras próprias e não muda o contrato dos demais jogadores.
+- **Placa:** bloco inferior da frente que contém nick, bandeira, função principal,
+  função secundária e time; sua altura responsiva é 24%/26%/28%.
+- **Asset-id de foto:** identificador cru seguro que resolve para
+  `fotos/<asset-id>.webp`; não é um caminho arbitrário nem o ID sequencial do DOM.
+- **Retrato canônico:** WebP opaco 5:7 já normalizado antes do runtime. A carta não
+  corrige enquadramento com zoom ou offset por jogador.
+- **Densidade compacta:** mesma carta abaixo do corte responsivo, com tokens
+  universais ajustados; não é um layout alternativo nem licença para ocultar
+  conteúdo.
+- **Trilho de stat:** barra horizontal de um atributo no verso; os quatro trilhos
+  usam toda a largura útil e preservam a distribuição vertical.
+- **Gate geométrico:** medição executável que reprova overflow, recorte, colisão,
+  desalinhamento ou ocupação insuficiente; uma captura visual complementa, mas
+  não substitui esse gate.
+
 ## Time
 
 - **Força bruta:** soma dos OVRs dos cinco jogadores.

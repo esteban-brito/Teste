@@ -8,10 +8,11 @@ já entendidos ou declare o trabalho pronto sem prova suficiente.
 
 1. Leia `AGENTS.md` inteiro. Suas regras de branch, autonomia, separação entre
    refatoração e balanceamento e validação são obrigatórias e têm precedência.
-2. Leia `docs/project-context.md` e `docs/next-steps.md`.
+2. Leia `docs/retomada-2026-07-31.md`, o handoff geral mais recente; depois leia
+   `docs/project-context.md` e `docs/next-steps.md`.
 3. Antes de tocar aplicação, estado ou UI, leia
    `docs/p5-aplicacao-ui-2026-07-29.md`.
-4. Antes de tocar cartas, leia a seção 13 de
+4. Antes de tocar cartas, leia `docs/retomada-2026-07-31.md`, a seção 14 de
    `docs/cartas-design-2026-07-28.md`, `docs/card-portraits.md` e
    `docs/testing.md`.
 5. Antes de procurar qualquer dado do projeto, leia `src/data/catalog.mjs`.
@@ -144,3 +145,18 @@ existem `#proposta`, tecla P, A/B/C, referência `369c480` ou encaixe medido.
   184,2 s;
 - a próxima fatia visual é adicionar retratos pelo protocolo de
   `docs/card-portraits.md`, nunca criar CSS por jogador.
+
+Refinamento final do mesmo dia, publicado em `7175c26`:
+
+- nick e bandeira dividem a primeira linha; função principal ocupa a segunda;
+  função secundária e time dividem a última, sem a bandeira encostar no time;
+- os quatro stats do verso usam toda a largura útil e ocupam ao menos 35% da
+  altura; campeonato/ano e colocação permanecem no rodapé reservado;
+- a grade compacta usa tracking comum até 176 px e corpo comum reduzido até
+  150 px para neutralizar diferenças FreeType/DirectWrite, sem exceção por nick;
+- o E2E mede 153 cartas em 250/188/176/151/150/149/130/120 px e também trava
+  alinhamento da bandeira, afastamento do time e ocupação dos stats;
+- o deploy aplica cache-busting de conteúdo ao CSS do laboratório; a execução
+  `30652005186` ficou verde e publicou o checkpoint;
+- a retomada completa e as próximas grandes etapas estão em
+  `docs/retomada-2026-07-31.md`.

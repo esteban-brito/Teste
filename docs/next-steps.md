@@ -4,8 +4,9 @@
 > 22 de julho. Ele preserva o raciocínio e a sequência histórica de R1–R6/P1–P6,
 > mas **não é mais o handoff operacional atual**: P2 e o ciclo funcional da
 > simulação avançaram depois dele. Para retomar hoje, use `docs/project-context.md`,
-> `docs/p2-modularizacao-2026-07-28.md`, `docs/p5-aplicacao-ui-2026-07-29.md` e,
-> para cartas, a seção 13 de `docs/cartas-design-2026-07-28.md`. O backlog e as
+> **`docs/retomada-2026-07-31.md`**, `docs/p2-modularizacao-2026-07-28.md`,
+> `docs/p5-aplicacao-ui-2026-07-29.md` e, para cartas, a seção 14 de
+> `docs/cartas-design-2026-07-28.md`. O backlog e as
 > decisões de produto deste arquivo continuam válidos quando não forem
 > explicitamente superados por essas fontes mais novas.
 
@@ -510,12 +511,22 @@ de R3 e continuar as extrações de P2. Esse ponto foi executado: a distribuiç�
 individual foi entregue, o ciclo funcional da simulação foi fechado e P2 foi
 concluído. **Não use mais R3 versus P2 como escolha operacional atual.**
 
-Em 31/07/2026, as duas retomadas concretas documentadas são independentes:
+Em 31/07/2026, a ordem recomendada passou a estar consolidada em
+`docs/retomada-2026-07-31.md`. As duas primeiras retomadas concretas continuam
+independentes:
 
-1. produto visual: adicionar e normalizar retratos sobre a carta já canônica,
-   conforme `docs/card-portraits.md` e `docs/cartas-design-2026-07-28.md` §13;
+1. produto visual: adicionar e normalizar retratos de jogadores por time/era
+   sobre a carta já canônica, começando pelos quatro players restantes da Spirit
+   de Katowice 2024, conforme
+   `docs/card-portraits.md` e `docs/cartas-design-2026-07-28.md` §14;
 2. estrutura: extração exclusiva dos estados `S`, `TG`, `MP` e `MATCH`, conforme
    `docs/p5-aplicacao-ui-2026-07-29.md` §11.
+
+Depois delas, a recomendação é fechar a pré-produção da Carreira (ADR, loop,
+schema e fluxo de telas), entregar criador + save + temporada curta como primeira
+fatia vertical e só então ampliar mercado, narrativa e duração. P6/P7 estrutural
+e corpus IFCS seguem como trilhas separadas; nenhum deles autoriza misturar
+refatoração, produto e balanceamento.
 
 Em qualquer uma, preserve a baseline e não toque incidentalmente em `CFG_*`,
 receitas, pesos, thresholds ou consumo de RNG.
@@ -540,8 +551,9 @@ eles sem conversar com o responsável.
   `NM_DEF`, `STYLE_CONTRA`, `roleStyleReality`) e, portanto, no snapshot dos 85 jogadores e em
   todas as assinaturas de `bancada/perfis.js`. É a mudança de maior alcance já cogitada:
   qualquer versão dela é balanceamento estrutural, com comparação pareada e commit próprio.
-- **Estilo das cartas** (apresentação visual dos jogadores). Camada de interface; não deve
-  tocar motor, avaliação nem RNG.
+- ~~**Estilo das cartas** (apresentação visual dos jogadores).~~ **ENTREGUE em
+  31/07/2026** — a A refinada é o componente canônico; o trabalho restante é
+  conteúdo de retratos pelo contrato 5:7, não outro redesenho.
 - ~~Utilidade como recurso do round.~~ **ENTREGUE em 28/07/2026** —
   `docs/utilitaria-2026-07-28.md`. Com ela, **o escopo original da simulação está fechado**.
 

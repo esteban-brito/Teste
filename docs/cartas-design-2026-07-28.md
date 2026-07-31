@@ -4,7 +4,7 @@
 > executável vive em `src/ui/game/card-view.mjs`, `src/ui/shared/flags.mjs` e
 > `style.css`. Emblemas, comparadores A/B/C, referência `369c480` e ajuste medido
 > foram removidos; o histórico das experiências abaixo permanece para explicar
-> decisões, não como backlog. O estado vigente está na **seção 13**.
+> decisões, não como backlog. O estado vigente está na **seção 14**.
 >
 > `prototipo-cartas.html` é uma bancada fina de QA da única implementação real.
 
@@ -446,18 +446,18 @@ compartilhado e alinhamento OVR/bandeira. Uma prova sintética degrada cada um d
 nove contratos e confirma que todos reprovam. A proposta refinada fecha em zero
 falha geométrica e editorial nas oito larguras.
 
-### O que falta
+### O que faltava naquele checkpoint — registro superado
 
-1. conferir no Pages o A refinado contra a referência `369c480`, nas duas faces
-   e nas densidades completa e compacta;
-2. os cinco retratos restantes de Spirit Katowice 2024 — `sh1ro_kato24`,
-   `zont1x`, `magixx`, `chopper_kato24` e `hally`;
-3. promover a proposta ao jogo, com os cinco pontos acima andando juntos,
-   `npm run visual:capturar` antes/depois e inspeção de cada captura alterada;
-4. na promoção, o retrato deixa de ser lista no laboratório e vira campo do dado
-   cru — `src/data/catalog.mjs` declara a cobertura e
-   `tools/check-data-catalog.js` passa a provar o número. Hoje o catálogo ainda
-   declara `sem-foto` em `DIVERGENCIAS`.
+1. ~~conferir no Pages o A refinado contra a referência `369c480`~~ — concluído
+   e depois substituído pelo checkpoint canônico `7175c26`;
+2. a previsão citava cinco retratos, incluindo `hally`; o contrato executável
+   criado na promoção cobre jogadores. Permanecem como próximo lote seguro
+   `sh1ro_kato24`, `zont1x`, `magixx` e `chopper_kato24`; treinador exige extensão
+   explícita do dado/checker;
+3. ~~promover a proposta ao jogo e comparar as capturas~~ — concluído;
+4. ~~transformar o retrato em campo cru catalogado~~ — concluído. O catálogo
+   declara `foto` com cobertura 1/85 e não possui mais `sem-foto` em
+   `DIVERGENCIAS`.
 
 Fechamento da primeira ampliação: `npm run validate`, **25/25 suítes verdes** em
 184,4 s. Fechamento do refinamento editorial: `npm run validate`, **25/25 suítes
@@ -465,6 +465,10 @@ verdes** em 186,1 s. Nada de dado cru, OVR, tiers, snapshot, golden, RNG ou
 balanceamento foi tocado.
 
 ## 13. Promoção canônica — 31/07/2026
+
+> Este é o checkpoint da promoção inicial. O refinamento final do mesmo dia,
+> especialmente bandeira, placa e ocupação do verso, está na seção 14 e tem
+> precedência.
 
 A última A refinada substituiu o design anterior no jogo. Não existe classe de
 proposta nem segundo layout no laboratório. O contrato atual é:
@@ -497,3 +501,56 @@ Fechamento: a comparação visual alterou somente os nove estados que contêm
 cartas (frente, verso e elenco nas três larguras); os outros 12/21 ficaram pixel
 a pixel idênticos. `npm run validate` encerrou com **25/25 suítes verdes** em
 184,2 s, sem mudar snapshot, golden, RNG ou balanceamento.
+
+## 14. Refinamento final e verdade canônica — 31/07/2026
+
+O responsável aprovou a A refinada e pediu um último ajuste de distribuição: a
+foto deveria ganhar área pela descida/compactação da placa, **sem zoom**; as
+informações precisavam ficar simétricas; a bandeira não poderia disputar espaço
+com o time; e os quatro stats do verso deveriam voltar a ocupar a carta inteira.
+
+O contrato final é:
+
+- retrato fixo em `100% auto · 50% 12%`; diferença de fonte é resolvida no asset;
+- placa com 24% acima de 176 px, 26% entre 151–176 px e 28% até 150 px;
+- frente em três linhas: **nick + bandeira**, **role principal**,
+  **role secundário + time**;
+- nick e bandeira compartilham o mesmo centro vertical; a bandeira mantém
+  distância mínima do time;
+- nick normal em `clamp(13px, 10.5cqw, 27px)`, tracking comum de `-.025em` até
+  176 px e corpo comum `clamp(12px, 10cqw, 27px)` até 150 px;
+- nenhuma escala, classe, variável ou offset por jogador;
+- role principal, role secundário, bandeira e time permanecem sempre visíveis;
+- verso com quatro stats em largura integral, trilhos também integrais e bloco
+  ocupando ao menos 35% da altura;
+- campeonato/ano e colocação usam o rodapé reservado, sem comprimir os stats no
+  centro;
+- treinador permanece categoria própria dentro da mesma infraestrutura.
+
+O E2E mede 153 cartas reais/sintéticas nas larguras 250, 188, 176, 151, 150,
+149, 130 e 120 px. Além das provas anteriores, ele agora injeta falhas para
+confirmar que detecta bandeira oculta, tipografia diferente, stat removido e
+trilho com meia largura; também trava alinhamento bandeira/nick, afastamento do
+time, largura dos stats e ocupação vertical.
+
+### Portabilidade tipográfica
+
+A primeira versão passou no Windows, mas FreeType/Linux mediu nomes longos de
+forma diferente. Os commits `95bdb7c`, `1e6452c` e as guardas de fonte provaram
+que a solução portável é universal: tracking compartilhado no intervalo
+intermediário e corpo compartilhado no compacto. Não reintroduzir tratamento por
+nick nem confiar apenas em `document.fonts.ready`; o E2E exige
+`document.fonts.check` para `Chakra Petch 700`.
+
+### Publicação e cache
+
+O HTML do laboratório já recebia cache-busting, mas o Pages podia reutilizar um
+`style.css` antigo e mostrar uma carta diferente da validada. `7175c26` passou a
+versionar o CSS do protótipo pelo hash de conteúdo. O laboratório publicado em
+`?cb=7175c26` carregou `style.css?v=39c71a6e` e repetiu zero falhas nas oito
+larguras.
+
+Fechamento remoto: execução `30652005186` verde, 25 suítes e deploy concluído.
+A comparação visual permaneceu restrita aos mesmos 9/21 estados com cartas. A
+retomada geral, o próximo lote de retratos e o roadmap recomendado estão em
+`docs/retomada-2026-07-31.md`.

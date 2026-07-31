@@ -41,9 +41,11 @@ dos times, Suíça, playoffs, placar, antessala, campanha final e Hall sem DOM.
 canônica. Mede 153 cartas reais e sintéticas em oito larguras e reprova estouro,
 recorte, colisão, conteúdo frontal oculto, quantidade diferente de quatro stats
 e qualquer variação tipográfica entre jogadores. Também prova as três densidades
-de placa (24%/26%/28%), tamanhos mínimos, contraste de pelo menos 4,5:1, ausência
-de halo, diagonais equivalentes, equilíbrio do verso, eixos compartilhados,
-teclado, reduced motion, touch e o componente dentro do jogo real.
+de placa (24%/26%/28%), bandeira centrada com o nick e afastada do time, stats e
+trilhos com largura integral, ocupação vertical mínima de 35% no verso, tamanhos
+mínimos, contraste de pelo menos 4,5:1, ausência de halo, diagonais equivalentes,
+eixos compartilhados, teclado, reduced motion, touch e o componente dentro do
+jogo real.
 O Donk é tanto a referência isolada quanto o molde visual usado pela escada de
 raridade e pela matriz de funções; os casos reais continuam cobrindo os 85
 jogadores sem alterar essa implementação.
@@ -57,15 +59,17 @@ atribuir o problema ao layout.
 
 Mesmo com a face correta carregada, FreeType/Linux mediu `olofmeister` 1,25 px
 mais largo que DirectWrite/Windows no limite de 120 px. A densidade compacta usa
-tracking universal de `-0.025em` — não ajuste individual — para absorver essa
-diferença sem reduzir o corpo. A comparação dessa correção deve alterar somente
-nicks frontais compactos; verso e larguras acima de 150 px ficam idênticos.
+tracking universal de `-0.025em` até 176 px e corpo universal
+`clamp(12px, 10cqw, 27px)` até 150 px — nunca ajuste individual — para absorver
+essa diferença depois que a bandeira passou a compartilhar o eixo do nick. A
+grade ampla, a partir de 188 px, mantém `clamp(13px, 10.5cqw, 27px)`.
 
 O retrato de referência é fotografado com o OVR escondido para amostrar o pixel
 real mais claro da zona superior. Casos sintéticos provam que o medidor acusa
 texto impossível, colisão, reticência deliberada, conteúdo oculto, stat ausente e
-exceção de fonte; depois a medição precisa voltar a zero. Não existe mais estado
-"publicado versus proposta" nem comparador de enquadramento no laboratório.
+exceção de fonte, bandeira ausente e trilho encurtado; depois a medição precisa
+voltar a zero. Não existe mais estado "publicado versus proposta" nem comparador
+de enquadramento no laboratório.
 
 `tools/check-card-portraits.js`, parte de `npm run check`, valida os assets ligados
 ao campo cru `foto`: ID seguro, arquivo WebP existente, proporção exata 5:7,
@@ -172,6 +176,11 @@ O `docs/baseline.md` é um retrato histórico: sua contagem de 13 suítes corres
 à captura de 19 de julho de 2026, não à bancada atual. A validação final de P2,
 em 28 de julho de 2026, aprovou 24/24 suítes em 168,3 s. Isso confirma regressão;
 não é uma nota IFCS oficial.
+
+O checkpoint visual de 31 de julho de 2026 usa a bancada atual de 25 suítes:
+`npm run validate` aprovou 25/25 em 184,2 s; a execução remota `30652005186`
+também ficou verde e publicou `7175c26`. A comparação visual mudou 9/21 estados,
+todos contendo cartas, e deixou os outros 12 pixel a pixel idênticos.
 
 ## Validação do extrator IFCS
 
@@ -288,12 +297,13 @@ o balanceamento executável do produto.
 
 ## Próximas camadas
 
-- Guardas justificadas de caudas, ranking e inversões somente depois de revisar
-  a caracterização produzida por R1; R1 e R2 permanecem diagnósticas.
-- Distribuição de resultados entre muitas campanhas MD3 e seu contrato de teste.
-- Unitários de fórmulas e limites após cada motor ser extraído.
-- Integração do torneio sem DOM.
-- Screenshots responsivos e com `prefers-reduced-motion`.
-- Benchmark de desempenho separado dos asserts de realismo.
-- Adquirir, auditar e selar o corpus real; então produzir a primeira baseline
-  IFCS sem tuning no mesmo commit.
+- retratos por lotes: validar arquivo/dado, rodar o E2E de cartas e inspecionar
+  frente/verso nas oito larguras antes de publicar cada lote;
+- P5 estado: guarda unitária de shape, instâncias independentes, identidade dos
+  resets e campos deliberadamente ausentes antes de mover qualquer controlador;
+- P5 controladores: E2E completo do jogo e golden/RNG pertinente a cada extração;
+- Carreira: testes de schema/migração do save, recálculo de derivados e um E2E da
+  primeira temporada curta desde o criador até o encerramento;
+- desempenho: benchmark separado dos asserts de realismo, antes de otimizar;
+- IFCS: adquirir, auditar e selar o corpus real; só então produzir a primeira
+  nota oficial, sem tuning no mesmo commit.
