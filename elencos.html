@@ -25,9 +25,10 @@
   --shadow:0 1px 0 rgba(255,255,255,.03),0 12px 34px rgba(0,0,0,.5);
   --barbg:rgba(255,255,255,.08);
   --ff:'Chakra Petch'; --fb:'Barlow Semi Condensed';
-  /* faixas de OVR: dourado · âmbar · laranja(accent) · ciano · prata — do próprio jogo */
-  --t22:#ffce4a; --t22i:#07090e; --t21:#f0a93a; --t21i:#07090e; --t18:#ff6b2a; --t18i:#07090e;
-  --t15:#4bd7ff; --t15i:#07090e; --t14:#aab6c4; --t14i:#0b1119;
+  /* As seis faixas usam a mesma taxonomia cromática da carta canônica. */
+  --t6:#cfd8ff; --t6i:#0b1119; --t5:#c4162c; --t5i:#fff;
+  --t4:#ffbe00; --t4i:#07090e; --t3:#d4a017; --t3i:#07090e;
+  --t2:#1f7a4d; --t2i:#fff; --t1:#c9d2dd; --t1i:#0b1119;
 }
 *{box-sizing:border-box; margin:0; padding:0}
 body{
@@ -91,8 +92,8 @@ header{
 :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px}
 .btn[aria-pressed="true"]{border-color:var(--accent); color:var(--accent)}
 .tag.dupe{color:var(--cyan); border:1px solid color-mix(in srgb,var(--cyan) 45%,transparent)}
-.tag.dev-up{color:var(--t21); border:1px solid color-mix(in srgb,var(--t21) 50%,transparent)}
-.tag.dev-dn{color:var(--t15); border:1px solid color-mix(in srgb,var(--t15) 50%,transparent)}
+.tag.dev-up{color:var(--t4); border:1px solid color-mix(in srgb,var(--t4) 50%,transparent)}
+.tag.dev-dn{color:var(--t2); border:1px solid color-mix(in srgb,var(--t2) 50%,transparent)}
 .rowh [data-key]{cursor:pointer; user-select:none; transition:color .12s}
 .rowh [data-key]:hover{color:var(--ink)}
 .rowh [data-key].on{color:var(--accent)}
@@ -124,8 +125,8 @@ main{max-width:1180px; margin:0 auto; padding:20px 20px 80px}
 .tmeta{display:flex; flex-direction:column; gap:2px; min-width:0}
 .tname{font-family:var(--ff); font-weight:700; font-size:1.02rem; letter-spacing:.02em; display:flex; align-items:center; gap:8px}
 .tcamp{font-size:.74rem; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-.tcrown{font-size:.62rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--t22);
-  border:1px solid color-mix(in srgb,var(--t22) 45%,transparent); padding:1px 6px; border-radius:5px}
+.tcrown{font-size:.62rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--t6);
+  border:1px solid color-mix(in srgb,var(--t6) 45%,transparent); padding:1px 6px; border-radius:5px}
 .tright{margin-left:auto; display:flex; align-items:center; gap:16px}
 .tavg{text-align:right}
 .tavg .v{font-weight:800; font-size:1.3rem; line-height:1}
@@ -168,9 +169,9 @@ main{max-width:1180px; margin:0 auto; padding:20px 20px 80px}
 .pl{display:flex; flex-direction:column; gap:2px; min-width:0}
 .pl .nm{font-weight:700; font-size:.96rem; display:flex; align-items:center; gap:6px; letter-spacing:-.01em}
 .pl .nm .txt{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-.star{color:var(--t22)}
+.star{color:var(--t6)}
 .tag{font-size:.58rem; font-weight:800; letter-spacing:.04em; padding:1px 5px; border-radius:5px; text-transform:uppercase}
-.tag.igl{color:var(--t22); border:1px solid color-mix(in srgb,var(--t22) 45%,transparent)}
+.tag.igl{color:var(--t6); border:1px solid color-mix(in srgb,var(--t6) 45%,transparent)}
 .tag.team{color:var(--muted); border:1px solid var(--line); font-weight:700}
 .pl .meta{font-size:.68rem; color:var(--faint); display:flex; gap:7px}
 
@@ -267,10 +268,10 @@ const DATA=[{"n":"FaZe","cor":"#e43d30","camp":"ESL One New York 2017","coloc":"
 
 const STAT=[["fp","FP"],["en","EN"],["tr","TR"],["op","OP"],["cl","CL"],["sn","SN"],["ut","UT"]];
 const STATFULL={fp:"Firepower",en:"Entrada",tr:"Trade",op:"Abertura",cl:"Clutch",sn:"AWP",ut:"Utilitário"};
-/* cores idênticas às do jogo (style.css: roles dessaturados + características de treinador) */
+/* Cores de função idênticas às da carta canônica em style.css. */
 const ROLE={
-  AWPer:{c:"#9a86c4",ab:"AWP"}, Rifler:{c:"#bf9f63",ab:"RIFLE"}, Entry:{c:"#c47a6a",ab:"ENTRY"},
-  Lurker:{c:"#7fa882",ab:"LURK"}, Support:{c:"#5fa6a6",ab:"SUP"}, IGL:{c:"#7a93b8",ab:"IGL"}
+  AWPer:{c:"#b070ff",ab:"AWP"}, Rifler:{c:"#ff5fd0",ab:"RIFLE"}, Entry:{c:"#ff7d4d",ab:"ENTRY"},
+  Lurker:{c:"#22d3ee",ab:"LURK"}, Support:{c:"#16c9b0",ab:"SUP"}, IGL:{c:"#4d9bff",ab:"IGL"}
 };
 const CARAC={Estrategista:"#2fd6d6",Gestor:"#c9a36a",Desenvolvedor:"#4a82ff",Motivador:"#c79bff"};
 const CAMPEAO=t=>/campe/i.test(t.coloc||"");
@@ -278,7 +279,7 @@ const CAMPEAO=t=>/campe/i.test(t.coloc||"");
 /* Mesmas faixas de `tierOf` em src/ui/game/card-view.mjs. Se as duas divergirem,
    o mesmo jogador aparece com raridades diferentes na carta e nesta lista. */
 function tierVars(o){
-  const t=o>=21?"22":o>=20?"21":o>=19?"18":o>=17?"15":"14";
+  const t=o>=22?"6":o>=21?"5":o>=20?"4":o>=18?"3":o>=15?"2":"1";
   return `--tbg:var(--t${t});--tink:var(--t${t}i)`;
 }
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}

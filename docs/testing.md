@@ -37,39 +37,40 @@ download do backup e isolamento de instâncias com adaptadores falsos de navegad
 `check-game-view-modules.js` congela escaping, cartas, tiers, selos, identidade
 dos times, Suíça, playoffs, placar, antessala, campanha final e Hall sem DOM.
 
-`bancada/e2e-cartas.js` é a guarda geométrica, visual e interativa das cartas.
-Mede 156 cartas — 152 da bancada-base e 4 comparadores de enquadramento/composição
-— em oito larguras, nos estados publicado e proposta, e reprova
-estouro horizontal, recorte vertical e colisão entre regiões. Em cada largura,
-também exige campeonato/colocação visíveis em jogador e treinador, ausência dos
-nós de rating e peso removidos do verso, tamanhos mínimos, contraste calculado de
-pelo menos 4,5:1, nenhum halo externo e a composição vertical declarada do
-retrato nas densidades completa e compacta. Congela ainda o contrato de movimento:
-tempos, propriedades, holografia estática e keyframes sem rotação, luz ou
-overshoot. No jogo real, prova a costura compacta, frente/verso acessível por
-teclado, reset do modo Virar, seleção normal, ausência da varredura de entrada,
-`prefers-reduced-motion` e ausência de hover preso em dispositivos touch. Casos
-sintéticos garantem que o detector não esteja sempre verde e separam falha real
-de reticências deliberadas.
+`bancada/e2e-cartas.js` é a guarda geométrica, visual e interativa da única carta
+canônica. Mede 153 cartas reais e sintéticas em oito larguras e reprova estouro,
+recorte, colisão, conteúdo frontal oculto, quantidade diferente de quatro stats
+e qualquer variação tipográfica entre jogadores. Também prova as três densidades
+de placa (24%/26%/28%), tamanhos mínimos, contraste de pelo menos 4,5:1, ausência
+de halo, diagonais equivalentes, equilíbrio do verso, eixos compartilhados,
+teclado, reduced motion, touch e o componente dentro do jogo real.
+O Donk é tanto a referência isolada quanto o molde visual usado pela escada de
+raridade e pela matriz de funções; os casos reais continuam cobrindo os 85
+jogadores sem alterar essa implementação.
 
-Desde 31/07/2026, a proposta ativa também passa por uma guarda de **grade
-editorial**. Ela mede margem inferior nas duas faces, distância entre texto e
-diagonal no ponto apertado, igualdade física das inclinações, razão mínima entre
-playstyle e nick, equilíbrio dos stats entre identidade e era, eixo lateral
-compartilhado e alinhamento superior de OVR/bandeira. O A do checkpoint `369c480`
-fica ao lado como referência visual e é excluído somente desse gate novo. Uma
-injeção sintética degrada os nove contratos, prova que o detector os acusa e
-restaura a medição a zero antes de continuar a suíte.
+Antes da geometria, o E2E carrega explicitamente `Chakra Petch 700` e exige uma
+face disponível em `document.fonts`. `document.fonts.ready` sozinho não basta:
+ele também resolve quando a fonte falha, caso em que a métrica do fallback pode
+criar um falso estouro somente no Linux. O laboratório e o jogo fazem preload do
+subset latino usado pelos nicks; uma falha futura informa a fonte antes de
+atribuir o problema ao layout.
 
-Desde 30/07/2026 ela também **amostra pixel real** em toda carta que declara
-`--foto`. O contraste calculado acima assume um fundo fixo escuro, e esse modelo
-deixa de valer quando há retrato: o OVR e a bandeira ficam direto sobre o campo,
-sem placa por baixo, e cada foto traz o próprio padrão de luz. A guarda fotografa
-a carta **com o texto escondido** — sem isso o pixel mais claro da zona é o
-próprio número branco e a medição mede a si mesma —, varre as duas zonas e exige
-4,5:1 para texto branco. Duas provas sintéticas fecham o contrato: um retrato
-branco puro sem o escurecimento do campo reprova em 1:1, e com ele passa em
-4,82:1, que é a folga real do desenho contra o pior retrato concebível.
+Mesmo com a face correta carregada, FreeType/Linux mediu `olofmeister` 1,25 px
+mais largo que DirectWrite/Windows no limite de 120 px. A densidade compacta usa
+tracking universal de `-0.025em` — não ajuste individual — para absorver essa
+diferença sem reduzir o corpo. A comparação dessa correção deve alterar somente
+nicks frontais compactos; verso e larguras acima de 150 px ficam idênticos.
+
+O retrato de referência é fotografado com o OVR escondido para amostrar o pixel
+real mais claro da zona superior. Casos sintéticos provam que o medidor acusa
+texto impossível, colisão, reticência deliberada, conteúdo oculto, stat ausente e
+exceção de fonte; depois a medição precisa voltar a zero. Não existe mais estado
+"publicado versus proposta" nem comparador de enquadramento no laboratório.
+
+`tools/check-card-portraits.js`, parte de `npm run check`, valida os assets ligados
+ao campo cru `foto`: ID seguro, arquivo WebP existente, proporção exata 5:7,
+resolução mínima, limite de peso e ausência de órfãos. O protocolo completo de
+entrada e normalização está em `docs/card-portraits.md`.
 
 Os servidores efêmeros dos E2E devem usar faixas aceitas pelo Chromium. O fluxo
 principal usa 7000–7299; a faixa antiga 5900–6199 incluía a porta 6000, que o

@@ -99,9 +99,9 @@ catálogo não menciona o dado, aí sim ele não existe.
   e operacional do IFCS; não substituem os contratos executáveis acima.
 - `elencos.html`: artefato gerado; não editar os dados embutidos manualmente.
 - `prototipo-cartas.html`: **laboratório de cartas** — importa `style.css` e os
-  módulos de UI reais, tem medidor de geometria (largura, recorte e colisão),
-  escala de cinza, daltonismo e um bloco `#proposta` para A/B. Mudança de design
-  de carta entra aqui antes do jogo.
+  módulos de UI reais e mede a única carta canônica: geometria, recorte, colisão,
+  simetria, tipografia universal, escala de cinza e daltonismo. Não há A/B ou
+  ajuste por jogador. Retratos seguem `docs/card-portraits.md`.
   Abrir por servidor: `npm run serve` → `/prototipo-cartas.html`.
 
 A fronteira arquitetural vigente está detalhada em `docs/architecture.md`.

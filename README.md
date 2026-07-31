@@ -83,7 +83,7 @@ draft9-0/
 │   └── ui/               ← renderizadores e utilitários puros de interface
 ├── elencos.html          ← base de elencos (página standalone)
 ├── sandbox.html          ← bancada de tuning + calibrador inteligente
-├── prototipo-cartas.html ← laboratório A/B que usa os módulos e o CSS reais
+├── prototipo-cartas.html ← QA da carta canônica com módulos e CSS reais
 ├── calibrador-worker.js  ← Web Worker do calibrador (busca em paralelo)
 ├── fonts.css + fonts/    ← fontes auto-hospedadas (Chakra Petch + Barlow, sem CDN)
 ├── og-image.png · robots.txt · .gitignore

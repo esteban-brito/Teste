@@ -112,8 +112,7 @@ async function main(){
   // Um conserto sem atualizar o catálogo é tão ruim quanto a divergência.
   const aindaVale={
     "camp-empacotado":()=>TIMES_DEF.every(t=>/^(.*?)\s(\d{4})$/.test(t.camp))&&
-      !("evento" in TIMES_DEF[0]),
-    "sem-foto":()=>!camposCrusReais.has("foto")
+      !("evento" in TIMES_DEF[0])
   };
   DIVERGENCIAS.forEach(d=>{
     const teste=aindaVale[d.id];
@@ -123,7 +122,7 @@ async function main(){
 
   console.log(`data catalog: ok (${TOTAIS.jogadores} jogadores · ${TOTAIS.elencos} elencos · `+
     `${TOTAIS.campeonatosDistintos} campeonatos · ${TOTAIS.paisesTotais} países · `+
-    `${DIVERGENCIAS.length} divergências declaradas)`);
+    `${DIVERGENCIAS.length} divergência${DIVERGENCIAS.length===1?"":"s"} declarada${DIVERGENCIAS.length===1?"":"s"})`);
 }
 
 main().catch(error=>{

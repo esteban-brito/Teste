@@ -11,8 +11,8 @@ já entendidos ou declare o trabalho pronto sem prova suficiente.
 2. Leia `docs/project-context.md` e `docs/next-steps.md`.
 3. Antes de tocar aplicação, estado ou UI, leia
    `docs/p5-aplicacao-ui-2026-07-29.md`.
-4. Antes de tocar cartas, leia as seções 11 (design publicado) e 12 (proposta
-   ativa, ainda não promovida) de `docs/cartas-design-2026-07-28.md`, além de
+4. Antes de tocar cartas, leia a seção 13 de
+   `docs/cartas-design-2026-07-28.md`, `docs/card-portraits.md` e
    `docs/testing.md`.
 5. Antes de procurar qualquer dado do projeto, leia `src/data/catalog.mjs`.
 
@@ -82,6 +82,9 @@ Regras não negociáveis:
 15. O E2E exige, nas oito larguras, rodapé em 100% das cartas, tamanhos mínimos,
     contraste calculado de pelo menos 4,5:1 e ausência física dos nós removidos.
     Não substitua essas provas por uma captura bonita.
+16. A geometria só é comparável depois de `Chakra Petch 700` carregar de fato.
+    `document.fonts.ready` também resolve em falha; preserve o preload, a carga
+    explícita e a asserção de `document.fonts.check` do laboratório/E2E.
 
 ## Ritual para qualquer mudança visual de carta
 
@@ -124,35 +127,20 @@ Se o repositório tiver avançado, trate este checkpoint como histórico e confi
 estado real. As guardas executáveis e os documentos especializados continuam sendo
 a fonte de verdade.
 
-## Existe uma proposta visual ATIVA no laboratório (30/07/2026)
+## Carta canônica e retratos (31/07/2026)
 
-**Antes de tocar em carta, leia a seção 12 de `docs/cartas-design-2026-07-28.md`.**
-O bloco `#proposta` de `prototipo-cartas.html` deixou de estar vazio: ele carrega
-uma hipótese completa — escada de seis faixas por OVR, bordas cromadas no 20/21/22,
-paleta de função reconstruída, treinador reformulado e a primeira fatia de retrato.
+A A refinada foi promovida e é a única carta do jogo e do laboratório. Não
+existem `#proposta`, tecla P, A/B/C, referência `369c480` ou encaixe medido.
 
-O que uma sessão nova precisa saber antes de mexer:
-
-- **nada disso está no jogo.** Com a tecla `P` desligada, laboratório e jogo são
-  idênticos. O único arquivo de produto tocado foi `style.css`, e só para separar
-  pintura de tinta (`--m`/`--m-ink`, `--r`/`--r-ink`), com 21/21 capturas
-  provadas pixel a pixel idênticas;
-- **não reintroduza o que foi reprovado**: guilhoché, textura no campo, filete
-  duplo no topo, filete sob o nome da função, braçadeira ou entalhe na carta de
-  IGL. A carta de IGL é estruturalmente igual às outras de propósito;
-- **as marcas de raridade e os emblemas de função foram removidos** por decisão
-  do responsável — o OVR carrega o valor e o centro da carta é do retrato;
-- **fio, campo e placa saem de `--fio-cor`/`--wash-cor`, nunca de `--m` cru.**
-  Derivar qualquer um deles da cor estrutural reintroduz inversão de luminância
-  na escada, que já aconteceu duas vezes;
-- **promover exige mover cinco pontos juntos**: `tierOf` em `card-view.mjs`,
-  `tierVars` em `elencos.html`, `tools/check-game-view-modules.js`, o array
-  `TIERS` do laboratório e `CARTAS_ESPERADAS` em `bancada/e2e-cartas.js`;
-- **a guarda de contraste agora amostra pixel real** nas cartas com `--foto`,
-  porque o modelo de fundo fixo deixa de valer quando há retrato. Ela esconde o
-  texto antes de medir e tem duas provas sintéticas de que consegue reprovar.
-- **o responsável escolheu o enquadramento A.** O bloco `0` ainda mostra A/B/C
-  como registro. A composição seguinte amplia o campo: placa de 38% para 32% na
-  densidade completa e de 32% para 29% na compacta, com toda a identidade
-  descendo pelos mesmos tokens. Aguardar a conferência visual antes dos outros
-  cinco retratos.
+- jogador usa tipografia universal, bandeira/roles/time sempre visíveis e quatro
+  stats; qualquer exceção individual reprova o E2E;
+- recorte de runtime é fixo em `100% auto · 50% 12%`; novos retratos são
+  normalizados como assets 5:7 antes de entrar;
+- o campo cru `foto` contém asset-id e tem cobertura declarada no catálogo;
+- `tools/check-card-portraits.js` valida formato, proporção, resolução, peso,
+  referências e órfãos;
+- `donk_kato24` é a referência e o molde visual da escada/matriz; a comparação
+  mudou somente 9/21 estados com cartas e `npm run validate` fechou 25/25 em
+  184,2 s;
+- a próxima fatia visual é adicionar retratos pelo protocolo de
+  `docs/card-portraits.md`, nunca criar CSS por jogador.

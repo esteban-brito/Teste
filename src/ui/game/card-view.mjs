@@ -1,38 +1,19 @@
-/* CARTA — frente e verso, HTML puro.
-   ══════════════════════════════════════════════════════════════════════════════
+/* Carta canônica — frente e verso em HTML puro.
+   A frente usa uma grade fixa para nick, role principal, bandeira, role
+   secundário e time. O verso usa quatro slots fixos: Firepower, atributos mais
+   relevantes ao playstyle e, quando necessário, o melhor atributo complementar.
 
-   FRENTE: quem é e quanto vale.   VERSO: como joga.
-
-   Três níveis de leitura na frente, e só três: OVR sozinho no canto, nick sobre
-   uma placa sólida, função primária na cor da função. O rodapé (função
-   secundária e time) é apagado de propósito — é contexto, não hierarquia.
-
-   O nick sobre PLACA SÓLIDA, e não sobre degradê, porque o contraste de um
-   degradê muda ao longo da própria palavra. É o que cartas de coleção reais
-   fazem, e é o que sustenta o dia em que houver foto atrás.
-
-   O VERSO tem o playstyle como espinha. Firepower vem sempre primeiro; o resto
-   continua ordenado pela contribuição real (peso × valor), sem expor pesos de
-   receita ou repetir OVR/rating. Assim o espaço serve aos atributos e à era.
-   São 3 ou 4 estatísticas — 3 quando Firepower já está na receita — e o layout
-   centraliza para absorver os dois casos sem reajuste.
-
-   NO DESIGN PUBLICADO, A CAMADA DE FOTO ESTÁ VAZIA. Hoje 0 de 85 jogadores têm
-   retrato no dado cru; o laboratório mantém um ativo isolado para a proposta
-   A/B. O estado "sem foto" é declarado, não um remendo: a tinta da raridade sobe
-   e a carta fica assumidamente gráfica. Promover fotos é mudança de dado — não
-   redesenho.
-
-   O TREINADOR usa o MESMO esqueleto. A diferença é que a cor não vem da
-   raridade e sim da característica dele, porque ele não disputa a escala de OVR
-   dos jogadores; e a característica ocupa o lugar da função primária, já que é
-   ela que descreve o que ele faz pelo time. */
+   Jogadores nunca recebem fonte, offset ou recorte individual. O dado cru pode
+   declarar um ID de foto; sem ele, o mesmo componente renderiza o fallback
+   gráfico. Treinadores compartilham o esqueleto, mas mantêm escala própria para
+   nomes de característica porque são outra categoria de carta. */
 import {escapeHtml as esc} from "../shared/html.mjs";
 import {bandeiraDe} from "../shared/flags.mjs";
-import {emblemaDe,EMBLEMA_TREINADOR,slugFuncao} from "../shared/role-emblems.mjs";
 
-const STAT_LABEL={fp:"Firepower",op:"Abertura",cl:"Clutch",ut:"Utilitário",en:"Entrada",tr:"Trade",sn:"AWP"};
+const STAT_LABEL={fp:"Firepower",op:"Abertura",cl:"Clutch",ut:"Utilitário",
+  en:"Entrada",tr:"Trade",sn:"AWP"};
 const DEFAULT_BACK_STATS=["fp","op","cl","ut"];
+const COMPLEMENTARY_STATS=[...DEFAULT_BACK_STATS,"en","tr","sn"];
 const AXIS_ATTRIBUTE={fogo:"fp",ent:"en",ab:"op",tr:"tr",cl:"cl",ut:"ut"};
 const COLOCACAO_LABEL={Campeao:"Campeão",Final:"Vice",Top4:"Top 4",Top8:"Top 8",Grupos:"Grupos"};
 const COACH_DESCRIPTION={
@@ -41,60 +22,51 @@ const COACH_DESCRIPTION={
   Estrategista:"Reduz penalidades de estrutura em 15% e de comando (IGL) em 30%.",
   Motivador:"Reduz em 30% as penalidades de cobertura e saturação do elenco."};
 
-/* Faixas de raridade, por OVR puro. A pirâmide anterior punha 87% dos 85
-   jogadores em verde ou ouro, então a raridade quase não dizia nada — quatro
-   cartas de um mesmo elenco saíam idênticas. Esta distribui de verdade:
-   27 · 30 · 11 · 11 · 6 jogadores, do mais comum ao mais raro.
-   Promover por `estrela` foi descartado por medição: a flag é exatamente
-   ovr>=20, com zero discordâncias em 85 — não moveria uma única carta. */
-const tierOf=ovr=>ovr>=21?"tier-h":ovr>=20?"tier-s":ovr>=19?"tier-1":ovr>=17?"tier-2":"tier-3";
+/* Seis faixas por OVR: 5 · 39 · 24 · 11 · 2 · 4 jogadores. */
+const tierOf=ovr=>ovr>=22?"tier-6":ovr>=21?"tier-5":ovr>=20?"tier-4"
+  :ovr>=18?"tier-3":ovr>=15?"tier-2":"tier-1";
+const slugFuncao=role=>String(role||"").toLowerCase().replace(/[^a-z]/g,"")||"rifler";
 
-/* Nome curto e nome longo ocupam a mesma caixa óptica. É RAZÃO, não tamanho:
-   quem a aplica é o envelope das duas faces, então frente e verso encolhem
-   juntos. Antes o nome era cortado com reticências na frente e tinha um ajuste
-   por JavaScript no verso — mesma informação, dois comportamentos. */
+/* Ajustes exclusivos do treinador; jogadores usam corpos universais no CSS. */
 const escalaNick=nome=>nome.length<=6?1:nome.length<=9?.825:nome.length<=12?.675:.5625;
-
-/* O rótulo do verso — playstyle no jogador, característica no treinador — tem o
-   mesmo problema e recebe a mesma solução. "Desenvolvedor" é palavra única, não
-   quebra linha, e transbordava 16px no desktop e 26px a 120px, onde o navegador a
-   cortava. Degraus medidos contra os rótulos reais: `Infiltrador`, `Facilitador` e
-   `Estrategista` (11–12) e `Desenvolvedor` (13) são os únicos que não cabem. */
 const escalaCarac=texto=>texto.length<=10?1:texto.length<=12?.88:.8;
 
-const camadasDeFundo=`<div class="c-foto"></div><div class="c-tinta"></div><div class="c-vinheta"></div>`;
-const bandeiraHtml=pais=>{const fonte=bandeiraDe(pais);
-  return fonte?`<div class="c-flag" style="background-image:url('${fonte}')" title="${esc(pais)}"></div>`:"";};
+const camadasDeFundo=`<div class="c-foto"></div><div class="c-vinheta"></div>`;
+const bandeiraHtml=pais=>{
+  const fonte=bandeiraDe(pais);
+  return fonte?`<div class="c-flag" style="background-image:url('${fonte}')" title="${esc(pais)}"></div>`:"";
+};
+/* O ID, e não um caminho arbitrário, cruza a fronteira dado → CSS. */
+const fotoStyle=card=>{
+  const id=card.foto||card._eng?.foto||"";
+  return /^[a-zA-Z0-9_-]+$/.test(id)?`--foto:url('fotos/${id}.webp')`:"";
+};
 
 export function createCardView({styleId,styleLabel,styleRecipe}){
   const teamCardHTML=(team,extra="")=>`<div class="tcard ${extra}" data-team="${esc(team.id)}" style="--col:${esc(team.cor)}">
   <div class="tcoloc">${esc(team.coloc)}</div><div class="tname">${esc(team.nome)}</div><div class="tcamp">${esc(team.camp)}</div></div>`;
 
-  /* Duas classes, dois canais: `tier-*` pinta a moldura (raridade) e `fn-*`
-     pinta o campo (função). Elas não se sobrepõem em nenhuma propriedade. */
+  /* Raridade pinta a estrutura; função colore somente sua informação textual. */
   const cardClass=card=>card.tipo==="coach"
     ?`coachcard coach-${card.caracSlug}`
     :`card ${tierOf(card.ovr)} fn-${slugFuncao(card.prim)}`;
 
-  /* Frente compartilhada. `rotulo` é o texto sob o OVR e serve de MARCADOR DE
-     TIPO: é o único ponto da carta que nunca some por falta de espaço, então é
-     ali que "Treinador" aparece. `destaque` é a função primária do jogador ou a
-     característica do treinador; `contexto` é o par do rodapé. */
-  const frenteHtml=(card,rotulo,destaque,contexto,emblema)=>`${camadasDeFundo}
-  <div class="c-emblema">${emblema}</div>
+  const frenteHtml=(card,rotulo,destaque,contexto,tipo)=>`${camadasDeFundo}
   <div class="c-fio"></div><div class="c-placa"></div>
   <div class="c-ovr">${card.ovr}<small>${rotulo}</small></div>
-  ${bandeiraHtml(card.pais)}
-  <div class="c-nick">${esc(card.nick)}</div>
-  <div class="c-func">${esc(destaque)}</div>
-  <div class="c-meta"><span>${esc(contexto[0])}</span><span>${esc(contexto[1])}</span></div>
+  <div class="c-identidade c-identidade--${tipo}">
+    ${bandeiraHtml(card.pais)}
+    <div class="c-nick">${esc(card.nick)}</div>
+    <div class="c-func">${esc(destaque)}</div>
+    <div class="c-meta"><span class="c-role2${contexto[0]?` c-role2--${slugFuncao(contexto[0])}`:""}">${esc(contexto[0])}</span><span class="c-team">${esc(contexto[1])}</span></div>
+  </div>
   <div class="c-grao"></div>`;
 
-  const playerFront=card=>frenteHtml(card,"Overall",card.prim,[card.sec||"",card.time],emblemaDe(card.prim));
-  const coachFront=card=>frenteHtml(card,"Treinador",card.carac,["",card.time],EMBLEMA_TREINADOR);
+  const playerFront=card=>frenteHtml(card,"Overall",card.prim,[card.sec||"",card.time],"player");
+  const coachFront=card=>frenteHtml(card,"Treinador",card.carac,["",card.time],"coach");
 
-  /* Firepower permanece primeiro. As outras estatísticas são ordenadas pela
-     contribuição peso × valor usada na classificação do playstyle. */
+  /* Firepower permanece primeiro. A receita ordena os seguintes por contribuição
+     real (peso × valor); um atributo complementar completa o quarto slot. */
   const statsDoEstilo=(id,enginePlayer)=>{
     const recipe=id==="joker"?null:styleRecipe(id);
     if(!recipe)return null;
@@ -104,28 +76,26 @@ export function createCardView({styleId,styleLabel,styleRecipe}){
         contrib:weight*((enginePlayer&&enginePlayer[AXIS_ATTRIBUTE[axis]])||0)}))
       .filter(item=>item.attr)
       .sort((a,b)=>b.contrib-a.contrib);
-    const chaves=["fp",...ordenadas.map(item=>item.attr).filter(attr=>attr!=="fp")].slice(0,4);
+    const chaves=[...new Set(["fp",...ordenadas.map(item=>item.attr)])].slice(0,4);
+    const complementares=COMPLEMENTARY_STATS.filter(attr=>!chaves.includes(attr))
+      .sort((a,b)=>((enginePlayer&&enginePlayer[b])||0)-((enginePlayer&&enginePlayer[a])||0));
+    chaves.push(...complementares.slice(0,Math.max(0,4-chaves.length)));
     return chaves.map(attr=>({attr}));
   };
 
-  /* min-width no trilho segura o caso real: chopper tem Firepower 2. Sem isso a
-     barra some e parece defeito, quando na verdade ela É a informação. */
   const statHtml=({attr},enginePlayer)=>{
     const valor=Math.round(enginePlayer[attr]||0);
     return `<div class="c-st"><i>${esc(STAT_LABEL[attr])}</i><b>${valor}</b>`+
       `<div class="c-trilho"><u style="width:${valor}%"></u></div></div>`;
   };
 
-  /* Fonte única do rótulo do verso: o mesmo texto que a face mostra é o que decide
-     a razão de escala em `cardHTML`. Duas leituras divergentes reabririam o corte. */
   const rotuloVerso=card=>{
     if(card.tipo==="coach")return card.carac||"";
     const enginePlayer=card._eng||{};
     return enginePlayer.playstyle?styleLabel(styleId(enginePlayer.playstyle)):(card.prim||"");
   };
 
-  /* Jogador e treinador compartilham o mesmo rodapé de era. O campeonato nunca
-     é dividido em evento/ano: `camp` é a string canônica já existente no dado. */
+  /* `camp` já é a string canônica de evento + ano; a UI não a reinterpreta. */
   const rodapeVerso=card=>`<div class="c-vrod"><b>${esc(card.camp||"")}</b>`+
     `<span>${esc(COLOCACAO_LABEL[card.coloc]||card.coloc||"")}</span></div>`;
 
@@ -133,17 +103,16 @@ export function createCardView({styleId,styleLabel,styleRecipe}){
     const enginePlayer=card._eng||{};
     const id=styleId(enginePlayer.playstyle);
     const receita=statsDoEstilo(id,enginePlayer);
-    /* Coringa não tem receita: é polivalente por definição. O verso diz isso em
-       vez de mostrar barras vazias. */
-    const linhas=receita
-      ? receita.map(item=>statHtml(item,enginePlayer)).join("")
-      : DEFAULT_BACK_STATS.map(attr=>statHtml({attr},enginePlayer)).join("");
+    /* Coringa não tem receita por definição e usa o conjunto padrão. */
+    const linhas=(receita||DEFAULT_BACK_STATS.map(attr=>({attr})))
+      .map(item=>statHtml(item,enginePlayer)).join("");
     return `<div class="c-vfio"></div><div class="c-vfaixa"></div>
   <div class="c-vnick">${esc(card.nick)}</div>
   <div class="c-vestilo"><small>Playstyle</small><b>${esc(rotuloVerso(card))}</b></div>
   <div class="c-vstats">${linhas}</div>
   ${rodapeVerso(card)}
-  <div class="c-grao"></div>`;};
+  <div class="c-grao"></div>`;
+  };
 
   const backCoach=card=>`<div class="c-vfio"></div><div class="c-vfaixa"></div>
   <div class="c-vnick">${esc(card.nick)}</div>
@@ -154,12 +123,13 @@ export function createCardView({styleId,styleLabel,styleRecipe}){
 
   const cardHTML=card=>{
     const coach=card.tipo==="coach";
-    const front=coach?coachFront(card):playerFront(card);
-    const back=coach?backCoach(card):backPlayer(card);
-    return `<div class="cfaces" style="--nick-esc:${escalaNick(card.nick)};`+
-      `--carac-esc:${escalaCarac(rotuloVerso(card))}">`+
-      `<div class="cface cfront" aria-hidden="false">${front}</div>`+
-      `<div class="cface cback" aria-hidden="true">${back}</div></div>`;
+    const estilos=[fotoStyle(card)];
+    if(coach)estilos.push(`--nick-esc:${escalaNick(card.nick)}`,
+      `--carac-esc:${escalaCarac(rotuloVerso(card))}`);
+    const inline=estilos.filter(Boolean);
+    return `<div class="cfaces"${inline.length?` style="${inline.join(";")}"`:""}>`+
+      `<div class="cface cfront" aria-hidden="false">${coach?coachFront(card):playerFront(card)}</div>`+
+      `<div class="cface cback" aria-hidden="true">${coach?backCoach(card):backPlayer(card)}</div></div>`;
   };
 
   return {teamCardHTML,cardClass,cardHTML};
