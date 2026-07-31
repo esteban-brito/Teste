@@ -40,6 +40,12 @@ roadmap for concluída.
 
 ## 2. Ponto exato de retomada
 
+**Atualização mais recente: sessão de 31/07/2026, encerrada em `9e06073`.** O
+resumo completo — limpeza, escada de raridade, refino do verso, Spirit de Katowice
+completa e as duas lições que custaram retrabalho — está na **seção 0 de
+`docs/retomada-2026-07-31.md`**. Leia-a antes do resto desta seção, que descreve o
+estado anterior.
+
 Atualização vigente de 31 de julho de 2026 (tem precedência sobre o registro
 histórico abaixo):
 
