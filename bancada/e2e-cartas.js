@@ -166,8 +166,8 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     await page.check("#cProposta");
     const composicoes=[];
     for(const esperado of [
-      {largura:"250",placa:.34,contexto:.035,funcao:.08,nick:.157},
-      {largura:"130",placa:.30,contexto:null,funcao:.045,nick:.121},
+      {largura:"250",placa:.30,contexto:.035,funcao:.072,nick:.132},
+      {largura:"130",placa:.27,contexto:null,funcao:.042,nick:.105},
     ]){
       const {largura}=esperado;
       await page.selectOption("#cLargura",largura);await page.waitForTimeout(80);
@@ -195,13 +195,16 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
         const px=sel=>parseFloat(getComputedStyle(card.querySelector(sel)).fontSize);
         return [card.dataset.enquadramento,{placa:fs.getPropertyValue("--placa-n").trim(),
           b1:fs.getPropertyValue("--b1").trim(),hierarquia:px(".c-vestilo b")/px(".c-vnick"),
-          reserva:parseFloat(getComputedStyle(card.querySelector(".c-vrod")).minHeight)}];})));
-    check(comparacaoA.a?.placa==="34"&&comparacaoA.a?.b1==="3.5%"&&
+          reserva:parseFloat(getComputedStyle(card.querySelector(".c-vrod")).minHeight),
+          rodape:parseFloat(getComputedStyle(card.querySelector(".c-vrod")).bottom)/card.offsetHeight}];})));
+    check(comparacaoA.a?.placa==="30"&&comparacaoA.a?.b1==="3.5%"&&
       comparacaoA.a?.hierarquia>=1.14&&comparacaoA.a?.reserva>=26&&
+      Math.abs(comparacaoA.a?.rodape-.06)<.001&&
       comparacaoA["a-anterior"]?.placa==="32"&&comparacaoA["a-anterior"]?.b1==="2.8%"&&
-      comparacaoA["a-anterior"]?.hierarquia<1.05&&comparacaoA["a-anterior"]?.reserva===0,
-    "comparador conserva o A anterior e isola placa, margem, hierarquia e reserva do refinado"+
-      (comparacaoA.a?.placa==="34"?"":` — ${JSON.stringify(comparacaoA)}`));
+      comparacaoA["a-anterior"]?.hierarquia<1.05&&comparacaoA["a-anterior"]?.reserva===0&&
+      comparacaoA["a-anterior"]?.rodape<.03,
+    "comparador isola foto, grade frontal e rodapé elevado do A refinado"+
+      (comparacaoA.a?.placa==="30"?"":` — ${JSON.stringify(comparacaoA)}`));
     for(const largura of LARGURAS){
       await page.selectOption("#cLargura",largura);await page.waitForTimeout(80);
       const audit=await page.evaluate(()=>window.__LAB_MEDIR());
@@ -285,7 +288,7 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       nick.style.bottom="22%";
       estilo.style.top="20%";
       rotulo.style.fontSize=getComputedStyle(card.querySelector(".c-vnick")).fontSize;
-      rodape.style.minHeight="0";
+      rodape.style.minHeight="0";rodape.style.bottom="1%";
       faixa.style.clipPath="polygon(0 0,100% 0,100% 90%,0 100%)";
       funcao.style.left="12%";
       flag.style.top="9%";
