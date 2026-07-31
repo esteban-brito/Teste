@@ -38,8 +38,8 @@ download do backup e isolamento de instâncias com adaptadores falsos de navegad
 dos times, Suíça, playoffs, placar, antessala, campanha final e Hall sem DOM.
 
 `bancada/e2e-cartas.js` é a guarda geométrica, visual e interativa das cartas.
-Mede 155 cartas — 152 da bancada-base e 3 candidatas de enquadramento — em oito
-larguras, nos estados publicado e proposta, e reprova
+Mede 156 cartas — 152 da bancada-base e 4 comparadores de enquadramento/composição
+— em oito larguras, nos estados publicado e proposta, e reprova
 estouro horizontal, recorte vertical e colisão entre regiões. Em cada largura,
 também exige campeonato/colocação visíveis em jogador e treinador, ausência dos
 nós de rating e peso removidos do verso, tamanhos mínimos, contraste calculado de
@@ -51,6 +51,15 @@ teclado, reset do modo Virar, seleção normal, ausência da varredura de entrad
 `prefers-reduced-motion` e ausência de hover preso em dispositivos touch. Casos
 sintéticos garantem que o detector não esteja sempre verde e separam falha real
 de reticências deliberadas.
+
+Desde 31/07/2026, a proposta ativa também passa por uma guarda de **grade
+editorial**. Ela mede margem inferior nas duas faces, distância entre texto e
+diagonal no ponto apertado, igualdade física das inclinações, razão mínima entre
+playstyle e nick, equilíbrio dos stats entre identidade e era, eixo lateral
+compartilhado e alinhamento superior de OVR/bandeira. O A do checkpoint `369c480`
+fica ao lado como referência visual e é excluído somente desse gate novo. Uma
+injeção sintética degrada os nove contratos, prova que o detector os acusa e
+restaura a medição a zero antes de continuar a suíte.
 
 Desde 30/07/2026 ela também **amostra pixel real** em toda carta que declara
 `--foto`. O contraste calculado acima assume um fundo fixo escuro, e esse modelo

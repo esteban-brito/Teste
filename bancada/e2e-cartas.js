@@ -13,7 +13,7 @@
    nome permanentemente cortado é estável, logo invisível para ele. Faltava uma
    guarda que medisse GEOMETRIA.
 
-   COMO ELA MEDE. O laboratório (`prototipo-cartas.html`) renderiza 155 cartas
+   COMO ELA MEDE. O laboratório (`prototipo-cartas.html`) renderiza 156 cartas
    com os módulos e o CSS reais e expõe `window.__LAB_MEDIR`. Esta suíte chama a
    MESMA função no estado publicado e na proposta A/B, nas cinco larguras reais e
    nos três pontos da costura compacta. Mede largura, recorte vertical e colisão
@@ -36,8 +36,9 @@ const {okMark,chromiumLaunchOptions}=require("./common");
    ainda quebrar justamente na troca entre os dois layouts. */
 const LARGURAS=["250","188","176","151","150","149","130","120"];
 /* 100 reais (85 jogadores + 15 treinadores) + 7 da escada (6 faixas + treinador)
-   + 36 da matriz (6 faixas × 6 funções) + 9 casos de layout + 3 enquadramentos. */
-const CARTAS_ESPERADAS=155;
+   + 36 da matriz (6 faixas × 6 funções) + 9 casos de layout + 4 comparadores de
+   enquadramento/composição. */
+const CARTAS_ESPERADAS=156;
 
 function waitServer(port,tries=50){
   return new Promise((resolve,reject)=>{
@@ -86,9 +87,13 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
         y:getComputedStyle(card).getPropertyValue("--foto-y").trim()})));
     check(JSON.stringify(framing)===JSON.stringify([
       {id:"a",size:"100% auto",x:"50%",y:"12%"},
+      {id:"a-anterior",size:"100% auto",x:"50%",y:"12%"},
       {id:"b",size:"116% auto",x:"70%",y:"28%"},
       {id:"c",size:"132% auto",x:"75%",y:"30%"},
-    ]),"laboratório expõe os três enquadramentos reproduzíveis do mesmo retrato");
+    ]),"laboratório compara A refinado, A anterior e os dois enquadramentos históricos");
+    check(await page.locator('#gRetratos .card[data-enquadramento="a-anterior"]'+
+      '[data-layout-reference="true"]').count()===1,
+    "composição anterior está marcada como referência, não como candidata");
     check(errors.length===0,`laboratório carrega sem erro de página${errors.length?": "+errors[0]:""}`);
 
     /* A proposta começa DESLIGADA: primeiro se prova o jogo publicado. */
@@ -161,8 +166,8 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     await page.check("#cProposta");
     const composicoes=[];
     for(const esperado of [
-      {largura:"250",placa:.32,contexto:.028,funcao:.08,nick:.1554},
-      {largura:"130",placa:.29,contexto:null,funcao:.05,nick:.1254},
+      {largura:"250",placa:.35,contexto:.035,funcao:.087,nick:.1624},
+      {largura:"130",placa:.31,contexto:null,funcao:.055,nick:.1304},
     ]){
       const {largura}=esperado;
       await page.selectOption("#cLargura",largura);await page.waitForTimeout(80);
@@ -182,13 +187,28 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     }
     const composicaoOk=composicoes.every(item=>item.ok);
     check(composicaoOk,
-      "proposta amplia o retrato e desce diagonal, nome e funções pela mesma composição"+
+      "A refinado preserva mais retrato que o jogo e recupera a grade nas duas densidades"+
       (composicaoOk?"":` — ${JSON.stringify(composicoes)}`));
+    await page.selectOption("#cLargura","188");await page.waitForTimeout(80);
+    const comparacaoA=await page.locator('#gRetratos .card[data-enquadramento^="a"]').evaluateAll(cards=>
+      Object.fromEntries(cards.map(card=>{const faces=card.querySelector(".cfaces"),fs=getComputedStyle(faces);
+        const px=sel=>parseFloat(getComputedStyle(card.querySelector(sel)).fontSize);
+        return [card.dataset.enquadramento,{placa:fs.getPropertyValue("--placa-n").trim(),
+          b1:fs.getPropertyValue("--b1").trim(),hierarquia:px(".c-vestilo b")/px(".c-vnick"),
+          reserva:parseFloat(getComputedStyle(card.querySelector(".c-vrod")).minHeight)}];})));
+    check(comparacaoA.a?.placa==="35"&&comparacaoA.a?.b1==="3.5%"&&
+      comparacaoA.a?.hierarquia>=1.14&&comparacaoA.a?.reserva>=26&&
+      comparacaoA["a-anterior"]?.placa==="32"&&comparacaoA["a-anterior"]?.b1==="2.8%"&&
+      comparacaoA["a-anterior"]?.hierarquia<1.05&&comparacaoA["a-anterior"]?.reserva===0,
+    "comparador conserva o A anterior e isola placa, margem, hierarquia e reserva do refinado"+
+      (comparacaoA.a?.placa==="35"?"":` — ${JSON.stringify(comparacaoA)}`));
     for(const largura of LARGURAS){
       await page.selectOption("#cLargura",largura);await page.waitForTimeout(80);
       const audit=await page.evaluate(()=>window.__LAB_MEDIR());
-      check(audit.falhas.length===0,
-        `${largura}px · proposta ativa sem falha geométrica${audit.falhas.length?` (${audit.falhas[0].campo})`:""}`);
+      check(audit.falhas.length===0&&audit.ritmo.length===0,
+        `${largura}px · proposta sem falha geométrica ou editorial`+
+        (audit.falhas.length?` (geometria: ${audit.falhas[0].campo})`:"")+
+        (audit.ritmo.length?` (grade: ${audit.ritmo[0].campo})`:""));
 
       const standards=await page.evaluate(()=>{
         const cards=[...document.querySelectorAll(".card,.coachcard")];
@@ -244,6 +264,42 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
         `${largura}px · nenhuma carta projeta halo externo`+
         (standards.externalShadows?` (${standards.externalShadows} falha(s))`:""));
     }
+
+    /* O gate editorial também precisa provar que sabe reprovar. As nove
+       deformações vivem apenas durante esta avaliação e são restauradas pelo
+       `cssText` original antes de qualquer outra medição. */
+    await page.selectOption("#cLargura","188");await page.waitForTimeout(80);
+    const detectaGrade=await page.locator('#gRetratos .card[data-enquadramento="a"]').evaluate(card=>{
+      const alvos=[card.querySelector(".cfaces"),card.querySelector(".c-nick"),
+        card.querySelector(".c-vestilo"),card.querySelector(".c-vestilo b"),
+        card.querySelector(".c-vrod"),card.querySelector(".c-vfaixa"),
+        card.querySelector(".c-func"),card.querySelector(".c-flag"),
+        card.querySelector(".c-vstats")];
+      const originais=alvos.map(el=>el.style.cssText);
+      const [faces,nick,estilo,rotulo,rodape,faixa,funcao,flag,stats]=alvos;
+      faces.style.setProperty("--b1","1%");
+      nick.style.bottom="22%";
+      estilo.style.top="20%";
+      rotulo.style.fontSize=getComputedStyle(card.querySelector(".c-vnick")).fontSize;
+      rodape.style.minHeight="0";
+      faixa.style.clipPath="polygon(0 0,100% 0,100% 90%,0 100%)";
+      funcao.style.left="12%";
+      flag.style.top="9%";
+      stats.style.top="55%";stats.style.bottom="10%";
+      const campos=window.__LAB_MEDIR().ritmo.filter(f=>f.nick===(card.dataset.nick||"—"))
+        .map(f=>f.campo);
+      alvos.forEach((el,index)=>{el.style.cssText=originais[index];});
+      return campos;
+    });
+    const camposGrade=["respiro inferior · frente","respiro inferior · verso",
+      "respiro diagonal · frente","respiro diagonal · verso","inclinação frente/verso",
+      "hierarquia playstyle/nick","equilíbrio stats/era","eixo lateral compartilhado",
+      "alinhamento OVR/bandeira"];
+    check(camposGrade.every(campo=>detectaGrade.includes(campo)),
+      "medidor acusa margem, diagonais, hierarquia, equilíbrio e eixos degradados"+
+      (camposGrade.every(campo=>detectaGrade.includes(campo))?"":` — viu ${detectaGrade.join(", ")}`));
+    const gradeLimpa=await page.evaluate(()=>window.__LAB_MEDIR().ritmo.length);
+    check(gradeLimpa===0,"grade editorial volta a zero depois da prova sintética");
 
     /* CONTRASTE SOBRE RETRATO — a checagem acima calcula contraste contra um
        fundo FIXO escuro, e esse modelo deixa de valer na carta que tem foto: o

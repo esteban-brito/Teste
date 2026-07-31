@@ -47,8 +47,8 @@ histórico abaixo):
   sem halos ou varredura de luz, movimento curto, raridade por marcas, treinador
   neutro e verso sem OVR/RTG/pesos visuais. Campeonato e colocação permanecem
   visíveis em jogador e treinador, inclusive no compacto;
-- a guarda mede 155 cartas (152 da bancada-base + 3 enquadramentos) em oito
-  larguras e também prova fontes mínimas,
+- a guarda mede 156 cartas (152 da bancada-base + 4 comparadores) em oito
+  larguras e também prova fontes mínimas, grade editorial,
   contraste de 4,5:1, conteúdo obrigatório, ausência de halo, keyframes limpos,
   teclado, frente/verso, reduced motion e touch. O contrato detalhado está em
   `docs/cartas-design-2026-07-28.md`, seção 11;
@@ -59,12 +59,15 @@ histórico abaixo):
   decisões medidas, hipóteses reprovadas e o que falta para promover estão na
   **seção 12** de `docs/cartas-design-2026-07-28.md`;
 - o responsável escolheu o enquadramento A (`100% auto`, `50% 12%`) no bloco `0`
-  do laboratório. A evolução seguinte amplia o campo do retrato: a placa cai de
-  38% para 32% na densidade completa e de 32% para 29% na compacta; diagonal,
-  nome e funções descem pela mesma pilha de tokens. Falta a conferência visual
-  final antes de buscar os cinco retratos restantes;
+  do laboratório. O A refinado preserva mais retrato que o jogo com placas de
+  35%/31%, recupera margem inferior, separa nick e playstyle no verso e fixa o
+  filete da era para campeonatos de uma ou duas linhas. O A de `369c480` permanece
+  ao lado como referência; falta a conferência no Pages antes dos cinco retratos
+  restantes;
 - validação integral desse marco: `npm run validate`, **25/25 suítes verdes** em
   182,2 s; snapshot, golden, consumo de RNG e balanceamento permaneceram intactos;
+- validação integral do refinamento editorial do A: `npm run validate`, **25/25
+  suítes verdes** em 186,1 s; snapshot e golden permaneceram idênticos;
 - CI e deploy do commit `bf5d5e5`: workflow `30527422214`, verde;
 - o ciclo **P2 de modularização por paridade está concluído**, Fases 0–7;
 - `game.js` caiu de 3.054 para **889 linhas** — 1.206 ao fim do P2, 938 depois das
@@ -1261,9 +1264,9 @@ handoffs especializados mais novos definem a retomada operacional atual:
 
 1. **cartas, produto visual:** o jogo continua no Tactical Editorial publicado;
    a proposta de seis faixas e retratos está somente em `#proposta`. O
-   enquadramento A foi escolhido e sua composição vertical ampliada aguarda
-   conferência; depois vêm os outros cinco retratos da Spirit, antes de qualquer
-   promoção. Fonte: `docs/cartas-design-2026-07-28.md` §12;
+   enquadramento A refinado e a referência anterior estão lado a lado para a
+   conferência final; depois vêm os outros cinco retratos da Spirit, antes de
+   qualquer promoção. Fonte: `docs/cartas-design-2026-07-28.md` §12;
 2. **P5, estrutura:** separar somente criação/reset de `S`, `TG`, `MP` e `MATCH`,
    preservando forma, identidade e quirks. Fonte:
    `docs/p5-aplicacao-ui-2026-07-29.md` §11;

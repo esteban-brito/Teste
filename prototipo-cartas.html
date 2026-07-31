@@ -303,26 +303,78 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
    "colisao nick/funcao". A correcao e no RITMO, nao no tamanho — o nick sobe de
    `passo*1,2` para `passo*1,45` acima da funcao.
 
-   COMPOSICAO VERTICAL ESCOLHIDA. Depois de o responsavel escolher o enquadramento
-   A, o campo do retrato ganhou mais altura. Placa e pilha de identidade derivam
-   destes mesmos tokens: na densidade completa a placa desce de 38% para 32% e
-   todas as tres linhas descem 1,8 pp. A diagonal do verso e recalculada com a
-   mesma razao, portanto frente e verso continuam com o mesmo angulo fisico. */
+   GRADE EDITORIAL DO A REFINADO. A primeira ampliacao levou a placa de 38% para
+   32%, mas deixou so 2,8% de margem inferior e quatro pixels entre a ponta
+   apertada da diagonal e a caixa do nick a 188 px. Nao havia colisao, portanto a
+   guarda antiga passava, mas a composicao parecia comprimida.
+
+   A grade refinada recupera margem e respiro sem voltar ao desenho publicado:
+   placa de 35% na densidade completa e 31% na compacta, ainda menores que os
+   38%/32% do jogo. `--b1` ancora frente e verso na mesma margem inferior;
+   `--placa-n`, `--placa`, `--b2`, `--b3` e `--corte-v` continuam derivados, sem
+   deslocamento por jogador ou retrato. */
 .proposta .card.p-rank .cfaces{
-  --placa-n:32; --placa:calc(var(--placa-n)*1%);
+  --placa-n:35; --placa:calc(var(--placa-n)*1%);
   --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
-  --b1:2.8%; --b2:calc(var(--b1) + var(--passo));
+  --b1:3.5%; --b2:calc(var(--b1) + var(--passo));
   --b3:calc(var(--b2) + var(--passo)*1.45); --t3:7.4cqw}
 .proposta .coachcard .cfaces{--t3:7.4cqw; --b3:calc(var(--b2) + var(--passo)*1.45)}
 @container (max-width:150px){
   .proposta .card.p-rank .cfaces{
-    --placa-n:29; --placa:calc(var(--placa-n)*1%);
+    --placa-n:31; --placa:calc(var(--placa-n)*1%);
     --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
-    --b2:5%; --b3:calc(var(--b2) + var(--passo)*1.45); --t3:8.2cqw}
+    --b1:4%; --b2:5.5%; --b3:calc(var(--b2) + var(--passo)*1.45); --t3:8.2cqw}
   .proposta .coachcard .cfaces{--t3:8.2cqw}
 }
 .proposta .card.p-rank .cfront .c-func,
 .proposta .coachcard .cfront .c-func{letter-spacing:.15em;color:var(--r-ink)}
+
+/* OVR e bandeira passam a partir do mesmo eixo superior. A bandeira cresce meio
+   ponto de largura: a mudanca e pequena, mas remove a aparencia de adesivo solto
+   que os offsets 5,5%/6,5% produziam lado a lado. */
+.proposta .card.p-rank .cfront .c-flag{top:5.5%;width:8.5cqw}
+
+/* HIERARQUIA DO VERSO. No checkpoint anterior, nick e playstyle tinham 20,45 px
+   e 20,68 px a 188 px: dois titulos competindo. O nick vira cabecalho; o
+   playstyle, que e a espinha desta face, ganha razao minima de 1,15 inclusive
+   nos rotulos longos. A faixa e o rotulo tambem passam a guardar respiro real. */
+.proposta .card.p-rank .cback .c-vnick{
+  top:6.5%;font-size:clamp(11px,calc(var(--t2)*.62),20px)}
+.proposta .card.p-rank .cback .c-vestilo{top:26%}
+.proposta .card.p-rank .cback .c-vestilo b{
+  font-size:clamp(10px,calc(13cqw*var(--carac-esc,1)),26px)}
+
+/* O campeonato pode ocupar uma ou duas linhas. Sem uma reserva constante, o
+   filete subia e descia conforme o evento e mudava o centro optico dos stats.
+   A caixa usa a altura do pior caso real e ancora o conteudo embaixo: filete,
+   stats e margem inferior ficam identicos em todas as cartas. */
+.proposta .card.p-rank .cback .c-vrod{
+  min-height:clamp(26px,16cqw,36px);justify-content:flex-end}
+
+/* REFERENCIA VISUAL, NAO CANDIDATO. O primeiro card do bloco 0 conserva os
+   numeros de `369c480` para o A/B ser honesto. Ele e explicitamente excluido da
+   guarda editorial nova; continua passando por todas as guardas de geometria,
+   contraste e acessibilidade. */
+.proposta #gRetratos .card[data-layout-reference="true"] .cfaces{
+  --placa-n:32;--placa:calc(var(--placa-n)*1%);
+  --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
+  --b1:2.8%;--b2:calc(var(--b1) + var(--passo));
+  --b3:calc(var(--b2) + var(--passo)*1.45)}
+.proposta #gRetratos .card[data-layout-reference="true"] .cfront .c-flag{
+  top:6.5%;width:8cqw}
+.proposta #gRetratos .card[data-layout-reference="true"] .cback .c-vnick{
+  top:5.5%;font-size:clamp(10px,calc(var(--t2)*.68),22px)}
+.proposta #gRetratos .card[data-layout-reference="true"] .cback .c-vestilo{top:24%}
+.proposta #gRetratos .card[data-layout-reference="true"] .cback .c-vestilo b{
+  font-size:clamp(10px,calc(11cqw*var(--carac-esc,1)),24px)}
+.proposta #gRetratos .card[data-layout-reference="true"] .cback .c-vrod{
+  min-height:0;justify-content:flex-start}
+@container (max-width:150px){
+  .proposta #gRetratos .card[data-layout-reference="true"] .cfaces{
+    --placa-n:29;--placa:calc(var(--placa-n)*1%);
+    --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
+    --b1:2.8%;--b2:5%;--b3:calc(var(--b2) + var(--passo)*1.45)}
+}
 
 /* ── 5 · o campo pertence ao retrato ──────────────────────────────────────────
    Os emblemas de funcao saem, e com eles a prancheta do treinador. O motivo e
@@ -522,15 +574,16 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
   </div>
 
   <div class="lab-medidor" id="medidor">
-    <h4>Medidor de encaixe</h4>
-    <div id="medidorSaida">Clique em <b>Medir encaixe</b> — ele mede o texto contra a caixa em
-      todas as cartas desta página e reprova por número, não por gosto.</div>
+    <h4>Medidor de geometria e grade</h4>
+    <div id="medidorSaida">Clique em <b>Medir encaixe</b> — ele mede texto, colisões, respiros,
+      eixos, diagonais e hierarquia em todas as cartas; reprova por número, não por gosto.</div>
   </div>
 
   <h2 class="lab">0 · enquadramento e área do retrato</h2>
-  <p class="lab">O enquadramento <b>A foi escolhido</b>. B e C permanecem ao lado como
-  registro da comparação. Na evolução de A, a diagonal e toda a pilha de identidade desceram
-  juntas para dar mais área à foto, com tokens próprios para as densidades completa e compacta.
+  <p class="lab">O enquadramento <b>A foi escolhido</b>. A primeira carta mostra o
+  <b>A refinado</b>; a segunda conserva o mesmo recorte com a composição do checkpoint
+  <code>369c480</code>. B e C permanecem apenas como histórico do enquadramento. Compare também
+  os versos: a grade nova separa identidade, playstyle, stats e era sem mudar conteúdo.
   Ligue <b>Proposta futura</b> no topo; nada deste bloco foi promovido ao jogo.</p>
   <div class="lab-grade" id="gRetratos"></div>
 
@@ -618,12 +671,14 @@ const idCru=carta=>carta.tipo==="coach"?carta.nick:(carta._eng&&carta._eng.id)||
 const fotoDe=carta=>FOTOS.has(idCru(carta))
   ?`--foto:url('fotos/${encodeURIComponent(idCru(carta))}.webp')`:"";
 const ENQUADRAMENTOS=[
-  {id:"a",rot:"A · escolhido",size:"100% auto",x:"50%",y:"12%",
-    nota:"mais foto · contexto integral"},
+  {id:"a",rot:"A · refinado",size:"100% auto",x:"50%",y:"12%",
+    nota:"mesmo recorte · grade editorial"},
+  {id:"a-anterior",rot:"A · checkpoint 369c480",size:"100% auto",x:"50%",y:"12%",
+    nota:"referência · composição anterior",reference:true},
   {id:"b",rot:"B · alternativa",size:"116% auto",x:"70%",y:"28%",
-    nota:"registro · rosto maior"},
+    nota:"histórico · rosto maior"},
   {id:"c",rot:"C · close",size:"132% auto",x:"75%",y:"30%",
-    nota:"expressão maior · menos camisa"},
+    nota:"histórico · menos camisa"},
 ];
 const estiloEnquadramento=frame=>
   `--foto-size:${frame.size};--foto-x:${frame.x};--foto-y:${frame.y}`;
@@ -651,7 +706,9 @@ $("gRetratos").innerHTML=ENQUADRAMENTOS.map(frame=>
   item(cartaHtml(donkKato,estiloEnquadramento(frame)),
     `${frame.rot}<br><em>${frame.size} · ${frame.x} ${frame.y}</em><br>${frame.nota}`)).join("");
 $("gRetratos").querySelectorAll(".card").forEach((card,index)=>{
-  card.dataset.enquadramento=ENQUADRAMENTOS[index].id;
+  const frame=ENQUADRAMENTOS[index];
+  card.dataset.enquadramento=frame.id;
+  if(frame.reference)card.dataset.layoutReference="true";
 });
 
 /* ── 1 · escada de raridade: mesmo jogador, só o OVR muda ─────────────────── */
@@ -745,18 +802,20 @@ function caixaDoTexto(el){
 }
 
 /* ══ MEDIDOR ═════════════════════════════════════════════════════════════════
-   Mede o que a leitura de código não vê. Três perguntas:
-     · o nick cabe na caixa da frente?
-     · a característica do treinador cabe no verso?
-     · algum texto passa da borda da carta? */
+   Mede o que a leitura de código não vê. Além de corte e colisão, a proposta
+   ativa tem uma segunda camada: respiro, eixo, hierarquia e equilíbrio óptico.
+   Foi a lacuna que deixou a composição anterior tecnicamente verde e ainda
+   assim apertada. A carta marcada como referência histórica não entra nesse
+   gate novo; ela continua submetida a toda a geometria básica. */
 /* `medirCartas` é a implementação ÚNICA. `bancada/e2e-cartas.js` chama esta mesma
    função pelo navegador — a suíte é o portão, e o laboratório é o instrumento; duas
    medições diferentes para a mesma pergunta é o que produz desacordo silencioso. */
 function medirCartas(){
   const falhas=[];        /* corte NÃO intencional: o texto vaza ou é decapitado */
   const reticencias=[];   /* corte DECLARADO no CSS (`text-overflow:ellipsis`) */
+  const ritmo=[];         /* grade editorial: respiro, eixos e hierarquia */
   const TOL=.75;          /* ignora fração subpixel de rasterização entre plataformas */
-  let total=0;
+  let total=0,auditadas=0;
   for(const carta of todasAsCartas()){
     total++;
     const cx=carta.getBoundingClientRect();
@@ -842,18 +901,100 @@ function medirCartas(){
     colisao(".c-vstats",".c-vrod","stats/campeonato (verso)",true);
     colisao(".c-vestilo b",".c-vdesc","característica/descrição (verso)",true);
     colisao(".c-vdesc",".c-vrod","descrição/campeonato (verso)",true);
+
+    /* A grade editorial vale somente para jogadores na proposta refinada. O
+       treinador é outro objeto e tem grade própria; a referência `369c480`
+       existe justamente para mostrar por que estes limites foram adicionados. */
+    if(carta.classList.contains(RANK)&&carta.dataset.layoutReference!=="true"){
+      auditadas++;
+      const registrarRitmo=(campo,atual,limite,regra,unidade)=>ritmo.push({
+        nick:carta.dataset.nick||"—",campo,atual:+atual.toFixed(2),limite:+limite.toFixed(2),regra,unidade});
+      const minimo=(campo,atual,limite,tol=TOL,unidade="px")=>{
+        if(atual+tol<limite)registrarRitmo(campo,atual,limite,"mínimo",unidade);
+      };
+      const maximo=(campo,atual,limite,tol=TOL,unidade="px")=>{
+        if(atual-tol>limite)registrarRitmo(campo,atual,limite,"máximo",unidade);
+      };
+      const placa=carta.querySelector(".c-placa"),faixa=carta.querySelector(".c-vfaixa");
+      const nick=carta.querySelector(".c-nick"),estilo=carta.querySelector(".c-vestilo");
+      const vnick=carta.querySelector(".c-vnick"),vestilo=carta.querySelector(".c-vestilo b");
+      const rodape=carta.querySelector(".c-vrod");
+      const stats=[...carta.querySelectorAll(".c-st")];
+      const ancoraFrente=visivel(carta.querySelector(".c-meta"))
+        ?carta.querySelector(".c-meta"):carta.querySelector(".c-func");
+
+      /* Mesma margem inferior normalizada nas duas faces. Na compacta o contexto
+         some e a função vira a âncora visível da frente. */
+      if(ancoraFrente&&rodape){
+        minimo("respiro inferior · frente",
+          100*(cx.bottom-ancoraFrente.getBoundingClientRect().bottom)/cx.height,3.3,.05,"%");
+        minimo("respiro inferior · verso",
+          100*(cx.bottom-rodape.getBoundingClientRect().bottom)/cx.height,3.3,.05,"%");
+      }
+
+      /* Mede a linha realmente recortada, não só os tokens. O ponto crítico da
+         frente é a diagonal sob o começo do nick; no verso, sob PLAYSTYLE. */
+      const placaBox=placa?.getBoundingClientRect(),faixaBox=faixa?.getBoundingClientRect();
+      const nickBox=nick?.getBoundingClientRect(),estiloBox=estilo?.getBoundingClientRect();
+      const corteFrente=getComputedStyle(placa).clipPath.match(/^polygon\(0(?:px)?\s+([\d.]+)%/);
+      const corteVerso=getComputedStyle(faixa).clipPath.match(/100%\s+([\d.]+)%,\s*0(?:px)?\s+100%\)$/);
+      if(placaBox&&faixaBox&&nickBox&&estiloBox&&corteFrente&&corteVerso){
+        const subidaFrente=placaBox.height*Number(corteFrente[1])/100;
+        const subidaVerso=faixaBox.height*(100-Number(corteVerso[1]))/100;
+        const xNick=(nickBox.left-placaBox.left)/placaBox.width;
+        const xEstilo=(estiloBox.left-faixaBox.left)/faixaBox.width;
+        const linhaFrente=placaBox.top+subidaFrente*(1-xNick);
+        const linhaVerso=faixaBox.bottom-subidaVerso*xEstilo;
+        const respiroMin=Math.max(4,cx.width*.04);
+        minimo("respiro diagonal · frente",nickBox.top-linhaFrente,respiroMin);
+        minimo("respiro diagonal · verso",estiloBox.top-linhaVerso,respiroMin);
+        maximo("inclinação frente/verso",Math.abs(subidaFrente-subidaVerso),.35,.05);
+      }
+
+      /* O playstyle precisa dominar o nick no verso inclusive quando seu rótulo
+         usa `--carac-esc`. Medir font-size evita inferir hierarquia pela string. */
+      const fonteNick=parseFloat(getComputedStyle(vnick).fontSize);
+      const fonteEstilo=parseFloat(getComputedStyle(vestilo).fontSize);
+      minimo("hierarquia playstyle/nick",fonteEstilo/fonteNick,1.14,.005,"×");
+
+      /* O filete do rodapé é o limite inferior da área editorial. Reservar a
+         altura do campeonato em duas linhas torna esse limite estável; a pilha
+         de 3 ou 4 stats deve ficar opticamente centrada entre ele e o playstyle. */
+      if(stats.length&&rodape){
+        const primeiro=stats[0].getBoundingClientRect(),ultimo=stats.at(-1).getBoundingClientRect();
+        const linhaRodape=rodape.getBoundingClientRect().top-cx.width*.024;
+        const acima=primeiro.top-vestilo.getBoundingClientRect().bottom;
+        const abaixo=linhaRodape-ultimo.bottom;
+        maximo("equilíbrio stats/era",Math.abs(acima-abaixo),Math.max(4,cx.height*.025));
+      }
+
+      /* Todas as regiões textuais nascem no mesmo recuo lateral. Isto congela a
+         simetria como relação entre as faces, não como coincidência visual. */
+      const eixos=[".c-nick",".c-func",".c-meta",".c-vnick",".c-vestilo",".c-vstats",".c-vrod"]
+        .map(sel=>carta.querySelector(sel)).filter(visivel)
+        .map(el=>el.getBoundingClientRect().left-cx.left);
+      maximo("eixo lateral compartilhado",Math.max(...eixos)-Math.min(...eixos),.35,.05);
+      const ovr=carta.querySelector(".c-ovr"),flag=carta.querySelector(".c-flag");
+      if(visivel(ovr)&&visivel(flag))maximo("alinhamento OVR/bandeira",
+        Math.abs(ovr.getBoundingClientRect().top-flag.getBoundingClientRect().top),.35,.05);
+    }
   }
   const largura=Math.round(todasAsCartas()[0]?.getBoundingClientRect().width||0);
-  return {total,largura,falhas,reticencias};
+  return {total,largura,falhas,reticencias,ritmo,auditadas};
 }
 window.__LAB_MEDIR=medirCartas;
 
 function medir(){
-  const {total,largura,falhas,reticencias}=medirCartas();
+  const {total,largura,falhas,reticencias,ritmo,auditadas}=medirCartas();
   const cabeca=`<b>${total}</b> cartas medidas a <b>${largura}px</b> · `+
     (falhas.length
       ?`<span class="lab-ruim">${falhas.length} falha(s) geométrica(s)</span>`
       :`<span class="lab-ok">nenhuma falha geométrica</span>`)+
+    (auditadas
+      ?ritmo.length
+        ?` · <span class="lab-ruim">${ritmo.length} falha(s) de grade editorial</span>`
+        :` · <span class="lab-ok">grade editorial aprovada em ${auditadas} cartas</span>`
+      :"")+
     (reticencias.length
       ?` · ${reticencias.length} campo(s) com reticências, que é o comportamento declarado
          (contexto secundário da frente ou nome de stat)`:"");
@@ -862,7 +1003,11 @@ function medir(){
     falhas.map(f=>`<tr><td>${esc(f.nick)}</td><td>${esc(f.campo)}</td><td>${esc(f.texto)}</td>
       <td class="lab-ruim">${f.falta}px</td><td>${f.passa>0?f.passa+"px":"—"}</td>
       <td>${esc(f.fonte)}</td></tr>`).join("")+`</table>`:"";
-  $("medidorSaida").innerHTML=cabeca+tabela;
+  const tabelaRitmo=ritmo.length?`<table><tr><th>carta</th><th>grade editorial</th>
+    <th>medido</th><th>limite</th></tr>`+ritmo.map(f=>`<tr><td>${esc(f.nick)}</td>
+      <td>${esc(f.campo)}</td><td class="lab-ruim">${f.atual}${esc(f.unidade)}</td>
+      <td>${f.regra} ${f.limite}${esc(f.unidade)}</td></tr>`).join("")+`</table>`:"";
+  $("medidorSaida").innerHTML=cabeca+tabela+tabelaRitmo;
 }
 
 /* A proposta reclassifica TODAS as cartas de jogador da página pelo OVR real.
