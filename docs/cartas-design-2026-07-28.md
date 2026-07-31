@@ -681,3 +681,61 @@ confirma que a reversão da frente foi limpa.
 O guarda de views congelava o verso por substrings e **não acusou** o elemento
 novo; `tools/check-game-view-modules.js` ganhou a asserção da linha de identidade
 para que ela não possa sumir em silêncio.
+
+## 17. Simetria do verso e o vermelho do Rifler — 31/07/2026
+
+Pedidos do responsável: tirar o filete acima do campeonato, igualar as margens
+entre o playstyle e o campeonato, padronizar isso em **todas** as cartas, e trocar
+o rosa do Rifler por um vermelho impactante que não se confunda com a faixa 21.
+
+### O filete e a simetria
+
+O filete saiu: o espaço em branco já separa os stats da era, e a linha competia
+com os quatro trilhos logo acima dela.
+
+A medição mostrou dois problemas, não um. O primeiro era o esperado — o vão de
+baixo era **mais que o dobro** do de cima (14,2 px contra 31,8 px a 250 px). O
+segundo não: o vão de baixo **variava de carta para carta** (10,4 a 20,6 px a
+188 px). Causa: `.c-vrod` usava `min-height` + `justify-content:flex-end`, então um
+campeonato de duas linhas subia o texto e um de uma linha descia. As cartas nunca
+foram iguais nesse eixo.
+
+Duas correções estruturais:
+
+1. o rodapé passa a ser ancorado pelo **topo**, não pelo fundo. A primeira linha do
+   campeonato começa sempre no mesmo y e a segunda cresce para o espaço reservado;
+2. a caixa dos stats começa onde o bloco do playstyle termina e acaba onde o rodapé
+   começa, com linhas `auto` e `align-content:center`. A folga sobrante se divide
+   igual em cima e embaixo **por construção**.
+
+Calibrar por percentual não resolveria: os corpos saturam no `clamp` enquanto a
+caixa continua crescendo em %, então o que ficasse simétrico a 188 px abriria
+7,6 px de diferença a 250 px. Restou um resíduo constante de ~2 px, compensado por
+um `padding-top` — com conteúdo centrado, ele desloca o bloco por metade do valor.
+
+Resultado medido nas 135 cartas do laboratório: diferença entre os dois vãos de
+**0,02 a 0,55 px**, e idêntica entre todas as cartas em cada largura. A guarda
+`equilíbrio stats/era` passou a medir até o texto do campeonato, e sua tolerância
+caiu de "4 px ou 2,5% da altura" para **1 px**.
+
+O respiro do verso virou o token `--vfolga`, aplicado **igual** acima e abaixo da
+caixa: de um lado só, ele mesmo destruiria a simetria que a caixa garante.
+
+### O vermelho
+
+`Rifler` passou de `#ff5fd0` (magenta) para `#ff2038` (escarlate). Ele é mais
+saturado e mais escuro que a tinta da faixa 21 (`#ff7a86`), e claramente mais frio
+que o coral do `Entry` (`#ff7d4d`). O contraste de 4,5:1 continua aprovado nas oito
+larguras.
+
+### A divergência que isso revelou
+
+`elencos.html` mantém a própria cópia das cores e dos cortes — é página autônoma e
+não importa `style.css`. A troca para cobre da §15 **não havia sido replicada lá**:
+o mesmo jogador aparecia âmbar na lista e cobre na carta, com a suíte verde.
+
+Nasce `tools/check-roster-sync.js`, no `npm run check`: cobra as seis cores de
+função, que o próprio `elencos.html` declara serem idênticas às da carta, e os
+seis cortes de OVR. A cor de cada faixa não é cobrada — a lista pinta um selo com
+texto por cima e precisa de contraste próprio, então usa um tom da mesma família.
+Verificado que reprova: devolver o rosa à lista quebra a guarda.

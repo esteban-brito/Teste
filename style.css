@@ -267,8 +267,8 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   overflow-wrap:anywhere;text-wrap:balance}
 .c-vrod span{font-size:clamp(7px,4.3cqw,9px);letter-spacing:.16em;
   color:color-mix(in srgb,var(--m-ink) 86%,#fff);line-height:1}
-.c-vrod::before{content:"";position:absolute;left:0;right:0;bottom:calc(100% + 2.4cqw);
-  height:1px;background:color-mix(in srgb,var(--m) 38%,transparent)}
+/* Sem filete acima do rodapé: o espaço em branco já separa os stats da era, e a
+   linha competia com os quatro trilhos logo acima dela. */
 /* verso do treinador: a descrição objetiva do efeito ocupa o corpo da carta */
 .c-vdesc{position:absolute;left:var(--pad);right:var(--pad);top:43%;bottom:22%;z-index:5;
   font-family:'Barlow Semi Condensed',sans-serif;font-size:clamp(8px,5.2cqw,12px);
@@ -285,7 +285,10 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
   --b1:3.3%;--b2:5.8%;--b3:10.1%;--t3:6.2cqw;--t4:4.5cqw}
 .card .cfaces{--t2:clamp(13px,10.5cqw,27px);--t-style:clamp(14px,12.5cqw,26px);
-  --t3:6.4cqw;--t4:4.8cqw}
+  --t3:6.4cqw;--t4:4.8cqw;
+  /* Respiro do verso. Entra IGUAL acima e abaixo da caixa de stats: aplicado de um
+     lado só, ele mesmo destruiria a simetria que a caixa existe para garantir. */
+  --vfolga:clamp(2px,1.6cqw,4px)}
 
 /* Seis faixas com UMA mecânica de moldura: `--aro` dá a espessura, `--aro-pintura`
    dá o material. As três primeiras usam cor chapada; as três últimas, cromado.
@@ -332,11 +335,11 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .card.fn-igl{--r:#4d9bff;--r-ink:#4d9bff}
 .card.fn-awper{--r:#b070ff;--r-ink:#b070ff}
 .card.fn-entry{--r:#ff7d4d;--r-ink:#ff7d4d}
-.card.fn-rifler{--r:#ff5fd0;--r-ink:#ff5fd0}
+.card.fn-rifler{--r:#ff2038;--r-ink:#ff2038}
 .card.fn-lurker{--r:#22d3ee;--r-ink:#22d3ee}
 .card.fn-support{--r:#16c9b0;--r-ink:#16c9b0}
 .fn-igl .c-role2--awper{color:#b070ff}.fn-igl .c-role2--entry{color:#ff7d4d}
-.fn-igl .c-role2--rifler{color:#ff5fd0}.fn-igl .c-role2--lurker{color:#22d3ee}
+.fn-igl .c-role2--rifler{color:#ff2038}.fn-igl .c-role2--lurker{color:#22d3ee}
 .fn-igl .c-role2--support{color:#16c9b0}
 
 /* Retrato: o ativo já chega em 5:7. O runtime não corrige jogador por jogador. */
@@ -398,9 +401,23 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .card .c-vid span::before{content:"·";margin-right:clamp(3px,2.2cqw,6px);color:#46536a}
 .card .c-vestilo{top:27.5%}
 .card .c-vestilo b{font-size:var(--t-style)}
-.card .c-vstats{top:42%;bottom:20.5%;display:grid;
-  grid-template-rows:1.24fr repeat(3,minmax(0,1fr));align-items:center;justify-items:stretch;
-  justify-content:stretch;gap:clamp(2px,1.5cqw,4px)}
+/* Simetria por CONSTRUÇÃO, não por calibragem. A caixa começa exatamente onde o
+   bloco do playstyle termina e acaba exatamente onde o rodapé começa; as linhas
+   são `auto` e o conjunto é centrado. Assim a folga sobrante se divide igual em
+   cima e embaixo em QUALQUER largura e para QUALQUER carta.
+
+   Calibrar por percentual não resolvia: os corpos saturam no `clamp` enquanto a
+   caixa continua crescendo em %, então o que ficava simétrico a 188 px abria
+   7,6 px de diferença a 250 px. A altura do bloco do playstyle é
+   `small`(×1 + margem .6em) + `b`(×.95), e é isso que o `calc` reproduz. */
+.card .c-vstats{top:calc(27.5% + clamp(7px,4.2cqw,9px)*1.6 + var(--t-style)*.95 + var(--vfolga));
+  bottom:calc(14% + var(--vfolga));display:grid;
+  grid-template-rows:repeat(4,auto);align-items:center;justify-items:stretch;
+  align-content:center;justify-content:stretch;gap:clamp(2px,1.5cqw,4px);
+  /* Resíduo constante de ~2 px: o `line-height` do campeonato e a entrelinha do
+     primeiro trilho não são simétricos. Com conteúdo centrado, um padding no topo
+     desloca o bloco por METADE do seu valor — daí o alvo de 2 a 3 px. */
+  padding-top:clamp(2px,1.4cqw,3px)}
 .card .c-st{width:100%;align-content:center}
 .card .c-st i{font-size:clamp(7.5px,5cqw,11px)}
 .card .c-st b{font-size:clamp(9.5px,6.2cqw,14px)}
@@ -410,7 +427,11 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .card .c-st:first-child i{font-size:clamp(8px,5.6cqw,12px);color:#d3dcea}
 .card .c-st:first-child b{font-size:clamp(11px,7.6cqw,17px)}
 .card .c-st:first-child .c-trilho{height:clamp(3px,2.3cqw,4.5px)}
-.card .c-vrod{bottom:6%;min-height:clamp(26px,16cqw,36px);justify-content:flex-end}
+/* O rodapé é ancorado pelo TOPO, não pelo fundo. Com `min-height`+`flex-end`, um
+   campeonato de duas linhas subia o texto e um de uma linha descia — a margem
+   acima do campeonato mudava de carta para carta. Ancorado no topo, a primeira
+   linha começa sempre no mesmo y e a segunda cresce para o espaço reservado. */
+.card .c-vrod{top:86%;bottom:4%;min-height:0;justify-content:flex-start}
 
 /* Treinador continua sendo outra categoria, mas usa o mesmo sistema de eixos. */
 /* O treinador tem moldura própria, segmentada a 45° — não entra na escada. */
@@ -461,7 +482,12 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
      legível com metade do salto. */
   .card .c-vid{top:14.5%;font-size:clamp(6px,4.6cqw,8px);letter-spacing:.1em}
   .card .c-vestilo{top:25.5%}
-  .card .c-vstats{top:41.5%;bottom:21.5%;gap:clamp(1.5px,1.2cqw,3px)}
+  /* No compacto o campeonato de duas linhas ("DreamHack Cluj-Napoca") ocupa uma
+     fatia bem maior da carta, então o rodapé sobe: a 86% a colocação caía para
+     fora em 35 das 135 cartas. */
+  .card .c-vrod{top:82%}
+  .card .c-vstats{top:calc(25.5% + clamp(7px,4.2cqw,9px)*1.6 + var(--t-style)*.95 + var(--vfolga));
+    bottom:calc(18% + var(--vfolga));gap:clamp(1.5px,1.2cqw,3px)}
   .card .c-st:first-child i{font-size:clamp(7.5px,5.2cqw,11px)}
   .card .c-st:first-child b{font-size:clamp(10px,6.6cqw,14px)}
   .card .c-st:first-child .c-trilho{height:clamp(2.5px,1.8cqw,3.5px)}
