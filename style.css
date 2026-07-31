@@ -284,7 +284,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   --corte:calc(var(--corte-n)*1%);
   --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
   --b1:3.3%;--b2:5.8%;--b3:10.1%;--t3:6.2cqw;--t4:4.5cqw}
-.card .cfaces{--t2:clamp(13px,10.5cqw,27px);--t-style:clamp(15px,13.2cqw,27px);
+.card .cfaces{--t2:clamp(13px,10.5cqw,27px);--t-style:clamp(14.5px,12.6cqw,27px);
   --t3:6.4cqw;--t4:4.8cqw;
   /* Respiro do verso. Entra IGUAL acima e abaixo da caixa de stats: aplicado de um
      lado só, ele mesmo destruiria a simetria que a caixa existe para garantir. */
@@ -387,7 +387,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .card .c-role2{justify-self:start}.card .c-team{justify-self:end;text-align:right}
 
 /* Verso do jogador: tipografia fixa e quatro trilhos em largura integral. */
-.card .c-vnick{top:5.5%;font-size:clamp(12px,11cqw,23px)}
+.card .c-vnick{top:5.5%;font-size:clamp(12px,10.7cqw,23px)}
 /* Linha de identidade: ocupa a faixa que sobrava vazia sob o nick e devolve ao
    verso o "quem" e o "por quem". Função na cor da função, time apagado — a mesma
    hierarquia da frente, para as duas faces se reconhecerem. */
@@ -400,7 +400,10 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   text-overflow:ellipsis}
 .card .c-vid span::before{content:"·";margin-right:clamp(3px,2.2cqw,6px);color:#46536a}
 .card .c-vestilo{top:27.5%}
-.card .c-vestilo b{font-size:var(--t-style)}
+/* `Infiltrador` e `Facilitador` (11 letras) sao o pior caso, e FreeType mede mais
+   largo que DirectWrite: o CI do Linux reprovou com 3,45px de estouro onde o
+   Windows passava. Tracking universal, nunca excecao por jogador. */
+.card .c-vestilo b{font-size:var(--t-style);letter-spacing:-.03em}
 /* Simetria por CONSTRUÇÃO, não por calibragem. A caixa começa exatamente onde o
    bloco do playstyle termina e acaba exatamente onde o rodapé começa; as linhas
    são `auto` e o conjunto é centrado. Assim a folga sobrante se divide igual em
