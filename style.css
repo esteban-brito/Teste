@@ -134,43 +134,14 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .lineup--coach{max-width:none}
 
 /* ╔══════════════ CARTAS · jogador e treinador ══════════════╗
-   UM BLOCO DE TOKENS GOVERNA AS DUAS FACES: um recuo lateral (--pad), um passo
-   vertical (--passo) que gera a pilha inteira por calc, e quatro corpos de texto
-   numa razão de ~1,5. Abaixo deste bloco não existe número solto.
-
-   Tudo em cqw (% da largura da carta) sobre container query: a MESMA carta serve
-   do celular de 2 colunas à TV, sem uma segunda folha de regras.
-
-   A diagonal do verso DERIVA em CSS o mesmo ângulo físico da frente
-   (--corte-n × --placa-n / --faixa-n). Antes era um valor fixo com a conta só no
-   comentário, e mudar a altura da placa desalinhava as duas faces em silêncio. */
+   Estrutura compartilhada pelas duas faces. A anatomia e os tokens canônicos
+   ficam no bloco "CARTA CANÔNICA" abaixo; aqui vivem apenas o envelope e os
+   dois eixos herdados por jogador e treinador. */
 .card,.coachcard{position:relative;border-radius:10px;cursor:pointer;overflow:hidden;
   min-height:148px;aspect-ratio:5/7;background:#080b11;container-type:inline-size;
   isolation:isolate;perspective:800px;-webkit-perspective:800px;
   transition:transform var(--motion-card-fast) var(--ease-card);
-
-  --pad:9%;                                        /* recuo lateral, único */
-  --passo:5.2%;                                    /* passo do ritmo vertical */
-  --b1:4.6%;                                       /* rodapé  (linha 1) */
-  --b2:calc(var(--b1) + var(--passo));             /* função  (linha 2) */
-  --b3:calc(var(--b2) + var(--passo)*1.2);         /* nick    (linha 3) */
-
-  /* Alturas SEM unidade, para o ângulo das duas faces poder ser derivado. */
-  --placa-n:38;                                    /* altura da placa (frente) */
-  --faixa-n:22;                                    /* altura da faixa (verso) */
-  --corte-n:12;                                    /* inclinação na placa */
-  --placa:calc(var(--placa-n)*1%);
-  --faixa:calc(var(--faixa-n)*1%);
-  --corte:calc(var(--corte-n)*1%);
-  --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
-
-  /* piso dos dois canais de função; a tabela .fn-* sobrescreve os dois juntos */
-  --r:var(--r-rifler); --r-ink:var(--r-rifler);
-
-  --t1:33cqw;                                      /* OVR      */
-  --t3:6.2cqw;                                     /* função   */
-  --t4:4.4cqw;                                     /* contexto */
-
+  --pad:9%;--passo:5.2%;--r:var(--r-rifler);--r-ink:var(--r-rifler);--t1:33cqw;
   box-shadow:inset 0 0 0 var(--aro) color-mix(in srgb,var(--m) var(--aro-a),transparent)}
 /* O hover movimenta a superfície, mas não altera raridade nem projeta luz. */
 /* Em toque, `:hover` pode ficar preso depois do tap. O realce só existe onde há
@@ -181,41 +152,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
     transform:translateY(-2px)}
 }
 
-/* ═══ DOIS CANAIS, QUATRO TOKENS ═══════════════════════════════════════════
-   A carta comunica DUAS coisas, e cada uma tem seu território. Elas não
-   disputam nenhuma propriedade:
-
-     RARIDADE → moldura: aro, marcas, fio, placa e o rótulo do OVR.
-     FUNÇÃO   → campo: fundo, nome da função e o emblema ao fundo.
-
-   Antes a cor dizia só a raridade, e quatro jogadores da mesma faixa viravam
-   quatro cartas idênticas na linha do elenco revelado.
-
-   CADA CANAL TEM PINTURA E TINTA SEPARADAS, e a razão é medida, não estética:
-
-     --m / --r          PINTURA — aro, fio, placa, campo, emblema. Sem exigência
-                        de contraste: é grafismo, não leitura.
-     --m-ink / --r-ink  TINTA — todo texto que o canal colore. Precisa passar
-                        4,5:1 contra #080d14, e `bancada/e2e-cartas.js` reprova
-                        quem não passa.
-
-   Um token só para as duas funções impedia metade das cores possíveis. Contra
-   o fundo da carta, `#8b0f1d` (sangue) dá 2,03:1 e `#1f7a4d` (verde escuro) dá
-   3,66:1 — reprovam como texto, mas são exatamente as molduras desejadas. Com o
-   par, a moldura fica escura e a tinta é uma variante clara da MESMA cor. É o
-   mesmo padrão dos trios `--s-red`/`--s-red-lit`/`--s-red-dim` do `:root`. */
-
-/* ═══ TABELA DE RARIDADE ═══════════════════════════════════════════════════
-   Cor, contagem, fio e aro formam a escada sem depender de brilho externo.
-   As FAIXAS (quais OVR caem em cada tier) vivem em `tierOf`, no card-view. */
-.card.tier-3{--m:#8b98a8; --m-ink:#8b98a8; --marcas:0; --fio-a:52%;  --aro:1px;   --aro-a:42%}
-.card.tier-2{--m:#3ec07e; --m-ink:#3ec07e; --marcas:1; --fio-a:76%;  --aro:1.5px; --aro-a:64%}
-.card.tier-1{--m:#ffbe00; --m-ink:#ffbe00; --marcas:2; --fio-a:88%;  --aro:2px;   --aro-a:82%}
-.card.tier-s{--m:#ff5c6e; --m-ink:#ff5c6e; --marcas:3; --fio-a:100%; --aro:2px;   --aro-a:100%}
-.card.tier-h{--m:#c9a6ff; --m-ink:#c9a6ff; --marcas:4; --fio-a:100%; --aro:2px;   --aro-a:72%}
-/* O treinador não disputa a escala de OVR dos jogadores: a cor dele é a da
-   CARACTERÍSTICA, que é o que ele faz pelo time. A moldura neutra o coloca fora
-   da escada de raridade; o fio segmentado declara sua categoria. */
+/* A característica colore o treinador; ele não disputa a raridade dos jogadores. */
 .coachcard{--m:#93a0b2; --m-ink:#93a0b2; --aro:1.5px; --aro-a:54%;
   --r:var(--cc-main,var(--c-gestor)); --r-ink:var(--cc-main,var(--c-gestor))}
 .coach-gestor{--cc-main:var(--c-gestor)}
@@ -223,44 +160,12 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .coach-desenvolvedor{--cc-main:var(--c-desenvolvedor)}
 .coach-motivador{--cc-main:var(--c-motivador)}
 
-/* ═══ TABELA DE FUNÇÃO ═════════════════════════════════════════════════════
-   Uma linha por função. As cores são dessaturadas de propósito: elas ocupam a
-   maior área da carta e não podem competir com a moldura, que é o sinal de
-   raridade. O EMBLEMA é o que sustenta a leitura quando a carta é pequena ou
-   quem olha não distingue as cores — forma é independente de cor. */
-.fn-igl{--r:var(--r-igl); --r-ink:var(--r-igl)}
-.fn-awper{--r:var(--r-awper); --r-ink:var(--r-awper)}
-.fn-entry{--r:var(--r-entry); --r-ink:var(--r-entry)}
-.fn-rifler{--r:var(--r-rifler); --r-ink:var(--r-rifler)}
-.fn-lurker{--r:var(--r-lurker); --r-ink:var(--r-lurker)}
-.fn-support{--r:var(--r-support); --r-ink:var(--r-support)}
-
-/* Marcas de raridade: contagem permanece legível sem cor e em cartas compactas. */
-.card::before{content:"";position:absolute;top:2.6cqw;right:var(--pad);z-index:6;
-  pointer-events:none;height:2.2cqw;width:calc(var(--marcas,0)*4.4cqw);
-  background:repeating-linear-gradient(90deg,var(--m) 0 2.8cqw,transparent 2.8cqw 4.4cqw)}
-
-/* Aro holográfico estático do tier mais alto: distinção sem movimento contínuo. */
-.card.tier-h::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-  z-index:7;padding:2px;
-  background:linear-gradient(125deg,#ff0040,#ff8a00,#ffe600,#39e639,#00c8ff,#7a3cff,#ff0040);
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;mask-composite:exclude}
-
 /* ═══ FLIP ═════════════════════════════════════════════════════════════════
    Cada face gira independente e o que define o que aparece é a OPACIDADE (0/1).
    Assim nunca há sobreposição nem texto espelhado, mesmo se o Safari achatar o
    3D. Virar é por modo global (botão no cabeçalho do elenco revelado). */
-/* AS RAZÕES DE TEXTO VIVEM AQUI, e não em `.card` — é onde `card-view` põe
-   `--nick-esc` e `--carac-esc`. A substituição de custom property acontece no
-   elemento em que a propriedade é DECLARADA: com `--t2` declarado em `.card`,
-   `var(--nick-esc,1)` resolvia pelo fallback 1 e a escala de nome ficava MORTA.
-   Medido em 29/07/2026: os 100 nicks renderizavam a 16cqw e `olofmeister` e
-   `pashaBiceps` eram cortados 28px além da borda. Declarar no envelope das duas
-   faces mantém o contrato original — frente e verso encolhem JUNTOS. */
 .cfaces{position:absolute;inset:0;z-index:2;transform-style:preserve-3d;
-  -webkit-transform-style:preserve-3d;border-radius:inherit;
-  --t2:calc(16cqw*var(--nick-esc,1))}
+  -webkit-transform-style:preserve-3d;border-radius:inherit}
 .cface{position:absolute;inset:0;border-radius:inherit;overflow:hidden;
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   transition:transform var(--motion-card-face) var(--ease-card),
@@ -272,22 +177,8 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .card.flipped .cback,.coachcard.flipped .cback{transform:rotateY(0deg);opacity:1;pointer-events:auto}
 @media(prefers-reduced-motion:reduce){.cface{transition:none}}
 
-/* ═══ FRENTE ═══════════════════════════════════════════════════════════════
-   SEM FOTO é o estado de todos os 85 hoje, e é um estado DECLARADO, não um
-   remendo: o campo é gerado na cor da raridade em vez de ficar um retângulo
-   preto. Quando houver retrato, ele entra em `background-image` de .c-foto e
-   --tinta sobe para tingi-lo — mudança de dado, não redesenho. */
-.c-foto{position:absolute;inset:0;z-index:0;background-size:cover;background-position:50% 14%;
-  background-image:linear-gradient(158deg,color-mix(in srgb,var(--r) 11%,#101722),
-    #080d14 54%,#05080d)}
-/* EMBLEMA DA FUNÇÃO: silhueta grande e apagada ao fundo do campo. É o que
-   diferencia duas cartas da mesma raridade sem acrescentar mais uma cor, e o
-   que continua legível na grade de 2 colunas do celular. */
-.c-emblema{position:absolute;left:50%;top:38%;width:52cqw;height:52cqw;z-index:1;
-  transform:translate(-50%,-50%);color:var(--r);opacity:.23;pointer-events:none}
-.c-emblema svg{width:100%;height:100%;display:block}
-/* `color` preserva a luminância: o tier tinge o retrato sem apagar o rosto */
-.c-tinta{position:absolute;inset:0;z-index:1;background:var(--m);mix-blend-mode:color;opacity:var(--tinta,0)}
+/* ═══ FRENTE ═══════════════════════════════════════════════════════════════ */
+.c-foto{position:absolute;inset:0;z-index:0}
 .c-vinheta{position:absolute;inset:0;z-index:2;
   background:linear-gradient(180deg,transparent 46%,rgba(3,5,9,.55) 100%)}
 /* Grão de filme: quebra o degradê perfeito, que é o que denuncia CSS puro.
@@ -301,14 +192,8 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    então sua aresta cai exatamente sobre a diagonal em qualquer tamanho. */
 .c-fio,.c-placa{position:absolute;left:0;right:0;bottom:0;
   clip-path:polygon(0 var(--corte),100% 0,100% 100%,0 100%)}
-.c-fio{height:calc(var(--placa) + 2px);z-index:3;
-  background:linear-gradient(90deg,transparent,
-    color-mix(in srgb,var(--m) var(--fio-a,100%),transparent) 20%,
-    color-mix(in srgb,var(--m) var(--fio-a,100%),transparent) 76%,transparent)}
-.c-placa{height:var(--placa);z-index:4;
-  background:linear-gradient(178deg,color-mix(in srgb,var(--m) 14%,#0a0f17),#070a10 38%)}
-.coachcard .c-fio{background:repeating-linear-gradient(90deg,
-  color-mix(in srgb,var(--m) 82%,transparent) 0 3.4cqw,transparent 3.4cqw 6.4cqw)}
+.c-fio{height:calc(var(--placa) + 2px);z-index:3}
+.c-placa{height:var(--placa);z-index:4}
 
 /* 1 · OVR sozinho no canto. -.055em é acerto ÓPTICO: algarismo grande tem folga
       lateral própria e parece recuado demais quando alinhado pelo retângulo.
@@ -320,8 +205,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .c-ovr small{display:block;font-size:3.9cqw;letter-spacing:.26em;font-weight:700;line-height:1;
   color:color-mix(in srgb,var(--m-ink) 88%,#fff);margin:.35em 0 0 .06em;
   text-shadow:none;text-transform:uppercase}
-/* canto superior direito: BANDEIRA. Campeonato e ano ficam só no verso — aqui
-   competiriam com o OVR, que é o que se lê primeiro. */
+/* Base do treinador; no jogador a bandeira integra a grade inferior. */
 .c-identidade{display:contents}
 .c-flag{position:absolute;right:var(--pad);top:6.5%;z-index:5;width:8cqw;aspect-ratio:3/2;
   background-size:cover;background-position:50%;border-radius:.6cqw;
@@ -346,16 +230,10 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    pesos técnicos e ratings duplicados não disputam espaço com o que interessa. */
 .c-vfio,.c-vfaixa{position:absolute;left:0;right:0;top:0;
   clip-path:polygon(0 0,100% 0,100% calc(100% - var(--corte-v)),0 100%)}
-.c-vfio{height:calc(var(--faixa) + 2px);z-index:3;
-  background:linear-gradient(90deg,transparent,
-    color-mix(in srgb,var(--m) var(--fio-a,100%),transparent) 20%,
-    color-mix(in srgb,var(--m) var(--fio-a,100%),transparent) 76%,transparent)}
+.c-vfio{height:calc(var(--faixa) + 2px);z-index:3}
 .c-vfaixa{height:var(--faixa);z-index:4;
   background:linear-gradient(2deg,color-mix(in srgb,var(--m) 12%,#0a0f17),#070a10 44%)}
-.coachcard .c-vfio{background:repeating-linear-gradient(90deg,
-  color-mix(in srgb,var(--m) 82%,transparent) 0 3.4cqw,transparent 3.4cqw 6.4cqw)}
-/* O nick do verso deriva do MESMO --t2 da frente, que escala por comprimento:
-   sem isso um nome longo encolhia numa face e era cortado na outra. */
+/* Base tipográfica do nick no verso; cada categoria fixa seu corpo abaixo. */
 .c-vnick{position:absolute;left:var(--pad);right:var(--pad);top:5.5%;z-index:5;font-family:var(--ff);
   font-size:clamp(10px,calc(var(--t2)*.68),22px);font-weight:700;text-transform:uppercase;
   letter-spacing:-.01em;color:#f7f9fc;line-height:1;white-space:nowrap}
@@ -363,13 +241,12 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .c-vestilo small{display:block;font-size:clamp(7px,4.2cqw,9px);letter-spacing:.22em;
   color:#9aa8b9;margin-bottom:.6em;
   text-transform:uppercase}
-/* Mesma razão do nick, pelo mesmo motivo: "Desenvolvedor" é palavra única, não
-   quebra linha e transbordava 16px no desktop e 26px a 120px, onde era cortada. */
+/* A escala por conteúdo é exclusiva das características de treinador. */
 .c-vestilo b{font-size:clamp(10px,calc(11cqw*var(--carac-esc,1)),24px);font-weight:700;line-height:.95;
   color:var(--m-ink);text-transform:uppercase;letter-spacing:-.01em;display:block}
 .coachcard .c-vestilo b{color:var(--r-ink)}
-/* justify-content:center absorve 3 ou 4 linhas sem reajuste — o motor entrega 3
-   quando Firepower já está na receita e 4 quando não está. */
+/* O jogador sobrescreve este trilho com quatro slots canônicos; a base mantém a
+   caixa disponível para composições de categoria. */
 .c-vstats{position:absolute;left:var(--pad);right:var(--pad);top:43.5%;bottom:22%;z-index:5;
   display:flex;flex-direction:column;justify-content:center;gap:2cqw}
 .c-st{display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:2cqw}
@@ -400,23 +277,145 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   font-family:'Barlow Semi Condensed',sans-serif;font-size:clamp(8px,5.2cqw,12px);
   line-height:1.27;font-weight:500;color:#d5dde7;display:flex;align-items:flex-start}
 
-/* ═══ DENSIDADE COMPACTA ═══════════════════════════════════════════════════
-   Na grade de 2 colunas, só o contexto secundário da frente pode sair. Stats e
-   campeonato são conteúdo primário e permanecem visíveis em todas as larguras. */
+/* ═══ CARTA CANÔNICA · 31/07/2026 ═══════════════════════════════════════════
+   A carta aprovada no laboratório é agora o único contrato visual. Jogadores
+   compartilham a mesma grade, os mesmos corpos e o mesmo recorte de retrato;
+   conteúdo nunca desaparece para "fazer caber". */
+.cfaces{
+  --placa-n:24;--faixa-n:22;--corte-n:9;
+  --placa:calc(var(--placa-n)*1%);--faixa:calc(var(--faixa-n)*1%);
+  --corte:calc(var(--corte-n)*1%);
+  --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
+  --b1:3.3%;--b2:5.8%;--b3:10.1%;--t3:6.2cqw;--t4:4.5cqw}
+.card .cfaces{--t2:clamp(14px,11.5cqw,29px);--t-style:clamp(14px,12.5cqw,26px)}
+
+/* Seis faixas, sem classes auxiliares do laboratório. */
+.card.tier-1{--m:#c9d2dd;--m-ink:#e8eef6;--fio-cor:#aab4c2;--fio-a:30%;
+  --wash-cor:#c9d2dd;--wash:7%;--aro:1px;--aro-a:26%}
+.card.tier-2{--m:#1f7a4d;--m-ink:#3ec07e;--fio-cor:#3ec07e;--fio-a:55%;
+  --wash-cor:#3ec07e;--wash:11%;--aro:1.5px;--aro-a:60%}
+.card.tier-3{--m:#d4a017;--m-ink:#e8c34a;--fio-cor:#e8c34a;--fio-a:70%;
+  --wash-cor:#e8c34a;--wash:17%;--aro:2px;--aro-a:80%}
+.card.tier-4{--m:#ffbe00;--m-ink:#ffd24a;--fio-cor:#ffd24a;--fio-a:86%;
+  --wash-cor:#ffbe00;--wash:26%;--aro:0;--aro-a:0%}
+.card.tier-5{--m:#c4162c;--m-ink:#ff7a86;--fio-cor:#ff6b7a;--fio-a:100%;
+  --wash-cor:#ff3d52;--wash:34%;--aro:0;--aro-a:0%}
+.card.tier-6{--m:#cfd8ff;--m-ink:#b8c6ff;--fio-cor:#e6ecff;--fio-a:100%;
+  --wash-cor:#9fb4ff;--wash:30%;--aro:0;--aro-a:0%}
+.card.tier-4::after,.card.tier-5::after,.card.tier-6::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  z-index:7;display:block;padding:clamp(1.5px,1.15cqw,2.5px);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude}
+.card.tier-4::after{background:linear-gradient(152deg,#fff4cd 0%,#ffd05a 16%,#a2700f 38%,
+  #ffe9a3 56%,#e0a516 74%,#7d5606 88%,#ffdd7a 100%)}
+.card.tier-5::after{background:linear-gradient(152deg,#ff9aa2 0%,#e0233c 16%,#5c0812 38%,
+  #ff7f8b 56%,#c4162c 74%,#3d050c 88%,#ff6273 100%)}
+.card.tier-6::after{background:linear-gradient(152deg,#ff3a8e,#ff8a5a,#f7ff7a,#5cff9d,
+  #40d6ff,#7878ff,#c66eff,#ff3a8e)}
+.card.tier-6 .c-fio,.card.tier-6 .c-vfio{
+  background:linear-gradient(90deg,transparent,#ff3a8e 16%,#f7ff7a 38%,
+    #5cff9d 54%,#40d6ff 72%,#c66eff 88%,transparent)}
+
+/* Função é texto, não uma segunda pintura de fundo. */
+.card.fn-igl{--r:#4d9bff;--r-ink:#4d9bff}
+.card.fn-awper{--r:#b070ff;--r-ink:#b070ff}
+.card.fn-entry{--r:#ff7d4d;--r-ink:#ff7d4d}
+.card.fn-rifler{--r:#ff5fd0;--r-ink:#ff5fd0}
+.card.fn-lurker{--r:#22d3ee;--r-ink:#22d3ee}
+.card.fn-support{--r:#16c9b0;--r-ink:#16c9b0}
+.fn-igl .c-role2--awper{color:#b070ff}.fn-igl .c-role2--entry{color:#ff7d4d}
+.fn-igl .c-role2--rifler{color:#ff5fd0}.fn-igl .c-role2--lurker{color:#22d3ee}
+.fn-igl .c-role2--support{color:#16c9b0}
+
+/* Retrato: o ativo já chega em 5:7. O runtime não corrige jogador por jogador. */
+.c-foto{
+  background-image:
+    linear-gradient(180deg,rgba(3,6,11,.90) 0%,rgba(3,6,11,.74) 14%,
+      rgba(3,6,11,.48) 26%,rgba(3,6,11,.14) 36%,transparent 46%),
+    linear-gradient(158deg,
+      color-mix(in srgb,var(--wash-cor,var(--r)) var(--wash,12%),transparent),transparent 56%),
+    var(--foto,none),
+    linear-gradient(158deg,
+      color-mix(in srgb,var(--wash-cor,var(--r)) var(--wash,12%),#101722),#080d14 54%,#05080d);
+  background-size:auto,auto,100% auto,auto;
+  background-position:50% 0,50% 0,50% 12%,50% 0;
+  background-repeat:no-repeat}
+.c-fio,.c-vfio{background:linear-gradient(90deg,transparent,
+  color-mix(in srgb,var(--fio-cor,var(--m)) var(--fio-a),transparent) 20%,
+  color-mix(in srgb,var(--fio-cor,var(--m)) var(--fio-a),transparent) 76%,transparent)}
+.card .c-placa{background:linear-gradient(178deg,
+  color-mix(in srgb,var(--wash-cor) calc(var(--wash)*.8),#0a0f17),#070a10 40%)}
+.card .cback{background:linear-gradient(168deg,
+  color-mix(in srgb,var(--wash-cor) calc(var(--wash)*.6),#080b11),#06080d 58%)}
+
+/* Frente do jogador: três linhas e duas colunas, sem offsets individuais. */
+.c-identidade--player{position:absolute;left:var(--pad);right:var(--pad);bottom:var(--b1);
+  z-index:5;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  grid-template-areas:"nick nick" "func flag" "meta meta";
+  row-gap:clamp(.6px,.45cqw,1.2px);align-items:end}
+.card .c-identidade--player .c-nick{grid-area:nick;position:static;inset:auto;
+  font-size:var(--t2);line-height:.9;letter-spacing:-.005em;overflow:visible}
+.card .c-identidade--player .c-func{grid-area:func;position:static;inset:auto;
+  align-self:end;font-size:clamp(9px,var(--t3),14px);line-height:.95;letter-spacing:.13em;
+  color:var(--r-ink);white-space:nowrap}
+.card .c-identidade--player .c-flag{grid-area:flag;position:static;inset:auto;
+  display:block;width:clamp(18px,10cqw,22px);justify-self:end;align-self:end}
+.card .c-identidade--player .c-meta{grid-area:meta;position:static;inset:auto;
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;
+  font-size:clamp(7px,var(--t4),10px);line-height:1;letter-spacing:.1em}
+.card .c-role2{justify-self:start}.card .c-team{justify-self:end;text-align:right}
+
+/* Verso do jogador: tipografia fixa e quatro slots reais em todas as cartas. */
+.card .c-vnick{top:6.5%;font-size:clamp(11px,10cqw,22px)}
+.card .c-vestilo{top:26%}
+.card .c-vestilo b{font-size:var(--t-style)}
+.card .c-vstats{top:43.5%;bottom:24%;display:grid;grid-template-rows:repeat(4,1fr);
+  align-items:center;gap:clamp(2px,2cqw,5px)}
+.card .c-vrod{bottom:6%;min-height:clamp(26px,16cqw,36px);justify-content:flex-end}
+
+/* Treinador continua sendo outra categoria, mas usa o mesmo sistema de eixos. */
+.coachcard{--wash-cor:var(--r);--wash:12%;--aro:0;--aro-a:0%}
+.coachcard .cfaces{--placa-n:44;--faixa-n:26;
+  --placa:calc(var(--placa-n)*1%);--faixa:calc(var(--faixa-n)*1%);
+  --t2:calc(16cqw*var(--nick-esc,1));--t3:7.4cqw;
+  --b1:3.3%;--b2:calc(var(--b1) + var(--passo));--b3:calc(var(--b2) + var(--passo)*1.45)}
+.c-identidade--coach{display:contents}
+.coachcard .c-fio,.coachcard .c-placa,.coachcard .c-vfio,.coachcard .c-vfaixa{clip-path:none}
+.coachcard .c-placa{background:linear-gradient(178deg,
+  color-mix(in srgb,var(--r) 16%,#0a0f17),#070a10 46%)}
+.coachcard .c-vfaixa{background:linear-gradient(2deg,
+  color-mix(in srgb,var(--r) 14%,#0a0f17),#070a10 48%)}
+.coachcard .cback{background:linear-gradient(168deg,
+  color-mix(in srgb,var(--r) 8%,#080b11),#06080d 58%)}
+.coachcard::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  z-index:7;padding:1.6px;background:repeating-linear-gradient(45deg,
+    color-mix(in srgb,var(--r) 86%,transparent) 0 3.4cqw,transparent 3.4cqw 6.4cqw);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude}
+.coachcard .c-fio,.coachcard .c-vfio{background:repeating-linear-gradient(90deg,
+  color-mix(in srgb,var(--r) 86%,transparent) 0 3.4cqw,transparent 3.4cqw 6.4cqw)}
+.coachcard .c-meta{justify-content:flex-end}.coachcard .c-role2{display:none}
+.coachcard .c-ovr small{font-size:4.6cqw;letter-spacing:.2em;
+  color:color-mix(in srgb,var(--r-ink) 82%,#fff)}
+.coachcard .c-func{font-size:calc(var(--t3)*var(--carac-esc,1));letter-spacing:.15em;color:var(--r-ink)}
+.coachcard .cback .c-vestilo{top:30%}
+.coachcard .cback .c-vdesc{top:48%;bottom:18%;font-family:var(--ff);
+  font-size:clamp(10px,6.8cqw,15px);line-height:1.4;font-weight:600;
+  letter-spacing:.005em;color:#eef4fa;align-items:center}
+
+@container (max-width:176px){
+  .card .cfaces{--placa-n:26;--placa:calc(var(--placa-n)*1%);
+    --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%)}
+}
 @container (max-width:150px){
-  .c-meta,.c-flag{display:none}
-  /* A regra precisa atingir um DESCENDENTE do contêiner consultado. Aplicá-la à
-     própria `.card` era inerte: container query não estiliza o contêiner com a
-     medida dele mesmo, então placa e ritmo compacto nunca entravam. As grandezas
-     derivadas também são redeclaradas para usar o novo `--placa-n`. */
-  .cfaces{--placa-n:32;--b2:6%;--b3:14%;--t3:7cqw;
-    --placa:calc(var(--placa-n)*1%);
+  .card .cfaces{--placa-n:28;--placa:calc(var(--placa-n)*1%);
     --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
-  /* AQUI O TEXTO NÃO CRESCE. Era 18cqw para o nick e 12,5cqw para o estilo: com a
-     caixa menor e a fonte maior, `Skadoodle` e `controlez` voltavam a estourar
-     4–6px a 120px mesmo com a razão viva. Medido nas cinco larguras reais. */
-    --t2:calc(16cqw*var(--nick-esc,1))}
-  .c-vstats{top:43.5%;bottom:22%}
+    --t2:clamp(13px,11.5cqw,29px);--t3:6.2cqw;--t4:4.5cqw}
+  .card .c-identidade--player .c-meta{display:grid}
+  .card .c-identidade--player .c-flag{display:block}
+  .coachcard .cfaces{--t3:8.2cqw}
+  .coachcard .cback .c-vdesc{top:46%;bottom:21%;font-size:clamp(8px,6cqw,12px);line-height:1.34}
 }
 
 .slot{border:1px dashed rgba(52,65,85,.5);border-radius:10px;min-height:148px;aspect-ratio:5/7;

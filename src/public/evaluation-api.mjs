@@ -56,7 +56,7 @@ export function buildEvaluationState({atributos=ATRIBUTOS,timesDef=TIMES_DEF,
     return {id:`t${i}`,nome:t.nome,cor:t.cor,camp:t.camp,coloc:t.colocacao,
       // `camp` e `coloc` são projeção do elenco na carta, como `time` já era: a
       // carta precisa deles no verso e é o que distingue duas eras do mesmo nick.
-      jogadores:t.jogadores.map(id=>{const j=pool[id];return {id:`p${pid++}`,nick:j.nick,pais:j.pais,
+      jogadores:t.jogadores.map(id=>{const j=pool[id];return {id:`p${pid++}`,nick:j.nick,pais:j.pais,foto:j.foto||"",
         time:t.nome,camp:t.camp,coloc:t.colocacao,tipo:"player",ovr:j.ovr,prim:j.primario,sec:j.secundario,
         secForte:!!j.secForte,estrela:j.estrela,_eng:j};}),
       treinador:t.coach?{id:`c${i}`,nick:t.coach,pais:t.coachPais||paisTreinador[t.coach]||"—",

@@ -1,9 +1,11 @@
 /* Contrato dos renderizadores HTML puros e da interação acessível das cartas. */
 const assert=require("node:assert/strict");
+const fs=require("node:fs");
 const path=require("node:path");
 const {pathToFileURL}=require("node:url");
 
-const moduleUrl=(...parts)=>pathToFileURL(path.join(__dirname,"..","src","ui",...parts)).href;
+const ROOT=path.join(__dirname,"..");
+const moduleUrl=(...parts)=>pathToFileURL(path.join(ROOT,"src","ui",...parts)).href;
 
 async function main(){
   const [{escapeHtml},{createCardView},{setCardFlipped},{construirCartao},teamView,tournamentView,
@@ -30,14 +32,18 @@ async function main(){
     `<div class="tcard dim" data-team="a&quot;b" style="--col:#f00">
   <div class="tcoloc">1º</div><div class="tname">A&amp;B</div><div class="tcamp">&lt;Major&gt;</div></div>`,
     "template do time mudou");
-  // Duas classes, dois canais: tier-* pinta a moldura, fn-* pinta o campo.
-  assert.deepEqual([21,20,19,17,16].map(ovr=>view.cardClass({tipo:"player",ovr,prim:"AWPer"})),
-    ["card tier-h fn-awper","card tier-s fn-awper","card tier-1 fn-awper",
-      "card tier-2 fn-awper","card tier-3 fn-awper"],
+  // Duas classes, dois canais: tier-* pinta a estrutura, fn-* colore o texto da função.
+  assert.deepEqual([22,21,20,18,15,14].map(ovr=>view.cardClass({tipo:"player",ovr,prim:"AWPer"})),
+    ["card tier-6 fn-awper","card tier-5 fn-awper","card tier-4 fn-awper",
+      "card tier-3 fn-awper","card tier-2 fn-awper","card tier-1 fn-awper"],
     "faixas de raridade ou canal de função da carta mudaram");
+  const rosterSource=fs.readFileSync(path.join(ROOT,"elencos.html"),"utf8");
+  assert.ok(rosterSource.includes(
+    'const t=o>=22?"6":o>=21?"5":o>=20?"4":o>=18?"3":o>=15?"2":"1";'),
+  "Base de elencos divergiu das seis faixas canônicas da carta");
   // As bordas das faixas: 20 não pode cair em tier-1 nem 17 em tier-3.
-  assert.equal(view.cardClass({tipo:"player",ovr:20,prim:"IGL"}),"card tier-s fn-igl","borda 20/19 mudou");
-  assert.equal(view.cardClass({tipo:"player",ovr:17,prim:"Support"}),"card tier-2 fn-support","borda 17/16 mudou");
+  assert.equal(view.cardClass({tipo:"player",ovr:20,prim:"IGL"}),"card tier-4 fn-igl","borda 20/19 mudou");
+  assert.equal(view.cardClass({tipo:"player",ovr:17,prim:"Support"}),"card tier-2 fn-support","borda 17/18 mudou");
   assert.deepEqual(["IGL","AWPer","Entry","Rifler","Lurker","Support"]
     .map(role=>view.cardClass({tipo:"player",ovr:18,prim:role}).split(" ")[2]),
   ["fn-igl","fn-awper","fn-entry","fn-rifler","fn-lurker","fn-support"],
@@ -55,27 +61,31 @@ async function main(){
     playerHtml.includes('<div class="c-func">AWPer</div>')&&
     playerHtml.includes('<div class="c-nick">N&quot;ick</div>'),"hierarquia da frente da carta mudou");
   assert.ok(playerHtml.includes('class="c-identidade c-identidade--player"')&&
-    playerHtml.includes('<span class="c-role2">Support</span>')&&
+    playerHtml.includes('<span class="c-role2 c-role2--support">Support</span>')&&
     playerHtml.includes('<span class="c-team">A&amp;B</span>'),
   "estrutura de identidade da frente mudou");
   assert.ok(!playerHtml.includes("STAR")&&!playerHtml.includes("★"),"o selo de estrela voltou à carta");
-  assert.ok(playerHtml.includes('class="c-emblema"')&&playerHtml.includes("<svg viewBox=\"0 0 24 24\""),
-    "emblema da função sumiu da carta");
-  // A camada de foto existe e está vazia: quando houver retrato é mudança de dado.
-  assert.ok(playerHtml.includes('class="c-foto"')&&playerHtml.includes('class="c-tinta"'),
-    "camada de foto saiu da carta");
+  assert.ok(!playerHtml.includes('class="c-emblema"')&&!playerHtml.includes('class="c-tinta"'),
+    "camadas gráficas removidas voltaram à carta");
+  assert.ok(playerHtml.includes('class="c-foto"')&&playerHtml.includes('class="c-vinheta"'),
+    "camada canônica de retrato saiu da carta");
   // Bandeira é SVG embutido, nunca emoji (o Windows não tem os glifos).
   assert.ok(playerHtml.includes('class="c-flag"')&&playerHtml.includes("data:image/svg+xml"),
     "bandeira da carta mudou de mecanismo");
-  // Nick escala por RAZÃO, aplicada no envelope das duas faces — em vez de
-  // reticências na frente e ajuste por medição de DOM no verso.
-  // As DUAS razões saem no mesmo envelope: nick e rótulo do verso. Elas vivem em
-  // `.cfaces` porque `--t2` e a fonte do rótulo são declarados lá — declarar em
-  // `.card` fazia `var(--nick-esc,1)` cair no fallback e a escala morria em
-  // silêncio (o nick era cortado 28px além da borda). `bancada/e2e-cartas.js` mede
-  // o encaixe real; aqui congela-se o contrato do atributo.
-  assert.ok(playerHtml.includes('class="cfaces" style="--nick-esc:1;--carac-esc:0.8"'),
-    "razões de escala do envelope das duas faces mudaram");
+  // Jogadores não recebem ajuste individual: uma tipografia única governa os 85.
+  assert.ok(playerHtml.startsWith('<div class="cfaces"><div class="cface cfront"')&&
+    !playerHtml.includes("--nick-esc")&&!playerHtml.includes("--carac-esc"),
+  "jogador voltou a receber escala tipográfica individual");
+  const photoHtml=view.cardHTML({tipo:"player",ovr:22,pais:"RUS",time:"Spirit",nick:"donk",
+    foto:"donk_kato24",camp:"IEM Katowice 2024",coloc:"Campeao",prim:"Rifler",sec:"Entry",
+    _eng:{playstyle:"Coringa",fp:100,op:97,cl:63,ut:35}});
+  assert.ok(photoHtml.startsWith('<div class="cfaces" style="--foto:url(\'fotos/donk_kato24.webp\')"'),
+    "retrato canônico deixou de ser projetado pelo ID cru");
+  const unsafePhotoHtml=view.cardHTML({tipo:"player",ovr:22,pais:"RUS",time:"Spirit",nick:"donk",
+    foto:"../fora');color:red",camp:"IEM Katowice 2024",coloc:"Campeao",prim:"Rifler",sec:"Entry",
+    _eng:{playstyle:"Coringa",fp:100,op:97,cl:63,ut:35}});
+  assert.ok(!unsafePhotoHtml.includes("--foto")&&!unsafePhotoHtml.includes("../fora"),
+    "asset-id inseguro atravessou a fronteira do CSS");
   assert.ok(playerHtml.includes('class="cface cfront" aria-hidden="false"')&&
     playerHtml.includes('class="cface cback" aria-hidden="true"'),
   "faces da carta deixaram de declarar qual participa da acessibilidade");
@@ -116,19 +126,16 @@ async function main(){
     "ordem peso × valor das estatísticas do verso mudou");
   assert.ok(!playerHtml.includes("<em>")&&playerHtml.includes('<u style="width:80%">'),
     "peso técnico voltou ao verso ou trilho da estatística mudou");
+  assert.equal((playerHtml.match(/class="c-st"/g)||[]).length,4,
+    "verso do jogador deixou de usar quatro slots canônicos");
   assert.deepEqual(recipeCalls,["closer"],"receita do playstyle deixou de ser consultada uma vez");
-  // Emblema por função: seis silhuetas distintas. É o que diferencia duas cartas
-  // da mesma raridade sem depender de cor — e o que cobre o daltonismo.
-  const silhuetas=new Set(["IGL","AWPer","Entry","Rifler","Lurker","Support"].map(role=>
-    view.cardHTML({tipo:"player",ovr:18,pais:"BRA",time:"T",nick:"n",camp:"C 2020",coloc:"Top4",
-      prim:role,sec:"Entry",_eng:{playstyle:"Closer",rating:1,fp:1,op:1,cl:1,ut:1}})
-      .match(/<div class="c-emblema">(.*?)<\/div>/s)[1]));
-  assert.equal(silhuetas.size,6,"duas funções passaram a compartilhar o mesmo emblema");
   // Coringa não tem receita: o verso diz isso em vez de mostrar barras vazias.
   const jokerHtml=view.cardHTML({tipo:"player",ovr:17,pais:"BRA",time:"T",nick:"j",camp:"C 2020",coloc:"Top4",
     prim:"Rifler",sec:"Entry",_eng:{playstyle:"Coringa",rating:1,fp:70,op:60,cl:50,ut:40}});
   assert.ok(jokerHtml.includes("Firepower")&&jokerHtml.includes("Abertura")&&!jokerHtml.includes("<em>."),
     "verso do Coringa deixou de cair nas estatísticas padrão sem peso");
+  assert.equal((jokerHtml.match(/class="c-st"/g)||[]).length,4,
+    "verso do Coringa deixou de usar quatro slots canônicos");
 
   // Treinador: mesmo esqueleto e mesmo rodapé de era; OVR existe só na frente.
   const coachHtml=view.cardHTML({tipo:"coach",ovr:18,pais:"DEN",time:"SK",nick:"zonic",

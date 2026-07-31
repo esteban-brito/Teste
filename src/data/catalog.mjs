@@ -51,6 +51,7 @@ export const JOGADOR_CRU={
   nome:     {tipo:"string",       cobertura:85, nota:"vira o ID quando não há `id`"},
   id:       {tipo:"string",       cobertura:8,  nota:"só nas 8 entradas de era duplicada"},
   pais:     {tipo:"ISO3",         cobertura:40, nota:"PARCIAL no registro — os outros 45 vêm de PAIS_JOGADOR, indexado pelo ID cru. Use POOL.pais, que já resolve os 85."},
+  foto:     {tipo:"asset-id",     cobertura:1,  nota:"ID do retrato WebP canônico em fotos/<id>.webp; cobertura parcial e fallback gráfico são explícitos."},
   fp:       {tipo:"inteiro 0-100",cobertura:85},
   en:       {tipo:"inteiro 0-100",cobertura:85},
   tr:       {tipo:"inteiro 0-100",cobertura:85},
@@ -115,13 +116,5 @@ export const DIVERGENCIAS=[
     conserto:"ADIADO de propósito. A UI já foi modularizada, mas nenhum consumidor separa "+
               "evento e ano. Dividir exige migrar os 17 registros e todos os consumidores; "+
               "fazer somente quando surgir uso real para os dois campos."
-  },
-  {
-    id:"sem-foto",
-    o_que:"Não existe campo cru de retrato para jogador ou treinador.",
-    efeito:"O laboratório pode usar ativos isolados — hoje há `fotos/donk_kato24.webp` —, "+
-           "mas o jogo não pode projetá-los como dado sem criar essa fonte.",
-    conserto:"Na eventual promoção dos retratos, criar o campo cru, declarar sua cobertura "+
-             "neste catálogo e ampliar a guarda antes de ligar a UI."
   }
 ];
