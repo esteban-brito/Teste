@@ -16,6 +16,8 @@ As decisões estão classificadas assim:
 Este documento não substitui as fontes especializadas:
 
 - `AGENTS.md`: regras de trabalho, branch, invariantes e validação;
+- `docs/retomada-2026-07-31.md`: handoff geral mais recente, checkpoint
+  publicado, carta canônica e ordem recomendada das grandes etapas;
 - `docs/next-steps.md`: sequência aprovada de auditoria individual, variância,
   campanha, balanceamento condicional e retomada;
 - `docs/architecture.md`: arquitetura e dependências permitidas;
@@ -37,6 +39,10 @@ roadmap for concluída.
 Atualização vigente de 31 de julho de 2026 (tem precedência sobre o registro
 histórico abaixo):
 
+- o checkpoint visual publicado é `7175c26`, sincronizado com
+  `origin/sandbox-test`; a execução `30652005186` validou e publicou o Pages. O
+  retrato completo e a ordem recomendada de retomada estão em
+  `docs/retomada-2026-07-31.md`;
 - o handoff operacional do ciclo P5 está em
   `docs/p5-aplicacao-ui-2026-07-29.md`; ele registra commits, validações, contratos
   dos estados restantes e a próxima fatia segura;
@@ -45,8 +51,10 @@ histórico abaixo):
   push de checkpoints verdes para `sandbox-test` sem renovar a permissão;
 - a carta **A refinada é a implementação canônica**: seis faixas de OVR, bordas
   cromadas no 20/21/22, função como tinta textual, retrato em `100% auto · 50%
-  12%` e placa responsiva de 24%/26%/28%. Nome, roles, bandeira, time e quatro
-  stats permanecem visíveis em todas as larguras, sem fonte ou offset individual;
+  12%` e placa responsiva de 24%/26%/28%. Na frente, nick e bandeira dividem a
+  primeira linha, função principal ocupa a segunda e função secundária/time a
+  terceira. No verso, quatro stats ocupam toda a largura e pelo menos 35% da
+  altura. Todo conteúdo permanece visível, sem fonte ou offset individual;
 - `prototipo-cartas.html` não contém mais proposta, comparador, B/C ou encaixe
   medido. Ele renderiza uma única referência e 153 cartas reais/sintéticas com o
   componente do jogo; `bancada/e2e-cartas.js` prova a grade em oito larguras,
@@ -78,8 +86,9 @@ histórico abaixo):
   prova verde; os contratos permanentes são API pública, vetores congelados de
   RNG, catálogo, snapshot, goldens, regressão, benchmark e E2E;
 - nenhuma etapa desse ciclo alterou dados, classificação, `CFG_*`, RNG,
-  balanceamento, snapshot ou goldens.
-- validação final do ciclo: `npm run validate`, 24/24 suítes em 168,3 s.
+  balanceamento, snapshot ou goldens;
+- o fechamento histórico do P2 foi 24/24 em 168,3 s; a bancada atual possui 25
+  suítes e o fechamento da carta canônica aprovou 25/25 em 184,2 s.
 
 Registro histórico de 22 de julho de 2026:
 
@@ -717,8 +726,8 @@ npm run test:calibrator   calibrador, casos pesados e workers
 npm run test:benchmark    realismo, assists, KDA e rating
 npm run test:fidelity     contratos e scorer IFCS de fidelidade
 npm run corpus:fidelity   selo e verificação do manifesto real IFCS
-npm run test:e2e          jogo, calibrador e aba Simular no Chromium
-npm run test:all          todas as 17 suítes
+npm run test:e2e          cartas, jogo, calibrador e aba Simular no Chromium
+npm run test:all          todas as 25 suítes
 npm run validate          check + lint + todas as suítes
 node bancada/auditoria.js auditoria rápida histórica de classificação
 node bancada/auditoria.js --deep --format json
@@ -741,6 +750,8 @@ acelerar um resultado verde.
 - correlação e erro do rating;
 - placar, bilateralidade, seed automática, suficiência, scroll e responsividade
   da aba Simular;
+- geometria, tipografia, conteúdo, acessibilidade e uso real da carta canônica em
+  oito larguras;
 - draft, lineup, Suíça, playoffs, tela final e reinício do jogo principal;
 - matemática, monotonicidade, incerteza, cobertura e caps do scorer IFCS;
 - schema, hashes, mínimos, splits, auditoria determinística e holdout do corpus;
@@ -1255,17 +1266,24 @@ Não presumir respostas sem conversar:
 ## 13. Frentes atuais ao retomar
 
 `docs/next-steps.md` preserva o plano histórico que originou R1–R6/P1–P6; os
-handoffs especializados mais novos definem a retomada operacional atual:
+handoffs especializados mais novos definem a retomada operacional atual. Leia
+primeiro `docs/retomada-2026-07-31.md`:
 
-1. **cartas, produto visual:** a carta A refinada já é a única implementação do
-   jogo e do laboratório. A próxima fatia é receber e normalizar novos retratos
-   pelo contrato de `docs/card-portraits.md`, sem criar exceções de runtime;
+1. **biblioteca visual:** a carta A refinada já é a única implementação do jogo e
+   do laboratório. Receber e normalizar retratos por lotes coerentes de time/era,
+   começando pelos quatro jogadores restantes da Spirit de Katowice 2024, sem
+   criar exceções de runtime. Retrato de treinador exige extensão própria do
+   contrato de dados e não faz parte desse primeiro lote;
 2. **P5, estrutura:** separar somente criação/reset de `S`, `TG`, `MP` e `MATCH`,
    preservando forma, identidade e quirks. Fonte:
    `docs/p5-aplicacao-ui-2026-07-29.md` §11;
-3. **IFCS:** o corpus profissional continua parcial; não existe nota oficial;
-4. **Carreira de Jogador:** permanece uma frente posterior, dependente das
-   decisões de produto abertas e de estado/save próprios.
+3. **pré-produção da Carreira:** fechar as decisões de produto e registrar ADR,
+   schema de save e fluxo de telas antes de implementar comportamento definitivo;
+4. **fatia vertical da Carreira:** criador + save versionado + temporada curta,
+   sempre recalculando derivados pelos motores existentes;
+5. **P6/P7:** retirar dívida do sandbox/entrypoint por paridade depois do P5;
+6. **IFCS, em paralelo:** o corpus profissional continua parcial; não existe nota
+   oficial e a coleta não bloqueia as entregas visuais ou a Carreira.
 
 R1–R6 e P2 são contexto histórico, não uma fila ainda por executar. O domínio e
 os dados de `game.js` já foram removidos; novas adições entram pelos módulos crus.
@@ -1309,7 +1327,8 @@ refatoração, dados e balanceamento no mesmo commit.
 
 ## 16. Regras para qualquer IA futura
 
-- leia `AGENTS.md` e este documento antes de editar;
+- leia `AGENTS.md`, `docs/retomada-2026-07-31.md` e este documento antes de
+  editar;
 - verifique branch, status e mudanças do usuário;
 - escolha e execute a próxima fatia segura sem pedir nova permissão para cada
   etapa; commits e push para `sandbox-test` seguem a autorização de `AGENTS.md`;

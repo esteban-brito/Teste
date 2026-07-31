@@ -62,8 +62,11 @@ A carta de jogador possui uma única anatomia executável em
 bancada de QA para esse mesmo componente. O campo cru opcional `foto` carrega um
 asset-id, projetado pela API pública sem interpretação esportiva. O recorte não é
 configurável no runtime: assets em `fotos/` já chegam normalizados em 5:7 e seguem
-o contrato de `docs/card-portraits.md`. Isso mantém dado factual, preparação de
-asset e layout em fronteiras distintas.
+o contrato de `docs/card-portraits.md`. Nick e bandeira compartilham o primeiro
+eixo da frente; função principal e contexto ocupam linhas próprias. No verso,
+quatro stats derivados usam a largura integral e o rodapé preserva a era. Esses
+eixos são contrato do componente, não configuração individual. Isso mantém dado
+factual, preparação de asset e layout em fronteiras distintas.
 
 `random-source.mjs` encapsula o Mulberry32 em instâncias independentes, preservando
 as sequências uniforme e gaussiana bit a bit. A composição pública possui uma
@@ -159,10 +162,11 @@ extrator offline -> corpus derivado -> scorer IFCS
 - `src/ui/game/`: templates puros do draft, torneio, partida e histórico, sem
   mutação de DOM ou estado.
 
-`S` e `TG` ainda são locais ao entrypoint e mutados por controllers e
-renderizadores. O destino é um store pequeno, sem framework, com estados de draft
-e torneio separados e efeitos explícitos para DOM e timers; áudio e persistência
-já cruzaram essa fronteira.
+`S`, `TG`, `MP` e `MATCH` ainda são locais ao entrypoint e mutados pelos
+controladores atuais. O destino é um store pequeno, sem framework, com estados de
+draft, torneio e partida separados e efeitos explícitos para DOM e timers; áudio
+e persistência já cruzaram essa fronteira. A forma e a identidade desses objetos
+estão congeladas em `docs/p5-aplicacao-ui-2026-07-29.md`.
 
 ## Dados e identidade
 
@@ -180,24 +184,23 @@ snapshots. Testes e artefatos persistentes devem usar o ID cru.
 5. O calibrador diferencia mudança material de deterioração de margem interna.
 6. `elencos.html` contém dados gerados e pode divergir da fonte.
 
-## Próxima evolução do laboratório
+## Próxima evolução arquitetural
 
-O plano aprovado está em `docs/next-steps.md`. A auditoria individual R1 e a
-apresentação de variância R2 estão concluídas sem tocar no motor. R3 começou com
-uma MD3 isolada, orquestrada pelo sandbox sobre os mesmos motores de mapa.
+R1–R3 e a modularização do domínio estão concluídos; a MD3 do laboratório usa os
+mesmos motores e continua protegida por `bancada/campaign-golden.json`. A próxima
+extração estrutural não é outro motor: é o estado da aplicação, na ordem exata do
+handoff P5.
 
-Essas duas leituras não devem virar motores paralelos:
+1. extrair somente criação/reset de `S`, `TG`, `MP` e `MATCH`, com guarda de
+   shape, identidade e quirks;
+2. mover controlador de draft/roleta em commit separado;
+3. mover controlador do Major;
+4. mover série/reprodução, preservando timers, callbacks e consumo de RNG;
+5. deixar `game.js` como composição e wiring fino;
+6. somente depois iniciar a fatia vertical da Carreira sobre um schema próprio.
 
-- **expectativa:** agrega muitos mapas para medir convergência;
-- **campanha:** coordena uma sequência competitiva curta usando os mesmos motores.
-
-O contrato inicial da campanha deriva três mapas únicos da seed, alterna a
-orientação dos times, mantém uma força de forma por série e encerra no segundo
-mapa vencido. `bancada/campaign-golden.json` protege a orquestração observável;
-o golden completo do simulador continua protegendo os mapas internamente.
-
-Busca, filtros, comparação e exportação pertencem à interface/aplicação.
-Percentis e intervalos são calculados pelo módulo estatístico puro a partir das
-amostras preservadas pela aplicação. Qualquer nova extração precisa preservar
-IDs, agenda, lados, seeds e resultados aprovados antes de remover o código de
-origem da aplicação ou do sandbox.
+A biblioteca de retratos pode avançar em paralelo porque atravessa apenas a
+fronteira asset-id → asset normalizado → componente canônico. O corpus IFCS também
+é uma trilha paralela e offline. Nenhuma das duas justifica misturar estado,
+simulação ou balanceamento no mesmo commit. O mapa geral de prioridade está em
+`docs/retomada-2026-07-31.md`.

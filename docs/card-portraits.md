@@ -48,8 +48,10 @@ Para cada lote recebido:
 5. recortar ou expandir para 5:7 seguindo a grade fotográfica;
 6. exportar WebP no alvo recomendado e adicionar o asset-id ao dado cru;
 7. rodar `npm run check` e `node bancada/e2e-cartas.js`;
-8. conferir frente e verso a 250, 188, 176, 150, 130 e 120 px, além de escala de
-   cinza e três simulações de daltonismo no laboratório.
+8. capturar e conferir **frente e verso** a 250, 188, 176, 151, 150, 149, 130 e
+   120 px, além de escala de cinza e três simulações de daltonismo no laboratório;
+9. comparar massa óptica, linha dos olhos, cabeça, ombros, exposição e integração
+   com a diagonal contra o Donk canônico; corrigir o asset antes de publicar.
 
 Quando a origem já corta cabeça ou ombros, simples zoom não resolve. A ordem de
 preferência é: obter outra foto, reconstruir somente o fundo, ou usar expansão
@@ -66,9 +68,24 @@ não devem ser inventados silenciosamente.
   portanto não devem ser queimados na imagem.
 - Transparência não é necessária e aumenta o risco de bordas inconsistentes.
 - Duas eras do mesmo nick podem e normalmente devem usar assets diferentes.
+- A captura visual é obrigatória mesmo com o E2E verde: a suíte prova geometria e
+  contratos, mas não decide se uma fonte ficou artificial, lavada ou mal cortada.
+- Lotes devem manter um inventário simples de fonte, licença/permissão, ID cru,
+  transformação aplicada e arquivo final. Esse inventário não deve conter
+  cookies, credenciais nem material privado.
 
 ## Estado atual
 
 `donk_kato24` é o primeiro asset ligado ao dado cru e a referência visual
 canônica. A cobertura parcial é explícita em `src/data/catalog.mjs`; jogadores sem
 foto usam o fallback gráfico da mesma carta, sem layout alternativo.
+
+A próxima unidade recomendada é completar os jogadores da Spirit · IEM Katowice
+2024 com `sh1ro_kato24`, `zont1x`, `magixx` e `chopper_kato24`. Isso fecha o
+quinteto visual e permite julgar padronização entre poses diferentes antes de
+escalar o processo para os demais elencos.
+
+O checker e o campo `foto` atuais cobrem somente `ATRIBUTOS`. Um retrato para o
+treinador `hally` exige uma extensão separada e testada do contrato de times,
+catálogo, projeção pública e verificador; até lá, não adicionar um asset órfão.
+O roteiro geral está em `docs/retomada-2026-07-31.md`.

@@ -4,7 +4,8 @@
 > `src/infrastructure/persistence` ou `src/ui/game`.** Ele foi escrito para uma
 > nova sessão do Codex sem memória da conversa, do jogo ou das decisões tomadas.
 >
-> Este documento não substitui `AGENTS.md`, `docs/project-context.md`,
+> Este documento não substitui `AGENTS.md`, `docs/retomada-2026-07-31.md`,
+> `docs/project-context.md`,
 > `docs/p2-modularizacao-2026-07-28.md`, `docs/architecture.md` nem
 > `docs/testing.md`. Ele é o handoff operacional focado no ciclo P5.
 
@@ -30,6 +31,13 @@ densidade compacta e geometria; detalhes em `docs/cartas-design-2026-07-28.md`,
 seção 11. O marco fechou com `npm run validate` verde, 25/25 suítes em 198,2 s.
 Isso não muda a próxima fatia estrutural segura descrita neste handoff.
 
+Atualização de 31/07/2026: a A refinada foi promovida e refinada como única carta
+canônica. `game.js` permanece com 889 linhas; as mudanças ficaram no componente,
+CSS, laboratório, guardas e cache do deploy. O checkpoint publicado é `7175c26`,
+a execução `30652005186` ficou verde e `npm run validate` aprovou 25/25. O
+contrato final está em `docs/cartas-design-2026-07-28.md` §14 e a retomada geral
+em `docs/retomada-2026-07-31.md`. Isso também não altera a fatia estrutural P5.
+
 Estado funcional que precede este handoff:
 
 - branch: `sandbox-test`;
@@ -50,14 +58,15 @@ o repositório pode ter avançado depois de 29/07/2026.
 Leia nesta ordem:
 
 1. `AGENTS.md` — branch, disciplina, validações e invariantes;
-2. este arquivo — ponto operacional do P5;
-3. `docs/p2-modularizacao-2026-07-28.md` — como o motor foi extraído e como RNG
+2. `docs/retomada-2026-07-31.md` — checkpoint geral e prioridades atuais;
+3. este arquivo — ponto operacional do P5;
+4. `docs/p2-modularizacao-2026-07-28.md` — como o motor foi extraído e como RNG
    e paridade foram provados;
-4. `docs/project-context.md` — histórico, roadmap completo e visão da Carreira;
-5. `docs/architecture.md` — camadas e dependências permitidas;
-6. `docs/testing.md` — grupos, guardas e comandos;
-7. `src/data/catalog.mjs` — antes de afirmar que qualquer dado não existe;
-8. `game.js` — somente depois das leituras acima, para conferir o estado atual.
+5. `docs/project-context.md` — histórico, roadmap completo e visão da Carreira;
+6. `docs/architecture.md` — camadas e dependências permitidas;
+7. `docs/testing.md` — grupos, guardas e comandos;
+8. `src/data/catalog.mjs` — antes de afirmar que qualquer dado não existe;
+9. `game.js` — somente depois das leituras acima, para conferir o estado atual.
 
 Se a tarefa tocar avaliação, química ou simulação, leia também os ADRs e as
 referências indicadas pelo P2. Não deduza contratos do motor apenas pelo uso na UI.
@@ -199,13 +208,18 @@ Arquivos grandes que permanecem (medidos em `8a12250`, 29/07/2026):
   (`3a221e2`, `832017b`), que removeu duplicação e CSS morto sem mudança visual,
   provada pelo comparador de `tools/visual-regression.js`.
 
+Medição vigente em `7175c26`, 31/07/2026: `game.js` 889 linhas,
+`sandbox.html` 4.205, `style.css` 1.031 e `prototipo-cartas.html` 392. O aumento do
+CSS pertence ao componente canônico e às três densidades comprovadas; não muda a
+recomendação de separar estado antes de controladores.
+
 Tamanho não é autorização para dividir ou apagar. `sandbox.html` ainda possui
 dívida própria do P6; `style.css` não deve ser reorganizado junto com estado ou
 controladores.
 
 ## 6. Validação do estado final de código
 
-Após `57f5699`, passaram:
+No checkpoint histórico `57f5699`, passaram:
 
 - `npm run check` — sintaxe e todas as guardas permanentes, incluindo áudio,
   progresso, views, APIs públicas, sandbox, catálogo, add-team, RNG e estatística;
@@ -213,7 +227,7 @@ Após `57f5699`, passaram:
 - `npm run test:data` — verde; permanecem 14 warnings conhecidos de treinador sem
   `coachPais` inline, usando `PAIS_TREINADOR` como projetado;
 - `npm run test:regression` — 9/9 suítes, snapshot e golden idênticos;
-- `npm run test:e2e` — 3/3 suítes em 82,5 s:
+- `npm run test:e2e` — as 3 suítes então existentes, em 82,5 s:
   - intenções no calibrador: 59,7 s;
   - aba Simular: 6,5 s;
   - jogo completo: 15,6 s.
@@ -224,10 +238,12 @@ quartas, semifinal, final, título, ratings, recordes, reinício, reload e Hall.
 Benchmark, fidelidade e calibrador Node não foram repetidos nessa última fatia
 porque ela moveu somente aplicação/persistência/templates e não tocou avaliação,
 química, simulação, scorer, corpus, worker ou busca. O último `validate` integral
-do fechamento P2 permanece 24/24. Ao tocar uma área, siga a matriz obrigatória do
-`AGENTS.md`; não use esta justificativa para pular uma suíte pertinente.
+do fechamento P2 era 24/24. A bancada atual acrescentou o E2E de cartas e possui
+25 suítes; o checkpoint `7175c26` aprovou `npm run validate` 25/25 em 184,2 s.
+Ao tocar uma área, siga a matriz obrigatória do `AGENTS.md`; não use esta
+justificativa para pular uma suíte pertinente.
 
-## 7. Mapa das 888 linhas restantes de `game.js`
+## 7. Mapa das 889 linhas restantes de `game.js`
 
 Linhas medidas no commit `8a12250` (29/07/2026) — confira novamente se o arquivo
 avançou. O mapa anterior era do commit-base `57f5699` e tinha uma faixa de tilt que
@@ -495,13 +511,14 @@ Não resta uma lista aprovada de arquivos para deletar. A próxima auditoria dev
 
 - `npm run test:data` informa 14 ocorrências de treinador sem `coachPais` inline;
   o fallback `PAIS_TREINADOR` é o contrato atual;
-- o catálogo declara duas divergências conhecidas e continua verde;
+- o catálogo declara uma divergência conhecida, `camp-empacotado`, e continua
+  verde;
 - o corpus IFCS oficial ainda não está completo; não chamar baseline técnico de
   nota oficial;
 - `sandbox.html` ainda é grande e possui loader inline legado;
 - persistência atual serve ao histórico do modo existente; uma Carreira exigirá
   contrato próprio, migrations e IDs persistentes conforme `project-context`;
-- `game.js` ter 888 linhas não significa que todas devam sair.
+- `game.js` ter 889 linhas não significa que todas devam sair.
 
 ## 15. Validação e disciplina ao retomar
 

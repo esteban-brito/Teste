@@ -14,6 +14,8 @@ playoffs.
 O mapa técnico e as regras para mudanças estão em:
 
 - [`AGENTS.md`](AGENTS.md): invariantes, branch, validação e disciplina de commits;
+- [`docs/retomada-2026-07-31.md`](docs/retomada-2026-07-31.md): último
+  checkpoint publicado, carta canônica e próximas grandes etapas recomendadas;
 - [`docs/project-context.md`](docs/project-context.md): ponto de retomada, roadmap
   de profissionalização e visão do modo Carreira de Jogador;
 - [`docs/p5-aplicacao-ui-2026-07-29.md`](docs/p5-aplicacao-ui-2026-07-29.md):
@@ -66,6 +68,11 @@ Utilitário); o verso de um **treinador** explica o que a característica dele
 (Gestor, Desenvolvedor, Estrategista, Motivador) faz pelo time. Tocar no corpo
 da carta continua escolhendo/posicionando normalmente. As cartas usam proporção
 5/7 e se adaptam a qualquer tela.
+
+O padrão visual vigente usa o Donk de Katowice 2024 como referência. Retratos de
+origens diferentes são normalizados como assets 5:7; o jogo não aplica zoom,
+fonte ou posicionamento específico por jogador. O contrato e o fluxo de entrada
+estão em [`docs/card-portraits.md`](docs/card-portraits.md).
 
 ## Estrutura do projeto
 
