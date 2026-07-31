@@ -370,36 +370,46 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    dando ao nick a largura inteira. A linha da função ganhava contrapeso, mas a
    bandeira colava no time e passava a ler como parte DELE, não do jogador. A
    bandeira pertence ao mesmo bloco que o nick — é quem a pessoa é, não contexto. */
-.c-identidade--player{position:absolute;left:var(--pad);right:var(--pad);bottom:var(--b1);
+.c-identidade--player,.c-identidade--coach{position:absolute;left:var(--pad);right:var(--pad);
   z-index:5;display:grid;grid-template-columns:minmax(0,1fr) auto;
   grid-template-areas:"nick flag" "func func" "meta meta";
   column-gap:clamp(1px,1cqw,3px);row-gap:clamp(.6px,.45cqw,1.2px);align-items:end}
-.card .c-identidade--player .c-nick{grid-area:nick;position:static;inset:auto;
+.c-identidade--player{bottom:var(--b1)}
+/* A frente do treinador é o espelho vertical da frente do jogador: o mesmo
+   bloco editorial encosta no topo, enquanto o OVR troca o topo pela base. */
+.c-identidade--coach{top:var(--b1)}
+.card .c-identidade--player .c-nick,.coachcard .c-identidade--coach .c-nick{
+  grid-area:nick;position:static;inset:auto;
   min-width:0;font-size:var(--t2);line-height:.9;letter-spacing:-.005em;overflow:visible}
-.card .c-identidade--player .c-func{grid-area:func;position:static;inset:auto;
+.card .c-identidade--player .c-func,.coachcard .c-identidade--coach .c-func{
+  grid-area:func;position:static;inset:auto;
   align-self:end;font-size:clamp(9px,var(--t3),14px);line-height:.95;letter-spacing:.13em;
   color:var(--r-ink);white-space:nowrap}
-.card .c-identidade--player .c-flag{grid-area:flag;position:static;inset:auto;
+.card .c-identidade--player .c-flag,.coachcard .c-identidade--coach .c-flag{
+  grid-area:flag;position:static;inset:auto;
   display:block;width:clamp(13px,9.5cqw,22px);justify-self:end;align-self:center}
-.card .c-identidade--player .c-meta{grid-area:meta;position:static;inset:auto;
+.card .c-identidade--player .c-meta,.coachcard .c-identidade--coach .c-meta{
+  grid-area:meta;position:static;inset:auto;
   display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;
   font-size:clamp(7px,var(--t4),10px);line-height:1;letter-spacing:.1em}
-.card .c-role2{justify-self:start}.card .c-team{justify-self:end;text-align:right}
+.card .c-role2,.coachcard .c-role2{justify-self:start}
+.card .c-team,.coachcard .c-team{justify-self:end;text-align:right}
 
 /* Verso do jogador: tipografia fixa e quatro trilhos em largura integral. */
-.card .c-vnick{top:5.5%;font-size:clamp(12px,10.7cqw,23px)}
+.card .c-vnick,.coachcard .c-vnick{top:5.5%;font-size:clamp(12px,10.7cqw,23px)}
 /* Linha de identidade: ocupa a faixa que sobrava vazia sob o nick e devolve ao
    verso o "quem" e o "por quem". Função na cor da função, time apagado — a mesma
    hierarquia da frente, para as duas faces se reconhecerem. */
-.card .c-vid{position:absolute;left:var(--pad);right:var(--pad);top:15.5%;z-index:5;
+.card .c-vid,.coachcard .c-vid{position:absolute;left:var(--pad);right:var(--pad);top:15.5%;z-index:5;
   display:flex;align-items:baseline;gap:clamp(3px,2.2cqw,6px);font-family:var(--ff);
   font-size:clamp(7.5px,5cqw,11px);letter-spacing:.14em;text-transform:uppercase;
   line-height:1;white-space:nowrap;overflow:hidden}
-.card .c-vid b{font-weight:700;color:var(--r-ink);flex:0 0 auto}
-.card .c-vid span{font-weight:500;color:#7d8a9c;min-width:0;overflow:hidden;
+.card .c-vid b,.coachcard .c-vid b{font-weight:700;color:var(--r-ink);flex:0 0 auto}
+.card .c-vid span,.coachcard .c-vid span{font-weight:500;color:#7d8a9c;min-width:0;overflow:hidden;
   text-overflow:ellipsis}
-.card .c-vid span::before{content:"·";margin-right:clamp(3px,2.2cqw,6px);color:#46536a}
-.card .c-vestilo{top:27.5%}
+.card .c-vid span::before,.coachcard .c-vid span::before{
+  content:"·";margin-right:clamp(3px,2.2cqw,6px);color:#46536a}
+.card .c-vestilo,.coachcard .c-vestilo{top:27.5%}
 /* `Infiltrador` e `Facilitador` (11 letras) sao o pior caso, e FreeType mede mais
    largo que DirectWrite: o CI do Linux reprovou com 3,45px de estouro onde o
    Windows passava. Tracking universal, nunca excecao por jogador. */
@@ -434,18 +444,24 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    campeonato de duas linhas subia o texto e um de uma linha descia — a margem
    acima do campeonato mudava de carta para carta. Ancorado no topo, a primeira
    linha começa sempre no mesmo y e a segunda cresce para o espaço reservado. */
-.card .c-vrod{top:86%;bottom:4%;min-height:0;justify-content:flex-start}
+.card .c-vrod,.coachcard .c-vrod{top:86%;bottom:4%;min-height:0;justify-content:flex-start}
 
-/* Treinador continua sendo outra categoria, mas usa o mesmo sistema de eixos. */
-/* O treinador tem moldura própria, segmentada a 45° — não entra na escada. */
+/* Treinador: a única silhueta exclusiva é a moldura segmentada. Miolo, escala,
+   placa e verso usam a grade do jogador; na frente, os dois blocos são trocados
+   verticalmente sem criar uma segunda anatomia. */
 .coachcard{--wash-cor:var(--r);--wash:12%}
-.coachcard .cfaces{--placa-n:44;--faixa-n:26;
+.coachcard .cfaces{--placa-n:24;--faixa-n:22;
   --placa:calc(var(--placa-n)*1%);--faixa:calc(var(--faixa-n)*1%);
-  --t2:calc(16cqw*var(--nick-esc,1));--t3:7.4cqw;
-  --b1:3.3%;--b2:calc(var(--b1) + var(--passo));--b3:calc(var(--b2) + var(--passo)*1.45)}
-.c-identidade--coach{display:contents}
-.coachcard .c-fio,.coachcard .c-placa,.coachcard .c-vfio,.coachcard .c-vfaixa{clip-path:none}
-.coachcard .c-placa{background:linear-gradient(178deg,
+  --t2:clamp(13px,10.5cqw,27px);--t-style:clamp(14.5px,12.6cqw,27px);
+  --t3:6.4cqw;--t4:4.8cqw;--vfolga:clamp(2px,1.6cqw,4px)}
+.coachcard .c-fio,.coachcard .c-placa{top:0;bottom:auto;
+  clip-path:polygon(0 0,100% 0,100% 100%,0 calc(100% - var(--corte)))}
+/* O OVR inferior recebe o espelho exato da proteção escura usada pelo OVR dos
+   jogadores no topo. Sem esta camada, a roupa clara do retrato real de hally
+   derrubava o contraste para 2,14:1. */
+.coachcard .c-vinheta{background:linear-gradient(180deg,transparent 50%,
+  rgba(3,6,11,.45) 58%,rgba(3,6,11,.72) 68%,rgba(3,6,11,.86) 80%,rgba(3,6,11,.94) 100%)}
+.coachcard .c-placa{background:linear-gradient(2deg,
   color-mix(in srgb,var(--r) 16%,#0a0f17),#070a10 46%)}
 .coachcard .c-vfaixa{background:linear-gradient(2deg,
   color-mix(in srgb,var(--r) 14%,#0a0f17),#070a10 48%)}
@@ -458,44 +474,53 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   -webkit-mask-composite:xor;mask-composite:exclude}
 .coachcard .c-fio,.coachcard .c-vfio{background:repeating-linear-gradient(90deg,
   color-mix(in srgb,var(--r) 86%,transparent) 0 3.4cqw,transparent 3.4cqw 6.4cqw)}
-.coachcard .c-meta{justify-content:flex-end}.coachcard .c-role2{display:none}
-.coachcard .c-ovr small{font-size:4.6cqw;letter-spacing:.2em;
-  color:color-mix(in srgb,var(--r-ink) 82%,#fff)}
-.coachcard .c-func{font-size:calc(var(--t3)*var(--carac-esc,1));letter-spacing:.15em;color:var(--r-ink)}
-.coachcard .cback .c-vestilo{top:30%}
-.coachcard .cback .c-vdesc{top:48%;bottom:18%;font-family:var(--ff);
+/* O treinador não tem função secundária, então a faixa de contexto fica com um
+   item só. Ele precisa ocupar a linha inteira: sem isto o time permanece na
+   primeira das duas colunas e o `justify-self:end` da grade comum o ancora no
+   fim DELA — o nome parava a ~42% da largura, no meio da carta, com o medidor
+   verde porque nenhuma guarda de espelho olhava o eixo horizontal. */
+.coachcard .c-role2{display:none}
+.coachcard .c-team{grid-column:1/-1}
+.coachcard .c-ovr{top:auto;bottom:5.5%}
+.coachcard .c-ovr small{color:color-mix(in srgb,var(--r-ink) 82%,#fff)}
+.coachcard .c-vestilo b{font-size:calc(var(--t-style)*var(--carac-esc,1));color:var(--r-ink)}
+.coachcard .cback .c-vdesc{
+  top:calc(27.5% + clamp(7px,4.2cqw,9px)*1.6 + var(--t-style)*.95 + var(--vfolga));
+  bottom:calc(14% + var(--vfolga));font-family:var(--ff);
   font-size:clamp(10px,6.8cqw,15px);line-height:1.4;font-weight:600;
   letter-spacing:.005em;color:#eef4fa;align-items:center}
 
 @container (max-width:176px){
-  .card .cfaces{--placa-n:26;--placa:calc(var(--placa-n)*1%);
+  .card .cfaces,.coachcard .cfaces{--placa-n:26;--placa:calc(var(--placa-n)*1%);
     --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%)}
   /* FreeType e DirectWrite diferem nas métricas horizontais. O tracking comum
      protege nomes longos no intervalo em que a bandeira já divide o eixo. */
-  .card .c-identidade--player .c-nick{letter-spacing:-.025em}
+  .card .c-identidade--player .c-nick,.coachcard .c-identidade--coach .c-nick{
+    letter-spacing:-.025em}
 }
 @container (max-width:150px){
-  .card .cfaces{--placa-n:28;--placa:calc(var(--placa-n)*1%);
+  .card .cfaces,.coachcard .cfaces{--placa-n:28;--placa:calc(var(--placa-n)*1%);
     --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
     --t2:clamp(12px,10cqw,27px);--t3:6.4cqw;--t4:4.8cqw}
-  .card .c-identidade--player .c-meta{display:grid}
-  .card .c-identidade--player .c-flag{display:block}
+  .card .c-identidade--player .c-meta,.coachcard .c-identidade--coach .c-meta{display:grid}
+  .card .c-identidade--player .c-flag,.coachcard .c-identidade--coach .c-flag{display:block}
   /* No compacto a ênfase do Firepower cede: mantida cheia, ela empurra os quatro
      trilhos contra o rótulo em cima e o rodapé embaixo. A hierarquia continua
      legível com metade do salto. */
-  .card .c-vid{top:16%;font-size:clamp(7px,5.4cqw,9.5px);letter-spacing:.1em}
-  .card .c-vestilo{top:25.5%}
+  .card .c-vid,.coachcard .c-vid{top:16%;font-size:clamp(7px,5.4cqw,9.5px);letter-spacing:.1em}
+  .card .c-vestilo,.coachcard .c-vestilo{top:25.5%}
   /* No compacto o campeonato de duas linhas ("DreamHack Cluj-Napoca") ocupa uma
      fatia bem maior da carta, então o rodapé sobe: a 86% a colocação caía para
      fora em 35 das 135 cartas. */
-  .card .c-vrod{top:82%}
+  .card .c-vrod,.coachcard .c-vrod{top:82%}
   .card .c-vstats{top:calc(25.5% + clamp(7px,4.2cqw,9px)*1.6 + var(--t-style)*.95 + var(--vfolga));
     bottom:calc(18% + var(--vfolga));gap:clamp(1.5px,1.2cqw,3px)}
   .card .c-st:first-child i{font-size:clamp(7.5px,5.2cqw,11px)}
   .card .c-st:first-child b{font-size:clamp(10px,6.6cqw,14px)}
   .card .c-st:first-child .c-trilho{height:clamp(2.5px,1.8cqw,3.5px)}
-  .coachcard .cfaces{--t3:8.2cqw}
-  .coachcard .cback .c-vdesc{top:46%;bottom:21%;font-size:clamp(8px,6cqw,12px);line-height:1.34}
+  .coachcard .cback .c-vdesc{
+    top:calc(25.5% + clamp(7px,4.2cqw,9px)*1.6 + var(--t-style)*.95 + var(--vfolga));
+    bottom:calc(18% + var(--vfolga));font-size:clamp(8px,6cqw,12px);line-height:1.34}
 }
 
 .slot{border:1px dashed rgba(52,65,85,.5);border-radius:10px;min-height:148px;aspect-ratio:5/7;

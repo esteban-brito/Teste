@@ -105,13 +105,8 @@ async function main(){
   assert.ok(!classes.has("flipped")&&fakeCard.dataset.face==="front"&&
     atributos.front["aria-hidden"]==="false"&&atributos.back["aria-hidden"]==="true",
   "desvirar a carta deixou classe, estado visual e acessibilidade dessincronizados");
-  const nomesLongos=[["curto",1],["pashaBicep",0.675],["pashaBiceps",0.675],["nomeMuitoComprido",0.5625]];
-  nomesLongos.forEach(([nick,esperado])=>{
-    const html=view.cardHTML({tipo:"coach",ovr:15,pais:"DEN",time:"T",nick,carac:"Gestor",caracSlug:"gestor"});
-    assert.ok(html.includes(`--nick-esc:${esperado}`),`escala do nick mudou para "${nick}"`);
-  });
   // Rótulo do verso: 13+ caracteres não cabem a 100%, 11–12 cabem justos.
-  [["Gestor",1],["Estrategista",0.88],["Desenvolvedor",0.8]].forEach(([carac,esperado])=>{
+  [["Gestor",1],["Estrategista",0.77],["Desenvolvedor",0.7]].forEach(([carac,esperado])=>{
     const html=view.cardHTML({tipo:"coach",ovr:15,pais:"DEN",time:"T",nick:"c",carac,caracSlug:"gestor"});
     assert.ok(html.includes(`--carac-esc:${esperado}`),`escala do rótulo do verso mudou para "${carac}"`);
   });
@@ -147,6 +142,8 @@ async function main(){
   assert.ok(coachHtml.includes('<div class="c-ovr">18<small>Treinador</small>')&&
     coachHtml.includes('<div class="c-func">Gestor</div>')&&
     coachHtml.includes('class="c-identidade c-identidade--coach"'),"frente do treinador mudou");
+  assert.ok(coachHtml.includes('<div class="c-vid"><b>Treinador</b><span>SK</span></div>'),
+    "verso do treinador perdeu a linha de identidade padronizada");
   assert.ok(!coachHtml.includes("c-vovr")&&coachHtml.includes("ESL One Cologne 2016")&&
     coachHtml.includes("Campeão"),"verso do treinador perdeu padronização ou repetiu OVR");
   assert.ok(coachHtml.includes("Tolera +1 estrela")&&coachHtml.includes("7% → 4%"),

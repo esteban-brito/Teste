@@ -27,9 +27,10 @@ const tierOf=ovr=>ovr>=22?"tier-6":ovr>=21?"tier-5":ovr>=20?"tier-4"
   :ovr>=18?"tier-3":ovr>=15?"tier-2":"tier-1";
 const slugFuncao=role=>String(role||"").toLowerCase().replace(/[^a-z]/g,"")||"rifler";
 
-/* Ajustes exclusivos do treinador; jogadores usam corpos universais no CSS. */
-const escalaNick=nome=>nome.length<=6?1:nome.length<=9?.825:nome.length<=12?.675:.5625;
-const escalaCarac=texto=>texto.length<=10?1:texto.length<=12?.88:.8;
+/* Ajuste exclusivo do rótulo de característica; nicks usam o corpo universal. */
+/* A grade é única; só o corpo do rótulo longo reduz para preservar a mesma
+   caixa. Os fatores compensam a largura extra de Estrategista/Desenvolvedor. */
+const escalaCarac=texto=>texto.length<=10?1:texto.length<=12?.77:.7;
 
 const camadasDeFundo=`<div class="c-foto"></div><div class="c-vinheta"></div>`;
 const bandeiraHtml=pais=>{
@@ -120,6 +121,7 @@ export function createCardView({styleId,styleLabel,styleRecipe}){
 
   const backCoach=card=>`<div class="c-vfio"></div><div class="c-vfaixa"></div>
   <div class="c-vnick">${esc(card.nick)}</div>
+  <div class="c-vid"><b>Treinador</b><span>${esc(card.time||"")}</span></div>
   <div class="c-vestilo"><small>Característica</small><b>${esc(card.carac)}</b></div>
   <div class="c-vdesc">${esc(COACH_DESCRIPTION[card.carac]||"")}</div>
   ${rodapeVerso(card)}
@@ -128,8 +130,7 @@ export function createCardView({styleId,styleLabel,styleRecipe}){
   const cardHTML=card=>{
     const coach=card.tipo==="coach";
     const estilos=[fotoStyle(card)];
-    if(coach)estilos.push(`--nick-esc:${escalaNick(card.nick)}`,
-      `--carac-esc:${escalaCarac(rotuloVerso(card))}`);
+    if(coach)estilos.push(`--carac-esc:${escalaCarac(rotuloVerso(card))}`);
     const inline=estilos.filter(Boolean);
     return `<div class="cfaces"${inline.length?` style="${inline.join(";")}"`:""}>`+
       `<div class="cface cfront" aria-hidden="false">${coach?coachFront(card):playerFront(card)}</div>`+

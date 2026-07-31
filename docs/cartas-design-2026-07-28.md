@@ -775,3 +775,55 @@ fonte, não de layout.
   razão fica entre 1,17 e 1,25 em todas as larguras;
 - **vermelho forte demais**: `Rifler` de `#ff2038` para `#f04a5e`. Contraste 4,5:1
   segue aprovado nas oito larguras.
+
+## 19. Treinador como espelho vertical da carta canônica — 31/07/2026
+
+A distinção anterior havia virado uma segunda anatomia: placa reta de 44%, corpos
+maiores e eixos próprios no verso. A direção aprovada é mais simples: **a carta do
+treinador é a carta do jogador espelhada verticalmente na frente**.
+
+- a placa usa os mesmos 24%, 26% e 28%, mas nasce no topo;
+- o bloco completo de identidade muda da base para o topo e o OVR vai para a base;
+- nick, bandeira, característica e time usam a mesma grade frontal;
+- no verso, nick, linha `TREINADOR · TIME`, característica, corpo e era ocupam os
+  mesmos eixos e reservas da carta de jogador;
+- a única diferenciação estrutural preservada é a moldura segmentada/serrilhada;
+  a cor continua vindo da característica e não entra na escada de raridade.
+
+O laboratório passou a comparar cada coach com uma carta de jogador na mesma
+largura: âncoras espelhadas da frente, altura da placa, quatro eixos do verso,
+limites do corpo e altura da faixa. Uma prova sintética desloca frente e verso e
+confirma que a guarda reprova. O OVR inferior também é medido sobre o retrato real
+de hally: a proteção universal da base elevou o pior contraste de **2,14:1** para
+**10,13:1**, acima do contrato de 4,5:1 sem ajuste por treinador.
+
+### 19.1 O espelho tinha um eixo só — correção de 31/07/2026
+
+O espelhamento acima foi publicado com um defeito visível e um defeito de método,
+e os dois têm a mesma raiz: **as dez guardas do treinador eram todas verticais**.
+
+O defeito visível: o time parava a ~42% da largura, no meio da carta, em todos os
+18 treinadores e nas oito larguras. A faixa de contexto declara duas colunas
+porque o jogador põe função secundária à esquerda e time à direita; o treinador
+não tem função secundária, então `.c-role2` é ocultado e o time ficava sozinho na
+**primeira** coluna — onde `justify-self:end` o ancorava no fim DELA, não no fim
+da carta. Medido: 105,5 px de folga a 250 px e 52,2 px a 120 px.
+
+A correção é uma linha, e vale para a categoria inteira, sem exceção por pessoa
+ou por time: `.coachcard .c-team{grid-column:1/-1}`.
+
+O defeito de método é o que importa preservar. O medidor dizia `falhas=0
+ritmo=0` com isso na tela, porque comparava topo da identidade, base do OVR,
+altura da placa, quatro eixos do verso, limites do corpo e altura da faixa —
+**nenhuma medida no eixo x**. A única guarda que tocava o time apenas conferia se
+o nó estava *visível*, nunca *onde*. Um espelho vertical não dispensa a prova de
+que o eixo horizontal permaneceu idêntico; ele a exige, porque é justamente o
+eixo que ninguém está olhando.
+
+O laboratório ganhou a bateria `espelho horizontal · <campo>`, que compara com a
+carta de jogador de referência a borda que é contrato de cada campo: nick e
+característica pela esquerda, bandeira e time pela direita, faixa de contexto
+pelas duas. Ela foi verificada **reprovando** antes da correção — 144
+apontamentos, 18 coaches × 8 larguras, todos e somente em `time (direita)`, o que
+também provou que os demais campos já espelhavam certo. A prova sintética do E2E
+reencena exatamente esse defeito devolvendo o time à primeira coluna.
