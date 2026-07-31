@@ -51,7 +51,7 @@ export const JOGADOR_CRU={
   nome:     {tipo:"string",       cobertura:85, nota:"vira o ID quando não há `id`"},
   id:       {tipo:"string",       cobertura:8,  nota:"só nas 8 entradas de era duplicada"},
   pais:     {tipo:"ISO3",         cobertura:40, nota:"PARCIAL no registro — os outros 45 vêm de PAIS_JOGADOR, indexado pelo ID cru. Use POOL.pais, que já resolve os 85."},
-  foto:     {tipo:"asset-id",     cobertura:1,  nota:"ID do retrato WebP canônico em fotos/<id>.webp; cobertura parcial e fallback gráfico são explícitos."},
+  foto:     {tipo:"asset-id",     cobertura:5,  nota:"ID do retrato WebP canônico em fotos/<id>.webp. DEVE ser idêntico ao ID cru — é isso que impede colar a foto de uma era noutra quando o mesmo nick aparece várias vezes. Cobertura parcial e fallback gráfico são explícitos."},
   fp:       {tipo:"inteiro 0-100",cobertura:85},
   en:       {tipo:"inteiro 0-100",cobertura:85},
   tr:       {tipo:"inteiro 0-100",cobertura:85},
@@ -72,7 +72,8 @@ export const ELENCO_CRU={
   colocacao: {tipo:"enum",    cobertura:17},
   jogadores: {tipo:"ID[5]",   cobertura:17, nota:"referencia jogadores pelo ID cru"},
   coach:     {tipo:"string",  cobertura:15, nota:"2 elencos não têm treinador (EnVyUs, Virtus.pro)"},
-  coachPais: {tipo:"ISO3",    cobertura:1,  nota:"inline; tem precedência sobre PAIS_TREINADOR"}
+  coachPais: {tipo:"ISO3",    cobertura:1,  nota:"inline; tem precedência sobre PAIS_TREINADOR"},
+  coachFoto: {tipo:"asset-id",cobertura:1,  nota:"retrato do treinador em fotos/<id>.webp. Vive no ELENCO, não no treinador, porque o mesmo nome treina eras diferentes — hally está nas duas Spirits. Precisa começar pelo nome do treinador; o sufixo distingue a era."}
 };
 
 /** DERIVADO pelo domínio. Não é dado: não pode existir em `src/data`. (ADR 0002) */

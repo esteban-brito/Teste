@@ -80,10 +80,10 @@ export const ATRIBUTOS=[
   {nome:"HooXi",pais:"DEN",fp:5,en:70,tr:56,op:46,cl:31,sn:0,ut:81,rating:0.79,colocacao:"Top4",isIGL:true},
   // ——— Spirit · IEM Katowice 2024 (Campeao) ———
   {id:"donk_kato24",nome:"donk",pais:"RUS",foto:"donk_kato24",fp:100,en:53,tr:69,op:97,cl:63,sn:0,ut:35,rating:1.75,colocacao:"Campeao",isIGL:false},
-  {id:"sh1ro_kato24",nome:"sh1ro",pais:"RUS",fp:68,en:40,tr:94,op:36,cl:94,sn:86,ut:47,rating:1.20,colocacao:"Campeao",isIGL:false},
-  {nome:"zont1x",pais:"UKR",fp:49,en:57,tr:22,op:75,cl:57,sn:0,ut:53,rating:1.12,colocacao:"Campeao",isIGL:false},
-  {nome:"magixx",pais:"RUS",fp:21,en:93,tr:54,op:28,cl:79,sn:0,ut:66,rating:1.07,colocacao:"Campeao",isIGL:false},
-  {id:"chopper_kato24",nome:"chopper",pais:"RUS",fp:13,en:93,tr:6,op:52,cl:35,sn:0,ut:65,rating:1.02,colocacao:"Campeao",isIGL:true},
+  {id:"sh1ro_kato24",nome:"sh1ro",pais:"RUS",foto:"sh1ro_kato24",fp:68,en:40,tr:94,op:36,cl:94,sn:86,ut:47,rating:1.20,colocacao:"Campeao",isIGL:false},
+  {nome:"zont1x",pais:"UKR",foto:"zont1x",fp:49,en:57,tr:22,op:75,cl:57,sn:0,ut:53,rating:1.12,colocacao:"Campeao",isIGL:false},
+  {nome:"magixx",pais:"RUS",foto:"magixx",fp:21,en:93,tr:54,op:28,cl:79,sn:0,ut:66,rating:1.07,colocacao:"Campeao",isIGL:false},
+  {id:"chopper_kato24",nome:"chopper",pais:"RUS",foto:"chopper_kato24",fp:13,en:93,tr:6,op:52,cl:35,sn:0,ut:65,rating:1.02,colocacao:"Campeao",isIGL:true},
   // ——— FURIA · IEM Chengdu 2025 (Campeao) ———
   {id:"FalleN_furia25",nome:"FalleN",pais:"BRA",fp:5,en:63,tr:37,op:10,cl:40,sn:2,ut:76,rating:0.86,colocacao:"Campeao",isIGL:true},
   {nome:"YEKINDAR",pais:"LVA",fp:73,en:62,tr:3,op:91,cl:21,sn:0,ut:47,rating:1.11,colocacao:"Campeao",isIGL:false},

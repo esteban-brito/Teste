@@ -15,7 +15,7 @@ export const TIMES_DEF=[
   {nome:"Astralis",cor:"#e2231a",coach:"zonic",camp:"IEM Katowice 2019",colocacao:"Campeao",jogadores:["device","Xyp9x","Magisk","dupreeh","gla1ve"]},
   {nome:"Immortals",cor:"#00c2a8",coach:"zakk",camp:"PGL Major Krakow 2017",colocacao:"Final",jogadores:["kNgV-","HEN1","LUCAS1","boltz","steel"]},
   {nome:"G2",cor:"#e4002b",coach:"Swani",camp:"IEM Sydney 2023",colocacao:"Top4",jogadores:["m0NESY","jks","NiKo_g2","huNter-","HooXi"]},
-  {nome:"Spirit",cor:"#7d8aa0",coach:"hally",camp:"IEM Katowice 2024",colocacao:"Campeao",jogadores:["donk_kato24","sh1ro_kato24","zont1x","magixx","chopper_kato24"]},
+  {nome:"Spirit",cor:"#7d8aa0",coach:"hally",coachFoto:"hally_kato24",camp:"IEM Katowice 2024",colocacao:"Campeao",jogadores:["donk_kato24","sh1ro_kato24","zont1x","magixx","chopper_kato24"]},
   {nome:"FURIA",cor:"#1faa59",coach:"sidde",camp:"IEM Chengdu 2025",colocacao:"Campeao",jogadores:["FalleN_furia25","YEKINDAR","yuurih_furia25","KSCERATO_furia25","molodoy"]},
   {nome:"Virtus.pro",cor:"#f0a020",coach:null,camp:"EMS One Katowice 2014",colocacao:"Campeao",jogadores:["pashaBiceps","NEO","Snax","byali","TaZ"]},
   {nome:"BIG",cor:"#e9edf3",coach:"kakafu",coachPais:"AUT",camp:"ESL One Cologne 2018",colocacao:"Final",jogadores:["tabseN","nex","tiziaN","smooya","gob b"]},
