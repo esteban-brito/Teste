@@ -628,3 +628,56 @@ Validação: `npm run check` e `npm run lint` verdes; o E2E aprovou 153 cartas n
 oito larguras, incluindo contraste 4,5:1 e ausência de halo externo; a comparação
 visual mudou **9 de 21** capturas, exatamente os estados que contêm cartas, e
 deixou as outras 12 pixel a pixel idênticas.
+
+## 16. Refino do verso e uma tentativa descartada — 31/07/2026
+
+Com a escada consertada, o responsável pediu refino de design na frente e no
+verso. Duas notas de contexto que mudaram a prioridade: **todas as cartas terão
+foto** — o Donk é protótipo, então investir no estado sem retrato seria trabalho
+descartável — e o responsável deu carta branca de direção de arte.
+
+Isso concentra o refino onde a foto nunca entra: **o verso**.
+
+### O que estava errado no verso
+
+- a faixa superior gastava 22% da altura só com o nick e sobrava oca;
+- o verso era **anônimo**: virada a carta, não se sabia a função nem o time;
+- os quatro trilhos eram tipograficamente idênticos, então `Firepower 100` e
+  `Abertura 97` liam como duas barras iguais e a hierarquia sumia;
+- sobrava um vão entre o último stat e o rodapé da era.
+
+### O que mudou
+
+- nasce `.c-vid`, a linha de identidade sob o nick: **função principal na cor da
+  função + time apagado**, ecoando a hierarquia da frente. Ela preenche a faixa e
+  torna o verso autossuficiente;
+- o **Firepower**, que já era sempre o primeiro slot, passa a ser a âncora de
+  leitura — rótulo, valor e trilho maiores que os outros três. É hierarquia do
+  componente, não exceção por jogador: vale para as 85 cartas;
+- a grade dos stats passa a `1.24fr` na primeira linha e os blocos foram
+  reposicionados para fechar o vão do rodapé;
+- na densidade compacta a ênfase do Firepower cede pela metade: mantida cheia, ela
+  empurrava os trilhos contra o rótulo em cima e o rodapé embaixo a 120 px.
+
+### A tentativa que foi descartada
+
+Também testei reequilibrar a **frente**: a linha da função é a única sem
+contrapeso à direita, então a bandeira desceria para o eixo dela e o nick tomaria
+a largura inteira — o que de quebra dava ~14% mais espaço aos nicks longos, aliviando
+a pressão tipográfica do compacto.
+
+Renderizado, ficou pior. A bandeira colou no time e passou a ler como parte
+**dele**, não do jogador. A bandeira pertence ao mesmo bloco que o nick: é quem a
+pessoa é, não contexto. A grade da frente foi revertida e o motivo está escrito no
+`style.css`, para ninguém repetir a tentativa achando que é melhoria óbvia.
+
+### Prova
+
+`check` e `lint` verdes; o E2E fechou 69 verificações nas oito larguras. A
+comparação visual mudou **3 de 21** capturas — exclusivamente os versos em
+desktop, tablet e celular — e deixou as outras 18 pixel a pixel idênticas, o que
+confirma que a reversão da frente foi limpa.
+
+O guarda de views congelava o verso por substrings e **não acusou** o elemento
+novo; `tools/check-game-view-modules.js` ganhou a asserção da linha de identidade
+para que ela não possa sumir em silêncio.

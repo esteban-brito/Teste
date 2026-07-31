@@ -70,7 +70,11 @@ Regras não negociáveis:
     proporção 5:7, ausência de overflow, modo Virar, reset e seleção normal.
 11. O verso não contém `.c-vovr`, RTG nem pesos numéricos da receita. O OVR
     continua na frente e o rating continua no dado/motor; remover a exibição não
-    autoriza apagar ou recalibrar nenhuma dessas informações.
+    autoriza apagar ou recalibrar nenhuma dessas informações. O verso **carrega**
+    `.c-vid` — função principal e time sob o nick —, para não ser anônimo quando a
+    carta está virada; `tools/check-game-view-modules.js` congela essa linha.
+    O primeiro slot de estatística é o Firepower e é a âncora de leitura: corpo e
+    trilho maiores que os outros três, por hierarquia, não por exceção.
 12. Jogador e treinador compartilham `.c-vrod`. `camp` e `coloc` vêm da era do
     elenco, precisam existir nas duas categorias e permanecem visíveis inclusive
     na densidade compacta. Campeonato não usa reticências.
