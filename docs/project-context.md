@@ -512,7 +512,8 @@ Nenhum deles recorta ou avalia `game.js`.
 
 ## 6. Estado atual da aba Simular
 
-A modernização mais recente concentrou-se no sandbox. O estado publicado inclui:
+A modernização do sandbox, concluída em julho de 2026, deixou o seguinte estado
+publicado (não é o trabalho mais recente do repositório — ver §2):
 
 - confronto de dois times e amostra round-robin dos 17 times;
 - mapa único ou lotes de até 500 mapas;
@@ -583,8 +584,9 @@ depende do DOM. A auditoria R1 e o sandbox consomem o mesmo contrato.
 O redesenho visual e seu refinamento final de julho de 2026 preservaram a
 auditoria profunda exatamente em SHA-256
 `d9faccb428073b8191640c1a78830340b58f30d1ebdbeb91f60d0d43160bee8d` e
-2.273.746 bytes. A validação integral mais recente aprovou 17/17 suítes em
-180,3 s.
+2.273.746 bytes. A validação integral **daquele momento** aprovou 17/17 suítes em
+180,3 s — número histórico, não atual: a bancada tem hoje 25 suítes e o
+checkpoint vigente é 25/25 (§2).
 
 R3 começou com uma campanha curta MD3 separada do lote de expectativa: dois
 times, mapas sem repetição, orientação alternada, forma mantida na série,
