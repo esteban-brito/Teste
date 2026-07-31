@@ -214,9 +214,11 @@ const caixaDoTexto=elemento=>{const range=document.createRange();range.selectNod
 function medirCartas(){
   const falhas=[],reticencias=[],ritmo=[];
   const TOL=.75;
-  let auditadas=0;
+  let auditadas=0,treinadoresAuditados=0;
   const jogadoresRenderizados=[];
-  for(const carta of todasAsCartas()){
+  const cartas=todasAsCartas();
+  const referenciaJogador=cartas.find(carta=>carta.classList.contains("card"));
+  for(const carta of cartas){
     const caixa=carta.getBoundingClientRect();
     /* A face oculta da carta usa `opacity:0`, então opacidade zero só significa
        "sumiu" quando nasce ABAIXO da face — senão o verso inteiro deixaria de ser
@@ -234,6 +236,12 @@ function medirCartas(){
       nick:carta.dataset.nick||"—",campo,texto:elemento?.textContent.trim()||"",
       falta:+falta.toFixed(2),passa:+(passa==null?(elemento?caixaDoTexto(elemento).right-caixa.right:0):passa).toFixed(2),
       fonte:elemento?getComputedStyle(elemento).fontSize:"—"});
+    const registrarRitmo=(campo,atual,limite,regra="mínimo",unidade="px")=>ritmo.push({
+      nick:carta.dataset.nick||"—",campo,atual:+atual.toFixed(2),limite:+limite.toFixed(2),regra,unidade});
+    const minimo=(campo,atual,limite,tol=TOL,unidade="px")=>{
+      if(atual+tol<limite)registrarRitmo(campo,atual,limite,"mínimo",unidade);};
+    const maximo=(campo,atual,limite,tol=TOL,unidade="px")=>{
+      if(atual-tol>limite)registrarRitmo(campo,atual,limite,"máximo",unidade);};
     const fixa=(seletor,campo)=>{const elemento=carta.querySelector(seletor);if(!visivel(elemento))return;
       const falta=medirTexto(elemento)-elemento.clientWidth;if(falta>TOL)registrar(falhas,elemento,campo,falta);};
     const solta=(seletor,campo)=>{const elemento=carta.querySelector(seletor);if(!visivel(elemento))return;
@@ -280,14 +288,48 @@ function medirCartas(){
     colisao(".c-vestilo b",".c-vdesc","característica/descrição (verso)",true);
     colisao(".c-vdesc",".c-vrod","descrição/campeonato (verso)",true);
 
+    if(carta.classList.contains("coachcard")){
+      treinadoresAuditados++;
+      const ref=referenciaJogador,refCaixa=ref.getBoundingClientRect();
+      const identidade=carta.querySelector(".c-identidade--coach").getBoundingClientRect();
+      const refIdentidade=ref.querySelector(".c-identidade--player").getBoundingClientRect();
+      const ovr=carta.querySelector(".c-ovr").getBoundingClientRect();
+      const refOvr=ref.querySelector(".c-ovr").getBoundingClientRect();
+      const placa=carta.querySelector(".c-placa").getBoundingClientRect();
+      const refPlaca=ref.querySelector(".c-placa").getBoundingClientRect();
+      maximo("espelho frontal · identidade",
+        Math.abs((identidade.top-caixa.top)-(refCaixa.bottom-refIdentidade.bottom)),.35,.05);
+      maximo("espelho frontal · OVR",
+        Math.abs((caixa.bottom-ovr.bottom)-(refOvr.top-refCaixa.top)),.35,.05);
+      maximo("espelho frontal · altura da placa",Math.abs(placa.height-refPlaca.height),.35,.05);
+      maximo("espelho frontal · placa na borda",
+        Math.max(Math.abs(placa.top-caixa.top),Math.abs(refCaixa.bottom-refPlaca.bottom)),.35,.05);
+
+      for(const [seletor,campo] of [[".c-vnick","nick"],[".c-vid","identidade"],
+        [".c-vestilo","característica"],[".c-vrod","era"]]){
+        const atual=carta.querySelector(seletor).getBoundingClientRect();
+        const esperado=ref.querySelector(seletor).getBoundingClientRect();
+        maximo(`verso padronizado · ${campo}`,
+          Math.abs((atual.top-caixa.top)-(esperado.top-refCaixa.top)),.35,.05);
+      }
+      const descricao=carta.querySelector(".c-vdesc").getBoundingClientRect();
+      const stats=ref.querySelector(".c-vstats").getBoundingClientRect();
+      maximo("verso padronizado · início do corpo",
+        Math.abs((descricao.top-caixa.top)-(stats.top-refCaixa.top)),.35,.05);
+      maximo("verso padronizado · fim do corpo",
+        Math.abs((caixa.bottom-descricao.bottom)-(refCaixa.bottom-stats.bottom)),.35,.05);
+      const faixa=carta.querySelector(".c-vfaixa").getBoundingClientRect();
+      const refFaixa=ref.querySelector(".c-vfaixa").getBoundingClientRect();
+      maximo("verso padronizado · altura da faixa",Math.abs(faixa.height-refFaixa.height),.35,.05);
+      if(!getComputedStyle(carta,"::after").backgroundImage.includes("repeating-linear-gradient"))
+        registrarRitmo("moldura segmentada do treinador",0,1,"exato","estado");
+      if(![carta.querySelector(".c-flag"),carta.querySelector(".c-meta"),
+        carta.querySelector(".c-team"),carta.querySelector(".c-vid")].every(visivel))
+        registrarRitmo("conteúdo padronizado do treinador",0,1,"mínimo","estado");
+      continue;
+    }
     if(!carta.classList.contains("card"))continue;
     auditadas++;jogadoresRenderizados.push(carta);
-    const registrarRitmo=(campo,atual,limite,regra="mínimo",unidade="px")=>ritmo.push({
-      nick:carta.dataset.nick||"—",campo,atual:+atual.toFixed(2),limite:+limite.toFixed(2),regra,unidade});
-    const minimo=(campo,atual,limite,tol=TOL,unidade="px")=>{
-      if(atual+tol<limite)registrarRitmo(campo,atual,limite,"mínimo",unidade);};
-    const maximo=(campo,atual,limite,tol=TOL,unidade="px")=>{
-      if(atual-tol>limite)registrarRitmo(campo,atual,limite,"máximo",unidade);};
     const flag=carta.querySelector(".c-flag"),role2=carta.querySelector(".c-role2");
     const meta=carta.querySelector(".c-meta"),team=carta.querySelector(".c-team");
     const rodape=carta.querySelector(".c-vrod"),nick=carta.querySelector(".c-nick");
@@ -385,18 +427,18 @@ function medirCartas(){
     if(variacao>.05)ritmo.push({nick:"todos",campo:`tipografia única · ${campo}`,atual:+variacao.toFixed(2),
       limite:.05,regra:"máximo",unidade:"px"});
   }
-  return {total:todasAsCartas().length,largura:Math.round(todasAsCartas()[0]?.getBoundingClientRect().width||0),
-    falhas,reticencias,ritmo,auditadas};
+  return {total:cartas.length,largura:Math.round(cartas[0]?.getBoundingClientRect().width||0),
+    falhas,reticencias,ritmo,auditadas,treinadoresAuditados};
 }
 window.__LAB_MEDIR=medirCartas;
 
 function medir(){
-  const {total,largura,falhas,reticencias,ritmo,auditadas}=medirCartas();
+  const {total,largura,falhas,reticencias,ritmo,auditadas,treinadoresAuditados}=medirCartas();
   const resumo=`<b>${total}</b> cartas a <b>${largura}px</b> · `+
     (falhas.length?`<span class="lab-ruim">${falhas.length} falha(s) geométrica(s)</span>`:
       `<span class="lab-ok">geometria aprovada</span>`)+` · `+
     (ritmo.length?`<span class="lab-ruim">${ritmo.length} falha(s) de padrão</span>`:
-      `<span class="lab-ok">${auditadas} jogadores padronizados</span>`)+
+      `<span class="lab-ok">${auditadas} jogadores · ${treinadoresAuditados} coaches padronizados</span>`)+
     (reticencias.length?` · ${reticencias.length} reticência(s) declarada(s)`:"");
   const tabela=falhas.length?`<table><tr><th>carta</th><th>campo</th><th>texto</th><th>falta</th></tr>`+
     falhas.map(f=>`<tr><td>${esc(f.nick)}</td><td>${esc(f.campo)}</td><td>${esc(f.texto)}</td>

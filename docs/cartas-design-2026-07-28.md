@@ -775,3 +775,24 @@ fonte, não de layout.
   razão fica entre 1,17 e 1,25 em todas as larguras;
 - **vermelho forte demais**: `Rifler` de `#ff2038` para `#f04a5e`. Contraste 4,5:1
   segue aprovado nas oito larguras.
+
+## 19. Treinador como espelho vertical da carta canônica — 31/07/2026
+
+A distinção anterior havia virado uma segunda anatomia: placa reta de 44%, corpos
+maiores e eixos próprios no verso. A direção aprovada é mais simples: **a carta do
+treinador é a carta do jogador espelhada verticalmente na frente**.
+
+- a placa usa os mesmos 24%, 26% e 28%, mas nasce no topo;
+- o bloco completo de identidade muda da base para o topo e o OVR vai para a base;
+- nick, bandeira, característica e time usam a mesma grade frontal;
+- no verso, nick, linha `TREINADOR · TIME`, característica, corpo e era ocupam os
+  mesmos eixos e reservas da carta de jogador;
+- a única diferenciação estrutural preservada é a moldura segmentada/serrilhada;
+  a cor continua vindo da característica e não entra na escada de raridade.
+
+O laboratório passou a comparar cada coach com uma carta de jogador na mesma
+largura: âncoras espelhadas da frente, altura da placa, quatro eixos do verso,
+limites do corpo e altura da faixa. Uma prova sintética desloca frente e verso e
+confirma que a guarda reprova. O OVR inferior também é medido sobre o retrato real
+de hally: a proteção universal da base elevou o pior contraste de **2,14:1** para
+**10,13:1**, acima do contrato de 4,5:1 sem ajuste por treinador.

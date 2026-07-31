@@ -146,8 +146,10 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       });
       const esperado=Number(largura)<=150?"28":Number(largura)<=176?"26":"24";
       const primeiraFalha=resultado.audit.falhas[0],primeiroRitmo=resultado.audit.ritmo[0];
-      check(resultado.audit.falhas.length===0&&resultado.audit.ritmo.length===0,
-        `${largura}px · geometria e padrão aprovados em ${resultado.audit.auditadas} jogadores`+
+      check(resultado.audit.falhas.length===0&&resultado.audit.ritmo.length===0&&
+        resultado.audit.treinadoresAuditados===18,
+        `${largura}px · geometria aprovada em ${resultado.audit.auditadas} jogadores + `+
+        `${resultado.audit.treinadoresAuditados} coaches espelhados`+
         (primeiraFalha?` — ${primeiraFalha.nick}: ${primeiraFalha.campo} (${primeiraFalha.falta}px)`:"")+
         (primeiroRitmo?` — ${primeiroRitmo.nick}: ${primeiroRitmo.campo} (${primeiroRitmo.atual}${primeiroRitmo.unidade})`:""));
       check(resultado.placa===esperado&&resultado.allVisible&&resultado.fourStats&&resultado.canonicalLayout,
@@ -230,34 +232,53 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       return campos.includes("conteúdo frontal sempre visível");
     });
     check(detectaOpacidade,"medidor acusa conteúdo escondido por opacidade");
+    const detectaEspelhoCoach=await page.evaluate(()=>{
+      const coach=document.querySelector(".coachcard");
+      const identidade=coach.querySelector(".c-identidade--coach"),topAntes=identidade.style.top;
+      identidade.style.top="7%";
+      const frente=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
+      identidade.style.top=topAntes;
+      const descricao=coach.querySelector(".c-vdesc"),descAntes=descricao.style.top;
+      descricao.style.top="55%";
+      const verso=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
+      descricao.style.top=descAntes;
+      return frente.includes("espelho frontal · identidade")&&
+        verso.includes("verso padronizado · início do corpo");
+    });
+    check(detectaEspelhoCoach,"medidor acusa coach fora do espelho frontal ou da grade do verso");
     check((await page.evaluate(()=>window.__LAB_MEDIR())).falhas.length===0&&
       (await page.evaluate(()=>window.__LAB_MEDIR())).ritmo.length===0,
     "medição volta ao verde depois das provas sintéticas");
 
     /* O OVR fica sobre o retrato; mede-se o pixel mais claro da zona com o texto
        escondido. A placa já protege a bandeira na nova posição. */
-    async function contrasteOvr(card){
+    async function contrasteOvr(card,{x=.06,y=.04,w=.39,h=.18}={}){
       await card.evaluate(c=>{c.querySelector(".c-ovr").style.visibility="hidden";});
       const png=await card.screenshot();
       await card.evaluate(c=>{c.querySelector(".c-ovr").style.visibility="";});
-      return page.evaluate(async b64=>{
+      return page.evaluate(async ({b64,x,y,w,h})=>{
         const img=await new Promise(resolve=>{const element=new window.Image();element.onload=()=>resolve(element);
           element.src="data:image/png;base64,"+b64;});
         const canvas=document.createElement("canvas");canvas.width=img.width;canvas.height=img.height;
         const context=canvas.getContext("2d",{willReadFrequently:true});context.drawImage(img,0,0);
-        const data=context.getImageData(Math.round(img.width*.06),Math.round(img.height*.04),
-          Math.round(img.width*.39),Math.round(img.height*.18)).data;
+        const data=context.getImageData(Math.round(img.width*x),Math.round(img.height*y),
+          Math.round(img.width*w),Math.round(img.height*h)).data;
         const luminance=(r,g,b)=>{const channels=[r,g,b].map(channel=>{const value=channel/255;
           return value<=.04045?value/12.92:((value+.055)/1.055)**2.4;});
           return .2126*channels[0]+.7152*channels[1]+.0722*channels[2];};
         let maior=0;for(let i=0;i<data.length;i+=4)maior=Math.max(maior,luminance(data[i],data[i+1],data[i+2]));
         return +((1.05)/(maior+.05)).toFixed(2);
-      },png.toString("base64"));
+      },{b64:png.toString("base64"),x,y,w,h});
     }
     for(const largura of ["250","130"]){
       await page.selectOption("#cLargura",largura);await page.waitForTimeout(75);
       const ratio=await contrasteOvr(page.locator('#gRetratos .card[data-enquadramento="canonical"]'));
       check(ratio>=4.5,`${largura}px · OVR mantém 4,5:1 sobre o retrato real (${ratio}:1)`);
+      const hally=page.locator('.coachcard[data-nick="hally"]')
+        .filter({has:page.locator('.cfaces[style*="hally_kato24"]')}).first();
+      const coachRatio=await contrasteOvr(hally,{x:.11,y:.7,w:.3,h:.25});
+      check(coachRatio>=4.5,
+        `${largura}px · OVR espelhado do coach mantém 4,5:1 sobre o retrato real (${coachRatio}:1)`);
     }
 
     await page.selectOption("#cLargura","188");await page.waitForTimeout(75);

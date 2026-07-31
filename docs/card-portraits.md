@@ -116,9 +116,10 @@ fora do quadro. Saída em 500×700, o mesmo formato do `donk_kato24`.
 
 Limitações honestas destas fontes, para quem for melhorá-las depois:
 
-- `hally`: o topo da cabeça fica a ~2% da altura, contra os 5–10% da grade. Como a
-  placa do treinador ocupa 44%, o enquadramento funciona nessa categoria — mas uma
-  fonte com mais ar acima seria melhor;
+- `hally`: o topo da cabeça fica a ~2% da altura, contra os 5–10% da grade. A placa
+  espelhada do treinador ocupa os mesmos 24–28% da carta de jogador e revela mais
+  do retrato que a antiga placa de 44%; ainda assim, uma fonte com mais ar acima
+  seria melhor;
 - `chopper`: a origem é um close, então o rosto ocupa mais quadro que nos demais e
   o queixo cai por volta de 63%, fora da faixa de 47–56%. Não há como abrir mais:
   570×798 já é o campo de visão máximo dessa imagem.
