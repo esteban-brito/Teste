@@ -309,21 +309,20 @@ p.lab code{font-family:ui-monospace,monospace;font-size:.94em;color:#9fd0ff}
    guarda antiga passava, mas a composicao parecia comprimida.
 
    A grade refinada recupera margem e respiro sem voltar ao desenho publicado:
-   placa de 35% na densidade completa e 31% na compacta, ainda menores que os
+   placa de 34% na densidade completa e 30% na compacta, ainda menores que os
    38%/32% do jogo. `--b1` ancora frente e verso na mesma margem inferior;
-   `--placa-n`, `--placa`, `--b2`, `--b3` e `--corte-v` continuam derivados, sem
-   deslocamento por jogador ou retrato. */
+   `--b2` aproxima funcao e contexto, enquanto `--b3` preserva um intervalo maior
+   para o nick. A pilha e unica por densidade, sem deslocamento por jogador. */
 .proposta .card.p-rank .cfaces{
-  --placa-n:35; --placa:calc(var(--placa-n)*1%);
+  --placa-n:34; --placa:calc(var(--placa-n)*1%);
   --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
-  --b1:3.5%; --b2:calc(var(--b1) + var(--passo));
-  --b3:calc(var(--b2) + var(--passo)*1.45); --t3:7.4cqw}
+  --b1:3.5%; --b2:8%; --b3:15.7%; --t3:7.4cqw}
 .proposta .coachcard .cfaces{--t3:7.4cqw; --b3:calc(var(--b2) + var(--passo)*1.45)}
 @container (max-width:150px){
   .proposta .card.p-rank .cfaces{
-    --placa-n:31; --placa:calc(var(--placa-n)*1%);
+    --placa-n:30; --placa:calc(var(--placa-n)*1%);
     --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
-    --b1:4%; --b2:5.5%; --b3:calc(var(--b2) + var(--passo)*1.45); --t3:8.2cqw}
+    --b1:4%; --b2:4.5%; --b3:12.1%; --t3:8.2cqw}
   .proposta .coachcard .cfaces{--t3:8.2cqw}
 }
 .proposta .card.p-rank .cfront .c-func,
