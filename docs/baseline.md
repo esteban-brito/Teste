@@ -1,6 +1,6 @@
 # Baseline de comportamento
 
-> Retrato histórico de 19 de julho de 2026. A bancada atual possui 17 suítes;
+> Retrato histórico de 19 de julho de 2026. A bancada atual possui **25 suítes**;
 > consulte `docs/testing.md`. Os números e a contagem abaixo não devem ser
 > reescritos retroativamente para parecerem atuais.
 

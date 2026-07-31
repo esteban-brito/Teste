@@ -124,16 +124,15 @@ e não 21, como um rascunho anterior afirmava.
    raridade, porque ele não disputa a escala de OVR dos jogadores; e a característica
    ocupa o lugar da função primária, já que é ela que descreve o que ele faz pelo
    time. O emblema é a prancheta e o verso descreve o efeito da característica.
-3. **Fotos — CONTINUA ABERTO.** A camada existe e está vazia (`.c-foto`): 0 de 85
-   jogadores têm retrato e não há campo para guardá-lo. O estado "sem foto" é
-   declarado, não remendo — a tinta da raridade sobe e a carta fica assumidamente
-   gráfica. `src/data/catalog.mjs` registra isso em `DIVERGENCIAS` (`sem-foto`).
-   Decisão de produto pendente; quando as fotos existirem, é mudança de dado, não
-   redesenho.
-4. ~~**Daltonismo**~~ **RESOLVIDO** (`8a12250`) pelo emblema de função: seis
-   silhuetas no mesmo grid 24×24, forma independente de cor, que também diferencia na
-   grade de 2 colunas do celular. `tools/check-game-view-modules.js` exige as seis
-   silhuetas distintas.
+3. ~~**Fotos — CONTINUA ABERTO.**~~ **SUPERADO em 31/07/2026** — ver §13/§14. O campo
+   cru `foto` existe, `donk_kato24` está ligado, a cobertura declarada é 1/85 e a
+   divergência `sem-foto` **não existe mais** em `src/data/catalog.mjs` (hoje a única
+   declarada é `camp-empacotado`). O texto original dizia "0 de 85 jogadores têm
+   retrato e não há campo para guardá-lo"; era verdade em 29/07 e não é mais.
+4. ~~**Daltonismo**~~ **RESOLVIDO** (`8a12250`) pelo emblema de função — **mas o
+   mecanismo mudou em 31/07/2026**: os emblemas saíram para dar o centro ao retrato e
+   a cobertura passou para o **nome da função**, segundo elemento mais forte da
+   frente, em cor viva. Palavra escrita não depende de visão de cor. Ver §13.
 5. **Duplicados na roleta — CONTINUA ABERTO, como questão visual.** 8 jogadores têm
    duas eras e as duas frentes ficam quase iguais; só o rodapé (time) e o verso
    (campeonato, ano, colocação) as distinguem. O que já existe, e é **anterior a este
@@ -170,6 +169,11 @@ de refinamento registrado ao fim da seção 11.
 da escala de nome — e apodreceu no dia em que as cartas foram ligadas ao jogo. Agora
 ele **importa** `style.css`, `src/ui/game/card-view.mjs`, `src/ui/shared/flags.mjs` e
 `src/ui/shared/role-emblems.mjs`: zero cópia, 85 jogadores e 15 treinadores reais.
+
+> **Superado em 31/07/2026:** `src/ui/shared/role-emblems.mjs` foi **deletado** em
+> `673e205`. O laboratório importa hoje `style.css`, `evaluation-api.mjs`,
+> `card-view.mjs`, `card-face.mjs`, `html.mjs` e `flags.mjs`. O princípio de zero
+> cópia continua valendo — só a lista mudou.
 
 ```text
 npm run serve   →   http://127.0.0.1:5173/prototipo-cartas.html
