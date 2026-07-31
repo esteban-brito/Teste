@@ -34,7 +34,7 @@ roadmap for concluída.
 
 ## 2. Ponto exato de retomada
 
-Atualização vigente de 30 de julho de 2026 (tem precedência sobre o registro
+Atualização vigente de 31 de julho de 2026 (tem precedência sobre o registro
 histórico abaixo):
 
 - o handoff operacional do ciclo P5 está em
@@ -43,33 +43,26 @@ histórico abaixo):
 - `AGENTS.md` registra autorização persistente para o agente executar a próxima
   fatia segura, limpar legado comprovadamente dispensável, criar commits e fazer
   push de checkpoints verdes para `sandbox-test` sem renovar a permissão;
-- o refinamento **Tactical Editorial** das cartas está publicado em `bf5d5e5`:
-  sem halos ou varredura de luz, movimento curto, raridade por marcas, treinador
-  neutro e verso sem OVR/RTG/pesos visuais. Campeonato e colocação permanecem
-  visíveis em jogador e treinador, inclusive no compacto;
-- a guarda mede 156 cartas (152 da bancada-base + 4 comparadores) em oito
-  larguras e também prova fontes mínimas, grade editorial,
-  contraste de 4,5:1, conteúdo obrigatório, ausência de halo, keyframes limpos,
-  teclado, frente/verso, reduced motion e touch. O contrato detalhado está em
-  `docs/cartas-design-2026-07-28.md`, seção 11;
-- **existe uma proposta visual ATIVA e NÃO promovida** no bloco `#proposta` do
-  laboratório: escada de seis faixas por OVR, bordas cromadas no 20/21/22, paleta
-  de função reconstruída, treinador reformulado e a primeira fatia de retrato
-  (`fotos/donk_kato24.webp`). O jogo continua no design publicado. Contrato,
-  decisões medidas, hipóteses reprovadas e o que falta para promover estão na
-  **seção 12** de `docs/cartas-design-2026-07-28.md`;
-- o responsável escolheu o enquadramento A (`100% auto`, `50% 12%`) no bloco `0`
-  do laboratório. O A refinado preserva mais retrato que o jogo com placas de
-  24%/22%, sem zoom (`100% auto`, `50% 12%`): placa, diagonal e identidade frontal
-  encolhem e descem como uma grade. No verso, nick e playstyle ficam separados e
-  a era sobe para um eixo inferior de 6%, estável em campeonatos de uma ou duas
-  linhas. O A de `369c480` permanece ao lado como referência; falta a conferência
-  no Pages antes dos cinco retratos restantes;
-- validação integral desse marco: `npm run validate`, **25/25 suítes verdes** em
-  182,2 s; snapshot, golden, consumo de RNG e balanceamento permaneceram intactos;
-- validação integral do refinamento editorial do A: `npm run validate`, **25/25
-  suítes verdes** em 186,1 s; snapshot e golden permaneceram idênticos;
-- CI e deploy do commit `bf5d5e5`: workflow `30527422214`, verde;
+- a carta **A refinada é a implementação canônica**: seis faixas de OVR, bordas
+  cromadas no 20/21/22, função como tinta textual, retrato em `100% auto · 50%
+  12%` e placa responsiva de 24%/26%/28%. Nome, roles, bandeira, time e quatro
+  stats permanecem visíveis em todas as larguras, sem fonte ou offset individual;
+- `prototipo-cartas.html` não contém mais proposta, comparador, B/C ou encaixe
+  medido. Ele renderiza uma única referência e 153 cartas reais/sintéticas com o
+  componente do jogo; `bancada/e2e-cartas.js` prova a grade em oito larguras,
+  contraste, eixos, diagonais, conteúdo obrigatório, teclado, reduced motion,
+  touch e consumo no jogo real;
+- `donk_kato24` é a referência e também o molde visual da escada de raridade e
+  da matriz de funções; `device` não ocupa mais esse papel no laboratório;
+- `donk_kato24` é o primeiro retrato ligado ao campo cru `foto`. O catálogo
+  declara cobertura 1/85 e `tools/check-card-portraits.js` prova asset-id, WebP,
+  5:7, resolução, peso e ausência de órfãos. O protocolo para os próximos lotes
+  está em `docs/card-portraits.md`;
+- comparação visual da promoção: **9/21 capturas mudaram**, exclusivamente
+  frente, verso e elenco em desktop/tablet/celular; as outras 12 permaneceram
+  pixel a pixel idênticas;
+- validação integral da promoção: `npm run validate`, **25/25 suítes verdes** em
+  184,2 s; snapshot, golden, consumo de RNG e balanceamento permaneceram intactos;
 - o ciclo **P2 de modularização por paridade está concluído**, Fases 0–7;
 - `game.js` caiu de 3.054 para **889 linhas** — 1.206 ao fim do P2, 938 depois das
   primeiras fatias do P5, 888 após a remoção do tilt morto e uma linha de import
@@ -1263,11 +1256,9 @@ Não presumir respostas sem conversar:
 `docs/next-steps.md` preserva o plano histórico que originou R1–R6/P1–P6; os
 handoffs especializados mais novos definem a retomada operacional atual:
 
-1. **cartas, produto visual:** o jogo continua no Tactical Editorial publicado;
-   a proposta de seis faixas e retratos está somente em `#proposta`. O
-   enquadramento A refinado e a referência anterior estão lado a lado para a
-   conferência final; depois vêm os outros cinco retratos da Spirit, antes de
-   qualquer promoção. Fonte: `docs/cartas-design-2026-07-28.md` §12;
+1. **cartas, produto visual:** a carta A refinada já é a única implementação do
+   jogo e do laboratório. A próxima fatia é receber e normalizar novos retratos
+   pelo contrato de `docs/card-portraits.md`, sem criar exceções de runtime;
 2. **P5, estrutura:** separar somente criação/reset de `S`, `TG`, `MP` e `MATCH`,
    preservando forma, identidade e quirks. Fonte:
    `docs/p5-aplicacao-ui-2026-07-29.md` §11;

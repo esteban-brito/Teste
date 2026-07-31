@@ -1,15 +1,12 @@
 # Cartas de jogador — design aprovado (28/07/2026)
 
-> **Estado: LIGADO AO JOGO em 29/07/2026 e refinado em 30/07/2026**, depois do
-> P2, como o responsável havia decidido. O design executável vive em
-> `src/ui/game/card-view.mjs`, com
-> `src/ui/shared/flags.mjs` (bandeiras) e `src/ui/shared/role-emblems.mjs`
-> (emblemas), e o CSS entrou em `style.css` — commits `c1ecdee` e `8a12250`. O que
-> mudou de lá para cá está nas **seções 10 e 11**.
+> **Estado: A REFINADA PROMOVIDA COMO CARTA CANÔNICA em 31/07/2026.** O design
+> executável vive em `src/ui/game/card-view.mjs`, `src/ui/shared/flags.mjs` e
+> `style.css`. Emblemas, comparadores A/B/C, referência `369c480` e ajuste medido
+> foram removidos; o histórico das experiências abaixo permanece para explicar
+> decisões, não como backlog. O estado vigente está na **seção 13**.
 >
-> `prototipo-cartas.html` deixou de ser protótipo e virou o **laboratório de
-> cartas** — ver a seção 11. Ele importa o código real, então não pode mais
-> divergir do jogo.
+> `prototipo-cartas.html` é uma bancada fina de QA da única implementação real.
 
 ## 1. A direção escolhida
 
@@ -466,3 +463,37 @@ Fechamento da primeira ampliação: `npm run validate`, **25/25 suítes verdes**
 184,4 s. Fechamento do refinamento editorial: `npm run validate`, **25/25 suítes
 verdes** em 186,1 s. Nada de dado cru, OVR, tiers, snapshot, golden, RNG ou
 balanceamento foi tocado.
+
+## 13. Promoção canônica — 31/07/2026
+
+A última A refinada substituiu o design anterior no jogo. Não existe classe de
+proposta nem segundo layout no laboratório. O contrato atual é:
+
+- recorte único de retrato: `100% auto`, `50% 12%`, sem zoom por jogador;
+- placa de 24% na largura ampla, 26% na intermediária e 28% até 150 px;
+- nick universal de `11.5cqw`, role principal com piso de 9 px e role secundário
+  com piso de 7 px;
+- bandeira na coluna inferior direita, acima do time, visível em toda densidade;
+- role secundário e time nunca desaparecem;
+- playstyle e nick do verso usam corpos universais para todos os jogadores;
+- quatro stats em todos os versos e rodapé com reserva fixa para uma ou duas
+  linhas de campeonato;
+- treinador continua outra categoria, sem criar exceção na carta de jogador.
+
+O laboratório caiu de 1.077 linhas para uma única bancada canônica; usa o Donk
+como referência e como molde visual da escada/matriz, e mede 153 cartas
+reais/sintéticas em oito larguras. O gate reprova conteúdo oculto, stat
+ausente e qualquer diferença de fonte entre jogadores, além das guardas de
+geometria, contraste, diagonal, eixo, movimento e acessibilidade.
+
+`donk_kato24` é o primeiro campo cru `foto`, com cobertura explícita 1/85 no
+catálogo. `tools/check-card-portraits.js` valida 5:7, WebP, resolução, peso,
+referência e órfãos. A normalização dos próximos retratos segue
+`docs/card-portraits.md`; portanto, receber fontes com formatos e recortes
+diferentes não cria CSS diferente — produz assets canônicos diferentes para a
+mesma grade.
+
+Fechamento: a comparação visual alterou somente os nove estados que contêm
+cartas (frente, verso e elenco nas três larguras); os outros 12/21 ficaram pixel
+a pixel idênticos. `npm run validate` encerrou com **25/25 suítes verdes** em
+184,2 s, sem mudar snapshot, golden, RNG ou balanceamento.

@@ -5,7 +5,7 @@
 > mas **não é mais o handoff operacional atual**: P2 e o ciclo funcional da
 > simulação avançaram depois dele. Para retomar hoje, use `docs/project-context.md`,
 > `docs/p2-modularizacao-2026-07-28.md`, `docs/p5-aplicacao-ui-2026-07-29.md` e,
-> para cartas, a seção 12 de `docs/cartas-design-2026-07-28.md`. O backlog e as
+> para cartas, a seção 13 de `docs/cartas-design-2026-07-28.md`. O backlog e as
 > decisões de produto deste arquivo continuam válidos quando não forem
 > explicitamente superados por essas fontes mais novas.
 
@@ -510,10 +510,10 @@ de R3 e continuar as extrações de P2. Esse ponto foi executado: a distribuiç�
 individual foi entregue, o ciclo funcional da simulação foi fechado e P2 foi
 concluído. **Não use mais R3 versus P2 como escolha operacional atual.**
 
-Em 30/07/2026, as duas retomadas concretas documentadas são independentes:
+Em 31/07/2026, as duas retomadas concretas documentadas são independentes:
 
-1. produto visual: proposta ativa de cartas, ainda só no laboratório, conforme
-   `docs/cartas-design-2026-07-28.md` §12;
+1. produto visual: adicionar e normalizar retratos sobre a carta já canônica,
+   conforme `docs/card-portraits.md` e `docs/cartas-design-2026-07-28.md` §13;
 2. estrutura: extração exclusiva dos estados `S`, `TG`, `MP` e `MATCH`, conforme
    `docs/p5-aplicacao-ui-2026-07-29.md` §11.
 

@@ -57,6 +57,14 @@ campanha. Eles produzem strings sem acessar DOM ou estado global e usam o escape
 central de `src/ui/shared/html.mjs`; `game.js` conserva apenas a aplicação dessas
 views aos elementos e a coordenação do fluxo.
 
+A carta de jogador possui uma única anatomia executável em
+`src/ui/game/card-view.mjs` + `style.css`; `prototipo-cartas.html` é somente uma
+bancada de QA para esse mesmo componente. O campo cru opcional `foto` carrega um
+asset-id, projetado pela API pública sem interpretação esportiva. O recorte não é
+configurável no runtime: assets em `fotos/` já chegam normalizados em 5:7 e seguem
+o contrato de `docs/card-portraits.md`. Isso mantém dado factual, preparação de
+asset e layout em fronteiras distintas.
+
 `random-source.mjs` encapsula o Mulberry32 em instâncias independentes, preservando
 as sequências uniforme e gaussiana bit a bit. A composição pública possui uma
 instância por sessão e a passa explicitamente aos motores.
