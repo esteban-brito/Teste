@@ -24,11 +24,15 @@ Este documento não substitui as fontes especializadas:
 - `docs/formulas/`: roles, playstyles, OVR e química;
 - `docs/testing.md`: estratégia e comandos de teste;
 - `docs/realism-methodology.md`: IFCS, corpus real e nota de fidelidade 0–100;
-- `docs/rating-balance-2026-07-20.md`: auditoria do rating e comparação controlada;
+- `docs/ciclos/rating-balance-2026-07-20.md`: auditoria do rating e comparação controlada;
 - `docs/fidelity-corpus.md`: contrato operacional de coleta e auditoria do corpus;
 - `docs/adr/`: decisões arquiteturais;
 - `docs/baseline.md`: baseline estatístico e estrutural;
-- `docs/glossary.md`: vocabulário do domínio.
+- `docs/glossary.md`: vocabulário do domínio;
+- `docs/ciclos/`: relatórios de ciclos **encerrados** (R5/R6, fidelidade da
+  simulação, auditorias). São evidência, não roteiro — mas continuam sendo a
+  justificativa das constantes do motor: não mexa numa delas sem ler o relatório
+  correspondente. O índice está em `docs/ciclos/README.md`.
 
 Quando houver divergência, código executável + testes + ADR aceito têm precedência.
 Atualize este documento quando uma decisão aberta for fechada ou uma etapa do
@@ -151,7 +155,7 @@ Atualização operacional de 23 de julho de 2026:
   telemetria opcional caracterizam 1.088 mapas e 22.446 rounds sem alterar RNG;
 - o diagnóstico confirmou ausência de identidade própria de save para AWPer e
   probabilidades quase uniformes de trade/crédito KAST entre roles;
-- o plano mestre R5 está em `docs/r5-plan.md` e o contrato executável em
+- o plano mestre R5 está em `docs/ciclos/r5-plan.md` e o contrato executável em
   `docs/r5-experiment.json`;
 - R5.0–R5.1 concluíram a comparação pareada, com 1.088 mapas, 10.880
   player-maps, delta nulo e detecção sintética. Nenhum balanceamento foi
@@ -159,40 +163,40 @@ Atualização operacional de 23 de julho de 2026:
 - R5.2 removeu os pisos/tetos duros de forma e rating com caudas suaves,
   positivas e ilimitadas, sem adicionar pontos de RNG. A comparação pareada e
   o benchmark integral não detectaram deslocamento material do centro; detalhes
-  estão em `docs/r5-tail-balance-2026-07-23.md`.
+  estão em `docs/ciclos/r5-tail-balance-2026-07-23.md`.
 - R5.4 extraiu `combatProfile` e as parcelas somáveis de `fallenAngels` com
   golden idêntico e delta zero em 1.088 mapas/10.880 player-maps. A role ativa
-  do IGL não mudou; detalhes em `docs/r5-structural-extraction-2026-07-23.md`.
+  do IGL não mudou; detalhes em `docs/ciclos/r5-structural-extraction-2026-07-23.md`.
 - por decisão do responsável, o corpus IFCS completo de 800 mapas não é
   pré-requisito operacional deste ciclo. Ele permanece opcional para futura
   certificação; o produto não alegará nota IFCS oficial sem esse corpus;
 - R5.5 ativou a função de combate secundária já classificada dos IGLs, sem criar
   multiplicadores. A comparação pareada teve deltas globais imateriais e o
   benchmark melhorou correlação/MAE do rating; evidência em
-  `docs/r5-effective-role-balance-2026-07-23.md`.
+  `docs/ciclos/r5-effective-role-balance-2026-07-23.md`.
 - a parcela de exposição da R5.6 substituiu a seleção genérica da vítima por
   volume residual e contexto contínuo de função, atributos, lado e fase. Entry
   passou a liderar as mortes de abertura por pequena margem sem deslocamento
-  material global; evidência em `docs/r5-exposure-balance-2026-07-23.md`.
+  material global; evidência em `docs/ciclos/r5-exposure-balance-2026-07-23.md`.
 - o candidato separado de save acrescentou valor abstrato dos sobreviventes à
   decisão coletiva existente. Save de AWPer subiu cerca de 10% em termos
   relativos, enquanto save e produção globais ficaram estáveis; evidência em
-  `docs/r5-save-balance-2026-07-23.md`.
+  `docs/ciclos/r5-save-balance-2026-07-23.md`.
 - R5.7a condicionou a oportunidade de refrag à prontidão dos vivos e à
   possibilidade de troca da vítima. Entry e Support passaram a ser trocados com
   maior frequência sem inflar trades globais; evidência em
-  `docs/r5-trade-balance-2026-07-23.md`.
+  `docs/ciclos/r5-trade-balance-2026-07-23.md`.
 - R5.7b condicionou a oportunidade de assistência à utilidade disponível dos
   quatro companheiros elegíveis. APR global permaneceu estável e a separação
   entre facilitadores e finalizadores aumentou sem bônus direto por função ou
-  KAST; evidência em `docs/r5-assist-balance-2026-07-23.md`.
+  KAST; evidência em `docs/ciclos/r5-assist-balance-2026-07-23.md`.
 - R5.8 reconstruiu e mediu as onze parcelas do rating em 61.200 mapas-alvo. O
   prior atual `0,450` ficou praticamente no ótimo `0,455`; como o candidato
   piorou MAE/RMSE na validação, nenhum peso foi alterado. Evidência em
-  `docs/r5-rating-audit-2026-07-23.md`.
+  `docs/ciclos/r5-rating-audit-2026-07-23.md`.
 - R6 fechou o ciclo com comparação acumulada, 19/19 suítes e os três E2E. O
   resultado, os números finais e os limites honestos estão em
-  `docs/r6-closure-2026-07-23.md`.
+  `docs/ciclos/r6-closure-2026-07-23.md`.
 
 Atualização operacional de 24 de julho de 2026:
 
@@ -225,16 +229,16 @@ Atualização operacional de 24 de julho de 2026:
 
 | Commit | Etapa | Documento |
 |---|---|---|
-| `ce8133f` | Bancada multi-fator (medição pura) | `docs/baseline-simulacao-2026-07-26.md` |
-| `7119305` | Identidade única: o playstyle | `docs/identidade-playstyle-2026-07-26.md` |
-| `0d62d10` | O rating emerge da carta | `docs/rating-da-carta-2026-07-26.md` |
-| `798908e` | O round ganha um relógio real | `docs/relogio-do-round-2026-07-26.md` |
-| `7cf6bed` | Economia e arsenal reais | `docs/economia-real-2026-07-26.md` |
-| `d3d43c5` | Correção da flag de estrela + dificuldade pelo draft real | `docs/fechamento-dificuldade-2026-07-27.md` |
+| `ce8133f` | Bancada multi-fator (medição pura) | `docs/ciclos/baseline-simulacao-2026-07-26.md` |
+| `7119305` | Identidade única: o playstyle | `docs/ciclos/identidade-playstyle-2026-07-26.md` |
+| `0d62d10` | O rating emerge da carta | `docs/ciclos/rating-da-carta-2026-07-26.md` |
+| `798908e` | O round ganha um relógio real | `docs/ciclos/relogio-do-round-2026-07-26.md` |
+| `7cf6bed` | Economia e arsenal reais | `docs/ciclos/economia-real-2026-07-26.md` |
+| `d3d43c5` | Correção da flag de estrela + dificuldade pelo draft real | `docs/ciclos/fechamento-dificuldade-2026-07-27.md` |
 | `aa5841a` | Instrumento: varredura pareada e intervalo de Wilson | este arquivo, §2-bis |
-| `93f188a` | O medidor de dificuldade passa a medir o draft do jogo | `docs/dificuldade-invicto-2026-07-27.md` |
-| `b6156fd` | Abertura decidida por exposição, não por firepower | `docs/abertura-2026-07-27.md` |
-| `a92b210` | Campanha invicta entra na faixa de 4–6% | `docs/dificuldade-invicto-2026-07-27.md` |
+| `93f188a` | O medidor de dificuldade passa a medir o draft do jogo | `docs/ciclos/dificuldade-invicto-2026-07-27.md` |
+| `b6156fd` | Abertura decidida por exposição, não por firepower | `docs/ciclos/abertura-2026-07-27.md` |
+| `a92b210` | Campanha invicta entra na faixa de 4–6% | `docs/ciclos/dificuldade-invicto-2026-07-27.md` |
 | `41d6b86` | Goldens regravados | mensagem do commit |
 
 Validação final: **24/24 suítes verdes**, incluindo os três E2E. `realismo.js` fecha
@@ -284,18 +288,18 @@ guarda `totalRounds>=30` protege isso. A seed já foi trocada três vezes neste 
 
 ### O que ficou ABERTO, com causa já medida
 
-1. ~~Desvio intra-jogador do rating.~~ **RESOLVIDO em 28/07** — `docs/momentum-2026-07-28.md`.
+1. ~~Desvio intra-jogador do rating.~~ **RESOLVIDO em 28/07** — `docs/ciclos/momentum-2026-07-28.md`.
    A causa era estrutural (multinomial de pesos fixos é o piso da variância), e a solução foi
    `CFG_SIM.MOM_HEAT`: reforço de urna de Pólya sobre as kills líquidas já feitas no mapa.
    Desvio de 0,167 para **0,258**. Com isso **não resta nenhum critério em relatório** em
    `bancada/perfis.js` — as quatro etapas do ratchet estão ativas.
 2. ~~Duelo de abertura decidido por firepower bruto.~~ **RESOLVIDO em 27/07** —
-   `docs/abertura-2026-07-27.md`. Os dois critérios viraram gate.
+   `docs/ciclos/abertura-2026-07-27.md`. Os dois critérios viraram gate.
 3. **Utilidade como recurso do round** (flash/smoke/molotov comprados e gastos, ligando
    `ut` a execução e retake). Única parte do escopo original que não entrou. O custo de
    `full` (4300) já está dimensionado para absorvê-la quando existir.
 4. ~~Dificuldade abaixo do alvo.~~ **RESOLVIDO em 27/07** —
-   `docs/dificuldade-invicto-2026-07-27.md`. Invicto em 4,91% [4,46–5,41] com 8.000
+   `docs/ciclos/dificuldade-invicto-2026-07-27.md`. Invicto em 4,91% [4,46–5,41] com 8.000
    campanhas. Fica o risco registrado: a margem do título sobre a borda de 25% é de
    1,3 pp, e `Favorito gap 16+` caiu para 84,8 numa faixa que termina em 82 — é o teto
    de qualquer alavanca futura que aumente zebra.
@@ -331,7 +335,7 @@ do resultado da suíça) mais `PESO_EF` e `AMP_TIME`.
 única peça do escopo original — **utilidade como recurso do round**. Fora isso, a decisão é
 de produto: continuar refinando fidelidade ou começar o **Modo Carreira** (P6), que depende
 de schema de save e API estável, não de mais precisão. Ver o plano em
-`docs/momentum-2026-07-28.md` e `docs/dados-era-rating-1-0.md` para a dívida de dados
+`docs/ciclos/momentum-2026-07-28.md` e `docs/dados-era-rating-1-0.md` para a dívida de dados
 já registrada.
 
 Pendências anteriores que continuam válidas: a proveniência dos overrides do commit
@@ -711,7 +715,7 @@ profunda R1 foi executada duas vezes após R2 e preservou exatamente SHA-256
   ajuda e responsividade intermediária.
 
 O balanceamento deliberado está documentado em
-`docs/rating-balance-2026-07-20.md`. As mudanças posteriores de tabela foram
+`docs/ciclos/rating-balance-2026-07-20.md`. As mudanças posteriores de tabela foram
 apenas de interface e teste E2E. A política vigente de autonomia, commits e push
 está em `AGENTS.md`.
 

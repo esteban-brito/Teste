@@ -304,7 +304,7 @@ reconcilia K/D/A/KAST/ADR por round com o resultado final e preserva resultado e
 consumo de RNG por igualdade profunda no golden. O relatório valida cobertura
 dos 85 IDs, resultados e todas as partições. Arma, inventário e compra individual
 continuam indisponíveis e não devem ser inferidos do estado econômico do time.
-Evidência reproduzível: `docs/role-fidelity-audit-2026-07-23.md`.
+Evidência reproduzível: `docs/ciclos/role-fidelity-audit-2026-07-23.md`.
 
 Objetivo: verificar, sem presumir culpa, se algum perfil recebe rating alto por
 produzir ou por ser excessivamente recompensado por sobreviver.
@@ -345,27 +345,27 @@ Só executar se R4 comprovar um problema material.
 
 **Status em 23/07/2026:** R5.0–R5.1 e R5.2 concluídas. O
 manifesto congelado está em `docs/r5-experiment.json` e a arquitetura completa
-em `docs/r5-plan.md`. A captura de desenvolvimento cobre 1.088 mapas e 10.880
+em `docs/ciclos/r5-plan.md`. A captura de desenvolvimento cobre 1.088 mapas e 10.880
 player-maps; baseline contra baseline deve produzir deltas e IC95% exatamente
 zero antes de qualquer candidato. R5.2 removeu isoladamente os pisos/tetos duros
 de forma e rating, sem novo ponto de RNG e sem tuning tático; a evidência está em
-`docs/r5-tail-balance-2026-07-23.md`. O responsável decidiu que o corpus IFCS de
+`docs/ciclos/r5-tail-balance-2026-07-23.md`. O responsável decidiu que o corpus IFCS de
 800 mapas não será pré-requisito deste ciclo; certificação oficial permanece
 futura e nenhuma faixa por role será inventada. R5.4 foi concluída por paridade
 exata e R5.5 ativou a função secundária já classificada dos IGLs sem criar pesos.
-Evidências em `docs/r5-structural-extraction-2026-07-23.md` e
-`docs/r5-effective-role-balance-2026-07-23.md`. A etapa de exposição da R5.6
+Evidências em `docs/ciclos/r5-structural-extraction-2026-07-23.md` e
+`docs/ciclos/r5-effective-role-balance-2026-07-23.md`. A etapa de exposição da R5.6
 também foi concluída: contato agora depende de atributos, função efetiva, lado
-e fase, com evidência em `docs/r5-exposure-balance-2026-07-23.md`. O candidato
+e fase, com evidência em `docs/ciclos/r5-exposure-balance-2026-07-23.md`. O candidato
 separado de save também foi concluído, zero-centrado e sem alegar inventário;
-evidência em `docs/r5-save-balance-2026-07-23.md`. R5.7a concluiu a oportunidade
+evidência em `docs/ciclos/r5-save-balance-2026-07-23.md`. R5.7a concluiu a oportunidade
 contextual de trade sem inflar a taxa global; detalhes em
-`docs/r5-trade-balance-2026-07-23.md`. R5.7b concluiu a assistência contextual
+`docs/ciclos/r5-trade-balance-2026-07-23.md`. R5.7b concluiu a assistência contextual
 por utilidade disponível, com APR global estável e separação maior dos
-facilitadores; detalhes em `docs/r5-assist-balance-2026-07-23.md`. R5.8, a
+facilitadores; detalhes em `docs/ciclos/r5-assist-balance-2026-07-23.md`. R5.8, a
 decomposição do rating após os eventos, também foi concluída. O prior atual já
 estava no ótimo de calibração e o candidato piorou a validação, portanto nenhum
-peso foi alterado; detalhes em `docs/r5-rating-audit-2026-07-23.md`. R6 é a
+peso foi alterado; detalhes em `docs/ciclos/r5-rating-audit-2026-07-23.md`. R6 é a
 próxima etapa.
 
 Regras:
@@ -392,7 +392,7 @@ Aceitação:
 métricas globais e confirmou mudanças direcionais por função efetiva. A
 validação integral passou em 19/19 suítes, 45.900 mapas e 938.511 rounds. O
 fechamento e os limites remanescentes estão em
-`docs/r6-closure-2026-07-23.md`.
+`docs/ciclos/r6-closure-2026-07-23.md`.
 
 Atualização posterior: o commit de dados `f731b3a`, de 24 de julho, alterou seis
 jogadores por overrides do editor do sandbox e produziu uma nova execução de
@@ -555,7 +555,7 @@ eles sem conversar com o responsável.
   31/07/2026** — a A refinada é o componente canônico; o trabalho restante é
   conteúdo de retratos pelo contrato 5:7, não outro redesenho.
 - ~~Utilidade como recurso do round.~~ **ENTREGUE em 28/07/2026** —
-  `docs/utilitaria-2026-07-28.md`. Com ela, **o escopo original da simulação está fechado**.
+  `docs/ciclos/utilitaria-2026-07-28.md`. Com ela, **o escopo original da simulação está fechado**.
 
 Estado da simulação em 28/07/2026, para calibrar a urgência: **nenhum critério em relatório**.
 As quatro etapas do ratchet de `perfis.js` estão ativas, e `npm run validate` fecha 25/25 —

@@ -141,8 +141,8 @@ de `realismo.js`, relógio reprova por padrão; os critérios de economia contin
 opt-in com `ECONOMIA_STRICT=1`. `dificuldade.js` voltou a relatório em 28/07/2026
 depois de a recuperação da guarda `Favorito gap 16+` levar o invicto do elenco
 draftado a 3,8%; seus alvos só reprovam com `DIFICULDADE_STRICT=1`. O histórico
-dos alvos está em [`baseline-simulacao-2026-07-26.md`](baseline-simulacao-2026-07-26.md),
-[`dificuldade-invicto-2026-07-27.md`](dificuldade-invicto-2026-07-27.md) e no
+dos alvos está em [`baseline-simulacao-2026-07-26.md`](ciclos/baseline-simulacao-2026-07-26.md),
+[`dificuldade-invicto-2026-07-27.md`](ciclos/dificuldade-invicto-2026-07-27.md) e no
 cabeçalho executável de `bancada/dificuldade.js`.
 
 Toda calibração de constante passa por `bancada/sweep.js`: braços pareados pela mesma

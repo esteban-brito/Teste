@@ -24,14 +24,16 @@ O mapa técnico e as regras para mudanças estão em:
   de auditoria individual, variância, campanha e balanceamento condicional;
 - [`docs/architecture.md`](docs/architecture.md): fluxo de dados e fronteiras;
 - [`docs/testing.md`](docs/testing.md): 25 suítes e comandos por camada;
-- [`docs/rating-balance-2026-07-20.md`](docs/rating-balance-2026-07-20.md): auditoria sem curadoria e comparação antes/depois;
+- [`docs/ciclos/rating-balance-2026-07-20.md`](docs/ciclos/rating-balance-2026-07-20.md): auditoria sem curadoria e comparação antes/depois;
 - [`docs/fidelity-corpus.md`](docs/fidelity-corpus.md): coleta e auditoria do corpus IFCS;
 - [`docs/fidelity-target.json`](docs/fidelity-target.json): alvo histórico
   congelado, com janela, população, fontes e hashes;
 - [`docs/realism-methodology.md`](docs/realism-methodology.md): metodologia IFCS
   para medir fidelidade ao CS profissional em escala de 0 a 100;
 - [`docs/formulas/`](docs/formulas/): roles, playstyles, OVR e química;
-- [`docs/adr/`](docs/adr/): decisões arquiteturais registradas.
+- [`docs/adr/`](docs/adr/): decisões arquiteturais registradas;
+- [`docs/ciclos/`](docs/ciclos/README.md): relatórios de ciclos encerrados —
+  evidência de por que cada número é o que é, não ponto de retomada.
 
 Para preparar e validar o repositório:
 
@@ -313,4 +315,4 @@ alegação de “X% realista”. O retrato completo está em
 Essas duas linhas pertencem ao baseline histórico de 19 de julho de 2026. Após
 a recalibração publicada em `626b7ed`, a execução controlada obteve correlação
 0,946, MAE 0,052, inclinação 0,998 e maior erro individual 0,18. Consulte
-[`docs/rating-balance-2026-07-20.md`](docs/rating-balance-2026-07-20.md).
+[`docs/ciclos/rating-balance-2026-07-20.md`](docs/ciclos/rating-balance-2026-07-20.md).

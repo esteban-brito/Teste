@@ -75,7 +75,7 @@ congelada, sem misturar Train no alvo real.
 **Concluída.** O clamp final do rating foi removido e a forma passou a usar
 continuações suaves, positivas e sem limite superior, preservando os pontos de
 RNG. Provas, deltas pareados, benchmark e mudanças intencionais do golden estão
-em `docs/r5-tail-balance-2026-07-23.md`.
+em `docs/ciclos/r5-tail-balance-2026-07-23.md`.
 
 - remover o clamp final de rating `0,30–3,0`;
 - substituir o teto de `formaDoDia` por uma distribuição positiva sem limite
@@ -109,7 +109,7 @@ completo. Tuning tático numérico por role não pode usar faixas inventadas.
 **Concluída.** `combatProfile` e os componentes somáveis de `fallenAngels`
 foram extraídos com golden idêntico e delta zero em 1.088 mapas pareados. A role
 ativa de IGL permanece inalterada. Evidência em
-`docs/r5-structural-extraction-2026-07-23.md`.
+`docs/ciclos/r5-structural-extraction-2026-07-23.md`.
 
 Em commit estrutural e com golden idêntico:
 
@@ -121,7 +121,7 @@ Em commit estrutural e com golden idêntico:
 
 **Concluída.** IGL preserva liderança, química e sistema, mas usa AWPer, Entry,
 Rifler ou Support já classificado nas decisões de combate. Nenhum multiplicador
-novo foi criado. Evidência em `docs/r5-effective-role-balance-2026-07-23.md`.
+novo foi criado. Evidência em `docs/ciclos/r5-effective-role-balance-2026-07-23.md`.
 
 - IGL permanece liderança para sistema e química;
 - decisões de combate de IGL usam seu papel secundário/efetivo;
@@ -134,12 +134,12 @@ novo foi criado. Evidência em `docs/r5-effective-role-balance-2026-07-23.md`.
 volume residual de contato e um perfil contínuo derivado de função efetiva,
 atributos `en`, `op`, `sn`, `cl`, `ut`, agressividade, lado e fase do round.
 Entry assume mais primeiro contato; AWPer e Lurker não recebem bônus direto de
-sobrevivência. Evidência em `docs/r5-exposure-balance-2026-07-23.md`.
+sobrevivência. Evidência em `docs/ciclos/r5-exposure-balance-2026-07-23.md`.
 
 O candidato separado de save preserva as regras existentes de compra do time,
 vantagem numérica e objetivo, acrescentando somente o valor abstrato e
 zero-centrado dos sobreviventes. Evidência em
-`docs/r5-save-balance-2026-07-23.md`. Sem inventário individual, o relatório não
+`docs/ciclos/r5-save-balance-2026-07-23.md`. Sem inventário individual, o relatório não
 afirma que uma arma específica foi preservada.
 
 ### R5.7 — trade, assistência e KAST
@@ -147,12 +147,12 @@ afirma que uma arma específica foi preservada.
 **Concluída.** Prontidão dos
 companheiros vivos e possibilidade de troca da vítima agora deslocam a chance
 do refrag de forma zero-centrada. Evidência em
-`docs/r5-trade-balance-2026-07-23.md`.
+`docs/ciclos/r5-trade-balance-2026-07-23.md`.
 
 A oportunidade de assistência agora considera a utilidade disponível dos
 companheiros elegíveis, preservando o desconto histórico de quem já morreu e a
 seleção ponderada do assistente. Evidência em
-`docs/r5-assist-balance-2026-07-23.md`.
+`docs/ciclos/r5-assist-balance-2026-07-23.md`.
 
 - `tr` continua selecionando o refragger;
 - utilidade disponível contextualiza a assistência;
@@ -166,7 +166,7 @@ seleção ponderada do assistente. Evidência em
 61.200 mapas-alvo. O prior atual `0,450` ficou praticamente igual ao ótimo de
 calibração `0,455`; o candidato piorou MAE/RMSE na validação e foi rejeitado. O
 holdout de auditoria permaneceu selado. Evidência em
-`docs/r5-rating-audit-2026-07-23.md`.
+`docs/ciclos/r5-rating-audit-2026-07-23.md`.
 
 - os eventos sem prior preservaram correlação `0,875` com a referência;
 - o conjunto completo preservou correlação `0,956` e MAE `0,0486`;
@@ -200,4 +200,4 @@ intencional; publicação permanece separada da decisão científica.
 
 **Fechamento:** R6 foi concluída em 23 de julho de 2026. A comparação acumulada
 cobriu 1.088 partidas pareadas e a validação integral aprovou 19/19 suítes em
-195,6 segundos. Evidência em `docs/r6-closure-2026-07-23.md`.
+195,6 segundos. Evidência em `docs/ciclos/r6-closure-2026-07-23.md`.
