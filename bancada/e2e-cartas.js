@@ -198,6 +198,38 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       "ocupação horizontal dos stats","tipografia única · nick"]
       .every(campo=>detectaPadrao.includes(campo)),
     "gate acusa conteúdo oculto, trilho estreito, slot ausente e exceção tipográfica");
+    /* As três provas abaixo cobrem buracos reais encontrados em 31/07/2026: o
+       medidor ficava VERDE ao remover a clip-path, ao inverter a diagonal do
+       verso, ao apagar o retrato e ao esconder conteúdo por opacidade. */
+    const detectaDiagonal=await page.evaluate(()=>{
+      const card=document.querySelector(".card");
+      const placa=card.querySelector(".c-placa"),faixa=card.querySelector(".c-vfaixa");
+      const medir=alvo=>valor=>{const antes=alvo.style.clipPath;alvo.style.clipPath=valor;
+        const campos=window.__LAB_MEDIR().ritmo.map(item=>item.campo);alvo.style.clipPath=antes;return campos;};
+      const semPlaca=medir(placa)("none");
+      const versoInvertido=medir(faixa)("polygon(0 0,100% 0,100% 100%,0 60%)");
+      const rotulo="diagonal legível na clip-path";
+      return semPlaca.includes(rotulo)&&versoInvertido.includes(rotulo);
+    });
+    check(detectaDiagonal,"medidor acusa diagonal removida ou invertida");
+    const detectaRetrato=await page.evaluate(()=>{
+      const card=document.querySelector('#gRetratos .card[data-enquadramento="canonical"]');
+      const foto=card.querySelector(".c-foto");
+      const medir=(prop,valor)=>{const antes=foto.style[prop];foto.style[prop]=valor;
+        const campos=window.__LAB_MEDIR().ritmo.map(item=>item.campo);foto.style[prop]=antes;return campos;};
+      return medir("display","none").includes("retrato desenhado")&&
+        medir("backgroundPosition","50% 0,50% 0,50% 40%,50% 0")
+          .some(campo=>campo.startsWith("recorte canônico do retrato"));
+    });
+    check(detectaRetrato,"medidor acusa retrato ausente ou recortado fora do padrão");
+    const detectaOpacidade=await page.evaluate(()=>{
+      const flag=document.querySelector(".card .c-flag"),antes=flag.style.opacity;
+      flag.style.opacity="0";
+      const campos=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
+      flag.style.opacity=antes;
+      return campos.includes("conteúdo frontal sempre visível");
+    });
+    check(detectaOpacidade,"medidor acusa conteúdo escondido por opacidade");
     check((await page.evaluate(()=>window.__LAB_MEDIR())).falhas.length===0&&
       (await page.evaluate(()=>window.__LAB_MEDIR())).ritmo.length===0,
     "medição volta ao verde depois das provas sintéticas");

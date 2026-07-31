@@ -34,7 +34,7 @@ const escalaCarac=texto=>texto.length<=10?1:texto.length<=12?.88:.8;
 const camadasDeFundo=`<div class="c-foto"></div><div class="c-vinheta"></div>`;
 const bandeiraHtml=pais=>{
   const fonte=bandeiraDe(pais);
-  return fonte?`<div class="c-flag" style="background-image:url('${fonte}')" title="${esc(pais)}"></div>`:"";
+  return fonte?`<div class="c-flag" style="background-image:url('${esc(fonte)}')" title="${esc(pais)}"></div>`:"";
 };
 /* O ID, e não um caminho arbitrário, cruza a fronteira dado → CSS. */
 const fotoStyle=card=>{

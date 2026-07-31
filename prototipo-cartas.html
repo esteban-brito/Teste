@@ -185,14 +185,14 @@ const casos=[
   ["controlez","9 letras · <em>compacta</em>"],
   ["chopper","IGL · <em>firepower 2</em>"],
 ];
-const coringa=jogadores.find(jogador=>STYLE_ID(jogador._eng.playstyle)==="joker");
+const coringa=jogadores.find(jogador=>STYLE_ID(jogador._eng?.playstyle)==="joker");
 const desenvolvedor=treinadores.find(treinador=>treinador.carac==="Desenvolvedor");
 const estrategista=treinadores.find(treinador=>treinador.carac==="Estrategista");
 $("gCasos").innerHTML=casos.map(([nick,rotulo])=>{
   const carta=porNick(nick);return carta?item(cartaHtml(carta),`${nick}<br>${rotulo}`):"";}).join("")+
-  (coringa?item(cartaHtml(coringa),`${coringa.nick}<br>Coringa · <em>sem receita</em>`):"")+
-  (desenvolvedor?item(cartaHtml(desenvolvedor),`${desenvolvedor.nick}<br><em>13 letras</em>`):"")+
-  (estrategista?item(cartaHtml(estrategista),`${estrategista.nick}<br><em>descrição + era</em>`):"");
+  (coringa?item(cartaHtml(coringa),`${esc(coringa.nick)}<br>Coringa · <em>sem receita</em>`):"")+
+  (desenvolvedor?item(cartaHtml(desenvolvedor),`${esc(desenvolvedor.nick)}<br><em>13 letras</em>`):"")+
+  (estrategista?item(cartaHtml(estrategista),`${esc(estrategista.nick)}<br><em>descrição + era</em>`):"");
 
 $("gElencos").innerHTML=TEAMS.map(time=>{
   const cartas=time.jogadores.map(cartaHtml).join("")+
@@ -200,8 +200,8 @@ $("gElencos").innerHTML=TEAMS.map(time=>{
   return `<section class="lab-time"><h3>${esc(time.nome)} <i>${esc(time.camp)} · ${esc(time.coloc)}</i></h3>
     <div class="lab-grade">${cartas}</div></section>`;}).join("");
 $("gBandeiras").innerHTML=Object.entries(BANDEIRA).map(([pais,src])=>
-  `<div class="lab-band"><div class="g" style="background-image:url('${src}')"></div>
-   <div class="p" style="background-image:url('${src}')"></div><div class="lab-rot">${pais}</div></div>`).join("");
+  `<div class="lab-band"><div class="g" style="background-image:url('${esc(src)}')"></div>
+   <div class="p" style="background-image:url('${esc(src)}')"></div><div class="lab-rot">${esc(pais)}</div></div>`).join("");
 $("labInfo").textContent=`${jogadores.length} jogadores · ${treinadores.length} treinadores · `+
   `${TEAMS.length} elencos · uma única implementação`;
 
@@ -218,8 +218,18 @@ function medirCartas(){
   const jogadoresRenderizados=[];
   for(const carta of todasAsCartas()){
     const caixa=carta.getBoundingClientRect();
+    /* A face oculta da carta usa `opacity:0`, então opacidade zero só significa
+       "sumiu" quando nasce ABAIXO da face — senão o verso inteiro deixaria de ser
+       medido enquanto a frente estivesse à mostra. Sem esta subida, esconder a
+       bandeira com `opacity:0` passava batido, enquanto `display:none` reprovava. */
+    const opacoAteAFace=elemento=>{
+      for(let no=elemento;no&&!no.classList.contains("cface");no=no.parentElement)
+        if(Number(getComputedStyle(no).opacity)===0)return false;
+      return true;
+    };
     const visivel=elemento=>!!(elemento&&elemento.getClientRects().length&&
-      getComputedStyle(elemento).display!=="none"&&getComputedStyle(elemento).visibility!=="hidden");
+      getComputedStyle(elemento).display!=="none"&&getComputedStyle(elemento).visibility!=="hidden"&&
+      opacoAteAFace(elemento));
     const registrar=(lista,elemento,campo,falta,passa=null)=>lista.push({
       nick:carta.dataset.nick||"—",campo,texto:elemento?.textContent.trim()||"",
       falta:+falta.toFixed(2),passa:+(passa==null?(elemento?caixaDoTexto(elemento).right-caixa.right:0):passa).toFixed(2),
@@ -291,9 +301,34 @@ function medirCartas(){
 
     const placaBox=placa.getBoundingClientRect(),faixaBox=faixa.getBoundingClientRect();
     const nickBox=nick.getBoundingClientRect(),estiloBox=estilo.getBoundingClientRect();
+    /* O retrato é o maior elemento da carta e podia sumir inteiro sem reprovar
+       nada: o contrato conferia só estilo computado, que sobrevive a
+       `display:none`. Agora a presença é cobrada junto com o recorte, e em TODAS
+       as cartas com foto — não apenas na referência. */
+    const foto=carta.querySelector(".c-foto");
+    const fotoDeclarada=getComputedStyle(carta.querySelector(".cfaces"))
+      .getPropertyValue("--foto").trim();
+    if(fotoDeclarada&&fotoDeclarada!=="none"){
+      const estiloFoto=getComputedStyle(foto);
+      if(!visivel(foto))registrarRitmo("retrato desenhado",0,1,"exato","estado");
+      if(!estiloFoto.backgroundImage.includes(".webp"))
+        registrarRitmo("retrato na pilha de fundo",0,1,"exato","estado");
+      /* A terceira camada de `.c-foto` é o retrato; as outras três são degradês. */
+      const tamanho=(estiloFoto.backgroundSize.split(",")[2]||"").trim();
+      const posicao=(estiloFoto.backgroundPosition.split(",")[2]||"").trim();
+      if(!/^100%( auto)?$/.test(tamanho)||posicao!=="50% 12%")
+        registrarRitmo(`recorte canônico do retrato (viu ${tamanho} · ${posicao})`,0,1,"exato","estado");
+    }
+
     const corteFrente=getComputedStyle(placa).clipPath.match(/^polygon\(0(?:px)?\s+([\d.]+)%/);
     const corteVerso=getComputedStyle(faixa).clipPath.match(/100%\s+([\d.]+)%,\s*0(?:px)?\s+100%\)$/);
-    if(corteFrente&&corteVerso){
+    /* Ausência de diagonal legível É a falha. Até 31/07/2026 este bloco
+       simplesmente não rodava quando um regex não casava: remover a `clip-path`
+       ou inverter a diagonal do verso deixava as três provas abaixo em silêncio,
+       e a suíte inteira fechava verde. */
+    if(!corteFrente||!corteVerso){
+      registrarRitmo("diagonal legível na clip-path",0,1,"exato","estado");
+    }else{
       const subidaFrente=placaBox.height*Number(corteFrente[1])/100;
       const subidaVerso=faixaBox.height*(100-Number(corteVerso[1]))/100;
       const linhaFrente=placaBox.top+subidaFrente*(1-(nickBox.left-placaBox.left)/placaBox.width);

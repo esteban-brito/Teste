@@ -201,7 +201,8 @@ quebram; os 17 elencos completos; emblemas e bandeiras ampliados.
 > `#proposta` foram **removidos** em `673e205` — o mecanismo de A/B não existe mais,
 > porque não há mais duas hipóteses a comparar. Os emblemas também saíram. O que
 > permanece: verso, escala de cinza, daltonismo, as oito larguras, a escada, a
-> matriz, os casos que quebram e os 17 elencos, agora sobre a carta única.
+> matriz, os casos que quebram e os 17 elencos, agora sobre a carta única. A
+> matriz passou de **30 para 36 combinações** quando a escada ganhou a sexta faixa.
 
 E tem o **medidor de geometria**, que é a parte que não é gosto: ele mede texto
 contra caixa, recorte vertical e colisão entre regiões em todas as cartas da página,
