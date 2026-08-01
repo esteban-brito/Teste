@@ -39,6 +39,16 @@ ela não escondeu dívida nenhuma. Regra: aviso novo se conserta ou se declara n
 para provar inicialização, volume mestre, desbloqueio iOS, síntese, mute e
 isolamento de instâncias sem depender de hardware ou de um navegador real.
 
+`check-doc-measurements.js` prova o que `check-doc-links.js` não alcança:
+**afirmação obsoleta**. O primeiro garante que uma referência aponta para arquivo
+existente; o segundo garante que o número dito sobre ele ainda é verdade. Uma
+tabela precedida de `<!-- medicao-verificada -->` vira asserção executável — mexer
+no arquivo sem atualizar o número reprova o `check`. Foi criado depois que a §5 do
+handoff do P5 passou dias dizendo "medição vigente" com três dos quatro números
+errados. Prosa continua sem prova: número histórico ("caiu de 3.054 para 1.206 em
+`4945d47`") fica na prosa porque descreve um commit; número sobre o **hoje** vai
+para a tabela ou não é confiável.
+
 `check-progress-store.js` cobre schema, fallback sem storage, save, importação,
 download do backup e isolamento de instâncias com adaptadores falsos de navegador.
 
