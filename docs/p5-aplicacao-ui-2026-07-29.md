@@ -215,10 +215,24 @@ Arquivos grandes que permanecem (medidos em `8a12250`, 29/07/2026):
   (`3a221e2`, `832017b`), que removeu duplicação e CSS morto sem mudança visual,
   provada pelo comparador de `tools/visual-regression.js`.
 
-Medição vigente em `7175c26`, 31/07/2026: `game.js` 889 linhas,
-`sandbox.html` 4.205, `style.css` 1.031 e `prototipo-cartas.html` 392. O aumento do
-CSS pertence ao componente canônico e às três densidades comprovadas; não muda a
-recomendação de separar estado antes de controladores.
+Medição vigente, provada por `tools/check-doc-measurements.js` a cada
+`npm run check`:
+
+<!-- medicao-verificada -->
+
+| arquivo | linhas |
+|---|---:|
+| `game.js` | 882 |
+| `sandbox.html` | 4205 |
+| `style.css` | 1261 |
+| `prototipo-cartas.html` | 592 |
+
+Até 01/08/2026 este parágrafo dizia "medição vigente" e errava três dos quatro
+números — `style.css` 1.031 quando eram 1.261, `prototipo-cartas.html` 392 quando
+eram 592 e `game.js` 889 quando eram 882. A tabela acima é executável: mexer nos
+arquivos sem atualizar o número reprova o `check`. O crescimento do CSS pertence
+ao componente canônico e às três densidades comprovadas; não muda a recomendação
+de separar estado antes de controladores.
 
 Tamanho não é autorização para dividir ou apagar. `sandbox.html` ainda possui
 dívida própria do P6; `style.css` não deve ser reorganizado junto com estado ou
