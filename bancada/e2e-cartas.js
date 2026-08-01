@@ -255,6 +255,22 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     });
     check(detectaEspelhoCoach,
       "medidor acusa coach fora da grade compartilhada, no eixo vertical ou horizontal");
+    const detectaVersoCoach=await page.evaluate(()=>{
+      const coach=document.querySelector(".coachcard");
+      const linha=coach.querySelector(".c-vef"),displayAntes=linha.style.display;
+      linha.style.display="none";
+      const linhas=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
+      linha.style.display=displayAntes;
+      /* Inchar o corpo empurra a última linha contra o rodapé: é a versão
+         ancorada nas duas pontas que passou na colisão e ficou colada. */
+      const corpo=coach.querySelector(".c-vdesc"),gapAntes=corpo.style.gap;
+      corpo.style.gap="18%";
+      const respiro=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
+      corpo.style.gap=gapAntes;
+      return linhas.includes("verso padronizado · linhas de efeito")&&
+        respiro.includes("verso padronizado · respiro antes do rodapé");
+    });
+    check(detectaVersoCoach,"medidor acusa linha de efeito sumida ou corpo colado no rodapé");
     check((await page.evaluate(()=>window.__LAB_MEDIR())).falhas.length===0&&
       (await page.evaluate(()=>window.__LAB_MEDIR())).ritmo.length===0,
     "medição volta ao verde depois das provas sintéticas");

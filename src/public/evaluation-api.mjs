@@ -14,7 +14,8 @@ import {CFG_PADRAO as CFG_CLASSIFICACAO} from "../domain/evaluation/role-classif
 import {rolePairReality} from "../domain/evaluation/role-pair-reality.mjs";
 import {roleStyleReality} from "../domain/evaluation/role-style-reality.mjs";
 import {secondaryScore} from "../domain/evaluation/secondary-score.mjs";
-import {ovrTreinador,derivaCaracteristica,forcaTime} from "../domain/chemistry/team-chemistry.mjs";
+import {ovrTreinador,derivaCaracteristica,forcaTime,
+  CFG_PADRAO as CFG_QUIMICA} from "../domain/chemistry/team-chemistry.mjs";
 
 const CARAC_SLUG={Gestor:"gestor",Estrategista:"estrategista",Desenvolvedor:"desenvolvedor",Motivador:"motivador"};
 const CARAC_COR={Gestor:"var(--c-gestor)",Estrategista:"var(--c-estrategista)",Desenvolvedor:"var(--c-desenvolvedor)",Motivador:"var(--c-motivador)"};
@@ -38,6 +39,10 @@ export const PLAYSTYLES=Object.fromEntries(PLAYSTYLE_IDS.map(id=>
 export {styleId};
 export const STYLE_ID=styleId;
 export const STYLE_RECIPE=id=>NM_DEF[STYLE_KEYS[id]];
+/* Mesmo contrato do STYLE_RECIPE: devolve a tabela VIVA, não uma cópia, para que
+   o que o calibrador muta chegue a quem lê. É o que permite a carta do treinador
+   exibir os números da química em vez de reescrevê-los à mão. */
+export const COACH_RECIPE=carac=>CFG_QUIMICA.CARAC[carac];
 
 export function styleLabel(value){const id=styleId(value);return id==="joker"?"Coringa":(STYLE_KEYS[id]||id);}
 // Alias temporário para o contrato do sandbox durante a migração da Fase 5.

@@ -143,14 +143,14 @@ p.lab b{color:var(--txt);font-weight:600}
 </main>
 
 <script type="module">
-import {TEAMS,STYLE_ID,STYLE_LABEL,STYLE_RECIPE} from "./src/public/evaluation-api.mjs";
+import {TEAMS,STYLE_ID,STYLE_LABEL,STYLE_RECIPE,COACH_RECIPE} from "./src/public/evaluation-api.mjs";
 import {setCardFlipped} from "./src/application/card-face.mjs";
 import {createCardView} from "./src/ui/game/card-view.mjs";
 import {escapeHtml as esc} from "./src/ui/shared/html.mjs";
 import {BANDEIRA} from "./src/ui/shared/flags.mjs";
 
 const {cardClass,cardHTML}=createCardView({
-  styleId:STYLE_ID,styleLabel:STYLE_LABEL,styleRecipe:STYLE_RECIPE});
+  styleId:STYLE_ID,styleLabel:STYLE_LABEL,styleRecipe:STYLE_RECIPE,coachRecipe:COACH_RECIPE});
 const $=id=>document.getElementById(id);
 const jogadores=TEAMS.flatMap(time=>time.jogadores);
 const treinadores=TEAMS.map(time=>time.treinador).filter(Boolean);
@@ -311,6 +311,27 @@ function medirCartas(){
       const faixa=carta.querySelector(".c-vfaixa").getBoundingClientRect();
       const refFaixa=ref.querySelector(".c-vfaixa").getBoundingClientRect();
       maximo("verso padronizado · altura da faixa",Math.abs(faixa.height-refFaixa.height),.35,.05);
+
+      /* As duas linhas numéricas do efeito são obrigatórias nas quatro
+         características: a silhueta do verso não pode variar com a quantidade de
+         alavancas que a química deu a cada treinador. */
+      const efeitos=[...carta.querySelectorAll(".c-vef")].filter(visivel);
+      if(efeitos.length!==2)
+        registrarRitmo("verso padronizado · linhas de efeito",efeitos.length,2,"exato","linhas");
+
+      /* Respiro antes do rodapé, medido na TINTA e não na reserva. A caixa da
+         descrição termina a 84,9% e o rodapé começa a 86%: uma versão ancorada
+         nas duas pontas passou na guarda de colisão com 2,4 px de folga e ficou
+         visivelmente colada. O piso é o respiro do próprio jogador, cujos quatro
+         trilhos param bem antes do fim da reserva — assim a régua não é um número
+         escolhido a dedo e não há como afrouxá-la sem afrouxar a carta canônica. */
+      const tintaAte=elemento=>{const faixaTexto=document.createRange();
+        faixaTexto.selectNodeContents(elemento);return faixaTexto.getBoundingClientRect().bottom;};
+      const rodape=carta.querySelector(".c-vrod").getBoundingClientRect();
+      const refRodape=ref.querySelector(".c-vrod").getBoundingClientRect();
+      minimo("verso padronizado · respiro antes do rodapé",
+        rodape.top-tintaAte(carta.querySelector(".c-vdesc")),
+        refRodape.top-tintaAte(ref.querySelector(".c-vstats")),.35);
 
       /* A frente do treinador é a MESMA da carta de jogador, não um espelho dela.
          Cada campo declara as bordas que são seu contrato: quem nasce em `--pad`

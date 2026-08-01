@@ -22,11 +22,16 @@ async function main(){
 
   assert.equal(escapeHtml(`&<>"'`),"&amp;&lt;&gt;&quot;'","escape HTML mudou o contrato existente");
 
-  const recipeCalls=[];
+  const recipeCalls=[],coachCalls=[];
   const view=createCardView({
     styleId:playstyle=>playstyle==="Coringa"?"joker":"closer",
     styleLabel:id=>id==="closer"?"Closer <elite>":"Coringa",
     styleRecipe:id=>{recipeCalls.push(id);return {ovrW:{cl:.5,fogo:.2,ut:.3,ab:.1}};},
+    /* Valores fora da química real: se a carta voltar a escrever número à mão,
+       o HTML não vai mostrar estes e a asserção reprova. */
+    coachRecipe:carac=>{coachCalls.push(carac);
+      return {tetoEstrelasBonus:3,estrelaExtraPen:.5,cruPorJogador:.5,cruTeto:.5,
+        corteEstrutura:.5,corteComando:.5,cortePenalidade:.5};},
   });
   assert.equal(view.teamCardHTML({id:'a"b',cor:"#f00",coloc:"1º",nome:"A&B",camp:"<Major>"},"dim"),
     `<div class="tcard dim" data-team="a&quot;b" style="--col:#f00">
@@ -146,10 +151,31 @@ async function main(){
     "verso do treinador perdeu a linha de identidade padronizada");
   assert.ok(!coachHtml.includes("c-vovr")&&coachHtml.includes("ESL One Cologne 2016")&&
     coachHtml.includes("Campeão"),"verso do treinador perdeu padronização ou repetiu OVR");
-  assert.ok(coachHtml.includes("Tolera +1 estrela")&&coachHtml.includes("7% → 4%"),
-    "descrição do efeito do treinador mudou");
   assert.ok(!coachHtml.includes("c-vstats")&&coachHtml.includes("c-vdesc"),
     "verso do treinador deixou de ser a descrição do efeito");
+
+  /* Os números do efeito têm de vir da tabela injetada, nunca de constante na
+     view. `coachRecipe` acima devolve valores propositalmente diferentes dos
+     reais da química (0.5 e 3), então qualquer volta ao texto escrito à mão
+     reprova aqui. Também se prova o contrário: a frase NÃO carrega número, que
+     foi como "15%", "30%" e "4%" ficaram duplicados até 31/07/2026. */
+  assert.ok(coachHtml.includes("<b>+3</b>")&&coachHtml.includes("<b>50%</b>"),
+    "verso do treinador parou de ler os números da tabela de química injetada");
+  assert.equal(coachCalls.filter(carac=>carac==="Gestor").length>0,true,
+    "verso do treinador deixou de consultar a receita do treinador");
+  assert.ok(!/\d/.test(coachHtml.split('<div class="c-vdesc">')[1].split("<p>")[1].split("</p>")[0]),
+    "a frase do efeito voltou a trazer número escrito à mão; os valores vivem na química");
+  assert.equal((coachHtml.match(/class="c-vef"/g)||[]).length,2,
+    "o verso do treinador deve ter exatamente duas linhas numéricas em toda característica");
+
+  /* Sem receita a carta não pode quebrar: as linhas somem e a frase fica. */
+  const semReceita=createCardView({
+    styleId:()=>"closer",styleLabel:()=>"Closer",styleRecipe:()=>null,coachRecipe:()=>null,
+  }).cardHTML({tipo:"coach",ovr:18,pais:"DEN",time:"SK",nick:"zonic",
+    camp:"ESL One Cologne 2016",coloc:"Campeao",carac:"Gestor",caracSlug:"gestor"});
+  assert.ok(!semReceita.includes("c-vef")&&semReceita.includes("c-vdesc")&&
+    semReceita.includes("Sustenta mais uma estrela"),
+  "sem receita de treinador a carta deve perder as linhas, nunca a frase");
 
   const summary=construirCartao(["Comando +8%","AWP falta","Âncora −12%","2× Rifler −5%"],0);
   const order=["selo grave","selo leve","selo bonus","selo neutro"].map(marker=>summary.indexOf(marker));

@@ -871,3 +871,50 @@ A guarda acompanhou: `espelho frontal` e `espelho horizontal` viraram uma bateri
 só, `grade compartilhada · <campo> (<borda>)`, que compara os **quatro** lados de
 oito campos contra a carta de jogador de referência, com as bordas que são
 contrato de cada campo declaradas item a item.
+
+### 19.3 O verso do treinador passa a ler o motor — 31/07/2026
+
+O verso já usava os eixos e as reservas do jogador, e mesmo assim parecia
+inacabado. A medição explicou: a reserva do corpo tem 44,8% da altura da carta
+porque foi dimensionada para **quatro trilhos de stat**, e o treinador punha ali
+uma única frase centrada. A tinta ocupava **40%** a 250 px, com 13,4% de vazio
+acima e 13,7% abaixo — vazio simétrico, que é o pior, porque parece proposital e
+inacabado ao mesmo tempo.
+
+Ao investigar o que poderia preencher, apareceu um defeito mais sério. A frase
+reescrevia à mão constantes do motor: `15%`, `30%`, `5%`, `18%`, `4%` e o `+1`
+viviam em `CFG_QUIMICA.CARAC` (`src/domain/chemistry/team-chemistry.mjs`) e
+também, em prosa, em `card-view.mjs`. Rebalancear a química deixaria a carta
+mentindo em silêncio, sem nenhuma guarda reprovando — num projeto que criou
+`check-roster-sync` exatamente para impedir CSS e dados de divergirem.
+
+As duas coisas se resolvem juntas:
+
+- a frase perdeu todo número e passou a dizer só o que a característica faz;
+- os valores viram **duas linhas** `rótulo · valor`, lidas vivas da tabela por
+  `COACH_RECIPE`, injetada como `coachRecipe` no mesmo contrato do `STYLE_RECIPE`
+  — quem calibra a química move a carta junto;
+- são sempre duas linhas nas quatro características. Motivador tem um corte só,
+  mas ele incide de fato sobre cobertura e saturação: as duas linhas dizem a
+  verdade, não repetem por enfeite. A silhueta do verso não pode depender de
+  quantas alavancas a química deu a cada treinador.
+
+As linhas usam a métrica dos trilhos do jogador — rótulo à esquerda, valor à
+direita, filete separando — e por isso o verso do treinador voltou a ter o mesmo
+ritmo do verso do jogador. Sem barra: um corte percentual não é um medidor de 0 a
+100, e uma barra ali mentiria sobre a escala. A ocupação da reserva saiu de 40%
+para acima de 90% em todas as larguras.
+
+**Duas armadilhas de layout no caminho, ambas pegas por guarda nova.** Ancorar
+frase no topo e números na base fechava 101% de ocupação e abria um buraco único
+no meio da carta, além de deixar a última linha a 2,4 px do rodapé — passando na
+guarda de colisão, que só reprova sobreposição. E a 120 px o conjunto estourava a
+reserva em 7 px. Vieram daí duas provas: `linhas de efeito`, que exige as duas
+linhas **visíveis**, e `respiro antes do rodapé`, medido na **tinta** e não na
+caixa, com piso no respiro do próprio jogador — uma régua que não pode ser
+afrouxada sem afrouxar a carta canônica junto.
+
+O contrato do dado é congelado em `tools/check-game-view-modules.js`: a view é
+montada com uma receita de valores propositalmente falsos e o teste exige que
+sejam eles a aparecer, que a frase **não** contenha dígito e que, sem receita, as
+linhas sumam e a frase permaneça.
