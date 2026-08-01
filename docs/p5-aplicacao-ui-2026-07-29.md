@@ -480,7 +480,13 @@ Contratos cumpridos nessa primeira fatia:
 5. `tools/check-game-state.js` cobre
    shapes, instâncias independentes, identidade após reset e os campos
    deliberadamente não tocados;
-6. a guarda integra `npm run check`, e o checker do entrypoint impede reinlining;
+6. a guarda integra `npm run check`. O checker do entrypoint cobre o reinlining
+   **contando as chamadas** de cada fábrica e reset — reinlinar apaga o call
+   site, seja qual for a grafia. A primeira versão comparava o texto do reset
+   antigo e deixava passar `Object.assign(S,{treinador:…,jogadores:…})` com as
+   chaves noutra ordem; `no-unused-vars` é `warn`, então o import órfão também
+   não reprovava o lint. As contagens valem para o wiring atual: quando os
+   controladores saírem (§12), atualize os números junto com a extração;
 7. este handoff e `docs/project-context.md` foram atualizados na mesma fatia;
 8. a matriz de validação de estado/controladores continua obrigatória antes do
    commit;
