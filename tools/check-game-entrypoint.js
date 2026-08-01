@@ -41,10 +41,40 @@ assert.doesNotMatch(game,/\bconst Audio\s*=\s*\{/,
   "game.js voltou a embutir o serviço de áudio");
 assert.doesNotMatch(game,/\bconst PROGRESSO\s*=\s*\{/,
   "game.js voltou a embutir o serviço de persistência");
-assert.doesNotMatch(game,/\bconst (?:S|TG|MP|MATCH)\s*=\s*\{/,
+assert.doesNotMatch(game,/\b(?:const|let|var) (?:S|TG|MP|MATCH)\s*=\s*\{/,
   "game.js voltou a embutir um dos estados da aplicação");
-assert.doesNotMatch(game,/Object\.assign\(S,\s*\{jogadores:|Object\.assign\(MATCH,\s*\{A:|TG\.times=null;TG\.rodada=0;/,
-  "game.js voltou a embutir um reset de estado");
+
+/* Os quatro estados nascem e são zerados nos módulos de `src/application`. A
+   prova tem de ser a CHAMADA, não a grafia do reset: o padrão textual anterior
+   memorizava a ordem histórica das chaves, então bastava reinlinar
+   `Object.assign(S,{treinador:...,jogadores:...})` para passar limpo. E o import
+   órfão também não segurava — `no-unused-vars` é `warn`, e o lint sai com 0.
+   Contar chamadas fecha os dois furos de uma vez, porque reinlinar um reset
+   apaga necessariamente o call site.
+
+   As contagens descrevem o wiring ATUAL do entrypoint. Quando os controladores
+   saírem (P5 §12) elas mudam de propósito: atualize o número junto com a
+   extração; não afrouxe a asserção para fazer a fatia passar.
+
+   Cuidado ao endurecer isto: `atualizarMajorUI()` zera `TG.times`/`TG.playoffs`
+   quando o elenco deixa de estar completo, e `iniciarTorneio()` monta o Major
+   campo a campo. Os dois são legítimos e precisam continuar passando — por isso
+   a guarda mede chamada e mutação em massa, nunca escrita direta em campo. */
+const CHAMADAS_DE_ESTADO=[
+  ["createDraftState",1],["resetDraftState",2],
+  ["createMajorState",1],["resetMajorState",1],
+  ["createMapPlaybackState",1],["createMatchState",1],["resetMatchState",1]
+];
+for(const [nome,esperado] of CHAMADAS_DE_ESTADO){
+  const chamadas=(game.match(new RegExp(`\\b${nome}\\(`,"g"))||[]).length;
+  assert.equal(chamadas,esperado,
+    `game.js deveria chamar ${nome}() ${esperado}× e chama ${chamadas}× — `+
+    "reset reinlinado, ou controlador movido sem atualizar esta guarda");
+}
+assert.doesNotMatch(game,/Object\.assign\((?:S|TG|MP|MATCH),/,
+  "game.js voltou a mutar um estado da aplicação em massa; use o reset do módulo");
+assert.doesNotMatch(game,/\bS\.taken\.clear\(\)/,
+  "game.js voltou a zerar o Set do draft fora de resetDraftState");
 assert.doesNotMatch(game,/\bconst (?:ROLE_COR|STAT_LABEL|SELO_META)\s*=\s*\{/,
   "game.js voltou a embutir templates ou metadados das cartas");
 assert.doesNotMatch(game,/\b(?:function (?:chip|serieEl|monoChip)|const mono\s*=)/,
