@@ -112,11 +112,28 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
         const luminance=color=>{const linear=color.map(channel=>{const value=channel/255;
           return value<=.04045?value/12.92:((value+.055)/1.055)**2.4;});
           return .2126*linear[0]+.7152*linear[1]+.0722*linear[2];};
-        const background=luminance([8,13,20]);
+        /* O fundo era fixo em `[8,13,20]`, o escuro da carta, porque até então
+           todo texto vivia direto sobre ele. A faixa cromada do rótulo do
+           treinador tem fundo próprio e claro, e a régua fixa acusava 1,03:1 num
+           rótulo que na tela é perfeitamente legível. Agora o fundo é procurado
+           no elemento e nos ancestrais; quem não declarar nenhum continua sendo
+           medido contra o escuro da carta, como antes. Isto não afrouxa a prova:
+           ela passa a medir o par que o olho enxerga. */
+        const CARTA_ESCURA=[8,13,20];
+        const fundoDe=element=>{
+          for(let no=element;no&&no.nodeType===1;no=no.parentElement){
+            const bruto=getComputedStyle(no).backgroundColor;
+            const canais=(bruto.match(/[\d.]+/g)||[]).map(Number);
+            const alfa=bruto.startsWith("rgba")?canais[3]:1;
+            if(canais.length>=3&&alfa>0)return parseColor(bruto);
+          }
+          return CARTA_ESCURA;
+        };
         const selectors=[".c-ovr small",".c-func",".c-role2",".c-team",".c-vnick",
           ".c-vestilo small",".c-vestilo b",".c-st i",".c-st b",".c-vrod b",".c-vrod span",".c-vdesc"];
         const lowContrast=selectors.flatMap(selector=>[...document.querySelectorAll(selector)]
           .filter(visible).map(element=>{const foreground=luminance(parseColor(getComputedStyle(element).color));
+            const background=luminance(fundoDe(element));
             return {selector,ratio:(Math.max(foreground,background)+.05)/(Math.min(foreground,background)+.05)};})
           .filter(result=>result.ratio<4.5));
         const first=cards[0],faces=getComputedStyle(first.querySelector(".cfaces"));
@@ -234,27 +251,27 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     check(detectaOpacidade,"medidor acusa conteúdo escondido por opacidade");
     const detectaEspelhoCoach=await page.evaluate(()=>{
       const coach=document.querySelector(".coachcard");
-      const identidade=coach.querySelector(".c-identidade--coach"),topoAntes=identidade.style.top;
-      identidade.style.top="7%";
+      const nickFrente=coach.querySelector(".cfront .c-vnick"),topoAntes=nickFrente.style.top;
+      nickFrente.style.top="12%";
       const frente=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
-      identidade.style.top=topoAntes;
+      nickFrente.style.top=topoAntes;
       const descricao=coach.querySelector(".c-vdesc"),descAntes=descricao.style.top;
       descricao.style.top="55%";
       const verso=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
       descricao.style.top=descAntes;
-      /* Reencena o defeito real de 31/07/2026: com a função secundária oculta, o
-         time voltava a ocupar só a primeira das duas colunas e parava no meio da
-         carta. As guardas do treinador eram todas verticais e não viam nada. */
-      const time=coach.querySelector(".c-team"),colunaAntes=time.style.gridColumn;
-      time.style.gridColumn="1";
-      const horizontal=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
-      time.style.gridColumn=colunaAntes;
-      return frente.includes("espelho frontal · bloco de identidade (topo)")&&
+      /* A frente troca o rótulo pela característica. Se ela voltar a dizer
+         "Treinador", as duas faces passam a repetir a mesma informação e o bloco
+         da frente perde a razão de existir. */
+      const rotulo=coach.querySelector(".cfront .c-vid b"),textoAntes=rotulo.textContent;
+      rotulo.textContent="Treinador";
+      const duplicado=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
+      rotulo.textContent=textoAntes;
+      return frente.includes("frente replica o verso · nick (topo)")&&
         verso.includes("verso padronizado · início do corpo")&&
-        horizontal.includes("espelho frontal · time (direita)");
+        duplicado.includes("frente replica o verso · rótulo trocado");
     });
     check(detectaEspelhoCoach,
-      "medidor acusa coach fora do espelho frontal, no eixo vertical ou horizontal");
+      "medidor acusa frente do coach fora de réplica ou com rótulo repetido");
     const detectaVersoCoach=await page.evaluate(()=>{
       const coach=document.querySelector(".coachcard");
       const linha=coach.querySelector(".c-vef"),displayAntes=linha.style.display;
@@ -302,9 +319,10 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       check(ratio>=4.5,`${largura}px · OVR mantém 4,5:1 sobre o retrato real (${ratio}:1)`);
       const hally=page.locator('.coachcard[data-nick="hally"]')
         .filter({has:page.locator('.cfaces[style*="hally_kato24"]')}).first();
-      /* O OVR do treinador mora na base; medir a zona do topo leria a placa e o
-         nick, e devolveria um número que não é sobre o retrato. */
-      const coachRatio=await contrasteOvr(hally,{x:.06,y:.72,w:.39,h:.22});
+      /* O OVR do treinador mora na base, ACIMA da faixa de categoria. A zona
+         precisa parar antes dela: a faixa é cromo claro e puxaria a medição para
+         1,2:1 num número que na verdade está sobre o retrato. */
+      const coachRatio=await contrasteOvr(hally,{x:.06,y:.65,w:.39,h:.22});
       check(coachRatio>=4.5,
         `${largura}px · OVR do coach mantém 4,5:1 sobre o retrato real (${coachRatio}:1)`);
     }
@@ -361,8 +379,11 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
         front:card.querySelector(".cfront")?.getAttribute("aria-hidden"),
         back:card.querySelector(".cback")?.getAttribute("aria-hidden"),
         placa:getComputedStyle(faces).getPropertyValue("--placa-n").trim(),
-        flag:getComputedStyle(card.querySelector(".c-flag")).display,
-        meta:getComputedStyle(card.querySelector(".c-meta")).display,
+        /* `#picks` traz jogadores E treinadores, e o treinador não tem mais
+           bandeira nem faixa de contexto na frente. A asserção abaixo já filtra
+           por `card.player`; aqui basta não estourar ao coletar. */
+        flag:card.querySelector(".c-flag")?getComputedStyle(card.querySelector(".c-flag")).display:"ausente",
+        meta:card.querySelector(".c-meta")?getComputedStyle(card.querySelector(".c-meta")).display:"ausente",
         stats:card.querySelectorAll(".c-st").length,ratio:rect.width/rect.height,
         left:rect.left,right:rect.right};
     }));

@@ -94,7 +94,20 @@ export function createCardView({styleId,styleLabel,styleRecipe,coachRecipe}){
   <div class="c-grao"></div>`;
 
   const playerFront=card=>frenteHtml(card,"Overall",card.prim,[card.sec||"",card.time],"player");
-  const coachFront=card=>frenteHtml(card,"Treinador",card.carac,["",card.time],"coach");
+
+  /* A frente do treinador REPLICA o bloco de identidade do verso, em vez de usar
+     a grade de três linhas do jogador: mesmo nick, mesma linha de contexto, os
+     mesmos `.c-vnick`/`.c-vid`. Como a placa da frente tem a altura da faixa do
+     verso, os dois blocos caem exatamente no mesmo lugar sem uma única regra de
+     posição nova. A troca é só o rótulo: característica na frente, "Treinador"
+     no verso. Sem bandeira por decisão de design. */
+  const coachFront=card=>`${camadasDeFundo}
+  <div class="c-fio"></div><div class="c-placa"></div>
+  <div class="c-ovr">${card.ovr}<small>Overall</small></div>
+  <div class="c-vnick">${esc(card.nick)}</div>
+  <div class="c-vid"><b>${esc(card.carac||"")}</b><span>${esc(card.time||"")}</span></div>
+  <div class="c-cat">Treinador</div>
+  <div class="c-grao"></div>`;
 
   /* Firepower permanece primeiro. A receita ordena os seguintes por contribuição
      real (peso × valor); um atributo complementar completa o quarto slot. */
