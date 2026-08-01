@@ -149,7 +149,7 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       check(resultado.audit.falhas.length===0&&resultado.audit.ritmo.length===0&&
         resultado.audit.treinadoresAuditados===18,
         `${largura}px · geometria aprovada em ${resultado.audit.auditadas} jogadores + `+
-        `${resultado.audit.treinadoresAuditados} coaches espelhados`+
+        `${resultado.audit.treinadoresAuditados} coaches na mesma grade`+
         (primeiraFalha?` — ${primeiraFalha.nick}: ${primeiraFalha.campo} (${primeiraFalha.falta}px)`:"")+
         (primeiroRitmo?` — ${primeiroRitmo.nick}: ${primeiroRitmo.campo} (${primeiroRitmo.atual}${primeiroRitmo.unidade})`:""));
       check(resultado.placa===esperado&&resultado.allVisible&&resultado.fourStats&&resultado.canonicalLayout,
@@ -234,27 +234,44 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     check(detectaOpacidade,"medidor acusa conteúdo escondido por opacidade");
     const detectaEspelhoCoach=await page.evaluate(()=>{
       const coach=document.querySelector(".coachcard");
-      const identidade=coach.querySelector(".c-identidade--coach"),topAntes=identidade.style.top;
-      identidade.style.top="7%";
+      const identidade=coach.querySelector(".c-identidade--coach"),baseAntes=identidade.style.bottom;
+      identidade.style.bottom="7%";
       const frente=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
-      identidade.style.top=topAntes;
+      identidade.style.bottom=baseAntes;
       const descricao=coach.querySelector(".c-vdesc"),descAntes=descricao.style.top;
       descricao.style.top="55%";
       const verso=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
       descricao.style.top=descAntes;
       /* Reencena o defeito real de 31/07/2026: com a função secundária oculta, o
          time voltava a ocupar só a primeira das duas colunas e parava no meio da
-         carta. As guardas de espelho eram todas verticais e não viam nada. */
+         carta. As guardas do treinador eram todas verticais e não viam nada. */
       const time=coach.querySelector(".c-team"),colunaAntes=time.style.gridColumn;
       time.style.gridColumn="1";
       const horizontal=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
       time.style.gridColumn=colunaAntes;
-      return frente.includes("espelho frontal · identidade")&&
+      return frente.includes("grade compartilhada · identidade (base)")&&
         verso.includes("verso padronizado · início do corpo")&&
-        horizontal.includes("espelho horizontal · time (direita)");
+        horizontal.includes("grade compartilhada · time (direita)");
     });
     check(detectaEspelhoCoach,
-      "medidor acusa coach fora do espelho frontal, da grade do verso ou do eixo horizontal");
+      "medidor acusa coach fora da grade compartilhada, no eixo vertical ou horizontal");
+    const detectaVersoCoach=await page.evaluate(()=>{
+      const coach=document.querySelector(".coachcard");
+      const linha=coach.querySelector(".c-vef"),displayAntes=linha.style.display;
+      linha.style.display="none";
+      const linhas=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
+      linha.style.display=displayAntes;
+      /* Reencena o layout que de fato falhou: ancorar frase e números nas duas
+         pontas da reserva. Ele passava na guarda de colisão — que só reprova
+         sobreposição — com a última linha a 2,4 px do rodapé. */
+      const corpo=coach.querySelector(".c-vdesc"),alinhamentoAntes=corpo.style.justifyContent;
+      corpo.style.justifyContent="space-between";
+      const respiro=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
+      corpo.style.justifyContent=alinhamentoAntes;
+      return linhas.includes("verso padronizado · linhas de efeito")&&
+        respiro.includes("verso padronizado · respiro antes do rodapé");
+    });
+    check(detectaVersoCoach,"medidor acusa linha de efeito sumida ou corpo colado no rodapé");
     check((await page.evaluate(()=>window.__LAB_MEDIR())).falhas.length===0&&
       (await page.evaluate(()=>window.__LAB_MEDIR())).ritmo.length===0,
     "medição volta ao verde depois das provas sintéticas");
@@ -285,9 +302,9 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       check(ratio>=4.5,`${largura}px · OVR mantém 4,5:1 sobre o retrato real (${ratio}:1)`);
       const hally=page.locator('.coachcard[data-nick="hally"]')
         .filter({has:page.locator('.cfaces[style*="hally_kato24"]')}).first();
-      const coachRatio=await contrasteOvr(hally,{x:.11,y:.7,w:.3,h:.25});
+      const coachRatio=await contrasteOvr(hally);
       check(coachRatio>=4.5,
-        `${largura}px · OVR espelhado do coach mantém 4,5:1 sobre o retrato real (${coachRatio}:1)`);
+        `${largura}px · OVR do coach mantém 4,5:1 sobre o retrato real (${coachRatio}:1)`);
     }
 
     await page.selectOption("#cLargura","188");await page.waitForTimeout(75);

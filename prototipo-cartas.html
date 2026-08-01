@@ -6,7 +6,7 @@
 <title>Laboratório de cartas · draft9-0</title>
 <link rel="preload" href="fonts/chakra-petch-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="fonts.css">
-<link rel="stylesheet" href="style.css?v=601d7743">
+<link rel="stylesheet" href="style.css?v=f3e07b64">
 <style>
 /* Laboratório fino: renderiza o componente e o CSS do jogo. Não há variante de
    design, cópia de dado ou ajuste por jogador neste arquivo. */
@@ -143,14 +143,14 @@ p.lab b{color:var(--txt);font-weight:600}
 </main>
 
 <script type="module">
-import {TEAMS,STYLE_ID,STYLE_LABEL,STYLE_RECIPE} from "./src/public/evaluation-api.mjs";
+import {TEAMS,STYLE_ID,STYLE_LABEL,STYLE_RECIPE,COACH_RECIPE} from "./src/public/evaluation-api.mjs";
 import {setCardFlipped} from "./src/application/card-face.mjs";
 import {createCardView} from "./src/ui/game/card-view.mjs";
 import {escapeHtml as esc} from "./src/ui/shared/html.mjs";
 import {BANDEIRA} from "./src/ui/shared/flags.mjs";
 
 const {cardClass,cardHTML}=createCardView({
-  styleId:STYLE_ID,styleLabel:STYLE_LABEL,styleRecipe:STYLE_RECIPE});
+  styleId:STYLE_ID,styleLabel:STYLE_LABEL,styleRecipe:STYLE_RECIPE,coachRecipe:COACH_RECIPE});
 const $=id=>document.getElementById(id);
 const jogadores=TEAMS.flatMap(time=>time.jogadores);
 const treinadores=TEAMS.map(time=>time.treinador).filter(Boolean);
@@ -291,19 +291,9 @@ function medirCartas(){
     if(carta.classList.contains("coachcard")){
       treinadoresAuditados++;
       const ref=referenciaJogador,refCaixa=ref.getBoundingClientRect();
-      const identidade=carta.querySelector(".c-identidade--coach").getBoundingClientRect();
-      const refIdentidade=ref.querySelector(".c-identidade--player").getBoundingClientRect();
-      const ovr=carta.querySelector(".c-ovr").getBoundingClientRect();
-      const refOvr=ref.querySelector(".c-ovr").getBoundingClientRect();
       const placa=carta.querySelector(".c-placa").getBoundingClientRect();
       const refPlaca=ref.querySelector(".c-placa").getBoundingClientRect();
-      maximo("espelho frontal · identidade",
-        Math.abs((identidade.top-caixa.top)-(refCaixa.bottom-refIdentidade.bottom)),.35,.05);
-      maximo("espelho frontal · OVR",
-        Math.abs((caixa.bottom-ovr.bottom)-(refOvr.top-refCaixa.top)),.35,.05);
-      maximo("espelho frontal · altura da placa",Math.abs(placa.height-refPlaca.height),.35,.05);
-      maximo("espelho frontal · placa na borda",
-        Math.max(Math.abs(placa.top-caixa.top),Math.abs(refCaixa.bottom-refPlaca.bottom)),.35,.05);
+      maximo("grade compartilhada · altura da placa",Math.abs(placa.height-refPlaca.height),.35,.05);
 
       for(const [seletor,campo] of [[".c-vnick","nick"],[".c-vid","identidade"],
         [".c-vestilo","característica"],[".c-vrod","era"]]){
@@ -322,23 +312,55 @@ function medirCartas(){
       const refFaixa=ref.querySelector(".c-vfaixa").getBoundingClientRect();
       maximo("verso padronizado · altura da faixa",Math.abs(faixa.height-refFaixa.height),.35,.05);
 
-      /* O espelho do treinador é VERTICAL: o eixo horizontal precisa ser idêntico
-         ao do jogador. Sem esta bateria o medidor mediu só o eixo y e ficou verde
-         enquanto o time parava no meio da carta — a faixa declara duas colunas e,
-         com a função secundária oculta, o time caía sozinho na primeira. Cada
-         campo declara a borda que é seu contrato: quem nasce em `--pad` responde
-         pela esquerda, quem é ancorado por `justify-self:end` responde pela
-         direita, e a faixa inteira responde pelas duas. */
-      for(const [seletor,campo,borda] of [[".c-nick","nick","esquerda"],
-        [".c-func","característica","esquerda"],[".c-meta","faixa de contexto","ambas"],
-        [".c-flag","bandeira","direita"],[".c-team","time","direita"]]){
+      /* As duas linhas numéricas do efeito são obrigatórias nas quatro
+         características: a silhueta do verso não pode variar com a quantidade de
+         alavancas que a química deu a cada treinador. */
+      const efeitos=[...carta.querySelectorAll(".c-vef")].filter(visivel);
+      if(efeitos.length!==2)
+        registrarRitmo("verso padronizado · linhas de efeito",efeitos.length,2,"exato","linhas");
+
+      /* Respiro antes do rodapé, medido na TINTA e não na reserva. A caixa da
+         descrição termina a 84,9% e o rodapé começa a 86%: uma versão ancorada
+         nas duas pontas passou na guarda de colisão com 2,4 px de folga e ficou
+         visivelmente colada. O piso é o respiro do próprio jogador, cujos quatro
+         trilhos param bem antes do fim da reserva — assim a régua não é um número
+         escolhido a dedo e não há como afrouxá-la sem afrouxar a carta canônica. */
+      const tintaAte=elemento=>{const faixaTexto=document.createRange();
+        faixaTexto.selectNodeContents(elemento);return faixaTexto.getBoundingClientRect().bottom;};
+      const rodape=carta.querySelector(".c-vrod").getBoundingClientRect();
+      const refRodape=ref.querySelector(".c-vrod").getBoundingClientRect();
+      minimo("verso padronizado · respiro antes do rodapé",
+        rodape.top-tintaAte(carta.querySelector(".c-vdesc")),
+        refRodape.top-tintaAte(ref.querySelector(".c-vstats")),.35);
+
+      /* A frente do treinador é a MESMA da carta de jogador, não um espelho dela.
+         Cada campo declara as bordas que são seu contrato: quem nasce em `--pad`
+         responde pela esquerda, quem é ancorado por `justify-self:end` responde
+         pela direita, e a caixa que ocupa a largura inteira responde pelas duas.
+         Topo e base valem para todos, porque a grade é a mesma.
+
+         A bateria cobre os quatro lados de propósito. A versão anterior media só
+         o eixo vertical e ficou verde com o nome do time meia carta fora de
+         lugar; uma prova que enxerga um eixo só não prova padronização. */
+      for(const [seletor,campo,bordas] of [
+        [".c-placa","placa","esquerda direita topo base"],
+        [".c-identidade","identidade","esquerda direita topo base"],
+        [".c-ovr","OVR","esquerda topo base"],
+        [".c-nick","nick","esquerda direita topo base"],
+        [".c-func","característica","esquerda topo base"],
+        [".c-flag","bandeira","direita topo base"],
+        [".c-meta","faixa de contexto","esquerda direita topo base"],
+        [".c-team","time","direita topo base"]]){
         const atual=carta.querySelector(seletor),esperado=ref.querySelector(seletor);
         if(!visivel(atual)||!visivel(esperado))continue;
         const a=atual.getBoundingClientRect(),e=esperado.getBoundingClientRect();
-        if(borda!=="direita")maximo(`espelho horizontal · ${campo} (esquerda)`,
-          Math.abs((a.left-caixa.left)-(e.left-refCaixa.left)),.35,.05);
-        if(borda!=="esquerda")maximo(`espelho horizontal · ${campo} (direita)`,
-          Math.abs((caixa.right-a.right)-(refCaixa.right-e.right)),.35,.05);
+        const par={esquerda:[a.left-caixa.left,e.left-refCaixa.left],
+          direita:[caixa.right-a.right,refCaixa.right-e.right],
+          topo:[a.top-caixa.top,e.top-refCaixa.top],
+          base:[caixa.bottom-a.bottom,refCaixa.bottom-e.bottom]};
+        for(const borda of bordas.split(" "))
+          maximo(`grade compartilhada · ${campo} (${borda})`,
+            Math.abs(par[borda][0]-par[borda][1]),.35,.05);
       }
       if(!getComputedStyle(carta,"::after").backgroundImage.includes("repeating-linear-gradient"))
         registrarRitmo("moldura segmentada do treinador",0,1,"exato","estado");

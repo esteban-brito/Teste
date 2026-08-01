@@ -776,7 +776,15 @@ fonte, não de layout.
 - **vermelho forte demais**: `Rifler` de `#ff2038` para `#f04a5e`. Contraste 4,5:1
   segue aprovado nas oito larguras.
 
-## 19. Treinador como espelho vertical da carta canônica — 31/07/2026
+## 19. Treinador: o espelho vertical, e por que ele foi descartado — 31/07/2026
+
+> **Estado vigente: as seções 19 e 19.1 descrevem uma direção REVERTIDA no mesmo
+> dia.** O contrato em vigor é a seção 19.2: a frente do treinador é idêntica à
+> do jogador. As duas seções abaixo ficam porque registram uma armadilha que
+> custou caro — uma geometria exata e visualmente errada, aprovada por guardas
+> que mediam um eixo só.
+
+### 19.0 A direção tentada
 
 A distinção anterior havia virado uma segunda anatomia: placa reta de 44%, corpos
 maiores e eixos próprios no verso. A direção aprovada é mais simples: **a carta do
@@ -827,3 +835,86 @@ pelas duas. Ela foi verificada **reprovando** antes da correção — 144
 apontamentos, 18 coaches × 8 larguras, todos e somente em `time (direita)`, o que
 também provou que os demais campos já espelhavam certo. A prova sintética do E2E
 reencena exatamente esse defeito devolvendo o time à primeira coluna.
+
+### 19.2 Contrato vigente: a frente do treinador é a frente do jogador
+
+Com o eixo horizontal enfim medido, ficou visível que o problema não era o
+alinhamento do time: era o espelho. Ele foi descartado no mesmo dia.
+
+**Por que um espelho exato dá uma carta errada.** A carta é simétrica; a
+fotografia não é. O recorte de runtime `100% auto · 50% 12%` põe o rosto no terço
+superior justamente porque a placa mora nos 24% de baixo. Espelhar a placa para o
+topo a coloca sobre a cabeça de **todo** retrato — não é defeito do retrato do
+hally, é consequência estrutural, e valeria para cada treinador que entrasse. O
+OVR, empurrado para a base sobre a roupa, só sobrevivia com uma vinheta de
+10,13:1 que apagava metade da foto. Precisar de 10:1 para um elemento existir
+onde está não é problema de contraste: é o elemento no lugar errado.
+
+E o espelho não comprava nada. A distinção de categoria já vinha da moldura
+serrilhada e da cor da característica, e nenhuma das duas depende do eixo.
+
+**O que vale agora.** Frente do treinador = frente do jogador, sem exceção
+geométrica: placa nos 24% de baixo com a identidade, OVR no topo, mesma vinheta,
+mesmo recorte. A categoria se anuncia por material e cor — moldura serrilhada a
+45°, fio serrilhado, `--r` vindo da característica e o rótulo `TREINADOR` sob o
+OVR. Medido no laboratório, os dois perfis frontais ficaram idênticos linha a
+linha, e o OVR do coach sobre o retrato real do hally passou a marcar 6,08:1 com
+a vinheta comum, sem nenhuma proteção extra.
+
+A duplicação também caiu: `.coachcard .cfaces` reescrevia à mão sete tokens que
+já existiam em `.cfaces`/`.card .cfaces`, e `.coachcard .c-placa` repetia o
+gradiente da placa com o ângulo invertido. Hoje o treinador entra nas mesmas
+regras e ajusta só `--wash`. Mudar um token do jogador não deixa mais o treinador
+para trás em silêncio.
+
+A guarda acompanhou: `espelho frontal` e `espelho horizontal` viraram uma bateria
+só, `grade compartilhada · <campo> (<borda>)`, que compara os **quatro** lados de
+oito campos contra a carta de jogador de referência, com as bordas que são
+contrato de cada campo declaradas item a item.
+
+### 19.3 O verso do treinador passa a ler o motor — 31/07/2026
+
+O verso já usava os eixos e as reservas do jogador, e mesmo assim parecia
+inacabado. A medição explicou: a reserva do corpo tem 44,8% da altura da carta
+porque foi dimensionada para **quatro trilhos de stat**, e o treinador punha ali
+uma única frase centrada. A tinta ocupava **40%** a 250 px, com 13,4% de vazio
+acima e 13,7% abaixo — vazio simétrico, que é o pior, porque parece proposital e
+inacabado ao mesmo tempo.
+
+Ao investigar o que poderia preencher, apareceu um defeito mais sério. A frase
+reescrevia à mão constantes do motor: `15%`, `30%`, `5%`, `18%`, `4%` e o `+1`
+viviam em `CFG_QUIMICA.CARAC` (`src/domain/chemistry/team-chemistry.mjs`) e
+também, em prosa, em `card-view.mjs`. Rebalancear a química deixaria a carta
+mentindo em silêncio, sem nenhuma guarda reprovando — num projeto que criou
+`check-roster-sync` exatamente para impedir CSS e dados de divergirem.
+
+As duas coisas se resolvem juntas:
+
+- a frase perdeu todo número e passou a dizer só o que a característica faz;
+- os valores viram **duas linhas** `rótulo · valor`, lidas vivas da tabela por
+  `COACH_RECIPE`, injetada como `coachRecipe` no mesmo contrato do `STYLE_RECIPE`
+  — quem calibra a química move a carta junto;
+- são sempre duas linhas nas quatro características. Motivador tem um corte só,
+  mas ele incide de fato sobre cobertura e saturação: as duas linhas dizem a
+  verdade, não repetem por enfeite. A silhueta do verso não pode depender de
+  quantas alavancas a química deu a cada treinador.
+
+As linhas usam a métrica dos trilhos do jogador — rótulo à esquerda, valor à
+direita, filete separando — e por isso o verso do treinador voltou a ter o mesmo
+ritmo do verso do jogador. Sem barra: um corte percentual não é um medidor de 0 a
+100, e uma barra ali mentiria sobre a escala. A ocupação da reserva saiu de 40%
+para acima de 90% em todas as larguras.
+
+**Duas armadilhas de layout no caminho, ambas pegas por guarda nova.** Ancorar
+frase no topo e números na base fechava 101% de ocupação e abria um buraco único
+no meio da carta, além de deixar a última linha a 2,4 px do rodapé — passando na
+guarda de colisão, que só reprova sobreposição. E a 120 px o conjunto estourava a
+reserva em 7 px. Vieram daí duas provas: `linhas de efeito`, que exige as duas
+linhas **visíveis**, e `respiro antes do rodapé`, medido na **tinta** e não na
+caixa, com piso no respiro do próprio jogador — uma régua que não pode ser
+afrouxada sem afrouxar a carta canônica junto.
+
+O contrato do dado é congelado em `tools/check-game-view-modules.js`: a view é
+montada com uma receita de valores propositalmente falsos e o teste exige que
+sejam eles a aparecer, que a frase **não** contenha dígito e que, sem receita, as
+linhas sumam e a frase permaneça.

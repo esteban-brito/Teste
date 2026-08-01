@@ -16,11 +16,41 @@ const DEFAULT_BACK_STATS=["fp","op","cl","ut"];
 const COMPLEMENTARY_STATS=[...DEFAULT_BACK_STATS,"en","tr","sn"];
 const AXIS_ATTRIBUTE={fogo:"fp",ent:"en",ab:"op",tr:"tr",cl:"cl",ut:"ut"};
 const COLOCACAO_LABEL={Campeao:"Campeão",Final:"Vice",Top4:"Top 4",Top8:"Top 8",Grupos:"Grupos"};
+/* A frase diz o QUE a característica faz; os números vêm do motor logo abaixo.
+   Até 31/07/2026 ela também trazia os valores escritos à mão — "15%", "30%",
+   "5%", "18%", "4%" — todos duplicando constantes de `CFG_QUIMICA.CARAC`.
+   Rebalancear a química deixava a carta mentindo em silêncio, sem guarda nenhuma
+   reprovando. Aqui não entra número. */
 const COACH_DESCRIPTION={
-  Gestor:"Tolera +1 estrela no elenco. Penalidade por estrela extra: 7% → 4%.",
-  Desenvolvedor:"Reduz penalidades de elenco cru: 5% por jogador de OVR ≤14, até 18%.",
-  Estrategista:"Reduz penalidades de estrutura em 15% e de comando (IGL) em 30%.",
-  Motivador:"Reduz em 30% as penalidades de cobertura e saturação do elenco."};
+  Gestor:"Sustenta mais uma estrela e abranda a briga por espaço.",
+  Desenvolvedor:"Abranda a penalidade de elenco cru e lapida os verdes.",
+  Estrategista:"Abranda as penalidades de estrutura e de comando.",
+  Motivador:"Abranda as penalidades de cobertura e saturação."};
+
+/* O motor é dono dos números; a carta é dona das palavras. Cada linha aponta
+   para a chave real de `CFG_QUIMICA.CARAC`, lida viva por `coachRecipe`.
+
+   São sempre DUAS linhas, nas quatro características, porque a silhueta do verso
+   não pode depender de quantas alavancas a química deu a cada uma. Motivador tem
+   um único corte, e ele de fato incide sobre cobertura e saturação: as duas
+   linhas dizem a verdade, não repetem por enfeite. */
+const COACH_EFFECT_ROWS={
+  Gestor:[["Teto de estrelas","tetoEstrelasBonus","sinal"],
+    ["Penalidade por extra","estrelaExtraPen","pct"]],
+  Desenvolvedor:[["Corte por jogador cru","cruPorJogador","pct"],
+    ["Teto do corte","cruTeto","pct"]],
+  Estrategista:[["Corte de estrutura","corteEstrutura","pct"],
+    ["Corte de comando","corteComando","pct"]],
+  Motivador:[["Corte de cobertura","cortePenalidade","pct"],
+    ["Corte de saturação","cortePenalidade","pct"]]};
+
+/* `pct` arredonda para inteiro porque a química não usa fração de ponto
+   percentual em nenhuma das quatro; `sinal` marca o bônus como acréscimo. */
+const formatarEfeito=(valor,formato)=>{
+  if(!Number.isFinite(valor))return "—";
+  if(formato==="sinal")return `${valor>0?"+":""}${valor}`;
+  return `${Math.round(valor*100)}%`;
+};
 
 /* Seis faixas por OVR: 5 · 39 · 24 · 11 · 2 · 4 jogadores. */
 const tierOf=ovr=>ovr>=22?"tier-6":ovr>=21?"tier-5":ovr>=20?"tier-4"
@@ -43,7 +73,7 @@ const fotoStyle=card=>{
   return /^[a-zA-Z0-9_-]+$/.test(id)?`--foto:url('fotos/${id}.webp')`:"";
 };
 
-export function createCardView({styleId,styleLabel,styleRecipe}){
+export function createCardView({styleId,styleLabel,styleRecipe,coachRecipe}){
   const teamCardHTML=(team,extra="")=>`<div class="tcard ${extra}" data-team="${esc(team.id)}" style="--col:${esc(team.cor)}">
   <div class="tcoloc">${esc(team.coloc)}</div><div class="tname">${esc(team.nome)}</div><div class="tcamp">${esc(team.camp)}</div></div>`;
 
@@ -119,11 +149,22 @@ export function createCardView({styleId,styleLabel,styleRecipe}){
   <div class="c-grao"></div>`;
   };
 
+  /* Ausência de receita não pode virar carta quebrada: sem a tabela, as linhas
+     simplesmente não saem e a frase continua de pé. */
+  const efeitosDoCoach=carac=>{
+    const receita=coachRecipe?coachRecipe(carac):null;
+    if(!receita)return "";
+    const linhas=(COACH_EFFECT_ROWS[carac]||[])
+      .map(([rotulo,chave,formato])=>`<div class="c-vef"><i>${esc(rotulo)}</i>`+
+        `<b>${esc(formatarEfeito(receita[chave],formato))}</b></div>`).join("");
+    return linhas?`<div class="c-vefeitos">${linhas}</div>`:"";
+  };
+
   const backCoach=card=>`<div class="c-vfio"></div><div class="c-vfaixa"></div>
   <div class="c-vnick">${esc(card.nick)}</div>
   <div class="c-vid"><b>Treinador</b><span>${esc(card.time||"")}</span></div>
   <div class="c-vestilo"><small>Característica</small><b>${esc(card.carac)}</b></div>
-  <div class="c-vdesc">${esc(COACH_DESCRIPTION[card.carac]||"")}</div>
+  <div class="c-vdesc"><p>${esc(COACH_DESCRIPTION[card.carac]||"")}</p>${efeitosDoCoach(card.carac)}</div>
   ${rodapeVerso(card)}
   <div class="c-grao"></div>`;
 

@@ -15,7 +15,7 @@ import {swissBoardHtml,bracketSubtitle,bracketBoardHtml} from "./src/ui/game/tou
 import {scoreboardSideHtml} from "./src/ui/game/match-view.mjs";
 import {headlineHtml,campaignFinalView,campaignScoreHtml,hallView} from "./src/ui/game/history-view.mjs";
 const {TEAMS,POOL,forcaTime,simularMapa,simularSerie,forcaDoDia,
-  sortearFormaCampanha,distribuirRoles,STYLE_LABEL,STYLE_ID,STYLE_RECIPE,CFG_SIM,
+  sortearFormaCampanha,distribuirRoles,STYLE_LABEL,STYLE_ID,STYLE_RECIPE,COACH_RECIPE,CFG_SIM,
   logistica,srand,rndF,coletarMarcos,atualizarRecordes,manchete,narrativaMVP,
   RECORDE_LABELS}=PublicEngine;
 const arred=value=>Math.floor(value+0.4);
@@ -24,7 +24,7 @@ const WIN_INDEX=44;
 const rnd=n=>Math.floor(Math.random()*n);
 const pick=a=>a[rnd(a.length)];
 const {teamCardHTML,cardClass,cardHTML}=createCardView({
-  styleId:STYLE_ID,styleLabel:STYLE_LABEL,styleRecipe:STYLE_RECIPE,
+  styleId:STYLE_ID,styleLabel:STYLE_LABEL,styleRecipe:STYLE_RECIPE,coachRecipe:COACH_RECIPE,
 });
 
 const S=createDraftState();
