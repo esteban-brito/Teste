@@ -27,6 +27,14 @@ faixas atuais são guardas de regressão, não uma nota de 0–100.
 
 `npm run validate` executa sintaxe, lint e as 25 suítes.
 
+`npm run lint` roda com `--max-warnings 0`. Até 01/08/2026 ele saía com código 0
+mesmo emitindo avisos, e o CI executa exatamente esse script — então **todo aviso
+era invisível nos dois lados**. Isso já custou meia guarda: reinlinar um reset de
+estado em `game.js` deixa o import órfão, e o `no-unused-vars` resultante não
+reprovava nada. O repositório estava em zero avisos quando a trava entrou, então
+ela não escondeu dívida nenhuma. Regra: aviso novo se conserta ou se declara na
+`varsIgnorePattern` de `eslint.config.mjs` com motivo — não se tolera calado.
+
 `npm run check` inclui ainda `check-audio-module.js`, que usa um Web Audio falso
 para provar inicialização, volume mestre, desbloqueio iOS, síntese, mute e
 isolamento de instâncias sem depender de hardware ou de um navegador real.
