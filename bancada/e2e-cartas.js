@@ -234,10 +234,10 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     check(detectaOpacidade,"medidor acusa conteúdo escondido por opacidade");
     const detectaEspelhoCoach=await page.evaluate(()=>{
       const coach=document.querySelector(".coachcard");
-      const identidade=coach.querySelector(".c-identidade--coach"),baseAntes=identidade.style.bottom;
-      identidade.style.bottom="7%";
+      const identidade=coach.querySelector(".c-identidade--coach"),topoAntes=identidade.style.top;
+      identidade.style.top="7%";
       const frente=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
-      identidade.style.bottom=baseAntes;
+      identidade.style.top=topoAntes;
       const descricao=coach.querySelector(".c-vdesc"),descAntes=descricao.style.top;
       descricao.style.top="55%";
       const verso=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
@@ -249,12 +249,12 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       time.style.gridColumn="1";
       const horizontal=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
       time.style.gridColumn=colunaAntes;
-      return frente.includes("grade compartilhada · identidade (base)")&&
+      return frente.includes("espelho frontal · bloco de identidade (topo)")&&
         verso.includes("verso padronizado · início do corpo")&&
-        horizontal.includes("grade compartilhada · time (direita)");
+        horizontal.includes("espelho frontal · time (direita)");
     });
     check(detectaEspelhoCoach,
-      "medidor acusa coach fora da grade compartilhada, no eixo vertical ou horizontal");
+      "medidor acusa coach fora do espelho frontal, no eixo vertical ou horizontal");
     const detectaVersoCoach=await page.evaluate(()=>{
       const coach=document.querySelector(".coachcard");
       const linha=coach.querySelector(".c-vef"),displayAntes=linha.style.display;
@@ -302,7 +302,9 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       check(ratio>=4.5,`${largura}px · OVR mantém 4,5:1 sobre o retrato real (${ratio}:1)`);
       const hally=page.locator('.coachcard[data-nick="hally"]')
         .filter({has:page.locator('.cfaces[style*="hally_kato24"]')}).first();
-      const coachRatio=await contrasteOvr(hally);
+      /* O OVR do treinador mora na base; medir a zona do topo leria a placa e o
+         nick, e devolveria um número que não é sobre o retrato. */
+      const coachRatio=await contrasteOvr(hally,{x:.06,y:.72,w:.39,h:.22});
       check(coachRatio>=4.5,
         `${largura}px · OVR do coach mantém 4,5:1 sobre o retrato real (${coachRatio}:1)`);
     }

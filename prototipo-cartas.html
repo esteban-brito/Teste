@@ -6,7 +6,7 @@
 <title>Laboratório de cartas · draft9-0</title>
 <link rel="preload" href="fonts/chakra-petch-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="fonts.css">
-<link rel="stylesheet" href="style.css?v=f3e07b64">
+<link rel="stylesheet" href="style.css?v=15f75a87">
 <style>
 /* Laboratório fino: renderiza o componente e o CSS do jogo. Não há variante de
    design, cópia de dado ou ajuste por jogador neste arquivo. */
@@ -333,34 +333,52 @@ function medirCartas(){
         rodape.top-tintaAte(carta.querySelector(".c-vdesc")),
         refRodape.top-tintaAte(ref.querySelector(".c-vstats")),.35);
 
-      /* A frente do treinador é a MESMA da carta de jogador, não um espelho dela.
-         Cada campo declara as bordas que são seu contrato: quem nasce em `--pad`
-         responde pela esquerda, quem é ancorado por `justify-self:end` responde
-         pela direita, e a caixa que ocupa a largura inteira responde pelas duas.
-         Topo e base valem para todos, porque a grade é a mesma.
+      /* A frente do treinador espelha a do jogador no eixo VERTICAL e é idêntica
+         a ela no HORIZONTAL. Os dois eixos são medidos, cada um com a sua regra:
+         topo do treinador contra base do jogador, mas esquerda contra esquerda.
 
-         A bateria cobre os quatro lados de propósito. A versão anterior media só
-         o eixo vertical e ficou verde com o nome do time meia carta fora de
-         lugar; uma prova que enxerga um eixo só não prova padronização. */
-      for(const [seletor,campo,bordas] of [
-        [".c-placa","placa","esquerda direita topo base"],
-        [".c-identidade","identidade","esquerda direita topo base"],
-        [".c-ovr","OVR","esquerda topo base"],
-        [".c-nick","nick","esquerda direita topo base"],
+         Medir os quatro lados não é zelo excessivo: a primeira versão desta
+         bateria só olhava o eixo y e ficou verde com o nome do time meia carta
+         fora de lugar. Espelhar um eixo obriga a provar o outro. */
+      /* Duas réguas, porque só o mobiliário espelha. As três peças de primeiro
+         nível — placa, bloco de identidade e OVR — trocam de ponta em relação à
+         CARTA. Dentro do bloco, nada espelha: o nick lidera em cima nas duas
+         categorias, senão a carta do treinador se leria de baixo para cima. Por
+         isso os filhos são medidos contra a caixa do PRÓPRIO bloco, mesmo lado.
+         Exigir espelho deles acusava 16,7 px de desvio no nick — desvio que era
+         da régua, não da carta. */
+      const identidade=carta.querySelector(".c-identidade").getBoundingClientRect();
+      const refIdentidade=ref.querySelector(".c-identidade").getBoundingClientRect();
+      const medirCampos=(campos,base,refBase,espelhaVertical)=>{
+        for(const [seletor,campo,bordas] of campos){
+          const atual=carta.querySelector(seletor),esperado=ref.querySelector(seletor);
+          if(!visivel(atual)||!visivel(esperado))continue;
+          const a=atual.getBoundingClientRect(),e=esperado.getBoundingClientRect();
+          const par={esquerda:[a.left-base.left,e.left-refBase.left],
+            direita:[base.right-a.right,refBase.right-e.right],
+            topo:[a.top-base.top,espelhaVertical?refBase.bottom-e.bottom:e.top-refBase.top],
+            base:[base.bottom-a.bottom,espelhaVertical?e.top-refBase.top:refBase.bottom-e.bottom]};
+          for(const borda of bordas.split(" "))
+            maximo(`espelho frontal · ${campo} (${borda})`,
+              Math.abs(par[borda][0]-par[borda][1]),.35,.05);
+        }
+      };
+      medirCampos([[".c-placa","placa","esquerda direita topo base"],
+        [".c-identidade","bloco de identidade","esquerda direita topo base"],
+        [".c-ovr","OVR","esquerda topo base"]],caixa,refCaixa,true);
+      medirCampos([[".c-nick","nick","esquerda direita topo base"],
         [".c-func","característica","esquerda topo base"],
         [".c-flag","bandeira","direita topo base"],
         [".c-meta","faixa de contexto","esquerda direita topo base"],
-        [".c-team","time","direita topo base"]]){
-        const atual=carta.querySelector(seletor),esperado=ref.querySelector(seletor);
-        if(!visivel(atual)||!visivel(esperado))continue;
-        const a=atual.getBoundingClientRect(),e=esperado.getBoundingClientRect();
-        const par={esquerda:[a.left-caixa.left,e.left-refCaixa.left],
-          direita:[caixa.right-a.right,refCaixa.right-e.right],
-          topo:[a.top-caixa.top,e.top-refCaixa.top],
-          base:[caixa.bottom-a.bottom,refCaixa.bottom-e.bottom]};
-        for(const borda of bordas.split(" "))
-          maximo(`grade compartilhada · ${campo} (${borda})`,
-            Math.abs(par[borda][0]-par[borda][1]),.35,.05);
+        [".c-team","time","direita topo base"]],identidade,refIdentidade,false);
+      /* A aresta da placa do treinador é reta por decisão de design: a diagonal
+         é assinatura da carta de jogador. `clip-path` não altera a caixa, então
+         nenhuma medida de retângulo pegaria uma diagonal de volta. */
+      for(const [seletor,campo] of [[".c-placa","placa"],[".c-fio","fio"],
+        [".c-vfaixa","faixa do verso"],[".c-vfio","fio do verso"]]){
+        const elemento=carta.querySelector(seletor);
+        if(elemento&&getComputedStyle(elemento).clipPath!=="none")
+          registrarRitmo(`aresta reta do treinador · ${campo}`,1,0,"exato","estado");
       }
       if(!getComputedStyle(carta,"::after").backgroundImage.includes("repeating-linear-gradient"))
         registrarRitmo("moldura segmentada do treinador",0,1,"exato","estado");

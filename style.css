@@ -380,7 +380,9 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .c-fio,.c-vfio{background:linear-gradient(90deg,transparent,
   color-mix(in srgb,var(--fio-cor,var(--m)) var(--fio-a),transparent) 20%,
   color-mix(in srgb,var(--fio-cor,var(--m)) var(--fio-a),transparent) 76%,transparent)}
-.card .c-placa,.coachcard .c-placa{background:linear-gradient(178deg,
+/* O ângulo acompanha de que lado a placa nasce: 178deg escurece para baixo, na
+   carta de jogador; o treinador, com a placa no topo, usa o sentido oposto. */
+.card .c-placa,.coachcard .c-placa{background:linear-gradient(var(--placa-ang,178deg),
   color-mix(in srgb,var(--wash-cor) calc(var(--wash)*.8),#0a0f17),#070a10 40%)}
 .card .cback{background:linear-gradient(168deg,
   color-mix(in srgb,var(--wash-cor) calc(var(--wash)*.6),#080b11),#06080d 58%)}
@@ -397,6 +399,9 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   grid-template-areas:"nick flag" "func func" "meta meta";
   column-gap:clamp(1px,1cqw,3px);row-gap:clamp(.6px,.45cqw,1.2px);align-items:end;
   bottom:var(--b1)}
+/* Treinador: o bloco editorial encosta no topo e o OVR desce para a base. É o
+   espelho vertical — mas só do MOBILIÁRIO, e com a aresta reta (ver abaixo). */
+.c-identidade--coach{top:var(--b1);bottom:auto}
 .card .c-identidade--player .c-nick,.coachcard .c-identidade--coach .c-nick{
   grid-area:nick;position:static;inset:auto;
   min-width:0;font-size:var(--t2);line-height:.9;letter-spacing:-.005em;overflow:visible}
@@ -476,7 +481,23 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    cobria a cabeça de todo retrato, e o OVR, jogado sobre a roupa, só sobrevivia
    com uma vinheta de 10:1 que apagava metade da foto. Nada disso comprava
    distinção que a moldura serrilhada e a cor da característica já não dessem. */
-.coachcard{--wash-cor:var(--r);--wash:20%}
+.coachcard{--wash-cor:var(--r);--wash:20%;--placa-ang:2deg}
+/* A placa nasce no topo e sua aresta inferior é RETA, não diagonal. A diagonal é
+   assinatura da carta de jogador, onde ela sobe da esquerda para a direita e
+   fecha contra o canto do OVR; espelhada para o topo do treinador ela apontava
+   para o lado errado e brigava com a moldura serrilhada. Reta, a faixa vira uma
+   régua horizontal e a moldura fica sendo a única silhueta exclusiva. */
+.coachcard .c-fio,.coachcard .c-placa,
+.coachcard .c-vfio,.coachcard .c-vfaixa{clip-path:none}
+.coachcard .c-fio,.coachcard .c-placa{top:0;bottom:auto}
+.coachcard .c-ovr{top:auto;bottom:5.5%}
+/* O OVR do treinador desce para a base, onde o retrato mostra roupa e não fundo:
+   sobre o casaco claro do hally o contraste caía a 2,14:1, abaixo do contrato de
+   4,5:1. A proteção é o espelho da que o jogador já tem no topo, e é calibrada
+   para o contrato — não para o máximo possível. A versão anterior chegava a
+   10,13:1 e, para isso, apagava a metade inferior de todo retrato. */
+.coachcard .c-vinheta{background:linear-gradient(180deg,transparent 52%,
+  rgba(3,6,11,.34) 62%,rgba(3,6,11,.62) 74%,rgba(3,6,11,.80) 88%,rgba(3,6,11,.88) 100%)}
 .coachcard .c-vfaixa{background:linear-gradient(2deg,
   color-mix(in srgb,var(--r) 14%,#0a0f17),#070a10 48%)}
 .coachcard .cback{background:linear-gradient(168deg,

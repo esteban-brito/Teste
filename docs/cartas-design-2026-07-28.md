@@ -778,11 +778,10 @@ fonte, não de layout.
 
 ## 19. Treinador: o espelho vertical, e por que ele foi descartado — 31/07/2026
 
-> **Estado vigente: as seções 19 e 19.1 descrevem uma direção REVERTIDA no mesmo
-> dia.** O contrato em vigor é a seção 19.2: a frente do treinador é idêntica à
-> do jogador. As duas seções abaixo ficam porque registram uma armadilha que
-> custou caro — uma geometria exata e visualmente errada, aprovada por guardas
-> que mediam um eixo só.
+> **Estado vigente: seção 19.4.** As seções 19 a 19.3 registram o caminho — o
+> espelho tentado, o defeito de eixo único, a volta à grade do jogador e a
+> reformulação do verso. O contrato em vigor é o espelho vertical **de aresta
+> reta**, decidido pelo responsável depois de ver as duas versões no ar.
 
 ### 19.0 A direção tentada
 
@@ -918,3 +917,39 @@ O contrato do dado é congelado em `tools/check-game-view-modules.js`: a view é
 montada com uma receita de valores propositalmente falsos e o teste exige que
 sejam eles a aparecer, que a frase **não** contenha dígito e que, sem receita, as
 linhas sumam e a frase permaneça.
+
+### 19.4 Contrato vigente: espelho vertical de aresta reta — 31/07/2026
+
+Com as duas versões publicadas e vistas no ar, o responsável escolheu o espelho —
+OVR no canto inferior esquerdo, bloco de identidade no topo — **com a aresta da
+placa reta**. É a peça que faltava nas tentativas anteriores, e ela muda o
+diagnóstico da seção 19.2: o que brigava com o retrato não era só a posição da
+placa, era a diagonal apontando para o lado errado.
+
+A diagonal é assinatura da carta de **jogador**: ela sobe da esquerda para a
+direita e fecha contra o canto do OVR. Espelhada para o topo do treinador, ela
+apontava contra a moldura serrilhada e criava um canto ocupado demais. Reta, a
+faixa vira uma régua horizontal, e a moldura a 45° fica sendo a única silhueta
+exclusiva da categoria — que era a intenção desde o começo.
+
+A mesma régua vale no verso: `.c-vfaixa` e `.c-vfio` do treinador também perdem o
+`clip-path`. Frente e verso passam a cortar na horizontal, na mesma altura
+relativa. O corpo do verso, descrito em 19.3, não mudou.
+
+**O que se aprendeu sobre a vinheta.** A proteção do OVR inferior voltou, porque
+na base o retrato mostra roupa e não fundo — sobre o casaco do hally o contraste
+cai a 2,14:1. Mas ela agora é calibrada **para o contrato**, 5,9:1 contra o piso
+de 4,5:1, e não para o máximo possível. A versão de julho chegava a 10,13:1 e
+pagava isso apagando a metade inferior de todo retrato. Um número muito acima do
+contrato não é folga de segurança: é sintoma de que se está compensando outra
+coisa.
+
+**O que se aprendeu sobre a guarda.** A bateria de espelho precisa de duas
+réguas, não de uma. Só o mobiliário de primeiro nível — placa, bloco de
+identidade e OVR — troca de ponta em relação à carta. Dentro do bloco nada
+espelha: o nick lidera em cima nas duas categorias, senão a carta do treinador se
+leria de baixo para cima. Medir os filhos com a régua do espelho acusava 16,7 px
+de desvio no nick — desvio que era da régua, não da carta. Hoje os filhos são
+medidos contra a caixa do próprio bloco, mesmo lado, e as duas réguas convivem na
+mesma bateria. A aresta reta ganhou guarda própria: `clip-path` não altera a
+caixa, então nenhuma medida de retângulo pegaria uma diagonal de volta.
