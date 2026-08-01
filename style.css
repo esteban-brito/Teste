@@ -12,19 +12,22 @@
    A camada de refinamento, ao final, sobrescreve o tema base por cascata —
    é o lugar para ajustes visuais sem mexer nas regras estruturais acima.
    ════════════════════════════════════════════════════════════════════ */
+/* Todo token aqui tem consumidor. Dez foram removidos em 01/08/2026 por não
+   terem nenhum — `--bg`, `--panel3`, `--s-red-bg`, os três `--t3-silver*` e os
+   quatro `--c-*-dim`. Antes de acrescentar um token "para o caso de", declare o
+   consumidor junto: palette órfã é o que faz uma paleta parecer maior do que é. */
 :root{
-  --bg:#080b10; --panel2:#111826; --panel3:#151f2f; --line:#2c394e;
+  --panel2:#111826; --line:#2c394e;
   --txt:#f2f6fb; --dim:#94a3b8; --accent:#ff6b2a; --cyan:#4bd7ff;
   --radius:10px;
-  --s-red:#ff2d48; --s-red-lit:#ff5c6e; --s-red-dim:#c43b50; --s-red-bg:#18060c;
+  --s-red:#ff2d48; --s-red-lit:#ff5c6e; --s-red-dim:#c43b50;
   --t1-gold:#ffbe00; --t1-gold-lit:#ffe033; --t1-gold-dim:#c8960a;
   --t2-green:#3ec07e; --t2-green-lit:#6fd99f; --t2-green-dim:#2e8a5c;
-  --t3-silver:#aab6c4; --t3-silver-lit:#c6d0db; --t3-silver-dim:#6c7888;
   /* características de treinador */
-  --c-gestor:#c9a36a; --c-gestor-dim:#8f6f3e;
-  --c-estrategista:#2fd6d6; --c-estrategista-dim:#1d8f8f;
-  --c-desenvolvedor:#4a82ff; --c-desenvolvedor-dim:#2f55b5;
-  --c-motivador:#c79bff; --c-motivador-dim:#8a63cf;
+  --c-gestor:#c9a36a;
+  --c-estrategista:#2fd6d6;
+  --c-desenvolvedor:#4a82ff;
+  --c-motivador:#c79bff;
   /* roles (dessaturados) */
   --r-igl:#7a93b8; --r-awper:#9a86c4; --r-entry:#c47a6a; --r-rifler:#bf9f63; --r-lurker:#7fa882; --r-support:#5fa6a6;
   /* resultado/pódio */
@@ -141,7 +144,11 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   min-height:148px;aspect-ratio:5/7;background:#080b11;container-type:inline-size;
   isolation:isolate;perspective:800px;-webkit-perspective:800px;
   transition:transform var(--motion-card-fast) var(--ease-card);
-  --pad:9%;--passo:5.2%;--r:var(--r-rifler);--r-ink:var(--r-rifler);--t1:33cqw}
+  /* `--passo:5.2%` morava aqui e não era lido por ninguém. A pilha vertical da
+     frente é ancorada por `--b1/--b2/--b3`, não por um passo único. O documento
+     de design ainda descrevia o passo como quem "gera a pilha inteira por calc";
+     a §4 foi corrigida junto com esta remoção. */
+  --pad:9%;--r:var(--r-rifler);--r-ink:var(--r-rifler);--t1:33cqw}
 /* O hover movimenta a superfície, mas não altera raridade nem projeta luz. */
 /* Em toque, `:hover` pode ficar preso depois do tap. O realce só existe onde há
    ponteiro fino com hover real; teclado continua usando `:focus-visible`. */
@@ -810,7 +817,6 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .champ-tag{font-family:var(--ff);font-weight:700;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;
   color:var(--t1-gold-lit);text-shadow:0 0 12px rgba(255,190,0,.4)}
 .champ-wait{font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:600}
-.empty-tn{color:var(--dim);opacity:.6}
 .overlay-foot{display:flex;align-items:center;gap:18px;flex-wrap:wrap;
   padding:12px max(clamp(16px,4vw,34px),env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(clamp(16px,4vw,34px),env(safe-area-inset-left));
   border-top:1px solid var(--line);background:linear-gradient(0deg,rgba(20,27,43,.5),transparent)}

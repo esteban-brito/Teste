@@ -116,12 +116,17 @@ fora do quadro. Saída em 500×700, o mesmo formato do `donk_kato24`.
 
 Limitações honestas destas fontes, para quem for melhorá-las depois:
 
-- `hally`: o topo da cabeça fica a ~2% da altura, contra os 5–10% da grade. Isso
-  chegou a parecer defeito do retrato enquanto a placa do treinador ficava no
-  topo — não era: qualquer retrato bem enquadrado teria a cabeça coberta ali. Com
-  a frente do treinador de volta à grade do jogador (placa nos 24% de baixo), o
-  recorte único vale para as duas categorias e o rosto aparece inteiro; ainda
-  assim, uma fonte com mais ar acima seria melhor;
+- `hally`: o topo da cabeça fica a ~2% da altura, contra os 5–10% da grade.
+  **Atenção — este parágrafo afirmava o contrário até 01/08/2026.** Ele dizia que
+  a placa do treinador tinha voltado "aos 24% de baixo" e que por isso o rosto
+  aparecia inteiro. Não voltou: o contrato vigente (§19.5 do design) põe o bloco
+  de identidade no **topo**, e a medição a 250 px confirma — a placa do treinador
+  ocupa 0–22% da carta, enquanto a do jogador ocupa 76–100%.
+  Como o recorte de runtime é fixo em `50% 12%`, ele coloca o rosto exatamente na
+  faixa que a placa do treinador cobre. O retrato de treinador hoje é lido como
+  um plano de tronco, não de rosto. É um defeito real e conhecido, não uma
+  limitação da fonte: qualquer retrato bem enquadrado sofre o mesmo. Ver a lista
+  de achados visuais abertos no fim deste arquivo;
 - `chopper`: a origem é um close, então o rosto ocupa mais quadro que nos demais e
   o queixo cai por volta de 63%, fora da faixa de 47–56%. Não há como abrir mais:
   570×798 já é o campo de visão máximo dessa imagem.

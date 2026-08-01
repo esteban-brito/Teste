@@ -54,9 +54,13 @@ não a fórmula. OVR e rating também não se repetem no verso.
 
 ## 4. Padronização
 
-- **Um bloco de tokens em `.c` governa as DUAS faces**: um recuo lateral (`--pad`),
-  um passo vertical (`--passo`) que gera a pilha inteira por `calc`, e quatro corpos
-  de texto numa razão de ~1,5.
+- **Um bloco de tokens governa as DUAS faces**: um recuo lateral (`--pad`) em
+  `.card`/`.coachcard`, e em `.cfaces` as âncoras verticais `--b1/--b2/--b3` mais
+  quatro corpos de texto numa razão de ~1,5.
+  Até 01/08/2026 esta linha citava um `--passo:5.2%` "que gera a pilha inteira por
+  `calc`". Ele existia no CSS e **não era lido por ninguém** — a pilha sempre foi
+  ancorada pelas três medidas de base. O token foi removido junto com esta
+  correção.
 - **Raridade é uma tabela** de quatro sinais — cor, aro, fio e contagem de marcas.
   Nova raridade = nova linha; nenhuma faixa depende de halo externo.
 - A diagonal do verso **deriva em CSS** o mesmo ângulo físico da frente

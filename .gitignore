@@ -17,8 +17,15 @@ __pycache__/
 /tmp/
 scratchpad/
 
-# Capturas do comparador visual: a prova é entre duas execuções, não versionada
+# Capturas do comparador visual: a prova é entre duas execuções, não versionada.
+# `coach-*/` é a mesma classe: pastas ad-hoc de um ciclo de carta que ficaram
+# fora do padrão `visual-*` e por isso apareciam como untracked em todo
+# `git status`, poluindo a leitura do estado real.
 /visual-*/
+/coach-*/
+
+# Aviso de GPU que o Chromium do Playwright deixa cair na raiz.
+/debug.log
 
 # Corpus IFCS: manifestos podem ser versionados; demos e derivados são externos
 /fidelity-corpus/raw/

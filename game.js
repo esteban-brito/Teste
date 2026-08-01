@@ -96,7 +96,7 @@ function updateSpinUI(){
   const pendente=!!S.drawn;
   spinwrap.classList.toggle("gone",pendente||S.spinning||elencoCheio());
   $("respinbtn").hidden=!pendente||S.spinning;
-  if(typeof atualizarMajorUI==="function")atualizarMajorUI();
+  atualizarMajorUI();
 }
 
 function limparHighlights(){
@@ -481,7 +481,7 @@ function registrarPartida(jogo){
   meuStats.forEach(s=>{const e=c.ratings[s.nick]=c.ratings[s.nick]||{r:[],k:0,d:0,a:0};
     e.r.push(s.rating);e.k+=s.k;e.d+=s.d;e.a+=(s.a||0);});
   if(!c.jornada)c.jornada=[];
-  const adv=(typeof MATCH!=="undefined"&&MATCH.B)?MATCH.B.nome:"???";
+  const adv=MATCH.B?MATCH.B.nome:"???";
   c.jornada.push({adv,meu:meuSc,dele:advSc,venc:meuVenceu});
   // MEMÓRIA: marcos do mapa competem com os recordes persistentes; manchete conta a história
   const marcos=coletarMarcos(jogo);
@@ -501,7 +501,7 @@ function registrarCampanhaNoProgresso(c,campeao,rt,roster){
     const mvp=rt&&rt[0];
     P.titulos.push({data:dataHoje(),placar:`${c.mapasV}-${c.mapasD}`,invicto,
       elenco:Object.keys(roster||{}),
-      treinador:(typeof S!=="undefined"&&S.treinador&&S.treinador.nick)||null,
+      treinador:(S.treinador&&S.treinador.nick)||null,
       mvp:mvp?{nick:mvp.nick,media:+mvp.r.toFixed(2)}:null});
   }
   PROGRESSO.salvar();
@@ -817,7 +817,7 @@ function iniciarMapaDaSerie(){
   const jogo=simularMapa(tA,tB,fdA,fdB);
   MP.onFim=()=>{ // ao fim do mapa: contabiliza a série e libera o botão Continuar
     if(jogo.vencedorNome===A.nome)MATCH.vA++;else MATCH.vB++;
-    if(typeof registrarPartida==="function"&&(jogo.meuA||jogo.meuB))registrarPartida(jogo);
+    if(jogo.meuA||jogo.meuB)registrarPartida(jogo);
     MATCH.rodando=false;
   };
   reproduzirMapa(jogo,tA,tB,MATCH.contexto);
