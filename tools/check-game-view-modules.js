@@ -111,7 +111,7 @@ async function main(){
     atributos.front["aria-hidden"]==="false"&&atributos.back["aria-hidden"]==="true",
   "desvirar a carta deixou classe, estado visual e acessibilidade dessincronizados");
   // Rótulo do verso: 13+ caracteres não cabem a 100%, 11–12 cabem justos.
-  [["Gestor",1],["Estrategista",0.9],["Desenvolvedor",0.74]].forEach(([carac,esperado])=>{
+  [["Gestor",1],["Estrategista",0.8],["Desenvolvedor",0.7]].forEach(([carac,esperado])=>{
     const html=view.cardHTML({tipo:"coach",ovr:15,pais:"DEN",time:"T",nick:"c",carac,caracSlug:"gestor"});
     assert.ok(html.includes(`--carac-esc:${esperado}`),`escala do rótulo do verso mudou para "${carac}"`);
   });
