@@ -261,12 +261,13 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       linha.style.display="none";
       const linhas=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
       linha.style.display=displayAntes;
-      /* Inchar o corpo empurra a última linha contra o rodapé: é a versão
-         ancorada nas duas pontas que passou na colisão e ficou colada. */
-      const corpo=coach.querySelector(".c-vdesc"),gapAntes=corpo.style.gap;
-      corpo.style.gap="18%";
+      /* Reencena o layout que de fato falhou: ancorar frase e números nas duas
+         pontas da reserva. Ele passava na guarda de colisão — que só reprova
+         sobreposição — com a última linha a 2,4 px do rodapé. */
+      const corpo=coach.querySelector(".c-vdesc"),alinhamentoAntes=corpo.style.justifyContent;
+      corpo.style.justifyContent="space-between";
       const respiro=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
-      corpo.style.gap=gapAntes;
+      corpo.style.justifyContent=alinhamentoAntes;
       return linhas.includes("verso padronizado · linhas de efeito")&&
         respiro.includes("verso padronizado · respiro antes do rodapé");
     });

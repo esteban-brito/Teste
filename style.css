@@ -500,7 +500,11 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .coachcard .cback .c-vdesc{
   top:calc(27.5% + clamp(7px,4.2cqw,9px)*1.6 + var(--t-style)*.95 + var(--vfolga));
   bottom:calc(14% + var(--vfolga));font-family:var(--ff);
-  font-size:clamp(10px,6.8cqw,15px);line-height:1.4;font-weight:600;
+  /* Corpo menor que o antigo `clamp(10px,6.8cqw,15px)`: a frase dividia a reserva
+     com nada e podia ser a maior tipografia do verso; agora divide com duas
+     linhas numéricas. O tamanho de hoje é o dos valores dos trilhos, e a folga
+     que ele libera é o que absorve a medição mais larga do FreeType no CI. */
+  font-size:clamp(9px,6cqw,13px);line-height:1.34;font-weight:600;
   letter-spacing:.005em;color:#eef4fa}
 
 @container (max-width:176px){
@@ -510,6 +514,17 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
      protege nomes longos no intervalo em que a bandeira já divide o eixo. */
   .card .c-identidade--player .c-nick,.coachcard .c-identidade--coach .c-nick{
     letter-spacing:-.025em}
+  /* O corpo do treinador entra em densidade compacta AQUI, e não junto com o
+     resto da carta a 150 px. Ele carrega frase mais duas linhas numéricas na
+     mesma reserva que o jogador usa só para trilhos, então é o primeiro conteúdo
+     a ficar sem folga quando a carta estreita. A 151 px — a última largura de
+     densidade completa — a folga no Windows não sobrevivia ao FreeType: o CI
+     Linux reprovou `guerri` com 4 px de corte e respiro negativo. A correção é
+     universal e por faixa, nunca por treinador. */
+  .coachcard .cback .c-vdesc{font-size:clamp(9px,6.1cqw,13px);line-height:1.34;
+    gap:clamp(2px,1.8cqw,4px)}
+  .coachcard .c-vefeitos{gap:clamp(1.5px,1.4cqw,3px)}
+  .coachcard .c-vef{padding-top:clamp(1.5px,1.4cqw,3px)}
 }
 @container (max-width:150px){
   .card .cfaces,.coachcard .cfaces{--placa-n:28;--placa:calc(var(--placa-n)*1%);
