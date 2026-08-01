@@ -283,7 +283,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .c-vdesc{position:absolute;left:var(--pad);right:var(--pad);top:43%;bottom:22%;z-index:5;
   font-family:'Barlow Semi Condensed',sans-serif;font-size:clamp(8px,5.2cqw,12px);
   line-height:1.27;font-weight:500;color:#d5dde7;
-  display:flex;flex-direction:column;justify-content:flex-start;gap:3cqw}
+  display:flex;flex-direction:column;justify-content:center;gap:3cqw}
 .c-vdesc p{margin:0}
 /* Mesmo ritmo tipográfico dos trilhos do jogador, sem barra: um corte percentual
    não é um medidor de 0 a 100 e uma barra ali mentiria sobre a escala. */

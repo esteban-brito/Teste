@@ -59,8 +59,18 @@ const slugFuncao=role=>String(role||"").toLowerCase().replace(/[^a-z]/g,"")||"ri
 
 /* Ajuste exclusivo do rótulo de característica; nicks usam o corpo universal. */
 /* A grade é única; só o corpo do rótulo longo reduz para preservar a mesma
-   caixa. Os fatores compensam a largura extra de Estrategista/Desenvolvedor. */
-const escalaCarac=texto=>texto.length<=10?1:texto.length<=12?.77:.7;
+   caixa. Os fatores compensam a largura extra de Estrategista/Desenvolvedor.
+
+   Revistos em 31/07/2026: a 0,77 o `Estrategista` do treinador media 5,6% da
+   altura da carta contra 7,3% do `Playmaker` do jogador, e o verso do treinador
+   parecia uma versão encolhida do outro em vez da mesma carta. `Estrategista`
+   O teto NÃO é a largura da caixa no Windows: o CI Linux mede o mesmo
+   `Estrategista` cerca de 10,8 px mais largo a 120 px, e foi assim que 0,9
+   passou aqui e reprovou lá com 5,4 px de estouro. A régua é a folga medida na
+   largura mais apertada (120 px), que precisa cobrir esse delta com sobra:
+   0,80 deixa ~15,6 px e 0,70 deixa ~11 px, contra os 5,4 px que falharam.
+   Aumentar mais exige encolher o corpo por faixa de densidade, não por nick. */
+const escalaCarac=texto=>texto.length<=10?1:texto.length<=12?.8:.7;
 
 const camadasDeFundo=`<div class="c-foto"></div><div class="c-vinheta"></div>`;
 const bandeiraHtml=pais=>{

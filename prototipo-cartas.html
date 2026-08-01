@@ -6,7 +6,7 @@
 <title>Laboratório de cartas · draft9-0</title>
 <link rel="preload" href="fonts/chakra-petch-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="fonts.css">
-<link rel="stylesheet" href="style.css?v=fa0b98ca">
+<link rel="stylesheet" href="style.css?v=ba422f54">
 <style>
 /* Laboratório fino: renderiza o componente e o CSS do jogo. Não há variante de
    design, cópia de dado ou ajuste por jogador neste arquivo. */
@@ -326,8 +326,22 @@ function medirCartas(){
          visivelmente colada. O piso é o respiro do próprio jogador, cujos quatro
          trilhos param bem antes do fim da reserva — assim a régua não é um número
          escolhido a dedo e não há como afrouxá-la sem afrouxar a carta canônica. */
-      const tintaAte=elemento=>{const faixaTexto=document.createRange();
-        faixaTexto.selectNodeContents(elemento);return faixaTexto.getBoundingClientRect().bottom;};
+      const tintaDe=elemento=>{const faixaTexto=document.createRange();
+        faixaTexto.selectNodeContents(elemento);return faixaTexto.getBoundingClientRect();};
+      const tintaAte=elemento=>tintaDe(elemento).bottom;
+      /* O corpo é CENTRADO na reserva, o mesmo mecanismo dos quatro trilhos do
+         jogador — e é daí que sai o afastamento entre a característica e o texto.
+         Ancorado no topo, a tinta começava a 0% da reserva enquanto a do jogador
+         começa entre 2,9% e 7,4% da altura da carta, e o corpo do treinador
+         encostava na característica. Provar a centragem prova o afastamento sem
+         inventar um recuo fixo que envelheceria a cada mudança de corpo. */
+      const corpoCoach=carta.querySelector(".c-vdesc");
+      const caixaCorpo=corpoCoach.getBoundingClientRect();
+      const frase=corpoCoach.querySelector("p"),numeros=corpoCoach.querySelector(".c-vefeitos");
+      if(frase&&numeros)
+        maximo("verso padronizado · corpo centrado na reserva",
+          Math.abs((frase.getBoundingClientRect().top-caixaCorpo.top)-
+            (caixaCorpo.bottom-numeros.getBoundingClientRect().bottom)),.35,.05);
       const rodape=carta.querySelector(".c-vrod").getBoundingClientRect();
       const refRodape=ref.querySelector(".c-vrod").getBoundingClientRect();
       minimo("verso padronizado · respiro antes do rodapé",
