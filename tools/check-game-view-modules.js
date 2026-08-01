@@ -144,9 +144,15 @@ async function main(){
   // Treinador: mesmo esqueleto e mesmo rodapé de era; OVR existe só na frente.
   const coachHtml=view.cardHTML({tipo:"coach",ovr:18,pais:"DEN",time:"SK",nick:"zonic",
     camp:"ESL One Cologne 2016",coloc:"Campeao",carac:"Gestor",caracSlug:"gestor"});
-  assert.ok(coachHtml.includes('<div class="c-ovr">18<small>Treinador</small>')&&
-    coachHtml.includes('<div class="c-func">Gestor</div>')&&
-    coachHtml.includes('class="c-identidade c-identidade--coach"'),"frente do treinador mudou");
+  /* A frente do treinador REPLICA o bloco do verso: mesmos `.c-vnick`/`.c-vid`,
+     trocando só o rótulo — característica na frente, "Treinador" no verso. A
+     grade de três linhas do jogador (`.c-identidade`, `.c-func`, `.c-flag`,
+     `.c-meta`) não existe mais aqui, e a categoria virou a faixa `.c-cat`. */
+  assert.ok(coachHtml.includes('<div class="c-ovr">18<small>Overall</small>')&&
+    coachHtml.includes('<div class="c-vid"><b>Gestor</b><span>SK</span></div>')&&
+    coachHtml.includes('<div class="c-cat">Treinador</div>'),"frente do treinador mudou");
+  assert.ok(!/c-identidade|c-func|c-flag|c-meta/.test(coachHtml.split('<div class="cface cback"')[0]),
+    "a grade de três linhas do jogador voltou à frente do treinador");
   assert.ok(coachHtml.includes('<div class="c-vid"><b>Treinador</b><span>SK</span></div>'),
     "verso do treinador perdeu a linha de identidade padronizada");
   assert.ok(!coachHtml.includes("c-vovr")&&coachHtml.includes("ESL One Cologne 2016")&&

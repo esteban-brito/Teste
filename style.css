@@ -344,7 +344,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   --wash-cor:#9fb4ff;--wash:30%;--aro:clamp(1.5px,1.15cqw,2.5px);
   --aro-pintura:linear-gradient(152deg,#ff3a8e,#ff8a5a,#f7ff7a,#5cff9d,
     #40d6ff,#7878ff,#c66eff,#ff3a8e)}
-.card::after{
+.card::after,.coachcard::after{
   content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
   z-index:7;display:block;padding:var(--aro,1px);background:var(--aro-pintura,transparent);
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
@@ -400,8 +400,26 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   column-gap:clamp(1px,1cqw,3px);row-gap:clamp(.6px,.45cqw,1.2px);align-items:end;
   bottom:var(--b1)}
 /* Treinador: o bloco editorial encosta no topo e o OVR desce para a base. É o
-   espelho vertical — mas só do MOBILIÁRIO, e com a aresta reta (ver abaixo). */
-.c-identidade--coach{top:var(--b1);bottom:auto}
+   espelho vertical — mas só do MOBILIÁRIO, e com a aresta reta (ver abaixo).
+
+   O bloco tem DUAS linhas, não três: sem função secundária, o time sobe para o
+   eixo da característica e fica sob a bandeira, fechando as duas colunas nas
+   duas linhas. A terceira linha existia só para carregar o time sozinho e era o
+   maior vazio da frente.
+
+   A caixa ocupa a placa inteira e as linhas são centradas nela por
+   `align-content`. Ancorar por `--b1` como o jogador faz deixaria o bloco de duas
+   linhas colado numa aresta e com o vão todo na outra; centrado, a folga nasce
+   igual em cima e embaixo em qualquer largura e sem número escolhido a dedo. */
+.c-identidade--coach{top:0;bottom:calc(100% - var(--placa));
+  grid-template-areas:"nick flag" "func meta";align-content:center;
+  /* Respiro maior que o do jogador entre as duas linhas. Lá, três linhas dividem
+     a placa e o `row-gap` é quase nulo por falta de espaço; aqui sobra, e o mesmo
+     valor governa os dois afastamentos que importam — nick/característica na
+     coluna esquerda e bandeira/time na direita. Um número só mantém os dois
+     eixos iguais, e `align-content:center` devolve a folga que sobrar
+     igualmente para cima e para baixo. */
+  row-gap:clamp(3.5px,3.6cqw,10px)}
 .card .c-identidade--player .c-nick,.coachcard .c-identidade--coach .c-nick{
   grid-area:nick;position:static;inset:auto;
   min-width:0;font-size:var(--t2);line-height:.9;letter-spacing:-.005em;overflow:visible}
@@ -481,7 +499,24 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    cobria a cabeça de todo retrato, e o OVR, jogado sobre a roupa, só sobrevivia
    com uma vinheta de 10:1 que apagava metade da foto. Nada disso comprava
    distinção que a moldura serrilhada e a cor da característica já não dessem. */
-.coachcard{--wash-cor:var(--r);--wash:20%;--placa-ang:2deg}
+/* `--cromo` é a cor da placa do rótulo: no treinador ela vem da característica,
+   não do cinza estrutural de `--m`, para a placa dizer a que categoria a carta
+   pertence tanto quanto a moldura diz. */
+.coachcard{--wash-cor:var(--r);--wash:20%;--placa-ang:2deg;--cromo:var(--r);
+  /* O cromo é declarado UMA vez e servido a dois consumidores: a faixa do rodapé
+     e a moldura. Repetir as paradas nos dois lugares era garantia de divergirem
+     no primeiro ajuste — e o pedido é que sejam exatamente o mesmo material. */
+  --cromo-pintura:linear-gradient(160deg,
+    color-mix(in srgb,var(--cromo) 55%,#fff) 0%,
+    var(--cromo) 21%,
+    color-mix(in srgb,var(--cromo) 78%,#fff) 43%,
+    color-mix(in srgb,var(--cromo) 92%,#000) 60%,
+    var(--cromo) 77%,
+    color-mix(in srgb,var(--cromo) 58%,#fff) 100%);
+  --aro:clamp(1px,.7cqw,1.6px);--aro-pintura:var(--cromo-pintura);
+  /* Altura da faixa de categoria. Vive num token porque o OVR se apoia nela: o
+     número precisa subir exatamente o que a faixa ocupa, e não um chute. */
+  --cat-h:clamp(13px,11.6cqw,26px)}
 /* A placa nasce no topo e sua aresta inferior é RETA, não diagonal. A diagonal é
    assinatura da carta de jogador, onde ela sobe da esquerda para a direita e
    fecha contra o canto do OVR; espelhada para o topo do treinador ela apontava
@@ -490,23 +525,56 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .coachcard .c-fio,.coachcard .c-placa,
 .coachcard .c-vfio,.coachcard .c-vfaixa{clip-path:none}
 .coachcard .c-fio,.coachcard .c-placa{top:0;bottom:auto}
-.coachcard .c-ovr{top:auto;bottom:5.5%}
+/* O OVR do treinador é o do jogador, movido para a base: mesmo corpo, mesmo
+   recuo, mesmo rótulo `OVERALL` solto embaixo. A carta de jogador não tem cromo
+   nenhum — a faixa abaixo é exclusiva do treinador e é OUTRO elemento, o que
+   deixa o bloco do OVR livre dos remendos que ele exigia quando os dois
+   dividiam a mesma caixa (largura cheia, `text-indent`, margem negativa). */
+.coachcard .c-ovr{top:auto;bottom:calc(var(--cat-h) + 3.2%)}
+/* `OVERALL` na cor da carta. No treinador `--m-ink` é o cinza estrutural, então
+   sem isto o rótulo sairia neutro enquanto todo o resto da carta fala pela
+   característica. */
+.coachcard .c-ovr small{color:color-mix(in srgb,var(--r-ink) 88%,#fff)}
+
+/* Faixa de categoria: EXCLUSIVA do treinador, atravessa a carta e encosta na
+   borda de baixo. Altura por token para o OVR acima poder se apoiar nela sem
+   número mágico.
+
+   Cromo CLARO com tinta escura. A primeira tentativa foi o inverso — metal
+   rebaixado sobre base quase preta, tinta clara — e lia como um véu, não como
+   metal. As quatro características (`#c9a36a`, `#2fd6d6`, `#4a82ff`, `#c79bff`)
+   são claras o bastante para sustentar texto escuro, e as paradas ficam todas na
+   luz ou acima: o único degrau escuro mistura 8% de preto, o suficiente para o
+   brilho existir sem derrubar contraste em nenhuma cor.
+
+   A cor base é declarada SOB o gradiente. O medidor de contraste lê
+   `background-color`, e um `background-image` sozinho o deixa ver tinta escura
+   sobre o fundo escuro da carta — 1,03:1. A base também é o piso real do cromo,
+   então o que a guarda mede é o pior caso verdadeiro, não uma média otimista. */
+.coachcard .c-cat{position:absolute;left:0;right:0;bottom:0;z-index:5;
+  height:var(--cat-h);display:flex;align-items:center;justify-content:center;
+  font-family:var(--ff);font-size:5.2cqw;font-weight:800;line-height:1;
+  letter-spacing:.3em;text-transform:uppercase;color:#08111a;
+  background-color:var(--cromo);background-image:var(--cromo-pintura);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),
+    inset 0 -1px 0 color-mix(in srgb,var(--cromo) 70%,#000),
+    0 -3px 12px rgba(0,0,0,.5)}
 /* O OVR do treinador desce para a base, onde o retrato mostra roupa e não fundo:
    sobre o casaco claro do hally o contraste caía a 2,14:1, abaixo do contrato de
    4,5:1. A proteção é o espelho da que o jogador já tem no topo, e é calibrada
    para o contrato — não para o máximo possível. A versão anterior chegava a
    10,13:1 e, para isso, apagava a metade inferior de todo retrato. */
-.coachcard .c-vinheta{background:linear-gradient(180deg,transparent 52%,
-  rgba(3,6,11,.34) 62%,rgba(3,6,11,.62) 74%,rgba(3,6,11,.80) 88%,rgba(3,6,11,.88) 100%)}
+.coachcard .c-vinheta{background:linear-gradient(180deg,transparent 44%,
+  rgba(3,6,11,.32) 55%,rgba(3,6,11,.62) 65%,rgba(3,6,11,.82) 77%,rgba(3,6,11,.90) 100%)}
 .coachcard .c-vfaixa{background:linear-gradient(2deg,
   color-mix(in srgb,var(--r) 14%,#0a0f17),#070a10 48%)}
 .coachcard .cback{background:linear-gradient(168deg,
   color-mix(in srgb,var(--r) 8%,#080b11),#06080d 58%)}
-.coachcard::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-  z-index:7;padding:1.6px;background:repeating-linear-gradient(45deg,
-    color-mix(in srgb,var(--r) 86%,transparent) 0 3.4cqw,transparent 3.4cqw 6.4cqw);
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;mask-composite:exclude}
+/* O serrilhado a 45° saiu da moldura. Ele sobrevive só onde sempre fez sentido:
+   na régua HORIZONTAL sob a placa e sob a faixa do verso. Como moldura, ele
+   competia com a faixa cromada do rodapé a poucos pixels dela.
+   A moldura passa a usar `--aro`/`--aro-pintura`, a mesma mecânica das seis
+   faixas de raridade — o treinador deixa de ter regra própria de borda. */
 .coachcard .c-fio,.coachcard .c-vfio{background:repeating-linear-gradient(90deg,
   color-mix(in srgb,var(--r) 86%,transparent) 0 3.4cqw,transparent 3.4cqw 6.4cqw)}
 /* O treinador não tem função secundária, então a faixa de contexto fica com um
@@ -516,7 +584,6 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    verde porque nenhuma guarda de espelho olhava o eixo horizontal. */
 .coachcard .c-role2{display:none}
 .coachcard .c-team{grid-column:1/-1}
-.coachcard .c-ovr small{color:color-mix(in srgb,var(--r-ink) 82%,#fff)}
 .coachcard .c-vestilo b{font-size:calc(var(--t-style)*var(--carac-esc,1));color:var(--r-ink)}
 .coachcard .cback .c-vdesc{
   top:calc(27.5% + clamp(7px,4.2cqw,9px)*1.6 + var(--t-style)*.95 + var(--vfolga));
@@ -1179,3 +1246,16 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,107,42,.45)}
 .hall-rec-l{font-family:var(--ff);font-weight:700;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--neutral)}
 .hall-rec-m{font-size:.68rem;color:var(--dim)}
 .hall-import{cursor:pointer}
+
+/* ── Treinador: a placa da frente segue a faixa do verso ─────────────────────
+   Virar a carta não pode mover a régua horizontal. Na carta de jogador a frente
+   usa 24% e o verso 22% porque lá as duas arestas são diagonais e desencontram
+   de propósito; no treinador elas são retas e precisam coincidir.
+
+   Esta regra vive no fim do arquivo por necessidade, não por descuido: a escada
+   de densidade (`@container` de 176 px e 150 px) reescreve `--placa-n` para 26 e
+   28 em `.card .cfaces,.coachcard .cfaces`, com a mesma especificidade. Declarada
+   antes, ela perdia para a escada e a placa voltava a divergir da faixa em todas
+   as larguras compactas. `--faixa-n` não entra na escada, então amarrar uma na
+   outra mantém as duas alturas iguais em qualquer densidade. */
+.coachcard .cfaces{--placa-n:var(--faixa-n)}
