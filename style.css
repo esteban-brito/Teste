@@ -571,6 +571,24 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    4,5:1. A proteção é o espelho da que o jogador já tem no topo, e é calibrada
    para o contrato — não para o máximo possível. A versão anterior chegava a
    10,13:1 e, para isso, apagava a metade inferior de todo retrato. */
+/* O retrato do treinador desce a altura da placa.
+
+   POR QUE. O recorte de runtime `100% auto · 50% 12%` é INERTE: o asset é 5:7
+   exato e a carta também, então a imagem preenche sem sobra e uma percentagem de
+   Y não tem folga para deslocar. Na carta de jogador isso nunca importou — a
+   placa mora embaixo, sobre o tronco. No treinador ela mora em cima, e a grade
+   fotográfica de `docs/card-portraits.md` põe o topo da cabeça a 5–10%: a placa
+   cobria 0–22%, ou seja, a cabeça inteira. Todo retrato de treinador lia como
+   plano de tronco, e não era limitação da fonte — era geometria.
+
+   Deslocamento por COMPRIMENTO, não por percentagem, justamente porque não há
+   sobra: percentagem de zero é zero. `--faixa-n` é a altura da placa do treinador
+   em % da ALTURA; como a carta é 5:7, o mesmo valor em % da LARGURA é ×1,4 — daí
+   `cqw`, a única unidade de container disponível sob `container-type:inline-size`.
+   A escala do asset não muda: isto não é zoom, é a mesma imagem mais baixa. O que
+   sai pelo rodapé já era coberto pela faixa cromada. */
+.coachcard .c-foto{background-position:50% 0,50% 0,
+  50% calc(var(--faixa-n)*1.4*1cqw),50% 0}
 .coachcard .c-vinheta{background:linear-gradient(180deg,transparent 44%,
   rgba(3,6,11,.32) 55%,rgba(3,6,11,.62) 65%,rgba(3,6,11,.82) 77%,rgba(3,6,11,.90) 100%)}
 .coachcard .c-vfaixa{background:linear-gradient(2deg,
