@@ -9,6 +9,9 @@
    nomes de característica porque são outra categoria de carta. */
 import {escapeHtml as esc} from "../shared/html.mjs";
 import {bandeiraDe} from "../shared/flags.mjs";
+/* Mesma pergunta que o time já fazia — "as duas primeiras letras deste nome" —
+   então a regra é reusada em vez de ganhar uma segunda cópia. */
+import {teamMonogram as monograma} from "./team-view.mjs";
 
 const STAT_LABEL={fp:"Firepower",op:"Abertura",cl:"Clutch",ut:"Utilitário",
   en:"Entrada",tr:"Trade",sn:"AWP"};
@@ -72,7 +75,20 @@ const slugFuncao=role=>String(role||"").toLowerCase().replace(/[^a-z]/g,"")||"ri
    Aumentar mais exige encolher o corpo por faixa de densidade, não por nick. */
 const escalaCarac=texto=>texto.length<=10?1:texto.length<=12?.8:.7;
 
-const camadasDeFundo=`<div class="c-foto"></div><div class="c-vinheta"></div>`;
+/* MONOGRAMA DO CAMPO VAZIO.
+
+   Sem retrato, o campo da foto é a maior área da carta em preto quase liso — e é
+   o estado de 80 dos 85 jogadores e de 14 dos 15 treinadores. O monograma dá
+   marca a essa área e, tingido pela raridade, devolve a leitura da escada onde o
+   retrato não existe: sem ele, as seis faixas viram seis retângulos pretos
+   separados por um tint fraco.
+
+   Ele NÃO é emitido quando há foto. Não é uma regra de exceção no CSS: o HTML
+   simplesmente não cria o nó. O centro pertence ao retrato — foi por isso que os
+   emblemas de função saíram, e o monograma não pode reabrir essa disputa. */
+const camadasDeFundo=card=>`<div class="c-foto"></div>`+
+  (fotoStyle(card)?"":`<div class="c-mono" aria-hidden="true">${esc(monograma(card.nick||""))}</div>`)+
+  `<div class="c-vinheta"></div>`;
 const bandeiraHtml=pais=>{
   const fonte=bandeiraDe(pais);
   return fonte?`<div class="c-flag" style="background-image:url('${esc(fonte)}')" title="${esc(pais)}"></div>`:"";
@@ -92,7 +108,7 @@ export function createCardView({styleId,styleLabel,styleRecipe,coachRecipe}){
     ?`coachcard coach-${card.caracSlug}`
     :`card ${tierOf(card.ovr)} fn-${slugFuncao(card.prim)}`;
 
-  const frenteHtml=(card,rotulo,destaque,contexto,tipo)=>`${camadasDeFundo}
+  const frenteHtml=(card,rotulo,destaque,contexto,tipo)=>`${camadasDeFundo(card)}
   <div class="c-fio"></div><div class="c-placa"></div>
   <div class="c-ovr">${card.ovr}<small>${rotulo}</small></div>
   <div class="c-identidade c-identidade--${tipo}">
@@ -111,7 +127,7 @@ export function createCardView({styleId,styleLabel,styleRecipe,coachRecipe}){
      verso, os dois blocos caem exatamente no mesmo lugar sem uma única regra de
      posição nova. A troca é só o rótulo: característica na frente, "Treinador"
      no verso. Sem bandeira por decisão de design. */
-  const coachFront=card=>`${camadasDeFundo}
+  const coachFront=card=>`${camadasDeFundo(card)}
   <div class="c-fio"></div><div class="c-placa"></div>
   <div class="c-ovr">${card.ovr}<small>Overall</small></div>
   <div class="c-vnick">${esc(card.nick)}</div>

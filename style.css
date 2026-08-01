@@ -185,6 +185,29 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .c-foto{position:absolute;inset:0;z-index:0}
 .c-vinheta{position:absolute;inset:0;z-index:2;
   background:linear-gradient(180deg,transparent 46%,rgba(3,5,9,.55) 100%)}
+/* Monograma do campo vazio. Só existe quando a carta não tem retrato — o HTML nem
+   emite o nó nesse caso, então aqui não há condicional nem exceção.
+
+   Centrado na área livre de cada categoria, e essa área começa DEPOIS do OVR.
+   Centrar no campo inteiro punha o monograma no mesmo eixo do rótulo `OVERALL`,
+   e as duas coisas brigavam: o OVR é o primeiro nível de leitura da carta e não
+   pode dividir altura com textura. `--mono-topo` é a base medida do bloco do OVR
+   a 250 px (27,6% da carta) mais uma folga — o mesmo recurso de `--cat-h`, que
+   existe para o OVR do treinador se apoiar sem número mágico.
+
+   A tinta é `--m-ink`, a mesma da escada, em opacidade baixa: o monograma é
+   textura de fundo, não informação. O nick continua sendo o nome na placa. */
+.card,.coachcard{--mono-topo:30%}
+.c-mono{position:absolute;left:0;right:0;top:var(--mono-topo);bottom:var(--placa);
+  z-index:1;pointer-events:none;display:flex;align-items:center;justify-content:center;
+  font-family:var(--ff);font-weight:700;font-size:46cqw;line-height:1;
+  letter-spacing:-.05em;
+  color:color-mix(in srgb,var(--m-ink) 17%,transparent)}
+/* No treinador as duas âncoras trocam de lado: o topo livre é a própria placa e o
+   limite de baixo é o topo do bloco do OVR, medido em 67,2% a 250 px — a faixa de
+   categoria fica abaixo dele e não entra na conta. */
+.coachcard{--mono-base:67%}
+.coachcard .c-mono{top:var(--placa);bottom:calc(100% - var(--mono-base))}
 /* Grão de filme: quebra o degradê perfeito, que é o que denuncia CSS puro.
    SEM mix-blend-mode. O blend obrigava cada carta a virar uma camada própria e
    forçava recomposição do que estava atrás: custava 7 fps com 6 cartas na tela.
