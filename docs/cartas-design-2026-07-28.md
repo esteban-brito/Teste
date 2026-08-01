@@ -918,7 +918,7 @@ montada com uma receita de valores propositalmente falsos e o teste exige que
 sejam eles a aparecer, que a frase **não** contenha dígito e que, sem receita, as
 linhas sumam e a frase permaneça.
 
-### 19.4 Contrato vigente: espelho vertical de aresta reta — 31/07/2026
+### 19.4 Espelho vertical de aresta reta — 31/07/2026
 
 Com as duas versões publicadas e vistas no ar, o responsável escolheu o espelho —
 OVR no canto inferior esquerdo, bloco de identidade no topo — **com a aresta da
@@ -953,3 +953,56 @@ de desvio no nick — desvio que era da régua, não da carta. Hoje os filhos s�
 medidos contra a caixa do próprio bloco, mesmo lado, e as duas réguas convivem na
 mesma bateria. A aresta reta ganhou guarda própria: `clip-path` não altera a
 caixa, então nenhuma medida de retângulo pegaria uma diagonal de volta.
+
+### 19.5 CONTRATO VIGENTE da carta de treinador — 31/07/2026
+
+Estado final do ciclo. Tudo acima nesta seção 19 é histórico do caminho; **é isto
+que está publicado e provado**.
+
+**Frente.** Ela não usa mais a grade de três linhas do jogador — essa grade existia
+para carregar função principal, secundária e time, e o treinador só tem
+característica e time. A frente **replica o bloco do verso**: os mesmos
+`.c-vnick` e `.c-vid`, trocando apenas o rótulo — característica na frente,
+`Treinador` no verso. Como a placa da frente tem a altura da faixa do verso
+(`--placa-n:var(--faixa-n)`), os dois blocos caem no mesmo lugar sem nenhuma regra
+de posição nova. **Sem bandeira**, por decisão do responsável.
+
+**OVR.** Volta a ser o do jogador — mesmo corpo, mesmo recuo, rótulo `OVERALL`
+solto embaixo — movido para a base e tingido pela característica. A categoria
+virou `.c-cat`, faixa cromada própria colada na borda inferior, de largura total.
+Separar os dois elementos eliminou os remendos que a faixa exigia quando dividia a
+caixa do OVR: largura cheia, `text-indent` e margem negativa saíram todos.
+
+**Moldura.** O serrilhado a 45° foi removido. Ele sobrevive só nas réguas
+horizontais sob a placa e sob a faixa do verso. A borda usa `--aro`/`--aro-pintura`,
+a mesma mecânica das seis faixas de raridade — o treinador não tem mais regra
+própria de borda. O cromo é um token único (`--cromo-pintura`) servido a dois
+consumidores, faixa e aro.
+
+**A carta de jogador não mudou em nada neste ciclo.** Ela não tem cromo; o rótulo
+do OVR dela continua sendo texto solto sob o número.
+
+**Verso.** Corpo centrado na reserva, o mesmo mecanismo dos quatro trilhos do
+jogador — foi isso que devolveu o afastamento entre a característica e o texto.
+Ancorado no topo, a tinta começava a 0% da reserva enquanto a do jogador começa
+2,9% a 7,4% da altura da carta abaixo do topo.
+
+Medidos lado a lado a 250 px, os dois versos coincidem em todos os eixos: faixa
+22%, nick 5,5–12,1%, identidade 15,5–18,6%, corpo 40,1–84,9%, rodapé 86–96%.
+
+### 19.6 A régua de tipografia: medir a folga, nunca estimar o teto
+
+Esta é a lição mais cara do dia e vale para qualquer texto da carta.
+
+O `Estrategista` foi calibrado em 0,9 com um teto **estimado** a partir de uma
+largura de glifo chutada. Passou no Windows com 5,4 px de folga e o CI Linux
+reprovou com 5,4 px de estouro. Medido depois: o FreeType renderiza aquele mesmo
+rótulo cerca de **10,8 px mais largo** a 120 px.
+
+A régua correta é a folga **medida** na largura mais apertada, e ela precisa
+cobrir o delta com sobra. Os fatores vigentes de `escalaCarac` são 1 / 0,80 / 0,70
+e deixam 40,9 / 15,7 / 11,0 px de folga a 120 px.
+
+Não aumente esses fatores sem medir de novo. A 120 px a caixa tem ~97 px para uma
+palavra de 12 caracteres; o caminho para crescer mais é encolher o corpo **por
+faixa de densidade**, como o resto da carta já faz, nunca abrir exceção por nick.
