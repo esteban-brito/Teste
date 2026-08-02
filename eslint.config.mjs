@@ -28,6 +28,8 @@ const browserGlobals = {
   getComputedStyle: "readonly",
   matchMedia: "readonly",
   DOMMatrixReadOnly: "readonly",
+  URL: "readonly",
+  Image: "readonly",
   addEventListener: "readonly",
   removeEventListener: "readonly",
   Worker: "readonly",
@@ -78,6 +80,17 @@ export default [
   },
   {
     files: ["game.js"],
+    languageOptions: {
+      sourceType: "module",
+    },
+  },
+  {
+    /* O laboratório e a bancada de recorte importam os artefatos reais por
+       `<script type="module">`. Sem esta linha o parser os lê como script
+       clássico e para no primeiro `import`, e foi por isso que os dois ficaram
+       fora do lint até 02/08/2026 — justamente o arquivo que carrega todo o
+       contrato de medição da carta. */
+    files: ["prototipo-cartas.html", "recorte-retratos.html"],
     languageOptions: {
       sourceType: "module",
     },
