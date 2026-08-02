@@ -28,6 +28,24 @@
   --c-estrategista:#2fd6d6;
   --c-desenvolvedor:#4a82ff;
   --c-motivador:#c79bff;
+  /* O MESMO metal para as quatro. As cores acima pintam texto, onde saturação é
+     identidade; o cromo é SUPERFÍCIE, e aí saturação deixa de ler metal.
+
+     Medido em OKLCh: o gestor tem croma 0,087 e era o único que lia como metal;
+     estrategista 0,128, motivador 0,146 e desenvolvedor 0,195 liam como plástico
+     neon sob o mesmo `--cromo-pintura`. A luminância não explica — o
+     desenvolvedor tem a MAIOR amplitude de claro/escuro do gradiente (0,194) e
+     era o pior dos quatro. É croma sozinho: metal é quase acromático com um
+     tingimento, e nenhum gradiente salva uma base saturada.
+
+     Estes quatro são as mesmas cores com croma normalizado em 0,087, preservando
+     luminância e matiz. O gestor é a régua e por isso não mudou um bit. O matiz
+     continua carregando a identidade da característica; o material passa a ser
+     um só. `.c-cat` cobra o contraste da tinta escura sobre o pior degrau. */
+  --c-gestor-metal:#c9a36a;
+  --c-estrategista-metal:#74cfce;
+  --c-desenvolvedor-metal:#6f8ac0;
+  --c-motivador-metal:#bfa6e1;
   /* roles (dessaturados) */
   --r-igl:#7a93b8; --r-awper:#9a86c4; --r-entry:#c47a6a; --r-rifler:#bf9f63; --r-lurker:#7fa882; --r-support:#5fa6a6;
   /* resultado/pódio */
@@ -159,10 +177,10 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 /* A característica colore o treinador; ele não disputa a raridade dos jogadores. */
 .coachcard{--m:#93a0b2; --m-ink:#93a0b2;
   --r:var(--cc-main,var(--c-gestor)); --r-ink:var(--cc-main,var(--c-gestor))}
-.coach-gestor{--cc-main:var(--c-gestor)}
-.coach-estrategista{--cc-main:var(--c-estrategista)}
-.coach-desenvolvedor{--cc-main:var(--c-desenvolvedor)}
-.coach-motivador{--cc-main:var(--c-motivador)}
+.coach-gestor{--cc-main:var(--c-gestor);--cc-metal:var(--c-gestor-metal)}
+.coach-estrategista{--cc-main:var(--c-estrategista);--cc-metal:var(--c-estrategista-metal)}
+.coach-desenvolvedor{--cc-main:var(--c-desenvolvedor);--cc-metal:var(--c-desenvolvedor-metal)}
+.coach-motivador{--cc-main:var(--c-motivador);--cc-metal:var(--c-motivador-metal)}
 
 /* ═══ FLIP ═════════════════════════════════════════════════════════════════
    Cada face gira independente e o que define o que aparece é a OPACIDADE (0/1).
@@ -456,7 +474,27 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    `Range`, e reprova se este número sair de faixa. */
 .c-identidade--coach{top:calc(100% - var(--placa));bottom:0;
   grid-template-areas:"nick flag" "func meta";align-content:center;
-  padding-top:var(--carac-simetria,1.85cqw);
+  /* SEM PADDING DE COMPENSAÇÃO — 02/08/2026.
+     Aqui morava `padding-top:1.85cqw`, para corrigir uma "tinta que sobe". Ela
+     não subia: a medida que dizia isso comparava a caixa da fonte, que vai do
+     `ascent` ao `descent`, enquanto a MAIÚSCULA ocupa só o miolo — na Chakra
+     Petch a letra começa .29em abaixo do topo da caixa e termina .31em acima do
+     fim. Como o nick tem corpo quase o dobro da característica, os dois espaços
+     mortos são muito diferentes, e a caixa mentia sobre onde a letra está.
+
+     Medido com a régua certa: a guarda cravava 0,08–0,33 px enquanto o olho via
+     3,08–6,22 px de sobra EM CIMA — e o padding era a origem deles, não a cura.
+     Com padding nenhum o desequilíbrio natural fica em −0,5 a −1,9 px, e o que
+     resta é arredondamento de pixel na costura de densidade: um ajuste de dois
+     coeficientes só levaria isso a 0,75 px, o que é ruído, não estrutura.
+     `align-content:center` sozinho já entrega −0,5 a −1,9 px. O que sobra é
+     fechado abaixo por correção MEDIDA NA LETRA, por faixa de densidade — não
+     por eixo estimado. A diferença para o padding antigo não é de tamanho, é de
+     régua: aquele era calibrado contra a caixa e produzia 3–6 px de erro; este é
+     calibrado contra o glifo e deixa ≤0,4 px. A guarda cobra na letra, e é ela
+     que impede um "corretivo" novo contra a métrica errada. Os degraus ficam no
+     fim do arquivo, junto dos da placa. */
+  padding-top:var(--carac-simetria,0px);
   /* Respiro maior que o do jogador entre as duas linhas. Lá, três linhas dividem
      a placa e o `row-gap` é quase nulo por falta de espaço; aqui sobra, e o mesmo
      valor governa os dois afastamentos que importam — nick/característica na
@@ -475,7 +513,11 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    pequeno lado a lado, que é o oposto de padronizado — mesma razão pela qual o
    nick usa corpo comum por faixa de densidade e nunca exceção por nick. O piso de
    8 px é cobrado pelo E2E. */
-.coachcard .c-identidade--coach .c-func{font-size:clamp(8px,5.4cqw,12px);letter-spacing:.1em}
+/* O corpo vive num token porque o recorte da caixa da fonte precisa dele: o
+   deslocamento é a diferença entre dois espaços mortos, e o de baixo sai deste
+   corpo. Repetir o `clamp` nos dois lugares era garantia de divergirem. */
+.coachcard .cfaces{--t-carac:clamp(8px,5.4cqw,12px)}
+.coachcard .c-identidade--coach .c-func{font-size:var(--t-carac);letter-spacing:.1em}
 .card .c-identidade--player .c-flag,.coachcard .c-identidade--coach .c-flag{
   grid-area:flag;position:static;inset:auto;
   display:block;width:clamp(13px,9.5cqw,22px);justify-self:end;align-self:center}
@@ -518,10 +560,19 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   bottom:calc(14% + var(--vfolga));display:grid;
   grid-template-rows:repeat(4,auto);align-items:center;justify-items:stretch;
   align-content:center;justify-content:stretch;gap:clamp(3.5px,2.8cqw,7.5px);
-  /* Resíduo constante de ~2 px: o `line-height` do campeonato e a entrelinha do
-     primeiro trilho não são simétricos. Com conteúdo centrado, um padding no topo
-     desloca o bloco por METADE do seu valor — daí o alvo de 2 a 3 px. */
-  padding-top:4.7px}
+  /* Simetria do bloco central medida na LETRA — 02/08/2026, §21 do design.
+
+     Aqui morava `padding-top:4.7px`, calibrado contra a CAIXA dos textos: ele
+     PIORAVA o desnível, de 1,6–4,2 px para 6,3–8,9 px, sempre sobrando acima dos
+     trilhos. O vão de cima liga dois TEXTOS e o de baixo liga um retângulo a um
+     texto, então a caixa não mente igual dos dois lados — a do playstyle desce
+     muito abaixo da última letra dele.
+
+     `padding-bottom` porque o bloco precisa SUBIR, e com conteúdo centrado um
+     padding desloca por metade do seu valor. A mesma regra vale para o corpo do
+     treinador, logo abaixo: uma regra para as duas categorias. Degraus no fim do
+     arquivo. */
+  padding-bottom:var(--stats-simetria,0px)}
 .card .c-st{width:100%;align-content:center}
 .card .c-st i{font-size:clamp(7.5px,5cqw,11px)}
 .card .c-st b{font-size:clamp(9.5px,6.2cqw,14px)}
@@ -550,8 +601,14 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    distinção que a moldura serrilhada e a cor da característica já não dessem. */
 /* `--cromo` é a cor da placa do rótulo: no treinador ela vem da característica,
    não do cinza estrutural de `--m`, para a placa dizer a que categoria a carta
-   pertence tanto quanto a moldura diz. */
-.coachcard{--wash-cor:var(--r);--wash:20%;--placa-ang:2deg;--cromo:var(--r);
+   pertence tanto quanto a moldura diz.
+
+   Ela vem da versão METAL da característica, não da cor de texto. Até 02/08/2026
+   este token lia `var(--r)` direto, e o resultado era material diferente por
+   característica: ouro lia metal, ciano e azul liam plástico neon. A régua e o
+   porquê estão no `:root`, junto dos quatro tokens. */
+.coachcard{--wash-cor:var(--r);--wash:20%;--placa-ang:2deg;
+  --cromo:var(--cc-metal,var(--c-gestor-metal));
   /* O cromo é declarado UMA vez e servido a dois consumidores: a faixa do rodapé
      e a moldura. Repetir as paradas nos dois lugares era garantia de divergirem
      no primeiro ajuste — e o pedido é que sejam exatamente o mesmo material. */
@@ -614,8 +671,13 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   font-family:var(--ff);font-size:5.2cqw;font-weight:800;line-height:1;
   letter-spacing:.3em;text-transform:uppercase;color:#08111a;
   background-color:var(--cromo);background-image:var(--cromo-pintura);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),
-    inset 0 -1px 0 color-mix(in srgb,var(--cromo) 70%,#000),
+  /* Sem realce branco no topo. Ele era `inset 0 1px 0 rgba(255,255,255,.55)` e
+     pretendia ser reflexo especular; na tela lia como uma LINHA branca solta
+     acima da faixa, apontada pelo responsável em 02/08/2026. O gradiente já
+     começa claro e faz o brilho sozinho — a linha só duplicava a informação com
+     um traço de aresta. A sombra interna de baixo fica: é ela que assenta a
+     faixa sobre a placa. */
+  box-shadow:inset 0 -1px 0 color-mix(in srgb,var(--cromo) 70%,#000),
     0 -3px 12px rgba(0,0,0,.5)}
 /* O verso mantém o bloco no topo: lá ele encabeça o conteúdo, e é o rodapé de era
    que fecha a carta. A frente usa a grade de identidade, acima. */
@@ -655,7 +717,14 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
      linhas numéricas. O tamanho de hoje é o dos valores dos trilhos, e a folga
      que ele libera é o que absorve a medição mais larga do FreeType no CI. */
   font-size:clamp(9px,6cqw,13px);line-height:1.34;font-weight:600;
-  letter-spacing:.005em;color:#eef4fa}
+  letter-spacing:.005em;color:#eef4fa;
+  /* A MESMA regra do bloco de trilhos do jogador: o vão acima do corpo, contado
+     da característica, tem de igualar o vão abaixo dele até o campeonato — e
+     medido na letra, não na caixa. Sem correção o desnível é de 1,9 a 5,9 px,
+     maior que o do jogador. Aqui o coeficiente multiplica também `--carac-esc`,
+     porque a característica encolhe por comprimento e o espaço morto acompanha o
+     corpo real do texto, não o nominal. */
+  padding-bottom:var(--desc-simetria,0px)}
 
 @container (max-width:176px){
   .card .cfaces,.coachcard .cfaces{--placa-n:26;--placa:calc(var(--placa-n)*1%);
@@ -1333,12 +1402,61 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,107,42,.45)}
 @container (max-width:176px){.coachcard .cfaces{--placa-n:19}}
 @container (max-width:150px){.coachcard .cfaces{--placa-n:20}}
 
-/* A correção de simetria da tinta segue os MESMOS três degraus, e pelo mesmo
-   motivo: os corpos saturam no `clamp` em ritmos diferentes dos da placa, então
-   o desvio residual não é constante em `cqw`. Medido nas oito larguras, ele ia de
-   0,48 px a 1,52 px com um valor único — o pico caía justamente na costura dos
-   150 px. Com três degraus o pior caso fica em 0,32 px, contra os 0,75 px que o
-   medidor cobra. Recalibre medindo de novo; não estique o teto da guarda. */
-.coachcard .c-identidade--coach{--carac-simetria:1.85cqw}
-@container (max-width:176px){.coachcard .c-identidade--coach{--carac-simetria:1.78cqw}}
-@container (max-width:150px){.coachcard .c-identidade--coach{--carac-simetria:2.25cqw}}
+/* Correção residual da simetria, REFEITA em 02/08/2026 contra a régua certa.
+   Os três degraus anteriores (1,85 / 1,78 / 2,25 cqw) foram calibrados medindo a
+   caixa da fonte, e por isso empurravam a letra 3 a 6 px para baixo do centro —
+   o defeito que o responsável apontou na tela. Com eles fora, `align-content`
+   sozinho erra de −0,5 a −1,9 px; o que sobra é o que estes dois degraus fecham.
+
+   Sai em fração de `--t-carac`, não em `cqw`: o desvio nasce do espaço morto da
+   caixa da fonte, que é proporcional ao CORPO do texto, e o corpo satura no
+   `clamp` enquanto `cqw` continua crescendo. Foi essa diferença de ritmo que
+   obrigou três degraus antes; ancorado no corpo, bastam dois — e o pior caso cai
+   de 1,9 px para 0,40 px, contra os 0,75 px que o medidor cobra.
+
+   Os dois valores são CENTRADOS na faixa de erro, não ajustados ao melhor caso:
+   dentro de cada degrau sobra ~1 px de quantização de pixel que nenhum
+   coeficiente elimina — a 130 px ela empurra para um lado e a 150/120 para o
+   outro. Centrar deixa o pior caso em 0,55 px dos dois lados, contra 1,00 px se
+   o valor for escolhido para zerar uma largura só.
+
+   Medido nas oito larguras. Recalibre medindo de novo, na LETRA; não estique o
+   teto da guarda. */
+.coachcard .c-identidade--coach{--carac-simetria:calc(.095*var(--t-carac))}
+@container (max-width:150px){
+  .coachcard .c-identidade--coach{--carac-simetria:calc(.1425*var(--t-carac))}}
+
+/* VERSO — a mesma correção, e a mesma régua, para as DUAS categorias. O bloco
+   central sobe até o vão acima dele igualar o vão abaixo, medido na letra:
+   playstyle → primeiro rótulo contra último trilho → campeonato no jogador,
+   característica → frase contra última linha → campeonato no treinador.
+
+   Três degraus porque o desnível não é proporcional a `--t-style` sozinho: entre
+   176 px e 151 px ele cai de 4,22 para 1,59 px no jogador e de 5,92 para 3,03 px
+   no treinador, com apenas 3 px de diferença de corpo. A quebra aparece nas duas
+   categorias, o que aponta para o rodapé de era que elas compartilham; enquanto
+   não for entendida, ela custa 1,2 px de resíduo nesse par. Nas outras seis
+   larguras o resíduo fica em 0,06–0,56 px, contra 6,3–8,9 px antes.
+
+   Entender a quebra e reduzir três degraus a um é a melhoria certa. Esticar o
+   teto da guarda não é. */
+.card .c-vstats{--stats-simetria:calc(.146*var(--t-style))}
+@container (max-width:176px){.card .c-vstats{--stats-simetria:calc(.137*var(--t-style))}}
+@container (max-width:150px){.card .c-vstats{--stats-simetria:calc(.109*var(--t-style))}}
+/* O treinador NÃO precisa de degraus de densidade, e a razão é a parte
+   interessante: com a característica em tamanho cheio o desvio dele já é ~0,05 px.
+   O desequilíbrio inteiro vem de `--carac-esc`, o encolhimento por comprimento —
+   `DESENVOLVEDOR` sai a 0,7 do corpo, e como `.c-vestilo` é ancorado pelo TOPO, o
+   corpo menor SOBE a linha de base e abre o vão acima do texto. A 151 px isso vai
+   de 0,05 px em `Gestor` a 5,06 px em `Desenvolvedor`.
+
+   Por isso a correção é proporcional a (1 − carac-esc) e não à largura. O fator
+   sai da métrica: a linha de base desce `ascent` mais meia entrelinha do topo da
+   caixa, o que na Chakra Petch com `line-height:.95` dá .99 − .175 ≈ .85 do corpo.
+   Conferido contra o ajuste dos dados, que pediu .878.
+
+   Uma expressão para as oito larguras e as quatro características. Se alguém
+   ancorar a característica pela BASE em vez do topo, este termo deixa de existir
+   e deve ser removido, não recalibrado. */
+.coachcard .cback .c-vdesc{
+  --desc-simetria:calc(.85*var(--t-style)*(1 - var(--carac-esc,1)))}
