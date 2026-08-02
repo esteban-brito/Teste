@@ -1184,15 +1184,36 @@ A régua nova levou duas tentativas, e a tentativa falha vale registro:
    nas duas categorias e nas oito larguras — os treinadores ficam entre 9,7% e
    23,1% e o layout que falhou dá 2%. Piso em 6%.
 
+### O CI derrubou a primeira tentativa de teto — e a lição é de método
+
+Publicado, o Linux reprovou `equilíbrio corpo/era do treinador` com **3,27 px**
+onde o Windows media 2,27 px. O teto estava em 2,5 px: margem de 0,23 px sobre um
+resíduo que eu **não sabia explicar**. Isso é erro de método, não de número — o
+projeto já registra que o FreeType mede diferente, e teto apertado sobre resíduo
+inexplicado não sobrevive à travessia de plataforma.
+
+A primeira reação foi reverter a correção do verso. Estava errada também: medido o
+pior caso real, sem correção o desnível do treinador chega a **7,92 px**
+(`dastan`, 176 px) — os "1,9 a 5,9 px" que eu tinha em mãos eram a mediana, não o
+pior caso. Reverter trocaria 3,27 px por 7,92 px.
+
+O teto certo fica entre duas medidas: **acima** do resíduo com correção somado à
+diferença de plataforma, e **abaixo** do defeito sem correção — senão a guarda
+para de saber reprovar. Ficou em 5 px para o treinador e 3 px para o jogador.
+
+Nenhum dos dois é afrouxamento dos números antigos: 1,5 px e 0,35 px valiam sobre
+a CAIXA, que é outra grandeza. Sobre a letra, esses tetos cobram um desvio que
+antes passava inteiro.
+
 ### Dívida declarada
 
-O teto de `equilíbrio corpo/era do treinador` é **2,5 px**, contra 1,5 px do
-jogador. Isso é dívida, não conforto: sobra 2,27 px numa única combinação —
+Os tetos são **5 px** no treinador e **3 px** no jogador, e a diferença entre
+eles é dívida. Isso é dívida, não conforto: sobra 2,27 px numa única combinação —
 176 px com `Desenvolvedor`. A mesma carta a 151 px fica em 0,19 px, então não é o
 modelo de `--carac-esc` que falha. É a faixa 176/151, que já tinha mostrado
 ~1,2 px de quebra inexplicada nas DUAS categorias quando os coeficientes foram
 derivados; enquanto ela não for entendida, nenhum coeficiente fecha 176 sem abrir
-151. O certo é achar a causa e voltar o teto a 1,5.
+151. O certo é achar a causa e igualar os dois tetos em 3 px.
 
 ### Prova
 

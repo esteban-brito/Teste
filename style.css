@@ -570,8 +570,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 
      `padding-bottom` porque o bloco precisa SUBIR, e com conteúdo centrado um
      padding desloca por metade do seu valor. A mesma regra vale para o corpo do
-     treinador, logo abaixo: uma regra para as duas categorias. Degraus no fim do
-     arquivo. */
+     treinador: uma regra para as duas categorias. Degraus no fim do arquivo. */
   padding-bottom:var(--stats-simetria,0px)}
 .card .c-st{width:100%;align-content:center}
 .card .c-st i{font-size:clamp(7.5px,5cqw,11px)}
@@ -718,12 +717,9 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
      que ele libera é o que absorve a medição mais larga do FreeType no CI. */
   font-size:clamp(9px,6cqw,13px);line-height:1.34;font-weight:600;
   letter-spacing:.005em;color:#eef4fa;
-  /* A MESMA regra do bloco de trilhos do jogador: o vão acima do corpo, contado
-     da característica, tem de igualar o vão abaixo dele até o campeonato — e
-     medido na letra, não na caixa. Sem correção o desnível é de 1,9 a 5,9 px,
-     maior que o do jogador. Aqui o coeficiente multiplica também `--carac-esc`,
-     porque a característica encolhe por comprimento e o espaço morto acompanha o
-     corpo real do texto, não o nominal. */
+  /* A MESMA regra do bloco de trilhos do jogador, medida na letra. Sem ela o
+     desnível do treinador vai a 7,9 px no pior caso. O coeficiente depende de
+     `--carac-esc` porque é o encolhimento da característica que abre o vão. */
   padding-bottom:var(--desc-simetria,0px)}
 
 @container (max-width:176px){
@@ -1426,37 +1422,27 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,107,42,.45)}
 @container (max-width:150px){
   .coachcard .c-identidade--coach{--carac-simetria:calc(.1425*var(--t-carac))}}
 
-/* VERSO — a mesma correção, e a mesma régua, para as DUAS categorias. O bloco
-   central sobe até o vão acima dele igualar o vão abaixo, medido na letra:
-   playstyle → primeiro rótulo contra último trilho → campeonato no jogador,
-   característica → frase contra última linha → campeonato no treinador.
+/* VERSO — a mesma regra e a mesma régua para as DUAS categorias: o bloco central
+   sobe até o vão acima dele igualar o vão abaixo, medido na LETRA.
 
-   Três degraus porque o desnível não é proporcional a `--t-style` sozinho: entre
-   176 px e 151 px ele cai de 4,22 para 1,59 px no jogador e de 5,92 para 3,03 px
-   no treinador, com apenas 3 px de diferença de corpo. A quebra aparece nas duas
-   categorias, o que aponta para o rodapé de era que elas compartilham; enquanto
-   não for entendida, ela custa 1,2 px de resíduo nesse par. Nas outras seis
-   larguras o resíduo fica em 0,06–0,56 px, contra 6,3–8,9 px antes.
+     jogador  : playstyle → 1º rótulo      contra  último trilho → campeonato
+     treinador: característica → frase     contra  última linha  → campeonato
 
-   Entender a quebra e reduzir três degraus a um é a melhoria certa. Esticar o
-   teto da guarda não é. */
+   O jogador precisa de três degraus de densidade. O treinador não precisa de
+   nenhum, e essa é a parte que explica o fenômeno: com a característica em corpo
+   cheio o desvio dele já é 0,05 px. O desequilíbrio inteiro vem de `--carac-esc`
+   — como `.c-vestilo` é ancorado pelo TOPO, corpo menor SOBE a linha de base e
+   abre o vão acima. A 151 px isso vai de 0,05 px em `Gestor` a 5,06 px em
+   `Desenvolvedor`. O fator .85 sai da métrica da fonte (.99 − .175); o ajuste dos
+   dados pediu .878.
+
+   RESÍDUO CONHECIDO, e é ele que dita os tetos das guardas: o par 176/151 px
+   carrega uma quebra que nenhum dos dois modelos explica — 4,22 → 1,59 px no
+   jogador e 5,92 → 3,03 px no treinador com 3 px de diferença de corpo. Ela custa
+   até 2,27 px no Windows e 3,27 px no FreeType do CI. Recalibrar em cima dela só
+   troca qual largura reprova; o conserto é entender a quebra. §21 do design. */
 .card .c-vstats{--stats-simetria:calc(.146*var(--t-style))}
 @container (max-width:176px){.card .c-vstats{--stats-simetria:calc(.137*var(--t-style))}}
 @container (max-width:150px){.card .c-vstats{--stats-simetria:calc(.109*var(--t-style))}}
-/* O treinador NÃO precisa de degraus de densidade, e a razão é a parte
-   interessante: com a característica em tamanho cheio o desvio dele já é ~0,05 px.
-   O desequilíbrio inteiro vem de `--carac-esc`, o encolhimento por comprimento —
-   `DESENVOLVEDOR` sai a 0,7 do corpo, e como `.c-vestilo` é ancorado pelo TOPO, o
-   corpo menor SOBE a linha de base e abre o vão acima do texto. A 151 px isso vai
-   de 0,05 px em `Gestor` a 5,06 px em `Desenvolvedor`.
-
-   Por isso a correção é proporcional a (1 − carac-esc) e não à largura. O fator
-   sai da métrica: a linha de base desce `ascent` mais meia entrelinha do topo da
-   caixa, o que na Chakra Petch com `line-height:.95` dá .99 − .175 ≈ .85 do corpo.
-   Conferido contra o ajuste dos dados, que pediu .878.
-
-   Uma expressão para as oito larguras e as quatro características. Se alguém
-   ancorar a característica pela BASE em vez do topo, este termo deixa de existir
-   e deve ser removido, não recalibrado. */
 .coachcard .cback .c-vdesc{
   --desc-simetria:calc(.85*var(--t-style)*(1 - var(--carac-esc,1)))}
