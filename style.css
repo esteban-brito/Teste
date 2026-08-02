@@ -118,7 +118,7 @@ header{display:flex;position:relative;flex-wrap:wrap;flex-direction:row;align-it
   background:rgba(7,10,15,.68)}
 .spinwrap.gone{opacity:0;pointer-events:none;transition:opacity .2s}
 button.roll,button.ghost{font-family:var(--ff);font-weight:700;letter-spacing:.1em;text-transform:uppercase;
-  cursor:pointer;border-radius:10px;-webkit-tap-highlight-color:transparent;transition:transform .12s var(--ease)}
+  cursor:pointer;border-radius:var(--radius);-webkit-tap-highlight-color:transparent;transition:transform .12s var(--ease)}
 button.roll{font-size:.92rem;padding:13px 28px;border-radius:8px;border:1px solid var(--accent);color:#170700;
   background:linear-gradient(180deg,#ff6a2f,#ff5a1f)}
 button.roll:hover{transform:translateY(-2px)}
@@ -140,7 +140,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    Estrutura compartilhada pelas duas faces. A anatomia e os tokens canônicos
    ficam no bloco "CARTA CANÔNICA" abaixo; aqui vivem apenas o envelope e os
    dois eixos herdados por jogador e treinador. */
-.card,.coachcard{position:relative;border-radius:10px;cursor:pointer;overflow:hidden;
+.card,.coachcard{position:relative;border-radius:var(--radius);cursor:pointer;overflow:hidden;
   min-height:148px;aspect-ratio:5/7;background:#080b11;container-type:inline-size;
   isolation:isolate;perspective:800px;-webkit-perspective:800px;
   transition:transform var(--motion-card-fast) var(--ease-card);
@@ -203,11 +203,10 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   font-family:var(--ff);font-weight:700;font-size:46cqw;line-height:1;
   letter-spacing:-.05em;
   color:color-mix(in srgb,var(--m-ink) 17%,transparent)}
-/* No treinador as duas âncoras trocam de lado: o topo livre é a própria placa e o
-   limite de baixo é o topo do bloco do OVR, medido em 67,2% a 250 px — a faixa de
-   categoria fica abaixo dele e não entra na conta. */
-.coachcard{--mono-base:67%}
-.coachcard .c-mono{top:var(--placa);bottom:calc(100% - var(--mono-base))}
+/* No treinador o campo livre termina antes da faixa cromada, que fica acima da
+   placa. O topo é o mesmo do jogador, porque o OVR das duas categorias mora no
+   mesmo lugar. */
+.coachcard .c-mono{bottom:calc(var(--placa) + var(--cat-h))}
 /* Grão de filme: quebra o degradê perfeito, que é o que denuncia CSS puro.
    SEM mix-blend-mode. O blend obrigava cada carta a virar uma camada própria e
    forçava recomposição do que estava atrás: custava 7 fps com 6 cartas na tela.
@@ -229,8 +228,17 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .c-ovr{position:absolute;left:var(--pad);top:5.5%;z-index:5;font-family:var(--ff);
   font-size:var(--t1);font-weight:700;line-height:.78;letter-spacing:-.03em;color:#fff;
   margin-left:-.055em;text-shadow:0 2px 20px rgba(0,0,0,.55)}
+/* O rótulo CANCELA o acerto óptico do pai em vez de herdá-lo. O `-.055em` de
+   `.c-ovr` existe para o algarismo grande, que tem folga lateral própria; um
+   rótulo de 3,9cqw com tracking de .26em não tem folga nenhuma para compensar, e
+   herdando o recuo ele saía da coluna: medido a 250 px, ficava 3,95 px à esquerda
+   do nick e da função, que se alinham exatamente em `--pad`.
+
+   A compensação é o recuo do pai convertido para o em DESTE elemento:
+   .055em × (--t1 33cqw ÷ 3,9cqw) = .4654em. Se `--t1` ou este corpo mudarem,
+   refaça a conta — o alinhamento é cobrado pelo medidor. */
 .c-ovr small{display:block;font-size:3.9cqw;letter-spacing:.26em;font-weight:700;line-height:1;
-  color:color-mix(in srgb,var(--m-ink) 88%,#fff);margin:.35em 0 0 .06em;
+  color:color-mix(in srgb,var(--m-ink) 88%,#fff);margin:.35em 0 0 .4654em;
   text-shadow:none;text-transform:uppercase}
 /* Base do treinador; no jogador a bandeira integra a grade inferior. */
 .c-identidade{display:contents}
@@ -429,27 +437,31 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   grid-template-areas:"nick flag" "func func" "meta meta";
   column-gap:clamp(1px,1cqw,3px);row-gap:clamp(.6px,.45cqw,1.2px);align-items:end;
   bottom:var(--b1)}
-/* Treinador: o bloco editorial encosta no topo e o OVR desce para a base. É o
-   espelho vertical — mas só do MOBILIÁRIO, e com a aresta reta (ver abaixo).
+/* Treinador: a MESMA grade, com duas linhas em vez de três.
 
-   O bloco tem DUAS linhas, não três: sem função secundária, o time sobe para o
-   eixo da característica e fica sob a bandeira, fechando as duas colunas nas
-   duas linhas. A terceira linha existia só para carregar o time sozinho e era o
-   maior vazio da frente.
+   Sem função secundária, o time sobe para o eixo da característica e fica sob a
+   bandeira, fechando as duas colunas nas duas linhas. A terceira linha do
+   jogador existe só para carregar o time sozinho.
 
    A caixa ocupa a placa inteira e as linhas são centradas nela por
    `align-content`. Ancorar por `--b1` como o jogador faz deixaria o bloco de duas
    linhas colado numa aresta e com o vão todo na outra; centrado, a folga nasce
-   igual em cima e embaixo em qualquer largura e sem número escolhido a dedo. */
-.c-identidade--coach{top:0;bottom:calc(100% - var(--placa));
+   igual em cima e embaixo em qualquer largura e sem número escolhido a dedo.
+
+   `align-content:center` centra a CAIXA, e a caixa da primeira linha carrega
+   folga morta entre o topo e o glifo. Centrada assim, a tinta sobe — o mesmo
+   erro que já fez uma guarda de simetria cravar 0,00 px com 3 px visíveis. Com
+   conteúdo centrado um padding desloca o bloco por METADE do seu valor, então
+   `padding-top` vale o desvio medido. O medidor cobra a simetria pela TINTA, por
+   `Range`, e reprova se este número sair de faixa. */
+.c-identidade--coach{top:calc(100% - var(--placa));bottom:0;
   grid-template-areas:"nick flag" "func meta";align-content:center;
+  padding-top:var(--carac-simetria,1.85cqw);
   /* Respiro maior que o do jogador entre as duas linhas. Lá, três linhas dividem
      a placa e o `row-gap` é quase nulo por falta de espaço; aqui sobra, e o mesmo
      valor governa os dois afastamentos que importam — nick/característica na
-     coluna esquerda e bandeira/time na direita. Um número só mantém os dois
-     eixos iguais, e `align-content:center` devolve a folga que sobrar
-     igualmente para cima e para baixo. */
-  row-gap:clamp(3.5px,3.6cqw,10px)}
+     coluna esquerda e bandeira/time na direita. */
+  row-gap:clamp(1px,1.1cqw,3.5px)}
 .card .c-identidade--player .c-nick,.coachcard .c-identidade--coach .c-nick{
   grid-area:nick;position:static;inset:auto;
   min-width:0;font-size:var(--t2);line-height:.9;letter-spacing:-.005em;overflow:visible}
@@ -457,6 +469,13 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   grid-area:func;position:static;inset:auto;
   align-self:end;font-size:clamp(9px,var(--t3),14px);line-height:.95;letter-spacing:.13em;
   color:var(--r-ink);white-space:nowrap}
+/* A característica é mais longa que uma função: `DESENVOLVEDOR` tem 13 letras
+   contra as 6 de `RIFLER`. O corpo desce um degrau para a categoria INTEIRA, não
+   por nome. Escalar por comprimento faria `GESTOR` sair grande e `ESTRATEGISTA`
+   pequeno lado a lado, que é o oposto de padronizado — mesma razão pela qual o
+   nick usa corpo comum por faixa de densidade e nunca exceção por nick. O piso de
+   8 px é cobrado pelo E2E. */
+.coachcard .c-identidade--coach .c-func{font-size:clamp(8px,5.4cqw,12px);letter-spacing:.1em}
 .card .c-identidade--player .c-flag,.coachcard .c-identidade--coach .c-flag{
   grid-area:flag;position:static;inset:auto;
   display:block;width:clamp(13px,9.5cqw,22px);justify-self:end;align-self:center}
@@ -547,28 +566,37 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   /* Altura da faixa de categoria. Vive num token porque o OVR se apoia nela: o
      número precisa subir exatamente o que a faixa ocupa, e não um chute. */
   --cat-h:clamp(13px,11.6cqw,26px)}
-/* A placa nasce no topo e sua aresta inferior é RETA, não diagonal. A diagonal é
-   assinatura da carta de jogador, onde ela sobe da esquerda para a direita e
-   fecha contra o canto do OVR; espelhada para o topo do treinador ela apontava
-   para o lado errado e brigava com a moldura serrilhada. Reta, a faixa vira uma
-   régua horizontal e a moldura fica sendo a única silhueta exclusiva. */
+/* FRENTE DO TREINADOR — reestruturada em 01/08/2026 a pedido do responsável.
+
+   A placa volta para a BASE, como a do jogador, e sua aresta continua RETA. A
+   diagonal é assinatura da carta de jogador: ela sobe da esquerda para a direita
+   e fecha contra o canto do OVR. No treinador a régua horizontal é o que separa,
+   e a faixa cromada ocupa exatamente o lugar que a diagonal ocupa lá.
+
+   A pilha de baixo, de cima para baixo: régua serrilhada · faixa `TREINADOR` ·
+   bloco de identidade colado na borda inferior. O OVR sobe para o topo esquerdo,
+   na MESMA posição da carta de jogador — é o pedido literal do responsável, e o
+   medidor passou a comparar as duas cartas nesse eixo.
+
+   Some daqui o que a placa no topo exigia: o deslocamento do retrato (a cabeça
+   já não é coberta), a vinheta invertida (o OVR não mora mais embaixo) e a
+   âncora inferior do OVR. Cada um deles existia só para compensar a placa alta. */
 .coachcard .c-fio,.coachcard .c-placa,
 .coachcard .c-vfio,.coachcard .c-vfaixa{clip-path:none}
-.coachcard .c-fio,.coachcard .c-placa{top:0;bottom:auto}
-/* O OVR do treinador é o do jogador, movido para a base: mesmo corpo, mesmo
-   recuo, mesmo rótulo `OVERALL` solto embaixo. A carta de jogador não tem cromo
-   nenhum — a faixa abaixo é exclusiva do treinador e é OUTRO elemento, o que
-   deixa o bloco do OVR livre dos remendos que ele exigia quando os dois
-   dividiam a mesma caixa (largura cheia, `text-indent`, margem negativa). */
-.coachcard .c-ovr{top:auto;bottom:calc(var(--cat-h) + 3.2%)}
+/* A régua serrilhada SAI DA FRENTE, por decisão do responsável — com a faixa
+   cromada logo abaixo dela, as duas linhas empilhadas ficavam pesadas e o
+   tracejado lia como borda provisória. A faixa já separa retrato e identidade
+   sozinha. No VERSO o serrilhado permanece: lá não há cromo, e é ele que marca a
+   régua sob a faixa. */
+.coachcard .c-fio{display:none}
 /* `OVERALL` na cor da carta. No treinador `--m-ink` é o cinza estrutural, então
    sem isto o rótulo sairia neutro enquanto todo o resto da carta fala pela
    característica. */
 .coachcard .c-ovr small{color:color-mix(in srgb,var(--r-ink) 88%,#fff)}
 
-/* Faixa de categoria: EXCLUSIVA do treinador, atravessa a carta e encosta na
-   borda de baixo. Altura por token para o OVR acima poder se apoiar nela sem
-   número mágico.
+/* Faixa de categoria: EXCLUSIVA do treinador, atravessa a carta de ponta a ponta
+   e assenta sobre a placa — não mais na borda de baixo, que agora pertence ao
+   bloco de identidade. Altura por token porque a placa se apoia nela.
 
    Cromo CLARO com tinta escura. A primeira tentativa foi o inverso — metal
    rebaixado sobre base quase preta, tinta clara — e lia como um véu, não como
@@ -581,7 +609,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    `background-color`, e um `background-image` sozinho o deixa ver tinta escura
    sobre o fundo escuro da carta — 1,03:1. A base também é o piso real do cromo,
    então o que a guarda mede é o pior caso verdadeiro, não uma média otimista. */
-.coachcard .c-cat{position:absolute;left:0;right:0;bottom:0;z-index:5;
+.coachcard .c-cat{position:absolute;left:0;right:0;bottom:var(--placa);z-index:5;
   height:var(--cat-h);display:flex;align-items:center;justify-content:center;
   font-family:var(--ff);font-size:5.2cqw;font-weight:800;line-height:1;
   letter-spacing:.3em;text-transform:uppercase;color:#08111a;
@@ -589,41 +617,27 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   box-shadow:inset 0 1px 0 rgba(255,255,255,.55),
     inset 0 -1px 0 color-mix(in srgb,var(--cromo) 70%,#000),
     0 -3px 12px rgba(0,0,0,.5)}
-/* O OVR do treinador desce para a base, onde o retrato mostra roupa e não fundo:
-   sobre o casaco claro do hally o contraste caía a 2,14:1, abaixo do contrato de
-   4,5:1. A proteção é o espelho da que o jogador já tem no topo, e é calibrada
-   para o contrato — não para o máximo possível. A versão anterior chegava a
-   10,13:1 e, para isso, apagava a metade inferior de todo retrato. */
-/* O retrato do treinador desce a altura da placa.
+/* O verso mantém o bloco no topo: lá ele encabeça o conteúdo, e é o rodapé de era
+   que fecha a carta. A frente usa a grade de identidade, acima. */
+/* Com o retrato inteiro à mostra e o OVR de volta ao topo, a vinheta do treinador
+   volta a ser a do jogador. A versão anterior escurecia a METADE INFERIOR para
+   proteger um OVR que morava embaixo; hoje o topo já é protegido pela primeira
+   camada de `.c-foto`, compartilhada pelas duas categorias.
 
-   POR QUE. O recorte de runtime `100% auto · 50% 12%` é INERTE: o asset é 5:7
-   exato e a carta também, então a imagem preenche sem sobra e uma percentagem de
-   Y não tem folga para deslocar. Na carta de jogador isso nunca importou — a
-   placa mora embaixo, sobre o tronco. No treinador ela mora em cima, e a grade
-   fotográfica de `docs/card-portraits.md` põe o topo da cabeça a 5–10%: a placa
-   cobria 0–22%, ou seja, a cabeça inteira. Todo retrato de treinador lia como
-   plano de tronco, e não era limitação da fonte — era geometria.
-
-   Deslocamento por COMPRIMENTO, não por percentagem, justamente porque não há
-   sobra: percentagem de zero é zero. `--faixa-n` é a altura da placa do treinador
-   em % da ALTURA; como a carta é 5:7, o mesmo valor em % da LARGURA é ×1,4 — daí
-   `cqw`, a única unidade de container disponível sob `container-type:inline-size`.
-   A escala do asset não muda: isto não é zoom, é a mesma imagem mais baixa. O que
-   sai pelo rodapé já era coberto pela faixa cromada. */
-.coachcard .c-foto{background-position:50% 0,50% 0,
-  50% calc(var(--faixa-n)*1.4*1cqw),50% 0}
-.coachcard .c-vinheta{background:linear-gradient(180deg,transparent 44%,
-  rgba(3,6,11,.32) 55%,rgba(3,6,11,.62) 65%,rgba(3,6,11,.82) 77%,rgba(3,6,11,.90) 100%)}
+   Pelo mesmo motivo saiu o deslocamento do retrato: ele existia porque a placa
+   cobria 0–22%, exatamente onde a grade fotográfica põe a cabeça. Com a placa na
+   base, o recorte único volta a valer para as duas categorias — que é o que
+   `docs/card-portraits.md` sempre prometeu. */
 .coachcard .c-vfaixa{background:linear-gradient(2deg,
   color-mix(in srgb,var(--r) 14%,#0a0f17),#070a10 48%)}
 .coachcard .cback{background:linear-gradient(168deg,
   color-mix(in srgb,var(--r) 8%,#080b11),#06080d 58%)}
-/* O serrilhado a 45° saiu da moldura. Ele sobrevive só onde sempre fez sentido:
-   na régua HORIZONTAL sob a placa e sob a faixa do verso. Como moldura, ele
-   competia com a faixa cromada do rodapé a poucos pixels dela.
+/* O serrilhado a 45° saiu da moldura. Ele sobrevive numa régua horizontal só —
+   a do VERSO, sob a faixa. Como moldura, competia com a faixa cromada do rodapé
+   a poucos pixels dela; na frente, saiu junto com o fio (ver acima).
    A moldura passa a usar `--aro`/`--aro-pintura`, a mesma mecânica das seis
    faixas de raridade — o treinador deixa de ter regra própria de borda. */
-.coachcard .c-fio,.coachcard .c-vfio{background:repeating-linear-gradient(90deg,
+.coachcard .c-vfio{background:repeating-linear-gradient(90deg,
   color-mix(in srgb,var(--r) 86%,transparent) 0 3.4cqw,transparent 3.4cqw 6.4cqw)}
 /* O treinador não tem função secundária, então a faixa de contexto fica com um
    item só. Ele precisa ocupar a linha inteira: sem isto o time permanece na
@@ -693,7 +707,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   .coachcard .c-vef{padding-top:clamp(1px,.8cqw,2px)}
 }
 
-.slot{border:1px dashed rgba(52,65,85,.5);border-radius:10px;min-height:148px;aspect-ratio:5/7;
+.slot{border:1px dashed rgba(52,65,85,.5);border-radius:var(--radius);min-height:148px;aspect-ratio:5/7;
   background:#0b1018;display:flex;align-items:center;justify-content:center}
 .slot .ph{color:#243145;font-size:1.6rem}
 .slot.coach{border-color:rgba(255,200,50,.25)} .slot.coach .ph{color:rgba(255,200,50,.28)}
@@ -778,7 +792,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 @keyframes telaIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .overlay-head{display:flex;align-items:center;justify-content:space-between;gap:14px;
   padding:max(18px,env(safe-area-inset-top)) max(clamp(16px,4vw,34px),env(safe-area-inset-right)) 18px max(clamp(16px,4vw,34px),env(safe-area-inset-left));
-  border-bottom:1px solid rgba(124,156,196,.14);flex-wrap:wrap;background:#111826;position:relative}
+  border-bottom:1px solid rgba(124,156,196,.14);flex-wrap:wrap;background:var(--panel2);position:relative}
 .overlay-title{font-family:var(--ff);font-weight:700;font-size:clamp(1.1rem,3vw,1.5rem);
   letter-spacing:.06em;color:var(--txt);display:flex;align-items:baseline;gap:10px}
 .overlay-title::before{content:"";width:4px;height:1.1em;border-radius:2px;background:var(--accent);align-self:center}
@@ -801,7 +815,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .swiss-colhead.elim{background:linear-gradient(180deg,rgba(255,45,72,.16),rgba(255,45,72,.05));
   color:var(--s-red-lit);border:1px solid var(--s-red-dim)}
 .swiss-colhead.neutral{background:var(--panel2);color:var(--dim);border:1px solid var(--line)}
-.match{display:flex;align-items:center;gap:8px;background:#111826;min-height:50px;
+.match{display:flex;align-items:center;gap:8px;background:var(--panel2);min-height:50px;
   border:1px solid rgba(124,156,196,.16);border-radius:var(--radius);padding:10px 12px;
   transition:border-color .15s,box-shadow .15s}
 .match.mine{border-color:var(--cyan);box-shadow:0 0 0 1px rgba(57,211,255,.4),0 0 16px rgba(57,211,255,.18)}
@@ -823,7 +837,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .bracket-round{display:flex;flex-direction:column;gap:clamp(16px,3vw,30px);justify-content:center;flex:0 0 auto}
 .bracket-round-title{font-family:var(--ff);font-weight:700;font-size:.66rem;letter-spacing:.22em;
   color:var(--dim);text-align:center;margin-bottom:4px;text-transform:uppercase}
-.series{background:#111826;border:1px solid rgba(124,156,196,.16);border-radius:var(--radius);
+.series{background:var(--panel2);border:1px solid rgba(124,156,196,.16);border-radius:var(--radius);
   padding:12px 14px;min-width:200px;display:flex;flex-direction:column;gap:0;position:relative;overflow:hidden;
   transition:border-color .18s,box-shadow .18s}
 .series-sep{height:1px;background:var(--line);margin:7px 0;position:relative}
@@ -870,7 +884,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 
 /* ── PARTIDA: antessala + mapa ao vivo ── */
 .match-overlay{align-items:stretch}
-.match-close{position:absolute;top:max(14px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right));z-index:7;width:38px;height:38px;border-radius:10px;
+.match-close{position:absolute;top:max(14px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right));z-index:7;width:38px;height:38px;border-radius:var(--radius);
   border:1px solid var(--line);background:var(--panel2);color:var(--dim);font-size:1rem;cursor:pointer;
   transition:.14s;-webkit-tap-highlight-color:transparent}
 .match-close:hover{color:var(--txt);border-color:var(--accent);transform:scale(1.05)}
@@ -889,7 +903,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .pm-versus{font-family:var(--ff);font-weight:700;font-size:1.4rem;color:var(--dim);letter-spacing:.1em}
 .livemap{flex:1;display:flex;flex-direction:column;min-height:0}
 .scorebar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
-  border-bottom:1px solid var(--line);background:#111826;
+  border-bottom:1px solid var(--line);background:var(--panel2);
   padding:max(clamp(14px,2.5vw,22px),env(safe-area-inset-top)) clamp(14px,3vw,30px) clamp(14px,2.5vw,22px);gap:clamp(10px,3vw,28px)}
 .sb-team{display:flex;align-items:center;gap:13px;min-width:0}
 .sb-team.sb-b{flex-direction:row-reverse;text-align:right}
@@ -975,7 +989,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .jt-sc{font-family:var(--ff);font-weight:700;font-size:.78rem;font-variant-numeric:tabular-nums}
 .jt-w{border-color:rgba(127,230,168,.3);background:rgba(127,230,168,.06)}.jt-w .jt-sc{color:var(--win)}
 .jt-l{border-color:rgba(224,122,106,.3);background:rgba(224,122,106,.06)}.jt-l .jt-sc{color:var(--loss)}
-.fr-row{display:grid;grid-template-columns:20px 34px 1fr auto 54px auto;align-items:center;gap:10px;padding:9px 13px;border-radius:10px;background:rgba(255,255,255,.02);border:1px solid var(--line)}
+.fr-row{display:grid;grid-template-columns:20px 34px 1fr auto 54px auto;align-items:center;gap:10px;padding:9px 13px;border-radius:var(--radius);background:rgba(255,255,255,.02);border:1px solid var(--line)}
 .fr-role{font-family:var(--ff);font-weight:700;font-size:.56rem;letter-spacing:.04em;color:var(--rc,var(--dim));text-align:center;border:1px solid color-mix(in srgb,var(--rc,#6c7d93) 40%,transparent);border-radius:5px;padding:2px 0}
 .fr-ovr{font-family:var(--ff);font-weight:700;font-size:.72rem;color:var(--dim);font-variant-numeric:tabular-nums;text-align:right}
 .fr-bar{height:5px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden}
@@ -983,7 +997,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .fr-pos.md-g{color:var(--gold)}.fr-pos.md-s{color:var(--neutral)}.fr-pos.md-b{color:var(--bronze)}
 .fr-row.mvp{border-color:rgba(255,206,74,.4);background:rgba(255,206,74,.05)}
 .final-rec{display:flex;gap:8px;width:100%;justify-content:center}
-.rec{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:9px 6px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.02)}
+.rec{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:9px 6px;border-radius:var(--radius);border:1px solid var(--line);background:rgba(255,255,255,.02)}
 .rec-v{font-family:var(--ff);font-weight:800;font-size:1.05rem;color:var(--txt);font-variant-numeric:tabular-nums}
 .rec-l{font-family:var(--ff);font-weight:600;font-size:.58rem;letter-spacing:.05em;color:var(--dim);text-transform:uppercase}
 .final-wrap .final-selos{animation-delay:.34s}.final-wrap .final-mvp-card{animation-delay:.44s}
@@ -1059,7 +1073,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .majorbar[hidden],#majorTag[hidden]{display:none}
 .majorbar{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:18px}
 .majorbtn{display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left;
-  padding:16px 18px;border-radius:var(--radius);border:1px solid rgba(255,107,42,.36);background:#111826;
+  padding:16px 18px;border-radius:var(--radius);border:1px solid rgba(255,107,42,.36);background:var(--panel2);
   transition:transform .14s var(--ease),border-color .14s,box-shadow .14s;
   -webkit-tap-highlight-color:transparent;position:relative;overflow:hidden}
 .majorbtn::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
@@ -1107,7 +1121,7 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
 a.rosterlink{display:flex;align-items:center;gap:14px;width:100%;text-decoration:none;
   font-family:var(--ff);border:1px solid rgba(148,163,184,.18);background:#0d131d;border-radius:var(--radius);
   padding:14px 18px;color:var(--txt);transition:border-color .15s,transform .12s var(--ease),background .15s}
-a.rosterlink:hover{border-color:rgba(255,90,31,.45);transform:translateY(-1px);background:#111826}
+a.rosterlink:hover{border-color:rgba(255,90,31,.45);transform:translateY(-1px);background:var(--panel2)}
 a.rosterlink .rl-ic{font-size:1.15rem;color:var(--accent);line-height:1;flex:none}
 a.rosterlink .rl-tx{display:flex;flex-direction:column;gap:3px;min-width:0}
 a.rosterlink .rl-t{font-weight:700;font-size:.84rem;letter-spacing:.08em;text-transform:uppercase}
@@ -1197,7 +1211,7 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,107,42,.45)}
 .sec-lbl{color:var(--txt);letter-spacing:.22em}
 
 /* ════ MAJOR PROFISSIONAL: um só sistema de painel em todas as telas de torneio ════
-   Padrão: raio var(--radius) · borda rgba(124,156,196,.16) · fundo #111826 · fio de luz
+   Padrão: raio var(--radius) · borda rgba(124,156,196,.16) · fundo var(--panel2) · fio de luz
    no topo. Suíça, bracket, antessala, scoreboard e tela final falam a mesma língua. */
 /* — Fase suíça — */
 .swiss{gap:clamp(14px,2.4vw,22px)}
@@ -1214,7 +1228,7 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,107,42,.45)}
 .champion{border-radius:16px}
 /* — Antessala: blocos de time em vidro — */
 .pm-team{padding:20px 22px;border-radius:var(--radius);border:1px solid rgba(124,156,196,.16);
-  background:#111826}
+  background:var(--panel2)}
 .pm-team.mine{border-color:rgba(57,211,255,.4);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 0 0 1px rgba(57,211,255,.22),0 18px 40px -24px rgba(57,211,255,.35)}
 .prematch-ctx{padding:8px 18px;border-radius:20px;border:1px solid rgba(255,90,31,.35);
@@ -1223,12 +1237,12 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,107,42,.45)}
 .rs-cell:nth-child(13){margin-left:16px;position:relative}
 .rs-cell:nth-child(13)::before{content:"";position:absolute;left:-10px;top:-2px;bottom:-2px;width:2px;
   border-radius:2px;background:linear-gradient(180deg,transparent,rgba(124,156,196,.5),transparent)}
-.ls-side{border-radius:var(--radius);border-color:rgba(124,156,196,.16);background:#111826}
+.ls-side{border-radius:var(--radius);border-color:rgba(124,156,196,.16);background:var(--panel2)}
 .ls-head{padding:11px 14px}
 .ls-row{padding:10px 14px}
 /* — Tela final: cartões padronizados — */
-.final-mvp-card{border-radius:var(--radius);background:#111826}
-.fr-row,.jt,.rec{border-radius:var(--radius);border-color:rgba(124,156,196,.14);background:#111826}
+.final-mvp-card{border-radius:var(--radius);background:var(--panel2)}
+.fr-row,.jt,.rec{border-radius:var(--radius);border-color:rgba(124,156,196,.14);background:var(--panel2)}
 .sec-lbl{display:flex;align-items:center;gap:7px}
 .sec-lbl::before{content:"";width:6px;height:6px;border-radius:1.5px;transform:rotate(45deg);
   background:linear-gradient(135deg,#ff8a4a,var(--accent));box-shadow:0 0 7px rgba(255,90,31,.5)}
@@ -1294,15 +1308,37 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,107,42,.45)}
 .hall-rec-m{font-size:.68rem;color:var(--dim)}
 .hall-import{cursor:pointer}
 
-/* ── Treinador: a placa da frente segue a faixa do verso ─────────────────────
-   Virar a carta não pode mover a régua horizontal. Na carta de jogador a frente
-   usa 24% e o verso 22% porque lá as duas arestas são diagonais e desencontram
-   de propósito; no treinador elas são retas e precisam coincidir.
+/* ── Treinador: a placa da frente tem escada própria ─────────────────────────
+   Até 01/08/2026 esta regra amarrava a placa da frente à faixa do verso
+   (`--placa-n:var(--faixa-n)`, 22%), para que virar a carta não movesse a régua
+   horizontal. Com a frente reestruturada essa razão deixou de existir: a placa
+   desceu para a BASE e a faixa continua no topo do verso, então o flip já troca
+   tudo de lugar. Amarrar as duas só mantinha a placa alta demais.
 
-   Esta regra vive no fim do arquivo por necessidade, não por descuido: a escada
-   de densidade (`@container` de 176 px e 150 px) reescreve `--placa-n` para 26 e
-   28 em `.card .cfaces,.coachcard .cfaces`, com a mesma especificidade. Declarada
-   antes, ela perdia para a escada e a placa voltava a divergir da faixa em todas
-   as larguras compactas. `--faixa-n` não entra na escada, então amarrar uma na
-   outra mantém as duas alturas iguais em qualquer densidade. */
-.coachcard .cfaces{--placa-n:var(--faixa-n)}
+   A placa agora abraça o que carrega. Ela tem DUAS linhas contra as três do
+   jogador, e os valores saem de medição, não de proporção: a tinta das duas
+   linhas mede 11,8% da carta a 250 px e cresce até 14,8% a 120 px, porque os
+   corpos saturam no `clamp` enquanto a carta encolhe. Uma altura só deixaria
+   10,2% de sobra em cima e 7,2% embaixo — foi o que ficou visivelmente vazio.
+
+   Os três degraus deixam ~2,3 a 2,6% de respiro de cada lado em TODAS as oito
+   larguras, com folga para o FreeType do CI medir a linha mais alta que o
+   DirectWrite. O medidor cobra a simetria e a faixa desse respiro; mexer aqui
+   sem medir de novo reprova.
+
+   Continua no fim do arquivo pelo mesmo motivo de antes: a escada de densidade
+   reescreve `--placa-n` em `.card .cfaces,.coachcard .cfaces` com a mesma
+   especificidade, então só ganha quem vem depois. */
+.coachcard .cfaces{--placa-n:17.5}
+@container (max-width:176px){.coachcard .cfaces{--placa-n:19}}
+@container (max-width:150px){.coachcard .cfaces{--placa-n:20}}
+
+/* A correção de simetria da tinta segue os MESMOS três degraus, e pelo mesmo
+   motivo: os corpos saturam no `clamp` em ritmos diferentes dos da placa, então
+   o desvio residual não é constante em `cqw`. Medido nas oito larguras, ele ia de
+   0,48 px a 1,52 px com um valor único — o pico caía justamente na costura dos
+   150 px. Com três degraus o pior caso fica em 0,32 px, contra os 0,75 px que o
+   medidor cobra. Recalibre medindo de novo; não estique o teto da guarda. */
+.coachcard .c-identidade--coach{--carac-simetria:1.85cqw}
+@container (max-width:176px){.coachcard .c-identidade--coach{--carac-simetria:1.78cqw}}
+@container (max-width:150px){.coachcard .c-identidade--coach{--carac-simetria:2.25cqw}}

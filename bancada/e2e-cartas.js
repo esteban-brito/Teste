@@ -100,7 +100,11 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
           const values=cards.map(card=>px(card.querySelector(selector)));
           ranges[selector]=Math.max(...values)-Math.min(...values);
         }
-        const minimums=[[".card .c-func",9],[".card .c-role2",7],[".c-vnick",11],[".c-vestilo small",7],
+        /* `.coachcard .c-func` entra com piso próprio: a característica usa um
+           corpo menor que o da função do jogador porque é mais longa, e sem piso
+           declarado ela ficaria livre para encolher sem ninguém reclamar. */
+        const minimums=[[".card .c-func",9],[".coachcard .c-func",8],
+          [".card .c-role2",7],[".c-vnick",11],[".c-vestilo small",7],
           [".c-st i",7],[".c-st b",9],[".c-vrod b",8],[".c-vrod span",7],[".c-vdesc",8]];
         const tooSmall=minimums.flatMap(([selector,minimum])=>
           [...document.querySelectorAll(selector)].filter(element=>visible(element)&&px(element)<minimum-.05)
@@ -249,29 +253,47 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       return campos.includes("conteúdo frontal sempre visível");
     });
     check(detectaOpacidade,"medidor acusa conteúdo escondido por opacidade");
+    /* Reescrito em 01/08/2026 junto com a nova frente do treinador. As injeções
+       mudaram porque o contrato mudou: não se prova mais que a frente replica o
+       verso, e sim que a identidade mora DENTRO da placa, que o OVR ocupa a mesma
+       posição do jogador e que o serrilhado não voltou à frente. */
     const detectaEspelhoCoach=await page.evaluate(()=>{
       const coach=document.querySelector(".coachcard");
-      const nickFrente=coach.querySelector(".cfront .c-vnick"),topoAntes=nickFrente.style.top;
-      nickFrente.style.top="12%";
-      const frente=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
-      nickFrente.style.top=topoAntes;
+      const campos=()=>window.__LAB_MEDIR().ritmo.map(item=>item.campo);
+      /* O bloco é `position:static` dentro do flex da placa, então deslocá-lo
+         exige `relative` — mexer em `top` sozinho não moveria nada, e a prova
+         passaria sem nunca ter empurrado a identidade para fora. */
+      const nickFrente=coach.querySelector(".cfront .c-nick"),estiloNick=nickFrente.style.cssText;
+      nickFrente.style.position="relative";nickFrente.style.top="-40px";
+      const foraDaPlaca=campos();
+      nickFrente.style.cssText=estiloNick;
+      const ovr=coach.querySelector(".cfront .c-ovr"),estiloOvr=ovr.style.cssText;
+      ovr.style.top="42%";
+      const ovrTorto=campos();
+      ovr.style.cssText=estiloOvr;
+      const fio=coach.querySelector(".cfront .c-fio"),estiloFio=fio.style.cssText;
+      fio.style.display="block";
+      const serrilhadoDeVolta=campos();
+      fio.style.cssText=estiloFio;
       const descricao=coach.querySelector(".c-vdesc"),descAntes=descricao.style.top;
       descricao.style.top="55%";
-      const verso=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
+      const verso=campos();
       descricao.style.top=descAntes;
       /* A frente troca o rótulo pela característica. Se ela voltar a dizer
          "Treinador", as duas faces passam a repetir a mesma informação e o bloco
          da frente perde a razão de existir. */
-      const rotulo=coach.querySelector(".cfront .c-vid b"),textoAntes=rotulo.textContent;
+      const rotulo=coach.querySelector(".cfront .c-func"),textoAntes=rotulo.textContent;
       rotulo.textContent="Treinador";
-      const duplicado=window.__LAB_MEDIR().ritmo.map(item=>item.campo);
+      const duplicado=campos();
       rotulo.textContent=textoAntes;
-      return frente.includes("frente replica o verso · nick (topo)")&&
+      return foraDaPlaca.includes("identidade na base do treinador · nick entra na placa")&&
+        ovrTorto.includes("OVR do treinador igual ao do jogador · topo")&&
+        serrilhadoDeVolta.includes("régua serrilhada do treinador · fora da frente")&&
         verso.includes("verso padronizado · início do corpo")&&
         duplicado.includes("frente replica o verso · rótulo trocado");
     });
     check(detectaEspelhoCoach,
-      "medidor acusa frente do coach fora de réplica ou com rótulo repetido");
+      "medidor acusa identidade fora da placa, OVR torto, serrilhado de volta ou rótulo repetido");
     const detectaVersoCoach=await page.evaluate(()=>{
       const coach=document.querySelector(".coachcard");
       const linha=coach.querySelector(".c-vef"),displayAntes=linha.style.display;
@@ -319,10 +341,12 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       check(ratio>=4.5,`${largura}px · OVR mantém 4,5:1 sobre o retrato real (${ratio}:1)`);
       const hally=page.locator('.coachcard[data-nick="hally"]')
         .filter({has:page.locator('.cfaces[style*="hally_kato24"]')}).first();
-      /* O OVR do treinador mora na base, ACIMA da faixa de categoria. A zona
-         precisa parar antes dela: a faixa é cromo claro e puxaria a medição para
-         1,2:1 num número que na verdade está sobre o retrato. */
-      const coachRatio=await contrasteOvr(hally,{x:.06,y:.65,w:.39,h:.22});
+      /* Desde 01/08/2026 o OVR do treinador ocupa a MESMA posição do OVR do
+         jogador, então ele usa a MESMA zona — e essa igualdade é o ponto. A zona
+         anterior era `y:.65 h:.22`, recortada para um OVR que morava na base e
+         precisava parar antes do cromo claro da faixa. Mantê-la aqui mediria o
+         rodapé e devolveria 1,05:1 sobre um número que está no topo. */
+      const coachRatio=await contrasteOvr(hally);
       check(coachRatio>=4.5,
         `${largura}px · OVR do coach mantém 4,5:1 sobre o retrato real (${coachRatio}:1)`);
     }

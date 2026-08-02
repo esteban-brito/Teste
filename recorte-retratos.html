@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<!-- Bancada de recorte de retratos.
+
+     Existe porque o enquadramento é julgamento visual, não cálculo: a grade de
+     `docs/card-portraits.md` diz a faixa, mas quem decide se o rosto ficou bem é
+     o olho. Aqui o responsável arrasta, dá zoom e exporta o asset já no contrato
+     — 5:7 exato, WebP, 1000×1400.
+
+     Não há cópia de carta aqui: a prévia importa `card-view.mjs` e `style.css`
+     reais, como o laboratório faz. Se a carta mudar, esta bancada muda junto. -->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>draft9-0 · recorte de retratos</title>
+<link rel="stylesheet" href="fonts.css">
+<link rel="stylesheet" href="style.css">
+<style>
+  body{padding:18px;font-family:'Barlow Semi Condensed',sans-serif}
+  .rb-wrap{max-width:1220px;margin:0 auto}
+  h1{font-family:var(--ff);font-size:1.2rem;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px}
+  .rb-sub{color:var(--dim);font-size:.82rem;margin-bottom:14px}
+  .rb-grid{display:grid;grid-template-columns:1fr 300px;gap:18px;align-items:start}
+  .rb-palco{position:relative;border:1px solid var(--line);border-radius:10px;
+    background:#0b1018;overflow:hidden;min-height:420px;display:flex;
+    align-items:center;justify-content:center}
+  .rb-palco canvas{display:block;max-width:100%;cursor:grab}
+  .rb-palco canvas.arrastando{cursor:grabbing}
+  .rb-vazio{color:var(--dim);font-size:.9rem;text-align:center;padding:60px 20px;line-height:1.7}
+  .rb-lado{display:flex;flex-direction:column;gap:12px}
+  .rb-card{width:260px}
+  .rb-linha{display:flex;gap:8px;align-items:center;font-size:.78rem;color:var(--dim)}
+  .rb-linha input[type=text]{flex:1;min-width:0;background:#0c121b;border:1px solid var(--line);
+    color:var(--txt);border-radius:6px;padding:6px 8px;font-family:var(--ff);font-size:.85rem}
+  button{font-family:var(--ff);font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;
+    font-weight:700;padding:9px 12px;border-radius:8px;border:1px solid var(--line);
+    background:#111826;color:var(--txt);cursor:pointer}
+  button.rb-ok{background:var(--accent);border-color:var(--accent);color:#0b0f16}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  .rb-med{font-size:.74rem;color:var(--dim);line-height:1.7;border-top:1px solid var(--line);padding-top:10px}
+  .rb-med b{color:var(--txt);font-family:var(--ff)}
+  .rb-ok-txt{color:var(--t2-green-lit)} .rb-mau{color:var(--s-red-lit)}
+  .rb-dica{font-size:.74rem;color:var(--dim);line-height:1.8}
+  .rb-dica kbd{background:#0c121b;border:1px solid var(--line);border-radius:4px;padding:1px 5px;
+    font-family:var(--ff);font-size:.72rem}
+</style>
+</head>
+<body>
+<div class="rb-wrap">
+  <h1>Recorte de retratos</h1>
+  <div class="rb-sub">Arraste a imagem para mover · roda do mouse para zoom · o quadro é sempre 5:7</div>
+
+  <div class="rb-grid">
+    <div class="rb-palco" id="palco">
+      <div class="rb-vazio" id="vazio">
+        Arraste aqui uma foto (AVIF, JPG, PNG ou WebP)<br>
+        <span style="opacity:.6">as faixas coloridas são a grade de docs/card-portraits.md:<br>
+        laranja = topo da cabeça · azul = olhos · verde = queixo</span>
+      </div>
+      <canvas id="tela" hidden></canvas>
+    </div>
+
+    <div class="rb-lado">
+      <div class="rb-card" id="previa"></div>
+      <div class="rb-linha">
+        <label for="fonte">fonte</label>
+        <select id="fonte" style="flex:1;min-width:0;background:#0c121b;border:1px solid var(--line);
+          color:var(--txt);border-radius:6px;padding:6px 8px;font-family:var(--ff);font-size:.85rem">
+          <option value="">— escolha um retrato —</option>
+        </select>
+      </div>
+      <div class="rb-linha">
+        <label for="assetId">asset-id</label>
+        <input type="text" id="assetId" placeholder="donk_kato24" spellcheck="false">
+      </div>
+      <button id="baixar" class="rb-ok" disabled>Baixar WebP 1000×1400</button>
+      <button id="verso" disabled>Ver o verso</button>
+      <div class="rb-med" id="medidas">Nenhuma imagem carregada.</div>
+      <div class="rb-dica">
+        <kbd>arrastar</kbd> move o quadro<br>
+        <kbd>roda</kbd> aproxima e afasta<br>
+        <kbd>R</kbd> volta ao enquadramento inicial<br><br>
+        O arquivo baixado já sai no contrato: 5:7 exato, WebP, 1000×1400.
+        Salve em <b>fotos/&lt;asset-id&gt;.webp</b> e rode
+        <b>npm run check</b>.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import {createCardView} from "./src/ui/game/card-view.mjs";
+import {TEAMS,STYLE_ID,STYLE_LABEL,STYLE_RECIPE,COACH_RECIPE} from "./src/public/simulation-api.mjs";
+
+const {cardClass,cardHTML}=createCardView({
+  styleId:STYLE_ID,styleLabel:STYLE_LABEL,styleRecipe:STYLE_RECIPE,coachRecipe:COACH_RECIPE});
+
+const $=id=>document.getElementById(id);
+const tela=$("tela"),ctx=tela.getContext("2d");
+/* A carta de referência da prévia é a mesma do laboratório: o retrato entra por
+   `--foto`, exatamente como no jogo, então o que se vê aqui é o que sai lá. */
+const modelo=TEAMS.flatMap(t=>t.jogadores).find(j=>j._eng?.id==="donk_kato24")
+  ||TEAMS[0].jogadores[0];
+
+let img=null,q=null,mostrandoVerso=false;   // q = {cx,cy,h} em coordenadas da FONTE
+const RAZAO=5/7;
+
+function enquadramentoInicial(){
+  /* Começa no maior 5:7 possível, centrado. É o ponto de partida neutro: qualquer
+     ajuste a partir daí é decisão de quem olha, não do código. */
+  const h=Math.min(img.naturalHeight,img.naturalWidth/RAZAO);
+  return {cx:img.naturalWidth/2,cy:img.naturalHeight/2,h};
+}
+function limites(){
+  const w=q.h*RAZAO;
+  q.h=Math.min(q.h,img.naturalHeight,img.naturalWidth/RAZAO);
+  q.cx=Math.min(Math.max(q.cx,w/2),img.naturalWidth-w/2);
+  q.cy=Math.min(Math.max(q.cy,q.h/2),img.naturalHeight-q.h/2);
+}
+function caixa(){const w=q.h*RAZAO;return {x:q.cx-w/2,y:q.cy-q.h/2,w,h:q.h};}
+
+function desenhar(){
+  const escala=Math.min(760/img.naturalWidth,460/img.naturalHeight,1);
+  tela.width=Math.round(img.naturalWidth*escala);
+  tela.height=Math.round(img.naturalHeight*escala);
+  ctx.drawImage(img,0,0,tela.width,tela.height);
+  const c=caixa(),e=escala;
+  // escurece tudo o que fica de fora do quadro
+  ctx.fillStyle="rgba(4,7,12,.72)";
+  ctx.fillRect(0,0,tela.width,c.y*e);
+  ctx.fillRect(0,(c.y+c.h)*e,tela.width,tela.height-(c.y+c.h)*e);
+  ctx.fillRect(0,c.y*e,c.x*e,c.h*e);
+  ctx.fillRect((c.x+c.w)*e,c.y*e,tela.width-(c.x+c.w)*e,c.h*e);
+  // faixas da grade fotográfica, dentro do quadro
+  const faixa=(de,ate,cor)=>{ctx.fillStyle=cor;
+    ctx.fillRect(c.x*e,(c.y+c.h*de)*e,c.w*e,c.h*(ate-de)*e);};
+  faixa(.05,.10,"rgba(255,90,42,.26)");
+  faixa(.28,.35,"rgba(75,215,255,.26)");
+  faixa(.47,.56,"rgba(62,192,126,.26)");
+  ctx.strokeStyle="rgba(255,255,255,.85)";ctx.lineWidth=2;
+  ctx.strokeRect(c.x*e,c.y*e,c.w*e,c.h*e);
+  ctx.strokeStyle="rgba(255,255,255,.30)";ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo((c.x+c.w/2)*e,c.y*e);ctx.lineTo((c.x+c.w/2)*e,(c.y+c.h)*e);ctx.stroke();
+  atualizarPrevia();
+}
+
+/* TAMANHO DE SAÍDA — nunca inventa pixel.
+
+   A primeira versão exportava sempre 1000×1400. Quando o quadro na fonte tinha
+   571×800, isso era uma ampliação de 1,75× — o arquivo saía macio e o
+   responsável viu na hora. A prévia escondia o problema porque mostra a carta a
+   260 px, onde qualquer ampliação some.
+
+   Agora a saída acompanha o que a fonte realmente tem, limitada ao alvo de 1400
+   e ao piso de 700 do contrato. A altura é múltiplo de 7 para a proporção fechar
+   em 5:7 EXATO, que é o que `check-card-portraits.js` cobra — arredondar solto
+   produzia 5:6,998 e reprovava. */
+function tamanhoSaida(){
+  const c=caixa();
+  const nativa=Math.floor(c.h/7)*7;
+  const altura=Math.min(1400,Math.max(700,nativa));
+  return {w:altura/7*5,h:altura,ampliacao:altura/c.h};
+}
+
+function recortar(largura,altura,qualidade){
+  const c=caixa(),saida=document.createElement("canvas");
+  saida.width=largura;saida.height=altura;
+  const g=saida.getContext("2d");
+  g.imageSmoothingEnabled=true;g.imageSmoothingQuality="high";
+  g.drawImage(img,c.x,c.y,c.w,c.h,0,0,largura,altura);
+  return saida.toDataURL("image/webp",qualidade);
+}
+
+function atualizarPrevia(){
+  const url=recortar(500,700,.85);
+  $("previa").innerHTML=`<div class="${cardClass(modelo)}${mostrandoVerso?" flipped":""}"
+    style="width:260px">${cardHTML(modelo)}</div>`;
+  const faces=$("previa").querySelector(".cfaces");
+  faces.style.setProperty("--foto",`url('${url}')`);
+  const c=caixa(),s=tamanhoSaida();
+  const nativo=s.ampliacao<=1.001;
+  $("medidas").innerHTML=
+    `quadro na fonte: <b>${Math.round(c.w)}×${Math.round(c.h)}</b> em `+
+    `(${Math.round(c.x)}, ${Math.round(c.y)})<br>`+
+    `arquivo que vai sair: <b>${s.w}×${s.h}</b><br>`+
+    (nativo
+      ? `<span class="rb-ok-txt">pixel nativo — nenhuma ampliação</span>`
+      : `ampliação: <b>${s.ampliacao.toFixed(2)}×</b> `+
+        `<span class="${s.ampliacao<=1.25?"rb-ok-txt":"rb-mau"}">`+
+        `${s.ampliacao<=1.25?"aceitável":"vai ficar macio — afaste o zoom para pegar mais pixel"}</span>`);
+  $("baixar").textContent=`Baixar WebP ${s.w}×${s.h}`;
+}
+
+function carregar(arquivo){
+  const url=URL.createObjectURL(arquivo);
+  const nova=new Image();
+  nova.onload=()=>{
+    img=nova;q=enquadramentoInicial();limites();
+    $("vazio").hidden=true;tela.hidden=false;
+    $("baixar").disabled=false;$("verso").disabled=false;
+    if(!$("assetId").value)$("assetId").value=arquivo.name.replace(/\.[^.]+$/,"");
+    desenhar();
+  };
+  nova.onerror=()=>{$("medidas").innerHTML=
+    '<span class="rb-mau">Não deu para decodificar esta imagem.</span>';};
+  nova.src=url;
+}
+
+/* As fontes vivem em `fotos-origem/`, com o MESMO asset-id do arquivo final.
+   Elas não são versionadas — são material de trabalho — mas ficam no projeto para
+   que recortar de novo não dependa de caçar o original na pasta de downloads.
+   Foi exatamente isso que aconteceu em 01/08/2026, com o retrato do donk salvo
+   sob um nome de hash. */
+function carregarUrl(url,id){
+  const nova=new Image();
+  nova.onload=()=>{
+    img=nova;q=enquadramentoInicial();limites();
+    $("vazio").hidden=true;tela.hidden=false;
+    $("baixar").disabled=false;$("verso").disabled=false;
+    $("assetId").value=id;
+    desenhar();
+  };
+  nova.onerror=()=>{$("medidas").innerHTML=
+    '<span class="rb-mau">Não deu para carregar '+url+'</span>';};
+  nova.src=url;
+}
+fetch("fotos-origem/index.json").then(r=>r.ok?r.json():[]).then(lista=>{
+  const sel=$("fonte");
+  for(const arquivo of lista){
+    const o=document.createElement("option");
+    o.value=arquivo;o.textContent=arquivo.replace(/\.[^.]+$/,"");
+    sel.appendChild(o);
+  }
+  sel.onchange=()=>{if(sel.value)
+    carregarUrl("fotos-origem/"+sel.value,sel.value.replace(/\.[^.]+$/,""));};
+}).catch(()=>{});
+
+document.addEventListener("dragover",e=>e.preventDefault());
+document.addEventListener("drop",e=>{e.preventDefault();
+  const f=e.dataTransfer.files&&e.dataTransfer.files[0];if(f)carregar(f);});
+
+let arrastando=null;
+tela.addEventListener("pointerdown",e=>{if(!img)return;
+  arrastando={x:e.clientX,y:e.clientY,cx:q.cx,cy:q.cy};
+  tela.classList.add("arrastando");tela.setPointerCapture(e.pointerId);});
+tela.addEventListener("pointermove",e=>{if(!arrastando)return;
+  const escala=tela.width/img.naturalWidth;
+  q.cx=arrastando.cx-(e.clientX-arrastando.x)/escala;
+  q.cy=arrastando.cy-(e.clientY-arrastando.y)/escala;
+  limites();desenhar();});
+tela.addEventListener("pointerup",()=>{arrastando=null;tela.classList.remove("arrastando");});
+tela.addEventListener("wheel",e=>{if(!img)return;e.preventDefault();
+  q.h*=e.deltaY>0?1.04:1/1.04;limites();desenhar();},{passive:false});
+document.addEventListener("keydown",e=>{
+  if(e.key.toLowerCase()!=="r"||!img)return;q=enquadramentoInicial();limites();desenhar();});
+
+$("verso").onclick=()=>{mostrandoVerso=!mostrandoVerso;atualizarPrevia();};
+$("baixar").onclick=()=>{
+  const id=($("assetId").value||"retrato").replace(/[^a-zA-Z0-9_-]/g,"");
+  const s=tamanhoSaida();
+  /* 0,95 e não 0,9: a diferença de peso é pequena num recorte deste tamanho e o
+     WebP a 0,9 deixava artefato visível no cabelo e no headset. O teto de 500 kB
+     do contrato continua com folga larga. */
+  const a=document.createElement("a");
+  a.href=recortar(s.w,s.h,.95);a.download=id+".webp";a.click();
+};
+</script>
+</body>
+</html>

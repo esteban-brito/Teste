@@ -144,15 +144,30 @@ async function main(){
   // Treinador: mesmo esqueleto e mesmo rodapé de era; OVR existe só na frente.
   const coachHtml=view.cardHTML({tipo:"coach",ovr:18,pais:"DEN",time:"SK",nick:"zonic",
     camp:"ESL One Cologne 2016",coloc:"Campeao",carac:"Gestor",caracSlug:"gestor"});
-  /* A frente do treinador REPLICA o bloco do verso: mesmos `.c-vnick`/`.c-vid`,
-     trocando só o rótulo — característica na frente, "Treinador" no verso. A
-     grade de três linhas do jogador (`.c-identidade`, `.c-func`, `.c-flag`,
-     `.c-meta`) não existe mais aqui, e a categoria virou a faixa `.c-cat`. */
+  /* A frente do treinador usa a MESMA grade do jogador, com uma linha a menos:
+     nick + bandeira, depois característica + time. O jogador põe o time na
+     terceira linha porque tem função secundária; o treinador não tem.
+
+     Este bloco já afirmou o contrário. Até 01/08/2026 ele PROIBIA
+     `c-identidade|c-func|c-flag|c-meta` na frente, porque a §19.5 fazia a frente
+     replicar o bloco do verso, sem bandeira. O responsável reverteu a decisão e
+     pediu bandeira e time de volta; a proibição virou exigência. */
+  const frenteCoach=coachHtml.split('<div class="cface cback"')[0];
   assert.ok(coachHtml.includes('<div class="c-ovr">18<small>Overall</small>')&&
-    coachHtml.includes('<div class="c-vid"><b>Gestor</b><span>SK</span></div>')&&
     coachHtml.includes('<div class="c-cat">Treinador</div>'),"frente do treinador mudou");
-  assert.ok(!/c-identidade|c-func|c-flag|c-meta/.test(coachHtml.split('<div class="cface cback"')[0]),
-    "a grade de três linhas do jogador voltou à frente do treinador");
+  assert.ok(frenteCoach.includes('c-identidade c-identidade--coach')&&
+    frenteCoach.includes('<div class="c-nick">zonic</div>')&&
+    frenteCoach.includes('<div class="c-func">Gestor</div>')&&
+    /class="c-flag"/.test(frenteCoach)&&
+    frenteCoach.includes('<span class="c-team">SK</span>'),
+    "a frente do treinador perdeu a grade de identidade, a bandeira ou o time");
+  /* Função secundária não existe para treinador: o slot sai vazio e o CSS o
+     esconde. Se ele voltar com texto, é sinal de que alguém passou um contexto
+     de jogador para a frente do treinador. */
+  assert.ok(/<span class="c-role2"><\/span>/.test(frenteCoach),
+    "a frente do treinador ganhou função secundária");
+  assert.ok(!frenteCoach.includes("c-vnick")&&!frenteCoach.includes("c-vid"),
+    "a frente do treinador voltou a duplicar o bloco do verso");
   assert.ok(coachHtml.includes('<div class="c-vid"><b>Treinador</b><span>SK</span></div>'),
     "verso do treinador perdeu a linha de identidade padronizada");
   assert.ok(!coachHtml.includes("c-vovr")&&coachHtml.includes("ESL One Cologne 2016")&&
