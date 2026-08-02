@@ -6,7 +6,7 @@
 <title>Laboratório de cartas · draft9-0</title>
 <link rel="preload" href="fonts/chakra-petch-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="fonts.css">
-<link rel="stylesheet" href="style.css?v=6bd6ae29">
+<link rel="stylesheet" href="style.css?v=91dc9d1a">
 <style>
 /* Laboratório fino: renderiza o componente e o CSS do jogo. Não há variante de
    design, cópia de dado ou ajuste por jogador neste arquivo. */
@@ -210,9 +210,47 @@ const medirTexto=elemento=>{const range=document.createRange();range.selectNodeC
   return range.getBoundingClientRect().width;};
 const caixaDoTexto=elemento=>{const range=document.createRange();range.selectNodeContents(elemento);
   return range.getBoundingClientRect();};
+/* Croma OKLCh da cor PINTADA, não do token. Metal é quase acromático com um
+   tingimento, e foi medindo isto que se explicou por que o ouro lia metal
+   enquanto ciano e azul liam plástico neon sob exatamente o mesmo gradiente:
+   croma 0,087 contra 0,128 e 0,195. Luminância não separava os casos. */
+/* Onde a LETRA começa e termina — a régua vertical da carta.
+
+   A caixa da `Range` vai do `ascent` ao `descent` da fonte, o que foi aferido
+   exato contra a linha de base real; a maiúscula ocupa só o miolo dela. Enquanto
+   as guardas comparavam caixas, um vão entre dois corpos diferentes podia estar
+   3 a 9 px torto com o medidor cravando 0,1 px — foi assim que a assimetria da
+   frente do treinador e a do verso do jogador passaram verdes.
+
+   A métrica sai da fonte REAL do elemento e da string REALMENTE renderizada: a
+   carta mistura Chakra Petch e Barlow, e maiúscula não tem descendente. Usar uma
+   constante única para tudo foi por onde eu errei antes de medir. */
+const medidorGlifo=document.createElement("canvas").getContext("2d");
+const glifoDe=elemento=>{
+  const estilo=getComputedStyle(elemento);
+  let texto=elemento.textContent.replace(/\s+/g," ").trim();
+  if(estilo.textTransform==="uppercase")texto=texto.toUpperCase();
+  const caixa=caixaDoTexto(elemento);
+  medidorGlifo.font=`${estilo.fontStyle} ${estilo.fontWeight} ${estilo.fontSize} ${estilo.fontFamily}`;
+  const metrica=medidorGlifo.measureText(texto);
+  const linhaDeBase=caixa.top+metrica.fontBoundingBoxAscent;
+  return {inicio:linhaDeBase-metrica.actualBoundingBoxAscent,
+    fim:linhaDeBase+metrica.actualBoundingBoxDescent};
+};
+const letraInicio=elemento=>glifoDe(elemento).inicio;
+const letraFim=elemento=>glifoDe(elemento).fim;
+const cromaDe=cor=>{
+  const [r,g,b]=cor.match(/[\d.]+/g).slice(0,3).map(valor=>{
+    const c=Number(valor)/255;return c<=.04045?c/12.92:Math.pow((c+.055)/1.055,2.4);});
+  const l=Math.cbrt(.4122214708*r+.5363325363*g+.0514459929*b);
+  const m=Math.cbrt(.2119034982*r+.6806995451*g+.1073969566*b);
+  const s=Math.cbrt(.0883024619*r+.2817188376*g+.6299787005*b);
+  return Math.hypot(1.9779984951*l-2.4285922050*m+.4505937099*s,
+    .0259040371*l+.7827717662*m-.8086757660*s);
+};
 
 function medirCartas(){
-  const falhas=[],reticencias=[],ritmo=[];
+  const falhas=[],reticencias=[],ritmo=[],cromosDeTreinador=[];
   const TOL=.75;
   let auditadas=0,treinadoresAuditados=0;
   const jogadoresRenderizados=[];
@@ -347,30 +385,86 @@ function medirCartas(){
       /* Respiro antes do rodapé, medido na TINTA e não na reserva. A caixa da
          descrição termina a 84,9% e o rodapé começa a 86%: uma versão ancorada
          nas duas pontas passou na guarda de colisão com 2,4 px de folga e ficou
-         visivelmente colada. O piso é o respiro do próprio jogador, cujos quatro
-         trilhos param bem antes do fim da reserva — assim a régua não é um número
-         escolhido a dedo e não há como afrouxá-la sem afrouxar a carta canônica. */
-      const tintaDe=elemento=>{const faixaTexto=document.createRange();
-        faixaTexto.selectNodeContents(elemento);return faixaTexto.getBoundingClientRect();};
-      const tintaAte=elemento=>tintaDe(elemento).bottom;
+         visivelmente colada.
+
+         O piso ERA o respiro do próprio jogador. Ficou impossível em 02/08/2026,
+         quando as duas categorias passaram a ser simétricas — a explicação e a
+         régua nova estão logo abaixo, na prova do rodapé. */
       /* O corpo é CENTRADO na reserva, o mesmo mecanismo dos quatro trilhos do
          jogador — e é daí que sai o afastamento entre a característica e o texto.
          Ancorado no topo, a tinta começava a 0% da reserva enquanto a do jogador
          começa entre 2,9% e 7,4% da altura da carta, e o corpo do treinador
          encostava na característica. Provar a centragem prova o afastamento sem
          inventar um recuo fixo que envelheceria a cada mudança de corpo. */
-      const corpoCoach=carta.querySelector(".c-vdesc");
-      const caixaCorpo=corpoCoach.getBoundingClientRect();
-      const frase=corpoCoach.querySelector("p"),numeros=corpoCoach.querySelector(".c-vefeitos");
-      if(frase&&numeros)
-        maximo("verso padronizado · corpo centrado na reserva",
-          Math.abs((frase.getBoundingClientRect().top-caixaCorpo.top)-
-            (caixaCorpo.bottom-numeros.getBoundingClientRect().bottom)),.35,.05);
-      const rodape=carta.querySelector(".c-vrod").getBoundingClientRect();
-      const refRodape=ref.querySelector(".c-vrod").getBoundingClientRect();
-      minimo("verso padronizado · respiro antes do rodapé",
-        rodape.top-tintaAte(carta.querySelector(".c-vdesc")),
-        refRodape.top-tintaAte(ref.querySelector(".c-vstats")),.35);
+      /* SUBSTITUÍDA em 02/08/2026 pela MESMA prova que o jogador tem. Antes esta
+         linha media "conteúdo centrado dentro da reserva", pelas CAIXAS — um
+         proxy interno que ficava verde mesmo com o bloco visivelmente alto,
+         porque a reserva não é o que o olho compara. O olho compara o vão até a
+         característica, acima, com o vão até o campeonato, abaixo — exatamente o
+         que `equilíbrio stats/era` cobra no jogador.
+
+         Uma regra para as duas categorias, na letra. Sem correção o desnível do
+         treinador ia de 1,9 a 5,9 px, ainda pior que o do jogador. */
+      const corpoCoach=carta.querySelector(".cback .c-vdesc");
+      const frase=corpoCoach.querySelector("p");
+      const linhasEfeito=[...corpoCoach.querySelectorAll(".c-vef")];
+      const caracVerso=carta.querySelector(".cback .c-vestilo b");
+      const eraVerso=carta.querySelector(".cback .c-vrod b");
+      if(frase&&linhasEfeito.length&&caracVerso&&eraVerso){
+        const ultima=linhasEfeito[linhasEfeito.length-1];
+        const fimDoCorpo=ultima.querySelector("b")||ultima.querySelector("i");
+        /* 5 px, contra 3 px do jogador, e a diferença é DÍVIDA DECLARADA.
+
+           O teto precisa ficar entre duas medidas: acima do resíduo real COM a
+           correção — 2,27 px no Windows e 3,27 px no FreeType do CI — e abaixo do
+           defeito SEM correção, que no pior caso (`dastan`, 176 px) é 7,92 px.
+           5 px cumpre as duas: a guarda reprova se alguém tirar a correção e não
+           reprova por diferença de plataforma.
+
+           A primeira tentativa foi 2,5 px e o CI a derrubou com 3,27 px. Foi erro
+           de método, não de número: teto apertado sobre um resíduo que eu não
+           sabia explicar. Este desce para 3 px, igual ao do jogador, no dia em que
+           a quebra de 176/151 px for entendida. §21 do design. */
+        maximo("equilíbrio corpo/era do treinador",
+          Math.abs((letraInicio(frase)-letraFim(caracVerso))-
+            (letraInicio(eraVerso)-letraFim(fimDoCorpo))),5);
+      }
+      /* PISO REANCORADO em 02/08/2026 — e o motivo é uma incompatibilidade
+         lógica, não um ajuste de número.
+
+         Este piso era "o treinador respira ao menos tanto quanto o jogador",
+         usando o respiro do jogador para não inventar um valor. Isso só funcionava
+         enquanto os dois blocos eram posicionados pela mesma régua errada. Agora
+         os dois são SIMÉTRICOS — cada um tem o vão de cima igual ao de baixo — e
+         aí os respiros não podem mais ser iguais entre categorias: o corpo do
+         treinador é mais alto que os quatro trilhos, então sobra menos espaço
+         livre e cada metade dele é obrigatoriamente menor. Exigir paridade
+         passaria a exigir assimetria em uma das duas cartas.
+
+         O que o piso realmente protege — corpo colado no rodapé — continua
+         coberto, agora por três provas independentes: a simetria acima, a colisão
+         `descrição/campeonato` e o corte vertical da reserva. O piso permanece
+         como rede contra o caso degenerado, agora ancorado no RECUO até a aresta
+         de baixo da reserva, como fração dela.
+
+         Essa régua precisou de duas tentativas, e a tentativa falha vale registro.
+         A simetria acima NÃO pega o defeito: ancorar frase e números nas duas
+         pontas desloca os dois vãos pelo mesmo tanto, e a diferença continua zero.
+         Repartição do espaço livre também não pega: `space-between` ESTICA o
+         conteúdo em vez de empurrá-lo para um lado — medido, ele vai de 68,6 px
+         para 107,5 px numa reserva de 112,8 px, e a folga simplesmente some.
+
+         O que muda de verdade é o recuo até a aresta de baixo. Ele vale como
+         fração porque a reserva é a MESMA nas duas categorias e nas oito
+         larguras. Medido: os treinadores ficam entre 9,7% e 23,1%; o layout que
+         falhou dá 2%. O piso de 6% separa os dois casos com folga dos dois lados. */
+      if(frase&&linhasEfeito.length){
+        const reserva=corpoCoach.getBoundingClientRect();
+        const ultimaLinha=linhasEfeito[linhasEfeito.length-1];
+        const fimReal=ultimaLinha.querySelector("b")||ultimaLinha.querySelector("i");
+        minimo("verso padronizado · respiro antes do rodapé",
+          (reserva.bottom-letraFim(fimReal))/reserva.height,.06,.002,"×");
+      }
 
       /* A frente do treinador espelha a do jogador no eixo VERTICAL e é idêntica
          a ela no HORIZONTAL. Os dois eixos são medidos, cada um com a sua regra:
@@ -467,20 +561,33 @@ function medirCartas(){
          Mede-se a TINTA, não a caixa: a caixa do nick inclui faixa morta acima do
          texto, e foi exatamente esse erro que deixou uma guarda de simetria
          cravar 0,00 px enquanto o olho via 3 px de diferença. */
-      const tintaDe2=elemento=>{const r=document.createRange();
-        r.selectNodeContents(elemento);return r.getBoundingClientRect();};
-      const tintaTopo=tintaDe2(carta.querySelector(".cfront .c-nick")).top;
-      const tintaBase=tintaDe2(carta.querySelector(".cfront .c-func")).bottom;
-      const respiroAcima=tintaTopo-placaFrente.top;
-      const respiroAbaixo=placaFrente.bottom-tintaBase;
+      /* Mede a LETRA, não a caixa da fonte. A caixa da `Range` vai do `ascent`
+         ao `descent`; a maiúscula ocupa só o miolo. Aferido contra a linha de
+         base real na Chakra Petch: a letra começa .29em abaixo do topo da caixa
+         e termina .31em acima do fim dela.
+
+         Até 02/08/2026 estas duas linhas comparavam a caixa e cravavam
+         0,08–0,33 px enquanto o olho via 3,08–6,22 px de sobra em cima. É a
+         mesma lição que já trocou `getBoundingClientRect` por `Range`, um nível
+         abaixo: medir a linha não é medir o glifo. */
+      const respiroAcima=letraInicio(carta.querySelector(".cfront .c-nick"))-placaFrente.top;
+      const respiroAbaixo=placaFrente.bottom-letraFim(carta.querySelector(".cfront .c-func"));
       maximo("identidade na base do treinador · respiro simétrico",
         Math.abs(respiroAcima-respiroAbaixo),.75,.05);
       /* E a placa não pode nem sufocar nem sobrar: os dois respiros ficam numa
          faixa medida. Sem o teto, "simétrico" seria satisfeito por uma placa
-         gigante com o texto boiando no meio — que foi o defeito apontado. */
+         gigante com o texto boiando no meio — que foi o defeito apontado.
+
+         A faixa foi REBASEADA em 02/08/2026 junto com a régua. Ela era
+         1,2%–4,5% medindo a CAIXA; a letra fica dentro da caixa, então o mesmo
+         respiro físico dá número maior — o espaço morto acima do glifo vale
+         sozinho cerca de 2% da altura da carta a 250 px. Traduzida, a faixa
+         antiga equivale a 3,2%–6,5% na letra; a de agora é 3%–6%, ou seja mais
+         APERTADA no teto, que é o lado que pega o defeito. Medido: os oito
+         valores caem entre 3,57% e 5,22%. */
       for(const [campo,valor] of [["acima",respiroAcima],["abaixo",respiroAbaixo]]){
-        minimo(`identidade na base do treinador · respiro ${campo}`,valor,caixa.height*.012,.35);
-        maximo(`identidade na base do treinador · respiro ${campo}`,valor,caixa.height*.045,.35);
+        minimo(`identidade na base do treinador · respiro ${campo}`,valor,caixa.height*.03,.35);
+        maximo(`identidade na base do treinador · respiro ${campo}`,valor,caixa.height*.06,.35);
       }
       /* A frente usa a grade do jogador e NÃO pode carregar o bloco replicado do
          verso junto — os dois no mesmo lugar significariam nick duplicado. Esta
@@ -513,6 +620,15 @@ function medirCartas(){
         registrarRitmo("moldura e faixa do treinador · mesmo cromo",0,1,"exato","estado");
       if(pinturaAro.includes("repeating-linear-gradient"))
         registrarRitmo("moldura do treinador · serrilhado removido",1,0,"exato","estado");
+      /* O MATERIAL é um só nas quatro características; o que muda entre elas é o
+         matiz. A cor de TEXTO continua saturada, porque ali saturação é
+         identidade — mas a SUPERFÍCIE não pode, senão duas cartas da mesma
+         categoria leem como materiais diferentes, que foi o defeito apontado
+         pelo responsável em 02/08/2026. A régua é o gestor, o único dos quatro
+         que já lia como metal, medido em croma 0,087. */
+      const cromaDaFaixa=cromaDe(getComputedStyle(carta.querySelector(".c-cat")).backgroundColor);
+      cromosDeTreinador.push(cromaDaFaixa);
+      maximo("cromo do treinador · croma na faixa do metal",cromaDaFaixa,.10,.002,"");
       /* O serrilhado sobrevive só no VERSO. Na frente ele saiu por decisão do
          responsável: empilhado com a faixa cromada, o tracejado lia como borda
          provisória. Provar que ele NÃO está na frente é tão contrato quanto
@@ -588,7 +704,6 @@ function medirCartas(){
     minimo("hierarquia playstyle/nick",
       parseFloat(getComputedStyle(rotulo).fontSize)/parseFloat(getComputedStyle(vnick).fontSize),1.14,.005,"×");
     if(stats.length){
-      const primeiro=stats[0].getBoundingClientRect(),ultimo=stats.at(-1).getBoundingClientRect();
       const statsBox=carta.querySelector(".c-vstats").getBoundingClientRect();
       /* Medir CAIXA aqui foi um erro real: a caixa de `.c-st` inclui a faixa
          invisível acima do número, e a do playstyle não. Pela caixa o verso dava
@@ -598,13 +713,24 @@ function medirCartas(){
          Agora os dois vãos são medidos entre TEXTOS RENDERIZADOS, por Range,
          exatamente como o olho compara: do fim do playstyle ao começo do rótulo
          do primeiro stat, e do fim do último trilho ao começo do campeonato. */
-      const fimDoPlaystyle=caixaDoTexto(rotulo).bottom;
-      const inicioDoPrimeiro=caixaDoTexto(stats[0].querySelector("i")).top;
+      /* Na LETRA desde 02/08/2026. O vão de cima liga dois TEXTOS e o de baixo
+         liga um retângulo a um texto, então a caixa não mentia igual dos dois
+         lados: escondia quase todo o desnível de cima, porque a caixa do
+         playstyle desce muito abaixo da última letra dele. Cravava 0,03–1,28 px
+         enquanto o olho via 6,3–8,9 px.
+
+         O teto é 3 px, não os 1,5 px de antes, e a troca NÃO é afrouxamento: o
+         número velho valia sobre a caixa, que é outra grandeza. Sobre a letra,
+         3 px fica abaixo do defeito sem correção (6,3–8,9 px), então a guarda
+         continua sabendo reprovar, e acima do resíduo conhecido mais a diferença
+         do FreeType, que o CI já cobrou uma vez. */
+      const fimDoPlaystyle=letraFim(rotulo);
+      const inicioDoPrimeiro=letraInicio(stats[0].querySelector("i"));
       const fimDoUltimo=stats.at(-1).querySelector(".c-trilho").getBoundingClientRect().bottom;
-      const inicioDaEra=caixaDoTexto(carta.querySelector(".c-vrod b")).top;
+      const inicioDaEra=letraInicio(carta.querySelector(".c-vrod b"));
       const acima=inicioDoPrimeiro-fimDoPlaystyle;
       const abaixo=inicioDaEra-fimDoUltimo;
-      maximo("equilíbrio stats/era",Math.abs(acima-abaixo),1.5);
+      maximo("equilíbrio stats/era",Math.abs(acima-abaixo),3);
       const ocupacaoHorizontal=Math.min(...stats.map(stat=>{
         const statBox=stat.getBoundingClientRect();
         const trilhoBox=stat.querySelector(".c-trilho").getBoundingClientRect();
@@ -631,6 +757,13 @@ function medirCartas(){
     const variacao=Math.max(...tamanhos)-Math.min(...tamanhos);
     if(variacao>.05)ritmo.push({nick:"todos",campo:`tipografia única · ${campo}`,atual:+variacao.toFixed(2),
       limite:.05,regra:"máximo",unidade:"px"});
+  }
+  /* O teto por carta impede saturação; esta linha impede DERIVA. Sem ela, as
+     quatro poderiam ficar abaixo do teto e ainda assim em materiais distintos. */
+  if(cromosDeTreinador.length){
+    const amplitude=Math.max(...cromosDeTreinador)-Math.min(...cromosDeTreinador);
+    if(amplitude>.02)ritmo.push({nick:"todos",campo:"cromo do treinador · mesmo material nas quatro",
+      atual:+amplitude.toFixed(4),limite:.02,regra:"máximo",unidade:""});
   }
   return {total:cartas.length,largura:Math.round(cartas[0]?.getBoundingClientRect().width||0),
     falhas,reticencias,ritmo,auditadas,treinadoresAuditados};

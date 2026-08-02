@@ -1010,3 +1010,214 @@ e deixam 40,9 / 15,7 / 11,0 px de folga a 120 px.
 Não aumente esses fatores sem medir de novo. A 120 px a caixa tem ~97 px para uma
 palavra de 12 caracteres; o caminho para crescer mais é encolher o corpo **por
 faixa de densidade**, como o resto da carta já faz, nunca abrir exceção por nick.
+
+## 20. O cromo do treinador: um material, quatro matizes — 02/08/2026
+
+O responsável apontou, olhando as quatro cartas de treinador lado a lado no
+laboratório: **o ouro lê metal; o ciano e o azul leem plástico neon.** Todas
+usavam exatamente o mesmo `--cromo-pintura`, com as mesmas paradas de gradiente.
+O material era um só no código e quatro na tela.
+
+### O que a medição mostrou
+
+Convertidas para OKLCh, as quatro cores de característica:
+
+| característica | base | croma | leitura |
+|---|---|---:|---|
+| gestor | `#c9a36a` | 0,087 | metal |
+| estrategista | `#2fd6d6` | 0,128 | plástico neon |
+| motivador | `#c79bff` | 0,146 | — |
+| desenvolvedor | `#4a82ff` | 0,195 | plástico neon |
+
+A ordem do croma reproduz exatamente o veredito perceptual, e o gestor — o único
+abaixo de 0,09 — é o único que lê metal.
+
+A hipótese inicial era "croma baixo **mais** amplitude de luminância alta". **O
+número desmentiu a segunda metade**: o desenvolvedor tem a MAIOR amplitude de
+claro/escuro que o gradiente consegue produzir (0,194 contra 0,161 do gestor) e
+era o pior dos quatro. É croma sozinho. Metal é quase acromático com um
+tingimento; nenhuma escada de gradiente salva uma base saturada.
+
+### A correção
+
+Quatro tokens novos em `:root` — `--c-<carac>-metal` — são as mesmas cores com
+croma normalizado em **0,087**, preservando luminância e matiz. O gestor é a
+régua e por isso **não mudou um bit**. `--cromo` passou a ler `--cc-metal` em vez
+de `var(--r)`.
+
+A separação que isso estabelece vale além do treinador: **cor de texto pode ser
+saturada, porque ali saturação é identidade; superfície não pode.** As cartas
+continuam distinguíveis pelo matiz — é o material que deixou de variar.
+
+Contraste da tinta escura da faixa `.c-cat` sobre o pior degrau do gradiente,
+antes → depois: gestor 6,88 → 6,88, estrategista 8,95 → 8,81, motivador
+7,37 → 7,51, desenvolvedor 4,64 → 4,74. O piso de 4,5:1 se mantém nos quatro, e o
+desenvolvedor, o mais apertado, melhorou.
+
+### A guarda
+
+`medirCartas()` passou a calcular o croma OKLCh da cor **pintada** em `.c-cat` —
+não do token, que poderia divergir do que o navegador desenha. Duas linhas:
+
+1. teto por carta: croma ≤ 0,10;
+2. deriva entre cartas: amplitude ≤ 0,02, porque quatro valores podem ficar sob o
+   teto e ainda assim em materiais distintos.
+
+Verificada reprovando: reintroduzir `--cromo:var(--r)` produz **14 falhas** — 13
+cartas acima do teto (0,20) e a deriva em 0,1086 contra o limite de 0,02.
+
+
+## 21. Medir a linha não é medir o glifo — 02/08/2026
+
+O responsável olhou a carta de treinador no laboratório e disse duas coisas: há
+uma linha branca acima da faixa `TREINADOR`, e o espaço entre a faixa e `HALLY` é
+maior que o espaço entre `ESTRATEGISTA` e a borda de baixo. **A guarda de simetria
+estava verde.** Ele estava certo e a guarda estava cega.
+
+### A régua estava errada
+
+`Range.getBoundingClientRect()` devolve a caixa da FONTE — do `ascent` ao
+`descent` — não a linha nem a letra. Aferido contra a linha de base real, com um
+`span` de altura zero e `vertical-align:baseline`: a caixa começa exatamente
+`fontBoundingBoxAscent` acima da base. A maiúscula ocupa só o miolo dela.
+
+Como o nick tem corpo quase o dobro da característica, o espaço morto de cima é
+quase o dobro do de baixo. Igualar caixas desiguala letras:
+
+| largura | a guarda via | o olho via |
+|---|---:|---:|
+| 250px | 0,22 px | **6,22 px** |
+| 188px | 0,20 px | 5,80 px |
+| 150px | 0,33 px | 3,67 px |
+| 120px | 0,08 px | 3,08 px |
+
+A sequência completa da lição, agora com três degraus: **caixa do elemento →
+caixa da fonte → glifo.** Os dois primeiros já custaram retrabalho antes.
+
+### A régua nova
+
+`glifoDe()` no laboratório monta a medida a partir da fonte REAL de cada elemento
+e da string REALMENTE renderizada, com `text-transform` aplicado. Uma constante
+única não serve, e foi por aí que eu errei antes de aferir: a carta mistura
+Chakra Petch e Barlow, e maiúscula não tem descendente. Uma medição intermediária
+minha chegou a acusar 11–25 px de defeito no verso do treinador — era a constante
+de uma fonte aplicada ao texto da outra.
+
+### Frente do treinador
+
+O culpado era o `padding-top:1.85cqw` que existia para "corrigir a tinta que
+sobe". Ela não subia: com padding nenhum o desequilíbrio natural é de −0,5 a
+−1,9 px. O padding era a ORIGEM dos 3 a 6 px, calibrado contra a régua que não
+enxergava o próprio erro.
+
+Refeito em dois degraus, em fração de `--t-carac` — o desvio nasce do espaço
+morto da caixa da fonte, proporcional ao CORPO do texto, e o corpo satura no
+`clamp` enquanto `cqw` continua crescendo. Os coeficientes são centrados na faixa
+de erro, não ajustados ao melhor caso: sobra ~1 px de quantização de pixel que
+nenhum valor elimina, e centrar leva o pior caso de 1,00 px para 0,55 px.
+
+Resultado: **0,02 a 0,55 px** nas oito larguras, contra teto de 0,75.
+
+### A linha branca
+
+`inset 0 1px 0 rgba(255,255,255,.55)` na `.c-cat`, pretendendo ser reflexo
+especular. Na tela lia como um traço solto acima da faixa. O gradiente do cromo já
+começa claro e faz o brilho sozinho. A sombra interna de baixo fica: é ela que
+assenta a faixa sobre a placa.
+
+### A varredura: onde mais isso acontecia
+
+A regra é específica: **só quebra quando o vão compara dois corpos diferentes.**
+Para um elemento sozinho o centro da caixa e o centro da letra coincidem em
+~0,01em, porque `ascent − descent ≈ cap height` — é por isso que o alinhamento
+bandeira/nick nunca esteve torto e não precisou mudar.
+
+Os dois versos tinham o mesmo defeito, e o do treinador era pior:
+
+| face | a guarda via | o olho via |
+|---|---:|---:|
+| verso do jogador · stats/era | 0,03–1,28 px | 6,3–8,9 px |
+| verso do treinador · corpo/era | proxy interno, sempre verde | 1,9–5,9 px |
+
+Nos dois casos o `padding-top` existente **piorava** o desnível em vez de
+corrigi-lo, pelo mesmo motivo da frente.
+
+### Uma regra para as duas categorias
+
+O verso do treinador media "conteúdo centrado dentro da reserva", pelas caixas —
+um proxy interno que ficava verde com o bloco visivelmente alto, porque a reserva
+não é o que o olho compara. Ele passou a cobrar exatamente o que o jogador cobra:
+**o vão acima do bloco central igual ao vão abaixo dele**, medido na letra.
+
+- jogador: playstyle → primeiro rótulo, contra último trilho → campeonato;
+- treinador: característica → frase, contra última linha → campeonato.
+
+O jogador precisou de três degraus de densidade. O treinador **não precisou de
+nenhum**, e a razão é a parte interessante: com a característica em corpo cheio o
+desvio dele já era 0,05 px. O desequilíbrio inteiro vinha de `--carac-esc`, o
+encolhimento por comprimento — como `.c-vestilo` é ancorado pelo TOPO, um corpo
+menor SOBE a linha de base e abre o vão acima do texto. A 151 px isso vai de
+0,05 px em `Gestor` a 5,06 px em `Desenvolvedor`.
+
+Por isso a correção do treinador é proporcional a `(1 − carac-esc)` e não à
+largura, e o fator sai da métrica da fonte: a linha de base desce `ascent` mais
+meia entrelinha do topo da caixa, o que na Chakra Petch com `line-height:.95` dá
+.99 − .175 ≈ .85 do corpo. O ajuste dos dados pediu .878.
+
+### O piso do rodapé precisou ser reancorado
+
+Havia um contrato deliberado: o treinador respira antes do rodapé ao menos tanto
+quanto o jogador, usando o jogador como referência para não inventar um número.
+**Ele ficou logicamente impossível.** Com as duas cartas simétricas, os respiros
+não podem mais ser iguais entre categorias: o corpo do treinador é mais alto que
+os quatro trilhos, sobra menos espaço livre, e cada metade dele é obrigatoriamente
+menor. Exigir paridade passaria a exigir assimetria em uma das duas.
+
+A régua nova levou duas tentativas, e a tentativa falha vale registro:
+
+1. **a simetria não pega o defeito.** Ancorar frase e números nas duas pontas
+   desloca os dois vãos pelo mesmo tanto — a diferença continua zero;
+2. **a repartição do espaço livre também não pega.** `space-between` ESTICA o
+   conteúdo em vez de empurrá-lo: medido, ele vai de 68,6 px para 107,5 px numa
+   reserva de 112,8 px, e a folga some em vez de mudar de lado;
+3. **o recuo até a aresta de baixo pega.** Como fração da reserva — que é a mesma
+   nas duas categorias e nas oito larguras — os treinadores ficam entre 9,7% e
+   23,1% e o layout que falhou dá 2%. Piso em 6%.
+
+### O CI derrubou a primeira tentativa de teto — e a lição é de método
+
+Publicado, o Linux reprovou `equilíbrio corpo/era do treinador` com **3,27 px**
+onde o Windows media 2,27 px. O teto estava em 2,5 px: margem de 0,23 px sobre um
+resíduo que eu **não sabia explicar**. Isso é erro de método, não de número — o
+projeto já registra que o FreeType mede diferente, e teto apertado sobre resíduo
+inexplicado não sobrevive à travessia de plataforma.
+
+A primeira reação foi reverter a correção do verso. Estava errada também: medido o
+pior caso real, sem correção o desnível do treinador chega a **7,92 px**
+(`dastan`, 176 px) — os "1,9 a 5,9 px" que eu tinha em mãos eram a mediana, não o
+pior caso. Reverter trocaria 3,27 px por 7,92 px.
+
+O teto certo fica entre duas medidas: **acima** do resíduo com correção somado à
+diferença de plataforma, e **abaixo** do defeito sem correção — senão a guarda
+para de saber reprovar. Ficou em 5 px para o treinador e 3 px para o jogador.
+
+Nenhum dos dois é afrouxamento dos números antigos: 1,5 px e 0,35 px valiam sobre
+a CAIXA, que é outra grandeza. Sobre a letra, esses tetos cobram um desvio que
+antes passava inteiro.
+
+### Dívida declarada
+
+Os tetos são **5 px** no treinador e **3 px** no jogador, e a diferença entre
+eles é dívida. Isso é dívida, não conforto: sobra 2,27 px numa única combinação —
+176 px com `Desenvolvedor`. A mesma carta a 151 px fica em 0,19 px, então não é o
+modelo de `--carac-esc` que falha. É a faixa 176/151, que já tinha mostrado
+~1,2 px de quebra inexplicada nas DUAS categorias quando os coeficientes foram
+derivados; enquanto ela não for entendida, nenhum coeficiente fecha 176 sem abrir
+151. O certo é achar a causa e igualar os dois tetos em 3 px.
+
+### Prova
+
+Todas as guardas foram verificadas REPROVANDO, não só passando. Desfeitas as
+correções: 135 falhas em `equilíbrio stats/era` (pior 10,22 px) e 11 em
+`equilíbrio corpo/era do treinador` (pior 7,32 px). Reintroduzido o padding antigo
+da frente: 18 falhas de `respiro simétrico`. O E2E fecha nas oito larguras.

@@ -95,6 +95,21 @@ Regras não negociáveis:
 16. A geometria só é comparável depois de `Chakra Petch 700` carregar de fato.
     `document.fonts.ready` também resolve em falha; preserve o preload, a carga
     explícita e a asserção de `document.fonts.check` do laboratório/E2E.
+17. **Vão vertical entre dois corpos diferentes mede-se na LETRA, nunca na
+    caixa.** `Range.getBoundingClientRect()` devolve a caixa da FONTE, do
+    `ascent` ao `descent`; a maiúscula ocupa só o miolo dela, e o espaço morto é
+    proporcional ao corpo. Igualar caixas de corpos diferentes desiguala letras —
+    foi assim que três assimetrias de 3 a 9 px passaram com o medidor cravando
+    0,1 px. Use `letraInicio`/`letraFim` do laboratório, que tiram a métrica da
+    fonte REAL de cada elemento e da string REALMENTE renderizada: a carta mistura
+    Chakra Petch e Barlow, e uma constante única para tudo dá resultado errado.
+    Para um elemento sozinho a caixa serve — `ascent − descent ≈ cap height`, e o
+    erro fica em ~0,01em. Detalhe na §21 do design.
+18. **O material do cromo é um só nas quatro características do treinador.** Cor
+    de TEXTO pode ser saturada, porque ali saturação é identidade; SUPERFÍCIE não
+    pode — metal é quase acromático com um tingimento. Os quatro
+    `--c-<carac>-metal` têm croma normalizado em 0,087, o do gestor, que era o
+    único que lia como metal. Não volte a servir `--cromo` de `var(--r)`.
 
 ## Ritual para qualquer mudança visual de carta
 
@@ -155,3 +170,26 @@ Refinamento final do mesmo dia, publicado em `7175c26`:
   `30652005186` ficou verde e publicou o checkpoint;
 - a retomada completa e as próximas grandes etapas estão em
   `docs/retomada-2026-07-31.md`.
+
+## Sessões de 01–02/08/2026 — o que mudou depois daquele checkpoint
+
+A frente do treinador **voltou a ser a grade do jogador**, com duas linhas em vez
+de três: nick + bandeira, depois característica + time. `coachFront` deixou de ter
+template próprio e chama `frenteHtml`, então refino da frente do jogador chega ao
+treinador de graça. O OVR subiu para o topo esquerdo, na posição exata do jogador;
+a placa desceu para a base; o serrilhado saiu da frente e sobrevive no verso.
+Isso **substitui** a §19.5 do design, que descrevia a frente replicando o verso.
+
+Também entraram: o monograma do nick no campo sem retrato (80 dos 85 jogadores),
+retratos refeitos pela grade de `docs/card-portraits.md` com a bancada
+`recorte-retratos.html`, e o cromo de material único descrito na regra 17.
+
+Duas lições desse ciclo estão nas regras 17 e 18 acima e detalhadas nas §20 e §21
+do design. A mais cara: **uma compensação calibrada contra a régua errada não
+conserta o desvio, ela o cria.** Os três `padding` de simetria da carta — frente
+do treinador, verso do jogador, verso do treinador — todos pioravam o que diziam
+corrigir, e todos passavam verdes.
+
+Dívida declarada em aberto: o teto de `equilíbrio corpo/era do treinador` está em
+2,5 px em vez de 1,5 px por causa de ~2,3 px de resíduo inexplicado na faixa
+176/151 px. Ver §21.
