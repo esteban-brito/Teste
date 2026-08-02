@@ -261,6 +261,25 @@ function medirCartas(){
       if(y>TOL&&(soVertical||x>TOL))registrar(falhas,b,`colisão ${campo}`,soVertical?y:Math.min(x,y),0);
     };
 
+    /* COLUNA DA ESQUERDA. Tudo que é alinhado à esquerda na frente começa no
+       MESMO x — o recuo de `--pad`. A única exceção é o algarismo do OVR, que
+       tem acerto óptico próprio porque um número grande carrega folga lateral.
+
+       O rótulo `OVERALL` herdava esse acerto sem precisar dele e ficava 3,95 px
+       à esquerda do nick a 250 px: a coluna da frente tinha um degrau que ninguém
+       media. Aqui a régua é a TINTA, não a caixa. */
+    {
+      const pad=caixa.width*.09,coluna=[];
+      for(const [sel,campo] of [[".c-ovr small","rótulo do OVR"],[".c-nick","nick"],
+        [".c-func","função"],[".c-role2","função secundária"]]){
+        const el=carta.querySelector(`.cfront ${sel}`);
+        if(!visivel(el)||!el.textContent.trim())continue;
+        const t=caixaDoTexto(el);
+        if(t.width)coluna.push([campo,t.left-caixa.left]);
+      }
+      for(const [campo,x] of coluna)
+        maximo(`coluna da esquerda · ${campo} no recuo`,Math.abs(x-pad),.6,.05);
+    }
     fixa(".c-nick","nick (frente)");solta(".c-func","função (frente)");
     fixa(".c-vnick","nick (verso)");fixa(".c-vestilo b","playstyle/característica (verso)");
     for(const [indice,meta] of [...carta.querySelectorAll(".c-meta span")].entries())
@@ -296,10 +315,15 @@ function medirCartas(){
       /* A placa do treinador não segue mais a altura da do jogador: ela segue a
          faixa do PRÓPRIO verso, provado logo abaixo. */
 
+      /* Consertado em 01/08/2026: estas quatro linhas diziam medir o VERSO e
+         mediam a frente. `carta.querySelector(".c-vnick")` devolve o primeiro nó
+         do DOM, e no treinador a frente vem antes — enquanto ela replicava o
+         verso o erro ficou invisível, e só apareceu quando o bloco desceu para a
+         base. Escopo explícito em `.cback` nos dois lados. */
       for(const [seletor,campo] of [[".c-vnick","nick"],[".c-vid","identidade"],
         [".c-vestilo","característica"],[".c-vrod","era"]]){
-        const atual=carta.querySelector(seletor).getBoundingClientRect();
-        const esperado=ref.querySelector(seletor).getBoundingClientRect();
+        const atual=carta.querySelector(`.cback ${seletor}`).getBoundingClientRect();
+        const esperado=ref.querySelector(`.cback ${seletor}`).getBoundingClientRect();
         maximo(`verso padronizado · ${campo}`,
           Math.abs((atual.top-caixa.top)-(esperado.top-refCaixa.top)),.35,.05);
       }
@@ -355,24 +379,57 @@ function medirCartas(){
          Medir os quatro lados não é zelo excessivo: a primeira versão desta
          bateria só olhava o eixo y e ficou verde com o nome do time meia carta
          fora de lugar. Espelhar um eixo obriga a provar o outro. */
-      /* A frente do treinador é RÉPLICA do verso: mesmos `.c-vnick` e `.c-vid`,
-         nas mesmas coordenadas. Provar isso é comparar as duas faces da MESMA
-         carta, aresta por aresta — nada aqui olha para a carta de jogador, que
-         só continua servindo de referência para a placa e o OVR. */
-      for(const [seletor,campo] of [[".c-vnick","nick"],[".c-vid","linha de contexto"]]){
-        const frente=carta.querySelector(`.cfront ${seletor}`);
-        const verso=carta.querySelector(`.cback ${seletor}`);
-        if(!frente||!verso)
-          {registrarRitmo(`frente replica o verso · ${campo}`,0,1,"exato","estado");continue;}
-        const f=frente.getBoundingClientRect(),v=verso.getBoundingClientRect();
-        for(const [borda,desvio] of [["topo",Math.abs(f.top-v.top)],
-          ["base",Math.abs(f.bottom-v.bottom)],
-          ["esquerda",Math.abs(f.left-v.left)],["direita",Math.abs(f.right-v.right)]])
-          maximo(`frente replica o verso · ${campo} (${borda})`,desvio,.35,.05);
+      /* CONTRATO NOVO — 01/08/2026, a pedido do responsável. A frente do
+         treinador voltou a ser a GRADE DO JOGADOR, com duas linhas em vez de
+         três: nick + bandeira, depois característica + time. O OVR subiu para o
+         topo esquerdo e o bloco desceu para a base, sob a faixa cromada.
+
+         Isto substitui a prova de que a frente replicava o verso (§19.5). O que
+         se prova agora é mais forte, porque compara com a carta de JOGADOR: os
+         mesmos eixos que o E2E já cobra lá — bandeira alinhada ao nick e time
+         afastado da bandeira — passam a valer aqui, e a bandeira, que tinha
+         saído por decisão de design, volta com guarda como estava previsto. */
+      const placaFrente=carta.querySelector(".cfront .c-placa").getBoundingClientRect();
+      for(const [seletor,campo] of [[".c-nick","nick"],[".c-func","característica"],
+        [".c-flag","bandeira"],[".c-team","time"]]){
+        const no=carta.querySelector(`.cfront ${seletor}`);
+        if(!visivel(no)){registrarRitmo(`identidade na base do treinador · ${campo} sumiu`,
+          0,1,"exato","estado");continue;}
+        const bloco=no.getBoundingClientRect();
+        minimo(`identidade na base do treinador · ${campo} entra na placa`,
+          bloco.top-placaFrente.top,0,.35);
+        maximo(`identidade na base do treinador · ${campo} passa da carta`,
+          bloco.bottom-caixa.bottom,0,.35);
       }
-      /* A frente troca o rótulo pela característica; o verso mantém "Treinador".
-         Se os dois passarem a dizer a mesma coisa, o bloco perdeu a função. */
-      const rotuloFrente=carta.querySelector(".cfront .c-vid b").textContent.trim();
+      /* Os dois eixos que a carta de jogador já prova, agora exigidos também
+         aqui: a bandeira divide o eixo vertical com o nick, e o time guarda
+         distância dela. Foi um destes que, ausente, deixou o nome do time parar
+         no meio da carta com o medidor verde. */
+      const bandeiraCoach=carta.querySelector(".cfront .c-flag");
+      const nickCoach=carta.querySelector(".cfront .c-nick");
+      const timeCoach=carta.querySelector(".cfront .c-team");
+      if(visivel(bandeiraCoach)&&visivel(nickCoach)&&visivel(timeCoach)){
+        const fb=bandeiraCoach.getBoundingClientRect(),nb=nickCoach.getBoundingClientRect();
+        const tb=timeCoach.getBoundingClientRect();
+        maximo("identidade na base do treinador · bandeira alinhada ao nick",
+          Math.abs((fb.top+fb.bottom-nb.top-nb.bottom)/2),.4,.05);
+        minimo("identidade na base do treinador · time afastado da bandeira",
+          tb.top-fb.bottom,0,.35);
+      }
+      /* O OVR do treinador ocupa a MESMA posição do OVR do jogador. É o pedido
+         literal do responsável — "exatamente igual as cartas de players" — e sem
+         medir os dois eixos ele voltaria a divergir em silêncio. */
+      const ovrCoach=carta.querySelector(".cfront .c-ovr").getBoundingClientRect();
+      const ovrRef=ref.querySelector(".cfront .c-ovr").getBoundingClientRect();
+      for(const [campo,desvio] of [
+        ["topo",Math.abs((ovrCoach.top-caixa.top)-(ovrRef.top-refCaixa.top))],
+        ["esquerda",Math.abs((ovrCoach.left-caixa.left)-(ovrRef.left-refCaixa.left))]])
+        maximo(`OVR do treinador igual ao do jogador · ${campo}`,desvio,.35,.05);
+      /* A frente diz a característica; o verso diz "Treinador". Se os dois
+         passarem a dizer a mesma coisa, uma das faces perdeu a função. Depois de
+         01/08/2026 a frente carrega isso em `.c-func`, não em `.c-vid b` — o
+         bloco replicado do verso saiu junto com a volta da grade. */
+      const rotuloFrente=carta.querySelector(".cfront .c-func").textContent.trim();
       const rotuloVerso=carta.querySelector(".cback .c-vid b").textContent.trim();
       if(rotuloFrente===rotuloVerso||rotuloVerso!=="Treinador")
         registrarRitmo("frente replica o verso · rótulo trocado",0,1,"exato","estado");
@@ -381,14 +438,20 @@ function medirCartas(){
          não invadi-la. Como a faixa é elemento próprio, as duas coisas se medem
          direto, sem depender de recuos cancelados. */
       const rotulo=carta.querySelector(".c-cat").getBoundingClientRect();
-      const blocoOvr=carta.querySelector(".c-ovr").getBoundingClientRect();
+      const blocoOvr=carta.querySelector(".cfront .c-ovr").getBoundingClientRect();
       minimo("faixa do rótulo do treinador · OVR não a invade",
         rotulo.top-blocoOvr.bottom,0,.35);
       for(const [campo,desvio] of [
         ["sangra à esquerda",Math.abs(rotulo.left-caixa.left)],
         ["sangra à direita",Math.abs(caixa.right-rotulo.right)],
-        ["encosta na base",Math.abs(caixa.bottom-rotulo.bottom)]])
+        /* Antes ela encostava na base. Agora a base pertence ao bloco de
+           identidade e a faixa ASSENTA sobre a placa: as duas arestas têm de
+           coincidir, senão sobra um filete de retrato entre elas. */
+        ["assenta sobre a placa",Math.abs(rotulo.bottom-placaFrente.top)]])
         maximo(`faixa do rótulo do treinador · ${campo}`,desvio,.35,.05);
+      /* E a placa é quem encosta na base agora. */
+      maximo("placa do treinador · encosta na base",
+        Math.abs(caixa.bottom-placaFrente.bottom),.35,.05);
       /* Fina de propósito: só o que couber o rótulo. Acima de um quinto da carta
          ela deixaria de ser rodapé e viraria uma segunda placa. */
       maximo("faixa do rótulo do treinador · altura",
@@ -396,17 +459,41 @@ function medirCartas(){
       /* O bloco do treinador tem DUAS linhas contra três do jogador, então a
          altura não é comparável — o que se prova é outra coisa, e mais forte:
          as duas faces carregam o mesmo bloco, provado acima. */
-      const placaCoach=carta.querySelector(".c-placa").getBoundingClientRect();
-      const faixaCoach=carta.querySelector(".c-vfaixa").getBoundingClientRect();
-      /* Virar a carta não pode mover a régua: placa e faixa têm a mesma altura. */
-      maximo("aresta reta do treinador · placa e faixa na mesma altura",
-        Math.abs(placaCoach.height-faixaCoach.height),.35,.05);
-      /* A grade de três linhas do jogador — nick/bandeira, função, contexto — não
-         existe mais no treinador. Se qualquer um desses nós reaparecer na frente,
-         é sinal de que a réplica do verso foi desfeita sem querer. */
-      for(const seletor of [".c-identidade",".c-nick",".c-func",".c-flag",".c-meta"])
+      /* A placa ABRAÇA a identidade, com respiro SIMÉTRICO. Substituiu, em
+         01/08/2026, a prova de que placa e faixa tinham a mesma altura: aquela
+         existia para o flip não mover a régua horizontal, e com a placa na base e
+         a faixa no topo do verso o flip já troca tudo de lugar.
+
+         Mede-se a TINTA, não a caixa: a caixa do nick inclui faixa morta acima do
+         texto, e foi exatamente esse erro que deixou uma guarda de simetria
+         cravar 0,00 px enquanto o olho via 3 px de diferença. */
+      const tintaDe2=elemento=>{const r=document.createRange();
+        r.selectNodeContents(elemento);return r.getBoundingClientRect();};
+      const tintaTopo=tintaDe2(carta.querySelector(".cfront .c-nick")).top;
+      const tintaBase=tintaDe2(carta.querySelector(".cfront .c-func")).bottom;
+      const respiroAcima=tintaTopo-placaFrente.top;
+      const respiroAbaixo=placaFrente.bottom-tintaBase;
+      maximo("identidade na base do treinador · respiro simétrico",
+        Math.abs(respiroAcima-respiroAbaixo),.75,.05);
+      /* E a placa não pode nem sufocar nem sobrar: os dois respiros ficam numa
+         faixa medida. Sem o teto, "simétrico" seria satisfeito por uma placa
+         gigante com o texto boiando no meio — que foi o defeito apontado. */
+      for(const [campo,valor] of [["acima",respiroAcima],["abaixo",respiroAbaixo]]){
+        minimo(`identidade na base do treinador · respiro ${campo}`,valor,caixa.height*.012,.35);
+        maximo(`identidade na base do treinador · respiro ${campo}`,valor,caixa.height*.045,.35);
+      }
+      /* A frente usa a grade do jogador e NÃO pode carregar o bloco replicado do
+         verso junto — os dois no mesmo lugar significariam nick duplicado. Esta
+         lista era o inverso disto até 01/08/2026: proibia a grade e exigia a
+         réplica. */
+      for(const seletor of [".c-vnick",".c-vid"])
         if(carta.querySelector(`.cfront ${seletor}`))
-          registrarRitmo(`frente replica o verso · sobra de ${seletor}`,1,0,"exato","estado");
+          registrarRitmo(`frente do treinador · sobra de ${seletor}`,1,0,"exato","estado");
+      /* Função secundária não existe para treinador. O slot fica no HTML por
+         compartilhar a grade, mas precisa estar oculto: visível e vazio, ele
+         abriria uma coluna e desalinharia o time. */
+      if(visivel(carta.querySelector(".cfront .c-role2")))
+        registrarRitmo("frente do treinador · função secundária visível",1,0,"exato","estado");
       /* A aresta da placa do treinador é reta por decisão de design: a diagonal
          é assinatura da carta de jogador. `clip-path` não altera a caixa, então
          nenhuma medida de retângulo pegaria uma diagonal de volta. */
@@ -426,15 +513,21 @@ function medirCartas(){
         registrarRitmo("moldura e faixa do treinador · mesmo cromo",0,1,"exato","estado");
       if(pinturaAro.includes("repeating-linear-gradient"))
         registrarRitmo("moldura do treinador · serrilhado removido",1,0,"exato","estado");
-      for(const [seletor,campo] of [[".c-fio","frente"],[".c-vfio","verso"]]){
-        const regua=carta.querySelector(seletor);
-        if(regua&&!getComputedStyle(regua).backgroundImage.includes("repeating-linear-gradient"))
-          registrarRitmo(`régua serrilhada do treinador · ${campo}`,0,1,"exato","estado");
-      }
-      /* O que o treinador precisa mostrar hoje: nick e contexto nas duas faces,
-         a faixa de categoria e o rótulo do OVR. A bandeira saiu por decisão de
-         design e por isso NÃO entra nesta lista — se voltar, volta com guarda. */
-      if(![carta.querySelector(".cfront .c-vnick"),carta.querySelector(".cfront .c-vid"),
+      /* O serrilhado sobrevive só no VERSO. Na frente ele saiu por decisão do
+         responsável: empilhado com a faixa cromada, o tracejado lia como borda
+         provisória. Provar que ele NÃO está na frente é tão contrato quanto
+         provar que está no verso. */
+      const reguaVerso=carta.querySelector(".cback .c-vfio");
+      if(reguaVerso&&!getComputedStyle(reguaVerso).backgroundImage.includes("repeating-linear-gradient"))
+        registrarRitmo("régua serrilhada do treinador · verso",0,1,"exato","estado");
+      const reguaFrente=carta.querySelector(".cfront .c-fio");
+      if(reguaFrente&&getComputedStyle(reguaFrente).display!=="none")
+        registrarRitmo("régua serrilhada do treinador · fora da frente",1,0,"exato","estado");
+      /* O que o treinador precisa mostrar hoje. A BANDEIRA voltou em 01/08/2026,
+         por decisão do responsável, e entra aqui — era o que a versão anterior
+         desta linha prometia: "se voltar, volta com guarda". */
+      if(![carta.querySelector(".cfront .c-nick"),carta.querySelector(".cfront .c-func"),
+        carta.querySelector(".cfront .c-flag"),carta.querySelector(".cfront .c-team"),
         carta.querySelector(".cback .c-vnick"),carta.querySelector(".cback .c-vid"),
         carta.querySelector(".c-cat"),carta.querySelector(".c-ovr small")].every(visivel))
         registrarRitmo("conteúdo padronizado do treinador",0,1,"mínimo","estado");

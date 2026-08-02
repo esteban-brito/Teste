@@ -108,7 +108,7 @@ export function createCardView({styleId,styleLabel,styleRecipe,coachRecipe}){
     ?`coachcard coach-${card.caracSlug}`
     :`card ${tierOf(card.ovr)} fn-${slugFuncao(card.prim)}`;
 
-  const frenteHtml=(card,rotulo,destaque,contexto,tipo)=>`${camadasDeFundo(card)}
+  const frenteHtml=(card,rotulo,destaque,contexto,tipo,extra="")=>`${camadasDeFundo(card)}
   <div class="c-fio"></div><div class="c-placa"></div>
   <div class="c-ovr">${card.ovr}<small>${rotulo}</small></div>
   <div class="c-identidade c-identidade--${tipo}">
@@ -116,24 +116,26 @@ export function createCardView({styleId,styleLabel,styleRecipe,coachRecipe}){
     <div class="c-nick">${esc(card.nick)}</div>
     <div class="c-func">${esc(destaque)}</div>
     <div class="c-meta"><span class="c-role2${contexto[0]?` c-role2--${slugFuncao(contexto[0])}`:""}">${esc(contexto[0])}</span><span class="c-team">${esc(contexto[1])}</span></div>
-  </div>
+  </div>${extra}
   <div class="c-grao"></div>`;
 
   const playerFront=card=>frenteHtml(card,"Overall",card.prim,[card.sec||"",card.time],"player");
 
-  /* A frente do treinador REPLICA o bloco de identidade do verso, em vez de usar
-     a grade de três linhas do jogador: mesmo nick, mesma linha de contexto, os
-     mesmos `.c-vnick`/`.c-vid`. Como a placa da frente tem a altura da faixa do
-     verso, os dois blocos caem exatamente no mesmo lugar sem uma única regra de
-     posição nova. A troca é só o rótulo: característica na frente, "Treinador"
-     no verso. Sem bandeira por decisão de design. */
-  const coachFront=card=>`${camadasDeFundo(card)}
-  <div class="c-fio"></div><div class="c-placa"></div>
-  <div class="c-ovr">${card.ovr}<small>Overall</small></div>
-  <div class="c-vnick">${esc(card.nick)}</div>
-  <div class="c-vid"><b>${esc(card.carac||"")}</b><span>${esc(card.time||"")}</span></div>
-  <div class="c-cat">Treinador</div>
-  <div class="c-grao"></div>`;
+  /* A frente do treinador é a MESMA do jogador, com uma linha a menos.
+
+     Ela já foi três coisas: a grade de três linhas do jogador, depois uma réplica
+     do bloco do verso (§19.5, sem bandeira), e agora a grade do jogador de novo —
+     desta vez com duas linhas, por decisão do responsável em 01/08/2026:
+     nick + bandeira na primeira, característica + time na segunda. O jogador põe
+     o time na terceira porque tem função secundária; o treinador não tem, então
+     o time sobe uma linha. Essa é a única diferença real entre as duas frentes.
+
+     Por isso aqui não há template próprio: `frenteHtml` serve as duas, e o
+     treinador só passa a característica no lugar da função, uma função
+     secundária vazia e a faixa cromada como extra. Enquanto isso for verdade,
+     qualquer refino da frente do jogador chega ao treinador de graça. */
+  const coachFront=card=>frenteHtml(card,"Overall",card.carac||"",["",card.time||""],
+    "coach",`\n  <div class="c-cat">Treinador</div>`);
 
   /* Firepower permanece primeiro. A receita ordena os seguintes por contribuição
      real (peso × valor); um atributo complementar completa o quarto slot. */
