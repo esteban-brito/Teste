@@ -27,7 +27,7 @@ jobs:
           css=$(sha1sum style.css | cut -c1-8)
           js=$(sha1sum game.js | cut -c1-8)
           sed -i "s/style\.css?v=DEV/style.css?v=$css/g; s/game\.js?v=DEV/game.js?v=$js/g" \
-            index.html prototipo-cartas.html
+            index.html prototipo-cartas.html recorte-retratos.html
       - uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
