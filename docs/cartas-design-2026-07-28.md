@@ -447,8 +447,10 @@ Em 31/07/2026 o A foi refinado sem voltar ao desenho publicado:
 | completa | `38% → 32% → 35% → 34% → 30% → 24%` | `3,3%` | `5,8%` | `10,1%` |
 | compacta | `32% → 29% → 31% → 30% → 27% → 22%` | `3,3%` | `3,5%` | `8,5%` |
 
-`--placa-n`, `--placa`, `--b1`, `--b2` e `--b3` governam todas as cartas de
-jogador, em vez de deslocamentos por nick ou retrato. A função desce para perto
+`--placa-n`, `--placa`, `--b1`, `--b2` e `--b3` governavam todas as cartas de
+jogador, em vez de deslocamentos por nick ou retrato. **Os três `--b*` não
+existem mais desde 02/08/2026** — a grade de identidade os tornou inertes e a
+§22 registra a remoção; a tabela acima é histórica. A função desce para perto
 do contexto, enquanto o nick conserva o intervalo maior pedido; `--corte-v` é
 recalculado com a nova altura e mantém o ângulo físico igual nas duas faces.
 A foto continua ocupando mais área que no jogo publicado, mas frente e verso
@@ -503,7 +505,8 @@ A última A refinada substituiu o design anterior no jogo. Não existe classe de
 proposta nem segundo layout no laboratório. O contrato atual é:
 
 - recorte único de retrato: `100% auto`, `50% 12%`, sem zoom por jogador;
-- placa de 24% na largura ampla, 26% na intermediária e 28% até 150 px;
+- placa de 24,5% até 150 px e 26,5% abaixo disso, remedida em 02/08/2026 contra
+  a régua da diagonal (§22); era 24%/26%/28%;
 - nick universal de `11.5cqw`, role principal com piso de 9 px e role secundário
   com piso de 7 px;
 - bandeira na coluna inferior direita, acima do time, visível em toda densidade;
@@ -1221,3 +1224,166 @@ Todas as guardas foram verificadas REPROVANDO, não só passando. Desfeitas as
 correções: 135 falhas em `equilíbrio stats/era` (pior 10,22 px) e 11 em
 `equilíbrio corpo/era do treinador` (pior 7,32 px). Reintroduzido o padding antigo
 da frente: 18 falhas de `respiro simétrico`. O E2E fecha nas oito larguras.
+
+## 22. A guarda que só olhava uma categoria — 02/08/2026
+
+A §21 consertou a simetria da frente do treinador e criou a guarda para ela. A
+guarda nasceu **dentro do ramo `if(coachcard)`** do laboratório. O jogador nunca
+foi medido nesse eixo, e o mesmo defeito estava lá — em 135 das 153 cartas.
+
+É a §19.1 um nível acima. Lá a lição foi *uma guarda só vê o eixo que ela mede*;
+aqui ela ganha a segunda metade: **e só na categoria em que ela roda**.
+
+### A régua errada, de novo — e desta vez o E2E pegou
+
+A primeira medição comparou o respiro contra `placa.getBoundingClientRect().top`
+e acusou 4,89–12,59 px de desequilíbrio. Com esse número a placa parecia inchada
+— 13,2% de tinta dentro de 24% —, e a correção foi encolhê-la para 22/22,5/24 e
+centrar o bloco.
+
+**O E2E reprovou em 130 px e 120 px**: `respiro diagonal · frente`, com o nick a
+1,2–1,7 px da diagonal. O motivo é que no jogador a placa é cortada em diagonal,
+então a aresta VISÍVEL não é o topo da caixa: no eixo do nick ela corre
+`--corte-n × (1 − --pad) = 8,19%` da altura da placa abaixo dele. O treinador tem
+`clip-path:none` e por isso a guarda dele estava certa desde sempre.
+
+Contra a aresta visível o defeito era **1,1 a 3,7 pontos da carta** — real, pior
+na costura compacta, mas metade do que a caixa dizia. E a conclusão se inverteu:
+a placa **não estava inchada**. Aquele ar era folga que a diagonal cobra.
+
+Terceira aparição da mesma família de erro neste componente:
+
+| ciclo | régua errada | régua certa |
+|---|---|---|
+| 31/07 §18 | `getBoundingClientRect` | `Range` |
+| 02/08 §21 | caixa da fonte (`ascent`→`descent`) | glifo (`actualBoundingBox`) |
+| 02/08 §22 | topo da caixa da placa | aresta visível (a diagonal) |
+
+### O que ficou
+
+- a guarda subiu para o trecho compartilhado e roda nas **duas** categorias;
+- o jogador centra entre a **diagonal** e a base, por `--diag-k`; o treinador
+  continua centrando na caixa, porque a aresta dele é reta;
+- a placa foi de 24/26/28 para **24,5 / 26,5** — quase sem mudar, porque o
+  conserto é centrar, não encolher. A densidade intermediária perdeu o degrau
+  próprio: medida, ela pede o mesmo valor da ampla;
+- **sem coeficiente de correção residual.** `align-content:center` sozinho leva
+  o desvio a 0,03–1,46 px, e o que sobra não é proporcional a corpo nenhum: 0,03
+  px a 130 px contra 1,02 px a 120 px. Calibrar contra isso seria calibrar ruído
+  de subpixel — o erro da §21. O teto da guarda absorve;
+- tetos: **0,75 px** no treinador (2 linhas, 1 gap) e **3 px** no jogador
+  (3 linhas, 2 gaps), acima do resíduo mais a diferença de plataforma e bem
+  abaixo do defeito, que começava em 3,85 px.
+
+### O topo do verso também não tinha dono
+
+Nick, `.c-vid` e `.c-vestilo` eram três âncoras percentuais independentes
+(5,5% · 15,5% · 27,5%), e a guarda do verso começa no playstyle — o bloco acima
+dele nunca foi medido. Resultado: a razão entre o vão nick→identidade e o vão
+identidade→playstyle variava **1,37× a 2,84×**, e despencava na costura de
+150 px, onde `.c-vestilo` sobe para 25,5% enquanto `.c-vid` descia para 16% —
+os dois na direção contrária.
+
+Nick e identidade são a mesma unidade: quem joga e por quem. Proximidade é o que
+agrupa, então `.c-vid` passou a ser posicionado em fração do CORPO do nick
+(`--k-vid`, com degrau na densidade compacta pelo mesmo motivo que o resto da
+carta tem). Medido: razão de **2,23× a 2,59×** na faixa que o jogo entrega, e a
+costura ficou contínua (2,41 → 2,52).
+
+`.c-vestilo` **não se moveu**: o bloco inferior tem simetria calibrada por degrau
+e dívida declarada na §21; mexer nele é outra fatia, com recalibração própria. É
+por isso que a razão ainda sobe a 3,05× em 250 px, largura que só o laboratório
+usa — ali `--t-vnick` satura no teto de 23 px enquanto a carta continua crescendo.
+Fechar isso exige ancorar `.c-vestilo` ao corpo também.
+
+### Tokens mortos
+
+`--b1`, `--b2` e `--b3` saíram. A grade de identidade tornou `.c-nick` e
+`.c-func` `position:static`, o que deixou os três sem consumidor real. Provado
+por mutação, não por leitura: valores absurdos moviam **0 de 279** medidas,
+contra 156 do controle. `--b1` sobreviveu até a centragem do jogador e caiu junto
+— 0 de 160. Saíram também os valores `--t3:6.2cqw`/`--t4:4.5cqw` de `.cfaces`,
+que `.card .cfaces` sobrescreve em toda carta que existe.
+
+O `:root` já tinha passado por essa limpeza em 01/08; a geometria da carta não.
+
+### Prova
+
+Guardas verificadas **reprovando**. Desfeita a centragem do jogador: 135 falhas
+de `respiro simétrico` em 4 das 8 larguras, pior **13,01 px** a 150 px. Placa
+inflada para 45%: 306 ocorrências, as duas categorias. Diagonal aprofundada para
+22%: 405 ocorrências, incluindo `respiro diagonal · frente`.
+
+`npm run lint` e `npm run check` (17/17) verdes, E2E de cartas verde nas oito
+larguras e no jogo real. Comparação visual: **9 de 21** estados mudaram, todos os
+que contêm cartas; os outros 12 ficaram pixel a pixel idênticos. O treinador não
+mudou um pixel — as medidas dele são idênticas antes e depois.
+
+## 23. A grade que decidia a carta, e ninguém media — 02/08/2026
+
+As oito larguras do laboratório provam a CARTA. Nada provava a **grade** que
+escolhe essa largura no jogo. Dois defeitos moravam aí, com a mesma raiz: a
+largura era consequência do contêiner, e os dois contêineres eram diferentes.
+
+### As duas grades nunca coincidiram
+
+`.picks` era filho direto de `.wrap`; `.lineup` mora dentro de `.squad`, que tem
+`padding` e borda. Medido: 4,3 px de diferença no desktop e até 13 px a 320 px.
+Em três faixas de viewport isso jogava as duas em **densidades diferentes** — a
+588 px a carta escolhida ficava em densidade completa e a escalada em média, uma
+acima da outra, com corpos e placa diferentes. É a "exceção por carta" que o
+contrato proíbe, produzida pela grade em vez do CSS da carta.
+
+A correção não é padding parecido, é a **mesma caixa**. `.picks` ganhou o mesmo
+`--grade-pad` e uma borda transparente de 1 px: com `box-sizing:border-box` a
+borda do `.squad` fazia a caixa dele medir 2 px a menos, e com `auto-fill` esses
+2 px não somem no arredondamento — a 420 px eles bastavam para uma grade caber em
+3 colunas e a outra em 2.
+
+### A carta ia abaixo do piso provado
+
+A escada 6→3→2 colunas trocava em 640 px e 360 px. Entre os degraus a carta
+encolhia sem piso: medido no jogo real, **105,7 px a 641 px e a 375 px** — abaixo
+dos 120 px que o E2E prova, em duas faixas largas (tablet retrato inteiro e
+iPhone SE). E 105,7 px era um piso DURO: `min-height:148px` × 5/7. Ao bater nele
+a carta parava de encolher e o `.squad` transbordava, escondido pelo
+`overflow-x:hidden` do body. Atravessar 641→640 px levava a carta de 105,7 px a
+192,7 px: **82% num pixel**.
+
+`auto-fill` com `minmax(max(--carta-min,15%),1fr)` resolve os dois: o número de
+colunas passa a ser CONSEQUÊNCIA da largura mínima, não um degrau escolhido. A
+grade solta uma coluna exatamente quando a carta cairia abaixo do piso, e nunca
+antes. A percentagem segura seis colunas no desktop; o piso assume quando a tela
+estreita. Nenhuma media query de coluna sobrou.
+
+### Medido depois, em 38 viewports de 300 a 1440 px
+
+| | antes | depois |
+|---|---|---|
+| menor carta | 96,8 px | **120,4 px** |
+| faixa de tamanho | 96,8–201 px | 120,4–184 px |
+| maior salto ao trocar de coluna | +82% | +45% |
+| viewports com grades divergentes | 3 faixas | **nenhuma** |
+| overflow do `.squad` | sim, escondido | **nenhum** |
+
+O salto de +45% é o 3→2 colunas e é inerente à razão entre elas: com 6 itens, só
+6, 3 e 2 dão linhas cheias, e restringir a esses três força um salto de ~2×.
+Colunas balanceadas e ausência de penhasco são mutuamente exclusivas aqui —
+escolhi o piso, porque abaixo dele não há nada provado.
+
+Efeito colateral aceito: em 5 e 4 colunas a última linha fica incompleta. Em 5
+ela é exatamente `5 jogadores + treinador`, que é a estrutura semântica do HTML.
+
+### A guarda
+
+Duas provas novas no E2E, sobre 15 viewports: as duas grades compartilham coluna
+e densidade, a carta nunca fica abaixo de 120 px, nem o documento nem o `.squad`
+transbordam, e nenhuma troca de coluna muda a largura em mais de 55%.
+
+Verificadas **reprovando**: devolvida a borda só ao `.squad`, acusa a 540 px;
+devolvida a escada 6/3/2, acusa carta de 118,7 px a 820 px e salto de 74%.
+
+Uma terceira asserção mudou de forma junto: `jogo real usa a mesma densidade
+canônica` cravava a densidade compacta a 390 px. Isso só era verdade porque a
+grade entregava 105,7 px ali. Agora a densidade é **derivada da largura medida** —
+cravar valor por viewport transformaria a correção em reprovação.
