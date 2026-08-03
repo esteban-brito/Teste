@@ -109,6 +109,33 @@ futura que um handoff propõe. Cada entrada exige motivo escrito, e o checador
 à necessidade. O autoteste injeta corpus sintético com referência morta e exige que
 o medidor acuse: sem isso ele poderia ficar verde para sempre sem ninguém notar.
 
+`tools/check-design-tokens.js`, em `npm run check` desde 02/08/2026, prova o
+sistema de cor. Ele nasceu de uma medição: a folha tinha 225 hexadecimais e 178
+`rgba()` literais contra ~40 tokens, e não era ruído — eram cores **concorrentes
+para o mesmo papel**. `--accent` (#ff6b2a) convivia com 26 usos crus de
+`rgba(255,90,31,…)` (#ff5a1f), e `.slot.avail` chegava a ter a borda num laranja
+e o `+` do filho no outro. O lado CT da tira de rounds era pintado por
+`var(--c-desenvolvedor)` — o token da característica de treinador, igual por
+coincidência numérica: rebalancear a cor do Desenvolvedor repintava o placar.
+
+Ele cobra três coisas:
+
+1. **pares hex ↔ triplo RGB.** Cada cor tokenizada existe nas duas formas porque
+   `color-mix(in srgb,C p%,transparent)` **não** é bit-idêntico a `rgba(C,p)` no
+   Chromium — medido com o comparador, ele desloca a página inteira em 1/255 e
+   faz 21 de 21 capturas diferirem, inclusive telas sem nenhuma cor tocada.
+   `rgba(var(--x-rgb),a)` é exato; o preço é a duplicação, e ela é verificada em
+   vez de proibida;
+2. **literais regredidos.** Cor já tokenizada não pode voltar como literal. A
+   regra é *um token pode guardar qualquer literal; uma propriedade normal não* —
+   assim sistemas com paleta própria e valor coincidente, como a escada de
+   raridade da carta, continuam livres para divergir;
+3. **paleta compartilhada com `elencos.html`**, que é autônomo e mantém a própria
+   cópia. `check-roster-sync.js` já cobria funções e faixas; faltavam as cores de
+   chrome que o arquivo declara estarem "sincronizadas com style.css".
+
+As três foram verificadas reprovando, por mutação.
+
 Os servidores efêmeros dos E2E devem usar faixas aceitas pelo Chromium. O fluxo
 principal usa 7000–7299; a faixa antiga 5900–6199 incluía a porta 6000, que o
 navegador bloqueia com `ERR_UNSAFE_PORT` antes de qualquer teste de produto.
@@ -119,6 +146,12 @@ navegador bloqueia com `ERR_UNSAFE_PORT` antes de qualquer teste de produto.
 cartas, versos, elenco completo, suíça, antessala e mapa ao vivo) e compara duas
 execuções pixel a pixel. Ele existe porque o E2E prova que os elementos existem e
 que o fluxo funciona, mas nenhuma suíte percebia se algo tinha ficado feio.
+
+**Nomeie a pasta começando por `visual-`.** O `.gitignore` ignora `/visual-*/`, e
+só isso; um nome ad-hoc vira lixo untracked em todo `git status` — foi o que já
+aconteceu com as pastas `coach-*` e voltou a acontecer em 02/08/2026 com
+`tok-*`/`casc-*`. A prova é entre duas execuções da mesma sessão e a pasta é
+descartável: apague-a ao fechar a fatia.
 
 ```bash
 npm run visual:capturar -- visual-antes
