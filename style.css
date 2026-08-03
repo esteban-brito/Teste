@@ -20,6 +20,66 @@
   --panel2:#111826; --line:#2c394e;
   --txt:#f2f6fb; --dim:#94a3b8; --accent:#ff6b2a; --cyan:#4bd7ff;
   --radius:10px;
+  /* ── Cores que existiam só como literal, tokenizadas em 02/08/2026 ──────────
+     Nenhum valor foi consolidado nesta passagem: cada token guarda EXATAMENTE o
+     hex que já estava na regra. Onde dois tokens são parecidos, é porque a folha
+     de fato usava dois valores — e isso agora está declarado em vez de escondido
+     em 26 literais espalhados. Consolidar é decisão visível, não refatoração.
+
+     --accent-deep contra --accent: o sólido pinta tinta e borda; o profundo é a
+     base de todo véu e brilho translúcido, incluindo o gradiente do botão. Eram
+     26 usos de `rgba(255,90,31,…)` ao lado de 29 de `var(--accent)`, e a mesma
+     regra chegava a misturar os dois: `.slot.avail` tinha a borda num laranja e
+     o `+` do filho no outro.
+
+     --mine é SEU TIME, e não um segundo ciano: é o mesmo `#39d3ff` que
+     `game.js` dá ao time do jogador. Os 19 usos crus pintam exclusivamente
+     estados `.mine` (e o `.swp`, que é a mesma interação). `--cyan` continua
+     sendo o ciano sólido de UI — foco, HUD, borda.
+
+     --ct e --tr não existiam. O lado CT era pintado por `var(--c-desenvolvedor)`
+     na tira de rounds — o token da CARACTERÍSTICA DE TREINADOR, igual por
+     coincidência numérica: rebalancear a cor do Desenvolvedor repintava o placar.
+
+     --record é o amarelo de recorde/destaque. Ele vale `#ffd24a`, o mesmo hex de
+     `--m-ink` da faixa 4 da carta, mas por coincidência: são papéis diferentes e
+     ficam em tokens diferentes de propósito.
+
+     --gold-glow é DÍVIDA DECLARADA: `#ffc84a`, a 6 pontos de `--gold`, em três
+     brilhos de campeão. Provavelmente é um gold digitado torto, mas fundir muda
+     pixel — fica separado até alguém decidir olhando.
+
+     --line-base e --line-panel são as duas famílias de borda que o arquivo já
+     tinha: a do chrome do jogo (slate) e a dos overlays (mais azul), esta última
+     declarada como padrão no bloco "MAJOR PROFISSIONAL" e nunca aplicada acima.
+
+     POR QUE CADA COR TEM DUAS FORMAS, hex e triplo RGB. A primeira versão desta
+     fatia usou `color-mix(in srgb,var(--x) N%,transparent)`, que é o idioma da
+     carta e é ALGEBRICAMENTE igual a `rgba(x,N)`. Na tela não é: o Chromium
+     resolve os dois por caminhos diferentes e arredonda diferente. Medido com o
+     comparador — **21 de 21 capturas mudaram**, sempre por 1/255 num canal,
+     inclusive telas sem nenhuma cor tocada, porque o brilho de palco de
+     `html::before` tinge a página inteira.
+
+     Um refactor que desloca tudo em 1 unidade deixa de ser refactor, e pior:
+     torna o comparador inútil no próximo ciclo, porque toda captura passa a
+     diferir. `rgba(var(--x-rgb),a)` é exato por construção — mesma função,
+     mesmos argumentos que o literal que substitui.
+
+     As duas formas podem divergir, e é por isso que `tools/check-design-tokens.js`
+     prova que cada par denota a mesma cor. A duplicação não é proibida; ela é
+     verificada. */
+  --accent-deep:#ff5a1f;    --accent-deep-rgb:255,90,31;
+  --accent-rgb:255,107,42;
+  --mine:#39d3ff;           --mine-rgb:57,211,255;
+  --ct:#4a82ff;             --ct-rgb:74,130,255;      --ct-ink:#7aa0ff;
+  --tr:#ffaa28;             --tr-rgb:255,170,40;      --tr-ink:#ffb84a;
+  --record:#ffd24a;         --record-rgb:255,210,74;
+  --gold-glow:#ffc84a;      --gold-glow-rgb:255,200,74;
+  --line-base:#94a3b8;      --line-base-rgb:148,163,184;
+  --line-panel:#7c9cc4;     --line-panel-rgb:124,156,196;
+  --t1-gold-rgb:255,190,0;  --gold-rgb:255,206,74;
+  --t2-green-rgb:62,192,126; --s-red-rgb:255,45,72;
   --s-red:#ff2d48; --s-red-lit:#ff5c6e; --s-red-dim:#c43b50;
   --t1-gold:#ffbe00; --t1-gold-lit:#ffe033; --t1-gold-dim:#c8960a;
   --t2-green:#3ec07e; --t2-green-lit:#6fd99f; --t2-green-dim:#2e8a5c;
@@ -54,8 +114,7 @@
   /* movimento das cartas: curto, sem overshoot e limitado a transform/opacity */
   --ease-card:cubic-bezier(.22,1,.36,1); --motion-card-fast:180ms;
   --motion-card-face:360ms; --motion-card-fade:180ms;
-  --motion-card-deal:400ms; --motion-card-land:280ms;
-}
+  --motion-card-deal:400ms; --motion-card-land:280ms}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:linear-gradient(180deg,#090d14 0%,#070a0f 100%);
   color:var(--txt);font-family:'Barlow Semi Condensed',sans-serif;min-height:100vh;min-height:100dvh;overflow-x:hidden;
@@ -66,17 +125,17 @@ body{background:linear-gradient(180deg,#090d14 0%,#070a0f 100%);
 .logo span{color:var(--dim);font-size:.62rem;display:block;letter-spacing:.22em;font-weight:600;text-transform:uppercase;margin-top:5px}
 header{display:flex;position:relative;flex-wrap:wrap;flex-direction:row;align-items:center;justify-content:space-between;
   text-align:left;gap:16px;margin-bottom:16px;padding:14px 16px;
-  border:1px solid rgba(148,163,184,.18);border-radius:var(--radius);background:var(--panel2)}
+  border:1px solid rgba(var(--line-base-rgb),.18);border-radius:var(--radius);background:var(--panel2)}
 .hud{display:flex;gap:8px}
 .hud .s{position:relative;min-width:112px;padding:9px 12px;text-align:left;border-radius:8px;
-  border:1px solid rgba(148,163,184,.18);background:#0c121b}
+  border:1px solid rgba(var(--line-base-rgb),.18);background:#0c121b}
 .hud .v{font-family:var(--ff);font-size:1.45rem;font-weight:700;line-height:1}
 .hud .v.pwr{color:var(--cyan)}
 .hud .l{font-size:.6rem;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;font-weight:600}
 .section-tag{font-family:var(--ff);font-size:.82rem;letter-spacing:.18em;color:var(--txt);
   text-transform:uppercase;font-weight:700;margin:18px 0 9px;display:flex;align-items:center;gap:10px}
 .section-tag::after{content:'';flex:1;height:1px;
-  background:linear-gradient(90deg,rgba(255,107,42,.45),rgba(148,163,184,.18) 46%,transparent)}
+  background:linear-gradient(90deg,rgba(var(--accent-rgb),.45),rgba(var(--line-base-rgb),.18) 46%,transparent)}
 /* botão "Virar cartas" no cabeçalho do elenco revelado: alterna o modo global de virar carta */
 #picksTag::after{display:none} /* sem a linha: o botão ocupa a direita */
 .flipmode{margin-left:auto;font-size:.6rem;letter-spacing:.1em;padding:6px 11px;border-radius:8px;
@@ -91,7 +150,7 @@ header{display:flex;position:relative;flex-wrap:wrap;flex-direction:row;align-it
 
 /* ╔══════════════ ROLETA · draft de times ══════════════╗ */
 .roulette{position:relative;border-radius:var(--radius);overflow:hidden;min-height:104px;
-  border:1px solid rgba(148,163,184,.22);background:#0c121b}
+  border:1px solid rgba(var(--line-base-rgb),.22);background:#0c121b}
 .roulette::before,.roulette::after{content:'';position:absolute;top:0;bottom:0;width:64px;z-index:3;pointer-events:none}
 .roulette::before{left:0;background:linear-gradient(90deg,#0c1119 20%,transparent)}
 .roulette::after{right:0;background:linear-gradient(270deg,#0c1119 20%,transparent)}
@@ -138,20 +197,64 @@ header{display:flex;position:relative;flex-wrap:wrap;flex-direction:row;align-it
 button.roll,button.ghost{font-family:var(--ff);font-weight:700;letter-spacing:.1em;text-transform:uppercase;
   cursor:pointer;border-radius:var(--radius);-webkit-tap-highlight-color:transparent;transition:transform .12s var(--ease)}
 button.roll{font-size:.92rem;padding:13px 28px;border-radius:8px;border:1px solid var(--accent);color:#170700;
-  background:linear-gradient(180deg,#ff6a2f,#ff5a1f)}
+  /* `#ff6a2f` é um QUARTO laranja, usado só como parada de topo deste gradiente.
+     Está a 1 ponto de `--accent` (#ff6b2a) e quase certamente é ele digitado
+     torto, mas fundir muda pixel — fica declarado como pergunta em aberto, não
+     resolvido em silêncio. A parada de baixo é `--accent-deep`, e essa é a
+     mesma cor dos 26 véus da folha. */
+  background:linear-gradient(180deg,#ff6a2f,var(--accent-deep))}
 button.roll:hover{transform:translateY(-2px)}
 button.roll:active{transform:translateY(1px) scale(.97)}
-button.ghost,.flipmode{border-radius:8px;background:#0c121b;border-color:rgba(148,163,184,.22)}
-button.ghost{font-size:.76rem;padding:11px 20px;border:1px solid rgba(148,163,184,.22);background:#0c121b;color:var(--txt)}
-button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
+button.ghost,.flipmode{border-radius:8px;background:#0c121b;border-color:rgba(var(--line-base-rgb),.22)}
+button.ghost{font-size:.76rem;padding:11px 20px;border:1px solid rgba(var(--line-base-rgb),.22);background:#0c121b;color:var(--txt)}
+button.ghost.accent{border-color:rgba(var(--accent-deep-rgb),.45);color:var(--accent)}
 
 /* ╔══════════════ GRIDS · elenco e bancada ══════════════╗ */
-.picks,.lineup{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
-.picks{perspective:900px}
-.squad{position:relative;display:grid;grid-template-columns:repeat(6,1fr);gap:10px;border-radius:var(--radius);
-  border:1px solid rgba(148,163,184,.18);padding:12px;background:#0b1018}
+/* AS DUAS GRADES SÃO A MESMA GRADE — 02/08/2026.
+
+   Dois defeitos medidos, com a mesma raiz: a largura da carta era consequência
+   do contêiner, e os dois contêineres eram diferentes.
+
+   1. `.picks` é filho direto de `.wrap`; `.lineup` mora dentro de `.squad`, que
+      tem `padding`. As colunas NUNCA batiam — 4,3 px de diferença no desktop e
+      até 13 px a 320 px. Em três faixas de viewport isso jogava as duas grades
+      em DENSIDADES diferentes: a 588 px a carta escolhida ficava em densidade
+      completa e a escalada em média, uma acima da outra, com corpos e placa
+      diferentes. É a "exceção por carta" que o contrato proíbe, produzida pela
+      grade em vez do CSS da carta.
+
+   2. A escada 6→3→2 colunas trocava em 640 px e 360 px, e entre elas a carta
+      encolhia sem piso. Medido no jogo real: 105,7 px a 641 px e 105,7 px a
+      375 px — abaixo dos 120 px que o E2E prova, em duas faixas largas de
+      viewport (tablet retrato inteiro e iPhone SE). E 105,7 px era um PISO
+      DURO: `min-height:148px` × 5/7. Ao bater nele a carta parava de encolher e
+      o `.squad` transbordava, escondido pelo `overflow-x:hidden` do body.
+      Atravessar 641→640 px levava a carta de 105,7 px a 192,7 px: 82% num pixel.
+
+   `auto-fill` resolve os dois. O número de colunas passa a ser CONSEQUÊNCIA de
+   uma largura mínima, não um degrau escolhido: a grade solta uma coluna
+   exatamente quando a carta cairia abaixo do piso, e nunca antes. O mínimo é
+   `max(--carta-min, 15%)` — a percentagem segura seis colunas no desktop (15%
+   de 1136 px dá 170 px, e sete não cabem), e o piso assume quando a tela
+   estreita. Sem media query nenhuma.
+
+   O `padding` horizontal é o mesmo nas duas, por token, e é isso que faz as
+   colunas coincidirem em qualquer largura. */
+.picks,.squad{--grade-pad:12px;--carta-min:120px;
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(max(var(--carta-min),15%),1fr));
+  gap:10px}
+/* A borda transparente NÃO é enfeite: `.squad` tem borda de 1px e `box-sizing`
+   é `border-box`, então a caixa dele mede 2 px a menos que a de `.picks`. Com
+   `auto-fill` isso não some no arredondamento — a 420 px os 2 px bastavam para
+   `.picks` caber em 3 colunas e o elenco em 2, com densidades diferentes na
+   mesma tela. As duas grades precisam da MESMA caixa, não de paddings parecidos. */
+.picks{perspective:900px;padding:0 var(--grade-pad);border:1px solid transparent}
+.lineup{display:contents}
+.squad{position:relative;border-radius:var(--radius);
+  border:1px solid rgba(var(--line-base-rgb),.18);padding:var(--grade-pad);background:#0b1018}
 .squad>*{position:relative;z-index:1}
-.squad .lineup{display:contents}
+/* `.lineup` já é `display:contents` acima: os dois blocos do elenco (cinco
+   jogadores e o treinador) viram filhos diretos da grade do `.squad`. */
 .lineup--coach{max-width:none}
 
 /* ╔══════════════ CARTAS · jogador e treinador ══════════════╗
@@ -265,15 +368,15 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   box-shadow:0 0 0 1px rgba(255,255,255,.22),0 1px 5px rgba(0,0,0,.5)}
 /* 2 · nick sobre a placa SÓLIDA: o contraste de um degradê muda ao longo da
       própria palavra, e é isso que cartas de coleção reais evitam. */
-.c-nick{position:absolute;left:var(--pad);right:var(--pad);bottom:var(--b3);z-index:5;
+.c-nick{position:absolute;left:var(--pad);right:var(--pad);z-index:5;
   font-family:var(--ff);font-size:var(--t2);font-weight:700;line-height:1;letter-spacing:-.005em;
   text-transform:uppercase;color:#f4f8fd;white-space:nowrap}
 /* 3 · o que ele FAZ, na cor da função */
-.c-func{position:absolute;left:var(--pad);bottom:var(--b2);z-index:5;font-family:var(--ff);
+.c-func{position:absolute;left:var(--pad);z-index:5;font-family:var(--ff);
   font-size:var(--t3);font-weight:700;letter-spacing:.2em;text-transform:uppercase;
   color:color-mix(in srgb,var(--r-ink) 84%,#fff)}
 /* contexto: UMA linha, apagada. Função secundária e time. */
-.c-meta{position:absolute;left:var(--pad);right:var(--pad);bottom:var(--b1);z-index:5;
+.c-meta{position:absolute;left:var(--pad);right:var(--pad);z-index:5;
   display:flex;justify-content:space-between;gap:6px;font-family:var(--ff);
   font-size:var(--t4);letter-spacing:.16em;text-transform:uppercase;color:#9ba9bb}
 .c-meta span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
@@ -297,7 +400,6 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 /* A escala por conteúdo é exclusiva das características de treinador. */
 .c-vestilo b{font-size:clamp(10px,calc(11cqw*var(--carac-esc,1)),24px);font-weight:700;line-height:.95;
   color:var(--m-ink);text-transform:uppercase;letter-spacing:-.01em;display:block}
-.coachcard .c-vestilo b{color:var(--r-ink)}
 /* O jogador sobrescreve este trilho com quatro slots canônicos; a base mantém a
    caixa disponível para composições de categoria. */
 .c-vstats{position:absolute;left:var(--pad);right:var(--pad);top:43.5%;bottom:22%;z-index:5;
@@ -316,7 +418,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 /* rodapé do verso: o CAMPEONATO. É o que distingue duas cartas do mesmo jogador
    — donk em Katowice 2024 e em Budapest 2025 são a mesma pessoa em eras
    diferentes. Duas linhas porque "DreamHack Cluj-Napoca" não cabe dividindo. */
-.c-vrod{position:absolute;left:var(--pad);right:var(--pad);bottom:var(--b1);z-index:5;
+.c-vrod{position:absolute;left:var(--pad);right:var(--pad);z-index:5;
   display:flex;flex-direction:column;gap:1cqw;text-transform:uppercase;font-family:var(--ff)}
 .c-vrod b{font-size:clamp(8px,5cqw,11px);font-weight:700;letter-spacing:.03em;
   color:#f0f4f8;line-height:1.08;white-space:normal;overflow:visible;text-overflow:clip;
@@ -356,14 +458,64 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    A carta aprovada no laboratório é agora o único contrato visual. Jogadores
    compartilham a mesma grade, os mesmos corpos e o mesmo recorte de retrato;
    conteúdo nunca desaparece para "fazer caber". */
+/* A PLACA DO JOGADOR — remedida em 02/08/2026, contra a régua da DIAGONAL.
+
+   Ela era 24/26/28, número herdado de quando a frente eram três âncoras
+   absolutas (`--b1/--b2/--b3`). Quando a grade substituiu as âncoras, a altura
+   nunca foi rederivada.
+
+   A primeira tentativa a encolheu para 22/22,5/24, medindo o respiro contra o
+   TOPO DA CAIXA da placa — e o E2E reprovou em 130 px e 120 px, com o nick a
+   1,2–1,7 px da diagonal. O erro é o mesmo de sempre, um andar acima: no jogador
+   a aresta visível da placa NÃO é o topo da caixa, é a diagonal, que no eixo do
+   nick corre `--corte-n × (1 − --pad)` abaixo dele. Só o treinador, que tem
+   `clip-path:none`, tem caixa e aresta no mesmo lugar.
+
+   E a conclusão se inverteu quando a régua ficou certa: a placa NÃO estava
+   inchada. O ar de cima era folga estrutural que a diagonal cobra, e medi-lo
+   contra a caixa fez ele parecer sobra. Contra a aresta visível o desequilíbrio
+   antigo era de 1,1 a 3,7 pontos da carta — real, e pior na costura compacta,
+   mas metade do que a caixa dizia.
+
+   Por isso a altura quase não muda: 24,5% e 26,5% contra 24/26/28. O que
+   conserta o defeito é CENTRAR entre a diagonal e a base (ver `--diag-k`), não
+   encolher. Medido nas oito larguras: respiros entre 3,97% e 5,32% da carta,
+   desvio máximo de 1,46 px e folga até a diagonal sobrando de 1,7 a 4,8 px
+   sobre o piso que o E2E cobra.
+
+   A densidade intermediária deixou de ter degrau próprio de placa: medida, ela
+   pede o mesmo 24,5% da ampla, e um degrau que repete o valor anterior é
+   declaração redundante, não escada.
+
+   `--b2` e `--b3` saíram junto. Eram lidos só por `.c-nick`/`.c-func`, que a
+   grade torna `position:static` — provado por mutação: valores absurdos moviam
+   0 de 279 medidas, contra 156 do controle `--b1`. Mesma coisa com os valores
+   `--t3:6.2cqw`/`--t4:4.5cqw` daqui: `.card .cfaces` os sobrescreve com 6.4/4.8
+   e vence por especificidade em toda carta que existe. */
 .cfaces{
-  --placa-n:24;--faixa-n:22;--corte-n:9;
+  --placa-n:24.5;--faixa-n:22;--corte-n:9;
   --placa:calc(var(--placa-n)*1%);--faixa:calc(var(--faixa-n)*1%);
   --corte:calc(var(--corte-n)*1%);
   --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
-  --b1:3.3%;--b2:5.8%;--b3:10.1%;--t3:6.2cqw;--t4:4.5cqw}
+  /* Quanto da placa a diagonal come no eixo do nick, em fração da altura dela.
+     A `clip-path` desce `--corte-n`% da placa no canto esquerdo e zera no
+     direito; o nick começa em `--pad`, logo a diagonal já subiu `--pad` do
+     caminho. Daí `.09 × (1 − .09) = .0819`. É o que separa a aresta VISÍVEL do
+     topo da caixa — e o treinador não usa, porque a aresta dele é reta. */
+  --diag-k:.0819;
+  /* `--b1` saiu junto com `--b2` e `--b3`: com as duas categorias ocupando a
+     placa, ninguém mais o lê. Mutação: 0 de 160 medidas se moveram. */}
 .card .cfaces,.coachcard .cfaces{--t2:clamp(13px,10.5cqw,27px);--t-style:clamp(14.5px,12.6cqw,27px);
   --t3:6.4cqw;--t4:4.8cqw;
+  /* Os corpos do bloco de identidade do verso vivem em token porque a POSIÇÃO de
+     `.c-vid` é derivada deles — repetir o `clamp` na regra e no `calc` era
+     garantia de divergirem no primeiro ajuste, como já aconteceu com `--t-carac`. */
+  --t-vnick:clamp(12px,10.7cqw,23px);--t-vid:clamp(7.5px,5cqw,11px);
+  /* Quanto do corpo do nick separa o nick da linha de identidade. Tem degrau de
+     densidade pelo mesmo motivo que o resto da carta: abaixo de 150 px o
+     `.c-vestilo` sobe para 25,5% e o vão de baixo encolhe, então o de cima
+     precisa encolher junto ou a razão entre os dois quebra na costura. */
+  --k-vid:1.34;
   /* Respiro do verso. Entra IGUAL acima e abaixo da caixa de stats: aplicado de um
      lado só, ele mesmo destruiria a simetria que a caixa existe para garantir. */
   --vfolga:clamp(2px,1.6cqw,4px)}
@@ -450,11 +602,39 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    dando ao nick a largura inteira. A linha da função ganhava contrapeso, mas a
    bandeira colava no time e passava a ler como parte DELE, não do jogador. A
    bandeira pertence ao mesmo bloco que o nick — é quem a pessoa é, não contexto. */
+/* AS DUAS CATEGORIAS OCUPAM A PLACA E CENTRAM O BLOCO NELA — 02/08/2026.
+
+   Até aqui só o treinador fazia isso; o jogador era ancorado pela aresta de baixo
+   (`bottom:var(--b1)`), e o vão sobrava todo em cima. O comentário do treinador
+   já dizia por que aquilo não serve — "deixaria o bloco colado numa aresta e com
+   o vão todo na outra" — e a conclusão nunca voltou para o jogador.
+
+   Medido na LETRA, antes: respiro de 5,92% a 9,87% da carta acima do nick contra
+   3,85%–4,29% abaixo da meta, com desequilíbrio de 1,85 a 6,00 pontos — 12,6 px a
+   150 px, em 135 das 153 cartas. E instável: o desvio triplicava entre 188 px e
+   150 px, porque a placa crescia em % enquanto os corpos saturavam no `clamp`.
+
+   Centrado, a folga nasce igual dos dois lados em qualquer largura e sem número
+   escolhido a dedo. O que sobra é arredondamento de pixel, fechado abaixo por
+   correção medida na letra — nunca por eixo estimado. */
 .c-identidade--player,.c-identidade--coach{position:absolute;left:var(--pad);right:var(--pad);
   z-index:5;display:grid;grid-template-columns:minmax(0,1fr) auto;
   grid-template-areas:"nick flag" "func func" "meta meta";
   column-gap:clamp(1px,1cqw,3px);row-gap:clamp(.6px,.45cqw,1.2px);align-items:end;
-  bottom:var(--b1)}
+  top:calc(100% - var(--placa));bottom:0;align-content:center}
+/* O jogador centra entre a DIAGONAL e a base, não entre a caixa e a base: a
+   caixa da placa começa acima da aresta que se vê. Sem este recuo o bloco fica
+   alto e o nick encosta na diagonal — foi o que o E2E reprovou na primeira
+   tentativa. O treinador não entra aqui: a aresta dele é reta. */
+.c-identidade--player{top:calc(100% - var(--placa) + var(--placa)*var(--diag-k))}
+/* SEM CORREÇÃO RESIDUAL, e isso é resultado de medição, não de preguiça.
+   `align-content:center` sozinho leva o desequilíbrio do jogador de 4,89–12,59 px
+   para 0,03–1,47 px nas oito larguras. O que sobra NÃO é proporcional a corpo
+   nenhum: a 130 px o desvio é 0,03 px e a 120 px é 1,03 px, com corpos de 13 e
+   12 px — e a 151 px é 0,28 px contra 1,22 px a 150 px. Um coeficiente ajustado
+   a isso estaria calibrando ruído de arredondamento de subpixel, que é
+   exatamente o erro que já criou três desvios de 3 a 9 px neste arquivo.
+   O teto da guarda absorve o resíduo; ele não vira número no CSS. */
 /* Treinador: a MESMA grade, com duas linhas em vez de três.
 
    Sem função secundária, o time sobe para o eixo da característica e fica sob a
@@ -472,8 +652,11 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
    conteúdo centrado um padding desloca o bloco por METADE do seu valor, então
    `padding-top` vale o desvio medido. O medidor cobra a simetria pela TINTA, por
    `Range`, e reprova se este número sair de faixa. */
-.c-identidade--coach{top:calc(100% - var(--placa));bottom:0;
-  grid-template-areas:"nick flag" "func meta";align-content:center;
+/* Ocupar a placa e centrar o bloco nela subiu para a regra compartilhada acima,
+   quando o jogador passou a fazer o mesmo. Aqui fica só o que é do treinador: a
+   grade de duas linhas, o respiro entre elas e o resíduo próprio. */
+.c-identidade--coach{
+  grid-template-areas:"nick flag" "func meta";
   /* SEM PADDING DE COMPENSAÇÃO — 02/08/2026.
      Aqui morava `padding-top:1.85cqw`, para corrigir uma "tinta que sobe". Ela
      não subia: a medida que dizia isso comparava a caixa da fonte, que vai do
@@ -529,13 +712,30 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .card .c-team,.coachcard .c-team{justify-self:end;text-align:right}
 
 /* Verso do jogador: tipografia fixa e quatro trilhos em largura integral. */
-.card .c-vnick,.coachcard .c-vnick{top:5.5%;font-size:clamp(12px,10.7cqw,23px)}
+.card .c-vnick,.coachcard .c-vnick{top:5.5%;font-size:var(--t-vnick)}
 /* Linha de identidade: ocupa a faixa que sobrava vazia sob o nick e devolve ao
    verso o "quem" e o "por quem". Função na cor da função, time apagado — a mesma
-   hierarquia da frente, para as duas faces se reconhecerem. */
-.card .c-vid,.coachcard .c-vid{position:absolute;left:var(--pad);right:var(--pad);top:15.5%;z-index:5;
+   hierarquia da frente, para as duas faces se reconhecerem.
+
+   O TOPO É DERIVADO DO CORPO DO NICK, não de um percentual — 02/08/2026.
+   Nick, identidade e playstyle eram três âncoras independentes (5,5% · 15,5% ·
+   27,5%), e o percentual cresce com a carta enquanto os corpos saturam no
+   `clamp`. Resultado medido: o vão nick→identidade e o vão identidade→playstyle
+   mudavam de razão a cada largura — 2,05× a 250 px, 2,84× a 188 px e 1,37× a
+   120 px. A 150 px a razão despencava de 2,63× para 1,48%, porque a costura move
+   `.c-vestilo` para CIMA e movia `.c-vid` para BAIXO, os dois um contra o outro.
+
+   Identidade e nick são a MESMA unidade — quem joga e por quem. Proximidade é o
+   que agrupa, então o vão entre eles é constante em fração do corpo do nick e o
+   vão até o playstyle, que é outro bloco, sobra maior. O coeficiente sai da
+   métrica da fonte: com `line-height:1` a maiúscula termina a .69em do topo da
+   caixa e a de baixo começa a .29em da dela, logo
+   `.69·nick + folga − .29·id`, com folga medida. `.c-vestilo` NÃO se mexe: o
+   bloco inferior tem simetria calibrada por degrau e não entra nesta fatia. */
+.card .c-vid,.coachcard .c-vid{position:absolute;left:var(--pad);right:var(--pad);z-index:5;
+  top:calc(5.5% + var(--k-vid)*var(--t-vnick));
   display:flex;align-items:baseline;gap:clamp(3px,2.2cqw,6px);font-family:var(--ff);
-  font-size:clamp(7.5px,5cqw,11px);letter-spacing:.14em;text-transform:uppercase;
+  font-size:var(--t-vid);letter-spacing:.14em;text-transform:uppercase;
   line-height:1;white-space:nowrap;overflow:hidden}
 .card .c-vid b,.coachcard .c-vid b{font-weight:700;color:var(--r-ink);flex:0 0 auto}
 .card .c-vid span,.coachcard .c-vid span{font-weight:500;color:#7d8a9c;min-width:0;overflow:hidden;
@@ -723,8 +923,8 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   padding-bottom:var(--desc-simetria,0px)}
 
 @container (max-width:176px){
-  .card .cfaces,.coachcard .cfaces{--placa-n:26;--placa:calc(var(--placa-n)*1%);
-    --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%)}
+  /* Sem degrau de placa aqui: medida, esta densidade pede o mesmo 23,5% da
+     ampla. O treinador tem o degrau próprio dele no fim do arquivo. */
   /* FreeType e DirectWrite diferem nas métricas horizontais. O tracking comum
      protege nomes longos no intervalo em que a bandeira já divide o eixo. */
   .card .c-identidade--player .c-nick,.coachcard .c-identidade--coach .c-nick{
@@ -742,15 +942,19 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   .coachcard .c-vef{padding-top:clamp(1.5px,1.4cqw,3px)}
 }
 @container (max-width:150px){
-  .card .cfaces,.coachcard .cfaces{--placa-n:28;--placa:calc(var(--placa-n)*1%);
+  .card .cfaces,.coachcard .cfaces{--placa-n:26.5;--placa:calc(var(--placa-n)*1%);
     --corte-v:calc(var(--corte-n)*var(--placa-n)/var(--faixa-n)*1%);
-    --t2:clamp(12px,10cqw,27px);--t3:6.4cqw;--t4:4.8cqw}
+    --t2:clamp(12px,10cqw,27px)}
   .card .c-identidade--player .c-meta,.coachcard .c-identidade--coach .c-meta{display:grid}
   .card .c-identidade--player .c-flag,.coachcard .c-identidade--coach .c-flag{display:block}
   /* No compacto a ênfase do Firepower cede: mantida cheia, ela empurra os quatro
      trilhos contra o rótulo em cima e o rodapé embaixo. A hierarquia continua
      legível com metade do salto. */
-  .card .c-vid,.coachcard .c-vid{top:16%;font-size:clamp(7px,5.4cqw,9.5px);letter-spacing:.1em}
+  /* Só o corpo muda na densidade compacta: o topo é derivado e acompanha sozinho.
+     Antes esta regra empurrava `.c-vid` para 16% enquanto `.c-vestilo` subia para
+     25,5% — os dois na direção contrária, e era daí que vinha a quebra de ritmo. */
+  .card .cfaces,.coachcard .cfaces{--t-vid:clamp(7px,5.4cqw,9.5px);--k-vid:1.19}
+  .card .c-vid,.coachcard .c-vid{letter-spacing:.1em}
   .card .c-vestilo,.coachcard .c-vestilo{top:25.5%}
   /* No compacto o campeonato de duas linhas ("DreamHack Cluj-Napoca") ocupa uma
      fatia bem maior da carta, então o rodapé sobe: a 86% a colocação caía para
@@ -776,7 +980,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
   background:#0b1018;display:flex;align-items:center;justify-content:center}
 .slot .ph{color:#243145;font-size:1.6rem}
 .slot.coach{border-color:rgba(255,200,50,.25)} .slot.coach .ph{color:rgba(255,200,50,.28)}
-.slot.avail{border-style:solid;border-color:rgba(255,90,31,.5);background:#0f1723;cursor:pointer}
+.slot.avail{border-style:solid;border-color:rgba(var(--accent-deep-rgb),.5);background:#0f1723;cursor:pointer}
 .slot.coach.avail{border-color:rgba(255,200,50,.5)}
 .slot.avail .ph{color:var(--accent)} .slot.coach.avail .ph{color:var(--t1-gold)}
 .card.dim,.coachcard.dim{pointer-events:none}
@@ -795,7 +999,7 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .picks .card.taken::after,.picks .coachcard.taken::after{content:"NO ELENCO"}
 .picks .card.dup::after{content:"JÁ NA LINE"}
 .sel{outline:2px solid var(--sel,var(--accent));outline-offset:3px;z-index:6;filter:brightness(1.08)}
-.swp{outline:2px dashed rgba(57,211,255,.5);outline-offset:2px;cursor:pointer}
+.swp{outline:2px dashed rgba(var(--mine-rgb),.5);outline-offset:2px;cursor:pointer}
 
 @keyframes pop{from{opacity:0;transform:translate3d(0,6px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
 @keyframes cardDealEditorial{
@@ -809,35 +1013,32 @@ button.ghost.accent{border-color:rgba(255,90,31,.45);color:var(--accent)}
 .bar{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px}
 .result{margin-top:14px;animation:pop .4s var(--ease) both}
 .result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.stat{border:1px solid rgba(148,163,184,.18);border-radius:var(--radius);padding:14px 8px;text-align:center;
-  background:#0d131d;transition:border-color .2s,box-shadow .2s,transform .2s var(--ease)}
+.stat{border:1px solid rgba(var(--line-base-rgb),.18);border-radius:var(--radius);padding:14px 8px;text-align:center;
+  background:#0d131d}
 .stat-v{font-family:var(--ff);font-weight:700;font-size:clamp(1.6rem,6vw,2.4rem);line-height:1;color:var(--txt)}
 .stat-l{font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:600;margin-top:5px}
 .stat--chem .stat-v{color:var(--cyan)}
 /* Borda de acento na Força efetiva: é o número que decide o elenco, e era o
    único stat com destaque próprio até a cascata antiga apagá-lo por acidente. */
-.stat--eff{border-color:rgba(255,107,42,.45)}
+.stat--eff{border-color:rgba(var(--accent-rgb),.45)}
 .stat--eff .stat-v{color:var(--accent)}
 .alertbox{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
 .selo{display:inline-flex;align-items:center;gap:6px;font-family:var(--ff);font-size:.62rem;font-weight:600;letter-spacing:.03em;padding:5px 9px 5px 7px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);color:var(--dim)}
 .selo i{font-style:normal;font-size:.72rem;opacity:.85;line-height:1}
 .selo b{font-weight:800;font-variant-numeric:tabular-nums;margin-left:1px}
-.selo.forte{border-color:rgba(62,192,126,.35);color:var(--t2-green-lit);background:rgba(62,192,126,.07)}
+.selo.forte{border-color:rgba(var(--t2-green-rgb),.35);color:var(--t2-green-lit);background:rgba(var(--t2-green-rgb),.07)}
 .selo.bonus{border-color:rgba(70,140,235,.42);color:#7db4ff;background:rgba(70,140,235,.09)}
 .selo.leve{border-color:rgba(240,185,60,.42);color:#f2c24e;background:rgba(240,185,60,.08)}
-.selo.grave{border-color:rgba(255,45,72,.55);color:#ff6478;background:rgba(255,45,72,.13);box-shadow:inset 0 0 0 1px rgba(255,45,72,.14)}
+.selo.grave{border-color:rgba(var(--s-red-rgb),.55);color:#ff6478;background:rgba(var(--s-red-rgb),.13);box-shadow:inset 0 0 0 1px rgba(var(--s-red-rgb),.14)}
 .hint{text-align:center;color:var(--dim);font-size:.74rem;margin-top:8px;min-height:1.2em}
 footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;margin-top:22px;text-transform:uppercase;
   padding:14px 0 4px;border-top:1px solid var(--line)}
 
-/* mobile: 3 colunas × 2 linhas (desktop usa 6 colunas × 1 linha) */
-@media(max-width:640px){
-  .picks,.lineup,.squad{grid-template-columns:repeat(3,1fr)}
-}
-/* celular muito estreito (≤360px, ex. iPhone SE): 2 colunas → cartas largas o bastante p/ nada truncar */
-@media(max-width:360px){
-  .picks,.lineup,.squad{grid-template-columns:repeat(2,1fr)}
-}
+/* As duas media queries de coluna — 640 px para 3 e 360 px para 2 — saíram em
+   02/08/2026. O `auto-fill` decide o número de colunas pela largura mínima da
+   carta, então o degrau nasce onde a carta chegaria ao piso, e não num número
+   escolhido. Eram elas que produziam o penhasco de 82% em 640 px e a faixa de
+   viewport em que a carta ficava abaixo dos 120 px provados. */
 
 /* proporção de card (5/7) padroniza a altura em todas as telas; min-height é só o piso no mobile estreito */
 
@@ -857,94 +1058,100 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 @keyframes telaIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .overlay-head{display:flex;align-items:center;justify-content:space-between;gap:14px;
   padding:max(18px,env(safe-area-inset-top)) max(clamp(16px,4vw,34px),env(safe-area-inset-right)) 18px max(clamp(16px,4vw,34px),env(safe-area-inset-left));
-  border-bottom:1px solid rgba(124,156,196,.14);flex-wrap:wrap;background:var(--panel2);position:relative}
-.overlay-title{font-family:var(--ff);font-weight:700;font-size:clamp(1.1rem,3vw,1.5rem);
-  letter-spacing:.06em;color:var(--txt);display:flex;align-items:baseline;gap:10px}
+  border-bottom:1px solid rgba(var(--line-panel-rgb),.14);flex-wrap:wrap;background:var(--panel2);position:relative}
+.overlay-title{font-family:var(--ff);font-weight:700;
+  color:var(--txt);display:flex;align-items:baseline;gap:10px}
 .overlay-title::before{content:"";width:4px;height:1.1em;border-radius:2px;background:var(--accent);align-self:center}
 .overlay-title span{color:var(--dim);font-size:.72rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase}
 .overlay-actions{display:flex;gap:9px;flex-wrap:wrap}
 .overlay-actions .ghost{font-size:.72rem;padding:10px 16px}
-.overlay-actions .ghost.accent{background:linear-gradient(180deg,rgba(255,90,31,.16),rgba(255,90,31,.06));
-  border-color:rgba(255,90,31,.5);color:var(--accent)}
-.overlay-actions .ghost.accent:hover{background:linear-gradient(180deg,rgba(255,90,31,.24),rgba(255,90,31,.1));transform:translateY(-1px)}
+.overlay-actions .ghost.accent{background:linear-gradient(180deg,rgba(var(--accent-deep-rgb),.16),rgba(var(--accent-deep-rgb),.06));
+  border-color:rgba(var(--accent-deep-rgb),.5);color:var(--accent)}
+.overlay-actions .ghost.accent:hover{background:linear-gradient(180deg,rgba(var(--accent-deep-rgb),.24),rgba(var(--accent-deep-rgb),.1));transform:translateY(-1px)}
 .overlay-actions .ghost:hover{transform:translateY(-1px)}
 .swiss,.bracket{flex:1;overflow:auto;padding:20px}
 .swiss::-webkit-scrollbar,.bracket::-webkit-scrollbar{height:9px;width:9px}
 .swiss::-webkit-scrollbar-thumb,.bracket::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px}
-.swiss{display:flex;gap:16px;align-items:flex-start}
-.swiss-col{flex:0 0 auto;min-width:158px;display:flex;flex-direction:column;gap:9px}
-.swiss-colhead{font-family:var(--ff);font-weight:700;font-size:.7rem;letter-spacing:.16em;text-align:center;
-  padding:7px 0;border-radius:9px;text-transform:uppercase}
-.swiss-colhead.qual{background:linear-gradient(180deg,rgba(62,192,126,.18),rgba(62,192,126,.06));
+.swiss{display:flex;align-items:flex-start}
+/* `min-width` e `gap` vivem AQUI, e não na camada de refinamento no fim do
+   arquivo — 02/08/2026. Lá embaixo eles vinham DEPOIS do
+   `@media(max-width:640px)` com a mesma especificidade, então a coluna estreita
+   do celular nunca se aplicava: medido a 360 px, o computado era 172 px, o valor
+   de desktop. A tela pequena parecia tratada e não estava.
+   Foi a única regra responsiva do arquivo nessa condição — o resto da folha foi
+   varrido e está limpo. */
+.swiss-col{flex:0 0 auto;display:flex;flex-direction:column;min-width:172px;gap:10px}
+.swiss-colhead{font-family:var(--ff);font-weight:700;text-align:center;
+  text-transform:uppercase}
+.swiss-colhead.qual{background:linear-gradient(180deg,rgba(var(--t2-green-rgb),.18),rgba(var(--t2-green-rgb),.06));
   color:var(--t2-green-lit);border:1px solid var(--t2-green-dim)}
-.swiss-colhead.elim{background:linear-gradient(180deg,rgba(255,45,72,.16),rgba(255,45,72,.05));
+.swiss-colhead.elim{background:linear-gradient(180deg,rgba(var(--s-red-rgb),.16),rgba(var(--s-red-rgb),.05));
   color:var(--s-red-lit);border:1px solid var(--s-red-dim)}
 .swiss-colhead.neutral{background:var(--panel2);color:var(--dim);border:1px solid var(--line)}
 .match{display:flex;align-items:center;gap:8px;background:var(--panel2);min-height:50px;
-  border:1px solid rgba(124,156,196,.16);border-radius:var(--radius);padding:10px 12px;
+  border:1px solid rgba(var(--line-panel-rgb),.16);border-radius:var(--radius);padding:10px 12px;
   transition:border-color .15s,box-shadow .15s}
-.match.mine{border-color:var(--cyan);box-shadow:0 0 0 1px rgba(57,211,255,.4),0 0 16px rgba(57,211,255,.18)}
+.match.mine{border-color:var(--cyan);box-shadow:0 0 0 1px rgba(var(--mine-rgb),.4),0 0 16px rgba(var(--mine-rgb),.18)}
 .team-chip{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
 .team-mono{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-family:var(--ff);font-weight:700;font-size:.6rem;color:#0a0d13;flex:0 0 auto;
-  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.18),0 2px 6px rgba(0,0,0,.4)}
+  font-family:var(--ff);font-weight:700;font-size:.6rem;color:#0a0d13;flex:0 0 auto}
 .team-chip .tn{font-family:var(--ff);font-size:.78rem;font-weight:600;color:var(--neutral);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.02em}
 .team-chip.loser{opacity:.38;filter:grayscale(.5)}
-.qualified-slot{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:11px;min-height:46px;
-  background:linear-gradient(180deg,rgba(62,192,126,.12),rgba(62,192,126,.03));border:1px solid var(--t2-green-dim)}
-.qualified-slot.elim-slot{background:linear-gradient(180deg,rgba(255,45,72,.1),rgba(255,45,72,.03));border-color:var(--s-red-dim)}
+.qualified-slot{display:flex;align-items:center;gap:8px;padding:9px 11px;
+  background:linear-gradient(180deg,rgba(var(--t2-green-rgb),.12),rgba(var(--t2-green-rgb),.03));border:1px solid var(--t2-green-dim)}
+.qualified-slot.elim-slot{background:linear-gradient(180deg,rgba(var(--s-red-rgb),.1),rgba(var(--s-red-rgb),.03));border-color:var(--s-red-dim)}
 .swiss-count{margin-left:7px;font-variant-numeric:tabular-nums;opacity:.75;font-weight:700}
 .swiss-col-vazio{font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);
   opacity:.5;text-align:center;padding:14px 0}
-.qualified-slot.mine{box-shadow:0 0 0 1px rgba(57,211,255,.5),0 0 16px rgba(57,211,255,.2)}
+.qualified-slot.mine{box-shadow:0 0 0 1px rgba(var(--mine-rgb),.5),0 0 16px rgba(var(--mine-rgb),.2)}
 .bracket{display:flex;gap:clamp(20px,4vw,46px);align-items:center;justify-content:flex-start;min-height:100%}
 .bracket-round{display:flex;flex-direction:column;gap:clamp(16px,3vw,30px);justify-content:center;flex:0 0 auto}
-.bracket-round-title{font-family:var(--ff);font-weight:700;font-size:.66rem;letter-spacing:.22em;
-  color:var(--dim);text-align:center;margin-bottom:4px;text-transform:uppercase}
-.series{background:var(--panel2);border:1px solid rgba(124,156,196,.16);border-radius:var(--radius);
+.bracket-round-title{font-family:var(--ff);font-weight:700;
+  text-align:center;margin-bottom:4px;text-transform:uppercase}
+.series{background:var(--panel2);border:1px solid rgba(var(--line-panel-rgb),.16);border-radius:var(--radius);
   padding:12px 14px;min-width:200px;display:flex;flex-direction:column;gap:0;position:relative;overflow:hidden;
   transition:border-color .18s,box-shadow .18s}
 .series-sep{height:1px;background:var(--line);margin:7px 0;position:relative}
 .series-sep::after{content:"VS";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-  background:#141a28;padding:0 6px;font-family:var(--ff);font-size:.52rem;font-weight:700;
+  font-family:var(--ff);font-size:.52rem;font-weight:700;
   letter-spacing:.1em;color:var(--dim)}
-.series.mine{border-color:var(--cyan);box-shadow:0 0 0 1px rgba(57,211,255,.4),0 0 18px rgba(57,211,255,.16)}
+.series.mine{border-color:var(--cyan);box-shadow:0 0 0 1px rgba(var(--mine-rgb),.4),0 0 18px rgba(var(--mine-rgb),.16)}
 .series.done{border-color:var(--t2-green-dim);background:linear-gradient(180deg,#16241c,#0e1119)}
-.series.ativa{border-color:var(--accent);box-shadow:0 0 0 1px rgba(255,90,31,.5),0 0 20px rgba(255,90,31,.25);
+.series.ativa{border-color:var(--accent);box-shadow:0 0 0 1px rgba(var(--accent-deep-rgb),.5),0 0 20px rgba(var(--accent-deep-rgb),.25);
   animation:seriesPulse 1.6s ease-in-out infinite}
-@keyframes seriesPulse{0%,100%{box-shadow:0 0 0 1px rgba(255,90,31,.5),0 0 12px rgba(255,90,31,.18)}
-  50%{box-shadow:0 0 0 1px rgba(255,90,31,.7),0 0 24px rgba(255,90,31,.4)}}
+@keyframes seriesPulse{0%,100%{box-shadow:0 0 0 1px rgba(var(--accent-deep-rgb),.5),0 0 12px rgba(var(--accent-deep-rgb),.18)}
+  50%{box-shadow:0 0 0 1px rgba(var(--accent-deep-rgb),.7),0 0 24px rgba(var(--accent-deep-rgb),.4)}}
 .series-row{display:flex;align-items:center;gap:9px;min-height:30px}
-.series-row .sc{margin-left:auto;font-family:var(--ff);font-weight:700;font-size:1.05rem;
-  color:var(--txt);min-width:16px;text-align:center}
+.series-row .sc{margin-left:auto;font-family:var(--ff);font-weight:700;
+  color:var(--txt);text-align:center}
 .series-row.win .tn{color:var(--t2-green-lit)}
 .series-row.win .sc{color:var(--t2-green-lit)}
 .series-row.lose{opacity:.4;filter:grayscale(.55)}
 /* coluna do campeão */
 .champ-col{justify-content:center}
 .champion{display:flex;flex-direction:column;align-items:center;gap:11px;justify-content:center;min-width:178px;
-  padding:22px 16px;border-radius:16px;border:1px dashed var(--line);transition:.3s}
+  padding:22px 16px;border:1px dashed var(--line);transition:.3s}
 .champion.crowned{border:1px solid var(--t1-gold-dim);
-  background:radial-gradient(120% 100% at 50% 0%,rgba(255,190,0,.14),transparent 70%)}
+  background:radial-gradient(120% 100% at 50% 0%,rgba(var(--t1-gold-rgb),.14),transparent 70%)}
 .champion .cup-tag{font-family:var(--ff);font-weight:700;font-size:.66rem;letter-spacing:.22em;
   padding:6px 14px;border-radius:7px;color:var(--t1-gold-lit);border:1px solid var(--t1-gold-dim);
-  background:rgba(255,190,0,.08);text-shadow:0 0 12px rgba(255,190,0,.4);animation:cupGlow 2.4s ease-in-out infinite}
+  background:rgba(var(--t1-gold-rgb),.08);text-shadow:0 0 12px rgba(var(--t1-gold-rgb),.4);animation:cupGlow 2.4s ease-in-out infinite}
 .champion .cup-tag.dim{color:var(--dim);border-color:var(--line);background:none;text-shadow:none;animation:none;letter-spacing:.1em}
-@keyframes cupGlow{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 18px rgba(255,190,0,.3)}}
+@keyframes cupGlow{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 18px rgba(var(--t1-gold-rgb),.3)}}
 .champion .team-chip{flex:0 0 auto;justify-content:center}
 .champion.crowned .team-chip .tn{font-size:1.05rem;color:var(--t1-gold-lit)}
 .champ-tag{font-family:var(--ff);font-weight:700;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;
-  color:var(--t1-gold-lit);text-shadow:0 0 12px rgba(255,190,0,.4)}
+  color:var(--t1-gold-lit);text-shadow:0 0 12px rgba(var(--t1-gold-rgb),.4)}
 .champ-wait{font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:600}
 .overlay-foot{display:flex;align-items:center;gap:18px;flex-wrap:wrap;
   padding:12px max(clamp(16px,4vw,34px),env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(clamp(16px,4vw,34px),env(safe-area-inset-left));
   border-top:1px solid var(--line);background:linear-gradient(0deg,rgba(20,27,43,.5),transparent)}
 .leg{display:flex;align-items:center;gap:7px;font-size:.7rem;color:var(--dim);font-weight:600;letter-spacing:.04em}
 .leg-dot{width:10px;height:10px;border-radius:3px;flex:0 0 auto}
-.leg-dot.qual{background:var(--t2-green);box-shadow:0 0 6px rgba(62,192,126,.5)}
-.leg-dot.elim{background:var(--s-red);box-shadow:0 0 6px rgba(255,45,72,.5)}
-.leg-dot.mine{background:var(--cyan);box-shadow:0 0 6px rgba(57,211,255,.5)}
+.leg-dot.qual{background:var(--t2-green);box-shadow:0 0 6px rgba(var(--t2-green-rgb),.5)}
+.leg-dot.elim{background:var(--s-red);box-shadow:0 0 6px rgba(var(--s-red-rgb),.5)}
+.leg-dot.mine{background:var(--cyan);box-shadow:0 0 6px rgba(var(--mine-rgb),.5)}
 .leg-note{margin-left:auto;font-size:.66rem;color:var(--dim);opacity:.7;letter-spacing:.08em;text-transform:uppercase}
 
 /* ── PARTIDA: antessala + mapa ao vivo ── */
@@ -965,7 +1172,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .pm-team .pm-ef b{color:var(--cyan);font-size:1.1rem}
 .pm-team.mine .pm-name{color:var(--cyan)}
 .pm-mid{display:flex;flex-direction:column;align-items:center}
-.pm-versus{font-family:var(--ff);font-weight:700;font-size:1.4rem;color:var(--dim);letter-spacing:.1em}
+.pm-versus{font-family:var(--ff);font-weight:700;letter-spacing:.1em}
 .livemap{flex:1;display:flex;flex-direction:column;min-height:0}
 .scorebar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
   border-bottom:1px solid var(--line);background:var(--panel2);
@@ -980,8 +1187,8 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .sb-team.mine .sb-name{color:var(--cyan)}
 .sb-team .sb-camp{font-family:var(--ff);font-size:.6rem;color:var(--dim);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .sb-side{font-family:var(--ff);font-weight:700;font-size:.58rem;letter-spacing:.14em;padding:3px 9px;border-radius:5px;width:fit-content}
-.sb-side.ct{background:rgba(74,130,255,.16);color:#7aa0ff;border:1px solid rgba(74,130,255,.4)}
-.sb-side.tr{background:rgba(255,170,40,.16);color:#ffb84a;border:1px solid rgba(255,170,40,.4)}
+.sb-side.ct{background:rgba(var(--ct-rgb),.16);color:var(--ct-ink);border:1px solid rgba(var(--ct-rgb),.4)}
+.sb-side.tr{background:rgba(var(--tr-rgb),.16);color:var(--tr-ink);border:1px solid rgba(var(--tr-rgb),.4)}
 .sb-center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
 .sb-score{font-family:var(--ff);font-weight:700;font-size:clamp(2.6rem,8vw,3.8rem);line-height:.9;
   display:flex;align-items:center;gap:clamp(12px,3vw,22px);color:var(--txt);font-variant-numeric:tabular-nums}
@@ -999,8 +1206,8 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
   width:100%;max-width:720px;margin:0 auto;box-sizing:border-box;justify-content:center}
 .rs-cell{width:14px;height:14px;border-radius:4px;flex:0 0 auto;position:relative;
   background:#1a2233;transition:transform .2s var(--ease)}
-.rs-cell.ct{background:var(--c-desenvolvedor)}
-.rs-cell.tr{background:#ffaa28}
+.rs-cell.ct{background:var(--ct)}
+.rs-cell.tr{background:var(--tr)}
 .rs-cell.pop{animation:rsPop .3s var(--ease)}
 @keyframes rsPop{0%{transform:scale(0)}60%{transform:scale(1.4)}100%{transform:scale(1)}}
 .rs-cell.key::after{content:"";position:absolute;inset:0;border-radius:inherit;
@@ -1010,8 +1217,8 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 /* placar com flash de quem pontuou */
 .sb-score .flash-ct{animation:flashCT .5s var(--ease)}
 .sb-score .flash-tr{animation:flashTR .5s var(--ease)}
-@keyframes flashCT{0%,100%{color:var(--txt)}40%{color:#7aa0ff;text-shadow:0 0 16px rgba(74,130,255,.6)}}
-@keyframes flashTR{0%,100%{color:var(--txt)}40%{color:#ffb84a;text-shadow:0 0 16px rgba(255,170,40,.6)}}
+@keyframes flashCT{0%,100%{color:var(--txt)}40%{color:var(--ct-ink);text-shadow:0 0 16px rgba(var(--ct-rgb),.6)}}
+@keyframes flashTR{0%,100%{color:var(--txt)}40%{color:var(--tr-ink);text-shadow:0 0 16px rgba(var(--tr-rgb),.6)}}
 /* tela final de campanha (campeão / eliminado) */
 .final-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:14px;
   padding:max(28px,env(safe-area-inset-top)) 24px max(36px,env(safe-area-inset-bottom));width:100%;max-width:448px;margin:0 auto;text-align:center}
@@ -1029,14 +1236,14 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .final-trophy{width:62px;height:62px;color:#3a4458;margin-bottom:2px;display:flex}
 .final-trophy svg{width:100%;height:100%;filter:drop-shadow(0 4px 14px rgba(0,0,0,.5))}
 .final-overlay.is-champ .final-trophy{color:var(--gold);animation:trophyRise .7s var(--ease) both,champGlow 2.4s ease-in-out infinite .7s}
-.final-overlay.is-champ .final-trophy svg{filter:drop-shadow(0 0 18px rgba(255,200,74,.55))}
+.final-overlay.is-champ .final-trophy svg{filter:drop-shadow(0 0 18px rgba(var(--gold-glow-rgb),.55))}
 .final-overlay.is-elim .final-trophy{display:none}
 @keyframes trophyRise{0%{opacity:0;transform:translateY(18px) scale(.6) rotate(-8deg)}60%{transform:translateY(0) scale(1.12) rotate(3deg)}100%{opacity:1;transform:none}}
 .final-selos{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:2px 0 4px}
 .selo-final{font-family:var(--ff);font-weight:700;font-size:.66rem;letter-spacing:.12em;padding:5px 11px;border-radius:20px;border:1px solid var(--line);color:var(--dim);background:rgba(255,255,255,.02)}
 .selo-gold{color:#1a1206;background:linear-gradient(180deg,var(--gold-lit),var(--gold-dim));border-color:transparent;box-shadow:0 2px 12px rgba(255,180,60,.35)}
-.final-mvp-card{width:100%;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;background:linear-gradient(135deg,rgba(255,206,74,.10),rgba(255,206,74,.02));border:1px solid rgba(255,206,74,.35);position:relative;overflow:hidden}
-.final-mvp-card::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 12% 30%,rgba(255,206,74,.16),transparent 60%);pointer-events:none}
+.final-mvp-card{width:100%;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:14px 16px;border:1px solid rgba(var(--gold-rgb),.35);position:relative;overflow:hidden}
+.final-mvp-card::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 12% 30%,rgba(var(--gold-rgb),.16),transparent 60%);pointer-events:none}
 .mvp-badge{font-family:var(--ff);font-weight:800;font-size:.62rem;letter-spacing:.1em;color:#1a1206;background:linear-gradient(180deg,var(--gold-lit),var(--gold-dim));padding:5px 8px;border-radius:8px;align-self:start}
 .mvp-id{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .mvp-flag{font-family:var(--ff);font-weight:700;font-size:.6rem;letter-spacing:.05em;color:var(--dim);border:1px solid var(--line);border-radius:5px;padding:2px 5px}
@@ -1046,7 +1253,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .mvp-stats{grid-column:2;font-family:var(--ff);font-weight:600;font-size:.74rem;color:var(--dim);font-variant-numeric:tabular-nums}
 .mvp-stats span{opacity:.6;font-size:.66rem;margin-left:3px}
 .mvp-rate{font-family:var(--ff);font-weight:800;font-size:1.9rem;font-variant-numeric:tabular-nums;line-height:1}
-.sec-lbl{font-family:var(--ff);font-weight:700;font-size:.6rem;letter-spacing:.16em;color:var(--dim);text-align:left;margin:2px 0 6px;width:100%}
+.sec-lbl{font-family:var(--ff);font-weight:700;font-size:.6rem;text-align:left;margin:2px 0 6px;width:100%}
 .final-jornada{width:100%}
 .jor-tiles{display:flex;gap:5px;flex-wrap:wrap}
 .jt{flex:1;min-width:42px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 3px;border-radius:8px;border:1px solid var(--line);background:rgba(255,255,255,.02)}
@@ -1060,7 +1267,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .fr-bar{height:5px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden}
 .fr-bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--cyan),var(--win))}
 .fr-pos.md-g{color:var(--gold)}.fr-pos.md-s{color:var(--neutral)}.fr-pos.md-b{color:var(--bronze)}
-.fr-row.mvp{border-color:rgba(255,206,74,.4);background:rgba(255,206,74,.05)}
+.fr-row.mvp{border-color:rgba(var(--gold-rgb),.4);background:rgba(var(--gold-rgb),.05)}
 .final-rec{display:flex;gap:8px;width:100%;justify-content:center}
 .rec{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:9px 6px;border-radius:var(--radius);border:1px solid var(--line);background:rgba(255,255,255,.02)}
 .rec-v{font-family:var(--ff);font-weight:800;font-size:1.05rem;color:var(--txt);font-variant-numeric:tabular-nums}
@@ -1078,7 +1285,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 @keyframes finRise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 @keyframes finPop{0%{opacity:0;transform:scale(.7)}70%{transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}
 .final-overlay.is-champ .final-titulo{color:var(--gold);animation:champGlow 2.2s ease-in-out infinite}
-@keyframes champGlow{0%,100%{text-shadow:0 0 22px rgba(255,200,74,.4)}50%{text-shadow:0 0 42px rgba(255,200,74,.72)}}
+@keyframes champGlow{0%,100%{text-shadow:0 0 22px rgba(var(--gold-glow-rgb),.4)}50%{text-shadow:0 0 42px rgba(var(--gold-glow-rgb),.72)}}
 .final-overlay.is-champ .final-placar{color:var(--gold)}
 .final-overlay.is-elim .final-titulo{color:var(--dim)}
 .final-overlay.is-elim .final-placar{filter:saturate(.6)}
@@ -1089,12 +1296,12 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 /* scoreboard ao vivo: um painel por time, colunas alinhadas (jogador · K-D · rating) */
 .livescore{flex:1;overflow-y:auto;padding:clamp(12px,2.5vw,20px);display:flex;flex-direction:column;gap:14px;
   width:100%;max-width:580px;margin:0 auto;box-sizing:border-box;-webkit-overflow-scrolling:touch}
-.ls-side{display:flex;flex-direction:column;flex:0 0 auto;border-radius:14px;overflow:hidden;--ls-accent:#7aa0ff;
-  border:1px solid var(--line);background:linear-gradient(180deg,rgba(20,27,43,.5),rgba(11,14,21,.55))}
-.ls-side.mine{--ls-accent:var(--cyan);border-color:rgba(57,211,255,.32);
-  box-shadow:0 0 0 1px rgba(57,211,255,.16),0 10px 28px -18px rgba(57,211,255,.6)}
+.ls-side{display:flex;flex-direction:column;flex:0 0 auto;overflow:hidden;--ls-accent:var(--ct-ink);
+  border:1px solid var(--line)}
+.ls-side.mine{--ls-accent:var(--cyan);border-color:rgba(var(--mine-rgb),.32);
+  box-shadow:0 0 0 1px rgba(var(--mine-rgb),.16),0 10px 28px -18px rgba(var(--mine-rgb),.6)}
 .ls-head{display:grid;grid-template-columns:1fr 58px 44px 38px 46px;align-items:center;gap:6px;position:relative;
-  padding:10px 14px;background:rgba(255,255,255,.03);border-bottom:1px solid var(--line)}
+  background:rgba(255,255,255,.03);border-bottom:1px solid var(--line)}
 .ls-head::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ls-accent)}
 .ls-team-id{display:flex;align-items:center;gap:8px;min-width:0}
 .ls-mono{width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;
@@ -1104,20 +1311,20 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .ls-side.mine .ls-team{color:var(--cyan)}
 .ls-side-tag{font-family:var(--ff);font-weight:700;font-size:.52rem;letter-spacing:.12em;padding:2px 6px;border-radius:4px;flex:0 0 auto}
-.ls-side-tag.ct{background:rgba(74,130,255,.16);color:#7aa0ff;border:1px solid rgba(74,130,255,.4)}
-.ls-side-tag.tr{background:rgba(255,170,40,.16);color:#ffb84a;border:1px solid rgba(255,170,40,.4)}
+.ls-side-tag.ct{background:rgba(var(--ct-rgb),.16);color:var(--ct-ink);border:1px solid rgba(var(--ct-rgb),.4)}
+.ls-side-tag.tr{background:rgba(var(--tr-rgb),.16);color:var(--tr-ink);border:1px solid rgba(var(--tr-rgb),.4)}
 .ls-col{font-family:var(--ff);font-weight:700;font-size:.54rem;letter-spacing:.13em;color:var(--dim);text-transform:uppercase;text-align:right}
 .ls-row{display:grid;grid-template-columns:1fr 58px 44px 38px 46px;align-items:center;gap:6px;
-  padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.045);
+  border-bottom:1px solid rgba(255,255,255,.045);
   border-left:3px solid transparent;transition:background .25s,border-color .25s}
 .ls-row:last-child{border-bottom:none}
-.ls-row.mine{background:rgba(57,211,255,.04)}
+.ls-row.mine{background:rgba(var(--mine-rgb),.04)}
 .ls-row.frag{animation:lsFrag .6s var(--ease)}
-@keyframes lsFrag{0%{background:rgba(255,210,74,.22);border-left-color:rgba(255,210,74,.85)}
+@keyframes lsFrag{0%{background:rgba(var(--record-rgb),.22);border-left-color:rgba(var(--record-rgb),.85)}
   100%{background:transparent;border-left-color:transparent}}
 .ls-row.mine.frag{animation:lsFragMine .6s var(--ease)}
-@keyframes lsFragMine{0%{background:rgba(57,211,255,.28);border-left-color:rgba(57,211,255,.9)}
-  100%{background:rgba(57,211,255,.04);border-left-color:transparent}}
+@keyframes lsFragMine{0%{background:rgba(var(--mine-rgb),.28);border-left-color:rgba(var(--mine-rgb),.9)}
+  100%{background:rgba(var(--mine-rgb),.04);border-left-color:transparent}}
 .ls-nick{font-family:var(--ff);font-weight:600;font-size:.86rem;color:var(--neutral);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:7px;min-width:0}
 .ls-row.mine .ls-nick{color:#e8f6ff}
@@ -1138,14 +1345,14 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .majorbar[hidden],#majorTag[hidden]{display:none}
 .majorbar{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:18px}
 .majorbtn{display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left;
-  padding:16px 18px;border-radius:var(--radius);border:1px solid rgba(255,107,42,.36);background:var(--panel2);
+  padding:16px 18px;border-radius:var(--radius);border:1px solid rgba(var(--accent-rgb),.36);background:var(--panel2);
   transition:transform .14s var(--ease),border-color .14s,box-shadow .14s;
   -webkit-tap-highlight-color:transparent;position:relative;overflow:hidden}
 .majorbtn::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
 .majorbtn::after{content:"";position:absolute;right:20px;top:50%;width:9px;height:9px;
   border-right:2px solid var(--accent);border-top:2px solid var(--accent);
   transform:translateY(-50%) rotate(45deg);opacity:.5;transition:.14s}
-.majorbtn:hover{transform:translateY(-1px);border-color:rgba(255,90,31,.6)}
+.majorbtn:hover{transform:translateY(-1px);border-color:rgba(var(--accent-deep-rgb),.6)}
 .majorbtn:hover::after{opacity:1;right:16px}
 .majorbtn:active{transform:translateY(0) scale(.99)}
 .majorbtn .mbtxt{display:flex;flex-direction:column;gap:3px}
@@ -1169,7 +1376,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    ════════════════════════════════════════════════════════════════════ */
 
 /* — Sistema: seleção de texto, rolagem e foco por teclado — */
-::selection{background:rgba(255,90,31,.32);color:#fff}
+::selection{background:rgba(var(--accent-deep-rgb),.32);color:#fff}
 html{scroll-behavior:smooth}
 *{scrollbar-width:thin;scrollbar-color:#26324a transparent}
 ::-webkit-scrollbar{width:10px;height:10px}
@@ -1184,9 +1391,9 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
 /* — link para a página-irmã "Base de elencos" (elencos.html): usa a linguagem do jogo — */
 .rosterbar{margin:2px 0 4px}
 a.rosterlink{display:flex;align-items:center;gap:14px;width:100%;text-decoration:none;
-  font-family:var(--ff);border:1px solid rgba(148,163,184,.18);background:#0d131d;border-radius:var(--radius);
+  font-family:var(--ff);border:1px solid rgba(var(--line-base-rgb),.18);background:#0d131d;border-radius:var(--radius);
   padding:14px 18px;color:var(--txt);transition:border-color .15s,transform .12s var(--ease),background .15s}
-a.rosterlink:hover{border-color:rgba(255,90,31,.45);transform:translateY(-1px);background:var(--panel2)}
+a.rosterlink:hover{border-color:rgba(var(--accent-deep-rgb),.45);transform:translateY(-1px);background:var(--panel2)}
 a.rosterlink .rl-ic{font-size:1.15rem;color:var(--accent);line-height:1;flex:none}
 a.rosterlink .rl-tx{display:flex;flex-direction:column;gap:3px;min-width:0}
 a.rosterlink .rl-t{font-weight:700;font-size:.84rem;letter-spacing:.08em;text-transform:uppercase}
@@ -1202,10 +1409,10 @@ a.rosterlink:hover .rl-ar{color:var(--accent);transform:translateX(3px)}
 html::before{content:"";position:fixed;inset:-10% 0 0;z-index:-3;pointer-events:none;opacity:.55;
   background:
     radial-gradient(60% 55% at 22% 0%,rgba(255,110,47,.13),transparent 70%),
-    radial-gradient(60% 55% at 78% 0%,rgba(57,211,255,.11),transparent 70%)}
+    radial-gradient(60% 55% at 78% 0%,rgba(var(--mine-rgb),.11),transparent 70%)}
 body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.55;
-  background-image:linear-gradient(rgba(124,156,196,.045) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(124,156,196,.045) 1px,transparent 1px);
+  background-image:linear-gradient(rgba(var(--line-panel-rgb),.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(var(--line-panel-rgb),.045) 1px,transparent 1px);
   background-size:48px 48px;
   -webkit-mask:radial-gradient(120% 92% at 50% 0%,#000 26%,transparent 76%);
           mask:radial-gradient(120% 92% at 50% 0%,#000 26%,transparent 76%)}
@@ -1228,7 +1435,7 @@ body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opa
 
 /* — Botões: relevo — */
 button.ghost{transition:transform .12s var(--ease),border-color .14s,background .14s,box-shadow .14s}
-button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,107,42,.45)}
+button.ghost:hover{transform:translateY(-2px);border-color:rgba(var(--accent-rgb),.45)}
 
 /* — Cartas: elevação só onde hover existe de verdade; no touch ela ficava presa — */
 @media (hover:hover) and (pointer:fine){
@@ -1243,24 +1450,23 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,107,42,.45)}
 .stat{transition:border-color .2s,box-shadow .2s,transform .2s var(--ease)}
 .stat--eff{position:relative;overflow:hidden}
 .stat--eff::before{content:"";position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(circle at 50% 125%,rgba(255,90,31,.16),transparent 62%)}
+  background:radial-gradient(circle at 50% 125%,rgba(var(--accent-deep-rgb),.16),transparent 62%)}
 .stat--eff .stat-v{position:relative}
 
-.match:hover{border-color:rgba(124,156,196,.4)}
+.match:hover{border-color:rgba(var(--line-panel-rgb),.4)}
 .sb-score{letter-spacing:.01em;text-shadow:0 2px 18px rgba(0,0,0,.6)}
-.pm-versus{font-size:1.8rem;color:var(--accent);text-shadow:0 0 24px rgba(255,90,31,.5)}
+.pm-versus{font-size:1.8rem;color:var(--accent);text-shadow:0 0 24px rgba(var(--accent-deep-rgb),.5)}
 
 /* ════ LINGUAGEM DOS OVERLAYS: brasões no topo dos painéis-chave ════ */
 .overlay-title{font-size:clamp(1.3rem,3.4vw,1.7rem);letter-spacing:.08em}
-.swiss-colhead{border-radius:999px}
 .series::before{content:"";position:absolute;top:0;left:18%;right:18%;height:3px;border-radius:0 0 4px 4px;opacity:.55;
-  background:linear-gradient(90deg,transparent,rgba(124,156,196,.55),transparent)}
+  background:linear-gradient(90deg,transparent,rgba(var(--line-panel-rgb),.55),transparent)}
 .series.done::before{background:linear-gradient(90deg,transparent,var(--t2-green),transparent)}
 .series.mine::before{background:linear-gradient(90deg,transparent,var(--cyan),transparent);box-shadow:0 0 10px -1px var(--cyan)}
 .series.ativa::before{background:linear-gradient(90deg,transparent,var(--accent),transparent);box-shadow:0 0 10px -1px var(--accent)}
 .pm-team{position:relative;overflow:hidden}
 .pm-team::before{content:"";position:absolute;top:0;left:18%;right:18%;height:3px;border-radius:0 0 4px 4px;opacity:.55;
-  background:linear-gradient(90deg,transparent,rgba(124,156,196,.5),transparent)}
+  background:linear-gradient(90deg,transparent,rgba(var(--line-panel-rgb),.5),transparent)}
 .pm-team.mine::before{background:linear-gradient(90deg,transparent,var(--cyan),transparent);box-shadow:0 0 10px -1px var(--cyan)}
 .ls-side{position:relative}
 .ls-side::before{content:"";position:absolute;top:0;left:18%;right:18%;height:3px;z-index:2;border-radius:0 0 4px 4px;
@@ -1276,41 +1482,41 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,107,42,.45)}
 .sec-lbl{color:var(--txt);letter-spacing:.22em}
 
 /* ════ MAJOR PROFISSIONAL: um só sistema de painel em todas as telas de torneio ════
-   Padrão: raio var(--radius) · borda rgba(124,156,196,.16) · fundo var(--panel2) · fio de luz
+   Padrão: raio var(--radius) · borda rgba(var(--line-panel-rgb),.16) · fundo var(--panel2) · fio de luz
    no topo. Suíça, bracket, antessala, scoreboard e tela final falam a mesma língua. */
 /* — Fase suíça — */
 .swiss{gap:clamp(14px,2.4vw,22px)}
-.swiss-col{min-width:172px;gap:10px}
+
 .swiss-colhead{letter-spacing:.2em;padding:9px 0;border-radius:11px;font-size:.66rem}
 .qualified-slot{border-radius:13px;min-height:50px}
 .team-mono{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.22),inset 0 -8px 12px -6px rgba(0,0,0,.35),0 3px 8px rgba(0,0,0,.45)}
 /* — Bracket — */
 .bracket-round-title{display:flex;align-items:center;justify-content:center;gap:8px}
 .bracket-round-title::before,.bracket-round-title::after{content:"";width:6px;height:6px;border-radius:1.5px;
-  transform:rotate(45deg);background:linear-gradient(135deg,#ff8a4a,var(--accent));box-shadow:0 0 7px rgba(255,90,31,.55)}
+  transform:rotate(45deg);background:linear-gradient(135deg,#ff8a4a,var(--accent));box-shadow:0 0 7px rgba(var(--accent-deep-rgb),.55)}
 .series-row .sc{font-size:1.15rem;min-width:20px}
 .series-sep::after{background:#151b29;border-radius:4px;padding:1px 7px}
 .champion{border-radius:16px}
 /* — Antessala: blocos de time em vidro — */
-.pm-team{padding:20px 22px;border-radius:var(--radius);border:1px solid rgba(124,156,196,.16);
+.pm-team{padding:20px 22px;border-radius:var(--radius);border:1px solid rgba(var(--line-panel-rgb),.16);
   background:var(--panel2)}
-.pm-team.mine{border-color:rgba(57,211,255,.4);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 0 0 1px rgba(57,211,255,.22),0 18px 40px -24px rgba(57,211,255,.35)}
-.prematch-ctx{padding:8px 18px;border-radius:20px;border:1px solid rgba(255,90,31,.35);
-  background:rgba(255,90,31,.08);box-shadow:0 0 18px -6px rgba(255,90,31,.5)}
+.pm-team.mine{border-color:rgba(var(--mine-rgb),.4);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 0 0 1px rgba(var(--mine-rgb),.22),0 18px 40px -24px rgba(var(--mine-rgb),.35)}
+.prematch-ctx{padding:8px 18px;border-radius:20px;border:1px solid rgba(var(--accent-deep-rgb),.35);
+  background:rgba(var(--accent-deep-rgb),.08);box-shadow:0 0 18px -6px rgba(var(--accent-deep-rgb),.5)}
 /* — Mapa ao vivo: tira de rounds com divisor de troca de lado (round 13) — */
 .rs-cell:nth-child(13){margin-left:16px;position:relative}
 .rs-cell:nth-child(13)::before{content:"";position:absolute;left:-10px;top:-2px;bottom:-2px;width:2px;
-  border-radius:2px;background:linear-gradient(180deg,transparent,rgba(124,156,196,.5),transparent)}
-.ls-side{border-radius:var(--radius);border-color:rgba(124,156,196,.16);background:var(--panel2)}
+  border-radius:2px;background:linear-gradient(180deg,transparent,rgba(var(--line-panel-rgb),.5),transparent)}
+.ls-side{border-radius:var(--radius);border-color:rgba(var(--line-panel-rgb),.16);background:var(--panel2)}
 .ls-head{padding:11px 14px}
 .ls-row{padding:10px 14px}
 /* — Tela final: cartões padronizados — */
 .final-mvp-card{border-radius:var(--radius);background:var(--panel2)}
-.fr-row,.jt,.rec{border-radius:var(--radius);border-color:rgba(124,156,196,.14);background:var(--panel2)}
+.fr-row,.jt,.rec{border-radius:var(--radius);border-color:rgba(var(--line-panel-rgb),.14);background:var(--panel2)}
 .sec-lbl{display:flex;align-items:center;gap:7px}
 .sec-lbl::before{content:"";width:6px;height:6px;border-radius:1.5px;transform:rotate(45deg);
-  background:linear-gradient(135deg,#ff8a4a,var(--accent));box-shadow:0 0 7px rgba(255,90,31,.5)}
+  background:linear-gradient(135deg,#ff8a4a,var(--accent));box-shadow:0 0 7px rgba(var(--accent-deep-rgb),.5)}
 
 /* Movimento reduzido: silencia as animações contínuas desta camada */
 @media(prefers-reduced-motion:reduce){
@@ -1322,53 +1528,47 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(255,107,42,.45)}
 /* — Ajustes de tela estreita da camada Clean Matchday (07/2026) — */
 @media(max-width:760px){
   body{
-    padding:10px max(10px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
-  }
+    padding:10px max(10px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}
   header{
     flex-direction:column;
     align-items:stretch;
-    text-align:left;
-  }
+    text-align:left}
   .hud{
     display:grid;
-    grid-template-columns:1fr 1fr;
-  }
+    grid-template-columns:1fr 1fr}
   .hud .s{
-    min-width:0;
-  }
+    min-width:0}
   .section-tag{
-    letter-spacing:.14em;
-  }
-  .picks,.lineup,.squad{
-    gap:8px;
-  }
+    letter-spacing:.14em}
+  .picks,.squad{
+    gap:8px}
 }
 
 /* — MEMÓRIA: manchete pós-mapa, narrativa do MVP e Hall da Fama — */
 .manchete{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:10px 16px 0;
-  padding:10px 14px;border-radius:12px;background:rgba(255,90,31,.08);border:1px solid rgba(255,90,31,.3);
+  padding:10px 14px;border-radius:12px;background:rgba(var(--accent-deep-rgb),.08);border:1px solid rgba(var(--accent-deep-rgb),.3);
   animation:mancheteIn .3s var(--ease)}
 @keyframes mancheteIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .manchete-tag{font-family:var(--ff);font-weight:800;font-size:.56rem;letter-spacing:.16em;color:var(--accent);
-  padding:3px 8px;border-radius:5px;background:rgba(255,90,31,.14);flex:0 0 auto}
+  padding:3px 8px;border-radius:5px;background:rgba(var(--accent-deep-rgb),.14);flex:0 0 auto}
 .manchete-tx{font-family:var(--ff);font-weight:700;font-size:.9rem;color:var(--txt);line-height:1.3;min-width:0}
 .manchete-recs{display:flex;flex-wrap:wrap;gap:6px;width:100%}
-.rec-chip{font-family:var(--ff);font-weight:700;font-size:.68rem;color:#ffd24a;
-  padding:3px 9px;border-radius:999px;background:rgba(255,210,74,.12);border:1px solid rgba(255,210,74,.35)}
+.rec-chip{font-family:var(--ff);font-weight:700;font-size:.68rem;color:var(--record);
+  padding:3px 9px;border-radius:999px;background:rgba(var(--record-rgb),.12);border:1px solid rgba(var(--record-rgb),.35)}
 .mvp-narrativa{width:100%;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);
   font-size:.82rem;line-height:1.45;color:var(--neutral);text-align:center}
 .hall-body{flex:1;overflow-y:auto;padding:18px max(18px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left));
   display:flex;flex-direction:column;gap:18px;max-width:720px;margin:0 auto;width:100%}
 .hall-titulo{display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-radius:12px;
   background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);margin-bottom:8px}
-.hall-selos{font-size:.95rem}.hall-inv{color:#ffd24a;font-family:var(--ff);font-size:.7rem;margin-left:8px;letter-spacing:.08em}
+.hall-selos{font-size:.95rem}.hall-inv{color:var(--record);font-family:var(--ff);font-size:.7rem;margin-left:8px;letter-spacing:.08em}
 .hall-info{font-family:var(--ff);font-size:.82rem;color:var(--txt)}
 .hall-elenco{font-size:.74rem;color:var(--dim)}
 .hall-vazio{padding:26px 16px;text-align:center;color:var(--dim);font-size:.9rem;line-height:1.5}
 .hall-recgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}
 .hall-rec{display:flex;flex-direction:column;gap:2px;padding:11px 13px;border-radius:11px;
   background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}
-.hall-rec-v{font-family:var(--ff);font-weight:800;font-size:1.25rem;color:#ffd24a;font-variant-numeric:tabular-nums}
+.hall-rec-v{font-family:var(--ff);font-weight:800;font-size:1.25rem;color:var(--record);font-variant-numeric:tabular-nums}
 .hall-rec-l{font-family:var(--ff);font-weight:700;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--neutral)}
 .hall-rec-m{font-size:.68rem;color:var(--dim)}
 .hall-import{cursor:pointer}

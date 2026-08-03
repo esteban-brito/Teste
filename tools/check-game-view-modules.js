@@ -218,8 +218,21 @@ async function main(){
   const liveHeader=teamView.liveTeamHeaderHtml(alpha,"ct","sideA");
   assert.ok(liveHeader.includes('id="sideA">CT')&&liveHeader.includes("&lt;Major&gt;"),
     "cabeçalho ao vivo do time mudou");
-  assert.ok(teamView.prematchTeamHtml(alpha).includes("força <b>19</b>")&&
-    teamView.prematchTeamHtml(alpha).includes("border-radius:18px"),"card da antessala mudou");
+  /* A antessala carrega DADO inline (a cor do time) e nunca GEOMETRIA.
+     Até 02/08/2026 esta linha exigia `border-radius:18px` no HTML — ela congelava
+     uma duplicação: os mesmos quatro valores (74px, 74px, 1.5rem, 18px) viviam no
+     template E em `.pm-team .team-mono`, e quem mexesse no CSS perdia em silêncio
+     para o inline, que vence por especificidade. A guarda passou a cobrar o
+     contrário: o tamanho mora no CSS, e o HTML não pode retomá-lo. */
+  const antessala=teamView.prematchTeamHtml(alpha);
+  assert.ok(antessala.includes("força <b>19</b>"),"card da antessala mudou");
+  assert.ok(!/width:|height:|font-size:|border-radius:/.test(antessala),
+    "geometria voltou a ser inline na antessala; ela pertence a `.pm-team .team-mono`");
+  assert.ok(antessala.includes('style="background:#123"'),
+    "a cor do time deixou de viajar inline — ela é dado, não estilo");
+  const folha=fs.readFileSync(path.join(__dirname,"..","style.css"),"utf8");
+  assert.ok(/\.pm-team \.team-mono\{[^}]*border-radius:18px/.test(folha),
+    "`.pm-team .team-mono` não declara mais o tamanho da antessala");
 
   const swiss=tournamentView.swissBoardHtml({times:[alpha,beta],classificados:[alpha],eliminados:[beta]});
   assert.ok(swiss.includes("swiss-colhead neutral\">0:0")&&swiss.includes("match mine")&&swiss.includes("A&amp;B"),

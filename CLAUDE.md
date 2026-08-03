@@ -193,3 +193,67 @@ corrigir, e todos passavam verdes.
 Dívida declarada em aberto: o teto de `equilíbrio corpo/era do treinador` está em
 2,5 px em vez de 1,5 px por causa de ~2,3 px de resíduo inexplicado na faixa
 176/151 px. Ver §21.
+
+## Sessão de 02–03/08/2026 — sistema de design, grade e a terceira régua
+
+Ciclo inteiro sem tocar em dado, OVR, RNG ou balanceamento. Detalhes nas §22 e
+§23 do design e em `docs/testing.md`.
+
+### Três regras novas, não negociáveis
+
+19. **A aresta visível do jogador é a DIAGONAL, não o topo da caixa da placa.**
+    No eixo do nick ela corre `--corte-n × (1 − --pad) = 8,19%` da altura da placa
+    abaixo dela; `--diag-k` guarda esse número. Só o treinador, com
+    `clip-path:none`, tem caixa e aresta no mesmo lugar. Medir a placa do jogador
+    pela caixa diz que sobra ar onde há folga estrutural — foi assim que a
+    primeira versão desta fatia encolheu a placa e encostou o nick na diagonal.
+    É a **terceira** vez que a régua errada engana neste componente: §18 trocou
+    `getBoundingClientRect` por `Range`, §21 trocou a caixa da fonte pelo glifo,
+    §22 troca a caixa da placa pela aresta. Antes de confiar numa medida,
+    pergunte o que o OLHO usa como referência.
+20. **As duas categorias centram a identidade na placa.** O jogador centra entre
+    a diagonal e a base; o treinador, entre a caixa e a base. Nenhum dos dois é
+    ancorado por aresta. A guarda de simetria roda nas DUAS categorias — ela
+    nasceu dentro do ramo do treinador e por isso 135 cartas ficaram tortas sem
+    ninguém ver. Uma guarda só vê o eixo que mede **e a categoria em que roda**.
+21. **`.picks` e `.squad` são a mesma grade.** Mesmo `--grade-pad` e mesma caixa
+    — inclusive a borda de 1 px, transparente no `.picks`, porque com
+    `box-sizing:border-box` 2 px de diferença mudam o número de colunas. O número
+    de colunas vem de `auto-fill` com piso de 120 px, que é a menor largura
+    provada pelo E2E: **o produto não pode ir onde nada foi medido.** Não
+    reintroduza media query de coluna — era ela que entregava carta de 105,7 px e
+    um salto de 82% em um pixel de viewport.
+
+### Sistema de cor
+
+A paleta tinha 225 hex e 178 `rgba()` crus contra ~40 tokens, e não era ruído:
+eram cores **concorrentes para o mesmo papel**. 121 literais viraram token sem
+mudar um pixel; nenhuma cor foi consolidada, porque consolidar é decisão visível.
+`tools/check-design-tokens.js` trava isso no `npm run check`.
+
+Duas armadilhas medidas, ambas registradas em `docs/testing.md`:
+
+- **`color-mix(in srgb,C p%,transparent)` NÃO é `rgba(C,p)` na tela.** É igual na
+  álgebra e o Chromium arredonda diferente: 21 de 21 capturas deslocadas em
+  1/255. Cor translúcida de token usa `rgba(var(--x-rgb),a)`, que é exato. Daí
+  cada cor ter duas formas — e a guarda provar que as duas concordam;
+- **um token pode guardar qualquer literal; uma propriedade normal não.** É o que
+  deixa a escada de raridade manter `#3ec07e` sem virar `var(--t2-green)`: mesmo
+  valor, papéis diferentes, e devem poder divergir.
+
+### Cascata
+
+33 declarações não chegavam à tela — base sobrescrita sem query no meio,
+duplicatas byte a byte, um `border-radius` fantasma. Removidas sem mudar pixel.
+E uma regra responsiva estava **morta**: `.swiss-col{min-width:138px}` do
+`@media(max-width:640px)` vinha antes de um `172px` de topo com a mesma
+especificidade, então o celular nunca recebeu a coluna estreita. Varra a folha
+com essa pergunta ao mexer na camada de refinamento: ela vem DEPOIS das media
+queries e ganha por ordem.
+
+### Tokens removidos
+
+`--b1`, `--b2`, `--b3` e os valores mortos de `--t3`/`--t4` em `.cfaces`. Provados
+mortos **por mutação**, não por leitura: valores absurdos moviam 0 de 279 medidas
+contra 156 do controle. O `:root` já tinha passado por essa limpeza em 01/08; a
+geometria da carta não tinha.

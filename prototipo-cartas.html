@@ -6,7 +6,7 @@
 <title>Laboratório de cartas · draft9-0</title>
 <link rel="preload" href="fonts/chakra-petch-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="fonts.css">
-<link rel="stylesheet" href="style.css?v=91dc9d1a">
+<link rel="stylesheet" href="style.css?v=6f3d0f16">
 <style>
 /* Laboratório fino: renderiza o componente e o CSS do jogo. Não há variante de
    design, cópia de dado ou ajuste por jogador neste arquivo. */
@@ -347,6 +347,62 @@ function medirCartas(){
     colisao(".c-vestilo b",".c-vdesc","característica/descrição (verso)",true);
     colisao(".c-vdesc",".c-vrod","descrição/campeonato (verso)",true);
 
+    /* A PLACA ABRAÇA A IDENTIDADE, COM RESPIRO SIMÉTRICO — as DUAS categorias.
+       Até 02/08/2026 esta prova vivia dentro do ramo `if(coachcard)` abaixo, e o
+       jogador nunca foi medido neste eixo. Medido depois: respiro de 5,92% a
+       9,87% da carta acima do nick contra 3,85%–4,29% abaixo da meta, com
+       desequilíbrio de 4,89 a 12,59 px em 135 das 153 cartas. O defeito era o
+       mesmo que o responsável apontou no treinador; a guarda só não olhava.
+
+       É a lição registrada na §19.1 do design, um nível acima: uma guarda só vê
+       o eixo que ela mede — e só na CATEGORIA em que ela roda.
+
+       Mede-se a LETRA, não a caixa: a caixa da `Range` vai do `ascent` ao
+       `descent` e a maiúscula ocupa só o miolo. Os dois corpos comparados aqui
+       são bem diferentes (nick contra meta/característica), que é exatamente o
+       caso em que a caixa mente. */
+    {
+      const placa=carta.querySelector(".cfront .c-placa");
+      const nickFrente=carta.querySelector(".cfront .c-nick");
+      const ehTreinador=carta.classList.contains("coachcard");
+      /* Último bloco de tinta da placa: o jogador fecha na linha de contexto, o
+         treinador na característica — ele não tem terceira linha. */
+      const ultimo=carta.querySelector(ehTreinador?".cfront .c-func":".cfront .c-meta");
+      if(visivel(placa)&&visivel(nickFrente)&&visivel(ultimo)&&ultimo.textContent.trim()){
+        const pr=placa.getBoundingClientRect(),cat=ehTreinador?"treinador":"jogador";
+        /* A ARESTA VISÍVEL, não o topo da caixa. No treinador as duas coincidem
+           (`clip-path:none`); no jogador a placa é cortada em diagonal, e no eixo
+           do nick ela já desceu `--corte-n%` da altura vezes o quanto falta
+           percorrer até a direita. Medir contra a caixa mede um lugar onde não há
+           tinta nem borda: dizia que sobrava ar enquanto o nick encostava na
+           diagonal, e foi assim que a primeira versão desta fatia passou aqui e
+           reprovou no E2E a 130 px e 120 px. */
+        const corte=getComputedStyle(placa).clipPath.match(/^polygon\(0(?:px)?\s+([\d.]+)%/);
+        const arestaTopo=ehTreinador||!corte?pr.top
+          :pr.top+pr.height*Number(corte[1])/100*
+            (1-(nickFrente.getBoundingClientRect().left-pr.left)/pr.width);
+        const respiroAcima=letraInicio(nickFrente)-arestaTopo;
+        const respiroAbaixo=pr.bottom-letraFim(ultimo);
+        /* Tetos diferentes, e a diferença é medida, não conforto. O jogador tem
+           três linhas e dois `row-gap` para o subpixel arredondar, contra duas
+           linhas e um gap do treinador: o resíduo dele fica em 1,47 px no pior
+           caso contra 0,55 px do treinador, e não é proporcional a corpo nenhum
+           — a 130 px dá 0,03 px e a 120 px dá 1,03 px. O teto fica acima disso
+           somado à diferença de plataforma do FreeType (~1 px) e bem abaixo do
+           defeito que ele precisa pegar, que começava em 4,89 px. */
+        maximo(`identidade na placa · ${cat} · respiro simétrico`,
+          Math.abs(respiroAcima-respiroAbaixo),ehTreinador?.75:3,.05);
+        /* E a placa não pode nem sufocar nem sobrar: sem teto, "simétrico" seria
+           satisfeito por uma placa gigante com o texto boiando no meio — que foi
+           o defeito apontado no treinador e o que o jogador tinha de fato, com
+           10% a 13,7% da carta em ar dentro de uma placa de 24% a 28%. */
+        for(const [campo,valor] of [["acima",respiroAcima],["abaixo",respiroAbaixo]]){
+          minimo(`identidade na placa · ${cat} · respiro ${campo}`,valor,caixa.height*.03,.35);
+          maximo(`identidade na placa · ${cat} · respiro ${campo}`,valor,caixa.height*.06,.35);
+        }
+      }
+    }
+
     if(carta.classList.contains("coachcard")){
       treinadoresAuditados++;
       const ref=referenciaJogador,refCaixa=ref.getBoundingClientRect();
@@ -553,42 +609,10 @@ function medirCartas(){
       /* O bloco do treinador tem DUAS linhas contra três do jogador, então a
          altura não é comparável — o que se prova é outra coisa, e mais forte:
          as duas faces carregam o mesmo bloco, provado acima. */
-      /* A placa ABRAÇA a identidade, com respiro SIMÉTRICO. Substituiu, em
-         01/08/2026, a prova de que placa e faixa tinham a mesma altura: aquela
-         existia para o flip não mover a régua horizontal, e com a placa na base e
-         a faixa no topo do verso o flip já troca tudo de lugar.
-
-         Mede-se a TINTA, não a caixa: a caixa do nick inclui faixa morta acima do
-         texto, e foi exatamente esse erro que deixou uma guarda de simetria
-         cravar 0,00 px enquanto o olho via 3 px de diferença. */
-      /* Mede a LETRA, não a caixa da fonte. A caixa da `Range` vai do `ascent`
-         ao `descent`; a maiúscula ocupa só o miolo. Aferido contra a linha de
-         base real na Chakra Petch: a letra começa .29em abaixo do topo da caixa
-         e termina .31em acima do fim dela.
-
-         Até 02/08/2026 estas duas linhas comparavam a caixa e cravavam
-         0,08–0,33 px enquanto o olho via 3,08–6,22 px de sobra em cima. É a
-         mesma lição que já trocou `getBoundingClientRect` por `Range`, um nível
-         abaixo: medir a linha não é medir o glifo. */
-      const respiroAcima=letraInicio(carta.querySelector(".cfront .c-nick"))-placaFrente.top;
-      const respiroAbaixo=placaFrente.bottom-letraFim(carta.querySelector(".cfront .c-func"));
-      maximo("identidade na base do treinador · respiro simétrico",
-        Math.abs(respiroAcima-respiroAbaixo),.75,.05);
-      /* E a placa não pode nem sufocar nem sobrar: os dois respiros ficam numa
-         faixa medida. Sem o teto, "simétrico" seria satisfeito por uma placa
-         gigante com o texto boiando no meio — que foi o defeito apontado.
-
-         A faixa foi REBASEADA em 02/08/2026 junto com a régua. Ela era
-         1,2%–4,5% medindo a CAIXA; a letra fica dentro da caixa, então o mesmo
-         respiro físico dá número maior — o espaço morto acima do glifo vale
-         sozinho cerca de 2% da altura da carta a 250 px. Traduzida, a faixa
-         antiga equivale a 3,2%–6,5% na letra; a de agora é 3%–6%, ou seja mais
-         APERTADA no teto, que é o lado que pega o defeito. Medido: os oito
-         valores caem entre 3,57% e 5,22%. */
-      for(const [campo,valor] of [["acima",respiroAcima],["abaixo",respiroAbaixo]]){
-        minimo(`identidade na base do treinador · respiro ${campo}`,valor,caixa.height*.03,.35);
-        maximo(`identidade na base do treinador · respiro ${campo}`,valor,caixa.height*.06,.35);
-      }
+      /* A simetria da placa subiu para o trecho compartilhado, acima do ramo de
+         categoria, quando o jogador passou a ser medido pelo mesmo eixo. A régua
+         (letra, não caixa) e a faixa 3%–6% continuam idênticas; o que mudou é
+         que agora ela roda nas duas categorias. */
       /* A frente usa a grade do jogador e NÃO pode carregar o bloco replicado do
          verso junto — os dois no mesmo lugar significariam nick duplicado. Esta
          lista era o inverso disto até 01/08/2026: proibia a grade e exigia a

@@ -165,7 +165,11 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
           externalShadow:cards.filter(card=>{const shadow=getComputedStyle(card).boxShadow;
             return shadow!=="none"&&!/\binset\s*$/.test(shadow);}).length};
       });
-      const esperado=Number(largura)<=150?"28":Number(largura)<=176?"26":"24";
+      /* A escada da placa foi remedida em 02/08/2026 para abraçar a tinta da
+         identidade — era 24/26/28, herdada de quando a frente eram três âncoras
+         absolutas. Os números saem de medição: tinta + dois respiros dentro da
+         faixa 3%–6% que a guarda de simetria cobra nas duas categorias. */
+      const esperado=Number(largura)<=150?"26.5":"24.5";
       const primeiraFalha=resultado.audit.falhas[0],primeiroRitmo=resultado.audit.ritmo[0];
       check(resultado.audit.falhas.length===0&&resultado.audit.ritmo.length===0&&
         resultado.audit.treinadoresAuditados===18,
@@ -416,12 +420,68 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
     check(gameCards.length>=5&&gameCards.every(card=>card.role==="button"&&card.tabIndex===0&&
       card.face==="front"&&card.front==="false"&&card.back==="true"),
     "jogo real inicia todas as cartas como botões na face correta");
-    check(gameCards.filter(card=>card.player).every(card=>card.placa==="28"&&
+    /* A densidade é DERIVADA da largura medida, não cravada por viewport. Antes
+       esta linha exigia a densidade compacta a 390 px, e isso só era verdade
+       porque a grade entregava 105,7 px ali — abaixo do piso que a suíte prova.
+       Com a grade corrigida a carta tem 168 px e a densidade é a completa;
+       cravar um valor por viewport transformaria uma correção em reprovação. */
+    const densidadeEsperada=largura=>largura<=150?"26.5":"24.5";
+    const larguraReal=await page.locator("#picks .card").first()
+      .evaluate(card=>card.getBoundingClientRect().width);
+    check(gameCards.filter(card=>card.player)
+      .every(card=>card.placa===densidadeEsperada(larguraReal)&&
       card.flag!=="none"&&card.meta!=="none"&&card.stats===4),
       "jogo real usa a mesma densidade canônica, sem ocultar conteúdo");
     check(gameCards.every(card=>Math.abs(card.ratio-5/7)<.01&&card.left>=0&&card.right<=gamePage.clientWidth)&&
       gamePage.scrollWidth<=gamePage.clientWidth,
     "cartas reais preservam 5:7 e não criam overflow horizontal");
+
+    /* AS DUAS GRADES SÃO A MESMA GRADE, E A CARTA NUNCA CAI ABAIXO DO PISO.
+
+       As oito larguras acima provam a CARTA; nenhuma provava a GRADE que decide
+       essa largura no jogo. Medido em 02/08/2026, antes da correção: `.picks` e
+       `.lineup` nunca coincidiam — 4,3 px de diferença no desktop e até 13 px a
+       320 px, porque `.squad` tem padding e borda e `.picks` não tinha nenhum
+       dos dois. Em três faixas de viewport as duas caíam em DENSIDADES
+       diferentes, com a carta escolhida e a escalada lado a lado em corpos
+       diferentes. E a escada 6→3→2 colunas entregava 105,7 px a 641 px e a
+       375 px — abaixo dos 120 px que esta suíte prova —, com o `.squad`
+       transbordando e o `overflow-x:hidden` do body escondendo.
+
+       O piso é 120 px porque é a menor largura medida acima: abaixo dela nada
+       está provado, então o produto não pode ir. */
+    const PISO=120;
+    const grades=[];
+    for(const largura of [1280,1024,900,860,820,700,680,660,560,540,440,420,390,360,320]){
+      await page.setViewportSize({width:largura,height:900});
+      await page.waitForTimeout(60);
+      grades.push({largura,...await page.evaluate(()=>{
+        const coluna=el=>{const v=getComputedStyle(el).gridTemplateColumns.split(" ").filter(Boolean);
+          return {n:v.length,w:+parseFloat(v[0]).toFixed(2)};};
+        const picks=document.getElementById("picks"),squad=document.querySelector(".squad");
+        const carta=document.querySelector("#picks .card,#picks .coachcard");
+        const doc=document.documentElement;
+        return {picks:coluna(picks),squad:coluna(squad),
+          carta:carta?+carta.getBoundingClientRect().width.toFixed(2):null,
+          docOver:doc.scrollWidth-doc.clientWidth,squadOver:squad.scrollWidth-squad.clientWidth};
+      })});
+    }
+    const grade=grades.find(g=>Math.abs(g.picks.w-g.squad.w)>.5||g.picks.n!==g.squad.n||
+      g.picks.w<PISO||(g.carta!==null&&Math.abs(g.carta-g.picks.w)>.5)||
+      g.docOver>0||g.squadOver>0);
+    check(!grade,`bancada e elenco compartilham a mesma coluna, nunca abaixo de ${PISO}px`+
+      (grade?` — ${grade.largura}px: picks ${grade.picks.n}×${grade.picks.w} · `+
+        `squad ${grade.squad.n}×${grade.squad.w} · carta ${grade.carta} · `+
+        `overflow ${grade.docOver}/${grade.squadOver}`:""));
+    /* Sem penhasco: trocar de coluna não pode dobrar a carta. O pior salto medido
+       é o 3→2 colunas, inerente à razão entre elas; o layout antigo saltava 82%
+       em UM pixel de viewport, ao ir de 6 para 3 de uma vez. */
+    const saltos=grades.slice(1).map((g,i)=>({de:grades[i].largura,para:g.largura,
+      razao:g.picks.w/grades[i].picks.w}));
+    const penhasco=saltos.find(s=>s.razao>1.55||s.razao<1/1.55);
+    check(!penhasco,"nenhuma troca de coluna dobra a largura da carta"+
+      (penhasco?` — ${penhasco.de}px→${penhasco.para}px muda ${((penhasco.razao-1)*100).toFixed(0)}%`:""));
+    await page.setViewportSize({width:390,height:844});
     const gameCard=page.locator("#picks [data-pick]").first();
     await page.click("#flipModeBtn");await gameCard.focus();await page.keyboard.press("Enter");
     check(await gameCard.evaluate(card=>card.classList.contains("flipped")&&card.dataset.face==="back"),
