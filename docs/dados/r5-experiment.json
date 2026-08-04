@@ -66,7 +66,7 @@
     "note": "A candidate must also demonstrate non-inferiority against the stronger observed baseline; merely reaching these floors is insufficient."
   },
   "evidenceGate": {
-    "target": "docs/fidelity-target.json",
+    "target": "docs/dados/fidelity-target.json",
     "officialCorpusStatus": "insufficient",
     "officialCorpusCoverageAtFreeze": "1/800 maps and 1/6 events",
     "allowedBeforeEmpiricalTargets": ["verification infrastructure", "explicit removal of artificial output ceilings"],

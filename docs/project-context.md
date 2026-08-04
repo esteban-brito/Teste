@@ -67,7 +67,7 @@ histórico abaixo):
   altura. Todo conteúdo permanece visível, sem fonte ou offset individual;
 - `prototipo-cartas.html` não contém mais proposta, comparador, B/C ou encaixe
   medido. Ele renderiza uma única referência e 153 cartas reais/sintéticas com o
-  componente do jogo; `bancada/e2e-cartas.js` prova a grade em oito larguras,
+  componente do jogo; `bancada/suites/e2e-cartas.js` prova a grade em oito larguras,
   contraste, eixos, diagonais, conteúdo obrigatório, teclado, reduced motion,
   touch e consumo no jogo real;
 - `donk_kato24` é a referência e também o molde visual da escada de raridade e
@@ -88,7 +88,7 @@ histórico abaixo):
   fechou a conta atual — e o arquivo contém somente aplicação, controladores e UI;
 - dados e motores vivem em `src/data`, `src/domain` e `src/public`;
 - jogo, sandbox, worker e bancada usam `src/public/simulation-api.mjs`;
-- `bancada/motor.js` cria estado avaliado e sessão de RNG novos por carga, sem
+- `bancada/lib/motor.js` cria estado avaliado e sessão de RNG novos por carga, sem
   `vm`, recorte de texto ou lista manual de exports;
 - `tools/add-team.js` escreve apenas nos dois módulos crus e regenera
   `elencos.html` de forma transacional;
@@ -135,7 +135,7 @@ Registro histórico de 22 de julho de 2026:
   `PAISES_MAP` único virou `PAIS_JOGADOR` (por ID cru) e `PAIS_TREINADOR` (por
   nome), separando espaços de nome que estavam misturados — mudança de contrato,
   sem mudança de valor;
-- `bancada/times.js` e `bancada/snapshot.js` já consomem os novos módulos para
+- `bancada/suites/times.js` e `bancada/suites/snapshot.js` já consomem os novos módulos para
   dados crus; o snapshot deixou de manter um `new Function` próprio;
 - os ADRs 0004 e 0005 foram aceitos. `tools/add-team.js` agora projeta uma nova
   adição nos módulos e em `game.js` pela mesma operação, preserva quebras de
@@ -162,7 +162,7 @@ Atualização operacional de 23 de julho de 2026:
 - o diagnóstico confirmou ausência de identidade própria de save para AWPer e
   probabilidades quase uniformes de trade/crédito KAST entre roles;
 - o plano mestre R5 está em `docs/ciclos/r5-plan.md` e o contrato executável em
-  `docs/r5-experiment.json`;
+  `docs/dados/r5-experiment.json`;
 - R5.0–R5.1 concluíram a comparação pareada, com 1.088 mapas, 10.880
   player-maps, delta nulo e detecção sintética. Nenhum balanceamento foi
   misturado a essa infraestrutura.
@@ -255,10 +255,10 @@ a primeira vez que as três camadas fecham juntas.
 
 - **O rating histórico entra UMA vez, dentro do OVR (`nmOVR`).** Nenhum ponto do motor
   o lê depois disso; `ratingCompetitivo` foi removida. Reintroduzir essa leitura é
-  regressão e `bancada/perfis.js` reprova.
-- **`bancada/rating.js` deixou de ser gate** e virou relatório: a correlação real×sim
+  regressão e `bancada/suites/perfis.js` reprova.
+- **`bancada/suites/rating.js` deixou de ser gate** e virou relatório: a correlação real×sim
   era circular. Só a cobertura (85/85) continua obrigatória. O gate de qualidade
-  individual é `bancada/perfis.js`.
+  individual é `bancada/suites/perfis.js`.
 - **O sub-arquétipo não existe mais.** `SUBARQ`, `SUB_BY_STYLE`, `ESTEIRA`, `ehCoringa`
   e os campos `sub`/`esteira` foram removidos. Agressão e afinidade de lado saem de
   `PLAYSTYLES[id].traits`, extraídos em `src/domain/evaluation/style-identity.mjs`.
@@ -266,19 +266,19 @@ a primeira vez que as três camadas fecham juntas.
   `RND_TEMPO` e `PP_TEMPO` não existem mais.
 - **A economia é por jogador.** `mA`/`mB` viraram `dinA[5]`/`dinB[5]`; custos de CS2;
   drop de arma; recompensa por kill pela arma; `FA_ECO` usa a arma do jogador.
-- **`bancada/perfis.js` e `realismo.js` têm ratchet por etapa** (`ETAPA_ATIVA`): cada
+- **`bancada/suites/perfis.js` e `realismo.js` têm ratchet por etapa** (`ETAPA_ATIVA`): cada
   critério vira gate quando sua etapa é entregue. Não afrouxe um critério já ativo.
-- **`bancada/campaign-golden-update.js`** é novo e é a única forma correta de regravar
+- **`bancada/ferramentas/campaign-golden-update.js`** é novo e é a única forma correta de regravar
   o fixture MD3 do sandbox.
 - **`AGR_ABRE` mudou de significado**: era coeficiente linear sobre `styleAgr`, virou o
   **expoente** da exposição de abertura de quem fraga. A forma antiga produzia peso
   NEGATIVO em `pick()` a partir de ganho 1,43 — o "AGR_ABRE ≈ 1,8" registrado no ciclo
-  anterior era inválido. `bancada/abertura.js` guarda essa prova.
-- **O Major da bancada vive em `bancada/campanha-major.js`**, compartilhado pela suíte de
+  anterior era inválido. `bancada/suites/abertura.js` guarda essa prova.
+- **O Major da bancada vive em `bancada/ferramentas/campanha-major.js`**, compartilhado pela suíte de
   dificuldade e pelas varreduras. Não duplicar o torneio em outro script.
 - **O chaveamento dos playoffs semeia pelo RESULTADO da suíça**, força só como desempate
   (`garantirPlayoffs`). Semear por força punia quem passava bem pela suíça sendo mediano.
-- **`bancada/sweep.js` é o harness de varredura**: mesma seed e mesma agenda em todos os
+- **`bancada/lib/sweep.js` é o harness de varredura**: mesma seed e mesma agenda em todos os
   braços, valor restaurado mesmo após falha, braço de controle obrigatório. Toda calibração
   nova passa por ele em vez de editar `game.js` à mão.
 - **`DIFICULDADE_STRICT` vale por padrão** — os quatro alvos de `dificuldade.js` são gate.
@@ -298,7 +298,7 @@ guarda `totalRounds>=30` protege isso. A seed já foi trocada três vezes neste 
    A causa era estrutural (multinomial de pesos fixos é o piso da variância), e a solução foi
    `CFG_SIM.MOM_HEAT`: reforço de urna de Pólya sobre as kills líquidas já feitas no mapa.
    Desvio de 0,167 para **0,258**. Com isso **não resta nenhum critério em relatório** em
-   `bancada/perfis.js` — as quatro etapas do ratchet estão ativas.
+   `bancada/suites/perfis.js` — as quatro etapas do ratchet estão ativas.
 2. ~~Duelo de abertura decidido por firepower bruto.~~ **RESOLVIDO em 27/07** —
    `docs/ciclos/abertura-2026-07-27.md`. Os dois critérios viraram gate.
 3. **Utilidade como recurso do round** (flash/smoke/molotov comprados e gastos, ligando
@@ -415,8 +415,8 @@ assinaturas por função.
 - `calibrador-worker.js` paraleliza a busca do calibrador.
 - `elencos.html` é um artefato gerado a partir dos dados e motores.
 - `bancada/` executa caracterização, regressão, benchmark, IFCS e E2E.
-- `bancada/fidelity-score.js` calcula a nota IFCS a partir de artefatos explícitos.
-- `bancada/fidelity-corpus.js` valida proveniência, cobertura e auditoria do corpus.
+- `bancada/lib/fidelity-score.js` calcula a nota IFCS a partir de artefatos explícitos.
+- `bancada/lib/fidelity-corpus.js` valida proveniência, cobertura e auditoria do corpus.
 - `tools/extract-fidelity-demo.py` extrai demos reais offline com Awpy; não faz
   parte do jogo e passou em uma prova repetida documentada, ainda separada do
   corpus profissional.
@@ -513,7 +513,7 @@ Nenhum deles recorta ou avalia `game.js`.
 
 - 17 times e 85 jogadores;
 - cinco jogadores por time;
-- todos os IDs crus cobertos por `bancada/roster-snapshot.json`;
+- todos os IDs crus cobertos por `bancada/golden/roster-snapshot.json`;
 - Major com o time do usuário e 15 adversários;
 - role labels canônicos: `AWPer`, `Rifler`, `Entry`, `Lurker`, `Support`, `IGL`;
 - nenhuma refatoração altera pesos, thresholds, clamps, arredondamentos, dados ou
@@ -614,9 +614,9 @@ preservada sem argumentos. O modo novo é explícito e não participa da regress
 rápida por padrão:
 
 ```powershell
-node bancada/auditoria.js
-node bancada/auditoria.js --deep
-node bancada/auditoria.js --deep --format json
+node bancada/suites/auditoria.js
+node bancada/suites/auditoria.js --deep
+node bancada/suites/auditoria.js --deep --format json
 ```
 
 O protocolo padrão da auditoria profunda é:
@@ -741,8 +741,8 @@ npm run corpus:fidelity   selo e verificação do manifesto real IFCS
 npm run test:e2e          cartas, jogo, calibrador e aba Simular no Chromium
 npm run test:all          todas as 25 suítes
 npm run validate          check + lint + todas as suítes
-node bancada/auditoria.js auditoria rápida histórica de classificação
-node bancada/auditoria.js --deep --format json
+node bancada/suites/auditoria.js auditoria rápida histórica de classificação
+node bancada/suites/auditoria.js --deep --format json
                            baseline individual determinística detalhada
 ```
 
@@ -859,6 +859,19 @@ docs/
   adr/
   formulas/
 ```
+
+**Onde isto está em 03/08/2026.** `src/` já tem as camadas acima. O que a fatia
+de organização daquele dia entregou foi a parte de `tests/`: a bancada saiu de 42
+arquivos planos para `run.js` + `lib/` + `suites/` + `golden/` + `ferramentas/`,
+com `docs/` ganhando `dados/` ao lado de `ciclos/`. Os nomes ficaram nos do
+repositório, não nos do esboço acima — `bancada/suites/` em vez de `tests/unit/`
+— porque agrupar por *papel do arquivo* descreve o que existe, e agrupar por
+*tipo de teste* exigiria reclassificar 25 suítes que já têm grupos declarados em
+`SUITE_GROUPS`.
+
+O que continua **não** feito deste esboço: `apps/` e a divisão de `application/`
+e `ui/` por modo. Ambos dependem de mover o site para fora da raiz, que hoje é
+onde o GitHub Pages publica (`publish_dir: .`).
 
 ### Dependências desejadas
 

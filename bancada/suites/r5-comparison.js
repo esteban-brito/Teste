@@ -2,7 +2,7 @@
 const assert=require("node:assert/strict");
 const path=require("node:path");
 const {pathToFileURL}=require("node:url");
-const manifest=require("../../docs/r5-experiment.json");
+const manifest=require("../../docs/dados/r5-experiment.json");
 const {captureExperiment,compareCaptures,comparisonHasZeroDeltas}=require("../ferramentas/r5-experiment");
 const {ROOT}=require("../lib/common");
 

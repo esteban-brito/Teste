@@ -32,7 +32,7 @@ continua sendo o plano mestre que explica a arquitetura do experimento R5.
 | `r6-closure-2026-07-23.md` | R6 — fechamento e validação do ciclo |
 
 O manifesto executável do experimento **não** está aqui: ele é consumido por
-`bancada/r5-comparison.js` e continua em `docs/r5-experiment.json`.
+`bancada/suites/r5-comparison.js` e continua em `docs/dados/r5-experiment.json`.
 
 ## Ciclo de fidelidade da simulação (26–28/07/2026)
 
@@ -49,6 +49,18 @@ O manifesto executável do experimento **não** está aqui: ele é consumido por
 | `momentum-2026-07-28.md` | momentum intra-mapa; fecha o critério `distribuicao` |
 | `utilitaria-2026-07-28.md` | utilitária como recurso do round |
 | `receitas-padronizadas-2026-07-28.md` | receitas de playstyle padronizadas |
+
+## Ciclo P2 — modularização por paridade (28/07/2026)
+
+| Arquivo | Assunto |
+|---|---|
+| `p2-modularizacao-2026-07-28.md` | relatório final: o que saiu de `game.js`, os contratos descobertos, a prova de consumo de RNG e as armadilhas |
+
+Ele chegou aqui em 03/08/2026, vindo da raiz de `docs/`. O ciclo está encerrado —
+`docs/next-steps.md` o declara **CONCLUÍDO** —, então o lugar dele é entre as
+evidências. Isso **não** o rebaixa: `AGENTS.md` continua mandando lê-lo antes de
+alterar os módulos extraídos, exatamente como manda ler o relatório que produziu
+uma constante antes de mexer nela.
 
 ## Auditorias e passadas isoladas
 

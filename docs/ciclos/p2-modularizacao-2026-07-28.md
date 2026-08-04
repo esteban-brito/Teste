@@ -149,7 +149,7 @@ sessões isoladas), goldens completos, regressões, benchmarks e E2E.
 
 O ciclo P2 está concluído. `tools/check-game-entrypoint.js` impede o retorno do
 marcador e do domínio embutido; `tools/check-sandbox-engine.js` impede que sandbox
-ou worker voltem a recortar `game.js`; `bancada/motor.js` compõe a API pública com
+ou worker voltem a recortar `game.js`; `bancada/lib/motor.js` compõe a API pública com
 estado e RNG novos por carga.
 
 O próximo trabalho estrutural não é outra extração do simulador. É uma decisão de
@@ -195,5 +195,5 @@ posterior e ainda exige estado/save próprios e decisões de produto.
   campo de retrato em `src/data`.
 - **Faixa de dificuldade em revisão.** O invicto do elenco draftado está em 3,8%,
   abaixo do piso de 4%. O gate está rebaixado a relatório com o motivo escrito em
-  `bancada/dificuldade.js`. É conversa pendente com o responsável, com o número
+  `bancada/suites/dificuldade.js`. É conversa pendente com o responsável, com o número
   medido na mão.

@@ -1,4 +1,4 @@
-﻿# draft9-0 · Simulador de Counter-Strike
+# draft9-0 · Simulador de Counter-Strike
 
 > **▶ Jogue agora:** <https://esteban-brito.github.io/Teste/>
 
@@ -26,10 +26,12 @@ O mapa técnico e as regras para mudanças estão em:
 - [`docs/testing.md`](docs/testing.md): 25 suítes e comandos por camada;
 - [`docs/ciclos/rating-balance-2026-07-20.md`](docs/ciclos/rating-balance-2026-07-20.md): auditoria sem curadoria e comparação antes/depois;
 - [`docs/fidelity-corpus.md`](docs/fidelity-corpus.md): coleta e auditoria do corpus IFCS;
-- [`docs/fidelity-target.json`](docs/fidelity-target.json): alvo histórico
+- [`docs/dados/fidelity-target.json`](docs/dados/fidelity-target.json): alvo histórico
   congelado, com janela, população, fontes e hashes;
 - [`docs/realism-methodology.md`](docs/realism-methodology.md): metodologia IFCS
   para medir fidelidade ao CS profissional em escala de 0 a 100;
+- [`docs/add-team.md`](docs/add-team.md): formato de entrada e protocolo para
+  adicionar um time novo ao elenco;
 - [`docs/formulas/`](docs/formulas/): roles, playstyles, OVR e química;
 - [`docs/adr/`](docs/adr/): decisões arquiteturais registradas;
 - [`docs/ciclos/`](docs/ciclos/README.md): relatórios de ciclos encerrados —
@@ -96,25 +98,23 @@ draft9-0/
 ├── calibrador-worker.js  ← Web Worker do calibrador (busca em paralelo)
 ├── fonts.css + fonts/    ← fontes auto-hospedadas (Chakra Petch + Barlow, sem CDN)
 ├── og-image.png · robots.txt · .gitignore
-├── ADD_TEAM.md           ← documentação: como adicionar um time
+├── .editorconfig · .gitattributes · .nvmrc   ← encoding, LF e versão do Node
 ├── package.json · eslint.config.mjs   ← scripts e lint (dev; sem deps de runtime)
 ├── .github/workflows/    ← CI: valida (check + lint + bench) e faz deploy no Pages
 ├── bancada/              ← suíte de validação dos motores (Node)
-│   ├── motor.js · common.js       ← ponte CommonJS para a API pública + utilitários
-│   ├── run.js                     ← roda a suíte inteira
-│   ├── times.js · realismo.js · rating.js   ← lint de dados + fidelidade
-│   ├── roster.js                  ← regenera elencos.html
-│   ├── snapshot.js + roster-snapshot.json   ← trava a classificação aprovada do elenco
-│   ├── drop-reform.js · auditoria.js        ← guardas estruturais do motor
-│   ├── fidelity-score.js · fidelity-corpus.js ← scorer e contrato auditável do IFCS
-│   └── calibrador*.js · worker-calibrador.js · e2e-*.js   ← calibrador e testes de navegador
+│   ├── run.js            ← roda a suíte por grupo (data, regression, e2e, …)
+│   ├── lib/              ← motor.js, common.js, sweep e o scorer/contrato do IFCS
+│   ├── suites/           ← as 25 suítes de SUITE_GROUPS
+│   ├── golden/           ← snapshot do elenco e goldens de simulação e campanha
+│   └── ferramentas/      ← bancadas de trabalho e geradores que NÃO entram no run
 └── tools/
-    ├── add-team.js            ← adiciona time a partir de texto simples
-    ├── verify-report.js       ← confere se um relatório do sandbox foi aplicado fielmente
+    ├── run-checks.js         ← roda os 19 checadores estruturais do `npm run check`
+    ├── check-*.js            ← as guardas: entrypoint, estado, cartas, docs, tokens…
+    ├── add-team.js           ← adiciona time a partir de texto simples
+    ├── verify-report.js      ← confere se um relatório do sandbox foi aplicado fielmente
     ├── score-fidelity.js · verify-fidelity-corpus.js ← CLIs do IFCS
-    ├── extract-fidelity-demo.py ← extrator científico offline de demos CS2
-    ├── check-sandbox-*.js     ← checagens de sintaxe/motor
-    └── serve-static.js        ← servidor local estático
+    ├── extract-fidelity-demo.py + requirements-fidelity.*  ← extrator offline de demos CS2
+    └── serve-static.js       ← servidor local estático
 ```
 
 ## Os 6 motores
@@ -222,12 +222,12 @@ O `elencos.html` é uma página standalone que mostra todos os times, jogadores
 e treinadores com OVR, funções, atributos e rating. Os dados são gerados
 automaticamente a partir dos motores — nunca editados à mão.
 
-Para regenerar: `node bancada/roster.js`
+Para regenerar: `node bancada/ferramentas/roster.js`
 
 ## Como adicionar um time
 
 ```
-# 1. Escreva o time no formato simples (ver ADD_TEAM.md para detalhes)
+# 1. Escreva o time no formato simples (ver docs/add-team.md para detalhes)
 # 2. Rode o gerador:
 node tools/add-team.js caminho/do/time.txt
 
@@ -239,7 +239,7 @@ npm run validate
 
 O gerador insere os 5 jogadores em `src/data/players.mjs`, o time em
 `src/data/teams.mjs`, regenera a base de elencos e roda as validações. Veja
-`ADD_TEAM.md` para o formato completo e `AGENTS.md` para a política de publicação.
+`docs/add-team.md` para o formato completo e `AGENTS.md` para a política de publicação.
 
 ## Suíte de validação (bancada)
 
@@ -278,7 +278,7 @@ O primeiro mapa profissional elegível está selado no manifesto parcial
 
 O diagnóstico técnico mais recente obteve **96/100** em 4.000 mapas simulados:
 131 de 136 avaliações de indicadores ficaram dentro das faixas profissionais.
-Esse valor está registrado em `docs/fidelity-technical-baseline.json` e **não é
+Esse valor está registrado em `docs/dados/fidelity-technical-baseline.json` e **não é
 a nota IFCS oficial**, que continua bloqueada até o corpus e o holdout completos.
 
 ## Acessibilidade, mobile e desempenho
