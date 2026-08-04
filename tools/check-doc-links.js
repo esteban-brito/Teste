@@ -128,11 +128,19 @@ function main(){
   assert.deepEqual(obsoletas,[],
     `exceção declarada virou arquivo real; remova de REFERENCIAS_DECLARADAS: ${obsoletas.join(", ")}`);
 
-  const arquivos={};
+  /* O Git pode listar um arquivo que já não está no disco: um `git mv` cuja
+     remoção ficou por encenar deixa o caminho antigo no índice. Ler direto
+     rebentava com um stack trace de ENOENT que não dizia o que fazer. */
+  const arquivos={},fantasmas=[];
   for(const arquivo of versionados){
     if(!arquivo.endsWith(".md"))continue;
-    arquivos[arquivo]=fs.readFileSync(path.join(ROOT,arquivo),"utf8");
+    const absoluto=path.join(ROOT,arquivo);
+    if(!fs.existsSync(absoluto)){fantasmas.push(arquivo);continue;}
+    arquivos[arquivo]=fs.readFileSync(absoluto,"utf8");
   }
+  assert.deepEqual(fantasmas,[],
+    `o Git lista arquivo(s) que não existem no disco — índice fora de sincronia, `+
+    `provavelmente um "git mv" com a remoção não encenada. Rode "git add -u" em: ${fantasmas.join(", ")}`);
   const quebradas=referenciasQuebradas(arquivos,
     ref=>conhecidos.has(ref)||REFERENCIAS_DECLARADAS.has(ref));
   if(quebradas.length){
