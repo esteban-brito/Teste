@@ -29,11 +29,21 @@
 ## Cartas e retratos
 
 - **Carta canônica:** única anatomia de frente/verso usada pelo jogo e pelo
-  laboratório; em 31/07/2026 é a A refinada com Donk como referência.
+  laboratório — a A refinada, com Donk de Katowice 2024 como referência desde
+  31/07/2026. Treinador é outra categoria visual sobre o **mesmo** componente.
 - **Referência visual:** carta real usada para comparar proporção e ritmo. Ela
   não recebe regras próprias e não muda o contrato dos demais jogadores.
 - **Placa:** bloco inferior da frente que contém nick, bandeira, função principal,
-  função secundária e time; sua altura responsiva é 24%/26%/28%.
+  função secundária e time; sua altura é **24,5% até 150 px e 26,5% abaixo**,
+  medida contra a diagonal. A identidade fica centrada nela, não ancorada embaixo.
+- **Diagonal (aresta visível):** o corte da placa do jogador. É a referência que o
+  OLHO usa, e não coincide com o topo da caixa: no eixo do nick ela corre
+  `--diag-k = 8,19%` da altura da placa abaixo dele. Só o treinador, com
+  `clip-path:none`, tem caixa e aresta no mesmo lugar.
+- **Régua:** o que uma medição realmente representa. Caixa do elemento, caixa da
+  fonte, glifo e aresta pintada são réguas **diferentes**, e trocar uma pela outra
+  já produziu quatro defeitos neste componente. Antes de calibrar qualquer
+  compensação, aferir a régua contra a verdade.
 - **Asset-id de foto:** identificador cru seguro que resolve para
   `fotos/<asset-id>.webp`; não é um caminho arbitrário nem o ID sequencial do DOM.
 - **Retrato canônico:** WebP opaco 5:7 já normalizado antes do runtime. A carta não
@@ -46,6 +56,13 @@
 - **Gate geométrico:** medição executável que reprova overflow, recorte, colisão,
   desalinhamento ou ocupação insuficiente; uma captura visual complementa, mas
   não substitui esse gate.
+- **Token de cor:** par `--x` (hex) e `--x-rgb` (canais), provado consistente por
+  `tools/check-design-tokens.js`. Cor translúcida usa `rgba(var(--x-rgb),a)`, que
+  é exata; `color-mix(…,transparent)` **não** produz o mesmo pixel no Chromium.
+- **Medição verificada:** tabela precedida de `<!-- medicao-verificada -->` num
+  documento. Vira asserção executável: mexer no arquivo sem atualizar o número
+  reprova o `npm run check`. É a prova contra afirmação obsoleta, que
+  `check-doc-links.js` não alcança.
 
 ## Time
 

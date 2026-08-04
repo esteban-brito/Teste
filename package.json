@@ -1,10 +1,14 @@
 {
-  "name": "sandbox",
+  "name": "draft9-0",
   "private": true,
+  "description": "Jogo estático de navegador sobre Counter-Strike: draft de elenco, química, simulação de Major e bancada de calibração.",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "bench": "node bancada/run.js --group all",
-    "check": "node --check game.js && node tools/check-game-entrypoint.js && node tools/check-game-state.js && node tools/check-audio-module.js && node tools/check-progress-store.js && node tools/check-game-view-modules.js && node tools/check-public-evaluation-api.js && node tools/check-public-simulation-api.js && node tools/check-sandbox-engine.js && node tools/check-sandbox-syntax.js && node tools/check-data-catalog.js && node tools/check-card-portraits.js && node tools/check-doc-links.js && node tools/check-doc-measurements.js && node tools/check-design-tokens.js && node tools/check-roster-sync.js && node tools/check-add-team-sync.js && node tools/check-random-source-contract.js && node tools/check-sample-summary-parity.js",
-    "lint": "eslint --max-warnings 0 game.js sandbox.html prototipo-cartas.html recorte-retratos.html calibrador-worker.js bancada/*.js tools/*.js src/**/*.mjs",
+    "check": "node tools/run-checks.js",
+    "lint": "eslint --max-warnings 0 game.js sandbox.html prototipo-cartas.html recorte-retratos.html calibrador-worker.js bancada/**/*.js tools/*.js src/**/*.mjs",
     "serve": "node tools/serve-static.js",
     "visual:capturar": "node tools/visual-regression.js capturar",
     "visual:comparar": "node tools/visual-regression.js comparar",
@@ -13,19 +17,19 @@
     "test:benchmark": "node bancada/run.js --group benchmark",
     "test:fidelity": "node bancada/run.js --group fidelity",
     "test:e2e": "node bancada/run.js --group e2e",
-    "test:drop": "node bancada/drop-reform.js",
-    "test:golden": "node bancada/simulation-golden.js",
-    "test:r5": "node bancada/r5-comparison.js",
-    "test:r5:tails": "node bancada/r5-tails.js",
-    "audit:r5:rating": "node bancada/r5-rating-components.js",
+    "test:drop": "node bancada/suites/drop-reform.js",
+    "test:golden": "node bancada/suites/simulation-golden.js",
+    "test:r5": "node bancada/suites/r5-comparison.js",
+    "test:r5:tails": "node bancada/suites/r5-tails.js",
+    "audit:r5:rating": "node bancada/ferramentas/r5-rating-components.js",
     "test:calibrator": "node bancada/run.js --group calibrator",
     "test:all": "node bancada/run.js --group all",
     "validate": "npm run check && npm run lint && npm run test:all",
     "verify-report": "node tools/verify-report.js",
     "score:fidelity": "node tools/score-fidelity.js",
     "corpus:fidelity": "node tools/verify-fidelity-corpus.js",
-    "snapshot:update": "node bancada/snapshot.js --update",
-    "golden:update": "node bancada/simulation-golden.js --update"
+    "snapshot:update": "node bancada/suites/snapshot.js --update",
+    "golden:update": "node bancada/suites/simulation-golden.js --update"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

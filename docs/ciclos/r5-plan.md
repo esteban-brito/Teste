@@ -4,7 +4,7 @@ Data: 23 de julho de 2026
 
 Baseline executável: `8136df1`
 
-Manifesto congelado: `docs/r5-experiment.json`
+Manifesto congelado: `docs/dados/r5-experiment.json`
 
 ## Objetivo e ordem causal
 
@@ -94,7 +94,7 @@ adquirido neste ciclo e permanece uma trilha futura opcional. R5 pode usar
 evidência direcionada, regras já classificadas e comparações pareadas, sem
 inventar faixas por role nem alegar uma nota IFCS oficial.
 
-- usar a população congelada em `docs/fidelity-target.json` para dinâmica CS2;
+- usar a população congelada em `docs/dados/fidelity-target.json` para dinâmica CS2;
 - rotular roles por protocolo anterior ao resultado, sem escolher jogadores que
   favoreçam a hipótese;
 - avaliar identidade histórica por hierarquia e normalização de época;

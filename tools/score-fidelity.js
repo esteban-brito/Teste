@@ -1,7 +1,7 @@
 /* CLI somente leitura para calcular ou inspecionar o contrato IFCS. */
 const fs=require("fs");
 const path=require("path");
-const F=require("../bancada/fidelity-score");
+const F=require("../bancada/lib/fidelity-score");
 
 function usage(){
   console.log("Uso:");

@@ -1,0 +1,15 @@
+# Uma árvore com dois finais de linha produz diff falso: um editor no Windows
+# reescreve o arquivo inteiro sem mudar uma linha de conteúdo, e a revisão
+# perde a capacidade de ver o que mudou de verdade. Em 03/08/2026 a árvore
+# tinha 36 arquivos em CRLF contra 153 em LF, sem nada arbitrando.
+#
+# `text=auto` deixa o Git detectar o que é texto; `eol=lf` entrega LF no
+# working tree em qualquer sistema, inclusive Windows.
+* text=auto eol=lf
+
+# Assets binários: o Git nunca deve tentar converter byte aqui. A detecção
+# automática já acertaria, mas declarar é mais barato que descobrir por
+# retrato corrompido.
+*.png   binary
+*.webp  binary
+*.woff2 binary

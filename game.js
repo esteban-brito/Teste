@@ -1,4 +1,4 @@
-﻿/* game.js — aplicação, estado e interface do draft9-0.
+/* game.js — aplicação, estado e interface do draft9-0.
    Dados, avaliação e simulação entram exclusivamente pela API pública. */
 import * as PublicEngine from "./src/public/simulation-api.mjs";
 import {Audio} from "./src/application/audio.mjs";
@@ -423,7 +423,9 @@ document.addEventListener("keydown",e=>{
   if(e.key!=="Enter"&&e.key!==" ")return;
   if(S.spinning)return;
   if(modoVirar){const c=e.target.closest(".card,.coachcard");if(c){e.preventDefault();setCardFlipped(c,!c.classList.contains("flipped"));return;}}
-  const alvo=e.target.closest("[data-pick]:not(.taken):not(.dup),[data-move],.slot.avail");
+  // `a[role=button]` promete comportamento de botão: o link responde a Enter por
+  // natureza, mas Espaço rolava a página em vez de abrir o Hall.
+  const alvo=e.target.closest("[data-pick]:not(.taken):not(.dup),[data-move],.slot.avail,a[role=button]");
   if(!alvo)return;
   e.preventDefault();
   alvo.click();
@@ -663,10 +665,90 @@ function renderBracket(){
   $("playoffAvancar").hidden=!!P.campeao;
 }
 
-function abrir(id){const el=$(id);if(el._fechando){clearTimeout(el._fechando);el._fechando=null;}el.classList.remove("fechando");el.hidden=false;document.body.style.overflow="hidden";}
-function fechar(id){const el=$(id);document.body.style.overflow="";el.classList.add("fechando");if(el._fechando)clearTimeout(el._fechando);el._fechando=setTimeout(()=>{el.hidden=true;el.classList.remove("fechando");el._fechando=null;},190);}
+/* ——— UI · diálogos modais —————————————————————————————
+   Os cinco overlays declaram `aria-modal="true"`, o que promete que o resto da
+   página está inerte. Até 04/08/2026 a promessa era vazia: o foco continuava no
+   fundo ao abrir, sete botões do `.wrap` seguiam alcançáveis por Tab e Escape não
+   fechava nada. `inert` no `.wrap` cumpre a promessa de verdade — é o navegador
+   tirando o fundo da ordem de foco, não um laço de JS tentando prendê-lo. */
+const OVERLAYS=["suicaOverlay","playoffOverlay","matchOverlay","finalOverlay","hallOverlay"];
+const wrapEl=document.querySelector(".wrap");
+let focoAnterior=null;
+const overlayAberto=el=>el&&!el.hidden&&!el.classList.contains("fechando");
+const overlaysAbertos=()=>OVERLAYS.map($).filter(overlayAberto);
+function sincronizarModal(){
+  const abertos=overlaysAbertos();
+  if(abertos.length){wrapEl.setAttribute("inert","");document.body.style.overflow="hidden";}
+  else{wrapEl.removeAttribute("inert");document.body.style.overflow="";}
+  return abertos;
+}
+function abrir(id){
+  const el=$(id);
+  if(el._fechando){clearTimeout(el._fechando);el._fechando=null;}
+  el.classList.remove("fechando");
+  const jaAberto=overlayAberto(el);
+  // só o PRIMEIRO diálogo guarda o foco de origem; aninhado devolve ao anterior
+  if(!jaAberto&&!overlaysAbertos().length)focoAnterior=document.activeElement;
+  el.hidden=false;
+  sincronizarModal();
+  // foca o CONTÊINER, não o primeiro botão: em `finalOverlay` o primeiro botão é
+  // "Jogar novamente", e um Enter perdido reiniciaria a campanha.
+  if(!jaAberto)el.focus({preventScroll:true});
+}
+function fechar(id){
+  const el=$(id);
+  const estavaAberto=overlayAberto(el);
+  el.classList.add("fechando");
+  if(el._fechando)clearTimeout(el._fechando);
+  el._fechando=setTimeout(()=>{el.hidden=true;el.classList.remove("fechando");el._fechando=null;sincronizarModal();},190);
+  const restantes=sincronizarModal();
+  // `atualizarMajorUI` fecha overlays já fechados a cada giro: sem esta guarda,
+  // devolver o foco roubaria o do jogador no meio do draft.
+  if(estavaAberto&&!restantes.length&&focoAnterior&&focoAnterior.isConnected){
+    focoAnterior.focus({preventScroll:true});
+    focoAnterior=null;
+  }
+}
+/* Escape fecha pelo MESMO caminho do mouse — clicando o botão de fechar que já
+   existe. Por isso `finalOverlay` fica de fora: ele não tem botão de fechar, e o
+   teclado não deve inventar uma saída que o mouse não oferece. */
+const BOTAO_FECHAR={suicaOverlay:"suicaFechar",playoffOverlay:"playoffFechar",
+  matchOverlay:"matchClose",hallOverlay:"hallFechar"};
+document.addEventListener("keydown",e=>{
+  if(e.key!=="Escape")return;
+  const abertos=overlaysAbertos();
+  const topo=abertos[abertos.length-1];
+  const botao=topo&&BOTAO_FECHAR[topo.id];
+  if(!botao)return;
+  e.preventDefault();
+  $(botao).click();
+});
+/* O diálogo troca de controle sob o pé do usuário: "Iniciar partida" some ao
+   entrar no mapa, "Pular" vira "Continuar" ao terminar. Esconder o elemento
+   focado joga o foco no <body> — fora do modal, e num fundo que está `inert`.
+   Guardar a CLASSE do problema aqui vale mais que remendar cada troca: qualquer
+   controle que suma leva o foco de volta ao diálogo. */
+document.addEventListener("focusout",e=>{
+  const abertos=overlaysAbertos();
+  const topo=abertos[abertos.length-1];
+  if(!topo)return;
+  if(e.relatedTarget&&topo.contains(e.relatedTarget))return; // Tab normal dentro do diálogo
+  window.queueMicrotask(()=>{
+    if(!overlayAberto(topo)||topo.contains(document.activeElement))return;
+    topo.focus({preventScroll:true});
+  });
+});
 // troca antessala<->scoreboard com fade-in
-function mostrarTela(id){const el=$(id);el.classList.remove("is-hidden");el.classList.remove("tela-in");void el.offsetWidth;el.classList.add("tela-in");}
+function mostrarTela(id){
+  const el=$(id);el.classList.remove("is-hidden");el.classList.remove("tela-in");void el.offsetWidth;el.classList.add("tela-in");
+  /* Trocar de tela DENTRO do diálogo escondia o controle focado — "Iniciar
+     partida" some ao entrar no mapa ao vivo — e o foco caía no <body>, fora do
+     modal. Devolve SEMPRE ao contêiner: condicionar a `contains(activeElement)`
+     não funciona porque o blur de um elemento que virou `display:none` só chega
+     depois deste trecho, então a checagem ainda enxerga o botão que vai sumir. */
+  const dialogo=el.closest("[role=dialog]");
+  if(dialogo)dialogo.focus({preventScroll:true});
+}
 function abrirSuica(){if(!TG.times)iniciarTorneio();renderSwiss();abrir("suicaOverlay");}
 function abrirPlayoffs(){garantirPlayoffs();renderBracket();fechar("suicaOverlay");abrir("playoffOverlay");}
 

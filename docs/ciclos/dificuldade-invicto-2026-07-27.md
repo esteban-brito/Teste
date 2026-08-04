@@ -5,7 +5,7 @@
 
 ## 1. O instrumento era cego
 
-`bancada/dificuldade.js` media a campanha invicta com **300 campanhas**. Com o evento perto
+`bancada/suites/dificuldade.js` media a campanha invicta com **300 campanhas**. Com o evento perto
 de 5%, um único acerto vale 0,33 pp e não havia intervalo nenhum. As três medições
 registradas do **mesmo estado** — 0,7%, 1,1% e 1,5% — eram ruído, não movimento.
 
@@ -19,7 +19,7 @@ Amostra necessária, com o erro-padrão `sqrt(p(1−p)/n)` em p≈0,05:
 
 Entraram `src/domain/statistics/proportion-interval.mjs` (intervalo de **Wilson**, que ao
 contrário do normal simples não escapa de [0,1] nem subestima a incerteza quando o evento é
-raro) e `bancada/sweep.js` (varredura pareada versionada, com braço de controle que prova que
+raro) e `bancada/lib/sweep.js` (varredura pareada versionada, com braço de controle que prova que
 nenhum estado atravessa braços). Antes deste ciclo as varreduras eram feitas editando
 `game.js` à mão e não ficavam no repositório.
 
@@ -111,7 +111,7 @@ futura que empurre o título para baixo reprova a suíte antes de o invicto sair
 
 ## 7. Guardas preservadas
 
-`bancada/realismo.js`, 45.900 mapas: **12/12 macro e 6/6 forma**.
+`bancada/suites/realismo.js`, 45.900 mapas: **12/12 macro e 6/6 forma**.
 
 | guarda | antes | depois | faixa |
 |---|---|---|---|

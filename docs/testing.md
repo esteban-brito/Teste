@@ -19,13 +19,45 @@ faixas atuais são guardas de regressão, não uma nota de 0–100.
 | `npm run test:calibrator` | basic, heavy, worker | busca, intenção, custo e paralelismo |
 | `npm run test:benchmark` | realismo, assists, KDA, rating, perfis, dificuldade | fidelidade estatística dos motores, coerência de carta e dificuldade da campanha |
 | `npm run test:fidelity` | scorer e corpus IFCS | matemática, cobertura, caps, proveniência e auditoria |
-| `npm run test:e2e` | cards, intent, simulation, game flow | cartas, calibrador, aba Simular e jogo principal no navegador |
+| `npm run test:e2e` | cards, intent, simulation, game flow, acessibilidade | cartas, calibrador, aba Simular, jogo principal e a travessia por teclado/leitor de tela nos três viewports |
 | `npm run test:r5` | comparador pareado R5 | hashes, cobertura, delta nulo e detecção sintética |
 | `npm run test:r5:tails` | guardas de cauda R5.2 | ratings extremos, forma positiva e ausência de massa nos limites antigos |
-| `npm run test:all` | as 25 suítes acima | validação completa na ordem histórica |
+| `npm run test:all` | as 26 suítes acima | validação completa na ordem histórica |
 | `npm run bench` | alias de `test:all` | compatibilidade com CI e fluxo legado |
 
-`npm run validate` executa sintaxe, lint e as 25 suítes.
+`npm run validate` executa sintaxe, lint e as 26 suítes.
+
+## Como a bancada está organizada
+
+Desde 03/08/2026 os 42 arquivos deixaram de morar numa pasta plana:
+
+```text
+bancada/
+├── run.js          roda a suíte por grupo; SUITE_GROUPS é a lista canônica
+├── lib/            o que as suítes importam: motor, common, sweep,
+│                   calibrador-loader e o par fidelity-score/fidelity-corpus
+├── suites/         as 26 de SUITE_GROUPS, e só elas
+├── golden/         roster-snapshot.json e os dois goldens de comparação
+└── ferramentas/    bancadas de trabalho e geradores que NÃO entram no run
+```
+
+`ferramentas/` não é a lixeira. `classificacao.js` e `serie.js` se declaram no
+cabeçalho como bancadas fora do `run.js`, de propósito, e a auditoria de órfãos de
+31/07/2026 registrou isso por escrito. **Não estarem em `SUITE_GROUPS` não é
+esquecimento** — não os remova por isso.
+
+Duas dependências atravessam as pastas, e são informação, não defeito:
+`suites/dificuldade.js` importa `ferramentas/campanha-major.js`, e
+`ferramentas/r5-experiment.js` importa `suites/auditoria.js`, que exporta
+`buildDeepAudit` além de rodar como suíte.
+
+**Caminho não se calcula com `__dirname` mais uma contagem de `..`.**
+`lib/common.js` exporta `ROOT` — achado subindo a árvore até o `package.json` — e
+`GOLDEN`. Era a contagem fixa que fazia 16 caminhos em 12 arquivos dependerem da
+profundidade de quem os calculava; trocá-la ANTES de mover foi o que permitiu que
+a organização não virasse mudança de comportamento. As únicas exceções legítimas
+são os seis `require("../../src/…")`, que saem da bancada e são resolvidos pelo
+Node, não por nós.
 
 `npm run lint` roda com `--max-warnings 0`. Até 01/08/2026 ele saía com código 0
 mesmo emitindo avisos, e o CI executa exatamente esse script — então **todo aviso
@@ -34,6 +66,39 @@ estado em `game.js` deixa o import órfão, e o `no-unused-vars` resultante não
 reprovava nada. O repositório estava em zero avisos quando a trava entrou, então
 ela não escondeu dívida nenhuma. Regra: aviso novo se conserta ou se declara na
 `varsIgnorePattern` de `eslint.config.mjs` com motivo — não se tolera calado.
+
+## A suíte que olha o jogo, não os elementos dele (04/08/2026)
+
+`bancada/suites/e2e-acessibilidade.js` nasceu de uma pergunta que nenhuma outra
+suíte fazia: **o jogo reclama de alguma coisa enquanto roda, e alguém que não usa
+mouse consegue jogar?**
+
+As outras suítes provam que o elemento existe e que o fluxo avança. O
+`e2e-game-flow` chega perto — coleta `pageerror` e console `error` —, mas filtra
+de propósito `Failed to load resource` e `net::`, então **um 404 real passava
+batido**, e ele não olha acessibilidade nenhuma.
+
+O que ela cobre, em desktop (1440), tablet (760) e celular (390), em oito estados
+do fluxo real: console `error`/`warning`, exceção não capturada, requisição falha,
+HTTP≥400, documento sem `h1`, controle sem nome acessível, `img` sem `alt`, campo
+sem rótulo, `id` duplicado, `tabindex` positivo, focável dentro de
+`aria-hidden`, rótulo cujo controle o Tab não alcança, diálogo modal sem nome ou
+com o foco fora dele, fundo ainda focável sob `aria-modal`, `overflow-x` e alvo
+de toque menor que 24×24 (só onde há dedo).
+
+**Os três viewports não são exagero.** `overflow-x` só aparece no estreito e alvo
+de toque só existe no dedo — uma guarda só vê a superfície em que roda, a mesma
+lição que deixou 135 cartas tortas por meses.
+
+**Doze provas sintéticas** quebram o produto de propósito dentro da página e
+exigem que o auditor acuse cada defeito, mais uma que exige o retorno ao verde.
+Sem elas, um auditor sempre verde passaria por cobertura.
+
+Uma dessas provas ensina algo sobre o próprio produto: injetar "foco fora do
+modal" nos overlays reais **não funciona**, porque o `focusout` de `game.js`
+devolve o foco antes de o auditor olhar. A prova usa um diálogo sintético, fora
+da lista que aquele listener vigia. Guarda que se defende do teste sintético é
+guarda funcionando — mas a prova precisa saber disso, senão parece quebrada.
 
 `npm run check` inclui ainda `check-audio-module.js`, que usa um Web Audio falso
 para provar inicialização, volume mestre, desbloqueio iOS, síntese, mute e
@@ -55,7 +120,7 @@ download do backup e isolamento de instâncias com adaptadores falsos de navegad
 `check-game-view-modules.js` congela escaping, cartas, tiers, selos, identidade
 dos times, Suíça, playoffs, placar, antessala, campanha final e Hall sem DOM.
 
-`bancada/e2e-cartas.js` é a guarda geométrica, visual e interativa da única carta
+`bancada/suites/e2e-cartas.js` é a guarda geométrica, visual e interativa da única carta
 canônica. Mede 153 cartas reais e sintéticas em oito larguras e reprova estouro,
 recorte, colisão, conteúdo frontal oculto, quantidade diferente de quatro stats
 e qualquer variação tipográfica entre jogadores. Também prova as três densidades
@@ -194,9 +259,9 @@ depois de a recuperação da guarda `Favorito gap 16+` levar o invicto do elenco
 draftado a 3,8%; seus alvos só reprovam com `DIFICULDADE_STRICT=1`. O histórico
 dos alvos está em [`baseline-simulacao-2026-07-26.md`](ciclos/baseline-simulacao-2026-07-26.md),
 [`dificuldade-invicto-2026-07-27.md`](ciclos/dificuldade-invicto-2026-07-27.md) e no
-cabeçalho executável de `bancada/dificuldade.js`.
+cabeçalho executável de `bancada/suites/dificuldade.js`.
 
-Toda calibração de constante passa por `bancada/sweep.js`: braços pareados pela mesma
+Toda calibração de constante passa por `bancada/lib/sweep.js`: braços pareados pela mesma
 seed e agenda, valor restaurado mesmo após falha, e braço de controle obrigatório
 provando que nenhum estado atravessa braços. Proporções raras (a campanha invicta vive
 perto de 5%) são relatadas com intervalo de Wilson — sem intervalo, mover o número é
@@ -255,7 +320,7 @@ validação Node:
 
 ```text
 python -m venv .venv-fidelity
-.venv-fidelity/Scripts/python -m pip install -r requirements-fidelity.lock
+.venv-fidelity/Scripts/python -m pip install -r tools/requirements-fidelity.lock
 .venv-fidelity/Scripts/python tools/extract-fidelity-demo.py --check-environment
 .venv-fidelity/Scripts/python tools/extract-fidelity-demo.py --self-test
 ```
@@ -273,7 +338,7 @@ coincidiram entre as execuções.
 
 O diagnóstico legado pode produzir uma nota técnica preliminar de aderência às
 faixas, mas ela deve sempre ser rotulada como `not-ifcs`. A captura atual está
-em `docs/fidelity-technical-baseline.json`: 4.000 mapas, 131/136 avaliações
+em `docs/dados/fidelity-technical-baseline.json`: 4.000 mapas, 131/136 avaliações
 aprovadas e resultado arredondado 96/100.
 
 ## Atualização de snapshot
@@ -289,7 +354,7 @@ aprovadas e resultado arredondado 96/100.
 
 `npm run test:golden` reconstrói três cenários em motores novos e compara mapa,
 placar, todos os rounds, economia, plant, clutch, destaques e estatísticas dos
-dez jogadores com `bancada/simulation-golden.json`. A cobertura inclui uma
+dez jogadores com `bancada/golden/simulation-golden.json`. A cobertura inclui uma
 série melhor de três, prorrogação repetida e paridade entre os modos completo e
 leve. Os jogadores são identificados pelo ID cru, não apenas pelo nick.
 
@@ -353,7 +418,7 @@ valores numéricos e seus rótulos para leitores de tela.
 O mesmo E2E protege a campanha curta: controles próprios, término no segundo
 mapa vencido, dois ou três mapas sem repetição, orientação alternada, dez
 jogadores, uma amostra por mapa e ausência de apresentação como fidelidade. A
-seed `424242` deve reproduzir integralmente `bancada/campaign-golden.json`.
+seed `424242` deve reproduzir integralmente `bancada/golden/campaign-golden.json`.
 
 `e2e-game-flow.js` percorre o jogo principal pela interface real: sorteia e
 monta os seis slots, valida força e química, disputa Suíça e playoffs, confere

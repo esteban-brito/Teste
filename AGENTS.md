@@ -1,8 +1,8 @@
 # AGENTS.md
 
 Este arquivo orienta pessoas e agentes de IA que trabalham neste repositório.
-Comece por `docs/retomada-2026-07-31.md`, que registra o último checkpoint
-publicado, a carta canônica e a ordem recomendada das próximas grandes etapas.
+Comece por `docs/retomada-2026-08-04.md`, o handoff geral: estado verificado do
+repositório, trabalho aberto, escopo recusado e a ordem recomendada de retomada.
 Depois leia `docs/project-context.md`, que mantém o roadmap de profissionalização
 e a visão do modo Carreira de Jogador. Leia também
 `docs/next-steps.md`, que registra a sequência aprovada para fidelidade individual,
@@ -71,15 +71,16 @@ catálogo não menciona o dado, aí sim ele não existe.
 
 ## Fontes de verdade atuais
 
-- `docs/retomada-2026-07-31.md`: **handoff geral mais recente** — checkpoint
-  publicado, contrato final das cartas, protocolo de retratos e ordem recomendada
-  entre biblioteca visual, P5, Carreira, P6/P7 e corpus IFCS. **Leia primeiro em
-  uma sessão sem memória.**
+- `docs/retomada-2026-08-04.md`: **handoff geral** — estado verificado, o que os
+  três ciclos desde 31/07 mudaram, trabalho aberto em ordem, escopo recusado com
+  motivo e decisões pendentes com o responsável. **Leia primeiro em uma sessão
+  sem memória.** A raiz de `docs/` tem exatamente um ponto de retomada; o handoff
+  anterior virou evidência em `docs/ciclos/retomada-2026-07-31.md`.
 - `docs/p5-aplicacao-ui-2026-07-29.md`: **ponto de retomada operacional do P5** —
   commits publicados, arquitetura atual, validações, contratos exatos de `S`,
   `TG`, `MP` e `MATCH`, trabalho adiado e próxima fatia segura. **Leia antes de
   alterar aplicação, estado ou UI do jogo.**
-- `docs/p2-modularizacao-2026-07-28.md`: **relatório final do ciclo P2** (modularização
+- `docs/ciclos/p2-modularizacao-2026-07-28.md`: **relatório final do ciclo P2** (modularização
   por paridade) — o que saiu, os contratos descobertos, o mecanismo de prova de
   consumo de RNG e as armadilhas. **Leia antes de alterar os módulos extraídos.**
 - `src/data/catalog.mjs`: **índice de todo dado do projeto** — fonte, chave, cobertura e a
@@ -95,12 +96,12 @@ catálogo não menciona o dado, aí sim ele não existe.
 - `src/ui/game/*.mjs`: HTML puro de cartas, química, times, torneio, partida,
   campanha final e Hall; escaping compartilhado em `src/ui/shared/html.mjs`.
 - `game.js`: aplicação, estado e interface; não contém motores ou dados crus.
-- `bancada/motor.js`: ponte CommonJS fina para a mesma API pública.
+- `bancada/lib/motor.js`: ponte CommonJS fina para a mesma API pública.
 - `sandbox.html`: interface e algoritmo do calibrador.
-- `bancada/roster-snapshot.json`: classificação aprovada de cada ID de jogador.
-- `bancada/fidelity-score.js`: matemática e agregação do IFCS.
-- `bancada/fidelity-corpus.js`: schema, proveniência, auditoria e travas do corpus IFCS.
-- `docs/fidelity-target.json`: população e época congeladas para a primeira medição.
+- `bancada/golden/roster-snapshot.json`: classificação aprovada de cada ID de jogador.
+- `bancada/lib/fidelity-score.js`: matemática e agregação do IFCS.
+- `bancada/lib/fidelity-corpus.js`: schema, proveniência, auditoria e travas do corpus IFCS.
+- `docs/dados/fidelity-target.json`: população e época congeladas para a primeira medição.
 - `docs/realism-methodology.md` e `docs/fidelity-corpus.md`: protocolo científico
   e operacional do IFCS; não substituem os contratos executáveis acima.
 - `elencos.html`: artefato gerado; não editar os dados embutidos manualmente.
@@ -114,13 +115,20 @@ A fronteira arquitetural vigente está detalhada em `docs/architecture.md`.
 
 **`docs/` está separado por função desde 31/07/2026.** Na raiz ficam os documentos
 que orientam trabalho novo; em `docs/ciclos/` ficam os relatórios de ciclos
-encerrados — R5/R6, o ciclo de fidelidade da simulação e as auditorias isoladas.
-Evidência não é roteiro: nenhum arquivo de `docs/ciclos/` é ponto de retomada. Mas
-eles continuam sendo a justificativa medida das constantes do motor, então alterar
-uma constante sem ler o relatório que a produziu é desfazer trabalho comprovado. O
-índice está em `docs/ciclos/README.md`. `tools/check-doc-links.js`, no
-`npm run check`, prova que nenhuma referência da documentação aponta para arquivo
-inexistente.
+encerrados — R5/R6, o ciclo de fidelidade da simulação, o P2 e as auditorias
+isoladas. Evidência não é roteiro: nenhum arquivo de `docs/ciclos/` é ponto de
+retomada. Mas eles continuam sendo a justificativa medida das constantes do motor,
+então alterar uma constante sem ler o relatório que a produziu é desfazer trabalho
+comprovado. O índice está em `docs/ciclos/README.md`.
+
+Desde 03/08/2026 há um terceiro lugar: **`docs/dados/`**, para os arquivos que são
+dado congelado e não texto — `fidelity-target.json`, `r5-experiment.json` e
+`fidelity-technical-baseline.json`. Eles são consumidos por código e por
+comparação, não lidos como documentação, e misturá-los com prosa fazia a raiz de
+`docs/` parecer maior do que é.
+
+`tools/check-doc-links.js`, no `npm run check`, prova que nenhuma referência da
+documentação aponta para arquivo inexistente.
 
 **Quanto se pode andar de uma vez (revisto em 28/07/2026).** A regra antiga — "não antecipe
 várias etapas numa única mudança" — protegia contra mudança *não medida*, mas na prática também
@@ -131,7 +139,7 @@ travava migração estrutural que é totalmente verificável. Os dois casos são
 - **Migração estrutural provada por paridade** pode ir em fatias maiores. Cada
   checkpoint deve fechar os invariantes pertinentes à superfície alterada,
   conforme a matriz abaixo. Se tocar em motor, API compartilhada ou RNG, isso
-  inclui snapshot idêntico, golden bit a bit, `validate` 25/25 e consumo de RNG
+  inclui snapshot idêntico, golden bit a bit, `validate` integral verde e consumo de RNG
   inalterado. Se tocar somente em aplicação/UI, use as guardas centrais e o E2E;
   rode a validação integral ao encerrar um marco amplo. Refatoração não muda
   resultado — se mudou, é bug da refatoração, e a fatia volta atrás.
@@ -157,7 +165,7 @@ npm run test:fidelity     # se tocar no scorer, corpus ou metodologia IFCS
 npm run test:e2e          # se tocar no jogo ou na interface do calibrador
 ```
 
-`npm run test:all` e `npm run bench` executam as mesmas 25 suítes, na ordem
+`npm run test:all` e `npm run bench` executam as mesmas 26 suítes, na ordem
 histórica. Use `npm run validate` para alterações em motores/APIs compartilhadas
 e para fechar marcos estruturais amplos. O benchmark completo é demorado; agrupe
 mudanças coerentes antes de executá-lo, mas não reduza amostras ou limites para
@@ -169,11 +177,11 @@ obter um resultado verde.
 - Antes de atualizar o snapshot, explique cada diferença e confirme que a
   mudança de classificação é intencional.
 - O snapshot deve cobrir todos os IDs de `ATRIBUTOS`; cobertura parcial é erro.
-- `elencos.html` é regenerado por `bancada/roster.js` enquanto a arquitetura
+- `elencos.html` é regenerado por `bancada/ferramentas/roster.js` enquanto a arquitetura
   legada existir.
 - Demos `.dem`, saídas `processed/`, material `private-audit/`, credenciais e
   cookies nunca entram no Git.
-- O extrator IFCS usa `.venv-fidelity` isolada e `requirements-fidelity.lock`.
+- O extrator IFCS usa `.venv-fidelity` isolada e `tools/requirements-fidelity.lock`.
   A validação Node não instala Awpy nem substitui a prova com uma demo real.
 - Não edite `package-lock.json` à mão.
 
@@ -212,5 +220,5 @@ real sustenta. Ninguém estava somando.
 **Regra:** toda etapa de balanceamento reporta os dois números **antes e depois**, junto — como
 já se faz com a contagem de jogadores alterados. Um sem o outro não decide nada.
 
-A curva completa das quatro faixas de diferença de força sai em `bancada/realismo.js`; a
-dificuldade, com IC95%, em `bancada/dificuldade.js`.
+A curva completa das quatro faixas de diferença de força sai em `bancada/suites/realismo.js`; a
+dificuldade, com IC95%, em `bancada/suites/dificuldade.js`.

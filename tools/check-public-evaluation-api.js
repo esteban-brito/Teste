@@ -1,6 +1,6 @@
 const assert=require("node:assert/strict"),path=require("node:path"),fs=require("node:fs"),os=require("node:os");
 const {execFileSync}=require("node:child_process"),{pathToFileURL}=require("node:url");
-const {ROOT}=require("../bancada/common");
+const {ROOT}=require("../bancada/lib/common");
 const plain=v=>JSON.parse(JSON.stringify(v));
 async function main(){
   const A=await import(pathToFileURL(path.join(ROOT,"src/public/evaluation-api.mjs")).href);

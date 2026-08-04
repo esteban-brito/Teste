@@ -7,7 +7,7 @@
 const fs=require("fs");
 const path=require("path");
 const {pathToFileURL}=require("url");
-const {ROOT}=require("../bancada/common");
+const {ROOT}=require("../bancada/lib/common");
 
 const reportPath=process.argv[2];
 if(!reportPath){console.error("uso: node tools/verify-report.js <relatorio.txt>");process.exit(2);}

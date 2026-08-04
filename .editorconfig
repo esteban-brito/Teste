@@ -1,0 +1,18 @@
+# Convenção MEDIDA na árvore em 03/08/2026, não escolhida por gosto: 2 espaços
+# como recuo de primeiro nível em js/mjs/css/html/json/yml, zero tabulações,
+# zero espaço em fim de linha fora de markdown e todos os 212 arquivos
+# terminando em newline. Este arquivo apenas trava o que já é verdade.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Markdown usa dois espaços no fim da linha como quebra deliberada; aparar
+# apagaria formatação.
+[*.md]
+trim_trailing_whitespace = false

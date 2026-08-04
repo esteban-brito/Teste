@@ -14,9 +14,9 @@ Três instrumentos novos, todos de medição pura:
 
 | Suíte | O que mede |
 |---|---|
-| `bancada/perfis.js` | coerência de carta: assinatura por função e por playstyle, sobreposição entre bandas de OVR, variância intra-jogador, peso do contexto |
-| `bancada/dificuldade.js` | P(título) e P(invicto) por faixa de força, replicando o Major da UI (suíça + playoffs) |
-| `bancada/realismo.js` (ampliado) | **forma** além da média: kills por round, placar do perdedor, método do round, abertura por lado, mix de compra por lado |
+| `bancada/suites/perfis.js` | coerência de carta: assinatura por função e por playstyle, sobreposição entre bandas de OVR, variância intra-jogador, peso do contexto |
+| `bancada/suites/dificuldade.js` | P(título) e P(invicto) por faixa de força, replicando o Major da UI (suíça + playoffs) |
+| `bancada/suites/realismo.js` (ampliado) | **forma** além da média: kills por round, placar do perdedor, método do round, abertura por lado, mix de compra por lado |
 
 As três rodam em modo **relatório**: imprimem o retrato e os alvos, mas não
 reprovam a suíte. Os alvos passam a valer por variável de ambiente, na etapa em
@@ -28,7 +28,7 @@ que o problema correspondente for atacado:
 
 Congelar limites antes disso produziria gate verde sobre premissa errada.
 
-`bancada/realismo.js` liga a telemetria em 1 de cada 8 mapas. A telemetria observa
+`bancada/suites/realismo.js` liga a telemetria em 1 de cada 8 mapas. A telemetria observa
 decisões já tomadas — não consome RNG nem altera resultado (game.js, `simularMapa`)
 —, então amostrar é seguro e mantém a suíte barata.
 
@@ -138,9 +138,9 @@ Os números acima dizem em que ordem atacar:
 
 ```powershell
 npm run check                 # motor e paridades intactos
-node bancada/perfis.js        # N=40 para o retrato deste documento
-node bancada/realismo.js      # N=300 (padrão)
-node bancada/dificuldade.js   # N=3400 para o retrato deste documento
+node bancada/suites/perfis.js        # N=40 para o retrato deste documento
+node bancada/suites/realismo.js      # N=300 (padrão)
+node bancada/suites/dificuldade.js   # N=3400 para o retrato deste documento
 ```
 
 Sementes fixas: `perfis.js` 31415, `dificuldade.js` 20260726, `realismo.js` 90210.

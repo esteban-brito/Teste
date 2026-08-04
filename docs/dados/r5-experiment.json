@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "kind": "r5-experiment-manifest",
+  "status": "frozen",
+  "frozenAt": "2026-07-23",
+  "scope": "R5.0-R5.1 comparison infrastructure; no balance target is approved by this manifest",
+  "baseline": {
+    "branch": "sandbox-test",
+    "commit": "8136df1a4f19f23b48bf83c428a0db4128ef6957",
+    "gameSha256": "93d2d4691887d349dad10d878ade40885c6c1fd379a6bf9f5030566154b64192",
+    "auditSchemaVersion": 3,
+    "auditSha256": "eaf99d88c72cf6f0e912017a36865bdb9a329051b784a018ef0e930df48a0584",
+    "telemetrySchemaVersion": 1,
+    "nodeReference": "20"
+  },
+  "developmentSchedule": {
+    "cycles": 8,
+    "teams": 17,
+    "players": 85,
+    "maps": 1088,
+    "playerMapObservations": 10880,
+    "pairingUnit": "player-map",
+    "uncertaintyBlock": "simulated-map",
+    "baseSeed": 1374772765,
+    "seedPolicy": "base + imul(cycle + 1, 0x9e3779b1) + imul(pair + 1, 0x85ebca6b)",
+    "mapRotation": ["Mirage", "Inferno", "Nuke", "Ancient", "Anubis", "Dust2", "Train", "Overpass"],
+    "orientationPolicy": "odd cycles swap every pairing"
+  },
+  "releaseSchedule": {
+    "minimumSimulatedMaps": 50000,
+    "minimumRareTailPlayerMaps": 1000000,
+    "sameSeedsMapsSidesAndPairings": true,
+    "rareTailMaximumIsDescriptiveOnly": true,
+    "executionPolicy": "Release capture must be batched or streamed before R6; the in-memory development capture is not release evidence.",
+    "targetAlignedActiveMaps": ["Ancient", "Anubis", "Dust2", "Inferno", "Mirage", "Nuke", "Overpass"],
+    "productWideRegressionMaps": ["Mirage", "Inferno", "Nuke", "Ancient", "Anubis", "Dust2", "Train", "Overpass"],
+    "crossPoolPoolingAllowed": false
+  },
+  "capturedFacts": {
+    "identity": ["raw player ID", "team", "opponent", "primary role", "secondary role", "effective combat role", "playstyle", "OVR", "historical rating"],
+    "context": ["cycle", "pairing", "seed", "map", "orientation", "outcome", "side", "team buy state"],
+    "production": ["rating", "kills", "deaths", "assists", "damage", "KAST credits", "trade kills", "opening kills", "opening deaths", "death sequence"],
+    "survival": ["survived rounds", "explicit save rounds", "traded deaths", "trade KAST credits"]
+  },
+  "reportedMetrics": [
+    "rating", "KPR", "DPR", "APR", "ADR", "KAST", "survival", "save",
+    "traded-death rate", "trade KAST-credit rate", "trade kills per round",
+    "opening kills per round", "opening deaths per round", "mean death sequence",
+    "CT KPR/DPR/APR/ADR/KAST/survival/save", "TR KPR/DPR/APR/ADR/KAST/survival/save"
+  ],
+  "tailQuantiles": [0.001, 0.01, 0.05, 0.5, 0.95, 0.99, 0.999],
+  "practicalDifferenceFloors": {
+    "roundOrEventProportionPercentagePoints": 2,
+    "KPR_DPR_APR": 0.02,
+    "KASTPercentagePoints": 2,
+    "ADR": 2,
+    "ratingMeanOrMAE": 0.03,
+    "correlationAfterFisherZ": 0.03,
+    "source": "docs/realism-methodology.md section 8.1"
+  },
+  "existingRegressionGuards": {
+    "minimumRatingCorrelation": 0.9,
+    "maximumRatingMAE": 0.065,
+    "ratingSlope": [0.85, 1.15],
+    "maximumIndividualRatingError": 0.2,
+    "note": "A candidate must also demonstrate non-inferiority against the stronger observed baseline; merely reaching these floors is insufficient."
+  },
+  "evidenceGate": {
+    "target": "docs/dados/fidelity-target.json",
+    "officialCorpusStatus": "insufficient",
+    "officialCorpusCoverageAtFreeze": "1/800 maps and 1/6 events",
+    "allowedBeforeEmpiricalTargets": ["verification infrastructure", "explicit removal of artificial output ceilings"],
+    "forbiddenBeforeEmpiricalTargets": ["invented role target ranges", "claim of official IFCS fidelity", "role tuning selected only by visual plausibility"]
+  },
+  "hardRules": [
+    "No condition by player name, raw ID, team or era.",
+    "Do not change player data in a simulator-balance commit.",
+    "Do not add RNG call sites when an existing decision draw can be reused.",
+    "Change one parameter family at a time.",
+    "Do not relax a regression threshold to accept a candidate.",
+    "Do not update a golden before explaining every intentional difference.",
+    "KAST remains derived from factual kill, assist, survival and trade events.",
+    "A baseline-versus-baseline comparison must produce exact zero deltas."
+  ]
+}

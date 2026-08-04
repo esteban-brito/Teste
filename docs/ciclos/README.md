@@ -3,8 +3,9 @@
 Os documentos desta pasta são **relatórios de ciclos que já terminaram**. Eles
 respondem *"por que este número é este"*, não *"o que eu faço agora"*.
 
-Para saber o que fazer agora, leia `AGENTS.md` e `docs/retomada-2026-07-31.md`.
-Nenhum arquivo daqui é ponto de retomada.
+Para saber o que fazer agora, leia `AGENTS.md` e `docs/retomada-2026-08-04.md`.
+Nenhum arquivo daqui é ponto de retomada — **inclusive o handoff de 31/07/2026**,
+que chegou aqui em 04/08 depois de ser ultrapassado por três ciclos.
 
 Eles foram separados em 31/07/2026 porque `docs/` tinha 39 arquivos num diretório
 plano: guia operacional e evidência histórica disputavam o mesmo espaço, e uma
@@ -32,7 +33,7 @@ continua sendo o plano mestre que explica a arquitetura do experimento R5.
 | `r6-closure-2026-07-23.md` | R6 — fechamento e validação do ciclo |
 
 O manifesto executável do experimento **não** está aqui: ele é consumido por
-`bancada/r5-comparison.js` e continua em `docs/r5-experiment.json`.
+`bancada/suites/r5-comparison.js` e continua em `docs/dados/r5-experiment.json`.
 
 ## Ciclo de fidelidade da simulação (26–28/07/2026)
 
@@ -49,6 +50,29 @@ O manifesto executável do experimento **não** está aqui: ele é consumido por
 | `momentum-2026-07-28.md` | momentum intra-mapa; fecha o critério `distribuicao` |
 | `utilitaria-2026-07-28.md` | utilitária como recurso do round |
 | `receitas-padronizadas-2026-07-28.md` | receitas de playstyle padronizadas |
+
+## Ciclo P2 — modularização por paridade (28/07/2026)
+
+| Arquivo | Assunto |
+|---|---|
+| `p2-modularizacao-2026-07-28.md` | relatório final: o que saiu de `game.js`, os contratos descobertos, a prova de consumo de RNG e as armadilhas |
+
+Ele chegou aqui em 03/08/2026, vindo da raiz de `docs/`. O ciclo está encerrado —
+`docs/next-steps.md` o declara **CONCLUÍDO** —, então o lugar dele é entre as
+evidências. Isso **não** o rebaixa: `AGENTS.md` continua mandando lê-lo antes de
+alterar os módulos extraídos, exatamente como manda ler o relatório que produziu
+uma constante antes de mexer nela.
+
+## Handoffs superados
+
+| Arquivo | Assunto |
+|---|---|
+| `retomada-2026-07-31.md` | handoff geral entre 31/07 e 04/08/2026 — fechamento do ciclo visual das cartas e o caminho até ele, inclusive direções tentadas e descartadas |
+
+Um handoff superado é evidência como qualquer outra: ele registra por que a carta
+é o que é e o que já foi tentado. O que ele **não** pode continuar sendo é o
+arquivo que uma sessão nova abre para saber o que fazer — por isso saiu da raiz.
+O cabeçalho dele lista o que envelheceu.
 
 ## Auditorias e passadas isoladas
 

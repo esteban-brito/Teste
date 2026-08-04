@@ -69,7 +69,7 @@ do escopo de balanceamento do motor:
 3. aceitar a faixa mais dura — 1,5% é raro, mas o ciclo inteiro foi pedido como "TEM que ser
    difícil".
 
-A suíte `bancada/dificuldade.js` segue como **relatório**, com o alvo de 4–6% declarado e o
+A suíte `bancada/suites/dificuldade.js` segue como **relatório**, com o alvo de 4–6% declarado e o
 valor real impresso. Não foi marcada como aprovada.
 
 ## 4. Estado final do ciclo

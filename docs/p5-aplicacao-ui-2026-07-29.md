@@ -4,9 +4,9 @@
 > `src/infrastructure/persistence` ou `src/ui/game`.** Ele foi escrito para uma
 > nova sessão do Codex sem memória da conversa, do jogo ou das decisões tomadas.
 >
-> Este documento não substitui `AGENTS.md`, `docs/retomada-2026-07-31.md`,
+> Este documento não substitui `AGENTS.md`, `docs/retomada-2026-08-04.md`,
 > `docs/project-context.md`,
-> `docs/p2-modularizacao-2026-07-28.md`, `docs/architecture.md` nem
+> `docs/ciclos/p2-modularizacao-2026-07-28.md`, `docs/architecture.md` nem
 > `docs/testing.md`. Ele é o handoff operacional focado no ciclo P5.
 
 ## 1. Decisão do responsável e estado seguro
@@ -36,7 +36,7 @@ canônica. `game.js` permanece com 889 linhas; as mudanças ficaram no component
 CSS, laboratório, guardas e cache do deploy. O checkpoint publicado é `7175c26`,
 a execução `30652005186` ficou verde e `npm run validate` aprovou 25/25. O
 contrato final está em `docs/cartas-design-2026-07-28.md` §14 e a retomada geral
-em `docs/retomada-2026-07-31.md`. Isso também não altera a fatia estrutural P5.
+em `docs/retomada-2026-08-04.md`. Isso também não altera a fatia estrutural P5.
 
 Atualização estrutural posterior de 31/07/2026: a primeira fatia recomendada
 deste handoff foi executada. Criação/reset de `S`, `TG`, `MP` e `MATCH` vivem em
@@ -65,9 +65,9 @@ o repositório pode ter avançado depois de 29/07/2026.
 Leia nesta ordem:
 
 1. `AGENTS.md` — branch, disciplina, validações e invariantes;
-2. `docs/retomada-2026-07-31.md` — checkpoint geral e prioridades atuais;
+2. `docs/retomada-2026-08-04.md` — checkpoint geral e prioridades atuais;
 3. este arquivo — ponto operacional do P5;
-4. `docs/p2-modularizacao-2026-07-28.md` — como o motor foi extraído e como RNG
+4. `docs/ciclos/p2-modularizacao-2026-07-28.md` — como o motor foi extraído e como RNG
    e paridade foram provados;
 5. `docs/project-context.md` — histórico, roadmap completo e visão da Carreira;
 6. `docs/architecture.md` — camadas e dependências permitidas;
@@ -202,7 +202,7 @@ index.html
        -> src/ui/shared/html.mjs
        -> src/ui/game/*.mjs
 
-sandbox.html + calibrador-worker.js + bancada/motor.js
+sandbox.html + calibrador-worker.js + bancada/lib/motor.js
   -> a mesma src/public/simulation-api.mjs
 ```
 
@@ -222,9 +222,9 @@ Medição vigente, provada por `tools/check-doc-measurements.js` a cada
 
 | arquivo | linhas |
 |---|---:|
-| `game.js` | 882 |
+| `game.js` | 964 |
 | `sandbox.html` | 4205 |
-| `style.css` | 1648 |
+| `style.css` | 1665 |
 | `prototipo-cartas.html` | 842 |
 
 Até 01/08/2026 este parágrafo dizia "medição vigente" e errava três dos quatro
@@ -548,11 +548,11 @@ referências em HTML e citações em documentação.
 Resultado:
 
 - **nenhum módulo órfão em `src/`** — tudo é alcançável por `game.js`,
-  `sandbox.html`, `prototipo-cartas.html` ou `bancada/motor.js`. As três
+  `sandbox.html`, `prototipo-cartas.html` ou `bancada/lib/motor.js`. As três
   estatísticas (`sample-summary`, `paired-comparison`, `proportion-interval`) só
   aparecem por `import()` dinâmico e `require` de `.mjs`; uma busca ingênua as
   declara órfãs por engano;
-- **`bancada/classificacao.js` e `bancada/serie.js` NÃO são órfãos.** Eles se
+- **`bancada/ferramentas/classificacao.js` e `bancada/ferramentas/serie.js` NÃO são órfãos.** Eles se
   declaram no cabeçalho como bancadas de trabalho fora do `run.js`, de propósito.
   Não os remova por não aparecerem em `SUITE_GROUPS`;
 - removido `instalar-drop-iphone.sh`: instalador de uso único que entrou junto com

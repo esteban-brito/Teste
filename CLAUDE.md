@@ -8,11 +8,11 @@ já entendidos ou declare o trabalho pronto sem prova suficiente.
 
 1. Leia `AGENTS.md` inteiro. Suas regras de branch, autonomia, separação entre
    refatoração e balanceamento e validação são obrigatórias e têm precedência.
-2. Leia `docs/retomada-2026-07-31.md`, o handoff geral mais recente; depois leia
+2. Leia `docs/retomada-2026-08-04.md`, o handoff geral; depois leia
    `docs/project-context.md` e `docs/next-steps.md`.
 3. Antes de tocar aplicação, estado ou UI, leia
    `docs/p5-aplicacao-ui-2026-07-29.md`.
-4. Antes de tocar cartas, leia `docs/retomada-2026-07-31.md`, a seção 14 de
+4. Antes de tocar cartas, leia as regras 1–21 deste arquivo, as §14 e §20–§23 de
    `docs/cartas-design-2026-07-28.md`, `docs/card-portraits.md` e
    `docs/testing.md`.
 5. Antes de procurar qualquer dado do projeto, leia `src/data/catalog.mjs`.
@@ -41,7 +41,7 @@ Fontes reais:
 - `src/ui/game/card-view.mjs`: HTML puro das duas faces;
 - `src/application/card-face.mjs`: única transição de frente/verso;
 - `prototipo-cartas.html`: laboratório que importa os três artefatos reais;
-- `bancada/e2e-cartas.js`: prova geométrica e interativa no Chromium.
+- `bancada/suites/e2e-cartas.js`: prova geométrica e interativa no Chromium.
 
 Regras não negociáveis:
 
@@ -116,7 +116,7 @@ Regras não negociáveis:
 ```text
 npm run visual:capturar -- visual-antes
 # faça a mudança primeiro no laboratório/artefatos reais
-node bancada/e2e-cartas.js
+node bancada/suites/e2e-cartas.js
 npm run visual:capturar -- visual-depois
 npm run visual:comparar -- visual-antes visual-depois
 ```
@@ -168,8 +168,8 @@ Refinamento final do mesmo dia, publicado em `7175c26`:
   alinhamento da bandeira, afastamento do time e ocupação dos stats;
 - o deploy aplica cache-busting de conteúdo ao CSS do laboratório; a execução
   `30652005186` ficou verde e publicou o checkpoint;
-- a retomada completa e as próximas grandes etapas estão em
-  `docs/retomada-2026-07-31.md`.
+- o registro completo daquele dia está em `docs/ciclos/retomada-2026-07-31.md`;
+  as próximas grandes etapas migraram para `docs/retomada-2026-08-04.md`.
 
 ## Sessões de 01–02/08/2026 — o que mudou depois daquele checkpoint
 
@@ -257,3 +257,111 @@ queries e ganha por ordem.
 mortos **por mutação**, não por leitura: valores absurdos moviam 0 de 279 medidas
 contra 156 do controle. O `:root` já tinha passado por essa limpeza em 01/08; a
 geometria da carta não tinha.
+
+## Sessão de 03/08/2026 — organização do repositório
+
+Ciclo sem tocar em dado, OVR, RNG, balanceamento, CSS ou geometria. A comparação
+visual fechou **21/21 idênticas**. O que mudou de lugar:
+
+- `bancada/` saiu de 42 arquivos planos para `run.js` + `lib/` (6) + `suites/`
+  (25) + `golden/` (3) + `ferramentas/` (7). Detalhe em `docs/testing.md`;
+- `docs/dados/` recebeu os três JSONs congelados; `p2-modularizacao` foi para
+  `docs/ciclos/`; `ADD_TEAM.md` virou `docs/add-team.md`;
+- `requirements-fidelity.{in,lock}` foram para `tools/`;
+- `npm run check` virou `tools/run-checks.js`;
+- a suíte do worker, antes chamada `worker-calibrador.js`, virou
+  `bancada/suites/calibrador-worker.test.js` — o nome antigo era quase homógrafo
+  de `calibrador-worker.js`, o Worker de verdade que ela testa;
+- entraram `.gitattributes`, `.editorconfig` e `.nvmrc`; 37 arquivos foram de
+  CRLF para LF e 4 perderam o BOM.
+
+### Três regras novas
+
+22. **Antes de mover arquivo, tire o caminho da contagem de `..`.** `common.js`
+    definia `ROOT` como `__dirname + ".."`, e 16 caminhos em 12 arquivos
+    dependiam da profundidade de quem os calculava — mover qualquer coisa
+    reescreveria todos em silêncio. Hoje `ROOT` sobe até achar `package.json` e
+    `GOLDEN` deriva dele. Fazer isso numa fatia separada, ANTES da mudança de
+    pasta, é o que impede que organização vire mudança de comportamento.
+23. **Reescrita de caminho em massa erra por borda, não por lógica.** Duas vezes
+    no mesmo dia: o padrão `simulation-golden.js` casou como **prefixo** dentro
+    do nome `simulation-golden.json`, mandando o golden para a pasta errada; e um
+    script que tratava `./X` e `../docs/` passou
+    batido nos cinco `../src/` — o segundo derrubou 16 suítes de uma vez porque
+    `lib/motor.js` é a ponte que quase tudo importa. Antes de reescrever, enumere
+    **todas** as formas que o caminho assume no repositório e ponha borda à
+    direita do padrão. Depois varra o resultado por `..`, não por `require`.
+24. **`ferramentas/` não é lixeira.** `classificacao.js` e `serie.js` se declaram
+    no cabeçalho como bancadas fora do `run.js`, e a auditoria de órfãos de
+    31/07/2026 registrou isso por escrito. Não estarem em `SUITE_GROUPS` não é
+    esquecimento. Duas dependências cruzam pastas de propósito:
+    `suites/dificuldade.js` → `ferramentas/campanha-major.js` e
+    `ferramentas/r5-experiment.js` → `suites/auditoria.js`.
+
+### O que ficou de fora, e por quê
+
+Não é backlog esquecido; é escopo recusado com motivo:
+
+- **mover o site para `web/`** — o workflow publica com `publish_dir: .` e faz
+  `sed` de cache-busting; é migração de deploy, não faxina;
+- **quebrar `sandbox.html`** — 4.206 linhas, com `<script>` inline de 3.465 e
+  `<style>` de 702. É a maior dívida do repositório e merece ciclo com paridade
+  provada;
+- **unificar CJS → ESM** — `src/` é 48 `.mjs`; `bancada/` e `tools/` são 63
+  `.js` CommonJS. São 63 arquivos de mudança lógica, que contaminariam qualquer
+  commit de organização.
+
+Observação lateral não tratada: `tools/` calcula a raiz do repositório 12 vezes,
+com três nomes diferentes (`ROOT`, `RAIZ`, `root`) e dois métodos (`path.join` e
+`path.resolve`), e mais 6 arquivos de `tools/` importam `ROOT` de
+`bancada/lib/common.js`. Funciona, porque `tools/` não mudou de profundidade.
+
+## Sessão de 04/08/2026 — documentação e a frente A da revisão
+
+Ciclo sem tocar em dado, OVR, RNG, balanceamento ou geometria de carta. A
+comparação visual fechou **21/21 idênticas** e a bancada foi de 25 para **26
+suítes**.
+
+**Documentação.** A raiz de `docs/` passou a ter exatamente um ponto de retomada:
+`docs/retomada-2026-08-04.md`. O handoff de 31/07 virou evidência em
+`docs/ciclos/`. Aviso de "SUPERADO" dentro do arquivo não resolvia nada — quem
+chega lê o ponteiro, não o aviso.
+
+**Frente A da revisão do jogo.** Zero erro de console, zero exceção e zero
+requisição falha nos três viewports. Quatro barreiras de acessibilidade achadas
+e corrigidas, agora congeladas em `bancada/suites/e2e-acessibilidade.js` com doze
+provas sintéticas.
+
+### Três regras novas
+
+25. **`aria-modal="true"` é uma PROMESSA de que o fundo está inerte, e quem a
+    cumpre é `inert`.** Os cinco overlays declaravam a promessa e não a cumpriam:
+    o foco ficava no fundo ao abrir, sete botões do `.wrap` seguiam alcançáveis
+    por Tab e Escape não fechava nada. Prender foco com laço de JS é remendo;
+    `inert` no `.wrap` faz o navegador tirar o fundo da ordem de foco. Ao abrir,
+    foque o CONTÊINER, nunca o primeiro botão — em `finalOverlay` o primeiro
+    botão é "Jogar novamente", e um Enter perdido reiniciaria a campanha. E
+    Escape só pode fechar o que o mouse também fecha: ele clica o botão de fechar
+    que já existe, por isso `finalOverlay`, que não tem um, fica de fora.
+26. **Esconder o elemento focado joga o foco no `<body>`.** O diálogo troca de
+    controle sob o pé do usuário — "Iniciar partida" some ao entrar no mapa,
+    "Pular" vira "Continuar" ao terminar — e nas duas vezes o foco saía do modal
+    para um fundo que está `inert`. A correção certa é guardar a **classe** do
+    problema num `focusout` que devolve o foco ao diálogo, não remendar as duas
+    trocas: a terceira troca chegaria sem guarda. Cuidado ao condicionar isso a
+    `contains(activeElement)` — o blur de um elemento que virou `display:none`
+    chega DEPOIS do seu código, então a checagem ainda enxerga o botão que vai
+    sumir.
+27. **Guarda que se defende do teste sintético parece guarda quebrada.** A prova
+    de "foco fora do modal" falhou na primeira execução porque o `focusout` da
+    regra 26 devolvia o foco antes de o auditor olhar — o produto desfazia o dano.
+    Não relaxe a guarda para a prova passar: injete o defeito onde ela não
+    alcança (ali, um `[role=dialog]` sintético, fora da lista que o listener
+    vigia). A prova existe para testar o AUDITOR, não para vencer o produto.
+
+### O que a frente A ensinou sobre as suítes existentes
+
+`e2e-game-flow.js` coleta `pageerror` e console `error`, mas filtra
+`Failed to load resource` e `net::` — então **404 real passava batido**, e
+warnings nunca foram olhados. Filtro de ruído numa guarda é uma decisão que
+envelhece: revise o que ele está escondendo antes de confiar no verde.

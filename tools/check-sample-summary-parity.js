@@ -2,7 +2,7 @@
 const assert=require("node:assert/strict");
 const path=require("node:path");
 const {pathToFileURL}=require("node:url");
-const {ROOT}=require("../bancada/common");
+const {ROOT}=require("../bancada/lib/common");
 
 function legacyDescribe(values){
   const sum=xs=>xs.reduce((total,value)=>total+value,0);

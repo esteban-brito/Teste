@@ -127,13 +127,13 @@ Cada uma foi revisada conscientemente:
    A cobertura **aumenta**: três mapas exercitam o mapa decisivo, que a varrida 2-0 nunca
    alcançava.
 4. **`campaign-golden.json`** (campanha MD3 do sandbox, seed 424242): segue 2-1 em três
-   mapas, com placares novos. Regenerado por `bancada/campaign-golden-update.js`, criado
+   mapas, com placares novos. Regenerado por `bancada/ferramentas/campaign-golden-update.js`, criado
    nesta etapa — antes esse fixture só podia ser editado à mão.
 
 ## 5. Validação
 
 22/22 suítes verdes (`npm run validate`), incluindo os três E2E. `npm run check` cobre a
-nova paridade de identidade. `elencos.html` regenerado por `bancada/roster.js`; a coluna
+nova paridade de identidade. `elencos.html` regenerado por `bancada/ferramentas/roster.js`; a coluna
 que mostrava o sub-arquétipo passou a mostrar o playstyle (chave `ps`).
 
 Verificação manual: abrir `index.html`, sortear e virar a carta do m0NESY — lê

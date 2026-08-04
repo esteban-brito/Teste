@@ -52,15 +52,15 @@ que usa `demoparser2`, reconstrói rounds e expõe eventos como morte, dano,
 plant/defuse e término de round. A versão, o backend, o extrator e suas opções
 ficam congelados no manifesto.
 
-O ambiente exige Python `>=3.11,<3.14`. `requirements-fidelity.in` fixa a
+O ambiente exige Python `>=3.11,<3.14`. `tools/requirements-fidelity.in` fixa a
 dependência direta e registra o hash da wheel publicada;
-`requirements-fidelity.lock` congela o ambiente transitivo observado. Antes da
+`tools/requirements-fidelity.lock` congela o ambiente transitivo observado. Antes da
 primeira extração oficial, o lock deve ser reinstalado do zero e acompanhado
 dos hashes de distribuição de todas as dependências.
 
 ## O que o contrato verifica
 
-`bancada/fidelity-corpus.js` separa:
+`bancada/lib/fidelity-corpus.js` separa:
 
 - `valid`: estrutura e proveniência internamente coerentes;
 - `officialReady`: todos os mínimos científicos e operacionais satisfeitos.
@@ -111,7 +111,7 @@ Antes de baixar dados, registrar:
 - SHA-256 do conteúdo dessas revisões;
 - versão do parser e hashes do extrator e das opções.
 
-O alvo foi congelado em `docs/fidelity-target.json`: última época competitiva
+O alvo foi congelado em `docs/dados/fidelity-target.json`: última época competitiva
 homogênea completa, de 22 de janeiro a 7 de julho de 2026, com Ancient, Anubis,
 Dust II, Inferno, Mirage, Nuke e Overpass, eventos LAN Valve-ranked e ambos os
 times no top 20 VRS. A revisão de evidência corrigiu o primeiro registro, que
@@ -155,7 +155,7 @@ Preparação e fingerprints:
 
 ```text
 python -m venv .venv-fidelity
-.venv-fidelity/Scripts/python -m pip install -r requirements-fidelity.lock
+.venv-fidelity/Scripts/python -m pip install -r tools/requirements-fidelity.lock
 .venv-fidelity/Scripts/python tools/extract-fidelity-demo.py --check-environment
 .venv-fidelity/Scripts/python tools/extract-fidelity-demo.py --self-test
 .venv-fidelity/Scripts/python tools/extract-fidelity-demo.py --fingerprint

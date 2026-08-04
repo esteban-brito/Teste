@@ -5,7 +5,7 @@ const fs=require("node:fs");
 const os=require("node:os");
 const path=require("node:path");
 const {execFileSync}=require("node:child_process");
-const {ROOT}=require("../bancada/common");
+const {ROOT}=require("../bancada/lib/common");
 const {
   assignPlayerKeys,parse,projectSources,transactionalWrite,validateInput
 }=require("./add-team");
