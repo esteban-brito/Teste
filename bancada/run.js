@@ -16,7 +16,7 @@ const SUITES_DIR="suites";
 const SUITE_GROUPS={
   data:["times.js"],
   regression:["auditoria.js","snapshot.js","drop-reform.js","simulation-golden.js","r5-comparison.js","r5-tails.js","sweep.test.js","abertura.js","memoria.js"],
-  calibrator:["calibrador.js","calibrador-heavy.js","worker-calibrador.js"],
+  calibrator:["calibrador.js","calibrador-heavy.js","calibrador-worker.test.js"],
   benchmark:["realismo.js","assists.js","kda.js","rating.js","perfis.js","dificuldade.js"],
   fidelity:["fidelity-score.test.js","fidelity-corpus.test.js"],
   e2e:["e2e-intent.js","e2e-simulation.js","e2e-game-flow.js","e2e-cartas.js"]

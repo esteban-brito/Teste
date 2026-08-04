@@ -1,4 +1,11 @@
-/* bancada/suites/worker-calibrador.js - exercita o Web Worker real do calibrador em worker_threads.
+/* bancada/suites/calibrador-worker.test.js - exercita o Web Worker real do calibrador
+   em worker_threads.
+
+   O NOME. Ele testa `calibrador-worker.js` da raiz, que é o Worker de verdade
+   carregado por `sandbox.html`. Até 03/08/2026 esta suíte se chamava
+   `worker-calibrador.js` — quase homógrafo do artefato que ela testa, e a troca
+   dos dois numa busca era questão de tempo. `X.test.js` já era a convenção do
+   repositório para exatamente essa relação (`sweep.test.js`, `fidelity-score.test.js`).
    Valida bootstrap, isolamento, partição do espaço e cancelamento cooperativo sem duplicar
    a lógica do calibrador. O wrapper só adapta self/fetch/postMessage para o Node. */
 const path=require("path");
