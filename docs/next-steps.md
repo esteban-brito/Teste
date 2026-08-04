@@ -4,7 +4,7 @@
 > 22 de julho. Ele preserva o raciocínio e a sequência histórica de R1–R6/P1–P6,
 > mas **não é mais o handoff operacional atual**: P2 e o ciclo funcional da
 > simulação avançaram depois dele. Para retomar hoje, use `docs/project-context.md`,
-> **`docs/retomada-2026-07-31.md`**, `docs/ciclos/p2-modularizacao-2026-07-28.md`,
+> **`docs/retomada-2026-08-04.md`**, `docs/ciclos/p2-modularizacao-2026-07-28.md`,
 > `docs/p5-aplicacao-ui-2026-07-29.md` e, para cartas, a seção 14 de
 > `docs/cartas-design-2026-07-28.md`. O backlog e as
 > decisões de produto deste arquivo continuam válidos quando não forem
@@ -511,9 +511,9 @@ de R3 e continuar as extrações de P2. Esse ponto foi executado: a distribuiç�
 individual foi entregue, o ciclo funcional da simulação foi fechado e P2 foi
 concluído. **Não use mais R3 versus P2 como escolha operacional atual.**
 
-Em 31/07/2026, a ordem recomendada passou a estar consolidada em
-`docs/retomada-2026-07-31.md`. As duas primeiras retomadas concretas continuam
-independentes:
+Desde 31/07/2026 a ordem recomendada passou a estar consolidada num handoff
+geral, hoje `docs/retomada-2026-08-04.md`. As duas primeiras retomadas concretas
+continuam independentes:
 
 1. produto visual: adicionar e normalizar retratos de jogadores por time/era
    sobre a carta já canônica, começando pelos quatro players restantes da Spirit
@@ -578,6 +578,28 @@ Registradas para não voltarem como se fossem novas.
   inimigo está quebrado porque ele perdeu o round anterior, mas se ele perdeu, eu ganhei, recebi
   o prêmio e não estou de eco. O caso real que ela queria capturar já é coberto pela escada de
   derrota. O achado está escrito em `decidirCompra`.
+
+## 10-quater. Escopo RECUSADO com motivo (03–04/08/2026)
+
+Saiu do ciclo de organização do repositório. **Não é backlog esquecido: é escopo
+recusado, cada item com a razão medida.** Reabrir exige pedido do responsável e
+ciclo próprio com paridade provada.
+
+| Item | Por que ficou de fora |
+|---|---|
+| decompor `sandbox.html` | 4.205 linhas, `<script>` inline de 3.465 e `<style>` de 702. Maior dívida isolada do repositório — e, contraintuitivamente, o refactor grande **mais seguro** disponível, porque `check-sandbox-engine`, `check-sandbox-syntax`, as três suítes de calibrador e o `e2e-intent` já cercam o arquivo |
+| mover o site para `web/` ou `apps/` | o workflow publica com `publish_dir: .` e faz `sed` de cache-busting em `style.css`/`game.js`. É migração de deploy, não faxina, e a única prova é a publicação dar certo |
+| unificar CJS → ESM | `src/` é 48 `.mjs`; `bancada/` e `tools/` são 63 `.js` CommonJS. São 63 arquivos de mudança lógica, que contaminariam qualquer commit de organização |
+
+Se a ordem não mudar, `sandbox.html` é o primeiro dos três — ele também é o item
+4 da lista de dívidas do P6 e o "loader inline legado" citado em §7.
+
+**Dívida menor registrada para não sumir:** `tools/` calcula a raiz do
+repositório 12 vezes, com três nomes (`ROOT`, `RAIZ`, `root`) e dois métodos
+(`path.join`, `path.resolve`), enquanto 6 arquivos de `tools/` importam `ROOT` de
+`bancada/lib/common.js`. Funciona só porque `tools/` não mudou de profundidade —
+é a mesma armadilha que a reorganização da bancada teve de desarmar antes de
+mover qualquer arquivo.
 
 ## 11. Regra de parada
 

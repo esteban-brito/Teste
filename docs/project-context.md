@@ -16,8 +16,8 @@ As decisões estão classificadas assim:
 Este documento não substitui as fontes especializadas:
 
 - `AGENTS.md`: regras de trabalho, branch, invariantes e validação;
-- `docs/retomada-2026-07-31.md`: handoff geral mais recente, checkpoint
-  publicado, carta canônica e ordem recomendada das grandes etapas;
+- `docs/retomada-2026-08-04.md`: handoff geral — estado verificado, trabalho
+  aberto, escopo recusado e ordem recomendada das grandes etapas;
 - `docs/next-steps.md`: sequência aprovada de auditoria individual, variância,
   campanha, balanceamento condicional e retomada;
 - `docs/architecture.md`: arquitetura e dependências permitidas;
@@ -40,19 +40,17 @@ roadmap for concluída.
 
 ## 2. Ponto exato de retomada
 
-**Atualização mais recente: sessão de 31/07/2026, encerrada em `9e06073`.** O
-resumo completo — limpeza, escada de raridade, refino do verso, Spirit de Katowice
-completa e as duas lições que custaram retrabalho — está na **seção 0 de
-`docs/retomada-2026-07-31.md`**. Leia-a antes do resto desta seção, que descreve o
-estado anterior.
+**Atualização mais recente: 04/08/2026.** O estado verificado do repositório, os
+três ciclos que aconteceram desde 31/07, o trabalho aberto em ordem e o escopo
+recusado com motivo estão em **`docs/retomada-2026-08-04.md`**. Leia-o antes do
+resto desta seção, que descreve o estado anterior.
 
-Atualização vigente de 31 de julho de 2026 (tem precedência sobre o registro
-histórico abaixo):
+Atualização vigente (tem precedência sobre o registro histórico abaixo):
 
-- o checkpoint visual publicado é `7175c26`, sincronizado com
-  `origin/sandbox-test`; a execução `30652005186` validou e publicou o Pages. O
-  retrato completo e a ordem recomendada de retomada estão em
-  `docs/retomada-2026-07-31.md`;
+- `origin/sandbox-test` aponta para `da322b9`, e há **8 commits locais não
+  publicados** do ciclo de organização — parados por escolha do responsável, que
+  preferiu revisar antes, não por pendência técnica. O checkpoint visual anterior,
+  `7175c26`, foi validado e publicado pela execução `30652005186`;
 - o handoff operacional do ciclo P5 está em
   `docs/p5-aplicacao-ui-2026-07-29.md`; ele registra commits, validações, contratos
   dos estados restantes e a próxima fatia segura;
@@ -60,11 +58,17 @@ histórico abaixo):
   fatia segura, limpar legado comprovadamente dispensável, criar commits e fazer
   push de checkpoints verdes para `sandbox-test` sem renovar a permissão;
 - a carta **A refinada é a implementação canônica**: seis faixas de OVR, bordas
-  cromadas no 20/21/22, função como tinta textual, retrato em `100% auto · 50%
-  12%` e placa responsiva de 24%/26%/28%. Na frente, nick e bandeira dividem a
+  cromadas no 20/21/22, função como tinta textual e retrato em `100% auto · 50%
+  12%`. A placa mede **24,5% até 150 px e 26,5% abaixo**, remedida em 02/08/2026
+  contra a régua da diagonal, com a identidade **centrada** nela — era 24%/26%/28%
+  com o bloco ancorado embaixo. Na frente do jogador, nick e bandeira dividem a
   primeira linha, função principal ocupa a segunda e função secundária/time a
   terceira. No verso, quatro stats ocupam toda a largura e pelo menos 35% da
   altura. Todo conteúdo permanece visível, sem fonte ou offset individual;
+- **o treinador usa a grade do jogador**, com duas linhas em vez de três, desde
+  01/08/2026: `coachFront` não tem template próprio e chama `frenteHtml`, então
+  refino da frente do jogador chega ao treinador de graça. Isso substitui a §19.5
+  do design;
 - `prototipo-cartas.html` não contém mais proposta, comparador, B/C ou encaixe
   medido. Ele renderiza uma única referência e 153 cartas reais/sintéticas com o
   componente do jogo; `bancada/suites/e2e-cartas.js` prova a grade em oito larguras,
@@ -72,15 +76,19 @@ histórico abaixo):
   touch e consumo no jogo real;
 - `donk_kato24` é a referência e também o molde visual da escada de raridade e
   da matriz de funções; `device` não ocupa mais esse papel no laboratório;
-- `donk_kato24` é o primeiro retrato ligado ao campo cru `foto`. O catálogo
-  declara cobertura 1/85 e `tools/check-card-portraits.js` prova asset-id, WebP,
-  5:7, resolução, peso e ausência de órfãos. O protocolo para os próximos lotes
-  está em `docs/card-portraits.md`;
-- comparação visual da promoção: **9/21 capturas mudaram**, exclusivamente
-  frente, verso e elenco em desktop/tablet/celular; as outras 12 permaneceram
-  pixel a pixel idênticas;
-- validação integral da promoção: `npm run validate`, **25/25 suítes verdes** em
-  184,2 s; snapshot, golden, consumo de RNG e balanceamento permaneceram intactos;
+- os retratos ligados ao campo cru `foto` cobrem a **Spirit · IEM Katowice 2024
+  completa**: 5 jogadores mais o treinador. `src/data/catalog.mjs` é a fonte da
+  cobertura e `tools/check-card-portraits.js` prova asset-id, WebP, 5:7,
+  resolução, peso e ausência de órfãos. O protocolo dos próximos lotes está em
+  `docs/card-portraits.md`;
+- a paleta foi tokenizada em 02–03/08/2026: 121 literais viraram token **sem
+  mudar um pixel**, e `tools/check-design-tokens.js` trava o sistema de cor no
+  `npm run check`. `--b1`, `--b2` e `--b3` não existem mais, provados mortos por
+  mutação;
+- validação vigente: `npm run check` fecha **19/19 checadores**; o último
+  `npm run validate` de marco amplo fechou **25/25 suítes**, e a comparação visual
+  do ciclo de organização fechou **21/21 idênticas**. Snapshot, golden, consumo de
+  RNG e balanceamento permanecem intactos desde 31/07;
 - o ciclo **P2 de modularização por paridade está concluído**, Fases 0–7;
 - `game.js` caiu de 3.054 para **882 linhas** — 1.206 ao fim do P2, 938 depois das
   primeiras fatias do P5, 888 após a remoção do tilt morto e uma linha de import
@@ -595,7 +603,7 @@ O redesenho visual e seu refinamento final de julho de 2026 preservaram a
 auditoria profunda exatamente em SHA-256
 `d9faccb428073b8191640c1a78830340b58f30d1ebdbeb91f60d0d43160bee8d` e
 2.273.746 bytes. A validação integral **daquele momento** aprovou 17/17 suítes em
-180,3 s — número histórico, não atual: a bancada tem hoje 25 suítes e o
+180,3 s — número histórico, não atual: a bancada tem hoje 26 suítes e o
 checkpoint vigente é 25/25 (§2).
 
 R3 começou com uma campanha curta MD3 separada do lote de expectativa: dois
@@ -739,7 +747,7 @@ npm run test:benchmark    realismo, assists, KDA e rating
 npm run test:fidelity     contratos e scorer IFCS de fidelidade
 npm run corpus:fidelity   selo e verificação do manifesto real IFCS
 npm run test:e2e          cartas, jogo, calibrador e aba Simular no Chromium
-npm run test:all          todas as 25 suítes
+npm run test:all          todas as 26 suítes
 npm run validate          check + lint + todas as suítes
 node bancada/suites/auditoria.js auditoria rápida histórica de classificação
 node bancada/suites/auditoria.js --deep --format json
@@ -866,7 +874,7 @@ arquivos planos para `run.js` + `lib/` + `suites/` + `golden/` + `ferramentas/`,
 com `docs/` ganhando `dados/` ao lado de `ciclos/`. Os nomes ficaram nos do
 repositório, não nos do esboço acima — `bancada/suites/` em vez de `tests/unit/`
 — porque agrupar por *papel do arquivo* descreve o que existe, e agrupar por
-*tipo de teste* exigiria reclassificar 25 suítes que já têm grupos declarados em
+*tipo de teste* exigiria reclassificar 26 suítes que já têm grupos declarados em
 `SUITE_GROUPS`.
 
 O que continua **não** feito deste esboço: `apps/` e a divisão de `application/`
@@ -1294,12 +1302,17 @@ Não presumir respostas sem conversar:
 
 `docs/next-steps.md` preserva o plano histórico que originou R1–R6/P1–P6; os
 handoffs especializados mais novos definem a retomada operacional atual. Leia
-primeiro `docs/retomada-2026-07-31.md`:
+primeiro `docs/retomada-2026-08-04.md`:
 
+0. **revisão do jogo:** pedida em 04/08/2026, três frentes. A **A** fechou no
+   mesmo dia e virou `bancada/suites/e2e-acessibilidade.js` — console, exceção,
+   HTTP≥400 e acessibilidade nos três viewports. Restam **B** (`export`/seletor
+   sem consumidor) e **C** (robustez na ausência de dado). Detalhe em
+   `docs/retomada-2026-08-04.md` §3.1;
 1. **biblioteca visual:** a carta A refinada já é a única implementação do jogo e
-   do laboratório, e a Spirit de Katowice 2024 já está completa. Receber e
-   normalizar os próximos retratos por lotes coerentes de time/era, sem criar
-   exceções de runtime;
+   do laboratório, e a Spirit de Katowice 2024 já está completa — 5 jogadores e o
+   treinador. Receber e normalizar os próximos retratos por lotes coerentes de
+   time/era, sem criar exceções de runtime;
 2. **P5, estrutura:** a criação/reset de `S`, `TG`, `MP` e `MATCH` já foi
    extraída com shape, identidade e quirks protegidos. A próxima fatia é somente
    o controlador de draft/roleta. Fonte: `docs/p5-aplicacao-ui-2026-07-29.md` §12;
@@ -1353,7 +1366,7 @@ refatoração, dados e balanceamento no mesmo commit.
 
 ## 16. Regras para qualquer IA futura
 
-- leia `AGENTS.md`, `docs/retomada-2026-07-31.md` e este documento antes de
+- leia `AGENTS.md`, `docs/retomada-2026-08-04.md` e este documento antes de
   editar;
 - verifique branch, status e mudanças do usuário;
 - escolha e execute a próxima fatia segura sem pedir nova permissão para cada

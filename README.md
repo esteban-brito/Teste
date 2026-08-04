@@ -14,8 +14,8 @@ playoffs.
 O mapa técnico e as regras para mudanças estão em:
 
 - [`AGENTS.md`](AGENTS.md): invariantes, branch, validação e disciplina de commits;
-- [`docs/retomada-2026-07-31.md`](docs/retomada-2026-07-31.md): último
-  checkpoint publicado, carta canônica e próximas grandes etapas recomendadas;
+- [`docs/retomada-2026-08-04.md`](docs/retomada-2026-08-04.md): handoff geral —
+  estado verificado, trabalho aberto e próximas grandes etapas recomendadas;
 - [`docs/project-context.md`](docs/project-context.md): ponto de retomada, roadmap
   de profissionalização e visão do modo Carreira de Jogador;
 - [`docs/p5-aplicacao-ui-2026-07-29.md`](docs/p5-aplicacao-ui-2026-07-29.md):
@@ -23,7 +23,7 @@ O mapa técnico e as regras para mudanças estão em:
 - [`docs/next-steps.md`](docs/next-steps.md): plano histórico, decisões e backlog
   de auditoria individual, variância, campanha e balanceamento condicional;
 - [`docs/architecture.md`](docs/architecture.md): fluxo de dados e fronteiras;
-- [`docs/testing.md`](docs/testing.md): 25 suítes e comandos por camada;
+- [`docs/testing.md`](docs/testing.md): 26 suítes e comandos por camada;
 - [`docs/ciclos/rating-balance-2026-07-20.md`](docs/ciclos/rating-balance-2026-07-20.md): auditoria sem curadoria e comparação antes/depois;
 - [`docs/fidelity-corpus.md`](docs/fidelity-corpus.md): coleta e auditoria do corpus IFCS;
 - [`docs/dados/fidelity-target.json`](docs/dados/fidelity-target.json): alvo histórico
@@ -104,7 +104,7 @@ draft9-0/
 ├── bancada/              ← suíte de validação dos motores (Node)
 │   ├── run.js            ← roda a suíte por grupo (data, regression, e2e, …)
 │   ├── lib/              ← motor.js, common.js, sweep e o scorer/contrato do IFCS
-│   ├── suites/           ← as 25 suítes de SUITE_GROUPS
+│   ├── suites/           ← as 26 suítes de SUITE_GROUPS
 │   ├── golden/           ← snapshot do elenco e goldens de simulação e campanha
 │   └── ferramentas/      ← bancadas de trabalho e geradores que NÃO entram no run
 └── tools/
@@ -255,7 +255,7 @@ A pasta `bancada/` contém uma suíte de validação que roda no Node.js:
 | `abertura.js` | Nenhum peso negativo pode entrar no sorteio do duelo de abertura |
 | `sweep.test.js` | Varredura pareada e intervalo de proporção: braços isolados, valor restaurado, Wilson conferido |
 | `campanha-major.js` | Não é suíte: é o Major replicado fora da UI, usado pela dificuldade e pelas varreduras |
-| `run.js` | Roda as 25 suítes; aceita grupos de dados, regressão, calibrador, benchmark, fidelidade e E2E |
+| `run.js` | Roda as 26 suítes; aceita grupos de dados, regressão, calibrador, benchmark, fidelidade e E2E |
 
 ```bash
 npm run test:data          # integridade dos dados
@@ -264,8 +264,8 @@ npm run test:calibrator    # calibrador e workers
 npm run test:benchmark     # realismo + assists + KDA + rating + perfis + dificuldade
 npm run test:fidelity      # scorer e contrato do corpus IFCS
 npm run test:e2e           # calibrador, aba Simular e jogo principal no navegador
-npm run test:all           # todas as 25 suítes
-npm run validate           # check + lint + todas as 25 suítes
+npm run test:all           # todas as 26 suítes
+npm run validate           # check + lint + todas as 26 suítes
 npm run score:fidelity -- caminho/entrada.json  # calcula um relatório IFCS
 npm run corpus:fidelity -- --template  # modelo do manifesto auditável
 ```

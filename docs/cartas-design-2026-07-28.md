@@ -55,12 +55,16 @@ não a fórmula. OVR e rating também não se repetem no verso.
 ## 4. Padronização
 
 - **Um bloco de tokens governa as DUAS faces**: um recuo lateral (`--pad`) em
-  `.card`/`.coachcard`, e em `.cfaces` as âncoras verticais `--b1/--b2/--b3` mais
-  quatro corpos de texto numa razão de ~1,5.
-  Até 01/08/2026 esta linha citava um `--passo:5.2%` "que gera a pilha inteira por
-  `calc`". Ele existia no CSS e **não era lido por ninguém** — a pilha sempre foi
-  ancorada pelas três medidas de base. O token foi removido junto com esta
-  correção.
+  `.card`/`.coachcard` e quatro corpos de texto numa razão de ~1,5 em `.cfaces`.
+  Esta linha já errou **duas** vezes, e as duas pelo mesmo motivo — descrevia
+  token que o CSS tinha mas ninguém lia:
+  - até 01/08/2026 citava `--passo:5.2%` "que gera a pilha inteira por `calc`";
+  - até 03/08/2026 citava as âncoras verticais `--b1/--b2/--b3`. Elas caíram na
+    §23, provadas mortas **por mutação**: valores absurdos moviam 0 de 279
+    medidas, contra 156 do controle. A pilha é ancorada pela grade de identidade,
+    não por elas.
+
+  Antes de descrever um token como contrato, confirme que alguém o **lê**.
 - **Raridade é uma tabela** de quatro sinais — cor, aro, fio e contagem de marcas.
   Nova raridade = nova linha; nenhuma faixa depende de halo externo.
 - A diagonal do verso **deriva em CSS** o mesmo ângulo físico da frente
@@ -585,7 +589,7 @@ larguras.
 Fechamento remoto: execução `30652005186` verde, 25 suítes e deploy concluído.
 A comparação visual permaneceu restrita aos mesmos 9/21 estados com cartas. A
 retomada geral, o próximo lote de retratos e o roadmap recomendado estão em
-`docs/retomada-2026-07-31.md`.
+`docs/retomada-2026-08-04.md`.
 
 ## 15. A escada volta a existir — 31/07/2026
 

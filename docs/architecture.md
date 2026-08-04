@@ -68,6 +68,14 @@ quatro stats derivados usam a largura integral e o rodapé preserva a era. Esses
 eixos são contrato do componente, não configuração individual. Isso mantém dado
 factual, preparação de asset e layout em fronteiras distintas.
 
+Desde 01/08/2026 a frente do **treinador não tem template próprio**: `coachFront`
+chama `frenteHtml`, a mesma grade do jogador, trocando apenas os campos. É uma
+fronteira, não uma economia de linhas — enquanto existiam dois templates, um
+refino da frente do jogador precisava ser reimplementado no treinador para não
+divergir, e foi assim que o nome do time parou no meio da carta com a guarda
+verde. Treinador continua sendo outra categoria **visual**, nunca uma segunda
+infraestrutura de carta.
+
 `random-source.mjs` encapsula o Mulberry32 em instâncias independentes, preservando
 as sequências uniforme e gaussiana bit a bit. A composição pública possui uma
 instância por sessão e a passa explicitamente aos motores.
@@ -208,4 +216,4 @@ A biblioteca de retratos pode avançar em paralelo porque atravessa apenas a
 fronteira asset-id → asset normalizado → componente canônico. O corpus IFCS também
 é uma trilha paralela e offline. Nenhuma das duas justifica misturar estado,
 simulação ou balanceamento no mesmo commit. O mapa geral de prioridade está em
-`docs/retomada-2026-07-31.md`.
+`docs/retomada-2026-08-04.md`.

@@ -19,13 +19,13 @@ faixas atuais são guardas de regressão, não uma nota de 0–100.
 | `npm run test:calibrator` | basic, heavy, worker | busca, intenção, custo e paralelismo |
 | `npm run test:benchmark` | realismo, assists, KDA, rating, perfis, dificuldade | fidelidade estatística dos motores, coerência de carta e dificuldade da campanha |
 | `npm run test:fidelity` | scorer e corpus IFCS | matemática, cobertura, caps, proveniência e auditoria |
-| `npm run test:e2e` | cards, intent, simulation, game flow | cartas, calibrador, aba Simular e jogo principal no navegador |
+| `npm run test:e2e` | cards, intent, simulation, game flow, acessibilidade | cartas, calibrador, aba Simular, jogo principal e a travessia por teclado/leitor de tela nos três viewports |
 | `npm run test:r5` | comparador pareado R5 | hashes, cobertura, delta nulo e detecção sintética |
 | `npm run test:r5:tails` | guardas de cauda R5.2 | ratings extremos, forma positiva e ausência de massa nos limites antigos |
-| `npm run test:all` | as 25 suítes acima | validação completa na ordem histórica |
+| `npm run test:all` | as 26 suítes acima | validação completa na ordem histórica |
 | `npm run bench` | alias de `test:all` | compatibilidade com CI e fluxo legado |
 
-`npm run validate` executa sintaxe, lint e as 25 suítes.
+`npm run validate` executa sintaxe, lint e as 26 suítes.
 
 ## Como a bancada está organizada
 
@@ -36,7 +36,7 @@ bancada/
 ├── run.js          roda a suíte por grupo; SUITE_GROUPS é a lista canônica
 ├── lib/            o que as suítes importam: motor, common, sweep,
 │                   calibrador-loader e o par fidelity-score/fidelity-corpus
-├── suites/         as 25 de SUITE_GROUPS, e só elas
+├── suites/         as 26 de SUITE_GROUPS, e só elas
 ├── golden/         roster-snapshot.json e os dois goldens de comparação
 └── ferramentas/    bancadas de trabalho e geradores que NÃO entram no run
 ```
@@ -66,6 +66,39 @@ estado em `game.js` deixa o import órfão, e o `no-unused-vars` resultante não
 reprovava nada. O repositório estava em zero avisos quando a trava entrou, então
 ela não escondeu dívida nenhuma. Regra: aviso novo se conserta ou se declara na
 `varsIgnorePattern` de `eslint.config.mjs` com motivo — não se tolera calado.
+
+## A suíte que olha o jogo, não os elementos dele (04/08/2026)
+
+`bancada/suites/e2e-acessibilidade.js` nasceu de uma pergunta que nenhuma outra
+suíte fazia: **o jogo reclama de alguma coisa enquanto roda, e alguém que não usa
+mouse consegue jogar?**
+
+As outras suítes provam que o elemento existe e que o fluxo avança. O
+`e2e-game-flow` chega perto — coleta `pageerror` e console `error` —, mas filtra
+de propósito `Failed to load resource` e `net::`, então **um 404 real passava
+batido**, e ele não olha acessibilidade nenhuma.
+
+O que ela cobre, em desktop (1440), tablet (760) e celular (390), em oito estados
+do fluxo real: console `error`/`warning`, exceção não capturada, requisição falha,
+HTTP≥400, documento sem `h1`, controle sem nome acessível, `img` sem `alt`, campo
+sem rótulo, `id` duplicado, `tabindex` positivo, focável dentro de
+`aria-hidden`, rótulo cujo controle o Tab não alcança, diálogo modal sem nome ou
+com o foco fora dele, fundo ainda focável sob `aria-modal`, `overflow-x` e alvo
+de toque menor que 24×24 (só onde há dedo).
+
+**Os três viewports não são exagero.** `overflow-x` só aparece no estreito e alvo
+de toque só existe no dedo — uma guarda só vê a superfície em que roda, a mesma
+lição que deixou 135 cartas tortas por meses.
+
+**Doze provas sintéticas** quebram o produto de propósito dentro da página e
+exigem que o auditor acuse cada defeito, mais uma que exige o retorno ao verde.
+Sem elas, um auditor sempre verde passaria por cobertura.
+
+Uma dessas provas ensina algo sobre o próprio produto: injetar "foco fora do
+modal" nos overlays reais **não funciona**, porque o `focusout` de `game.js`
+devolve o foco antes de o auditor olhar. A prova usa um diálogo sintético, fora
+da lista que aquele listener vigia. Guarda que se defende do teste sintético é
+guarda funcionando — mas a prova precisa saber disso, senão parece quebrada.
 
 `npm run check` inclui ainda `check-audio-module.js`, que usa um Web Audio falso
 para provar inicialização, volume mestre, desbloqueio iOS, síntese, mute e

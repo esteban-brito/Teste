@@ -1,8 +1,8 @@
 # AGENTS.md
 
 Este arquivo orienta pessoas e agentes de IA que trabalham neste repositório.
-Comece por `docs/retomada-2026-07-31.md`, que registra o último checkpoint
-publicado, a carta canônica e a ordem recomendada das próximas grandes etapas.
+Comece por `docs/retomada-2026-08-04.md`, o handoff geral: estado verificado do
+repositório, trabalho aberto, escopo recusado e a ordem recomendada de retomada.
 Depois leia `docs/project-context.md`, que mantém o roadmap de profissionalização
 e a visão do modo Carreira de Jogador. Leia também
 `docs/next-steps.md`, que registra a sequência aprovada para fidelidade individual,
@@ -71,10 +71,11 @@ catálogo não menciona o dado, aí sim ele não existe.
 
 ## Fontes de verdade atuais
 
-- `docs/retomada-2026-07-31.md`: **handoff geral mais recente** — checkpoint
-  publicado, contrato final das cartas, protocolo de retratos e ordem recomendada
-  entre biblioteca visual, P5, Carreira, P6/P7 e corpus IFCS. **Leia primeiro em
-  uma sessão sem memória.**
+- `docs/retomada-2026-08-04.md`: **handoff geral** — estado verificado, o que os
+  três ciclos desde 31/07 mudaram, trabalho aberto em ordem, escopo recusado com
+  motivo e decisões pendentes com o responsável. **Leia primeiro em uma sessão
+  sem memória.** A raiz de `docs/` tem exatamente um ponto de retomada; o handoff
+  anterior virou evidência em `docs/ciclos/retomada-2026-07-31.md`.
 - `docs/p5-aplicacao-ui-2026-07-29.md`: **ponto de retomada operacional do P5** —
   commits publicados, arquitetura atual, validações, contratos exatos de `S`,
   `TG`, `MP` e `MATCH`, trabalho adiado e próxima fatia segura. **Leia antes de
@@ -138,7 +139,7 @@ travava migração estrutural que é totalmente verificável. Os dois casos são
 - **Migração estrutural provada por paridade** pode ir em fatias maiores. Cada
   checkpoint deve fechar os invariantes pertinentes à superfície alterada,
   conforme a matriz abaixo. Se tocar em motor, API compartilhada ou RNG, isso
-  inclui snapshot idêntico, golden bit a bit, `validate` 25/25 e consumo de RNG
+  inclui snapshot idêntico, golden bit a bit, `validate` integral verde e consumo de RNG
   inalterado. Se tocar somente em aplicação/UI, use as guardas centrais e o E2E;
   rode a validação integral ao encerrar um marco amplo. Refatoração não muda
   resultado — se mudou, é bug da refatoração, e a fatia volta atrás.
@@ -164,7 +165,7 @@ npm run test:fidelity     # se tocar no scorer, corpus ou metodologia IFCS
 npm run test:e2e          # se tocar no jogo ou na interface do calibrador
 ```
 
-`npm run test:all` e `npm run bench` executam as mesmas 25 suítes, na ordem
+`npm run test:all` e `npm run bench` executam as mesmas 26 suítes, na ordem
 histórica. Use `npm run validate` para alterações em motores/APIs compartilhadas
 e para fechar marcos estruturais amplos. O benchmark completo é demorado; agrupe
 mudanças coerentes antes de executá-lo, mas não reduza amostras ou limites para

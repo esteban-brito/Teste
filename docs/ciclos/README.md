@@ -3,8 +3,9 @@
 Os documentos desta pasta são **relatórios de ciclos que já terminaram**. Eles
 respondem *"por que este número é este"*, não *"o que eu faço agora"*.
 
-Para saber o que fazer agora, leia `AGENTS.md` e `docs/retomada-2026-07-31.md`.
-Nenhum arquivo daqui é ponto de retomada.
+Para saber o que fazer agora, leia `AGENTS.md` e `docs/retomada-2026-08-04.md`.
+Nenhum arquivo daqui é ponto de retomada — **inclusive o handoff de 31/07/2026**,
+que chegou aqui em 04/08 depois de ser ultrapassado por três ciclos.
 
 Eles foram separados em 31/07/2026 porque `docs/` tinha 39 arquivos num diretório
 plano: guia operacional e evidência histórica disputavam o mesmo espaço, e uma
@@ -61,6 +62,17 @@ Ele chegou aqui em 03/08/2026, vindo da raiz de `docs/`. O ciclo está encerrado
 evidências. Isso **não** o rebaixa: `AGENTS.md` continua mandando lê-lo antes de
 alterar os módulos extraídos, exatamente como manda ler o relatório que produziu
 uma constante antes de mexer nela.
+
+## Handoffs superados
+
+| Arquivo | Assunto |
+|---|---|
+| `retomada-2026-07-31.md` | handoff geral entre 31/07 e 04/08/2026 — fechamento do ciclo visual das cartas e o caminho até ele, inclusive direções tentadas e descartadas |
+
+Um handoff superado é evidência como qualquer outra: ele registra por que a carta
+é o que é e o que já foi tentado. O que ele **não** pode continuar sendo é o
+arquivo que uma sessão nova abre para saber o que fazer — por isso saiu da raiz.
+O cabeçalho dele lista o que envelheceu.
 
 ## Auditorias e passadas isoladas
 

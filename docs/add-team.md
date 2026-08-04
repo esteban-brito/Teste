@@ -36,7 +36,7 @@ computados de cada time — use isso pra revisar se os overalls/funções ficara
 ## 3. Valide e prepare a publicação
 
 ```
-npm run validate         # sintaxe + lint + todas as 25 suítes
+npm run validate         # sintaxe + lint + todas as 26 suítes
 ```
 
 Depois, faça um commit exclusivo para o novo time. Checkpoints verdes podem ser
@@ -52,7 +52,7 @@ aparece automaticamente **na roleta do jogo** e **na Base de Elencos**.
 | `tools/add-team.js` | cola texto → insere nos módulos de dados + regenera elencos + valida |
 | `bancada/ferramentas/roster.js` | regenera o `const DATA` do elencos.html a partir da API pública |
 | `bancada/suites/times.js`  | lint: atributos 0–100, IDs únicos, ≥1 IGL, país do treinador, invariante do Major, resumo por time |
-| `bancada/run.js`    | orquestra as 25 suítes de dados, regressão, calibrador, benchmark, IFCS e E2E |
+| `bancada/run.js`    | orquestra as 26 suítes de dados, regressão, calibrador, benchmark, IFCS e E2E |
 
 ## Invariantes garantidos
 
