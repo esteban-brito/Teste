@@ -41,7 +41,7 @@ Fontes reais:
 - `src/ui/game/card-view.mjs`: HTML puro das duas faces;
 - `src/application/card-face.mjs`: única transição de frente/verso;
 - `prototipo-cartas.html`: laboratório que importa os três artefatos reais;
-- `bancada/e2e-cartas.js`: prova geométrica e interativa no Chromium.
+- `bancada/suites/e2e-cartas.js`: prova geométrica e interativa no Chromium.
 
 Regras não negociáveis:
 
@@ -116,7 +116,7 @@ Regras não negociáveis:
 ```text
 npm run visual:capturar -- visual-antes
 # faça a mudança primeiro no laboratório/artefatos reais
-node bancada/e2e-cartas.js
+node bancada/suites/e2e-cartas.js
 npm run visual:capturar -- visual-depois
 npm run visual:comparar -- visual-antes visual-depois
 ```
@@ -257,3 +257,61 @@ queries e ganha por ordem.
 mortos **por mutação**, não por leitura: valores absurdos moviam 0 de 279 medidas
 contra 156 do controle. O `:root` já tinha passado por essa limpeza em 01/08; a
 geometria da carta não tinha.
+
+## Sessão de 03/08/2026 — organização do repositório
+
+Ciclo sem tocar em dado, OVR, RNG, balanceamento, CSS ou geometria. A comparação
+visual fechou **21/21 idênticas**. O que mudou de lugar:
+
+- `bancada/` saiu de 42 arquivos planos para `run.js` + `lib/` (6) + `suites/`
+  (25) + `golden/` (3) + `ferramentas/` (7). Detalhe em `docs/testing.md`;
+- `docs/dados/` recebeu os três JSONs congelados; `p2-modularizacao` foi para
+  `docs/ciclos/`; `ADD_TEAM.md` virou `docs/add-team.md`;
+- `requirements-fidelity.{in,lock}` foram para `tools/`;
+- `npm run check` virou `tools/run-checks.js`;
+- a suíte do worker, antes chamada `worker-calibrador.js`, virou
+  `bancada/suites/calibrador-worker.test.js` — o nome antigo era quase homógrafo
+  de `calibrador-worker.js`, o Worker de verdade que ela testa;
+- entraram `.gitattributes`, `.editorconfig` e `.nvmrc`; 37 arquivos foram de
+  CRLF para LF e 4 perderam o BOM.
+
+### Três regras novas
+
+22. **Antes de mover arquivo, tire o caminho da contagem de `..`.** `common.js`
+    definia `ROOT` como `__dirname + ".."`, e 16 caminhos em 12 arquivos
+    dependiam da profundidade de quem os calculava — mover qualquer coisa
+    reescreveria todos em silêncio. Hoje `ROOT` sobe até achar `package.json` e
+    `GOLDEN` deriva dele. Fazer isso numa fatia separada, ANTES da mudança de
+    pasta, é o que impede que organização vire mudança de comportamento.
+23. **Reescrita de caminho em massa erra por borda, não por lógica.** Duas vezes
+    no mesmo dia: o padrão `simulation-golden.js` casou como **prefixo** dentro
+    do nome `simulation-golden.json`, mandando o golden para a pasta errada; e um
+    script que tratava `./X` e `../docs/` passou
+    batido nos cinco `../src/` — o segundo derrubou 16 suítes de uma vez porque
+    `lib/motor.js` é a ponte que quase tudo importa. Antes de reescrever, enumere
+    **todas** as formas que o caminho assume no repositório e ponha borda à
+    direita do padrão. Depois varra o resultado por `..`, não por `require`.
+24. **`ferramentas/` não é lixeira.** `classificacao.js` e `serie.js` se declaram
+    no cabeçalho como bancadas fora do `run.js`, e a auditoria de órfãos de
+    31/07/2026 registrou isso por escrito. Não estarem em `SUITE_GROUPS` não é
+    esquecimento. Duas dependências cruzam pastas de propósito:
+    `suites/dificuldade.js` → `ferramentas/campanha-major.js` e
+    `ferramentas/r5-experiment.js` → `suites/auditoria.js`.
+
+### O que ficou de fora, e por quê
+
+Não é backlog esquecido; é escopo recusado com motivo:
+
+- **mover o site para `web/`** — o workflow publica com `publish_dir: .` e faz
+  `sed` de cache-busting; é migração de deploy, não faxina;
+- **quebrar `sandbox.html`** — 4.206 linhas, com `<script>` inline de 3.465 e
+  `<style>` de 702. É a maior dívida do repositório e merece ciclo com paridade
+  provada;
+- **unificar CJS → ESM** — `src/` é 48 `.mjs`; `bancada/` e `tools/` são 63
+  `.js` CommonJS. São 63 arquivos de mudança lógica, que contaminariam qualquer
+  commit de organização.
+
+Observação lateral não tratada: `tools/` calcula a raiz do repositório 12 vezes,
+com três nomes diferentes (`ROOT`, `RAIZ`, `root`) e dois métodos (`path.join` e
+`path.resolve`), e mais 6 arquivos de `tools/` importam `ROOT` de
+`bancada/lib/common.js`. Funciona, porque `tools/` não mudou de profundidade.
