@@ -120,7 +120,10 @@ body{background:linear-gradient(180deg,#090d14 0%,#070a0f 100%);
   color:var(--txt);font-family:'Barlow Semi Condensed',sans-serif;min-height:100vh;min-height:100dvh;overflow-x:hidden;
   padding:16px max(16px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
 .wrap{max-width:1180px;margin:0 auto;position:relative}
-.logo{font-family:var(--ff);font-weight:700;font-size:clamp(1.55rem,4vw,2.18rem);letter-spacing:.08em;line-height:1}
+/* `.logo` é o <h1> do documento desde 04/08/2026 — o único que existia estava
+   dentro do <noscript> e nunca renderizava. `margin:0` neutraliza o padrão do UA:
+   sem ele o cabeçalho ganharia .67em acima e abaixo. */
+.logo{font-family:var(--ff);font-weight:700;font-size:clamp(1.55rem,4vw,2.18rem);letter-spacing:.08em;line-height:1;margin:0}
 .logo b{color:var(--accent)}
 .logo span{color:var(--dim);font-size:.62rem;display:block;letter-spacing:.22em;font-weight:600;text-transform:uppercase;margin-top:5px}
 header{display:flex;position:relative;flex-wrap:wrap;flex-direction:row;align-items:center;justify-content:space-between;
@@ -1572,6 +1575,12 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(var(--accent-rgb
 .hall-rec-l{font-family:var(--ff);font-weight:700;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--neutral)}
 .hall-rec-m{font-size:.68rem;color:var(--dim)}
 .hall-import{cursor:pointer}
+/* O input de importar era `hidden`, e `hidden` não é focável: o rótulo virava um
+   controle só-de-mouse, e importar backup é a única forma de restaurar progresso.
+   Escondido para o olho, preservado para o Tab e para o leitor de tela. */
+.so-leitor{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;
+  clip-path:inset(50%);overflow:hidden;white-space:nowrap}
+.hall-import:focus-within{outline:2px solid var(--accent);outline-offset:2px}
 
 /* ── Treinador: a placa da frente tem escada própria ─────────────────────────
    Até 01/08/2026 esta regra amarrava a placa da frente à faixa do verso

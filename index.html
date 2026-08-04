@@ -50,7 +50,7 @@
 </noscript>
 <div class="wrap">
   <header>
-    <div class="logo">draft<b>9</b>-<b>0</b><span>Montagem de elenco · rumo ao título invicto</span></div>
+    <h1 class="logo">draft<b>9</b>-<b>0</b><span>Montagem de elenco · rumo ao título invicto</span></h1>
     <div class="hud">
       <div class="s"><div class="v" id="cnt">0/6</div><div class="l">Escalados</div></div>
       <div class="s"><div class="v pwr" id="pwr">—</div><div class="l">Força total</div></div>
@@ -118,7 +118,7 @@
 </div>
 
 <!-- Overlay: Fase Suíça (estilo Major) -->
-<div class="overlay" id="suicaOverlay" role="dialog" aria-modal="true" aria-labelledby="suicaTitle" hidden>
+<div class="overlay" id="suicaOverlay" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="suicaTitle" hidden>
   <div class="overlay-head">
     <div class="overlay-title" id="suicaTitle">Fase Suíça <span id="suicaSub"></span></div>
     <div class="overlay-actions">
@@ -137,7 +137,7 @@
 </div>
 
 <!-- Overlay: Playoffs (bracket) -->
-<div class="overlay" id="playoffOverlay" role="dialog" aria-modal="true" aria-labelledby="playoffTitle" hidden>
+<div class="overlay" id="playoffOverlay" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="playoffTitle" hidden>
   <div class="overlay-head">
     <div class="overlay-title" id="playoffTitle">Playoffs <span id="playoffSub"></span></div>
     <div class="overlay-actions">
@@ -149,7 +149,7 @@
 </div>
 
 <!-- Overlay: Partida (antessala + mapa ao vivo) -->
-<div class="overlay match-overlay" id="matchOverlay" role="dialog" aria-modal="true" aria-label="Partida" hidden>
+<div class="overlay match-overlay" id="matchOverlay" tabindex="-1" role="dialog" aria-modal="true" aria-label="Partida" hidden>
   <button class="match-close" id="matchClose" aria-label="Fechar"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 2L12 12M12 2L2 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
   <!-- Antessala -->
   <div class="prematch" id="prematch">
@@ -184,7 +184,7 @@
     </div>
   </div>
 </div>
-<div class="overlay final-overlay" id="finalOverlay" role="dialog" aria-modal="true" aria-labelledby="finalTitulo" hidden>
+<div class="overlay final-overlay" id="finalOverlay" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="finalTitulo" hidden>
   <div class="final-glow" id="finalGlow"></div>
   <div class="final-wrap">
     <div class="final-trophy" id="finalTrophy"><svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -205,12 +205,12 @@
   </div>
 </div>
 
-<div class="overlay" id="hallOverlay" role="dialog" aria-modal="true" aria-labelledby="hallTitulo" hidden>
+<div class="overlay" id="hallOverlay" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="hallTitulo" hidden>
   <div class="overlay-head">
     <div class="overlay-title" id="hallTitulo">Hall da Fama</div>
     <div class="overlay-actions">
       <button class="ghost" id="hallExportar" title="Baixar backup do progresso">Exportar</button>
-      <label class="ghost hall-import" title="Restaurar progresso de um backup">Importar<input type="file" id="hallImportar" accept="application/json" hidden></label>
+      <label class="ghost hall-import" title="Restaurar progresso de um backup">Importar<input class="so-leitor" type="file" id="hallImportar" accept="application/json"></label>
       <button class="ghost" id="hallFechar">Fechar</button>
     </div>
   </div>
