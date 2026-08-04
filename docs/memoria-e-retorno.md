@@ -23,7 +23,7 @@ Entregue nesta etapa:
 
 - **Núcleo puro** (`src/domain/narrative/game-memory.mjs`, exposto pela API pública): `coletarMarcos`,
   `atualizarRecordes`, `manchete`, `narrativaMVP`, `perspectivaDoMapa`, `maiorClutchDoLado`.
-  Contratos em `bancada/memoria.js` (grupo regression): determinismo total, perspectiva do
+  Contratos em `bancada/suites/memoria.js` (grupo regression): determinismo total, perspectiva do
   meu time, merge só quando supera, prioridade de manchetes (clutch 1v3+ > OT > virada >
   carry > atropelo > equilíbrio > padrão).
 - **`PROGRESSO`** (`src/infrastructure/persistence/progress-store.mjs`): localStorage
@@ -53,7 +53,7 @@ Entregue nesta etapa:
 
 ## Invariantes de teste
 
-- `bancada/memoria.js` cobre o núcleo puro; o E2E do jogo cobre persistência e Hall.
+- `bancada/suites/memoria.js` cobre o núcleo puro; o E2E do jogo cobre persistência e Hall.
 - Golden, snapshot e paridades **não mudam** em nenhuma entrega desta trilha, exceto o
   futuro commit de balanceamento do Modo Profissional (que seguirá o protocolo do
   `AGENTS.md`: separado, comparado e justificado).

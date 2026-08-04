@@ -36,7 +36,7 @@ O `zweih` estava a **0,0000**. Ou seja: metade do elenco a um empurrão de ser o
 torna qualquer padronização cara em mudanças, e torna o rótulo menos informativo do que parece.
 
 Por isso a reformulação perseguiu **duas** métricas, não uma: quantos jogadores mudam
-(estabilidade) **e** a margem de decisão (nitidez). `bancada/classificacao.js` mede as duas.
+(estabilidade) **e** a margem de decisão (nitidez). `bancada/ferramentas/classificacao.js` mede as duas.
 
 ## A regra
 
@@ -66,7 +66,7 @@ mudou** — padronizar receita de estilo não toca a atribuição de função, q
 ### A âncora que reprovou o primeiro vencedor
 
 O melhor candidato por nitidez pura tirava **drop, fnx e gla1ve** do Facilitador — exatamente os
-três jogadores que `bancada/drop-reform.js` ancora, de uma reforma deliberada anterior. A
+três jogadores que `bancada/suites/drop-reform.js` ancora, de uma reforma deliberada anterior. A
 medição pegou o erro: a receita `ut/tr/ab` era pior que a antiga para capturar o perfil "glue".
 
 As âncoras viraram restrição dura e o Facilitador foi rebuscado sobre 20 combinações. Duas

@@ -13,13 +13,13 @@ E2E — ver achado 1.
 ## Achados corrigidos
 
 ### 1. [bug/infra · alta] E2E impossíveis de rodar fora da CI com cache de browser divergente
-- **Onde:** `bancada/e2e-intent.js:42`, `bancada/e2e-simulation.js:35`, `bancada/e2e-game-flow.js:117`.
+- **Onde:** `bancada/suites/e2e-intent.js:42`, `bancada/suites/e2e-simulation.js:35`, `bancada/suites/e2e-game-flow.js:117`.
 - **Repro:** container padrão com Chromium pré-instalado (`chromium-1194` em
   `PLAYWRIGHT_BROWSERS_PATH`) e Playwright fixado em `^1.61.1` → os três E2E abortam com
   `browserType.launch: Executable doesn't exist at .../chromium_headless_shell-1228/...`.
   O contrato "ausência de infra falha visível" estava correto, mas a suíte não oferecia NENHUM
   caminho para usar um Chromium local válido — só CI conseguia rodar E2E.
-- **Correção:** helper `chromiumLaunchOptions()` em `bancada/common.js`, usado pelos três E2E.
+- **Correção:** helper `chromiumLaunchOptions()` em `bancada/lib/common.js`, usado pelos três E2E.
   Sem a env `CHROMIUM_EXECUTABLE`, o comportamento é byte a byte o de antes (mesmo objeto
   `{headless:true}`); com ela, `executablePath` aponta o binário local. Caminho inválido
   continua falhando visível — nada converte falta de browser em sucesso.
@@ -70,7 +70,7 @@ E2E — ver achado 1.
   modular do índice).
 - **Código morto:** 0 funções sem referência em `game.js` e em `sandbox.html`; 0 exports mortos
   em `src/` (os dois suspeitos, `quantileSorted` e `distributionSummary`, são usados por acesso
-  qualificado em `bancada/auditoria.js` e `bancada/r5-comparison.js`).
+  qualificado em `bancada/suites/auditoria.js` e `bancada/suites/r5-comparison.js`).
 - **CSS órfão:** 0 (as classes `coach-*` são construídas dinamicamente em `game.js:1578`).
 - **Sobras de debug:** 0 `console.*` indevidos (os 3 do sandbox são `console.error` legítimos de
   fallback de workers/erro visível).
@@ -83,7 +83,7 @@ E2E — ver achado 1.
 
 ## Validação final
 
-Mudanças tocam apenas `bancada/common.js`, os 3 E2E e o painel individual do `sandbox.html`
+Mudanças tocam apenas `bancada/lib/common.js`, os 3 E2E e o painel individual do `sandbox.html`
 (camada de visão). Gates executados após as mudanças: `npm run check` (15 paridades) ✓ ·
 `npm run lint` ✓ · `test:data` ✓ · `test:regression` (golden + snapshot idênticos) ✓ ·
 `test:calibrator` ✓ · `test:e2e` 3/3 ✓ (com `CHROMIUM_EXECUTABLE` local). Motor intocado:

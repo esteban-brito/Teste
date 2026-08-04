@@ -4,7 +4,7 @@
 > 22 de julho. Ele preserva o raciocínio e a sequência histórica de R1–R6/P1–P6,
 > mas **não é mais o handoff operacional atual**: P2 e o ciclo funcional da
 > simulação avançaram depois dele. Para retomar hoje, use `docs/project-context.md`,
-> **`docs/retomada-2026-07-31.md`**, `docs/p2-modularizacao-2026-07-28.md`,
+> **`docs/retomada-2026-07-31.md`**, `docs/ciclos/p2-modularizacao-2026-07-28.md`,
 > `docs/p5-aplicacao-ui-2026-07-29.md` e, para cartas, a seção 14 de
 > `docs/cartas-design-2026-07-28.md`. O backlog e as
 > decisões de produto deste arquivo continuam válidos quando não forem
@@ -259,7 +259,7 @@ Contrato implementado da primeira fatia:
 - forma de cada time sorteada uma vez e mantida durante a série;
 - placar da série e placares de cada mapa;
 - diagnóstico individual disponível, sempre marcado como amostra pequena;
-- golden próprio em `bancada/campaign-golden.json`;
+- golden próprio em `bancada/golden/campaign-golden.json`;
 - separação visual explícita: a MD3 não se apresenta como expectativa ou nota
   de fidelidade e não altera o Major do jogo principal.
 
@@ -344,7 +344,7 @@ Achados do gate:
 Só executar se R4 comprovar um problema material.
 
 **Status em 23/07/2026:** R5.0–R5.1 e R5.2 concluídas. O
-manifesto congelado está em `docs/r5-experiment.json` e a arquitetura completa
+manifesto congelado está em `docs/dados/r5-experiment.json` e a arquitetura completa
 em `docs/ciclos/r5-plan.md`. A captura de desenvolvimento cobre 1.088 mapas e 10.880
 player-maps; baseline contra baseline deve produzir deltas e IC95% exatamente
 zero antes de qualquer candidato. R5.2 removeu isoladamente os pisos/tetos duros
@@ -440,7 +440,7 @@ já foram entregues em R2.
 > resultados aprovados, do RNG ou do balanceamento. Jogo, sandbox, worker e
 > bancada usam a mesma API pública; o bloco duplicado de `game.js` foi removido.
 > O relatório detalhado e os contratos descobertos estão em
-> **`docs/p2-modularizacao-2026-07-28.md`** — leia-o antes de retomar.
+> **`docs/ciclos/p2-modularizacao-2026-07-28.md`** — leia-o antes de retomar.
 
 - aceitar ou revisar ADRs 0002 e 0004;
 - extrair primeiro APIs puras de avaliação;
@@ -549,7 +549,7 @@ eles sem conversar com o responsável.
 
 - **Reformulação de roles e playstyles.** Mexe no coração da classificação (`ROLE_PERFIL`,
   `NM_DEF`, `STYLE_CONTRA`, `roleStyleReality`) e, portanto, no snapshot dos 85 jogadores e em
-  todas as assinaturas de `bancada/perfis.js`. É a mudança de maior alcance já cogitada:
+  todas as assinaturas de `bancada/suites/perfis.js`. É a mudança de maior alcance já cogitada:
   qualquer versão dela é balanceamento estrutural, com comparação pareada e commit próprio.
 - ~~**Estilo das cartas** (apresentação visual dos jogadores).~~ **ENTREGUE em
   31/07/2026** — a A refinada é o componente canônico; o trabalho restante é
@@ -567,7 +567,7 @@ tudo é evolução deliberada.
 Registradas para não voltarem como se fossem novas.
 
 - **Memória de série** (o mapa 2 reagir ao que aconteceu no mapa 1). Medida antes de virar
-  mecânica, com `bancada/serie.js`. O formato MD3 sozinho já dá 75% ao vencedor do mapa 1 — ele
+  mecânica, com `bancada/ferramentas/serie.js`. O formato MD3 sozinho já dá 75% ao vencedor do mapa 1 — ele
   precisa de 1 dos 2 seguintes, o outro precisa dos 2. O jogo entrega **79,2%** em confrontos
   equilibrados e **81,9%** no geral, com gradiente correto por diferença de força (79% → 85%).
   Ou seja: **a persistência já existe**, e vem da forma de campanha, que é sorteada uma vez e

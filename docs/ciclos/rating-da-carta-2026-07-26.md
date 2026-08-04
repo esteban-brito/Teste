@@ -73,7 +73,7 @@ mapa começar.
 
 ### O que piorou — e por que isso é o resultado correto
 
-`bancada/rating.js` caiu de r=0,960 / MAE=0,045 / inclinação=1,013 para **r=0,859 / MAE=0,074
+`bancada/suites/rating.js` caiu de r=0,960 / MAE=0,045 / inclinação=1,013 para **r=0,859 / MAE=0,074
 / inclinação=0,510**.
 
 Isso não é regressão: é a medida deixando de ser circular. A inclinação de 0,51 diz que a
@@ -83,7 +83,7 @@ exigiria devolver o rating histórico ao motor — exatamente o que esta etapa r
 Por isso `rating.js` **deixou de ser gate** e virou relatório. Sua única checagem obrigatória
 que permanece é a **cobertura**: um jogador sumir da amostra continua sendo erro.
 
-O gate de qualidade individual passou a ser `bancada/perfis.js`, agora com **ratchet por
+O gate de qualidade individual passou a ser `bancada/suites/perfis.js`, agora com **ratchet por
 etapa**: os critérios de coerência de carta já reprovam a suíte, de modo que uma mudança
 futura que reintroduza circularidade quebra o build.
 

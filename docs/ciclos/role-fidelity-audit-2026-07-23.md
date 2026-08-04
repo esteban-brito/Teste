@@ -8,11 +8,11 @@ Escopo: caracterização diagnóstica e telemetria opcional, sem balanceamento
 Comando:
 
 ```text
-node bancada/auditoria.js --deep --cycles 8
+node bancada/suites/auditoria.js --deep --cycles 8
 ```
 
 A auditoria foi executada originalmente pelo motor de `game.js`; hoje
-`bancada/motor.js` compõe a mesma API pública de simulação. A agenda round-robin
+`bancada/lib/motor.js` compõe a mesma API pública de simulação. A agenda round-robin
 determinística e o contrato Mulberry32 permanecem. A execução cobriu:
 
 - 85 IDs e 17 times;

@@ -458,9 +458,9 @@ Resumo em 20 de julho de 2026:
 - auditoria de placares e eventos;
 - splits por evento congelados.
 
-Estado: o alvo está congelado em `docs/fidelity-target.json`. O schema, o selo
+Estado: o alvo está congelado em `docs/dados/fidelity-target.json`. O schema, o selo
 SHA-256, a seleção determinística da auditoria e as travas de publicação estão
-implementados em `bancada/fidelity-corpus.js`. O extrator Awpy passou no
+implementados em `bancada/lib/fidelity-corpus.js`. O extrator Awpy passou no
 autoteste e em duas extrações independentes da mesma demo CS2 real, declarada em
 `fidelity-corpus/parser-proof.json`. Como essa demo FACEIT acadêmica não pertence
 à população profissional definida, ela prova o pipeline, mas não conta no
@@ -475,8 +475,8 @@ humana, portanto M1 ainda não está concluído.
 - teste de monotonicidade: aproximar o sim do real nunca piora a métrica;
 - saída JSON determinística para seeds e corpus fixos.
 
-Estado: implementado em `bancada/fidelity-score.js`, com contrato sintético em
-`bancada/fidelity-score.test.js`. Isso valida a fórmula, mas não conclui M1 nem
+Estado: implementado em `bancada/lib/fidelity-score.js`, com contrato sintético em
+`bancada/suites/fidelity-score.test.js`. Isso valida a fórmula, mas não conclui M1 nem
 autoriza uma nota oficial sem corpus real auditado.
 
 ### M3 — benchmark integrado

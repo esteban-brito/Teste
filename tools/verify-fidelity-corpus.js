@@ -2,7 +2,7 @@
 const fs=require("fs");
 const path=require("path");
 const crypto=require("crypto");
-const C=require("../bancada/fidelity-corpus");
+const C=require("../bancada/lib/fidelity-corpus");
 
 function usage(){
   console.log("Uso:");

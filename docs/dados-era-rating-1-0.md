@@ -59,7 +59,7 @@ MAE 0,050, inclinação 1,016, maior erro individual 0,178.
 ## O ponto que exige atenção: `rating` é gabarito, não atributo
 
 O campo `rating` **não descreve o jogador** — é a referência histórica contra a qual
-`bancada/rating.js` compara o rating simulado. É o gabarito.
+`bancada/suites/rating.js` compara o rating simulado. É o gabarito.
 
 O editor do sandbox trata `rating` como mais um campo editável, ao lado de `fp`, `en`, `tr`…
 (`sandbox.html`, `EDITOR_FIELDS`). Ou seja: **a mesma tela edita a resposta e o gabarito**. O
@@ -69,8 +69,8 @@ Para a era Rating 1.0 isso é menos grave do que parece — o próprio 1,10 já 
 métrica antiga, traduzido para a escala atual, e portanto também julgamento. Mas o risco
 estrutural permanece: **é possível mover o alvo junto com a flecha e a pontaria parecer boa.**
 
-Foi por essa circularidade, medida de forma independente, que `bancada/rating.js` deixou de ser
-gate em 26/07/2026 e virou relatório. Hoje o gate de qualidade individual é `bancada/perfis.js`,
+Foi por essa circularidade, medida de forma independente, que `bancada/suites/rating.js` deixou de ser
+gate em 26/07/2026 e virou relatório. Hoje o gate de qualidade individual é `bancada/suites/perfis.js`,
 que compara **assinaturas de função e playstyle**, não o rating contra si mesmo.
 
 ### Guarda recomendada, ainda não implementada

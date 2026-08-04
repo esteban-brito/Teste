@@ -3,7 +3,13 @@
         N=1500 node bancada/run.js (profundo) */
 const {execFileSync}=require("child_process");
 const path=require("path");
-const {secondsSince}=require("./common");
+const {secondsSince}=require("./lib/common");
+
+/* As suítes vivem em `suites/`; `lib/` guarda o que elas importam, `golden/` os
+   arquivos congelados de comparação e `ferramentas/` as bancadas de trabalho que
+   NÃO entram no run — `classificacao.js` e `serie.js` se declaram assim no
+   cabeçalho de propósito, e não estarem aqui não é esquecimento. */
+const SUITES_DIR="suites";
 
 // Os E2E usam Playwright/Chromium reais. A dependência e o browser são obrigatórios: ausência
 // de infraestrutura deve falhar de forma visível, nunca converter falta de cobertura em sucesso.
@@ -37,7 +43,7 @@ function selectedGroup(argv){
 function runSuite(file){
   const started=Date.now();
   try{
-    execFileSync(process.execPath,[path.join(__dirname,file)],{stdio:"inherit",env:process.env});
+    execFileSync(process.execPath,[path.join(__dirname,SUITES_DIR,file)],{stdio:"inherit",env:process.env});
     return {ok:true,seconds:secondsSince(started)};
   }catch{
     return {ok:false,seconds:secondsSince(started)};

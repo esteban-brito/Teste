@@ -79,7 +79,7 @@ catálogo não menciona o dado, aí sim ele não existe.
   commits publicados, arquitetura atual, validações, contratos exatos de `S`,
   `TG`, `MP` e `MATCH`, trabalho adiado e próxima fatia segura. **Leia antes de
   alterar aplicação, estado ou UI do jogo.**
-- `docs/p2-modularizacao-2026-07-28.md`: **relatório final do ciclo P2** (modularização
+- `docs/ciclos/p2-modularizacao-2026-07-28.md`: **relatório final do ciclo P2** (modularização
   por paridade) — o que saiu, os contratos descobertos, o mecanismo de prova de
   consumo de RNG e as armadilhas. **Leia antes de alterar os módulos extraídos.**
 - `src/data/catalog.mjs`: **índice de todo dado do projeto** — fonte, chave, cobertura e a
@@ -95,12 +95,12 @@ catálogo não menciona o dado, aí sim ele não existe.
 - `src/ui/game/*.mjs`: HTML puro de cartas, química, times, torneio, partida,
   campanha final e Hall; escaping compartilhado em `src/ui/shared/html.mjs`.
 - `game.js`: aplicação, estado e interface; não contém motores ou dados crus.
-- `bancada/motor.js`: ponte CommonJS fina para a mesma API pública.
+- `bancada/lib/motor.js`: ponte CommonJS fina para a mesma API pública.
 - `sandbox.html`: interface e algoritmo do calibrador.
-- `bancada/roster-snapshot.json`: classificação aprovada de cada ID de jogador.
-- `bancada/fidelity-score.js`: matemática e agregação do IFCS.
-- `bancada/fidelity-corpus.js`: schema, proveniência, auditoria e travas do corpus IFCS.
-- `docs/fidelity-target.json`: população e época congeladas para a primeira medição.
+- `bancada/golden/roster-snapshot.json`: classificação aprovada de cada ID de jogador.
+- `bancada/lib/fidelity-score.js`: matemática e agregação do IFCS.
+- `bancada/lib/fidelity-corpus.js`: schema, proveniência, auditoria e travas do corpus IFCS.
+- `docs/dados/fidelity-target.json`: população e época congeladas para a primeira medição.
 - `docs/realism-methodology.md` e `docs/fidelity-corpus.md`: protocolo científico
   e operacional do IFCS; não substituem os contratos executáveis acima.
 - `elencos.html`: artefato gerado; não editar os dados embutidos manualmente.
@@ -114,13 +114,20 @@ A fronteira arquitetural vigente está detalhada em `docs/architecture.md`.
 
 **`docs/` está separado por função desde 31/07/2026.** Na raiz ficam os documentos
 que orientam trabalho novo; em `docs/ciclos/` ficam os relatórios de ciclos
-encerrados — R5/R6, o ciclo de fidelidade da simulação e as auditorias isoladas.
-Evidência não é roteiro: nenhum arquivo de `docs/ciclos/` é ponto de retomada. Mas
-eles continuam sendo a justificativa medida das constantes do motor, então alterar
-uma constante sem ler o relatório que a produziu é desfazer trabalho comprovado. O
-índice está em `docs/ciclos/README.md`. `tools/check-doc-links.js`, no
-`npm run check`, prova que nenhuma referência da documentação aponta para arquivo
-inexistente.
+encerrados — R5/R6, o ciclo de fidelidade da simulação, o P2 e as auditorias
+isoladas. Evidência não é roteiro: nenhum arquivo de `docs/ciclos/` é ponto de
+retomada. Mas eles continuam sendo a justificativa medida das constantes do motor,
+então alterar uma constante sem ler o relatório que a produziu é desfazer trabalho
+comprovado. O índice está em `docs/ciclos/README.md`.
+
+Desde 03/08/2026 há um terceiro lugar: **`docs/dados/`**, para os arquivos que são
+dado congelado e não texto — `fidelity-target.json`, `r5-experiment.json` e
+`fidelity-technical-baseline.json`. Eles são consumidos por código e por
+comparação, não lidos como documentação, e misturá-los com prosa fazia a raiz de
+`docs/` parecer maior do que é.
+
+`tools/check-doc-links.js`, no `npm run check`, prova que nenhuma referência da
+documentação aponta para arquivo inexistente.
 
 **Quanto se pode andar de uma vez (revisto em 28/07/2026).** A regra antiga — "não antecipe
 várias etapas numa única mudança" — protegia contra mudança *não medida*, mas na prática também
@@ -169,11 +176,11 @@ obter um resultado verde.
 - Antes de atualizar o snapshot, explique cada diferença e confirme que a
   mudança de classificação é intencional.
 - O snapshot deve cobrir todos os IDs de `ATRIBUTOS`; cobertura parcial é erro.
-- `elencos.html` é regenerado por `bancada/roster.js` enquanto a arquitetura
+- `elencos.html` é regenerado por `bancada/ferramentas/roster.js` enquanto a arquitetura
   legada existir.
 - Demos `.dem`, saídas `processed/`, material `private-audit/`, credenciais e
   cookies nunca entram no Git.
-- O extrator IFCS usa `.venv-fidelity` isolada e `requirements-fidelity.lock`.
+- O extrator IFCS usa `.venv-fidelity` isolada e `tools/requirements-fidelity.lock`.
   A validação Node não instala Awpy nem substitui a prova com uma demo real.
 - Não edite `package-lock.json` à mão.
 
@@ -212,5 +219,5 @@ real sustenta. Ninguém estava somando.
 **Regra:** toda etapa de balanceamento reporta os dois números **antes e depois**, junto — como
 já se faz com a contagem de jogadores alterados. Um sem o outro não decide nada.
 
-A curva completa das quatro faixas de diferença de força sai em `bancada/realismo.js`; a
-dificuldade, com IC95%, em `bancada/dificuldade.js`.
+A curva completa das quatro faixas de diferença de força sai em `bancada/suites/realismo.js`; a
+dificuldade, com IC95%, em `bancada/suites/dificuldade.js`.

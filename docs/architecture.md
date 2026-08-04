@@ -9,7 +9,7 @@ avaliação, química, simulação e narrativa entram por
 `src/public/simulation-api.mjs`.
 
 Jogo, sandbox, worker do calibrador e bancada Node consomem a mesma composição
-pública. `bancada/motor.js` é apenas uma ponte CommonJS que cria estado avaliado
+pública. `bancada/lib/motor.js` é apenas uma ponte CommonJS que cria estado avaliado
 e sessão de RNG novos por carga; não lê nem avalia texto de `game.js`.
 
 O IFCS é infraestrutura de validação offline, não parte do runtime. O scorer e o
@@ -192,7 +192,7 @@ snapshots. Testes e artefatos persistentes devem usar o ID cru.
 ## Próxima evolução arquitetural
 
 R1–R3 e a modularização do domínio estão concluídos; a MD3 do laboratório usa os
-mesmos motores e continua protegida por `bancada/campaign-golden.json`. A primeira
+mesmos motores e continua protegida por `bancada/golden/campaign-golden.json`. A primeira
 extração de estado da aplicação também foi concluída; a sequência restante segue
 a ordem exata do handoff P5.
 

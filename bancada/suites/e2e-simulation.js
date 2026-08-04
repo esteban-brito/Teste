@@ -1,0 +1,324 @@
+/* bancada/suites/e2e-simulation.js — contrato de navegador da aba Simular.
+   Protege placar, confronto bilateral, amostra da liga, métricas profissionais,
+   seed automática, rolagem e responsividade. Não altera nem recalibra o motor. */
+const http=require("http");
+const fs=require("fs");
+const path=require("path");
+const {spawn}=require("child_process");
+const {chromium}=require("playwright");
+const {ROOT,okMark,chromiumLaunchOptions}=require("../lib/common");
+const CAMPAIGN_GOLDEN=require("../golden/campaign-golden.json");
+
+function waitServer(port,tries=50){
+  return new Promise((resolve,reject)=>{
+    const tick=n=>{
+      const req=http.get({host:"127.0.0.1",port,path:"/sandbox.html"},res=>{res.resume();resolve();});
+      req.on("error",()=>{if(n<=0)reject(new Error("servidor não subiu"));else setTimeout(()=>tick(n-1),150);});
+    };
+    tick(tries);
+  });
+}
+
+let failures=0;
+function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failures++;}
+
+(async()=>{
+  console.log("— E2E: ABA SIMULAR (mapa + lote) —");
+  const port=5500+Math.floor(Math.random()*400);
+  const server=spawn(process.execPath,[path.join(ROOT,"tools","serve-static.js")],
+    {env:{...process.env,PORT:String(port)},stdio:"ignore"});
+  let browser=null;
+  const done=async code=>{try{if(browser)await browser.close();}catch{}try{server.kill();}catch{}process.exitCode=code;};
+
+  try{
+    await waitServer(port);
+    browser=await chromium.launch(chromiumLaunchOptions());
+    const page=await browser.newPage({viewport:{width:1440,height:700}});
+    const errors=[];
+    page.on("pageerror",error=>errors.push(String(error.message||error)));
+    page.on("console",message=>{
+      if(message.type()==="error"&&!/Failed to load resource|ERR_CONNECTION|ERR_NAME_NOT_RESOLVED|net::/.test(message.text())){
+        errors.push("console:"+message.text());
+      }
+    });
+
+    await page.goto(`http://127.0.0.1:${port}/sandbox.html?e2e=1`,{waitUntil:"load",timeout:20000});
+    await page.waitForFunction(()=>window.__e2e&&window.__e2e.ready,{timeout:20000});
+    await page.click('#modebar button[data-mode="simular"]');
+    await page.waitForSelector("#runMapBtn",{timeout:8000});
+    const matchControls=await page.evaluate(()=>(
+      {batchAccent:document.getElementById("runBatchBtn").classList.contains("accent"),mapAccent:document.getElementById("runMapBtn").classList.contains("accent")}
+    ));
+    check(matchControls.batchAccent&&!matchControls.mapAccent,"confronto destaca o lote como ação principal");
+
+    await page.selectOption("#simA","0");
+    await page.selectOption("#simB","1");
+    await page.selectOption("#simMap","Mirage");
+    await page.click("#runMapBtn");
+    await page.waitForSelector("#matchout .scoreboards table",{timeout:10000});
+
+    const map=await page.evaluate(()=>{
+      const tables=[...document.querySelectorAll("#matchout .scoreboards table")];
+      const headers=tables.map(table=>[...table.querySelectorAll("thead th")].map(cell=>cell.textContent.trim()));
+      const rows=tables.map(table=>[...table.querySelectorAll("tbody tr")].map(row=>[...row.cells].map(cell=>cell.textContent.trim())));
+      return {headers,rows,text:document.getElementById("matchout").textContent};
+    });
+    const expectedPlayerColumns=["K","D","A","KAST","ADR","Rating"];
+    const allMapRows=map.rows.flat();
+    const validMapValues=allMapRows.every(row=>row.length===7&&/^\d+%$/.test(row[4])&&Number.isFinite(Number(row[5]))&&Number.isFinite(Number(row[6])));
+    check(map.headers.length===2&&map.rows.every(rows=>rows.length===5),"placar contém 2 times e 5 jogadores por time");
+    check(map.headers.every(headers=>JSON.stringify(headers.slice(1))===JSON.stringify(expectedPlayerColumns)),"colunas K/D/A/KAST/ADR/Rating estão padronizadas");
+    check(validMapValues,"KAST, ADR e Rating estão preenchidos com valores válidos");
+    check(!/NaN|undefined|Infinity/.test(map.text),"placar do mapa não contém valores inválidos");
+    const mapSeed=await page.evaluate(()=>window.__e2e.simulation().seed);
+    const hasSeedControl=await page.locator("#simSeed").count();
+    check(Number.isInteger(mapSeed)&&mapSeed>0&&!hasSeedControl,"mapa usa seed automática sem expor controle manual");
+
+    await page.fill("#simRuns","1");
+    await page.click("#runBatchBtn");
+    await page.waitForSelector("#matchout .player-variance-table",{state:"attached",timeout:15000});
+    const singleMapVariance=await page.evaluate(()=>({
+      headers:[...document.querySelectorAll(".player-variance-table thead th")].map(cell=>cell.textContent.trim()),
+      rows:[...document.querySelectorAll(".player-variance-table tbody tr")].map(row=>({
+        id:row.dataset.playerId,
+        stats:Object.fromEntries([...row.querySelectorAll("td[data-stat]")].map(cell=>[cell.dataset.stat,cell.dataset.value])),
+        roles:{primary:row.querySelector(".role-cell")?.dataset.primaryRole,secondary:row.querySelector(".role-cell")?.dataset.secondaryRole},
+        combat:{...row.querySelector(".kd-cell")?.dataset},
+        range:{...row.querySelector(".distribution-cell")?.dataset},
+        distributionLabel:row.querySelector(".rating-viz")?.getAttribute("aria-label")||"",
+        sufficient:row.dataset.sufficient
+      })),
+      players:window.__e2e.simulation().players
+    }));
+    const expectedVarianceColumns=["Jogador","Time","Funções","Comparar","Rating","K/D","KAST","ADR","Distribuição","Mapas"];
+    const singlePlayers=new Map(singleMapVariance.players.map(player=>[player.id,player]));
+    const validSingleMap=singleMapVariance.rows.every(row=>{
+      const player=singlePlayers.get(row.id),average=Number(row.stats.mean),kd=Number(row.stats.kd),kast=Number(row.stats.kast),adr=Number(row.stats.adr),maps=Number(row.stats.maps);
+      const kills=Number(row.combat.kills),deaths=Number(row.combat.deaths),assists=Number(row.combat.assists),kpr=Number(row.combat.kpr),dpr=Number(row.combat.dpr),apr=Number(row.combat.apr),range=[row.range.min,row.range.p10,row.range.p90,row.range.max].map(Number);
+      return player&&row.roles.primary&&row.roles.secondary&&row.roles.primary!==row.roles.secondary&&
+        [average,kd,kast,adr,maps,kills,deaths,assists,kpr,dpr,apr,...range].every(Number.isFinite)&&range.every(value=>value===average)&&maps===1&&
+        kills===player.kills&&deaths===player.deaths&&assists===player.assists&&Math.abs(kpr-kills/player.rounds)<1e-12&&Math.abs(dpr-deaths/player.rounds)<1e-12&&Math.abs(apr-assists/player.rounds)<1e-12&&
+        Math.abs(kast-player.kastRoundWeight/player.rounds*100)<1e-12&&Math.abs(adr-player.adrRoundWeight/player.rounds)<1e-12&&
+        /mediana|média/.test(row.distributionLabel)&&/desvio-padrão 0\.000/.test(row.distributionLabel)&&row.sufficient==="false";
+    });
+    check(JSON.stringify(singleMapVariance.headers)===JSON.stringify(expectedVarianceColumns),"painel individual prioriza rating, produção, KAST e ADR");
+    check(singleMapVariance.rows.length===10&&validSingleMap,"um mapa mantém 10 jogadores, duas funções e estatísticas individuais derivadas do placar");
+
+    await page.fill("#simRuns","3");
+    await page.click("#runBatchBtn");
+    await page.waitForSelector("#matchout .fidelity-score",{timeout:15000});
+    const firstBatch=await page.evaluate(()=>{
+      const out=document.getElementById("matchout");
+      const table=out.querySelector(".scoreboards table");
+      return {
+        text:out.textContent,
+        core:[...out.querySelectorAll(".sim-core-item")].map(node=>node.textContent.replace(/\s+/g," ").trim()),
+        sides:[...out.querySelectorAll(".sim-side")].map(node=>({name:node.querySelector(".sim-side-name")?.textContent.trim(),pct:Number(node.querySelector(".sim-side-pct")?.textContent.replace("%",""))})),
+        headers:table?[...table.querySelectorAll("thead th")].map(cell=>cell.textContent.trim()):[],
+        rows:table?[...table.querySelectorAll("tbody tr")].map(row=>[...row.cells].map(cell=>cell.textContent.trim())):[],
+        bands:[...out.querySelectorAll('[title^="real "]')].map(node=>({title:node.title,style:node.getAttribute("style")||""})),
+        groups:out.querySelectorAll(".fidelity-group").length,
+        breakdowns:out.querySelectorAll(".sim-breakdowns .sim-data-panel").length,
+        breakdownColumns:getComputedStyle(out.querySelector(".sim-breakdowns")).gridTemplateColumns.trim().split(/\s+/).length,
+        compactRolePanel:out.querySelector(".role-signature-panel").clientWidth<=982,
+        redundantSectionTag:!!out.querySelectorAll("details.sim-details")[1].querySelector(".sim-section-tag"),
+        deltaRows:out.querySelectorAll(".player-delta tbody tr").length,
+        distributionVisuals:out.querySelectorAll(".player-variance-table .rating-viz").length,
+        legendKeys:out.querySelectorAll(".player-dist-legend .dist-legend-key").length,
+        commonScale:/Escala comum \d+\.\d{2}–\d+\.\d{2}/.test(out.querySelector(".dist-scale")?.textContent||""),
+        helpOpen:out.querySelector(".player-help").open,
+        varianceRows:[...out.querySelectorAll(".player-variance-table tbody tr")].map(row=>({
+          values:[...row.querySelectorAll("td[data-value]")].map(cell=>cell.dataset.value),
+          sufficient:row.dataset.sufficient
+        })),
+        details:[...out.querySelectorAll("details.sim-details")].map(node=>node.open),
+        samplePlayers:window.__e2e.simulation().players
+      };
+    });
+    const coreText=firstBatch.core.join(" ");
+    const expectedRoleColumns=["Função","KPR","DPR","A/K","KAST","ADR"];
+    check(["KPR","KAST","ADR","CT win","Plant"].every(label=>coreText.includes(label)),"resumo mantém somente os cinco indicadores centrais");
+    check(firstBatch.sides.length===2&&firstBatch.sides.every(side=>side.name&&Number.isFinite(side.pct))&&firstBatch.sides.reduce((sum,side)=>sum+side.pct,0)===100,"confronto identifica os dois times e porcentagens complementares");
+    check(JSON.stringify(firstBatch.headers)===JSON.stringify(expectedRoleColumns),"breakdown possui colunas por função esperadas");
+    // O breakdown mostra uma linha por função PRESENTE no confronto, não seis fixas: dois times
+    // de cinco cobrem no máximo seis funções e frequentemente menos — a Outsiders, por exemplo,
+    // pode sair com dois Riflers e dois Supports e nenhum Entry, que é composição válida (a
+    // química já pune falta de iniciativa). Cravar 6 era sorte do confronto escolhido e quebrava
+    // a cada mudança de classificação. O contrato real é: uma linha por função, sem repetir e
+    // sem truncar.
+    const funcoesNoBreakdown=firstBatch.rows.map(row=>row[0]);
+    check(funcoesNoBreakdown.length>=4&&funcoesNoBreakdown.length<=6
+      &&new Set(funcoesNoBreakdown).size===funcoesNoBreakdown.length
+      &&funcoesNoBreakdown.every(Boolean),
+      `breakdown lista uma linha por função do confronto (${funcoesNoBreakdown.length}: ${funcoesNoBreakdown.join(", ")})`);
+    check(firstBatch.deltaRows===10,"painel de rating mostra os 10 jogadores do confronto");
+    check(firstBatch.breakdownColumns===1&&firstBatch.distributionVisuals===10,"funções e distribuições usam a largura completa com uma visualização por jogador");
+    check(firstBatch.compactRolePanel&&!firstBatch.redundantSectionTag,"resumo por função permanece compacto sem título intermediário redundante");
+    check(firstBatch.legendKeys===6&&firstBatch.commonScale&&!firstBatch.helpOpen,"legenda explica todos os elementos, informa a escala comum e mantém a ajuda recolhida");
+    check(firstBatch.varianceRows.length===10&&firstBatch.varianceRows.every(row=>row.sufficient==="false"&&row.values.every(value=>value===""||Number.isFinite(Number(value)))),"lote curto expõe distribuições válidas sem esconder amostras pequenas");
+    check(firstBatch.samplePlayers.length===10&&firstBatch.samplePlayers.every(player=>player.id&&player.maps===3&&player.samples===3),"lote preserva uma amostra por mapa para cada jogador");
+    check(firstBatch.bands.length>=9&&firstBatch.bands.every(band=>band.title.startsWith("real ")),"faixas reais aparecem nas métricas globais e por função");
+    check(firstBatch.groups===4&&firstBatch.breakdowns===2&&firstBatch.details.length===2&&firstBatch.details.every(open=>!open),"detalhes completos permanecem disponíveis e fechados por padrão");
+    check(!/NaN|undefined|Infinity/.test(firstBatch.text),"lote não contém valores inválidos");
+    const firstSeed=await page.evaluate(()=>window.__e2e.simulation().seed);
+
+    await page.click("#runBatchBtn");
+    await page.waitForSelector("#matchout .fidelity-score",{timeout:15000});
+    const secondSeed=await page.evaluate(()=>window.__e2e.simulation().seed);
+    check(Number.isInteger(firstSeed)&&firstSeed>0&&Number.isInteger(secondSeed)&&secondSeed>0&&secondSeed!==firstSeed,"cada clique em rodar lote gera uma nova seed");
+
+    await page.selectOption("#simScope","league");
+    const leagueControls=await page.evaluate(()=>({
+      teams:[...document.querySelectorAll(".sim-team-field")].every(node=>getComputedStyle(node).display==="none"),
+      mapDisabled:document.getElementById("runMapBtn").disabled,
+      mapHidden:document.getElementById("runMapBtn").hidden,
+      batchAccent:document.getElementById("runBatchBtn").classList.contains("accent"),
+      batchLabel:document.getElementById("runBatchBtn").textContent.trim()
+    }));
+    check(leagueControls.teams&&leagueControls.mapDisabled&&leagueControls.mapHidden&&leagueControls.batchAccent&&leagueControls.batchLabel==="Rodar amostra","modo liga exibe somente a ação primária relevante");
+    await page.fill("#simRuns","80");
+    await page.click("#runBatchBtn");
+    await page.waitForSelector('#matchout [data-metric="postplant"]',{state:"attached",timeout:20000});
+    const league=await page.evaluate(()=>{
+      const out=document.getElementById("matchout");
+      return {
+        text:out.textContent,
+        metrics:[...out.querySelectorAll("[data-metric]")].map(node=>({key:node.dataset.metric,state:node.className})),
+        deltaRows:out.querySelectorAll(".player-delta tbody tr").length,
+        insufficientRows:out.querySelectorAll('.player-variance-table tbody tr[data-sufficient="false"]').length,
+        sufficientBadges:out.querySelectorAll(".player-variance-table .sample-status:not(.low)").length,
+        ranges:[...out.querySelectorAll('.player-variance-table .distribution-cell')].map(cell=>[cell.dataset.min,cell.dataset.p10,cell.dataset.p90,cell.dataset.max].map(Number)),
+        samplePlayers:window.__e2e.simulation().players
+      };
+    });
+    const proMetrics=["kpr","ct","plant","postplant","antieco","pistol","clutch1","clutch2","clutch3","kast","adr","ak","apr","ratingR","ratingMae","fav03","fav16"];
+    check(/Amostra da liga · 17\/17 times/.test(league.text),"amostra da liga cobre os 17 times");
+    check(proMetrics.every(key=>league.metrics.some(metric=>metric.key===key)),"painel cobre combate, lados, economia, clutches, rating e favoritos");
+    check(league.metrics.every(metric=>/\b(ok|out|low)\b/.test(metric.state)),"cada métrica recebe diagnóstico ou amostra insuficiente");
+    check(league.deltaRows===85,"painel de rating mostra todos os 85 jogadores da liga");
+    check(league.insufficientRows===0&&league.sufficientBadges===0,"amostra padrão da liga informa suficiência sem repetir badges em todas as linhas");
+    check(league.ranges.length===85&&league.ranges.every(([minimum,p10,p90,maximum])=>[minimum,p10,p90,maximum].every(Number.isFinite)&&minimum<=p10&&p10<=p90&&p90<=maximum),"extremos e faixa recorrente P10–P90 permanecem ordenados para os 85 jogadores");
+    check(league.samplePlayers.length===85&&league.samplePlayers.every(player=>player.id&&player.maps===player.samples&&player.maps>=8&&player.maps<=11),"liga preserva as distribuições dos 85 jogadores sem perder exposições");
+    check(/Indicadores dentro da faixa\s+\d+\/\d+/.test(league.text)&&!/Fidelidade profissional/.test(league.text)&&!/NaN|undefined|Infinity/.test(league.text),"resumo comunica aderência às faixas sem se apresentar como nota oficial");
+
+    await page.locator("details.sim-details").nth(1).evaluate(node=>{node.open=true;});
+    const diagnosticLayout=await page.evaluate(()=>{
+      const scroller=document.querySelector(".player-table-scroll"),table=document.querySelector(".player-variance-table"),header=table.querySelector("th"),identity=[...table.querySelectorAll("tbody tr:first-child td")].slice(0,3);
+      return {fullWidth:getComputedStyle(document.querySelector(".sim-breakdowns")).gridTemplateColumns.trim().split(/\s+/).length===1,noHorizontalScroll:scroller.scrollWidth<=scroller.clientWidth+1,stickyHeader:getComputedStyle(header).position==="sticky",stickyIdentity:identity.every(cell=>getComputedStyle(cell).position==="sticky")};
+    });
+    check(diagnosticLayout.fullWidth&&diagnosticLayout.noHorizontalScroll&&diagnosticLayout.stickyHeader&&diagnosticLayout.stickyIdentity,`diagnóstico usa largura integral sem scroll horizontal e mantém cabeçalho/identidade fixos${diagnosticLayout.fullWidth&&diagnosticLayout.noHorizontalScroll&&diagnosticLayout.stickyHeader&&diagnosticLayout.stickyIdentity?"":` (${JSON.stringify(diagnosticLayout)})`}`);
+    check(await page.locator(".player-comparison.is-empty .player-comparison-body").evaluate(node=>getComputedStyle(node).display)==="none","comparação vazia permanece recolhida");
+    const firstPlayerId="s1mple";
+    await page.fill("#simPlayerSearch",firstPlayerId);
+    let visiblePlayers=await page.locator('.player-variance-table tbody tr[data-player-id]').count();
+    check(visiblePlayers===1&&await page.locator('.player-variance-table tbody tr[data-player-id]').first().getAttribute("data-player-id")===firstPlayerId,"busca por ID encontra exatamente o jogador solicitado");
+    await page.fill("#simPlayerSearch","jogador-que-nao-existe");
+    check(await page.locator('.player-variance-table tbody tr[data-player-id]').count()===0&&await page.locator(".player-empty").count()===1,"busca vazia informa ausência sem remover dados da amostra");
+    await page.click("#simPlayerReset");
+    check(await page.locator('.player-variance-table tbody tr[data-player-id]').count()===85,"limpar filtros restaura os 85 participantes");
+
+    const firstTeamValue=await page.$eval("#simPlayerTeam",select=>select.options[1]?.value);
+    await page.selectOption("#simPlayerTeam",firstTeamValue);
+    visiblePlayers=await page.locator('.player-variance-table tbody tr[data-player-id]').count();
+    check(visiblePlayers===5,"filtro de time isola os cinco jogadores da escalação histórica");
+    await page.click("#simPlayerReset");
+    await page.selectOption("#simPlayerRole","AWPer");
+    const roleCells=await page.locator('.player-variance-table tbody tr[data-player-id] .role-cell').evaluateAll(cells=>cells.map(cell=>({primary:cell.dataset.primaryRole,secondary:cell.dataset.secondaryRole})));
+    check(roleCells.length>0&&roleCells.every(role=>role.primary==="AWPer"||role.secondary==="AWPer"),"filtro de função considera papéis primários e secundários");
+    const [csvDownload]=await Promise.all([page.waitForEvent("download"),page.click("#simPlayerExport")]);
+    const csv=fs.readFileSync(await csvDownload.path(),"utf8"),csvLines=csv.trim().split(/\r?\n/);
+    const csvHeader=csvLines[0].replace(/^\ufeff/,"").split(","),primaryRoleIndex=csvHeader.indexOf("primary_role"),secondaryRoleIndex=csvHeader.indexOf("secondary_role");
+    const csvRoles=csvLines.slice(1).map(line=>{const cells=line.split(",");return {primary:cells[primaryRoleIndex],secondary:cells[secondaryRoleIndex]};});
+    check(csv.charCodeAt(0)===0xfeff&&/^sandbox-player-performance-league-seed--?\d+\.csv$/.test(csvDownload.suggestedFilename())&&csvLines[0].includes("primary_role,secondary_role")&&csvLines[0].includes("kills,deaths,assists,kd_ratio,kpr,dpr,apr,kast_percent,adr")&&csvLines[0].includes("minimum,p10,p90,maximum"),"CSV inclui BOM, nome rastreável, duas funções e desempenho individual");
+    check(csvLines.length===roleCells.length+1&&csvRoles.every(role=>role.primary==="AWPer"||role.secondary==="AWPer"),"CSV exporta exatamente os jogadores visíveis após filtros em ambas as funções");
+    const csvSafety=await page.evaluate(()=>[window.simCsvCell("=2+2"),window.simCsvCell('nome, "apelido"')]);
+    check(csvSafety[0]==="'=2+2"&&csvSafety[1]==='"nome, ""apelido"""',"CSV neutraliza fórmulas e escapa campos compostos");
+    await page.click("#simPlayerReset");
+    await page.selectOption("#simPlayerSufficiency","small");
+    check(await page.locator('.player-variance-table tbody tr[data-player-id]').count()===0,"filtro de amostra pequena respeita a suficiência da liga");
+    await page.click("#simPlayerReset");
+    await page.selectOption("#simPlayerSort","mean");
+    await page.selectOption("#simPlayerDirection","asc");
+    const orderedMeans=await page.locator('.player-variance-table tbody tr[data-player-id] td[data-stat="mean"]').evaluateAll(cells=>cells.map(cell=>Number(cell.dataset.value)));
+    check(orderedMeans.every((value,index)=>index===0||orderedMeans[index-1]<=value),"ordenação crescente por média é estável e numérica");
+    await page.click("#simPlayerReset");
+    const compareBoxes=page.locator('[data-compare-player]');
+    await compareBoxes.nth(0).check();
+    await compareBoxes.nth(1).check();
+    check(await page.locator("[data-compare-card]").count()===2&&await page.locator("[data-compare-card] .rating-viz").count()===2&&!await page.locator(".player-comparison").evaluate(node=>node.classList.contains("is-empty")),"comparação apresenta dois jogadores lado a lado com distribuição visual");
+    await compareBoxes.nth(2).click();
+    check(await page.locator("[data-compare-card]").count()===2&&!await compareBoxes.nth(2).isChecked(),"comparação bloqueia um terceiro jogador sem perder a seleção válida");
+
+    const leagueSeed=await page.evaluate(()=>window.__e2e.simulation().seed);
+    await page.click("#runBatchBtn");
+    await page.waitForSelector('#matchout [data-metric="postplant"]',{state:"attached",timeout:20000});
+    const leagueSeedAgain=await page.evaluate(()=>window.__e2e.simulation().seed);
+    check(leagueSeedAgain!==leagueSeed,"nova amostra da liga também recebe seed automática");
+    check(await page.locator("[data-compare-card]").count()===0,"nova amostra limpa a comparação anterior");
+
+    await page.$$eval("details.sim-details",nodes=>nodes.forEach(node=>{node.open=true;}));
+    await page.evaluate(()=>window.scrollTo(0,0));
+    await page.waitForFunction(()=>window.scrollY===0);
+    const canvasPoint=await page.$eval(".canvas-body",node=>{
+      const rect=node.getBoundingClientRect(),x=Math.min(window.innerWidth-10,Math.max(10,rect.left+Math.min(200,rect.width/2))),y=Math.min(window.innerHeight-10,Math.max(10,rect.top+20));
+      return {x,y,inside:Boolean(document.elementFromPoint(x,y)?.closest(".canvas-body"))};
+    });
+    await page.mouse.move(canvasPoint.x,canvasPoint.y);
+    const scrollBefore=await page.evaluate(()=>window.scrollY);
+    await page.mouse.wheel(0,600);
+    await page.waitForTimeout(200);
+    const scroll=await page.evaluate(()=>({windowY:window.scrollY,bodyOverflow:getComputedStyle(document.body).overflowY,canvasOverflow:getComputedStyle(document.querySelector(".canvas-body")).overflowY,scrollHeight:document.documentElement.scrollHeight,clientHeight:document.documentElement.clientHeight}));
+    check(canvasPoint.inside&&scroll.windowY>scrollBefore&&scroll.bodyOverflow!=="hidden"&&scroll.canvasOverflow!=="auto",`rolagem do mouse sobre o canvas move a página sem criar scroll aninhado${scroll.windowY>scrollBefore?"":` (windowY=${scroll.windowY}, antes=${scrollBefore}, height=${scroll.scrollHeight}/${scroll.clientHeight}, body=${scroll.bodyOverflow}, canvas=${scroll.canvasOverflow})`}`);
+    await page.setViewportSize({width:820,height:844});
+    const tabletLayout=await page.evaluate(()=>(
+      {controlColumns:getComputedStyle(document.querySelector(".player-controls")).gridTemplateColumns.trim().split(/\s+/).length,noOverflow:document.documentElement.scrollWidth<=document.documentElement.clientWidth}
+    ));
+    check(tabletLayout.controlColumns===3&&tabletLayout.noOverflow,"layout intermediário reorganiza filtros em três colunas sem overflow da página");
+    await page.setViewportSize({width:390,height:844});
+    const mobileLayout=await page.evaluate(()=>({
+      metricColumns:getComputedStyle(document.querySelector(".fidelity-grid")).gridTemplateColumns.trim().split(/\s+/).length,
+      tableColumns:getComputedStyle(document.querySelector(".sim-breakdowns")).gridTemplateColumns.trim().split(/\s+/).length,
+      controlColumns:getComputedStyle(document.querySelector(".player-controls")).gridTemplateColumns.trim().split(/\s+/).length,
+      cardRows:[...document.querySelectorAll(".player-variance-table tbody tr[data-player-id]")].every(row=>getComputedStyle(row).display==="grid"),
+      noOverflow:document.documentElement.scrollWidth<=document.documentElement.clientWidth
+    }));
+    check(mobileLayout.metricColumns===1&&mobileLayout.tableColumns===1&&mobileLayout.controlColumns<=2&&mobileLayout.cardRows&&mobileLayout.noOverflow,"layout mobile transforma jogadores em cards sem overflow horizontal");
+
+    await page.setViewportSize({width:1440,height:700});
+    await page.selectOption("#simScope","campaign");
+    const campaignControls=await page.evaluate(()=>(
+      {teams:[...document.querySelectorAll(".sim-team-field")].every(node=>getComputedStyle(node).display!=="none"),mapHidden:getComputedStyle(document.querySelector(".sim-map-field")).display==="none",runsHidden:getComputedStyle(document.querySelector(".sim-runs-field")).display==="none",button:document.getElementById("runBatchBtn").textContent.trim()}
+    ));
+    check(campaignControls.teams&&campaignControls.mapHidden&&campaignControls.runsHidden&&campaignControls.button==="Jogar MD3","campanha curta apresenta somente as decisões relevantes da MD3");
+    await page.selectOption("#simA","0");
+    await page.selectOption("#simB","1");
+    await page.click("#runBatchBtn");
+    await page.waitForSelector(".sim-campaign-score",{timeout:15000});
+    const campaign=await page.evaluate(()=>({state:window.__e2e.simulation(),mapCards:document.querySelectorAll(".sim-campaign-map").length,fidelityScore:document.querySelectorAll(".fidelity-score").length,details:document.querySelectorAll("details.sim-details").length,text:document.getElementById("matchout").textContent}));
+    const series=campaign.state.campaign,seriesMaps=series?.maps||[],orientations=seriesMaps.map(map=>map.orientation);
+    check(campaign.state.scope==="campaign"&&series?.format==="MD3"&&seriesMaps.length>=2&&seriesMaps.length<=3&&series.winsA+series.winsB===seriesMaps.length&&Math.max(series.winsA,series.winsB)===2,"campanha encerra a MD3 exatamente quando um time vence dois mapas");
+    check(new Set(seriesMaps.map(map=>map.map)).size===seriesMaps.length&&orientations.every((value,index)=>index===0||value!==orientations[index-1]),"campanha usa mapas sem repetição e alterna a orientação dos times");
+    check(campaign.mapCards===seriesMaps.length&&campaign.state.maps===seriesMaps.length&&campaign.state.players.length===10&&campaign.state.players.every(player=>player.maps===seriesMaps.length&&player.samples===seriesMaps.length),"campanha preserva placares e uma amostra individual por mapa");
+    check(campaign.fidelityScore===0&&campaign.details===1&&/não mede expectativa de longo prazo/.test(campaign.text)&&!/NaN|undefined|Infinity/.test(campaign.text),"campanha não se apresenta como benchmark de expectativa ou fidelidade");
+    const goldenPage=await browser.newPage({viewport:{width:1280,height:720}});
+    await goldenPage.goto(`http://127.0.0.1:${port}/sandbox.html?e2e=1&e2eSeed=${CAMPAIGN_GOLDEN.seed}`,{waitUntil:"load",timeout:20000});
+    await goldenPage.waitForFunction(()=>window.__e2e&&window.__e2e.ready,{timeout:20000});
+    await goldenPage.click('#modebar button[data-mode="simular"]');
+    await goldenPage.selectOption("#simScope","campaign");
+    await goldenPage.selectOption("#simA","0");
+    await goldenPage.selectOption("#simB","1");
+    await goldenPage.click("#runBatchBtn");
+    await goldenPage.waitForSelector(".sim-campaign-score",{timeout:15000});
+    const goldenCampaign=await goldenPage.evaluate(()=>{const state=window.__e2e.simulation();return {seed:state.seed,scope:state.scope,maps:state.maps,campaign:state.campaign};});
+    await goldenPage.close();
+    check(JSON.stringify(goldenCampaign)===JSON.stringify(CAMPAIGN_GOLDEN),"campanha MD3 preserva o golden completo por seed fixa");
+    check(errors.length===0,`sem page-error no fluxo${errors.length?": "+errors[0]:""}`);
+
+    console.log(failures?`✗ ${failures} checagem(ns) e2e falharam`:"✓ aba Simular preserva expectativa e separa a campanha curta");
+    return done(failures?1:0);
+  }catch(error){
+    console.log("  ✗ e2e abortou: "+(error.message||error));
+    console.log("✗ e2e da aba Simular falhou");
+    return done(1);
+  }
+})();

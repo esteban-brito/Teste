@@ -13,7 +13,7 @@
 const fs=require("fs");
 const path=require("path");
 const {execFileSync}=require("child_process");
-const {ROOT,ATTRS}=require("../bancada/common");
+const {ROOT,ATTRS}=require("../bancada/lib/common");
 
 const PLAYERS_MODULE=path.join(ROOT,"src","data","players.mjs");
 const TEAMS_MODULE=path.join(ROOT,"src","data","teams.mjs");

@@ -241,7 +241,7 @@ A densidade compacta ainda **aumentava** a fonte (18cqw), o que reabria o estour
 | P3 | rótulo do verso ganha `--carac-esc` pela mesma lógica | `style.css` + `card-view.mjs` |
 | P8 | `:hover` deixa de exibir o aro de opacidade cheia de outra faixa | `style.css` |
 
-Prova permanente: **`bancada/e2e-cartas.js`** (grupo `test:e2e`) chama o próprio
+Prova permanente: **`bancada/suites/e2e-cartas.js`** (grupo `test:e2e`) chama o próprio
 medidor do laboratório nos estados publicado e proposta e exige zero falhas nas
 oito larguras. Ele também prova que sabe acusar, injetando nome e colisão impossíveis,
 e que não confunde reticências declaradas com quebra. Com isso a bancada foi de 24
@@ -354,7 +354,7 @@ carta com `p-rank` + `p-tN` e o bloco pinta. Ao promover, isso vira `tierOf` em
 aparece com raridade diferente em duas telas: `card-view.mjs` (`tierOf`),
 `elencos.html` (`tierVars`, cópia própria escrita à mão — só o bloco `DATA` é
 gerado), `tools/check-game-view-modules.js` (congela as strings de classe),
-`prototipo-cartas.html` (array `TIERS`) e `bancada/e2e-cartas.js`
+`prototipo-cartas.html` (array `TIERS`) e `bancada/suites/e2e-cartas.js`
 (`CARTAS_ESPERADAS`, hoje 155: 152 cartas-base + 3 enquadramentos).
 
 ### Decisões que custaram medição e não devem ser refeitas
@@ -411,7 +411,7 @@ donk o pixel mais claro atrás do OVR dava 2,62:1 — reprovaria na tela e passa
 na guarda, que calcula contra um fundo fixo. Escurecimento por canto piorou (a
 bandeira caiu de 5,56 para 2,50) e foi descartado pela medição. A faixa de topo
 dimensionada pelo alvo levou o OVR a 7,02:1 e a bandeira a 12,32:1.
-`bancada/e2e-cartas.js` agora **amostra pixel real** em toda carta com `--foto`,
+`bancada/suites/e2e-cartas.js` agora **amostra pixel real** em toda carta com `--foto`,
 escondendo o texto antes de medir — sem isso o pixel mais claro da zona é o
 próprio número branco. Duas provas sintéticas fecham: retrato branco puro sem
 escurecimento reprova em 1:1, com escurecimento passa em 4,82:1.

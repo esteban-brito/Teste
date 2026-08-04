@@ -66,7 +66,7 @@ Para cada lote recebido:
 4. corrigir rotação, balanço de branco, contraste e ruído sem alterar a identidade;
 5. recortar ou expandir para 5:7 seguindo a grade fotográfica;
 6. exportar WebP no alvo recomendado e adicionar o asset-id ao dado cru;
-7. rodar `npm run check` e `node bancada/e2e-cartas.js`;
+7. rodar `npm run check` e `node bancada/suites/e2e-cartas.js`;
 8. capturar e conferir **frente e verso** a 250, 188, 176, 151, 150, 149, 130 e
    120 px, além de escala de cinza e três simulações de daltonismo no laboratório;
 9. comparar massa óptica, linha dos olhos, cabeça, ombros, exposição e integração
