@@ -1,4 +1,4 @@
-﻿/* game.js — aplicação, estado e interface do draft9-0.
+/* game.js — aplicação, estado e interface do draft9-0.
    Dados, avaliação e simulação entram exclusivamente pela API pública. */
 import * as PublicEngine from "./src/public/simulation-api.mjs";
 import {Audio} from "./src/application/audio.mjs";
