@@ -190,7 +190,15 @@ header{display:flex;position:relative;flex-wrap:wrap;flex-direction:row;align-it
 @keyframes rouFlash{0%{box-shadow:inset 0 0 60px 10px rgba(255,255,255,.45)}100%{box-shadow:inset 0 0 0 0 transparent}}
 
 .roulettebar{display:flex;align-items:center;justify-content:space-between}
+/* Alvo de toque de 32x32: o mínimo do WCAG 2.2 AA é 24, e este botão media
+   exatamente 24,0 px de altura no Windows — verde por 0,0 px de margem — contra
+   22 px no FreeType do CI. A altura vinha de `line-height:normal` aplicado a um
+   emoji, ou seja, era a fonte do SISTEMA decidindo o tamanho do alvo. Fixar a
+   caixa não é "margem maior": é tirar a medida da fonte e acabar com a variação
+   por plataforma. `line-height:1` impede que o glifo volte a empurrar a altura. */
 .mutebtn{background:none;border:none;cursor:pointer;font-size:.95rem;padding:2px 6px;border-radius:6px;
+  min-width:32px;min-height:32px;display:inline-flex;align-items:center;justify-content:center;line-height:1;
+  margin:-4px 0;
   opacity:.7;transition:opacity .15s,transform .12s;-webkit-tap-highlight-color:transparent}
 .mutebtn:hover{opacity:1;transform:scale(1.1)}
 .mutebtn.muted{opacity:.4;filter:grayscale(1)}

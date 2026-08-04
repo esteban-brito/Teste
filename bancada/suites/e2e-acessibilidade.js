@@ -233,6 +233,23 @@ async function percorrer(browser,tela,port,ruido){
   await pg.waitForTimeout(300);
   await auditarEstado("tudo-fechado");
 
+  /* O gate de 24x24 é o padrão do WCAG, mas passar POR 0,0 px não é passar: em
+     04/08/2026 o botão de mudo media exatamente 24,0 no Windows e 22 no FreeType
+     do CI, então o verde local era sorte. A folga tem de cobrir a diferença de
+     plataforma MEDIDA, que ali foi de 2 px — por isso o piso de 2. */
+  if(tela.toque){
+    const menor=await pg.evaluate(()=>[...document.querySelectorAll("button,a[href],[role=button]")]
+      .filter(n=>{const r=n.getBoundingClientRect();const cs=getComputedStyle(n);
+        return (r.width||r.height)&&cs.display!=="none"&&!n.hasAttribute("hidden")&&!n.classList.contains("so-leitor");})
+      .map(n=>{const r=n.getBoundingClientRect();
+        return {el:n.tagName.toLowerCase()+(n.id?"#"+n.id:""),lado:Math.min(r.width,r.height)};})
+      .sort((x,y)=>x.lado-y.lado)[0]||null);
+    const folga=menor?menor.lado-24:0;
+    check(menor&&folga>=2,
+      `${tela.nome} · menor alvo de toque com folga sobre 24px: ${menor?menor.el:"—"} `+
+      `${menor?menor.lado.toFixed(1):"?"}px (folga ${folga.toFixed(1)}px, mínimo 2)`);
+  }
+
   await pg.close();
   return achados;
 }
