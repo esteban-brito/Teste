@@ -104,7 +104,7 @@ def load_environment() -> tuple[Any, Any, str]:
         from awpy import Demo
     except ImportError as error:
         raise RuntimeError(
-            "Awpy ausente; crie .venv-fidelity e instale requirements-fidelity.lock"
+            "Awpy ausente; crie .venv-fidelity e instale tools/requirements-fidelity.lock"
         ) from error
     version = getattr(awpy, "__version__", "")
     if version != EXPECTED_AWPY_VERSION:

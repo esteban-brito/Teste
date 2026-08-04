@@ -50,8 +50,8 @@ aparece automaticamente **na roleta do jogo** e **na Base de Elencos**.
 | Arquivo | O quê |
 |---|---|
 | `tools/add-team.js` | cola texto → insere nos módulos de dados + regenera elencos + valida |
-| `bancada/roster.js` | regenera o `const DATA` do elencos.html a partir da API pública |
-| `bancada/times.js`  | lint: atributos 0–100, IDs únicos, ≥1 IGL, país do treinador, invariante do Major, resumo por time |
+| `bancada/ferramentas/roster.js` | regenera o `const DATA` do elencos.html a partir da API pública |
+| `bancada/suites/times.js`  | lint: atributos 0–100, IDs únicos, ≥1 IGL, país do treinador, invariante do Major, resumo por time |
 | `bancada/run.js`    | orquestra as 25 suítes de dados, regressão, calibrador, benchmark, IFCS e E2E |
 
 ## Invariantes garantidos

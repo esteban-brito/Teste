@@ -29,7 +29,7 @@ const RAIZ=path.resolve(__dirname,"..");
 const MARCA="<!-- medicao-verificada -->";
 
 function documentos(){
-  const achados=["AGENTS.md","CLAUDE.md","README.md","ADD_TEAM.md"]
+  const achados=["AGENTS.md","CLAUDE.md","README.md"]
     .map(nome=>path.join(RAIZ,nome)).filter(fs.existsSync);
   const caminhar=dir=>{
     for(const entrada of fs.readdirSync(dir,{withFileTypes:true})){

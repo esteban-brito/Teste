@@ -25,7 +25,7 @@ const ROOT=path.join(__dirname,"..");
    é um arquivo de raiz conhecido. Sem essa âncora, `tierOf` e `npm run check`
    entrariam como caminhos. */
 const RAIZES=["docs/","src/","tools/","bancada/","fonts/","fotos/",".github/","fidelity-corpus/"];
-const ARQUIVOS_RAIZ=new Set(["AGENTS.md","README.md","CLAUDE.md","ADD_TEAM.md","game.js",
+const ARQUIVOS_RAIZ=new Set(["AGENTS.md","README.md","CLAUDE.md","game.js",
   "sandbox.html","style.css","index.html","elencos.html","prototipo-cartas.html","fonts.css",
   "package.json","package-lock.json","calibrador-worker.js","eslint.config.mjs","robots.txt"]);
 
