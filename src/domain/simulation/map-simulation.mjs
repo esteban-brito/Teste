@@ -62,7 +62,10 @@ export function simularMapa(A,B,fA,fB,mapaForcado,leve,options,deps){
     const eco=classe=>classe==="eco"||classe==="pistol";
     const plano=tatica?tatica.planejar(estadoTatico,{ladoA,placarA:pa,placarB:pb,
       ecoA:eco(buyA),ecoB:eco(buyB),random:tatica.random}):null;
-    const res=combateRound(a,b,{pEdgeA,
+    const res=combateRound(a,b,{
+      // `pEdgeA` é a aresta de TODO contato do round; a tática entra aqui com o
+      // canal de execução, e o clamp de [.03,.97] é o mesmo de sempre
+      pEdgeA:plano?clamp(pEdgeA+plano.ajustePEdgeA,.03,.97):pEdgeA,
       openEdgeA:plano?openEdgeA+plano.ajusteOpenEdgeA:openEdgeA,
       ritmoBonus:plano?plano.ritmoBonus:0,plantBonusT:plano?plano.plantBonusT:0,
       buyA,buyB,comprasA,comprasB,aIsCT:ladoA==="CT",trace:roundTrace});
@@ -83,7 +86,7 @@ export function simularMapa(A,B,fA,fB,mapaForcado,leve,options,deps){
       comprasA:[...comprasA],comprasB:[...comprasB],clutchX:res.clutchX,clutchWon:res.clutchWon,destaque:res.destaque,snapA,snapB};
     if(plano){
       // só existe com a camada ligada: desligada, o round mantém a forma antiga
-      registro.tatica={direcaoA:plano.planoA.direcao,direcaoB:plano.planoB.direcao,
+      registro.tatica={jogadaA:plano.planoA.jogada,jogadaB:plano.planoB.jogada,
         ctAcertou:plano.ctAcertou,executouA:plano.planoA.executou,executouB:plano.planoB.executou,
         usouA:plano.planoA.leituraUsada,usouB:plano.planoB.leituraUsada,
         confA:plano.planoA.confianca,confB:plano.planoB.confianca};

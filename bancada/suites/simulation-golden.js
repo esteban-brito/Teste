@@ -105,8 +105,12 @@ function campaignSeriesScenario(){
   const result=X.simularSerie(a,b,()=>X.forcaDoDia(a.ef,a.quim),()=>X.forcaDoDia(b.ef,b.quim),3,false);
   // Série de três mapas: cobre o mapa decisivo, que uma varrida 2-0 nunca alcança. A sequência
   // de mapas acompanha o novo sorteio de RNG; a cobertura é a mesma.
-  assert.equal(result.placarSerie.join(","),"1,2",`${id}: ancora da serie mudou antes de atualizar o fixture`);
-  assert.equal(result.mapas.map(map=>map.mapa).join(","),"Anubis,Ancient,Nuke",`${id}: sequencia de mapas mudou antes de atualizar o fixture`);
+  /* 05/08/2026: a série virou 2-1 ao ligar a camada tática. A ÂNCORA muda, o
+     cenário não — ele existe para cobrir o mapa decisivo, e 2-1 são três mapas
+     exatamente como 1-2 era. Uma varrida 2-0 é que o esvaziaria, e aí a seed
+     teria de ser trocada em vez da asserção. */
+  assert.equal(result.placarSerie.join(","),"2,1",`${id}: ancora da serie mudou antes de atualizar o fixture`);
+  assert.equal(result.mapas.map(map=>map.mapa).join(","),"Anubis,Nuke,Ancient",`${id}: sequencia de mapas mudou antes de atualizar o fixture`);
   return {
     id,kind:"campaign-series",seed,
     input:{...projectInput(a,b,aIndex,bIndex),bestOf:3,campaignForm:true},
@@ -127,18 +131,21 @@ function buildCurrent(){
       // Âncoras revisadas em 28/07/2026 pela PADRONIZAÇÃO de playstyles e funções: 31 jogadores
       // ao todo trocaram de estilo, de função ou de 1 de OVR, o que altera química, força efetiva
       // e todo o stream de RNG a partir do primeiro round. As seeds são reescolhidas para
-      // preservar a FORMA do cenário, nunca para encobrir a diferença: a seed 8 devolve um 13-11
-      // competitivo em 22 rounds, com as quatro classes de compra e clutch vencido.
-      fixedMapScenario({id:"economy-and-clutches",seed:8,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[13,7]}),
+      // preservar a FORMA do cenário, nunca para encobrir a diferença.
+      // 05/08/2026, ao LIGAR a camada tática: a seed 8 passou a devolver 13-5 em 18 rounds e
+      // deixou de exercitar a compra `force` — o cenário existe justamente para cobrir as quatro
+      // classes, então a seed foi trocada, não a asserção. A 11 devolve o mesmo 13-11 competitivo
+      // em 24 rounds, com as quatro compras e clutch vencido. Histórico da seed: 8 → 11.
+      fixedMapScenario({id:"economy-and-clutches",seed:11,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[13,11]}),
       // Este cenário cobre o OT REPETÍVEL (alvo 13→16→19→22), caminho que só executa com duas ou
       // mais prorrogações. Ele é frágil por natureza: qualquer balanceamento reembaralha o RNG e a
       // seed antiga deixa de ir para o overtime. A regra ao mexer aqui é procurar uma seed que
       // volte a produzir 2+ prorrogações — nunca aceitar um placar de tempo normal, que esvaziaria
-      // o teste. A seed 235 reproduz 20-22 em 42 rounds — três prorrogações, exatamente a mesma
-      // forma que a 364 dava antes da recalibração de mapas de 04/08/2026 (com ela, a 364 passou
-      // a terminar 3-13, em tempo normal, e esvaziaria o cenário).
-      // Histórico da seed: 129 → 349 → 515 → 200 → 456 → 132 → 645 → 1036 → 622 → 364 → 235.
-      fixedMapScenario({id:"repeated-overtime",seed:235,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[20,22]}),
+      // o teste. A seed 362 reproduz 22-20 em 42 rounds — três prorrogações, exatamente a mesma
+      // forma que a 235 dava antes de a camada tática ser ligada em 05/08/2026 (com ela, a 235
+      // passou a terminar 10-13, em tempo normal, e esvaziaria o cenário).
+      // Histórico da seed: 129 → 349 → 515 → 200 → 456 → 132 → 645 → 1036 → 622 → 364 → 235 → 362.
+      fixedMapScenario({id:"repeated-overtime",seed:362,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[22,20]}),
       campaignSeriesScenario()
     ]
   };

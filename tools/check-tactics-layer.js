@@ -20,16 +20,11 @@
                   eixo. Se o estático falhar por uma grafia não prevista, este
                   pega.
 
-   A CHAVE DESLIGADA É O CONTRATO. Desde 04/08/2026 a camada está ligada ao
-   motor, mas `CFG_TATICA.ATIVA` sai de fábrica em 0: nenhuma linha dela executa,
-   nenhuma amostra de RNG a mais é consumida, e `simulation-golden` continua bit
-   a bit idêntico. Este checador exige que continue assim.
-
-   LIGAR A CHAVE É BALANCEAMENTO, não configuração de conveniência: muda o
-   resultado das partidas e exige commit próprio, comparação pareada nas mesmas
-   seeds e os dois indicadores acumulados (`Favorito gap 16+` e `invicto`)
-   reportados antes e depois, juntos. Ao ligá-la, ATUALIZE esta asserção na MESMA
-   fatia — ela é um marco deliberado, não um obstáculo. */
+   A CHAVE ESTÁ LIGADA desde 05/08/2026, e mexer nela — nas DUAS direções — é
+   balanceamento, não configuração de conveniência: muda o resultado das
+   partidas e exige commit próprio, comparação pareada nas mesmas seeds e os
+   dois indicadores acumulados (`Favorito gap 16+` e `invicto`) reportados
+   antes e depois, juntos. */
 const assert=require("node:assert/strict");
 const fs=require("node:fs");
 const path=require("node:path");
@@ -222,7 +217,8 @@ function provarModelo(O){
 }
 
 /* ——— decisão de round ——— */
-function provarPlano(P){
+function provarPlano(P,J){
+  const TIPOS_JOGADA=J.TIPOS_JOGADA;
   ["planejarRound","confrontoDePlanos","mixagem","fidelidade"].forEach(nome=>
     assert.equal(typeof P[nome],"function",`${nome} ausente da decisão de round`));
 
@@ -235,21 +231,29 @@ function provarPlano(P){
   assert.throws(()=>P.planejarRound({identidade:{},lado:"TR"}),/gerador/,
     "planejar sem gerador precisa falhar alto, não sortear escondido");
 
-  // sem crença, a direção é moeda honesta — o time não finge saber
-  const semCrenca=amostrar(600,random=>P.planejarRound({
-    identidade:{},lado:"TR",crenca:null,contexto:{},random}));
-  const pA=fracao(semCrenca,p=>p.direcao==="A");
-  assert.ok(Math.abs(pA-.5)<.07,`sem crença a direção não é moeda honesta (A em ${(pA*100).toFixed(1)}%)`);
-  assert.ok(semCrenca.every(p=>!p.leituraUsada),"plano sem crença marcou leitura como usada");
+  const TIPOS=TIPOS_JOGADA;
+  const uniforme=1/TIPOS.length;
 
-  /* OS DOIS LADOS sem crença. Cobrir só o TR deixou passar um estouro real: o
-     ramo do CT lia `crenca.moda` sem checar, e "CT sem leitura" é o estado do
-     round 1 de TODO mapa. Uma guarda só vê a superfície em que roda. */
+  /* Sem crença E sem repertório, o sorteio é uniforme entre as seis jogadas —
+     o time não finge saber nem inventa preferência que o elenco não tem. */
+  const semNada=amostrar(1200,random=>P.planejarRound({
+    identidade:{},lado:"TR",crenca:null,contexto:{},random}));
+  TIPOS.forEach(tipo=>{
+    const p=fracao(semNada,x=>x.jogada===tipo);
+    assert.ok(Math.abs(p-uniforme)<.05,
+      `sem repertório nem crença, ${tipo} saiu em ${(p*100).toFixed(1)}% e não no uniforme`);
+  });
+  assert.ok(semNada.every(p=>!p.leituraUsada),"plano sem crença marcou leitura como usada");
+  assert.ok(semNada.every(p=>TIPOS.includes(p.jogada)),"plano devolveu jogada fora do vocabulário");
+
+  /* OS DOIS LADOS sem crença. Cobrir só o TR deixou passar um estouro real na
+     versão A|B: o ramo do CT lia `crenca.moda` sem checar, e "CT sem leitura" é
+     o estado do round 1 de TODO mapa. Uma guarda só vê a superfície em que roda. */
   for(const lado of ["CT","TR"]){
-    const cego=amostrar(400,random=>P.planejarRound({identidade:{},lado,crenca:null,contexto:{},random}));
-    const p=fracao(cego,x=>x.direcao==="A");
-    assert.ok(Math.abs(p-.5)<.08,`${lado} sem crença não é moeda honesta (A em ${(p*100).toFixed(1)}%)`);
-    assert.ok(cego.every(x=>x.direcao==="A"||x.direcao==="B"),`${lado} sem crença devolveu direção inválida`);
+    const cego=amostrar(600,random=>P.planejarRound({identidade:{},lado,crenca:null,contexto:{},random}));
+    assert.ok(cego.every(x=>TIPOS.includes(x.jogada)),`${lado} sem crença devolveu jogada inválida`);
+    const maior=Math.max(...TIPOS.map(tipo=>fracao(cego,x=>x.jogada===tipo)));
+    assert.ok(maior-uniforme<.07,`${lado} sem crença concentrou em uma jogada (${(maior*100).toFixed(1)}%)`);
   }
   for(const lado of ["CT","TR"]){
     const semModa=()=>P.planejarRound({identidade:{},lado,crenca:{moda:null,confianca:.9},
@@ -257,17 +261,37 @@ function provarPlano(P){
     assert.doesNotThrow(semModa,`${lado} estoura quando a crença existe mas não tem moda`);
   }
 
-  // com crença forte: o CT COINCIDE, o T DIVERGE — o sentido muda com o lado
-  const crenca={moda:"A",confianca:.9};
+  /* O T SEGUE O PRÓPRIO REPERTÓRIO. É a peça que quebra o matching pennies: com
+     A|B a marginal era 50/50 por construção e não havia o que ler. */
+  const repertorio={};
+  TIPOS.forEach((tipo,i)=>{repertorio[tipo]=i===0?.5:.1;});
+  const comRepertorio=amostrar(1200,random=>P.planejarRound({
+    identidade:{leitura:0},jogada:{repertorio,assinatura:.9},
+    lado:"TR",crenca:null,contexto:{},random}));
+  const pPreferida=fracao(comRepertorio,x=>x.jogada===TIPOS[0]);
+  assert.ok(pPreferida>uniforme+.12,
+    `o T não seguiu o próprio repertório (jogada preferida em ${(pPreferida*100).toFixed(1)}%)`);
+
+  /* O CT MONTA CONTRA O QUE ACREDITA. Para o CT, ler é ESCOLHER. */
+  const distribuicao={};
+  TIPOS.forEach((tipo,i)=>{distribuicao[tipo]=i===1?.75:.05;});
+  const crenca={moda:TIPOS[1],confianca:.9,distribuicao};
   const identidadeFirme={estrutura:1,leitura:0};
-  const ct=amostrar(600,random=>P.planejarRound({
+  const ct=amostrar(1200,random=>P.planejarRound({
     identidade:identidadeFirme,lado:"CT",crenca,contexto:{},random}));
-  const tr=amostrar(600,random=>P.planejarRound({
-    identidade:identidadeFirme,lado:"TR",crenca,contexto:{},random}));
-  assert.ok(fracao(ct,p=>p.direcao==="A")>.60,
-    "o CT não concentrou onde acredita que o T vai — acertar, no CT, é coincidir");
-  assert.ok(fracao(tr,p=>p.direcao==="B")>.60,
-    "o T não evitou o lado que acredita fechado — acertar, no T, é divergir");
+  assert.ok(fracao(ct,p=>p.jogada===TIPOS[1])>.45,
+    "o CT não montou contra a jogada que acredita que vem — para o CT, ler é escolher");
+
+  /* O T FOGE DO QUE ACREDITA COBERTO. Para o T, ler é FUGIR — e sem este termo
+     o modelo viraria "o CT lê e o T é passivo". */
+  const trCego=amostrar(1200,random=>P.planejarRound({
+    identidade:identidadeFirme,jogada:{repertorio,assinatura:.9},
+    lado:"TR",crenca:null,contexto:{},random}));
+  const trLendo=amostrar(1200,random=>P.planejarRound({
+    identidade:identidadeFirme,jogada:{repertorio,assinatura:.9},
+    lado:"TR",crenca:{moda:TIPOS[0],confianca:.9,distribuicao},contexto:{},random}));
+  assert.ok(fracao(trLendo,p=>p.jogada===TIPOS[0])<fracao(trCego,p=>p.jogada===TIPOS[0])-.10,
+    "o T não fugiu da jogada que acredita coberta — para o T, ler é fugir");
 
   /* O PISO DE CONFIANÇA, medido EXATO e não por proxy estatístico. A primeira
      versão amostrava a direção com confiança .05 e exigia desvio menor que 7 pp
@@ -276,15 +300,20 @@ function provarPlano(P){
      Tolerância maior que o efeito é uma asserção que não sabe reprovar. */
   const piso=P.CFG_PADRAO.CONF_MIN;
   const fixo=()=>.5;
-  assert.equal(P.planejarRound({identidade:{},lado:"CT",
-    crenca:{moda:"A",confianca:piso-1e-6},contexto:{},random:fixo}).leituraUsada,false,
+  const noPiso=delta=>P.planejarRound({identidade:{},lado:"CT",
+    crenca:{moda:TIPOS[1],confianca:piso+delta,distribuicao},contexto:{},random:fixo});
+  assert.equal(noPiso(-1e-6).leituraUsada,false,
     "abaixo do piso de confiança o time apostou na leitura");
-  assert.equal(P.planejarRound({identidade:{},lado:"CT",
-    crenca:{moda:"A",confianca:piso+1e-6},contexto:{},random:fixo}).leituraUsada,true,
+  assert.equal(noPiso(1e-6).leituraUsada,true,
     "acima do piso de confiança o time ignorou a leitura");
-  assert.equal(P.planejarRound({identidade:{},lado:"CT",
-    crenca:{moda:"A",confianca:piso-1e-6},contexto:{},random:fixo}).aposta,0,
-    "abaixo do piso a aposta precisa ser exatamente 0");
+  /* E o piso precisa MUDAR A ESCOLHA, não só o rótulo: abaixo dele o CT sorteia
+     uniforme, ignorando a crença por completo. Um piso que só troca um booleano
+     seria decoração. */
+  const abaixoDoPiso=amostrar(1200,random=>P.planejarRound({identidade:{},lado:"CT",
+    crenca:{moda:TIPOS[1],confianca:piso-1e-6,distribuicao},contexto:{},random}));
+  const concentrou=Math.max(...TIPOS.map(tipo=>fracao(abaixoDoPiso,x=>x.jogada===tipo)));
+  assert.ok(concentrou-uniforme<.07,
+    `abaixo do piso o CT ainda usou a crença (concentrou ${(concentrou*100).toFixed(1)}%)`);
 
   // estrutura decide se o plano vira realidade
   const solto=amostrar(500,random=>P.planejarRound({
@@ -303,10 +332,11 @@ function provarPlano(P){
   });
 
   // o confronto empurra os botões do motor, e o empurrão é LIMITADO
-  const planoT={direcao:"A",tempo:"rapido",comprometimento:"stack",utilitaria:"gastar"};
-  const acertou=P.confrontoDePlanos(planoT,{direcao:"A",tempo:"lento",comprometimento:"stack",utilitaria:"guardar"});
-  const errou=P.confrontoDePlanos(planoT,{direcao:"B",tempo:"lento",comprometimento:"stack",utilitaria:"guardar"});
-  assert.equal(acertou.ctAcertou,true,"stack no mesmo lado não foi contado como acerto do CT");
+  const planoT={jogada:TIPOS[0],tempo:"rapido",comprometimento:"stack",utilitaria:"gastar"};
+  const contra=jogada=>P.confrontoDePlanos(planoT,
+    {jogada,tempo:"lento",comprometimento:"stack",utilitaria:"guardar"});
+  const acertou=contra(TIPOS[0]),errou=contra(TIPOS[1]);
+  assert.equal(acertou.ctAcertou,true,"stack na mesma jogada não foi contado como acerto do CT");
   assert.ok(acertou.vantagemAberturaT<0&&errou.vantagemAberturaT>0,
     "acertar a leitura precisa doer no T, e errar precisa abrir espaço para ele");
   for(const r of [acertou,errou]){
@@ -314,8 +344,164 @@ function provarPlano(P){
       Math.abs(r.ritmoContato)<=.17,
       "o confronto de planos passou de um empurrão: isso viraria um motor paralelo");
   }
+
+  /* SOMA ZERO CONTRA UM CT UNIFORME — a asserção que protege `CT-round win%`.
+     Com dois rótulos o CT acertava metade das vezes e o ± se cancelava sozinho.
+     Com seis jogadas ele erra cinco em cada seis, e premiar o T em todo erro com
+     a magnitude do castigo daria a ele +2/3 do canal de vantagem sistemática —
+     um deslocamento de LADO disfarçado de leitura, contra um gate de 47–54.
+     Somando as seis escolhas possíveis do CT, o resultado tem de ser zero. */
+  const soma=TIPOS.reduce((total,jogada)=>total+contra(jogada).vantagemAberturaT,0);
+  assert.ok(Math.abs(soma)<1e-12,
+    `o confronto não é soma zero contra um CT uniforme (soma ${soma.toExponential(2)}). `+
+    `Todo ganho precisa vir de LER melhor que o acaso, nunca da contagem de jogadas.`);
+
   assert.deepEqual(P.confrontoDePlanos(null,null).ctAcertou,false,
     "confronto sem planos precisa devolver neutro, não quebrar");
+}
+
+/* ——— tipo de jogada ———
+   A guarda mais importante deste arquivo, porque protege contra um erro que
+   PARECE uma melhoria: usar a afinidade do time por um tipo de jogada como
+   bônus. Três encodings independentes foram medidos e os três acoplam forma a
+   força (rush × força = 0,78 / 0,75 / 0,78), porque forma de atributo determina
+   distribuição de função e função já tem preço em `DUEL_CONVERSION`. Quem somar
+   `forma` a `openEdgeA` estará pagando talento duas vezes.
+
+   A única grandeza medida como neutra é `assinatura`, e é ela que esta função
+   cobra. Com 17 elencos, um |r| abaixo de .35 não se distingue de zero (p > .15)
+   — o teto não afirma independência, afirma que a amostra não vê diferença. */
+const CORR_MAX=.35;
+
+function correlacao(xs,ys){
+  const media=v=>v.reduce((s,x)=>s+x,0)/Math.max(1,v.length);
+  const mx=media(xs),my=media(ys);
+  let sxy=0,sxx=0,syy=0;
+  for(let i=0;i<xs.length;i++){
+    const dx=xs[i]-mx,dy=ys[i]-my;
+    sxy+=dx*dy;sxx+=dx*dx;syy+=dy*dy;
+  }
+  return sxx&&syy?sxy/Math.sqrt(sxx*syy):0;
+}
+
+function provarJogada(J,A,Q){
+  ["TIPOS_JOGADA","RECEITAS","computePlayStyleReference","playStyleProfile","playStyleRaw"]
+    .forEach(nome=>assert.ok(J[nome],`${nome} ausente do módulo de tipo de jogada`));
+  assert.equal(J.TIPOS_JOGADA.length,6,"o vocabulário de jogadas mudou de tamanho");
+  J.TIPOS_JOGADA.forEach(tipo=>assert.ok(J.RECEITAS[tipo],`${tipo} não tem receita`));
+  Object.keys(J.RECEITAS).forEach(tipo=>assert.ok(J.TIPOS_JOGADA.includes(tipo),
+    `receita ${tipo} não está no vocabulário — moda com afinidade igual desempata pela ordem`));
+
+  const elencos=A.TEAMS.map(time=>time.jogadores);
+  const ref=J.computePlayStyleReference(elencos);
+  const perfis=elencos.map(elenco=>J.playStyleProfile(elenco,ref));
+
+  // zero-centrado contra a liga, como todo o resto do domínio
+  for(const tipo of J.TIPOS_JOGADA){
+    const m=perfis.reduce((soma,p)=>soma+p.forma[tipo],0)/perfis.length;
+    assert.ok(Math.abs(m)<1e-12,`tipo ${tipo} não está zero-centrado (média ${m})`);
+  }
+  // distribuição de verdade: o que sai daqui é peso de sorteio, não escore
+  perfis.forEach((p,i)=>{
+    const soma=J.TIPOS_JOGADA.reduce((s,tipo)=>s+p.pesos[tipo],0);
+    assert.ok(Math.abs(soma-1)<1e-9,`elenco ${i}: os pesos somam ${soma}, não 1`);
+    J.TIPOS_JOGADA.forEach(tipo=>assert.ok(p.pesos[tipo]>0&&p.pesos[tipo]<1,
+      `elenco ${i}: peso de ${tipo} saiu de (0,1) — nenhuma jogada pode ser impossível`));
+  });
+
+  // determinismo, ordem e não-mutação, na mesma tolerância da identidade
+  const antes=JSON.parse(JSON.stringify(elencos[0].map(carta=>carta._eng)));
+  const direto=J.playStyleProfile(elencos[0],ref);
+  const invertido=J.playStyleProfile([...elencos[0]].reverse(),ref);
+  J.TIPOS_JOGADA.forEach(tipo=>assert.ok(
+    Math.abs(direto.forma[tipo]-invertido.forma[tipo])<1e-12,
+    `a ordem dos cinco jogadores mudou a afinidade por ${tipo}`));
+  assert.deepEqual(JSON.parse(JSON.stringify(elencos[0].map(carta=>carta._eng))),antes,
+    "o perfil de jogada MUTOU o jogador que recebeu");
+  assert.doesNotThrow(()=>J.playStyleProfile([],ref),"elenco vazio quebrou o perfil");
+
+  /* A ASSERÇÃO QUE IMPORTA: a grandeza que pode virar aposta é neutra em força.
+     Se uma receita nova fizer `assinatura` prever elenco bom, ligar a mecânica
+     passaria a premiar time forte por ser forte — e isso reprova aqui, antes de
+     chegar ao balanceamento. */
+  const forca=A.TEAMS.map(time=>Q.forcaTime(time.jogadores.map(carta=>carta._eng||carta),
+    time.treinador&&time.treinador.carac,time.treinador&&time.treinador.ovr).efetiva);
+  const rAssinatura=correlacao(perfis.map(p=>p.assinatura),forca);
+  assert.ok(Math.abs(rAssinatura)<CORR_MAX,
+    `assinatura × força = ${rAssinatura.toFixed(3)}, acima do teto de ${CORR_MAX}. `+
+    `A assinatura é a ÚNICA grandeza deste módulo autorizada a virar aposta, `+
+    `justamente por não prever elenco bom. Se ela passou a prever, a mecânica `+
+    `pagaria talento duas vezes — reveja as receitas, não o teto.`);
+
+  /* `vantagem` É O CANAL QUE PAGA, então ela leva a mesma prova que `assinatura`
+     — e mais uma, exclusiva: a soma sobre o próprio repertório tem de ser ZERO.
+     É essa centragem que separa "rodou o que sabe fazer" de "é um time bom".
+     Sem ela isto seria `forma`, que prevê elenco forte em 0,78, e o canal viraria
+     bônus de talento disfarçado de tática. */
+  perfis.forEach((p,i)=>{
+    const soma=J.TIPOS_JOGADA.reduce((s,tipo)=>s+p.vantagem[tipo],0);
+    assert.ok(Math.abs(soma)<1e-12,
+      `elenco ${i}: a vantagem de execução soma ${soma.toExponential(2)} sobre o próprio `+
+      `repertório, e precisa somar zero — senão ela é nível, não forma`);
+  });
+  const esperada=perfis.map(p=>
+    J.TIPOS_JOGADA.reduce((s,tipo)=>s+p.pesos[tipo]*p.vantagem[tipo],0));
+  const rExecucao=correlacao(esperada,forca);
+  assert.ok(Math.abs(rExecucao)<CORR_MAX,
+    `vantagem de execução esperada × força = ${rExecucao.toFixed(3)}, acima do teto de `+
+    `${CORR_MAX}. Rodar o próprio jogo não pode valer mais para quem já é forte: `+
+    `isso pagaria talento duas vezes, que é o que este módulo inteiro existe para impedir.`);
+
+  /* `forma` NÃO é neutra, e a camada não pode consumi-la. Enquanto nenhum outro
+     módulo a lê, a proibição é barata de manter — e é aqui que ela é congelada,
+     não num comentário que a próxima fatia não vai ler. */
+  for(const modulo of modulosDaCamada()){
+    if(modulo.endsWith("play-style.mjs"))continue;
+    const fonte=apenasCodigo(fs.readFileSync(path.join(ROOT,modulo),"utf8"));
+    assert.ok(!/\.forma\b/.test(fonte),
+      `${modulo} lê \`.forma\`, que carrega força. Só \`pesos\` e \`assinatura\` `+
+      `podem atravessar esta fronteira.`);
+  }
+
+  /* β é o botão, e precisa fazer o que diz: em 0 o time é ilegível (uniforme),
+     e subir concentra a moda. Sem isso, "o time repete o que sabe fazer" seria
+     uma afirmação sem mecanismo. */
+  const uniforme=J.playStyleProfile(elencos[0],ref,{...J.CFG_PADRAO,BETA:0});
+  J.TIPOS_JOGADA.forEach(tipo=>assert.ok(Math.abs(uniforme.pesos[tipo]-1/6)<1e-12,
+    "com β em 0 o sorteio precisa ser uniforme — é o estado de hoje, e o zero da comparação"));
+  const modaEm=beta=>{
+    const p=J.playStyleProfile(elencos[0],ref,{...J.CFG_PADRAO,BETA:beta});
+    return p.pesos[p.moda];
+  };
+  assert.ok(modaEm(6)>modaEm(3)&&modaEm(3)>modaEm(1),
+    "subir β não concentrou a moda — o botão de legibilidade não está ligado");
+
+  /* Um elenco de assinatura extrema é LEGÍVEL; um equilibrado é ILEGÍVEL. Prova
+     sintética, porque com dado real os dois extremos podem simplesmente não
+     existir e a guarda ficaria verde sem testar nada. */
+  const molde=elencos[0][0]._eng;
+  const sintetico=valores=>Array.from({length:5},()=>({_eng:{...molde,...valores}}));
+  const refSint=J.computePlayStyleReference([...elencos,sintetico({en:99,op:99,fp:99})]);
+  const extremo=J.playStyleProfile(sintetico({en:99,op:99,fp:99}),refSint);
+  assert.ok(extremo.assinatura>Math.max(...perfis.map(p=>p.assinatura)),
+    "um elenco de atributos extremos não ficou mais legível que qualquer elenco real");
+  assert.equal(extremo.moda,"rush",
+    "elenco com entrada/abertura/fogo no teto precisa ler como `rush`");
+
+  /* O CONTRÁRIO também precisa valer, e é o lado que prova o mecanismo: um
+     elenco sem forma nenhuma — todo atributo exatamente na média da liga — tem
+     z zero em tudo, logo afinidade IGUAL por todos os tipos. Se este elenco
+     preferisse alguma jogada, a preferência estaria vindo da receita e não do
+     elenco. */
+  const naMedia={};
+  for(const chave of J.ATRIBUTOS)naMedia[chave]=ref.escala[chave].media;
+  const semForma=J.playStyleRaw(sintetico(naMedia),ref.escala);
+  const valores=J.TIPOS_JOGADA.map(tipo=>semForma[tipo]);
+  assert.ok(Math.max(...valores)-Math.min(...valores)<1e-12,
+    "elenco sem forma nenhuma preferiu uma jogada — a preferência veio da receita, não do elenco");
+
+  return {tipos:J.TIPOS_JOGADA.length,rAssinatura,
+    acerto:perfis.reduce((s,p)=>s+p.pesos[p.moda],0)/perfis.length};
 }
 
 async function main(){
@@ -349,16 +535,24 @@ async function main(){
   const M=await import(pathToFileURL(path.join(ROOT,`${CAMADA}/team-identity.mjs`)).href);
   const O=await import(pathToFileURL(path.join(ROOT,`${CAMADA}/opponent-model.mjs`)).href);
   const P=await import(pathToFileURL(path.join(ROOT,`${CAMADA}/round-plan.mjs`)).href);
+  const J=await import(pathToFileURL(path.join(ROOT,`${CAMADA}/play-style.mjs`)).href);
+  const Q=await import(pathToFileURL(path.join(ROOT,"src/domain/chemistry/team-chemistry.mjs")).href);
   const elencos=provarIdentidade(M,A);
   provarModelo(O);
-  provarPlano(P);
+  provarPlano(P,J);
+  const jogada=provarJogada(J,A,Q);
 
-  // ——— A CHAVE SAI DE FÁBRICA DESLIGADA ———
+  /* ——— A CHAVE ESTÁ LIGADA DESDE 05/08/2026 ———
+     A asserção inverteu de propósito, e não virou frouxa: ela continua dizendo
+     que MEXER na chave é balanceamento, agora nas duas direções. Desligar a
+     camada mudaria o resultado das partidas exatamente como ligá-la mudou, e
+     exigiria a mesma prova — comparação pareada nas mesmas seeds e os dois
+     indicadores acumulados juntos. */
   const cfgTatica=(await import(pathToFileURL(path.join(ROOT,`${CAMADA}/tactics-config.mjs`)).href)).CFG_TATICA;
-  assert.ok(!cfgTatica.ATIVA,
-    "CFG_TATICA.ATIVA saiu de fábrica LIGADA. Ligar a camada muda o resultado das "+
-    "partidas: é balanceamento, com commit próprio, comparação pareada nas mesmas "+
-    "seeds e `Favorito gap 16+` + `invicto` reportados antes e depois.");
+  assert.equal(cfgTatica.ATIVA,1,
+    "CFG_TATICA.ATIVA saiu de 1. Desligar a camada é balanceamento, não conveniência: "+
+    "exige commit próprio, comparação pareada nas mesmas seeds e `Favorito gap 16+` + "+
+    "`invicto` reportados antes e depois, juntos.");
 
   /* O fluxo tático precisa continuar SEPARADO do combate. Se `seedTatico` virar
      identidade, os dois geradores andam juntos e a decisão passa a deslocar os
@@ -393,7 +587,9 @@ async function main(){
 
   console.log(`tactics layer: ok (${modulos.length} módulos · ${elencos} elencos · `+
     `${EIXOS.length} eixos zero-centrados · modelo esquece e admite não saber · `+
-    `chave desligada · ${CONSUMIDORES_DECLARADOS.size} consumidores declarados)`);
+    `chave LIGADA · ${CONSUMIDORES_DECLARADOS.size} consumidores declarados · `+
+    `${jogada.tipos} tipos de jogada · assinatura×força ${jogada.rAssinatura.toFixed(3)} · `+
+    `moda média ${(100*jogada.acerto).toFixed(1)}%)`);
 }
 
 main();

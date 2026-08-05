@@ -17,10 +17,11 @@
    ligar, e por que os quatro eixos que já agem não podem agir de novo aqui. */
 
 export const CFG_TATICA={
-  /* 0 = desligada. Qualquer valor verdadeiro liga a camada. Trocar isto muda
-     resultado do jogo: é balanceamento, com commit próprio e comparação
-     pareada, não uma configuração de conveniência. */
-  ATIVA:0,
+  /* 1 desde 05/08/2026. Ligar mudou o resultado das partidas: foi balanceamento,
+     com comparação pareada nas mesmas seeds e os dois indicadores acumulados
+     reportados juntos. Voltar para 0 também é balanceamento — não é chave de
+     conveniência em direção nenhuma. */
+  ATIVA:1,
   /* Mistura que separa o fluxo da tática do fluxo do combate. Constante
      arbitrária e fixa (a razão áurea em 32 bits, como em muitos hashes); o que
      importa é que ela não mude, senão partidas antigas deixam de reproduzir. */
