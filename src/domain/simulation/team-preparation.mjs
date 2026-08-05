@@ -7,11 +7,18 @@ const dot=(weights,player)=>{let sum=0;for(const key in weights)sum+=weights[key
 
 export const CFG_PADRAO={MAPA_SCALE:380,MAPA_CAP:.06,STYLE_LADO:{ct:5.9,t:5.2}};
 
+/* Caráter de cada mapa em atributos: que jogador rende ali. Os pesos somam 1,00
+   e são JULGAMENTO declarado, não medição — é a mesma natureza do resto desta
+   tabela desde que ela nasceu.
+
+   `Cache` entrou em 04/08/2026 com o pool: AWP de meio decide, duelo de abertura
+   pesa e o resto é fogo. `Train` e `Overpass` saíram do pool ativo do CS real e
+   por isso saíram daqui; as receitas ficam registradas no histórico do Git. */
 export const MAP_PROFILES={
   Mirage:{fp:.34,op:.30,tr:.18,ut:.18},Inferno:{ut:.34,tr:.28,en:.20,cl:.18},
   Nuke:{sn:.30,cl:.26,ut:.24,tr:.20},Ancient:{cl:.30,op:.26,ut:.24,tr:.20},
   Anubis:{fp:.30,cl:.26,op:.26,ut:.18},Dust2:{fp:.34,sn:.30,op:.26,en:.10},
-  Train:{sn:.30,ut:.30,cl:.22,tr:.18},Overpass:{ut:.30,cl:.26,tr:.24,op:.20}
+  Cache:{sn:.30,op:.28,fp:.24,ut:.18}
 };
 
 export const SIDE_ROLE_BONUS={

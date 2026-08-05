@@ -9,7 +9,10 @@ const {ROOT,compactStats,countBy,sortedCountEntries,teamNameFor}=require("../lib
 const DEEP_SCHEMA_VERSION=3;
 const DEFAULT_DEEP_CYCLES=8;
 const DEEP_BASE_SEED=0x51f15e1d;
-const MAPS=["Mirage","Inferno","Nuke","Ancient","Anubis","Dust2","Train","Overpass"];
+/* Deriva do pool real em vez de repetir a lista: em 04/08/2026 esta cópia ficou
+   com Train e Overpass depois que os dois saíram do CS, e a auditoria passou a
+   percorrer dois mapas que o jogo não sorteia mais — sem que nada reprovasse. */
+const MAPS=[...X.MAPAS_POOL];
 const QUARTILES=["Q1","Q2","Q3","Q4"];
 const OUTCOMES=["win","loss"];
 const BUY_STATES=["pistol","eco","force","full"];

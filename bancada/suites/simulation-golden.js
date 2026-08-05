@@ -106,7 +106,7 @@ function campaignSeriesScenario(){
   // Série de três mapas: cobre o mapa decisivo, que uma varrida 2-0 nunca alcança. A sequência
   // de mapas acompanha o novo sorteio de RNG; a cobertura é a mesma.
   assert.equal(result.placarSerie.join(","),"1,2",`${id}: ancora da serie mudou antes de atualizar o fixture`);
-  assert.equal(result.mapas.map(map=>map.mapa).join(","),"Anubis,Inferno,Dust2",`${id}: sequencia de mapas mudou antes de atualizar o fixture`);
+  assert.equal(result.mapas.map(map=>map.mapa).join(","),"Anubis,Ancient,Nuke",`${id}: sequencia de mapas mudou antes de atualizar o fixture`);
   return {
     id,kind:"campaign-series",seed,
     input:{...projectInput(a,b,aIndex,bIndex),bestOf:3,campaignForm:true},
@@ -129,15 +129,16 @@ function buildCurrent(){
       // e todo o stream de RNG a partir do primeiro round. As seeds são reescolhidas para
       // preservar a FORMA do cenário, nunca para encobrir a diferença: a seed 8 devolve um 13-11
       // competitivo em 22 rounds, com as quatro classes de compra e clutch vencido.
-      fixedMapScenario({id:"economy-and-clutches",seed:8,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[13,11]}),
+      fixedMapScenario({id:"economy-and-clutches",seed:8,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[13,7]}),
       // Este cenário cobre o OT REPETÍVEL (alvo 13→16→19→22), caminho que só executa com duas ou
       // mais prorrogações. Ele é frágil por natureza: qualquer balanceamento reembaralha o RNG e a
       // seed antiga deixa de ir para o overtime. A regra ao mexer aqui é procurar uma seed que
       // volte a produzir 2+ prorrogações — nunca aceitar um placar de tempo normal, que esvaziaria
-      // o teste. A seed 364 reproduz 20-22 em 42 rounds — três prorrogações, exatamente a mesma
-      // forma que a 132 dava antes da padronização.
-      // Histórico da seed: 129 → 349 → 515 → 200 → 456 → 132 → 645 → 1036 → 622 → 364.
-      fixedMapScenario({id:"repeated-overtime",seed:364,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[20,22]}),
+      // o teste. A seed 235 reproduz 20-22 em 42 rounds — três prorrogações, exatamente a mesma
+      // forma que a 364 dava antes da recalibração de mapas de 04/08/2026 (com ela, a 364 passou
+      // a terminar 3-13, em tempo normal, e esvaziaria o cenário).
+      // Histórico da seed: 129 → 349 → 515 → 200 → 456 → 132 → 645 → 1036 → 622 → 364 → 235.
+      fixedMapScenario({id:"repeated-overtime",seed:235,aIndex:0,bIndex:1,map:"Nuke",expectedScore:[20,22]}),
       campaignSeriesScenario()
     ]
   };
