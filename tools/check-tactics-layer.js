@@ -20,16 +20,11 @@
                   eixo. Se o estático falhar por uma grafia não prevista, este
                   pega.
 
-   A CHAVE DESLIGADA É O CONTRATO. Desde 04/08/2026 a camada está ligada ao
-   motor, mas `CFG_TATICA.ATIVA` sai de fábrica em 0: nenhuma linha dela executa,
-   nenhuma amostra de RNG a mais é consumida, e `simulation-golden` continua bit
-   a bit idêntico. Este checador exige que continue assim.
-
-   LIGAR A CHAVE É BALANCEAMENTO, não configuração de conveniência: muda o
-   resultado das partidas e exige commit próprio, comparação pareada nas mesmas
-   seeds e os dois indicadores acumulados (`Favorito gap 16+` e `invicto`)
-   reportados antes e depois, juntos. Ao ligá-la, ATUALIZE esta asserção na MESMA
-   fatia — ela é um marco deliberado, não um obstáculo. */
+   A CHAVE ESTÁ LIGADA desde 05/08/2026, e mexer nela — nas DUAS direções — é
+   balanceamento, não configuração de conveniência: muda o resultado das
+   partidas e exige commit próprio, comparação pareada nas mesmas seeds e os
+   dois indicadores acumulados (`Favorito gap 16+` e `invicto`) reportados
+   antes e depois, juntos. */
 const assert=require("node:assert/strict");
 const fs=require("node:fs");
 const path=require("node:path");
@@ -547,12 +542,17 @@ async function main(){
   provarPlano(P,J);
   const jogada=provarJogada(J,A,Q);
 
-  // ——— A CHAVE SAI DE FÁBRICA DESLIGADA ———
+  /* ——— A CHAVE ESTÁ LIGADA DESDE 05/08/2026 ———
+     A asserção inverteu de propósito, e não virou frouxa: ela continua dizendo
+     que MEXER na chave é balanceamento, agora nas duas direções. Desligar a
+     camada mudaria o resultado das partidas exatamente como ligá-la mudou, e
+     exigiria a mesma prova — comparação pareada nas mesmas seeds e os dois
+     indicadores acumulados juntos. */
   const cfgTatica=(await import(pathToFileURL(path.join(ROOT,`${CAMADA}/tactics-config.mjs`)).href)).CFG_TATICA;
-  assert.ok(!cfgTatica.ATIVA,
-    "CFG_TATICA.ATIVA saiu de fábrica LIGADA. Ligar a camada muda o resultado das "+
-    "partidas: é balanceamento, com commit próprio, comparação pareada nas mesmas "+
-    "seeds e `Favorito gap 16+` + `invicto` reportados antes e depois.");
+  assert.equal(cfgTatica.ATIVA,1,
+    "CFG_TATICA.ATIVA saiu de 1. Desligar a camada é balanceamento, não conveniência: "+
+    "exige commit próprio, comparação pareada nas mesmas seeds e `Favorito gap 16+` + "+
+    "`invicto` reportados antes e depois, juntos.");
 
   /* O fluxo tático precisa continuar SEPARADO do combate. Se `seedTatico` virar
      identidade, os dois geradores andam juntos e a decisão passa a deslocar os
@@ -587,7 +587,7 @@ async function main(){
 
   console.log(`tactics layer: ok (${modulos.length} módulos · ${elencos} elencos · `+
     `${EIXOS.length} eixos zero-centrados · modelo esquece e admite não saber · `+
-    `chave desligada · ${CONSUMIDORES_DECLARADOS.size} consumidores declarados · `+
+    `chave LIGADA · ${CONSUMIDORES_DECLARADOS.size} consumidores declarados · `+
     `${jogada.tipos} tipos de jogada · assinatura×força ${jogada.rAssinatura.toFixed(3)} · `+
     `moda média ${(100*jogada.acerto).toFixed(1)}%)`);
 }

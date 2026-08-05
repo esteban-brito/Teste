@@ -68,7 +68,16 @@ export const CFG_PADRAO={
   /* ACERTO_ABERTURA é o custo de o CT ACERTAR, para o T. O ganho do T quando o
      CT erra sai daqui dividido por (n−1) — ver `confrontoDePlanos`. */
   ACERTO_ABERTURA:.055,
-  ACERTO_PLANT:.045,     // idem no plant/retake
+  /* PLANT — o comprometimento de utilitária mexe em plantar/retomar, e isso é
+     fiel: quem gasta granada planta mais. Mas o empurrão é SIMÉTRICO num
+     processo de PRIMEIRO SUCESSO, e `1−∏(1−pᵢ)` é côncava: ruído simétrico
+     ABAIXA a média. A .045 isso custava 2,3 pontos de `Plant%`, gate em 46–60
+     que o ciclo de 04/08 pagou caro para tirar da borda — e o canal foi medido
+     como NÃO sendo de leitura (contribuição corrigida −0,07 pp). Gastava margem
+     e não comprava inteligência. A .025 a decisão continua valendo e a queda cai
+     para ~0,7 ponto, porque o efeito de Jensen escala com o QUADRADO do
+     empurrão. */
+  ACERTO_PLANT:.025,
   RITMO_CONTATO:.16,     // teto do efeito do tempo sobre o ritmo de contato
   /* EXECUÇÃO — o canal que faz a leitura valer, e o único aqui que NÃO é soma
      zero. Adivinhar a jogada é quase soma zero por natureza; ser empurrado para
