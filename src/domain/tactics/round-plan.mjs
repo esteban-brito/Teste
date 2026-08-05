@@ -105,7 +105,7 @@ export function fidelidade(identidade,cfg=CFG_PADRAO){
     O T parte do PRÓPRIO repertório; o CT parte do que acredita sobre o T e cai
     para uniforme quando não sabe nada — não finge saber. Devolve um objeto de
     pesos na ordem canônica de `TIPOS_JOGADA`, cuja ordem desempata sorteio. */
-function pesosDeJogada({lado,repertorio,crenca,identidade,contexto,cfg}){
+function pesosDeJogada({lado,repertorio,crenca,identidade,contexto,compromisso,cfg}){
   const n=TIPOS_JOGADA.length,uniforme=1/n;
   const temCrenca=!!(crenca&&crenca.moda!=null);
   const confianca=temCrenca?clamp(crenca.confianca??0,0,1):0;
@@ -113,11 +113,27 @@ function pesosDeJogada({lado,repertorio,crenca,identidade,contexto,cfg}){
 
   const base={};
   if(lado==="CT"){
-    // o CT monta contra o que acredita que vem; sem crença utilizável, uniforme
+    /* O CT REAL NÃO ESCOLHE UM SITE POR ROUND. Ele monta um default que cobre
+       tudo razoavelmente, e só às vezes o IGL chama um stack em cima de uma
+       leitura. As duas coisas são UMA chamada — por isso a nitidez da leitura
+       aqui é o mesmo `compromisso` que decide stack × split, e não um botão
+       separado.
+
+       Um CT que faz split joga a crença espalhada: ele se inclina para onde
+       acha que vem, sem abrir mão do resto. Um CT que stacka concentra na moda
+       e aceita o buraco do outro lado. É por isso que `confrontoDePlanos` já
+       cobrava pesoCT 1 no stack e .55 no split: o castigo de acertar sempre
+       dependeu de quanto se apostou.
+
+       O efeito colateral é a parte boa: só stacka quem tem ESTRUTURA e
+       CONFIANÇA, então a leitura é GANHA e não distribuída. Um elenco sem
+       capitão nunca chega ao comprometimento que a torna valiosa. */
+    const c=clamp(compromisso??0,0,1);
     for(const tipo of TIPOS_JOGADA){
-      base[tipo]=usaLeitura&&crenca.distribuicao
-        ?(crenca.distribuicao[tipo]??0)
-        :uniforme;
+      if(!usaLeitura||!crenca.distribuicao){base[tipo]=uniforme;continue;}
+      const esperado=crenca.distribuicao[tipo]??0;
+      const naModa=tipo===crenca.moda?1:0;
+      base[tipo]=(1-c)*esperado+c*naModa;
     }
   }else{
     for(const tipo of TIPOS_JOGADA)base[tipo]=repertorio?.[tipo]??uniforme;
@@ -168,15 +184,24 @@ export function planejarRound(entrada,cfg=CFG_PADRAO){
   const pRapido=sigmoide(cfg.RITMO_W*(identidade.ritmo??0)+cfg.RITMO_PRESSAO*pressao);
   const tempo=sortear({rapido:pRapido,lento:1-pRapido},random)==="rapido"?"rapido":"lento";
 
+  /* COMPROMETIMENTO — quanto do time vai junto. Estrutura e confiança empurram
+     para stack; a dúvida empurra para split, que é o jeito de não errar feio.
+     A PROBABILIDADE é calculada aqui, antes da jogada, porque ela também governa
+     a nitidez da leitura do CT — no CS a chamada é uma só. O SORTEIO continua
+     depois da jogada: a ordem de consumo do gerador é contrato, e mudá-la
+     mudaria toda a partida a partir daqui. */
+  /* Crença SEM moda não é crença: `{moda:null,confianca:.9}` chega quando o
+     modelo tem massa mas nada a apontar, e tratá-la como confiança real faria o
+     time stackar em cima de nada. */
+  const confianca=crenca&&crenca.moda!=null?clamp(crenca.confianca??0,0,1):0;
+  const pStack=sigmoide(cfg.COMPROMISSO_W*((identidade.estrutura??0)+confianca-.35));
+
   /* JOGADA — onde a leitura entra. A ordem das chamadas ao gerador é contrato:
      tempo, jogada, comprometimento, utilitária, execução. */
   const dist=pesosDeJogada({lado,repertorio:jogada&&jogada.repertorio,
-    crenca,identidade,contexto,cfg});
+    crenca,identidade,contexto,compromisso:pStack,cfg});
   const escolhida=sortear(dist.pesos,random);
 
-  /* COMPROMETIMENTO — quanto do time vai junto. Estrutura e confiança empurram
-     para stack; a dúvida empurra para split, que é o jeito de não errar feio. */
-  const pStack=sigmoide(cfg.COMPROMISSO_W*((identidade.estrutura??0)+dist.confianca-.35));
   const comprometimento=sortear({stack:pStack,split:1-pStack},random)==="stack"?"stack":"split";
 
   /* UTILITÁRIA — gastar agora ou guardar para o retake. Eco segura. */

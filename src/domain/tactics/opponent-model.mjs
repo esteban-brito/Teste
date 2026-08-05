@@ -32,11 +32,27 @@
    ESTADO: NENHUM CONSUMIDOR (Fase 0). Ver o cabeçalho de `team-identity.mjs`. */
 
 /** Pesos do modelo. Mutáveis num lugar só, para o calibrador poder tunar. */
+/* A MEMÓRIA É ANCORADA NO MEIO-TEMPO, e o número mudou junto com o vocabulário.
+
+   `MEIA_VIDA:4` foi calibrada quando a dimensão observada era binária, e ali ela
+   funcionava: seis rounds de amostra efetiva resolvem uma escolha entre duas.
+   Com seis tipos de jogada a mesma memória dá 1,05 observação POR JOGADA, e
+   medido no motor a confiança do CT estacionava em 0,19 já no round 3 e não
+   subia mais até o fim do mapa — a moda era ruído, e o acerto ficava em 19,5%
+   contra 16,7% de acaso. É a mesma classe de erro que o alfabeto de `nitidez`:
+   parâmetro afinado para dois símbolos não transfere para seis.
+
+   O valor novo tem âncora, não é busca: `MEIA_VIDA:8` dá amostra efetiva de
+   ~12 rounds, exatamente um meio-tempo. E há razão esportiva para a memória ser
+   mais longa agora — o que se observa deixou de ser "em que site ele bateu",
+   que muda a cada round, e passou a ser QUE TIPO DE ROUND ELE RODA, que é traço
+   de time e muda em escala de mapa. Medir um traço lento com memória rápida é
+   ler ruído. */
 export const CFG_PADRAO={
-  MEIA_VIDA:4,            // rounds até uma observação valer metade
-  MEIA_VIDA_MIN:1.5,      // piso: nem o melhor IGL reage a um round só
-  MEIA_VIDA_MAX:9,        // teto: nem o pior time esquece tudo
-  LEITURA_MEIA_VIDA:2.0,  // quanto o eixo `leitura` encurta a meia-vida
+  MEIA_VIDA:8,            // rounds até uma observação valer metade (~1 meio-tempo)
+  MEIA_VIDA_MIN:3,        // piso: nem o melhor IGL reage a um round só
+  MEIA_VIDA_MAX:16,       // teto: nem o pior time esquece tudo
+  LEITURA_MEIA_VIDA:4.0,  // quanto o eixo `leitura` encurta a meia-vida
   CONFIANCA_K:3,          // amostra efetiva em que a confiança chega a 50%
   LEITURA_CONFIANCA:.30   // quanto `leitura` levanta a confiança já formada
 };
