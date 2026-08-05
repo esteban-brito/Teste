@@ -27,7 +27,12 @@
    já agem. Ligar aqui é local à ferramenta: `CFG_TATICA.ATIVA` continua saindo
    de fábrica em 0, e `tools/check-tactics-layer.js` cobra isso.
 
-   Uso:  node bancada/ferramentas/tatica-baseline.js [--mapas 40] [--tatica] */
+   `--canais` responde uma pergunta DIFERENTE da correlação: não "o eixo explica
+   o mapa?", mas "quanto vale ACERTAR a leitura, e por qual canal?". Ver o
+   cabeçalho de `medirCanais`, que é onde mora a armadilha mais cara do arquivo.
+
+   Uso:  node bancada/ferramentas/tatica-baseline.js [--mapas 40] [--tatica]
+         node bancada/ferramentas/tatica-baseline.js --canais [--rounds 110000] */
 const {X,T}=require("../lib/motor");
 const {teamIdentityRaw,computeIdentityMeans}=require("../../src/domain/tactics/team-identity.mjs");
 const {CFG_TATICA}=require("../../src/domain/tactics/tactics-config.mjs");
@@ -70,7 +75,125 @@ function icFisher(r,n){
 }
 const contemZero=([lo,hi])=>lo<=0&&hi>=0;
 
+/* ——— POTÊNCIA DOS CANAIS ————————————————————————————————————————————————
+   Quanto vale ACERTAR a leitura, em pontos de round vencido pelo T, e por qual
+   dos três canais de `confrontoDePlanos`.
+
+   O BRAÇO DE CONTROLE É OBRIGATÓRIO, e descobrir isso custou uma medição
+   inteira. `ctAcertou` NÃO é exógeno: a direção sai da inércia, a inércia
+   depende de quem venceu o round anterior, e quem venceu o round anterior
+   prevê quem vence o próximo. Com os três canais em ZERO — onde acertar não
+   pode valer nada, por construção — o contraste "errou menos acertou" ainda
+   deu −0,83 pp ± 0,30 em 111 mil rounds. Quem lê esse contraste sem subtrair o
+   controle atribui ao canal um efeito que é SELEÇÃO. Toda linha da tabela
+   abaixo é lida CONTRA o controle, nunca contra zero.
+
+   OS CANAIS SÃO ISOLADOS porque não fazem a mesma coisa. `ACERTO_ABERTURA` e
+   `RITMO_CONTATO` respondem a acertar a direção. `ACERTO_PLANT` responde a
+   `utilitaria` e é ORTOGONAL à leitura — ele entra aqui não pelo contraste,
+   que nele é nulo, mas pela coluna `Plant%`: empurrão simétrico num processo
+   de PRIMEIRO SUCESSO não se cancela. `1−∏(1−pᵢ)` é côncava, então ruído
+   simétrico ABAIXA a média (Jensen), e Plant% é gate em 46–60. */
+function medirCanais(orcamentoRounds){
+  const PROJETO={ACERTO_ABERTURA:CFG_PLANO.ACERTO_ABERTURA,
+    ACERTO_PLANT:CFG_PLANO.ACERTO_PLANT,RITMO_CONTATO:CFG_PLANO.RITMO_CONTATO};
+  const zerado={ACERTO_ABERTURA:0,ACERTO_PLANT:0,RITMO_CONTATO:0};
+  const so=chave=>({...zerado,[chave]:PROJETO[chave]});
+  const cenarios=[
+    ["CONTROLE (os três em 0)",zerado],
+    ["só ACERTO_ABERTURA",so("ACERTO_ABERTURA")],
+    ["só ACERTO_PLANT",so("ACERTO_PLANT")],
+    ["só RITMO_CONTATO",so("RITMO_CONTATO")],
+    ["os três (projeto)",PROJETO]
+  ];
+
+  const rodar=()=>{
+    const acertou={n:0,tw:0,p:0},errou={n:0,tw:0,p:0};
+    let seed=1000,rounds=0,plantados=0;
+    // percorre os pares em ciclos até gastar o orçamento: seeds distintas por
+    // cenário seriam braços não pareados, então a sequência recomeça igual.
+    fim: for(let ciclo=0;ciclo<200;ciclo++)
+      for(let i=0;i<T.length;i++)for(let j=i+1;j<T.length;j++){
+        X.srand(seed++);
+        const jogo=X.simularMapa({nome:T[i].nome,jogadores:T[i].jogadores},
+          {nome:T[j].nome,jogadores:T[j].jogadores},
+          X.forcaDoDia(T[i].ef,T[i].quim),X.forcaDoDia(T[j].ef,T[j].quim),null,true);
+        for(const round of jogo.rounds){
+          if(!round.tatica)continue;
+          rounds++;
+          if(round.plantado)plantados++;
+          // o T deste round é o lado oposto ao CT; `venceA` é do time A
+          const venceuT=(round.ladoA==="TR")===round.venceA;
+          const celula=round.tatica.ctAcertou?acertou:errou;
+          celula.n++;
+          if(venceuT)celula.tw++;
+          if(round.plantado)celula.p++;
+        }
+        if(rounds>=orcamentoRounds)break fim;
+      }
+    const taxa=(x,n)=>n?x/n:0;
+    const pctA=taxa(acertou.tw,acertou.n),pctE=taxa(errou.tw,errou.n);
+    // erro-padrão da DIFERENÇA de duas proporções independentes
+    const se=100*Math.sqrt(pctA*(1-pctA)/Math.max(1,acertou.n)+
+      pctE*(1-pctE)/Math.max(1,errou.n));
+    return {rounds,se,
+      acerto:100*taxa(acertou.n,rounds),
+      contraste:100*(pctE-pctA),
+      plant:100*taxa(plantados,rounds)};
+  };
+
+  const aplicar=valores=>Object.assign(CFG_PLANO,valores);
+  const saida=[];
+  try{
+    for(const [nome,valores] of cenarios){
+      aplicar(valores);
+      saida.push([nome,rodar()]);
+    }
+  }finally{
+    // valor restaurado mesmo após falha, como manda `bancada/lib/sweep.js`
+    aplicar(PROJETO);
+  }
+
+  const controle=saida[0][1].contraste;
+  console.log("══════════════════════════════════════════════════════════════");
+  console.log(" POTÊNCIA DOS CANAIS — quanto vale ACERTAR a leitura");
+  console.log("══════════════════════════════════════════════════════════════\n");
+  console.log("cenário                    rounds   CT acerta   contraste  (SE)   "+
+    "CORRIGIDO   Plant%");
+  console.log("─".repeat(94));
+  for(const [nome,r] of saida){
+    const corrigido=r.contraste-controle;
+    const ehControle=nome.startsWith("CONTROLE");
+    console.log(`${nome.padEnd(26)} ${String(r.rounds).padStart(6)}  `+
+      `${r.acerto.toFixed(1).padStart(8)}%  `+
+      `${r.contraste.toFixed(2).padStart(9)}  (${r.se.toFixed(2)})  `+
+      `${(ehControle?"—":corrigido.toFixed(2)+" pp").padStart(9)}  `+
+      `${r.plant.toFixed(2).padStart(7)}`);
+  }
+  const seControle=saida[0][1].se;
+  console.log("\n── como ler ──");
+  console.log(`  O controle mede o CONFUNDIMENTO: ${controle.toFixed(2)} pp ± ${seControle.toFixed(2)} `+
+    `com os canais em 0.`);
+  console.log("  Ele não é zero porque `ctAcertou` correlaciona com o estado do round.");
+  console.log("  A coluna CORRIGIDO é a única que fala do canal; as outras falam de seleção.\n");
+  const acertoMedio=saida[saida.length-1][1].acerto;
+  const canal=saida[saida.length-1][1].contraste-controle;
+  console.log("── transmissão total ──");
+  console.log(`  acertar vale ${canal.toFixed(2)} pp de round, e o CT acerta ${acertoMedio.toFixed(1)}%.`);
+  console.log(`  Com a base em 50% (duas direções), a transmissão é `+
+    `(${acertoMedio.toFixed(1)}−50)×${canal.toFixed(2)}/100 = `+
+    `${((acertoMedio-50)*canal/100).toFixed(4)} pp.`);
+  console.log("  É por isso que aumentar o GANHO do canal não resolve: multiplicar");
+  console.log("  por uma taxa de acerto travada em 50% dá zero em qualquer escala.");
+}
+
 function main(){
+  if(process.argv.includes("--canais")){
+    CFG_TATICA.ATIVA=1;
+    medirCanais(argInt("--rounds",110000));
+    CFG_TATICA.ATIVA=0;
+    return;
+  }
   const mapasPorPar=argInt("--mapas",40);
   const comTatica=process.argv.includes("--tatica");
   CFG_TATICA.ATIVA=comTatica?1:0;
