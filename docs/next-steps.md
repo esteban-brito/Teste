@@ -345,7 +345,7 @@ Só executar se R4 comprovar um problema material.
 
 **Status em 23/07/2026:** R5.0–R5.1 e R5.2 concluídas. O
 manifesto congelado está em `docs/dados/r5-experiment.json` e a arquitetura completa
-em `docs/ciclos/r5-plan.md`. A captura de desenvolvimento cobre 1.088 mapas e 10.880
+em `docs/ciclos/r5-plan.md`. A captura de desenvolvimento cobre 1.904 mapas e 19.040
 player-maps; baseline contra baseline deve produzir deltas e IC95% exatamente
 zero antes de qualquer candidato. R5.2 removeu isoladamente os pisos/tetos duros
 de forma e rating, sem novo ponto de RNG e sem tuning tático; a evidência está em

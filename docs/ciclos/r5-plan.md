@@ -48,9 +48,16 @@ agenda, seeds, métricas, pisos materiais e gates de evidência.
 
 ### R5.1 — comparação pareada
 
-**Concluída.** A captura de desenvolvimento possui 1.088 mapas e 10.880
-player-maps; baseline contra baseline gera delta e IC95% exatamente zero, e as
+**Concluída.** A captura de desenvolvimento possui **1.904 mapas e 19.040
+player-maps**; baseline contra baseline gera delta e IC95% exatamente zero, e as
 mutações sintéticas provam detecção de regressão e deriva de contexto.
+
+> **A agenda foi de 8 para 14 ciclos em 04/08/2026**, quando o pool ativo passou
+> a ter 7 mapas. Não é escolha de tamanho de amostra: o número de ciclos precisa
+> ser múltiplo do pool **e** par, porque o agendamento inverte a orientação em
+> ciclos ímpares e cada jogador precisa de exposição A/B igual. 14 é o menor que
+> cumpre as duas. Os relatórios de julho, mais abaixo, descrevem a agenda de 8
+> ciclos e 1.088 mapas que valia então — continuam corretos como registro.
 
 - capturar uma observação por jogador e mapa;
 - preservar IDs, confronto, mapa, seed, orientação, lado e compras;
@@ -59,7 +66,7 @@ mutações sintéticas provam detecção de regressão e deriva de contexto.
 - exigir delta zero em baseline contra baseline;
 - provar com mutação sintética que regressão e deriva de contexto são detectadas.
 
-A agenda de desenvolvimento possui 1.088 mapas e 10.880 player-maps. A execução
+A agenda de desenvolvimento possui 1.904 mapas e 19.040 player-maps (eram 1.088 e 10.880 com 8 ciclos, até 04/08/2026). A execução
 de release exige ao menos 50.000 mapas. Caudas da ordem de 1/10.000 ou 1/100.000
 são avaliadas em suíte própria com ao menos um milhão de player-maps; o máximo
 observado é descritivo e nunca vira teto.
