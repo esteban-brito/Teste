@@ -318,6 +318,131 @@ function provarPlano(P){
     "confronto sem planos precisa devolver neutro, não quebrar");
 }
 
+/* ——— tipo de jogada ———
+   A guarda mais importante deste arquivo, porque protege contra um erro que
+   PARECE uma melhoria: usar a afinidade do time por um tipo de jogada como
+   bônus. Três encodings independentes foram medidos e os três acoplam forma a
+   força (rush × força = 0,78 / 0,75 / 0,78), porque forma de atributo determina
+   distribuição de função e função já tem preço em `DUEL_CONVERSION`. Quem somar
+   `forma` a `openEdgeA` estará pagando talento duas vezes.
+
+   A única grandeza medida como neutra é `assinatura`, e é ela que esta função
+   cobra. Com 17 elencos, um |r| abaixo de .35 não se distingue de zero (p > .15)
+   — o teto não afirma independência, afirma que a amostra não vê diferença. */
+const CORR_MAX=.35;
+
+function correlacao(xs,ys){
+  const media=v=>v.reduce((s,x)=>s+x,0)/Math.max(1,v.length);
+  const mx=media(xs),my=media(ys);
+  let sxy=0,sxx=0,syy=0;
+  for(let i=0;i<xs.length;i++){
+    const dx=xs[i]-mx,dy=ys[i]-my;
+    sxy+=dx*dy;sxx+=dx*dx;syy+=dy*dy;
+  }
+  return sxx&&syy?sxy/Math.sqrt(sxx*syy):0;
+}
+
+function provarJogada(J,A,Q){
+  ["TIPOS_JOGADA","RECEITAS","computePlayStyleReference","playStyleProfile","playStyleRaw"]
+    .forEach(nome=>assert.ok(J[nome],`${nome} ausente do módulo de tipo de jogada`));
+  assert.equal(J.TIPOS_JOGADA.length,6,"o vocabulário de jogadas mudou de tamanho");
+  J.TIPOS_JOGADA.forEach(tipo=>assert.ok(J.RECEITAS[tipo],`${tipo} não tem receita`));
+  Object.keys(J.RECEITAS).forEach(tipo=>assert.ok(J.TIPOS_JOGADA.includes(tipo),
+    `receita ${tipo} não está no vocabulário — moda com afinidade igual desempata pela ordem`));
+
+  const elencos=A.TEAMS.map(time=>time.jogadores);
+  const ref=J.computePlayStyleReference(elencos);
+  const perfis=elencos.map(elenco=>J.playStyleProfile(elenco,ref));
+
+  // zero-centrado contra a liga, como todo o resto do domínio
+  for(const tipo of J.TIPOS_JOGADA){
+    const m=perfis.reduce((soma,p)=>soma+p.forma[tipo],0)/perfis.length;
+    assert.ok(Math.abs(m)<1e-12,`tipo ${tipo} não está zero-centrado (média ${m})`);
+  }
+  // distribuição de verdade: o que sai daqui é peso de sorteio, não escore
+  perfis.forEach((p,i)=>{
+    const soma=J.TIPOS_JOGADA.reduce((s,tipo)=>s+p.pesos[tipo],0);
+    assert.ok(Math.abs(soma-1)<1e-9,`elenco ${i}: os pesos somam ${soma}, não 1`);
+    J.TIPOS_JOGADA.forEach(tipo=>assert.ok(p.pesos[tipo]>0&&p.pesos[tipo]<1,
+      `elenco ${i}: peso de ${tipo} saiu de (0,1) — nenhuma jogada pode ser impossível`));
+  });
+
+  // determinismo, ordem e não-mutação, na mesma tolerância da identidade
+  const antes=JSON.parse(JSON.stringify(elencos[0].map(carta=>carta._eng)));
+  const direto=J.playStyleProfile(elencos[0],ref);
+  const invertido=J.playStyleProfile([...elencos[0]].reverse(),ref);
+  J.TIPOS_JOGADA.forEach(tipo=>assert.ok(
+    Math.abs(direto.forma[tipo]-invertido.forma[tipo])<1e-12,
+    `a ordem dos cinco jogadores mudou a afinidade por ${tipo}`));
+  assert.deepEqual(JSON.parse(JSON.stringify(elencos[0].map(carta=>carta._eng))),antes,
+    "o perfil de jogada MUTOU o jogador que recebeu");
+  assert.doesNotThrow(()=>J.playStyleProfile([],ref),"elenco vazio quebrou o perfil");
+
+  /* A ASSERÇÃO QUE IMPORTA: a grandeza que pode virar aposta é neutra em força.
+     Se uma receita nova fizer `assinatura` prever elenco bom, ligar a mecânica
+     passaria a premiar time forte por ser forte — e isso reprova aqui, antes de
+     chegar ao balanceamento. */
+  const forca=A.TEAMS.map(time=>Q.forcaTime(time.jogadores.map(carta=>carta._eng||carta),
+    time.treinador&&time.treinador.carac,time.treinador&&time.treinador.ovr).efetiva);
+  const rAssinatura=correlacao(perfis.map(p=>p.assinatura),forca);
+  assert.ok(Math.abs(rAssinatura)<CORR_MAX,
+    `assinatura × força = ${rAssinatura.toFixed(3)}, acima do teto de ${CORR_MAX}. `+
+    `A assinatura é a ÚNICA grandeza deste módulo autorizada a virar aposta, `+
+    `justamente por não prever elenco bom. Se ela passou a prever, a mecânica `+
+    `pagaria talento duas vezes — reveja as receitas, não o teto.`);
+
+  /* `forma` NÃO é neutra, e a camada não pode consumi-la. Enquanto nenhum outro
+     módulo a lê, a proibição é barata de manter — e é aqui que ela é congelada,
+     não num comentário que a próxima fatia não vai ler. */
+  for(const modulo of modulosDaCamada()){
+    if(modulo.endsWith("play-style.mjs"))continue;
+    const fonte=apenasCodigo(fs.readFileSync(path.join(ROOT,modulo),"utf8"));
+    assert.ok(!/\.forma\b/.test(fonte),
+      `${modulo} lê \`.forma\`, que carrega força. Só \`pesos\` e \`assinatura\` `+
+      `podem atravessar esta fronteira.`);
+  }
+
+  /* β é o botão, e precisa fazer o que diz: em 0 o time é ilegível (uniforme),
+     e subir concentra a moda. Sem isso, "o time repete o que sabe fazer" seria
+     uma afirmação sem mecanismo. */
+  const uniforme=J.playStyleProfile(elencos[0],ref,{...J.CFG_PADRAO,BETA:0});
+  J.TIPOS_JOGADA.forEach(tipo=>assert.ok(Math.abs(uniforme.pesos[tipo]-1/6)<1e-12,
+    "com β em 0 o sorteio precisa ser uniforme — é o estado de hoje, e o zero da comparação"));
+  const modaEm=beta=>{
+    const p=J.playStyleProfile(elencos[0],ref,{...J.CFG_PADRAO,BETA:beta});
+    return p.pesos[p.moda];
+  };
+  assert.ok(modaEm(6)>modaEm(3)&&modaEm(3)>modaEm(1),
+    "subir β não concentrou a moda — o botão de legibilidade não está ligado");
+
+  /* Um elenco de assinatura extrema é LEGÍVEL; um equilibrado é ILEGÍVEL. Prova
+     sintética, porque com dado real os dois extremos podem simplesmente não
+     existir e a guarda ficaria verde sem testar nada. */
+  const molde=elencos[0][0]._eng;
+  const sintetico=valores=>Array.from({length:5},()=>({_eng:{...molde,...valores}}));
+  const refSint=J.computePlayStyleReference([...elencos,sintetico({en:99,op:99,fp:99})]);
+  const extremo=J.playStyleProfile(sintetico({en:99,op:99,fp:99}),refSint);
+  assert.ok(extremo.assinatura>Math.max(...perfis.map(p=>p.assinatura)),
+    "um elenco de atributos extremos não ficou mais legível que qualquer elenco real");
+  assert.equal(extremo.moda,"rush",
+    "elenco com entrada/abertura/fogo no teto precisa ler como `rush`");
+
+  /* O CONTRÁRIO também precisa valer, e é o lado que prova o mecanismo: um
+     elenco sem forma nenhuma — todo atributo exatamente na média da liga — tem
+     z zero em tudo, logo afinidade IGUAL por todos os tipos. Se este elenco
+     preferisse alguma jogada, a preferência estaria vindo da receita e não do
+     elenco. */
+  const naMedia={};
+  for(const chave of J.ATRIBUTOS)naMedia[chave]=ref.escala[chave].media;
+  const semForma=J.playStyleRaw(sintetico(naMedia),ref.escala);
+  const valores=J.TIPOS_JOGADA.map(tipo=>semForma[tipo]);
+  assert.ok(Math.max(...valores)-Math.min(...valores)<1e-12,
+    "elenco sem forma nenhuma preferiu uma jogada — a preferência veio da receita, não do elenco");
+
+  return {tipos:J.TIPOS_JOGADA.length,rAssinatura,
+    acerto:perfis.reduce((s,p)=>s+p.pesos[p.moda],0)/perfis.length};
+}
+
 async function main(){
   autoteste();
   const modulos=modulosDaCamada();
@@ -349,9 +474,12 @@ async function main(){
   const M=await import(pathToFileURL(path.join(ROOT,`${CAMADA}/team-identity.mjs`)).href);
   const O=await import(pathToFileURL(path.join(ROOT,`${CAMADA}/opponent-model.mjs`)).href);
   const P=await import(pathToFileURL(path.join(ROOT,`${CAMADA}/round-plan.mjs`)).href);
+  const J=await import(pathToFileURL(path.join(ROOT,`${CAMADA}/play-style.mjs`)).href);
+  const Q=await import(pathToFileURL(path.join(ROOT,"src/domain/chemistry/team-chemistry.mjs")).href);
   const elencos=provarIdentidade(M,A);
   provarModelo(O);
   provarPlano(P);
+  const jogada=provarJogada(J,A,Q);
 
   // ——— A CHAVE SAI DE FÁBRICA DESLIGADA ———
   const cfgTatica=(await import(pathToFileURL(path.join(ROOT,`${CAMADA}/tactics-config.mjs`)).href)).CFG_TATICA;
@@ -393,7 +521,9 @@ async function main(){
 
   console.log(`tactics layer: ok (${modulos.length} módulos · ${elencos} elencos · `+
     `${EIXOS.length} eixos zero-centrados · modelo esquece e admite não saber · `+
-    `chave desligada · ${CONSUMIDORES_DECLARADOS.size} consumidores declarados)`);
+    `chave desligada · ${CONSUMIDORES_DECLARADOS.size} consumidores declarados · `+
+    `${jogada.tipos} tipos de jogada · assinatura×força ${jogada.rAssinatura.toFixed(3)} · `+
+    `moda média ${(100*jogada.acerto).toFixed(1)}%)`);
 }
 
 main();
