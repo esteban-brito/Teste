@@ -365,3 +365,20 @@ provas sintéticas.
 `Failed to load resource` e `net::` — então **404 real passava batido**, e
 warnings nunca foram olhados. Filtro de ruído numa guarda é uma decisão que
 envelhece: revise o que ele está escondendo antes de confiar no verde.
+
+## Decisão de produto fechada em 04/08/2026 — raso na mão, profundo por baixo
+
+**Veto de mapa não existe e não vai existir**, nem como tela jogável nem como
+fase automática de ban/pick. E, mais amplo que isso: **toda complexidade nova
+vive DENTRO da simulação** — nenhuma pode cobrar um clique, uma tela ou uma
+decisão a mais do jogador. O laço é sortear → escolher carta → jogar, e ele não
+cresce.
+
+A afinidade de mapa que já existe (`MAP_PROFILES`, `MAPA_LADO`) continua valendo
+dentro do motor por `mapMultiplier`: o que está proibido é a **fase de escolha**,
+não o efeito do mapa.
+
+Exibição passiva é permitida e desejável — mostrar no placar ao vivo ou na
+manchete o que o motor decidiu informa sem cobrar. Antes de propor qualquer
+mecânica, pergunte quantos cliques a mais ela cobra; se não for zero, está fora
+do escopo. Detalhe e motivo na §11-bis de `docs/project-context.md`.

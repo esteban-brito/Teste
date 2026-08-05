@@ -14,11 +14,11 @@
     "nodeReference": "20"
   },
   "developmentSchedule": {
-    "cycles": 8,
+    "cycles": 14,
     "teams": 17,
     "players": 85,
-    "maps": 1088,
-    "playerMapObservations": 10880,
+    "maps": 1904,
+    "playerMapObservations": 19040,
     "pairingUnit": "player-map",
     "uncertaintyBlock": "simulated-map",
     "baseSeed": 1374772765,

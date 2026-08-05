@@ -7,6 +7,10 @@ export function simularMapa(A,B,fA,fB,mapaForcado,leve,options,deps){
   const {cfg:C,mapasPool,mapaLado,buy,lossBonus,recompensaArma,tetoGrana,
     random,gaussian,prepTime,telemetryTeam,telemetrySchemaVersion,combatProfile,
     decidirCompra,pagarCompra,compraDoTime,logistica,combateRound,fallenAngels}=deps;
+  /* Camada tática: só existe se a chave estiver ligada. Desligada, `tatica` é
+     null e NENHUMA linha abaixo executa — nem uma amostra a mais do gerador,
+     nem um campo a mais no round. É o que mantém o golden intacto. */
+  const tatica=deps.tactics&&deps.tactics.ativa()?deps.tactics:null;
   const mapa=mapaForcado||mapasPool[Math.floor(random()*mapasPool.length)];
   const a=prepTime(A,mapa),b=prepTime(B,mapa);
   const telemetry=options&&options.telemetry?{schemaVersion:telemetrySchemaVersion,
@@ -31,6 +35,7 @@ export function simularMapa(A,B,fA,fB,mapaForcado,leve,options,deps){
   const bonusCtA=C.LADO_CT+C.LADO_COMP*a.ctEdge,bonusTA=C.LADO_COMP*a.tEdge;
   const bonusCtB=C.LADO_CT+C.LADO_COMP*b.ctEdge,bonusTB=C.LADO_COMP*b.tEdge;
   let half1=null,compraAntA=null,compraAntB=null,venceuAntA=false,venceuAntB=false,alvo=13;
+  const estadoTatico=tatica?tatica.iniciarMapa(a,b):null;
   while(pa<alvo&&pb<alvo){
     r++;
     if(r===13){half1=[pa,pb];lsA=0;lsB=0;sA=0;sB=0;zerar(dinA,800);zerar(dinB,800);
@@ -52,7 +57,15 @@ export function simularMapa(A,B,fA,fB,mapaForcado,leve,options,deps){
     const fRB=(baseB+ladoBonusB+formaDiaB)*(0.42+0.58*poderB)*(1+momB-tiltB);
     const pEdgeA=clamp(logistica(fRA,fRB,pistol?C.D_DUELO_PIST:C.D_DUELO)+(ladoA==="CT"?pLadoMapa:-pLadoMapa),.03,.97);
     const roundTrace=telemetry?{round:r,scoreBefore:[pa,pb],sides:{A:ladoA,B:ladoB},buys:{A:buyA,B:buyB}}:null;
-    const res=combateRound(a,b,{pEdgeA,openEdgeA,buyA,buyB,comprasA,comprasB,aIsCT:ladoA==="CT",trace:roundTrace});
+    /* A decisão vem ANTES do combate e consome o gerador TÁTICO, nunca o do
+       combate — é essa separação que deixa a sequência de duelos intacta. */
+    const eco=classe=>classe==="eco"||classe==="pistol";
+    const plano=tatica?tatica.planejar(estadoTatico,{ladoA,placarA:pa,placarB:pb,
+      ecoA:eco(buyA),ecoB:eco(buyB),random:tatica.random}):null;
+    const res=combateRound(a,b,{pEdgeA,
+      openEdgeA:plano?openEdgeA+plano.ajusteOpenEdgeA:openEdgeA,
+      ritmoBonus:plano?plano.ritmoBonus:0,plantBonusT:plano?plano.plantBonusT:0,
+      buyA,buyB,comprasA,comprasB,aIsCT:ladoA==="CT",trace:roundTrace});
     const venceA=res.venceA;
     if(venceA){pa++;sA++;sB=0;creditar(dinA,res.premioV);creditar(dinB,lossBonus[Math.min(lsB,4)]);lsB=Math.min(lsB+1,4);lsA=Math.max(0,lsA-1);}
     else{pb++;sB++;sA=0;creditar(dinB,res.premioV);creditar(dinA,lossBonus[Math.min(lsA,4)]);lsA=Math.min(lsA+1,4);lsB=Math.max(0,lsB-1);}
@@ -66,8 +79,17 @@ export function simularMapa(A,B,fA,fB,mapaForcado,leve,options,deps){
     armadoA=comprasA.map((classe,i)=>carrega(classe)&&res.vivosA.includes(i));
     armadoB=comprasB.map((classe,i)=>carrega(classe)&&res.vivosB.includes(i));
     const snapA=leve?null:a.stats.map(s=>({k:s.k,d:s.d})),snapB=leve?null:b.stats.map(s=>({k:s.k,d:s.d}));
-    rounds.push({r,pa,pb,venceA,ladoA,ladoB,troca:(r===13),plantado:res.plantado,buyA,buyB,
-      comprasA:[...comprasA],comprasB:[...comprasB],clutchX:res.clutchX,clutchWon:res.clutchWon,destaque:res.destaque,snapA,snapB});
+    const registro={r,pa,pb,venceA,ladoA,ladoB,troca:(r===13),plantado:res.plantado,buyA,buyB,
+      comprasA:[...comprasA],comprasB:[...comprasB],clutchX:res.clutchX,clutchWon:res.clutchWon,destaque:res.destaque,snapA,snapB};
+    if(plano){
+      // só existe com a camada ligada: desligada, o round mantém a forma antiga
+      registro.tatica={direcaoA:plano.planoA.direcao,direcaoB:plano.planoB.direcao,
+        ctAcertou:plano.ctAcertou,executouA:plano.planoA.executou,executouB:plano.planoB.executou,
+        usouA:plano.planoA.leituraUsada,usouB:plano.planoB.leituraUsada,
+        confA:plano.planoA.confianca,confB:plano.planoB.confianca};
+      tatica.registrar(estadoTatico,venceA);   // cada lado observa o que o outro fez
+    }
+    rounds.push(registro);
     if(roundTrace){roundTrace.scoreAfter=[pa,pb];telemetry.rounds.push(roundTrace);}
   }
   const totalR=pa+pb;

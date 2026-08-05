@@ -32,6 +32,9 @@ O mapa técnico e as regras para mudanças estão em:
   para medir fidelidade ao CS profissional em escala de 0 a 100;
 - [`docs/add-team.md`](docs/add-team.md): formato de entrada e protocolo para
   adicionar um time novo ao elenco;
+- [`docs/formulas/atributos.md`](docs/formulas/atributos.md): o que cada um dos
+  sete atributos crus significa, sua distribuição real e **todo ponto do motor
+  que o lê**, com os coeficientes;
 - [`docs/formulas/`](docs/formulas/): roles, playstyles, OVR e química;
 - [`docs/adr/`](docs/adr/): decisões arquiteturais registradas;
 - [`docs/ciclos/`](docs/ciclos/README.md): relatórios de ciclos encerrados —
@@ -108,7 +111,7 @@ draft9-0/
 │   ├── golden/           ← snapshot do elenco e goldens de simulação e campanha
 │   └── ferramentas/      ← bancadas de trabalho e geradores que NÃO entram no run
 └── tools/
-    ├── run-checks.js         ← roda os 19 checadores estruturais do `npm run check`
+    ├── run-checks.js         ← roda os 20 checadores estruturais do `npm run check`
     ├── check-*.js            ← as guardas: entrypoint, estado, cartas, docs, tokens…
     ├── add-team.js           ← adiciona time a partir de texto simples
     ├── verify-report.js      ← confere se um relatório do sandbox foi aplicado fielmente
