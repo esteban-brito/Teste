@@ -83,7 +83,7 @@ export function simularMapa(A,B,fA,fB,mapaForcado,leve,options,deps){
       comprasA:[...comprasA],comprasB:[...comprasB],clutchX:res.clutchX,clutchWon:res.clutchWon,destaque:res.destaque,snapA,snapB};
     if(plano){
       // só existe com a camada ligada: desligada, o round mantém a forma antiga
-      registro.tatica={direcaoA:plano.planoA.direcao,direcaoB:plano.planoB.direcao,
+      registro.tatica={jogadaA:plano.planoA.jogada,jogadaB:plano.planoB.jogada,
         ctAcertou:plano.ctAcertou,executouA:plano.planoA.executou,executouB:plano.planoB.executou,
         usouA:plano.planoA.leituraUsada,usouB:plano.planoB.leituraUsada,
         confA:plano.planoA.confianca,confB:plano.planoB.confianca};

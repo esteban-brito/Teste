@@ -37,6 +37,7 @@ const {X,T}=require("../lib/motor");
 const {teamIdentityRaw,computeIdentityMeans}=require("../../src/domain/tactics/team-identity.mjs");
 const {CFG_TATICA}=require("../../src/domain/tactics/tactics-config.mjs");
 const {CFG_PADRAO:CFG_PLANO}=require("../../src/domain/tactics/round-plan.mjs");
+const {TIPOS_JOGADA}=require("../../src/domain/tactics/play-style.mjs");
 
 const EIXOS=["ritmo","estrutura","utilitaria","leitura","dependencia"];
 
@@ -178,13 +179,20 @@ function medirCanais(orcamentoRounds){
   console.log("  A coluna CORRIGIDO é a única que fala do canal; as outras falam de seleção.\n");
   const acertoMedio=saida[saida.length-1][1].acerto;
   const canal=saida[saida.length-1][1].contraste-controle;
+  /* A base é o acaso: um CT que não sabe nada acerta 1/n. Ela mudou de 50% para
+     16,7% quando `direcao` A|B virou o vocabulário de seis jogadas, e deixar o
+     50 cravado aqui faria a conta mentir exatamente na fatia que a mudou. */
+  const base=100/TIPOS_JOGADA.length;
+  const leitura=acertoMedio-base;
   console.log("── transmissão total ──");
-  console.log(`  acertar vale ${canal.toFixed(2)} pp de round, e o CT acerta ${acertoMedio.toFixed(1)}%.`);
-  console.log(`  Com a base em 50% (duas direções), a transmissão é `+
-    `(${acertoMedio.toFixed(1)}−50)×${canal.toFixed(2)}/100 = `+
-    `${((acertoMedio-50)*canal/100).toFixed(4)} pp.`);
-  console.log("  É por isso que aumentar o GANHO do canal não resolve: multiplicar");
-  console.log("  por uma taxa de acerto travada em 50% dá zero em qualquer escala.");
+  console.log(`  acertar vale ${canal.toFixed(2)} pp de round, e o CT acerta ${acertoMedio.toFixed(1)}% `+
+    `contra ${base.toFixed(1)}% de acaso.`);
+  console.log(`  transmissão de round = ${leitura.toFixed(1)}×${canal.toFixed(2)}/100 = `+
+    `${(leitura*canal/100).toFixed(4)} pp`);
+  console.log(`  ampliada para o mapa (≈4× numa corrida a 13) ≈ `+
+    `${(leitura*canal/100*4).toFixed(3)} pp de vitória de mapa.`);
+  console.log("  Aumentar o GANHO do canal não resolve sozinho: o produto tem DOIS");
+  console.log("  fatores, e o que estava travado em zero era o da esquerda.");
 }
 
 function main(){

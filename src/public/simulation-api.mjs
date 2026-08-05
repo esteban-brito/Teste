@@ -34,6 +34,7 @@ import {RECORD_LABELS,coletarMarcos,atualizarRecordes,manchete,narrativaMVP}
 import {TEAMS as ELENCOS_PADRAO} from "./evaluation-api.mjs";
 import {CFG_TATICA,seedTatico} from "../domain/tactics/tactics-config.mjs";
 import {computeIdentityMeans} from "../domain/tactics/team-identity.mjs";
+import {computePlayStyleReference} from "../domain/tactics/play-style.mjs";
 import {iniciarMapaTatico,planejarRoundTatico,registrarRoundTatico}
   from "../domain/tactics/tactics-session.mjs";
 
@@ -59,15 +60,21 @@ export function createSimulationSession({pool=POOL,seed,cfg=CFG_SIM,cfgCamp=CFG_
      nenhuma amostra do combate, então o golden dos duelos continua valendo e a
      comparação pareada ligado × desligado existe de verdade. */
   const tacticsRng=createMulberry32(seedTatico(seed,cfgTatica));
-  let mediasIdentidade=null;
+  let referenciasTaticas=null;
   const tactics={
     ativa:()=>!!cfgTatica.ATIVA,
     random:tacticsRng.rndF,
     iniciarMapa:(left,right)=>{
-      // memoizada: a média da liga não muda durante a sessão, e calculá-la por
-      // mapa custaria caro num benchmark de 45 mil mapas
-      if(!mediasIdentidade)mediasIdentidade=computeIdentityMeans(elencos.map(t=>t.jogadores));
-      return iniciarMapaTatico(left,right,mediasIdentidade,cfgTatica);
+      /* memoizadas: a liga não muda durante a sessão, e recalcular por mapa
+         custaria caro num benchmark de 45 mil mapas. As duas referências saem
+         dos MESMOS elencos, então a escala de atributo do repertório e a média
+         de identidade descrevem a mesma população. */
+      if(!referenciasTaticas){
+        const listas=elencos.map(t=>t.jogadores);
+        referenciasTaticas={identidade:computeIdentityMeans(listas),
+          jogada:computePlayStyleReference(listas)};
+      }
+      return iniciarMapaTatico(left,right,referenciasTaticas,cfgTatica);
     },
     planejar:planejarRoundTatico,
     registrar:registrarRoundTatico

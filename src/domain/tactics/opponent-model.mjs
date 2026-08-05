@@ -97,8 +97,17 @@ export function observar(modelo,lado,evento,leitura=0,cfg=CFG_PADRAO){
     `massa` é o tamanho EFETIVO da amostra depois do decaimento — não é a
     contagem de rounds. `confianca` combina essa massa com o quanto a
     distribuição realmente aponta para algum lado: um adversário 50/50 dá
-    confiança baixa por mais rounds que se observe, e é assim que tem de ser. */
-export function crenca(modelo,lado,dimensao,leitura=0,cfg=CFG_PADRAO){
+    confiança baixa por mais rounds que se observe, e é assim que tem de ser.
+
+    `alfabeto` é o tamanho do vocabulário POSSÍVEL da dimensão. Ele existe
+    porque medir nitidez contra o alfabeto OBSERVADO superestima a leitura no
+    começo do mapa: com seis jogadas possíveis e três vistas até aqui, o
+    uniforme seria 1/3 em vez de 1/6, e um adversário perfeitamente imprevisível
+    pareceria legível pelos primeiros rounds. É a mesma armadilha que a versão
+    anterior deste arquivo já tinha achado no caso de valor único; com dimensão
+    binária ela não aparecia, com seis valores aparece em todo round inicial.
+    Zero mantém o comportamento histórico: usar o que se observou. */
+export function crenca(modelo,lado,dimensao,leitura=0,cfg=CFG_PADRAO,alfabeto=0){
   const vazio={distribuicao:Object.create(null),moda:null,massa:0,nitidez:0,confianca:0};
   if(!modelo||!LADOS.includes(lado))return vazio;
   const contagem=modelo[lado][dimensao];
@@ -126,8 +135,9 @@ export function crenca(modelo,lado,dimensao,leitura=0,cfg=CFG_PADRAO){
      coisa é o mais legível que existe, e o modelo dizia não saber nada dele. O
      erro era medir a nitidez contra o alfabeto OBSERVADO em vez do possível.
      Quem protege contra a amostra pequena é o termo `daAmostra`, não este. */
-  const uniforme=1/chaves.length;
-  const nitidez=chaves.length>1?clamp((pMax-uniforme)/(1-uniforme),0,1):1;
+  const possiveis=Math.max(chaves.length,alfabeto||0);
+  const uniforme=1/possiveis;
+  const nitidez=possiveis>1?clamp((pMax-uniforme)/(1-uniforme),0,1):1;
 
   const daAmostra=massa/(massa+cfg.CONFIANCA_K);
   const confianca=clamp(daAmostra*nitidez*(1+cfg.LEITURA_CONFIANCA*leitura),0,1);
@@ -137,7 +147,7 @@ export function crenca(modelo,lado,dimensao,leitura=0,cfg=CFG_PADRAO){
 /** Atalho de leitura: o valor mais esperado e o quanto se aposta nele. `null`
     quando não há evidência — e quem consome DEVE tratar isso como "não sei",
     nunca como um palpite qualquer. */
-export function palpite(modelo,lado,dimensao,leitura=0,cfg=CFG_PADRAO){
-  const c=crenca(modelo,lado,dimensao,leitura,cfg);
-  return c.moda===null?null:{valor:c.moda,confianca:c.confianca};
+export function palpite(modelo,lado,dimensao,leitura=0,cfg=CFG_PADRAO,alfabeto=0){
+  const c=crenca(modelo,lado,dimensao,leitura,cfg,alfabeto);
+  return c.moda===null?null:{valor:c.moda,confianca:c.confianca,distribuicao:c.distribuicao};
 }

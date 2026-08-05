@@ -222,7 +222,8 @@ function provarModelo(O){
 }
 
 /* ——— decisão de round ——— */
-function provarPlano(P){
+function provarPlano(P,J){
+  const TIPOS_JOGADA=J.TIPOS_JOGADA;
   ["planejarRound","confrontoDePlanos","mixagem","fidelidade"].forEach(nome=>
     assert.equal(typeof P[nome],"function",`${nome} ausente da decisão de round`));
 
@@ -235,21 +236,29 @@ function provarPlano(P){
   assert.throws(()=>P.planejarRound({identidade:{},lado:"TR"}),/gerador/,
     "planejar sem gerador precisa falhar alto, não sortear escondido");
 
-  // sem crença, a direção é moeda honesta — o time não finge saber
-  const semCrenca=amostrar(600,random=>P.planejarRound({
-    identidade:{},lado:"TR",crenca:null,contexto:{},random}));
-  const pA=fracao(semCrenca,p=>p.direcao==="A");
-  assert.ok(Math.abs(pA-.5)<.07,`sem crença a direção não é moeda honesta (A em ${(pA*100).toFixed(1)}%)`);
-  assert.ok(semCrenca.every(p=>!p.leituraUsada),"plano sem crença marcou leitura como usada");
+  const TIPOS=TIPOS_JOGADA;
+  const uniforme=1/TIPOS.length;
 
-  /* OS DOIS LADOS sem crença. Cobrir só o TR deixou passar um estouro real: o
-     ramo do CT lia `crenca.moda` sem checar, e "CT sem leitura" é o estado do
-     round 1 de TODO mapa. Uma guarda só vê a superfície em que roda. */
+  /* Sem crença E sem repertório, o sorteio é uniforme entre as seis jogadas —
+     o time não finge saber nem inventa preferência que o elenco não tem. */
+  const semNada=amostrar(1200,random=>P.planejarRound({
+    identidade:{},lado:"TR",crenca:null,contexto:{},random}));
+  TIPOS.forEach(tipo=>{
+    const p=fracao(semNada,x=>x.jogada===tipo);
+    assert.ok(Math.abs(p-uniforme)<.05,
+      `sem repertório nem crença, ${tipo} saiu em ${(p*100).toFixed(1)}% e não no uniforme`);
+  });
+  assert.ok(semNada.every(p=>!p.leituraUsada),"plano sem crença marcou leitura como usada");
+  assert.ok(semNada.every(p=>TIPOS.includes(p.jogada)),"plano devolveu jogada fora do vocabulário");
+
+  /* OS DOIS LADOS sem crença. Cobrir só o TR deixou passar um estouro real na
+     versão A|B: o ramo do CT lia `crenca.moda` sem checar, e "CT sem leitura" é
+     o estado do round 1 de TODO mapa. Uma guarda só vê a superfície em que roda. */
   for(const lado of ["CT","TR"]){
-    const cego=amostrar(400,random=>P.planejarRound({identidade:{},lado,crenca:null,contexto:{},random}));
-    const p=fracao(cego,x=>x.direcao==="A");
-    assert.ok(Math.abs(p-.5)<.08,`${lado} sem crença não é moeda honesta (A em ${(p*100).toFixed(1)}%)`);
-    assert.ok(cego.every(x=>x.direcao==="A"||x.direcao==="B"),`${lado} sem crença devolveu direção inválida`);
+    const cego=amostrar(600,random=>P.planejarRound({identidade:{},lado,crenca:null,contexto:{},random}));
+    assert.ok(cego.every(x=>TIPOS.includes(x.jogada)),`${lado} sem crença devolveu jogada inválida`);
+    const maior=Math.max(...TIPOS.map(tipo=>fracao(cego,x=>x.jogada===tipo)));
+    assert.ok(maior-uniforme<.07,`${lado} sem crença concentrou em uma jogada (${(maior*100).toFixed(1)}%)`);
   }
   for(const lado of ["CT","TR"]){
     const semModa=()=>P.planejarRound({identidade:{},lado,crenca:{moda:null,confianca:.9},
@@ -257,17 +266,37 @@ function provarPlano(P){
     assert.doesNotThrow(semModa,`${lado} estoura quando a crença existe mas não tem moda`);
   }
 
-  // com crença forte: o CT COINCIDE, o T DIVERGE — o sentido muda com o lado
-  const crenca={moda:"A",confianca:.9};
+  /* O T SEGUE O PRÓPRIO REPERTÓRIO. É a peça que quebra o matching pennies: com
+     A|B a marginal era 50/50 por construção e não havia o que ler. */
+  const repertorio={};
+  TIPOS.forEach((tipo,i)=>{repertorio[tipo]=i===0?.5:.1;});
+  const comRepertorio=amostrar(1200,random=>P.planejarRound({
+    identidade:{leitura:0},jogada:{repertorio,assinatura:.9},
+    lado:"TR",crenca:null,contexto:{},random}));
+  const pPreferida=fracao(comRepertorio,x=>x.jogada===TIPOS[0]);
+  assert.ok(pPreferida>uniforme+.12,
+    `o T não seguiu o próprio repertório (jogada preferida em ${(pPreferida*100).toFixed(1)}%)`);
+
+  /* O CT MONTA CONTRA O QUE ACREDITA. Para o CT, ler é ESCOLHER. */
+  const distribuicao={};
+  TIPOS.forEach((tipo,i)=>{distribuicao[tipo]=i===1?.75:.05;});
+  const crenca={moda:TIPOS[1],confianca:.9,distribuicao};
   const identidadeFirme={estrutura:1,leitura:0};
-  const ct=amostrar(600,random=>P.planejarRound({
+  const ct=amostrar(1200,random=>P.planejarRound({
     identidade:identidadeFirme,lado:"CT",crenca,contexto:{},random}));
-  const tr=amostrar(600,random=>P.planejarRound({
-    identidade:identidadeFirme,lado:"TR",crenca,contexto:{},random}));
-  assert.ok(fracao(ct,p=>p.direcao==="A")>.60,
-    "o CT não concentrou onde acredita que o T vai — acertar, no CT, é coincidir");
-  assert.ok(fracao(tr,p=>p.direcao==="B")>.60,
-    "o T não evitou o lado que acredita fechado — acertar, no T, é divergir");
+  assert.ok(fracao(ct,p=>p.jogada===TIPOS[1])>.45,
+    "o CT não montou contra a jogada que acredita que vem — para o CT, ler é escolher");
+
+  /* O T FOGE DO QUE ACREDITA COBERTO. Para o T, ler é FUGIR — e sem este termo
+     o modelo viraria "o CT lê e o T é passivo". */
+  const trCego=amostrar(1200,random=>P.planejarRound({
+    identidade:identidadeFirme,jogada:{repertorio,assinatura:.9},
+    lado:"TR",crenca:null,contexto:{},random}));
+  const trLendo=amostrar(1200,random=>P.planejarRound({
+    identidade:identidadeFirme,jogada:{repertorio,assinatura:.9},
+    lado:"TR",crenca:{moda:TIPOS[0],confianca:.9,distribuicao},contexto:{},random}));
+  assert.ok(fracao(trLendo,p=>p.jogada===TIPOS[0])<fracao(trCego,p=>p.jogada===TIPOS[0])-.10,
+    "o T não fugiu da jogada que acredita coberta — para o T, ler é fugir");
 
   /* O PISO DE CONFIANÇA, medido EXATO e não por proxy estatístico. A primeira
      versão amostrava a direção com confiança .05 e exigia desvio menor que 7 pp
@@ -276,15 +305,20 @@ function provarPlano(P){
      Tolerância maior que o efeito é uma asserção que não sabe reprovar. */
   const piso=P.CFG_PADRAO.CONF_MIN;
   const fixo=()=>.5;
-  assert.equal(P.planejarRound({identidade:{},lado:"CT",
-    crenca:{moda:"A",confianca:piso-1e-6},contexto:{},random:fixo}).leituraUsada,false,
+  const noPiso=delta=>P.planejarRound({identidade:{},lado:"CT",
+    crenca:{moda:TIPOS[1],confianca:piso+delta,distribuicao},contexto:{},random:fixo});
+  assert.equal(noPiso(-1e-6).leituraUsada,false,
     "abaixo do piso de confiança o time apostou na leitura");
-  assert.equal(P.planejarRound({identidade:{},lado:"CT",
-    crenca:{moda:"A",confianca:piso+1e-6},contexto:{},random:fixo}).leituraUsada,true,
+  assert.equal(noPiso(1e-6).leituraUsada,true,
     "acima do piso de confiança o time ignorou a leitura");
-  assert.equal(P.planejarRound({identidade:{},lado:"CT",
-    crenca:{moda:"A",confianca:piso-1e-6},contexto:{},random:fixo}).aposta,0,
-    "abaixo do piso a aposta precisa ser exatamente 0");
+  /* E o piso precisa MUDAR A ESCOLHA, não só o rótulo: abaixo dele o CT sorteia
+     uniforme, ignorando a crença por completo. Um piso que só troca um booleano
+     seria decoração. */
+  const abaixoDoPiso=amostrar(1200,random=>P.planejarRound({identidade:{},lado:"CT",
+    crenca:{moda:TIPOS[1],confianca:piso-1e-6,distribuicao},contexto:{},random}));
+  const concentrou=Math.max(...TIPOS.map(tipo=>fracao(abaixoDoPiso,x=>x.jogada===tipo)));
+  assert.ok(concentrou-uniforme<.07,
+    `abaixo do piso o CT ainda usou a crença (concentrou ${(concentrou*100).toFixed(1)}%)`);
 
   // estrutura decide se o plano vira realidade
   const solto=amostrar(500,random=>P.planejarRound({
@@ -303,10 +337,11 @@ function provarPlano(P){
   });
 
   // o confronto empurra os botões do motor, e o empurrão é LIMITADO
-  const planoT={direcao:"A",tempo:"rapido",comprometimento:"stack",utilitaria:"gastar"};
-  const acertou=P.confrontoDePlanos(planoT,{direcao:"A",tempo:"lento",comprometimento:"stack",utilitaria:"guardar"});
-  const errou=P.confrontoDePlanos(planoT,{direcao:"B",tempo:"lento",comprometimento:"stack",utilitaria:"guardar"});
-  assert.equal(acertou.ctAcertou,true,"stack no mesmo lado não foi contado como acerto do CT");
+  const planoT={jogada:TIPOS[0],tempo:"rapido",comprometimento:"stack",utilitaria:"gastar"};
+  const contra=jogada=>P.confrontoDePlanos(planoT,
+    {jogada,tempo:"lento",comprometimento:"stack",utilitaria:"guardar"});
+  const acertou=contra(TIPOS[0]),errou=contra(TIPOS[1]);
+  assert.equal(acertou.ctAcertou,true,"stack na mesma jogada não foi contado como acerto do CT");
   assert.ok(acertou.vantagemAberturaT<0&&errou.vantagemAberturaT>0,
     "acertar a leitura precisa doer no T, e errar precisa abrir espaço para ele");
   for(const r of [acertou,errou]){
@@ -314,6 +349,18 @@ function provarPlano(P){
       Math.abs(r.ritmoContato)<=.17,
       "o confronto de planos passou de um empurrão: isso viraria um motor paralelo");
   }
+
+  /* SOMA ZERO CONTRA UM CT UNIFORME — a asserção que protege `CT-round win%`.
+     Com dois rótulos o CT acertava metade das vezes e o ± se cancelava sozinho.
+     Com seis jogadas ele erra cinco em cada seis, e premiar o T em todo erro com
+     a magnitude do castigo daria a ele +2/3 do canal de vantagem sistemática —
+     um deslocamento de LADO disfarçado de leitura, contra um gate de 47–54.
+     Somando as seis escolhas possíveis do CT, o resultado tem de ser zero. */
+  const soma=TIPOS.reduce((total,jogada)=>total+contra(jogada).vantagemAberturaT,0);
+  assert.ok(Math.abs(soma)<1e-12,
+    `o confronto não é soma zero contra um CT uniforme (soma ${soma.toExponential(2)}). `+
+    `Todo ganho precisa vir de LER melhor que o acaso, nunca da contagem de jogadas.`);
+
   assert.deepEqual(P.confrontoDePlanos(null,null).ctAcertou,false,
     "confronto sem planos precisa devolver neutro, não quebrar");
 }
@@ -478,7 +525,7 @@ async function main(){
   const Q=await import(pathToFileURL(path.join(ROOT,"src/domain/chemistry/team-chemistry.mjs")).href);
   const elencos=provarIdentidade(M,A);
   provarModelo(O);
-  provarPlano(P);
+  provarPlano(P,J);
   const jogada=provarJogada(J,A,Q);
 
   // ——— A CHAVE SAI DE FÁBRICA DESLIGADA ———

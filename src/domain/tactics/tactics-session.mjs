@@ -1,9 +1,9 @@
 /* TÁTICA — a composição que o motor consome, uma por mapa.
    ══════════════════════════════════════════════════════════════════════════════
 
-   Reúne identidade, os dois modelos de oponente e a decisão de round num objeto
-   só, para que `map-simulation.mjs` não precise conhecer as peças. O motor faz
-   três chamadas por round e nada mais:
+   Reúne identidade, repertório de jogada, os dois modelos de oponente e a
+   decisão de round num objeto só, para que `map-simulation.mjs` não precise
+   conhecer as peças. O motor faz duas chamadas por round e nada mais:
 
      planejarRound(...)  antes do combate  → os empurrões nos botões existentes
      registrarRound()    depois do combate → cada lado observa o que o outro fez
@@ -22,52 +22,63 @@
    OS EMPURRÕES SÃO PEQUENOS E LIMITADOS. Eles entram nos botões que o motor já
    tem — aresta de abertura, ritmo de contato e plant — e nunca criam um modelo
    paralelo de combate. `docs/ciclos/tatica-baseline-2026-08-04.md` explica por
-   que quatro dos cinco eixos NÃO podem render aqui: eles já rendem no motor, e
-   contá-los de novo seria balanceamento disfarçado de realismo. O que a camada
-   acrescenta é `leitura` e a interação plano × contra-plano. */
+   que quatro dos cinco eixos de identidade NÃO podem render aqui: eles já
+   rendem no motor, e contá-los de novo seria balanceamento disfarçado de
+   realismo. O que a camada acrescenta é `leitura` e a interação plano ×
+   contra-plano.
+
+   ─────────────────────────────────────────────────────────────────────────────
+   O QUE SE OBSERVA É A JOGADA, DIRETO — e voltar a isso foi possível porque o
+   vocabulário mudou. Com `direcao` A|B a distribuição MARGINAL de todo time era
+   50/50 mesmo quando ele repetia 56% das vezes, então contar frequência não
+   enxergava nada, e a leitura foi usada em 0,0% de 558 mil rounds. A saída de
+   então foi observar a TRANSIÇÃO ("ele repetiu?") e reconstruir a direção.
+
+   Com tipos de jogada a marginal deixa de ser plana: o repertório do elenco a
+   inclina sozinho, e a moda de um time real vale 32,7% contra 16,7% de uniforme.
+   O rodeio da repetição saiu junto com o problema que ele resolvia. */
 import {teamIdentity} from "./team-identity.mjs";
-import {criarModeloOponente,observar,palpite} from "./opponent-model.mjs";
+import {playStyleProfile,TIPOS_JOGADA} from "./play-style.mjs";
+import {criarModeloOponente,observar,crenca} from "./opponent-model.mjs";
 import {planejarRound,confrontoDePlanos} from "./round-plan.mjs";
 import {CFG_TATICA} from "./tactics-config.mjs";
 
-/* O QUE SE OBSERVA É A REPETIÇÃO, NÃO A DIREÇÃO — e a diferença derrubou a
-   primeira versão inteira. O que torna um time legível aqui é a INÉRCIA: ele
-   repete o próprio jogo, mais quando é estruturado e quando deu certo. Só que um
-   time que repete 56% das vezes ainda vai em A e em B metade de cada no
-   acumulado: a distribuição MARGINAL continua 50/50, e contar frequência de
-   direção não enxerga nada. A leitura foi usada em 0,0% de 558 mil rounds.
-
-   O padrão está na TRANSIÇÃO, então é a transição que se observa: "ele repetiu?"
-   Com a crença sobre repetição mais a última direção conhecida do adversário —
-   que se viu, não se adivinha —, a previsão de direção se reconstrói. É também
-   o que um analista de verdade anota: não "eles gostam do A", mas "eles rodam a
-   mesma coisa até apanhar". */
-const DIMENSAO="repeticao";
+const DIMENSAO="jogada";
 const clamp=(x,lo,hi)=>Math.max(lo,Math.min(hi,x));
 
-/** Reconstrói a previsão de DIREÇÃO a partir da crença sobre REPETIÇÃO. */
-function preverDirecao(modelo,ladoDoOutro,ultimoDoOutro,leitura){
-  if(!ultimoDoOutro)return null;                    // ainda não se viu nada dele
-  const p=palpite(modelo,ladoDoOutro,DIMENSAO,leitura);
-  if(!p)return null;
-  const repete=p.valor==="sim";
-  const oposta=ultimoDoOutro.direcao==="A"?"B":"A";
-  return {moda:repete?ultimoDoOutro.direcao:oposta,confianca:p.confianca};
+/** O que este lado acredita que o outro vai rodar. `null` quando não viu nada —
+    e quem consome DEVE tratar isso como "não sei", nunca como palpite. */
+function preverJogada(modelo,ladoDoOutro,leitura){
+  const c=crenca(modelo,ladoDoOutro,DIMENSAO,leitura,undefined,TIPOS_JOGADA.length);
+  return c.moda===null?null:c;
 }
 
-/** Um mapa em curso: quem é quem, o que cada um acredita e o que decidiu agora. */
-export function iniciarMapaTatico(timeA,timeB,medias,cfgTatica=CFG_TATICA){
+/** Um mapa em curso: quem é quem, o que cada um sabe fazer e o que acredita. */
+export function iniciarMapaTatico(timeA,timeB,referencias,cfgTatica=CFG_TATICA){
+  const elencoA=timeA?.jogadores||timeA?.js||[];
+  const elencoB=timeB?.jogadores||timeB?.js||[];
+  const refId=referencias&&referencias.identidade;
+  const refJogada=referencias&&referencias.jogada;
   return {
     cfg:cfgTatica,
-    identidadeA:teamIdentity(timeA?.jogadores||timeA?.js||[],medias),
-    identidadeB:teamIdentity(timeB?.jogadores||timeB?.js||[],medias),
+    identidadeA:teamIdentity(elencoA,refId),
+    identidadeB:teamIdentity(elencoB,refId),
+    jogadaA:perfilDeJogada(elencoA,refJogada),
+    jogadaB:perfilDeJogada(elencoB,refJogada),
     modeloDeA:criarModeloOponente(),   // o que A acredita sobre B
     modeloDeB:criarModeloOponente(),   // o que B acredita sobre A
     ultimo:null,
-    // o próprio jogo de cada um no round anterior: é o que alimenta a inércia,
-    // e sem inércia ninguém tem padrão para o outro ler
+    // o próprio jogo de cada um no round anterior, para o "run it back"
     inerciaA:null,inerciaB:null
   };
+}
+
+/** Repertório no formato que `planejarRound` consome. `forma` fica de fora de
+    propósito: ela carrega força, e `tools/check-tactics-layer.js` reprova
+    qualquer módulo da camada que a leia. */
+function perfilDeJogada(elenco,referencia){
+  const perfil=playStyleProfile(elenco,referencia);
+  return {repertorio:perfil.pesos,assinatura:perfil.assinatura,moda:perfil.moda};
 }
 
 /* Pressão do round, entre −1 e 1: negativa quando se está confortável, positiva
@@ -86,16 +97,18 @@ export function planejarRoundTatico(estado,{ladoA,placarA,placarB,ecoA,ecoB,rand
   const ladoDeA=aEhCT?"CT":"TR",ladoDeB=aEhCT?"TR":"CT";
 
   /* Cada um consulta o que acredita sobre o OUTRO, na superfície em que o outro
-     está jogando agora. Sem crença, `palpite` devolve null e o plano cai para
-     moeda honesta — o time não finge saber. */
-  const crencaDeA=preverDirecao(estado.modeloDeA,ladoDeB,estado.inerciaB,estado.identidadeA.leitura);
-  const crencaDeB=preverDirecao(estado.modeloDeB,ladoDeA,estado.inerciaA,estado.identidadeB.leitura);
+     está jogando agora. Sem crença, `preverJogada` devolve null e o plano cai
+     para uniforme — o time não finge saber. */
+  const crencaDeA=preverJogada(estado.modeloDeA,ladoDeB,estado.identidadeA.leitura);
+  const crencaDeB=preverJogada(estado.modeloDeB,ladoDeA,estado.identidadeB.leitura);
 
   // A ordem das duas chamadas é contrato: elas consomem o gerador tático em
   // sequência, e inverter mudaria toda a partida a partir daqui.
-  const planoA=planejarRound({identidade:estado.identidadeA,lado:ladoDeA,crenca:crencaDeA,
+  const planoA=planejarRound({identidade:estado.identidadeA,jogada:estado.jogadaA,
+    lado:ladoDeA,crenca:crencaDeA,
     contexto:{eco:!!ecoA,pressao:pressaoDoRound(placarA,placarB),ultimo:estado.inerciaA},random});
-  const planoB=planejarRound({identidade:estado.identidadeB,lado:ladoDeB,crenca:crencaDeB,
+  const planoB=planejarRound({identidade:estado.identidadeB,jogada:estado.jogadaB,
+    lado:ladoDeB,crenca:crencaDeB,
     contexto:{eco:!!ecoB,pressao:pressaoDoRound(placarB,placarA),ultimo:estado.inerciaB},random});
 
   const planoT=aEhCT?planoB:planoA,planoCT=aEhCT?planoA:planoB;
@@ -116,29 +129,21 @@ export function planejarRoundTatico(estado,{ladoA,placarA,placarB,ecoA,ecoB,rand
   };
 }
 
-/** Depois do round: cada lado registra o que o outro fez, na superfície dele, e
-    cada um guarda o próprio jogo para a inércia do round seguinte.
+/** Depois do round: cada lado registra a jogada que o outro rodou, na
+    superfície dele, e cada um guarda a própria para o "run it back".
 
-    `venceuA` é necessário porque repetir depende de ter dado certo — "run it
-    back" é comportamento real, e é ele que faz o padrão durar o suficiente para
-    ser lido. */
+    `venceuA` é necessário porque repetir depende de ter dado certo — é
+    comportamento real, e hoje é só um resíduo: o padrão que existe para ser
+    lido vem do repertório do elenco, não daqui. */
 export function registrarRoundTatico(estado,venceuA){
   const ultimo=estado.ultimo;
   if(!ultimo)return estado;
-  /* Só há repetição a observar a partir do SEGUNDO round de cada time: no
-     primeiro não existe "anterior", e inventar um daria evidência falsa. */
-  if(estado.inerciaA){
-    observar(estado.modeloDeB,ultimo.ladoDeA,
-      {[DIMENSAO]:ultimo.planoA.direcao===estado.inerciaA.direcao?"sim":"nao"},
-      estado.identidadeB.leitura);
-  }
-  if(estado.inerciaB){
-    observar(estado.modeloDeA,ultimo.ladoDeB,
-      {[DIMENSAO]:ultimo.planoB.direcao===estado.inerciaB.direcao?"sim":"nao"},
-      estado.identidadeA.leitura);
-  }
-  estado.inerciaA={direcao:ultimo.planoA.direcao,venceu:!!venceuA};
-  estado.inerciaB={direcao:ultimo.planoB.direcao,venceu:!venceuA};
+  observar(estado.modeloDeB,ultimo.ladoDeA,{[DIMENSAO]:ultimo.planoA.jogada},
+    estado.identidadeB.leitura);
+  observar(estado.modeloDeA,ultimo.ladoDeB,{[DIMENSAO]:ultimo.planoB.jogada},
+    estado.identidadeA.leitura);
+  estado.inerciaA={jogada:ultimo.planoA.jogada,venceu:!!venceuA};
+  estado.inerciaB={jogada:ultimo.planoB.jogada,venceu:!venceuA};
   estado.ultimo=null;
   return estado;
 }
