@@ -54,7 +54,34 @@ export const CFG_PADRAO={
   MEIA_VIDA_MAX:16,       // teto: nem o pior time esquece tudo
   LEITURA_MEIA_VIDA:4.0,  // quanto o eixo `leitura` encurta a meia-vida
   CONFIANCA_K:3,          // amostra efetiva em que a confiança chega a 50%
-  LEITURA_CONFIANCA:.30   // quanto `leitura` levanta a confiança já formada
+  LEITURA_CONFIANCA:.30,  // quanto `leitura` levanta a confiança já formada
+  /* ANTI-STRAT — o que o time já sabia ANTES do primeiro round.
+     Sem isto, `leitura` não tinha por onde agir: medido em 27.200 mapas, quem
+     lia bem e quem lia mal acertavam IGUAL (20,8% os dois), porque os dois
+     observavam os mesmos rounds e concluíam a mesma coisa. O eixo mudava só a
+     FREQUÊNCIA de apostar, nunca a QUALIDADE — e por isso continuava nulo.
+     Um IGL bom não lê melhor por prestar mais atenção durante o mapa; ele lê
+     melhor porque chegou preparado. Demo review é a explicação padrão de um
+     time "ter o número" do outro, e é isto aqui.
+     `leitura` vai de −0,458 a +0,454 no acervo. A escala abaixo dá ZERO ao pior
+     leitor da liga — ele entra sem relatório nenhum, que é o significado
+     honesto de não ter quem estude — e ~8,4 rounds ao melhor, contra ~12 de
+     amostra efetiva ao vivo: o prior manda cedo e é diluído pelo que se vê.
+
+     O VALOR É O DO JOELHO DA CURVA, medido, não escolhido no escuro:
+
+       PRIOR_BASE  PRIOR_LEITURA   diferenciação entre bom e mau leitor
+                0              0   0,84 pp   (sem anti-strat)
+                4              8   1,24 pp
+                2             14   2,24 pp   ← aqui
+                0             20   2,23 pp
+                0             40   2,99 pp   (melhor leitor com 18 rounds!)
+
+     O mecanismo SATURA perto de 3 pp: a observação ao vivo dilui o prior e os
+     dois lados convergem para a mesma crença. Dobrar a escala de novo compraria
+     0,7 pp ao preço de um scouting maior que o mapa inteiro, o que não é CS. */
+  PRIOR_BASE:2,
+  PRIOR_LEITURA:14
 };
 
 export const LADOS=["CT","TR"];
@@ -74,6 +101,40 @@ export function esquecerTudo(modelo){
     for(const dim of Object.keys(modelo[lado]))delete modelo[lado][dim];
     modelo.rounds[lado]=0;
   }
+  return modelo;
+}
+
+/** Massa de anti-strat que este time traz para o mapa, em rounds equivalentes.
+    Zero para quem não tem quem estude o adversário — e o piso é duro, porque
+    prior negativo seria "saber menos que nada". */
+export function massaAntiStrat(leitura=0,cfg=CFG_PADRAO){
+  return Math.max(0,cfg.PRIOR_BASE+cfg.PRIOR_LEITURA*leitura);
+}
+
+/** Semeia a memória com o que se estudou ANTES do mapa.
+
+    São PSEUDO-CONTAGENS, não um atalho: elas entram na mesma urna que a
+    observação ao vivo, decaem no mesmo ritmo e são diluídas pelo que realmente
+    acontece. Um adversário que joga diferente do que a demo mostrava desmente o
+    relatório em poucos rounds — que é exatamente o que se quer, e o que
+    diferencia scouting de onisciência.
+
+    A distribuição semeada é o REPERTÓRIO DERIVADO do elenco adversário, nunca
+    uma tabela por nome: `tools/check-tactics-layer.js` reprova a camada inteira
+    se algum módulo ramificar por nick. */
+export function semear(modelo,lado,dimensao,distribuicao,massa,cfg=CFG_PADRAO){
+  void cfg;
+  if(!modelo||!LADOS.includes(lado)||!distribuicao||!(massa>0))return modelo;
+  const memoria=modelo[lado];
+  const contagem=memoria[dimensao]||(memoria[dimensao]=Object.create(null));
+  let total=0;
+  for(const valor in distribuicao)total+=Math.max(0,distribuicao[valor]||0);
+  if(!(total>0))return modelo;
+  for(const valor in distribuicao){
+    const parte=Math.max(0,distribuicao[valor]||0)/total;
+    contagem[String(valor)]=(contagem[String(valor)]||0)+parte*massa;
+  }
+  modelo.rounds[lado]+=massa;
   return modelo;
 }
 

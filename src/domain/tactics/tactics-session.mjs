@@ -39,7 +39,7 @@
    O rodeio da repetição saiu junto com o problema que ele resolvia. */
 import {teamIdentity} from "./team-identity.mjs";
 import {playStyleProfile,TIPOS_JOGADA} from "./play-style.mjs";
-import {criarModeloOponente,observar,crenca} from "./opponent-model.mjs";
+import {criarModeloOponente,observar,crenca,semear,massaAntiStrat} from "./opponent-model.mjs";
 import {planejarRound,confrontoDePlanos} from "./round-plan.mjs";
 import {CFG_TATICA} from "./tactics-config.mjs";
 
@@ -59,14 +59,27 @@ export function iniciarMapaTatico(timeA,timeB,referencias,cfgTatica=CFG_TATICA){
   const elencoB=timeB?.jogadores||timeB?.js||[];
   const refId=referencias&&referencias.identidade;
   const refJogada=referencias&&referencias.jogada;
+  const identidadeA=teamIdentity(elencoA,refId);
+  const identidadeB=teamIdentity(elencoB,refId);
+  const jogadaA=perfilDeJogada(elencoA,refJogada);
+  const jogadaB=perfilDeJogada(elencoB,refJogada);
+  const modeloDeA=criarModeloOponente();   // o que A acredita sobre B
+  const modeloDeB=criarModeloOponente();   // o que B acredita sobre A
+
+  /* ANTI-STRAT: cada um entra no mapa com o que estudou do outro, e o quanto
+     estudou sai do próprio eixo `leitura`. É por aqui que um IGL bom passa a
+     ler MELHOR, e não apenas mais vezes — sem isto, medido em 27.200 mapas,
+     quem lia bem e quem lia mal acertavam idêntico.
+     Semeia nos DOIS lados porque não se sabe de que lado o adversário começa, e
+     o repertório não distingue CT de TR. */
+  semear(modeloDeA,"CT",DIMENSAO,jogadaB.repertorio,massaAntiStrat(identidadeA.leitura));
+  semear(modeloDeA,"TR",DIMENSAO,jogadaB.repertorio,massaAntiStrat(identidadeA.leitura));
+  semear(modeloDeB,"CT",DIMENSAO,jogadaA.repertorio,massaAntiStrat(identidadeB.leitura));
+  semear(modeloDeB,"TR",DIMENSAO,jogadaA.repertorio,massaAntiStrat(identidadeB.leitura));
+
   return {
     cfg:cfgTatica,
-    identidadeA:teamIdentity(elencoA,refId),
-    identidadeB:teamIdentity(elencoB,refId),
-    jogadaA:perfilDeJogada(elencoA,refJogada),
-    jogadaB:perfilDeJogada(elencoB,refJogada),
-    modeloDeA:criarModeloOponente(),   // o que A acredita sobre B
-    modeloDeB:criarModeloOponente(),   // o que B acredita sobre A
+    identidadeA,identidadeB,jogadaA,jogadaB,modeloDeA,modeloDeB,
     ultimo:null,
     // o próprio jogo de cada um no round anterior, para o "run it back"
     inerciaA:null,inerciaB:null
