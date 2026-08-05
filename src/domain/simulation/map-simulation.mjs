@@ -62,7 +62,10 @@ export function simularMapa(A,B,fA,fB,mapaForcado,leve,options,deps){
     const eco=classe=>classe==="eco"||classe==="pistol";
     const plano=tatica?tatica.planejar(estadoTatico,{ladoA,placarA:pa,placarB:pb,
       ecoA:eco(buyA),ecoB:eco(buyB),random:tatica.random}):null;
-    const res=combateRound(a,b,{pEdgeA,
+    const res=combateRound(a,b,{
+      // `pEdgeA` é a aresta de TODO contato do round; a tática entra aqui com o
+      // canal de execução, e o clamp de [.03,.97] é o mesmo de sempre
+      pEdgeA:plano?clamp(pEdgeA+plano.ajustePEdgeA,.03,.97):pEdgeA,
       openEdgeA:plano?openEdgeA+plano.ajusteOpenEdgeA:openEdgeA,
       ritmoBonus:plano?plano.ritmoBonus:0,plantBonusT:plano?plano.plantBonusT:0,
       buyA,buyB,comprasA,comprasB,aIsCT:ladoA==="CT",trace:roundTrace});

@@ -161,6 +161,16 @@ function pesosDaForma(forma,beta){
     não uma constante: a NAVI de Estocolmo fica em ~0,10 e a moda dela não passa
     de 19% nem com β alto.
 
+    `vantagem` é o quanto CADA jogada serve a este time, AUTOCENTRADA NELE
+    MESMO: soma exatamente zero sobre o próprio repertório. É essa centragem que
+    a torna utilizável onde `forma` é proibida — ela não compara times, só
+    responde "o time rodou o que sabe fazer, ou foi empurrado para fora?".
+    Medida sobre os 17 elencos: vantagem esperada × força = −0,067.
+
+    É o canal que o CS real usa. Um bom CT não vence adivinhando o site; vence
+    tirando de você o que você faz bem — e quem não tem assinatura não tem o que
+    lhe seja tirado. A NAVI de Estocolmo espera 0,004 aqui; a FaZe, 0,286.
+
     `forma` sai como DIAGNÓSTICO. Não a some a `openEdgeA`, `pPlant` ou ritmo:
     ela carrega força (ver o cabeçalho), e usá-la como bônus pagaria talento
     duas vezes. */
@@ -177,5 +187,13 @@ export function playStyleProfile(jogadores,referencia,cfg=CFG_PADRAO){
   let moda=TIPOS_JOGADA[0];
   for(const tipo of TIPOS_JOGADA)if(forma[tipo]>forma[moda])moda=tipo;
 
-  return {pesos:pesosDaForma(forma,cfg.BETA),assinatura,moda,forma};
+  /* AUTOCENTRAGEM NO PRÓPRIO TIME. Sem ela isto seria `forma`, que prevê elenco
+     bom (r = 0,78) e transformaria "rodar o próprio jogo" num bônus de talento.
+     Com ela a soma sobre o repertório é zero: o que sobra é só a diferença
+     entre a jogada rodada e a média das que este time saberia rodar. */
+  const centro=media(valores);
+  const vantagem={};
+  for(const tipo of TIPOS_JOGADA)vantagem[tipo]=forma[tipo]-centro;
+
+  return {pesos:pesosDaForma(forma,cfg.BETA),assinatura,moda,vantagem,forma};
 }

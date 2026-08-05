@@ -69,7 +69,15 @@ export const CFG_PADRAO={
      CT erra sai daqui dividido por (n−1) — ver `confrontoDePlanos`. */
   ACERTO_ABERTURA:.055,
   ACERTO_PLANT:.045,     // idem no plant/retake
-  RITMO_CONTATO:.16      // teto do efeito do tempo sobre o ritmo de contato
+  RITMO_CONTATO:.16,     // teto do efeito do tempo sobre o ritmo de contato
+  /* EXECUÇÃO — o canal que faz a leitura valer, e o único aqui que NÃO é soma
+     zero. Adivinhar a jogada é quase soma zero por natureza; ser empurrado para
+     fora do próprio repertório custa caro tenha o adversário adivinhado ou não.
+     É o que um CT bom faz no CS real: não acerta o site, tira de você o que você
+     faz bem. Medido, um time que enfrenta leitor muito melhor roda jogadas de
+     afinidade 0,0727 contra 0,0926 — a fuga já existia sem recompensa. */
+  EXECUCAO_W:.03,
+  EXECUCAO_MAX:.03       // teto do empurrão em `pEdge`, que age em TODO contato
 };
 
 const clamp=(x,lo,hi)=>Math.max(lo,Math.min(hi,x));
@@ -208,7 +216,12 @@ export function planejarRound(entrada,cfg=CFG_PADRAO){
   const pGastar=sigmoide(cfg.UTIL_W*(identidade.utilitaria??0)-(contexto.eco?cfg.UTIL_ECO:0));
   const utilitaria=sortear({gastar:pGastar,guardar:1-pGastar},random)==="gastar"?"gastar":"guardar";
 
-  const intencao={tempo,comprometimento,jogada:escolhida,utilitaria,
+  /* Quanto esta jogada serve a ESTE time, já autocentrado no próprio repertório
+     por `play-style.mjs`. Zero quando não há repertório: um time sem perfil não
+     é ajudado nem punido por rodar qualquer coisa. */
+  const vantagemExecucao=(jogada&&jogada.vantagem&&jogada.vantagem[escolhida])||0;
+
+  const intencao={tempo,comprometimento,jogada:escolhida,utilitaria,vantagemExecucao,
     leituraUsada:dist.usaLeitura,confianca:dist.confianca,
     assinatura:(jogada&&jogada.assinatura)||0};
 
@@ -236,7 +249,8 @@ export function planejarRound(entrada,cfg=CFG_PADRAO){
    esperança é exatamente zero, então tudo o que sobra vem de ler melhor que o
    acaso — que é precisamente o efeito que a camada existe para produzir. */
 export function confrontoDePlanos(planoT,planoCT,cfg=CFG_PADRAO){
-  const vazio={ctAcertou:false,vantagemAberturaT:0,vantagemPlantT:0,ritmoContato:0};
+  const vazio={ctAcertou:false,vantagemAberturaT:0,vantagemPlantT:0,ritmoContato:0,
+    vantagemExecucaoT:0};
   if(!planoT||!planoCT)return vazio;
 
   const n=TIPOS_JOGADA.length;
@@ -257,5 +271,13 @@ export function confrontoDePlanos(planoT,planoCT,cfg=CFG_PADRAO){
   const ritmoContato=clamp(((passo[planoT.tempo]??0)+(passo[planoCT.tempo]??0))/2*cfg.RITMO_CONTATO,
     -cfg.RITMO_CONTATO,cfg.RITMO_CONTATO);
 
-  return {ctAcertou,vantagemAberturaT,vantagemPlantT,ritmoContato};
+  /* EXECUÇÃO — diferencial, orientado ao T como os outros. Os DOIS lados entram:
+     um CT empurrado para uma montagem que não serve ao elenco dele sofre igual.
+     Isso cria a tensão certa, e ela é real — ler bem às vezes obriga a montar de
+     um jeito que não é o seu, e a decisão de fazê-lo tem preço. */
+  const vantagemExecucaoT=clamp(
+    ((planoT.vantagemExecucao||0)-(planoCT.vantagemExecucao||0))*cfg.EXECUCAO_W,
+    -cfg.EXECUCAO_MAX,cfg.EXECUCAO_MAX);
+
+  return {ctAcertou,vantagemAberturaT,vantagemPlantT,ritmoContato,vantagemExecucaoT};
 }

@@ -78,7 +78,8 @@ export function iniciarMapaTatico(timeA,timeB,referencias,cfgTatica=CFG_TATICA){
     qualquer módulo da camada que a leia. */
 function perfilDeJogada(elenco,referencia){
   const perfil=playStyleProfile(elenco,referencia);
-  return {repertorio:perfil.pesos,assinatura:perfil.assinatura,moda:perfil.moda};
+  return {repertorio:perfil.pesos,assinatura:perfil.assinatura,moda:perfil.moda,
+    vantagem:perfil.vantagem};
 }
 
 /* Pressão do round, entre −1 e 1: negativa quando se está confortável, positiva
@@ -122,6 +123,10 @@ export function planejarRoundTatico(estado,{ladoA,placarA,placarB,ecoA,ecoB,rand
   const sinalA=aEhCT?-1:1;
   return {
     ajusteOpenEdgeA:sinalA*confronto.vantagemAberturaT,
+    /* `pEdge` age em TODO contato do round, não só na abertura — é por isso que
+       o canal de execução entra aqui e não em `openEdge`: ser empurrado para
+       fora do próprio jogo estraga o round inteiro, não o primeiro duelo. */
+    ajustePEdgeA:sinalA*confronto.vantagemExecucaoT,
     plantBonusT:confronto.vantagemPlantT,
     ritmoBonus:confronto.ritmoContato,
     ctAcertou:confronto.ctAcertou,

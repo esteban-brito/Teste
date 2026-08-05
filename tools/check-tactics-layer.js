@@ -438,6 +438,25 @@ function provarJogada(J,A,Q){
     `justamente por não prever elenco bom. Se ela passou a prever, a mecânica `+
     `pagaria talento duas vezes — reveja as receitas, não o teto.`);
 
+  /* `vantagem` É O CANAL QUE PAGA, então ela leva a mesma prova que `assinatura`
+     — e mais uma, exclusiva: a soma sobre o próprio repertório tem de ser ZERO.
+     É essa centragem que separa "rodou o que sabe fazer" de "é um time bom".
+     Sem ela isto seria `forma`, que prevê elenco forte em 0,78, e o canal viraria
+     bônus de talento disfarçado de tática. */
+  perfis.forEach((p,i)=>{
+    const soma=J.TIPOS_JOGADA.reduce((s,tipo)=>s+p.vantagem[tipo],0);
+    assert.ok(Math.abs(soma)<1e-12,
+      `elenco ${i}: a vantagem de execução soma ${soma.toExponential(2)} sobre o próprio `+
+      `repertório, e precisa somar zero — senão ela é nível, não forma`);
+  });
+  const esperada=perfis.map(p=>
+    J.TIPOS_JOGADA.reduce((s,tipo)=>s+p.pesos[tipo]*p.vantagem[tipo],0));
+  const rExecucao=correlacao(esperada,forca);
+  assert.ok(Math.abs(rExecucao)<CORR_MAX,
+    `vantagem de execução esperada × força = ${rExecucao.toFixed(3)}, acima do teto de `+
+    `${CORR_MAX}. Rodar o próprio jogo não pode valer mais para quem já é forte: `+
+    `isso pagaria talento duas vezes, que é o que este módulo inteiro existe para impedir.`);
+
   /* `forma` NÃO é neutra, e a camada não pode consumi-la. Enquanto nenhum outro
      módulo a lê, a proibição é barata de manter — e é aqui que ela é congelada,
      não num comentário que a próxima fatia não vai ler. */
