@@ -3,7 +3,7 @@
 Os documentos desta pasta são **relatórios de ciclos que já terminaram**. Eles
 respondem *"por que este número é este"*, não *"o que eu faço agora"*.
 
-Para saber o que fazer agora, leia `AGENTS.md` e `docs/retomada-2026-08-04.md`.
+Para saber o que fazer agora, leia `AGENTS.md` e `docs/ciclos/retomada-2026-08-04.md`.
 Nenhum arquivo daqui é ponto de retomada — **inclusive o handoff de 31/07/2026**,
 que chegou aqui em 04/08 depois de ser ultrapassado por três ciclos.
 

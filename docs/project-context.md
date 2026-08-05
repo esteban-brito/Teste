@@ -16,7 +16,7 @@ As decisões estão classificadas assim:
 Este documento não substitui as fontes especializadas:
 
 - `AGENTS.md`: regras de trabalho, branch, invariantes e validação;
-- `docs/retomada-2026-08-04.md`: handoff geral — estado verificado, trabalho
+- `docs/retomada-2026-08-05.md`: handoff geral — estado verificado, trabalho
   aberto, escopo recusado e ordem recomendada das grandes etapas;
 - `docs/next-steps.md`: sequência aprovada de auditoria individual, variância,
   campanha, balanceamento condicional e retomada;
@@ -40,10 +40,15 @@ roadmap for concluída.
 
 ## 2. Ponto exato de retomada
 
-**Atualização mais recente: 04/08/2026.** O estado verificado do repositório, os
-três ciclos que aconteceram desde 31/07, o trabalho aberto em ordem e o escopo
-recusado com motivo estão em **`docs/retomada-2026-08-04.md`**. Leia-o antes do
-resto desta seção, que descreve o estado anterior.
+**Atualização mais recente: 05/08/2026.** O estado verificado do repositório, o
+trabalho aberto em ordem e o escopo recusado com motivo estão em
+**`docs/retomada-2026-08-05.md`**. A ordem de longo prazo está na §13-zero
+abaixo. Leia os dois antes do resto desta seção, que descreve o estado anterior.
+
+Naquele dia a **camada tática entrou em jogo** (`CFG_TATICA.ATIVA:1`) — primeira
+mudança de balanceamento desde a recalibração de mapas. Evidência em
+`docs/ciclos/tatica-tipo-de-jogada-2026-08-05.md`; as regras permanentes que ela
+produziu são as 28–31 do `CLAUDE.md`.
 
 Atualização vigente (tem precedência sobre o registro histórico abaixo):
 
@@ -1330,17 +1335,46 @@ Não presumir respostas sem conversar:
 11. Qual deve ser a faixa de OVR inicial e o ritmo desejado de progressão?
 12. Falha esportiva pode encerrar a carreira ou sempre há recuperação?
 
+## 13-zero. A ORDEM RECOMENDADA DE LONGO PRAZO (revista em 05/08/2026)
+
+Esta seção tem precedência sobre a lista histórica de §13. Ela mudou depois que a
+camada tática entrou em jogo, e a mudança tem um motivo declarado.
+
+**1. LEGIBILIDADE — a próxima grande etapa.** O motor sabe que tipo de time é
+cada elenco, que jogada rodou, se o CT leu, se o plano executou, quem está em
+forma, o viés do mapa e o estado da economia. O jogador vê um placar subindo e
+uma tira de rounds colorida. A §11-bis **permite e deseja** exibição passiva, e
+ela é o retorno de três ciclos de trabalho de motor. Sem ela um jogador não
+distingue este simulador de um cara-ou-coroa. Candidatos, todos sobre dado que já
+existe: identidade do adversário na antessala, a história do round no placar ao
+vivo, `manchete`/`narrativaMVP` falando de tática, fechamento de mapa explicando
+o mapa.
+
+**2. CARREIRA.** Bloqueada pelas 12 decisões de produto da §12 — e **não** pelo
+P5, como o handoff de 04/08 supunha. Se a Carreira viver numa entrada separada
+(`career.html`, §12.10) importando as mesmas APIs públicas, ela não toca
+`game.js`, e a extração dos controladores é higiene, não pré-requisito. Primeira
+fatia: criador + save versionado + temporada curta.
+
+**3. ESTRUTURA — P5 e a decomposição do `sandbox.html`.** As duas maiores dívidas
+e as duas invisíveis. **Intercalar com trabalho que se vê**; duas etapas seguidas
+sem retorno visível é como o projeto perde impulso.
+
+**4. Trilhas paralelas, sem etapa própria:** retratos (5 de 85, um time por vez),
+integridade (guarda de tokens do sandbox e as frentes B/C da revisão — pequenas,
+encaixáveis dentro de outra etapa) e o corpus IFCS.
+
 ## 13. Frentes atuais ao retomar
 
 `docs/next-steps.md` preserva o plano histórico que originou R1–R6/P1–P6; os
 handoffs especializados mais novos definem a retomada operacional atual. Leia
-primeiro `docs/retomada-2026-08-04.md`:
+primeiro `docs/retomada-2026-08-05.md`:
 
 0. **revisão do jogo:** pedida em 04/08/2026, três frentes. A **A** fechou no
    mesmo dia e virou `bancada/suites/e2e-acessibilidade.js` — console, exceção,
    HTTP≥400 e acessibilidade nos três viewports. Restam **B** (`export`/seletor
    sem consumidor) e **C** (robustez na ausência de dado). Detalhe em
-   `docs/retomada-2026-08-04.md` §3.1;
+   `docs/retomada-2026-08-05.md` §3.1;
 1. **biblioteca visual:** a carta A refinada já é a única implementação do jogo e
    do laboratório, e a Spirit de Katowice 2024 já está completa — 5 jogadores e o
    treinador. Receber e normalizar os próximos retratos por lotes coerentes de
@@ -1398,7 +1432,7 @@ refatoração, dados e balanceamento no mesmo commit.
 
 ## 16. Regras para qualquer IA futura
 
-- leia `AGENTS.md`, `docs/retomada-2026-08-04.md` e este documento antes de
+- leia `AGENTS.md`, `docs/retomada-2026-08-05.md` e este documento antes de
   editar;
 - verifique branch, status e mudanças do usuário;
 - escolha e execute a próxima fatia segura sem pedir nova permissão para cada

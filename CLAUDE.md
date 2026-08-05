@@ -8,7 +8,7 @@ já entendidos ou declare o trabalho pronto sem prova suficiente.
 
 1. Leia `AGENTS.md` inteiro. Suas regras de branch, autonomia, separação entre
    refatoração e balanceamento e validação são obrigatórias e têm precedência.
-2. Leia `docs/retomada-2026-08-04.md`, o handoff geral; depois leia
+2. Leia `docs/retomada-2026-08-05.md`, o handoff geral; depois leia
    `docs/project-context.md` e `docs/next-steps.md`.
 3. Antes de tocar aplicação, estado ou UI, leia
    `docs/p5-aplicacao-ui-2026-07-29.md`.
@@ -169,7 +169,7 @@ Refinamento final do mesmo dia, publicado em `7175c26`:
 - o deploy aplica cache-busting de conteúdo ao CSS do laboratório; a execução
   `30652005186` ficou verde e publicou o checkpoint;
 - o registro completo daquele dia está em `docs/ciclos/retomada-2026-07-31.md`;
-  as próximas grandes etapas migraram para `docs/retomada-2026-08-04.md`.
+  as próximas grandes etapas migraram para `docs/retomada-2026-08-05.md`.
 
 ## Sessões de 01–02/08/2026 — o que mudou depois daquele checkpoint
 
@@ -322,10 +322,10 @@ Ciclo sem tocar em dado, OVR, RNG, balanceamento ou geometria de carta. A
 comparação visual fechou **21/21 idênticas** e a bancada foi de 25 para **26
 suítes**.
 
-**Documentação.** A raiz de `docs/` passou a ter exatamente um ponto de retomada:
-`docs/retomada-2026-08-04.md`. O handoff de 31/07 virou evidência em
-`docs/ciclos/`. Aviso de "SUPERADO" dentro do arquivo não resolvia nada — quem
-chega lê o ponteiro, não o aviso.
+**Documentação.** A raiz de `docs/` passou a ter exatamente um ponto de retomada,
+que naquele dia era `docs/ciclos/retomada-2026-08-04.md`. O handoff de 31/07
+virou evidência em `docs/ciclos/`. Aviso de "SUPERADO" dentro do arquivo não
+resolvia nada — quem chega lê o ponteiro, não o aviso.
 
 **Frente A da revisão do jogo.** Zero erro de console, zero exceção e zero
 requisição falha nos três viewports. Quatro barreiras de acessibilidade achadas
@@ -365,6 +365,68 @@ provas sintéticas.
 `Failed to load resource` e `net::` — então **404 real passava batido**, e
 warnings nunca foram olhados. Filtro de ruído numa guarda é uma decisão que
 envelhece: revise o que ele está escondendo antes de confiar no verde.
+
+## Sessão de 05/08/2026 — a camada tática entrou em jogo
+
+**`CFG_TATICA.ATIVA` está em 1.** `direcao` A|B virou **seis tipos de jogada** com
+afinidade derivada dos atributos, e o canal que a leitura empurra deixou de ser
+"acertar" e passou a ser **a qualidade da jogada que o adversário conseguiu
+rodar**. Evidência, comparação pareada e as três hipóteses que a medição derrubou
+estão em `docs/ciclos/tatica-tipo-de-jogada-2026-08-05.md`. **Leia antes de mexer
+em qualquer constante da camada.**
+
+`npm run validate` fecha 26/26 e 20/20; `dificuldade.js` fecha 4/4 em STRICT.
+`Favorito gap 16+` 85,1 → 85,7 e `invicto` 4,2 → 4,5, os dois na direção
+pré-declarada. `CT-round win%` não se moveu um décimo.
+
+### Quatro regras novas, não negociáveis
+
+28. **Parâmetro calibrado para um alfabeto de dois símbolos não transfere para
+    seis.** Aconteceu duas vezes no mesmo dia: `nitidez` media contra o alfabeto
+    OBSERVADO em vez do possível — com seis jogadas e três vistas, o uniforme
+    virava 1/3 em vez de 1/6 e o CT ficava superconfiante em todo round inicial;
+    e `MEIA_VIDA:4` dava **1,05 observação por jogada**, fazendo a confiança
+    estacionar em 0,19 no round 3 e nunca subir. Ao ampliar um vocabulário,
+    varra TODO parâmetro que conta ocorrência, não só a fórmula que você mexeu.
+29. **Soma zero tem de valer na TAXA-BASE, não por evento.** Com dois rótulos o
+    CT acertava metade e o ± se cancelava sozinho. Com seis jogadas ele erra
+    cinco em cada seis, e premiar o T em todo erro com a magnitude do castigo lhe
+    daria **+2/3 do canal** em vantagem sistemática — deslocamento de LADO
+    disfarçado de leitura, contra o gate de `CT-round win%` em 47–54. Acertar
+    custa (n−1) vezes o que errar alivia, e a guarda soma as n escolhas exigindo
+    zero. Mudar o número de opções sem refazer essa conta desloca o jogo em
+    silêncio.
+30. **Empurrão simétrico num processo de PRIMEIRO SUCESSO não se cancela.**
+    `1−∏(1−pᵢ)` é côncava, então ruído simétrico ABAIXA a média (Jensen).
+    `ACERTO_PLANT` a .045 derrubava `Plant%` em 2,4 pontos sem que nada no
+    parâmetro sugerisse viés. Todo empurrão por tique sobre plant, defuse ou
+    contato tem essa propriedade — meça o agregado, nunca confie na simetria.
+31. **Forma de atributo carrega força, e nenhuma codificação conserta isso.**
+    Três encodings independentes deram `forma[rush] × força` de 0,779, 0,751 e
+    0,782, porque forma determina distribuição de função e função já tem preço
+    em `DUEL_CONVERSION` e `FRAG_ROLE`. Só grandezas **autocentradas dentro do
+    próprio time** são neutras: `assinatura` (−0,118) e `vantagem` (−0,067).
+    `forma` é diagnóstico e `check-tactics-layer.js` proíbe qualquer módulo da
+    camada de lê-la. Premiar "rodar o próprio jogo" com afinidade absoluta seria
+    pagar talento duas vezes.
+
+### Duas lições de método, que valem fora da tática
+
+- **Braço de controle é obrigatório quando o critério não é exógeno.** Com os
+  três canais em ZERO, o contraste "acertou × errou" ainda dava −0,79 pp: o
+  próprio `ctAcertou` correlaciona com o estado do round. Sem controle, seleção
+  vira efeito.
+- **Gate marginal reprovando pede AMOSTRA, não calibração.** Com `N=3000` o
+  `Título` marcou 24,8% e cruzou o piso; com `N=12000` deu 26,5% contra 26,6% da
+  baseline — efeito nenhum. Mexer numa constante ali teria calibrado contra
+  ruído.
+
+### O que NÃO refazer
+
+Perseguir `leitura` até sair de nula na correlação parcial. O mecanismo **satura
+perto de 3 pp** de diferenciação entre bom e mau leitor, mesmo dando ao melhor 18
+rounds de scouting. O teto é estrutural, não de ajuste — e provavelmente está
+certo assim: no CS real a leitura do IGL é efeito real e modesto.
 
 ## Decisão de produto fechada em 04/08/2026 — raso na mão, profundo por baixo
 
