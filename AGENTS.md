@@ -1,7 +1,7 @@
 # AGENTS.md
 
 Este arquivo orienta pessoas e agentes de IA que trabalham neste repositório.
-Comece por `docs/retomada-2026-08-04.md`, o handoff geral: estado verificado do
+Comece por `docs/retomada-2026-08-05.md`, o handoff geral: estado verificado do
 repositório, trabalho aberto, escopo recusado e a ordem recomendada de retomada.
 Depois leia `docs/project-context.md`, que mantém o roadmap de profissionalização
 e a visão do modo Carreira de Jogador. Leia também
@@ -71,7 +71,7 @@ catálogo não menciona o dado, aí sim ele não existe.
 
 ## Fontes de verdade atuais
 
-- `docs/retomada-2026-08-04.md`: **handoff geral** — estado verificado, o que os
+- `docs/retomada-2026-08-05.md`: **handoff geral** — estado verificado, o que os
   três ciclos desde 31/07 mudaram, trabalho aberto em ordem, escopo recusado com
   motivo e decisões pendentes com o responsável. **Leia primeiro em uma sessão
   sem memória.** A raiz de `docs/` tem exatamente um ponto de retomada; o handoff

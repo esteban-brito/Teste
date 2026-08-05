@@ -14,7 +14,7 @@ playoffs.
 O mapa técnico e as regras para mudanças estão em:
 
 - [`AGENTS.md`](AGENTS.md): invariantes, branch, validação e disciplina de commits;
-- [`docs/retomada-2026-08-04.md`](docs/retomada-2026-08-04.md): handoff geral —
+- [`docs/retomada-2026-08-05.md`](docs/retomada-2026-08-05.md): handoff geral —
   estado verificado, trabalho aberto e próximas grandes etapas recomendadas;
 - [`docs/project-context.md`](docs/project-context.md): ponto de retomada, roadmap
   de profissionalização e visão do modo Carreira de Jogador;

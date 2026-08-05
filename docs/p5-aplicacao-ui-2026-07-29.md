@@ -4,7 +4,7 @@
 > `src/infrastructure/persistence` ou `src/ui/game`.** Ele foi escrito para uma
 > nova sessão do Codex sem memória da conversa, do jogo ou das decisões tomadas.
 >
-> Este documento não substitui `AGENTS.md`, `docs/retomada-2026-08-04.md`,
+> Este documento não substitui `AGENTS.md`, `docs/retomada-2026-08-05.md`,
 > `docs/project-context.md`,
 > `docs/ciclos/p2-modularizacao-2026-07-28.md`, `docs/architecture.md` nem
 > `docs/testing.md`. Ele é o handoff operacional focado no ciclo P5.
@@ -36,7 +36,7 @@ canônica. `game.js` permanece com 889 linhas; as mudanças ficaram no component
 CSS, laboratório, guardas e cache do deploy. O checkpoint publicado é `7175c26`,
 a execução `30652005186` ficou verde e `npm run validate` aprovou 25/25. O
 contrato final está em `docs/cartas-design-2026-07-28.md` §14 e a retomada geral
-em `docs/retomada-2026-08-04.md`. Isso também não altera a fatia estrutural P5.
+em `docs/retomada-2026-08-05.md`. Isso também não altera a fatia estrutural P5.
 
 Atualização estrutural posterior de 31/07/2026: a primeira fatia recomendada
 deste handoff foi executada. Criação/reset de `S`, `TG`, `MP` e `MATCH` vivem em
@@ -65,7 +65,7 @@ o repositório pode ter avançado depois de 29/07/2026.
 Leia nesta ordem:
 
 1. `AGENTS.md` — branch, disciplina, validações e invariantes;
-2. `docs/retomada-2026-08-04.md` — checkpoint geral e prioridades atuais;
+2. `docs/retomada-2026-08-05.md` — checkpoint geral e prioridades atuais;
 3. este arquivo — ponto operacional do P5;
 4. `docs/ciclos/p2-modularizacao-2026-07-28.md` — como o motor foi extraído e como RNG
    e paridade foram provados;

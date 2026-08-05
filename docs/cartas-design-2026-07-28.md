@@ -589,7 +589,7 @@ larguras.
 Fechamento remoto: execução `30652005186` verde, 25 suítes e deploy concluído.
 A comparação visual permaneceu restrita aos mesmos 9/21 estados com cartas. A
 retomada geral, o próximo lote de retratos e o roadmap recomendado estão em
-`docs/retomada-2026-08-04.md`.
+`docs/retomada-2026-08-05.md`.
 
 ## 15. A escada volta a existir — 31/07/2026
 

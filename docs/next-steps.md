@@ -4,7 +4,7 @@
 > 22 de julho. Ele preserva o raciocínio e a sequência histórica de R1–R6/P1–P6,
 > mas **não é mais o handoff operacional atual**: P2 e o ciclo funcional da
 > simulação avançaram depois dele. Para retomar hoje, use `docs/project-context.md`,
-> **`docs/retomada-2026-08-04.md`**, `docs/ciclos/p2-modularizacao-2026-07-28.md`,
+> **`docs/retomada-2026-08-05.md`**, `docs/ciclos/p2-modularizacao-2026-07-28.md`,
 > `docs/p5-aplicacao-ui-2026-07-29.md` e, para cartas, a seção 14 de
 > `docs/cartas-design-2026-07-28.md`. O backlog e as
 > decisões de produto deste arquivo continuam válidos quando não forem
@@ -512,7 +512,7 @@ individual foi entregue, o ciclo funcional da simulação foi fechado e P2 foi
 concluído. **Não use mais R3 versus P2 como escolha operacional atual.**
 
 Desde 31/07/2026 a ordem recomendada passou a estar consolidada num handoff
-geral, hoje `docs/retomada-2026-08-04.md`. As duas primeiras retomadas concretas
+geral, hoje `docs/retomada-2026-08-05.md`. As duas primeiras retomadas concretas
 continuam independentes:
 
 1. produto visual: adicionar e normalizar retratos de jogadores por time/era

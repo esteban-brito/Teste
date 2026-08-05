@@ -87,16 +87,28 @@ que ele quer fazer"; o combate continua sem opinião própria.
   nitidez da distribuição. Quem mistura de verdade não é lido, e quem muda de
   padrão é seguido em poucos rounds.
 
-**Nada na camada pode ser escrito por time, nick ou era**, e nada nela consome
-aleatoriedade: ela descreve e conclui, quem sorteia é a decisão de round, com
-fluxo de RNG próprio. `tools/check-tactics-layer.js` prova isso por dois lados,
-varrendo o código de cada módulo em busca de nome e exigindo que trocar todos os
-nicks não mova nenhum eixo.
+- `play-style.mjs` deriva o REPERTÓRIO do elenco: seis tipos de jogada com
+  afinidade tirada dos atributos, a `assinatura` (o quanto o time tem jogada
+  preferida) e a `vantagem` de cada jogada **autocentrada no próprio time**.
+  Ele exporta a DISTRIBUIÇÃO, não o escore — um peso de sorteio não pode ser
+  somado a `openEdgeA` por descuido, um escore pode;
+- `round-plan.mjs` é o único módulo autorizado a sortear: escolher sob incerteza
+  é a decisão em si.
 
-A camada **não tem consumidor** e o checador exige que continue assim. É a Fase 0
-do plano: construir o cérebro inteiro e não ligá-lo, para que golden e snapshot
-sigam idênticos enquanto o desenho é revisado. Ligá-la é um marco deliberado, que
-atualiza aquela asserção na mesma fatia.
+**Nada na camada pode ser escrito por time, nick ou era**, e só a decisão de
+round consome aleatoriedade, com fluxo de RNG próprio derivado do seed da sessão.
+`tools/check-tactics-layer.js` prova isso por dois lados, varrendo o código de
+cada módulo em busca de nome e exigindo que trocar todos os nicks não mova nenhum
+eixo.
+
+**Desde 05/08/2026 a camada está LIGADA** (`CFG_TATICA.ATIVA:1`), e o checador
+exige que continue — desligar também é balanceamento. `map-simulation.mjs` não
+importa a camada: recebe `deps.tactics` por injeção e a consome atrás da chave.
+
+A guarda cobra ainda que só `assinatura` e `vantagem` atravessem a fronteira para
+o motor. `forma` fica dentro do módulo porque **carrega força** (r = 0,78 com
+força efetiva): usá-la como bônus pagaria talento duas vezes. Detalhe e medição
+em `docs/ciclos/tatica-tipo-de-jogada-2026-08-05.md`.
 
 `random-source.mjs` encapsula o Mulberry32 em instâncias independentes, preservando
 as sequências uniforme e gaussiana bit a bit. A composição pública possui uma
@@ -238,4 +250,4 @@ A biblioteca de retratos pode avançar em paralelo porque atravessa apenas a
 fronteira asset-id → asset normalizado → componente canônico. O corpus IFCS também
 é uma trilha paralela e offline. Nenhuma das duas justifica misturar estado,
 simulação ou balanceamento no mesmo commit. O mapa geral de prioridade está em
-`docs/retomada-2026-08-04.md`.
+`docs/retomada-2026-08-05.md`.
