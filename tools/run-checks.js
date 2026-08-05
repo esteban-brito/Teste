@@ -33,6 +33,7 @@ const CHECADORES=[
   {nome:"check-game-view-modules",args:["tools/check-game-view-modules.js"]},
   {nome:"check-public-evaluation-api",args:["tools/check-public-evaluation-api.js"]},
   {nome:"check-public-simulation-api",args:["tools/check-public-simulation-api.js"]},
+  {nome:"check-tactics-layer",args:["tools/check-tactics-layer.js"]},
   {nome:"check-sandbox-engine",args:["tools/check-sandbox-engine.js"]},
   {nome:"check-sandbox-syntax",args:["tools/check-sandbox-syntax.js"]},
   {nome:"check-data-catalog",args:["tools/check-data-catalog.js"]},

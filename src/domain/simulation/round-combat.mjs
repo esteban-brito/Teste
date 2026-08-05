@@ -113,7 +113,10 @@ export function combateRound(a,b,ctx,deps){
   let clutch=null;
   const idxT=aCT?vivB:vivA,timeT=aCT?b:a;
   const agrT=idxT.reduce((sum,i)=>sum+(timeT.agr[i]||0),0)/Math.max(1,idxT.length);
-  const ritmo=clamp(1+C.CONTATO_AGR*agrT+gaussian()*C.CONTATO_RITMO,
+  /* `ctx.ritmoBonus` é o empurrão da camada tática no ritmo do round. Ausente,
+     soma zero e a aritmética é bit a bit a mesma — é isso que permite ligar a
+     camada sem invalidar o golden enquanto a chave estiver desligada. */
+  const ritmo=clamp(1+C.CONTATO_AGR*agrT+gaussian()*C.CONTATO_RITMO+(ctx.ritmoBonus||0),
     C.CONTATO_MIN,C.CONTATO_MAX);
   const LIMITE=C.RND_SEGUNDOS+C.BOMBA_SEGUNDOS;
   while(vivA.length>0&&vivB.length>0&&fim===null&&relogio<LIMITE){
@@ -162,9 +165,10 @@ export function combateRound(a,b,ctx,deps){
         }
       }
       const fracao=relogio/C.RND_SEGUNDOS;
+      // `ctx.plantBonusT` idem: comprometimento de utilitária decidido pela tática.
       const pPlant=clamp(C.PLANT_BASE+fracao*C.PLANT_TEMPO+(vivT.length-vivCT.length)*C.PLANT_MEN+
         C.UTIL_PLANT*(utilityLoad(timeT,vivT,compT,C,assistUtilityMean)-
-          utilityLoad(timeCT,vivCT,compCT,C,assistUtilityMean)),0,.92);
+          utilityLoad(timeCT,vivCT,compCT,C,assistUtilityMean))+(ctx.plantBonusT||0),0,.92);
       if(random()<pPlant){plantado=true;pp=0;}
       else if(relogio>=C.RND_SEGUNDOS){fim=ctVence();metodo="tempo";break;}
     }else{

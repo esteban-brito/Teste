@@ -31,8 +31,13 @@ import {CFG_SIM,CFG_CAMP,CFG_FA,MAPA_LADO,MAPAS_POOL}
   from "../domain/simulation/simulation-config.mjs";
 import {RECORD_LABELS,coletarMarcos,atualizarRecordes,manchete,narrativaMVP}
   from "../domain/narrative/game-memory.mjs";
+import {TEAMS as ELENCOS_PADRAO} from "./evaluation-api.mjs";
+import {CFG_TATICA,seedTatico} from "../domain/tactics/tactics-config.mjs";
+import {computeIdentityMeans} from "../domain/tactics/team-identity.mjs";
+import {iniciarMapaTatico,planejarRoundTatico,registrarRoundTatico}
+  from "../domain/tactics/tactics-session.mjs";
 
-export {CFG_SIM,CFG_CAMP,CFG_FA,CFG_QUIMICA,MAPA_LADO,MAPAS_POOL,
+export {CFG_SIM,CFG_CAMP,CFG_FA,CFG_QUIMICA,CFG_TATICA,MAPA_LADO,MAPAS_POOL,
   BUY,LOSS_BONUS,RECOMPENSA_ARMA,TETO_GRANA,PREMIO_VITORIA,PREMIO_OBJETIVO,
   TELEMETRY_SCHEMA_VERSION};
 
@@ -47,8 +52,26 @@ export {preservationValue,tradeContextProfile,assistContextProfile,
   RECORD_LABELS as RECORDE_LABELS};
 
 export function createSimulationSession({pool=POOL,seed,cfg=CFG_SIM,cfgCamp=CFG_CAMP,
-  cfgFa=CFG_FA,cfgQuimica=CFG_QUIMICA}={}){
+  cfgFa=CFG_FA,cfgQuimica=CFG_QUIMICA,cfgTatica=CFG_TATICA,elencos=ELENCOS_PADRAO}={}){
   const rng=createMulberry32(seed);
+  /* Fluxo de RNG PRÓPRIO da tática, derivado do seed da sessão. É a decisão
+     técnica que sustenta o resto: com dois fluxos, ligar a decisão não consome
+     nenhuma amostra do combate, então o golden dos duelos continua valendo e a
+     comparação pareada ligado × desligado existe de verdade. */
+  const tacticsRng=createMulberry32(seedTatico(seed,cfgTatica));
+  let mediasIdentidade=null;
+  const tactics={
+    ativa:()=>!!cfgTatica.ATIVA,
+    random:tacticsRng.rndF,
+    iniciarMapa:(left,right)=>{
+      // memoizada: a média da liga não muda durante a sessão, e calculá-la por
+      // mapa custaria caro num benchmark de 45 mil mapas
+      if(!mediasIdentidade)mediasIdentidade=computeIdentityMeans(elencos.map(t=>t.jogadores));
+      return iniciarMapaTatico(left,right,mediasIdentidade,cfgTatica);
+    },
+    planejar:planejarRoundTatico,
+    registrar:registrarRoundTatico
+  };
   const players=Array.isArray(pool)?pool:Object.values(pool);
   const sideMean=computeSideMean(players,cfg);
   const combatMeans=computeCombatMeans(players,
@@ -73,7 +96,7 @@ export function createSimulationSession({pool=POOL,seed,cfg=CFG_SIM,cfgCamp=CFG_
     lossBonus:LOSS_BONUS,recompensaArma:RECOMPENSA_ARMA,tetoGrana:TETO_GRANA,
     random:rng.rndF,gaussian:rng.gaussF,prepTime,telemetryTeam,
     telemetrySchemaVersion:TELEMETRY_SCHEMA_VERSION,combatProfile:profileFor,
-    decidirCompra,pagarCompra,compraDoTime,logistica,combateRound,
+    decidirCompra,pagarCompra,compraDoTime,logistica,combateRound,tactics,
     fallenAngels:event=>calculateRating(event,cfgFa)};
   const simularMapa=(left,right,formLeft,formRight,map,light,options)=>
     runMap(left,right,formLeft,formRight,map,light,options,mapDependencies);
@@ -83,9 +106,13 @@ export function createSimulationSession({pool=POOL,seed,cfg=CFG_SIM,cfgCamp=CFG_
   const formaDoDia=player=>playerForm(player,rng.gaussF,cfg);
   const sortearFormaCampanha=teams=>drawCampaignForm(teams,rng.gaussF,cfgCamp);
   const forcaDoDia=(effective,chemistry)=>teamForm(effective,chemistry,rng.rndF,cfg,cfgQuimica);
-  return {CFG_SIM:cfg,CFG_CAMP:cfgCamp,CFG_FA:cfgFa,srand:rng.srand,rndF:rng.rndF,
+  /* `srand` reinicia os DOIS fluxos: sem isso, repetir a mesma seed reproduziria
+     o combate e não a decisão, e a partida deixaria de ser determinística
+     justamente na parte nova. */
+  const srand=value=>{rng.srand(value);tacticsRng.srand(seedTatico(value,cfgTatica));};
+  return {CFG_SIM:cfg,CFG_CAMP:cfgCamp,CFG_FA:cfgFa,CFG_TATICA:cfgTatica,srand,rndF:rng.rndF,
     gaussF:rng.gaussF,formaDoDia,sortearFormaCampanha,forcaDoDia,prepTime,
-    combateRound,simularMapa,simularSerie};
+    combateRound,simularMapa,simularSerie,tactics};
 }
 
 const DEFAULT_SESSION=createSimulationSession();
