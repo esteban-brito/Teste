@@ -85,7 +85,7 @@ Atualização vigente (tem precedência sobre o registro histórico abaixo):
   mudar um pixel**, e `tools/check-design-tokens.js` trava o sistema de cor no
   `npm run check`. `--b1`, `--b2` e `--b3` não existem mais, provados mortos por
   mutação;
-- validação vigente: `npm run check` fecha **19/19 checadores**; o último
+- validação vigente: `npm run check` fecha **20/20 checadores**; o último
   `npm run validate` de marco amplo fechou **25/25 suítes**, e a comparação visual
   do ciclo de organização fechou **21/21 idênticas**. Snapshot, golden, consumo de
   RNG e balanceamento permanecem intactos desde 31/07;
@@ -1279,6 +1279,38 @@ ponto é depois de existir:
 
 Nesse momento, C2/C3 podem avançar como fatia isolada enquanto o restante do
 monólito continua sendo extraído gradualmente.
+
+## 11-bis. Decisão FECHADA: raso na mão, profundo por baixo (04/08/2026)
+
+**Classificação: Decidido.** Não reabrir sem pedido explícito do responsável.
+
+> "veto de mapa eu não quero nunca [...] o meu jogo é pra ser rápido e viciante,
+> porém a simulação deve ser muito complexa e inteligente."
+
+Duas regras saem disso, e elas valem para **qualquer** trabalho futuro, não só
+para a camada tática:
+
+1. **Veto de mapa não existe e não vai existir.** Nem como tela jogável, nem
+   como fase automática de ban/pick. O mapa continua saindo do sorteio de
+   `simularSerie`/`simularMapa`. A afinidade de mapa que já existe
+   (`MAP_PROFILES`, `MAPA_LADO`) segue valendo **dentro** da simulação, via
+   `mapMultiplier` — o que está proibido é a fase de escolha, não o efeito do
+   mapa.
+2. **Toda complexidade nova vive DENTRO da simulação.** Nenhuma pode cobrar um
+   clique, uma tela ou uma decisão a mais do jogador. O laço do jogador é
+   sortear → escolher carta → jogar, e ele não cresce. Profundidade que exige
+   atenção do jogador é profundidade rejeitada.
+
+**Por quê:** o produto é um roguelike curto de sessão rápida, e o valor dele está
+na densidade do que acontece **sem** o jogador administrar. É a mesma divisão de
+um bom simulador esportivo: motor de partida profundo, interface de decisão
+enxuta. Confundir "jogo complexo" com "jogo com mais telas" mataria o produto.
+
+**Como aplicar:** ao propor qualquer mecânica, pergunte primeiro *quantos cliques
+a mais ela cobra do jogador*. Se a resposta não for zero, ela está fora do escopo
+até o responsável dizer o contrário. Exibição **passiva** — mostrar o que a IA
+decidiu, no placar ao vivo ou na manchete — é permitida e desejável, porque
+informa sem cobrar.
 
 ## 12. Decisões abertas para o responsável
 

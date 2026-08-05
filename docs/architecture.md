@@ -76,6 +76,28 @@ divergir, e foi assim que o nome do time parou no meio da carta com a guarda
 verde. Treinador continua sendo outra categoria **visual**, nunca uma segunda
 infraestrutura de carta.
 
+Desde 04/08/2026 existe `src/domain/tactics/`, a camada de DECISÃO. Ela é o único
+lugar do domínio autorizado a responder "que time é este, o que ele acredita e o
+que ele quer fazer"; o combate continua sem opinião própria.
+
+- `team-identity.mjs` deriva cinco eixos do elenco — ritmo, estrutura,
+  utilitária, leitura e dependência — zero-centrados contra a liga;
+- `opponent-model.mjs` guarda a crença sobre o adversário como frequência que
+  decai, **por lado**, com a confiança saindo do tamanho efetivo da amostra e da
+  nitidez da distribuição. Quem mistura de verdade não é lido, e quem muda de
+  padrão é seguido em poucos rounds.
+
+**Nada na camada pode ser escrito por time, nick ou era**, e nada nela consome
+aleatoriedade: ela descreve e conclui, quem sorteia é a decisão de round, com
+fluxo de RNG próprio. `tools/check-tactics-layer.js` prova isso por dois lados,
+varrendo o código de cada módulo em busca de nome e exigindo que trocar todos os
+nicks não mova nenhum eixo.
+
+A camada **não tem consumidor** e o checador exige que continue assim. É a Fase 0
+do plano: construir o cérebro inteiro e não ligá-lo, para que golden e snapshot
+sigam idênticos enquanto o desenho é revisado. Ligá-la é um marco deliberado, que
+atualiza aquela asserção na mesma fatia.
+
 `random-source.mjs` encapsula o Mulberry32 em instâncias independentes, preservando
 as sequências uniforme e gaussiana bit a bit. A composição pública possui uma
 instância por sessão e a passa explicitamente aos motores.
