@@ -590,12 +590,31 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       (penhasco?` — ${penhasco.de}px→${penhasco.para}px muda ${((penhasco.razao-1)*100).toFixed(0)}%`:""));
     await page.setViewportSize({width:390,height:844});
     const gameCard=page.locator("#picks [data-pick]").first();
-    await page.click("#flipModeBtn");await gameCard.focus();await page.keyboard.press("Enter");
+    /* NÃO EXISTE MAIS MODO VIRAR. Desde 06/08/2026 clicar VIRA e arrastar ESCALA:
+       o botão que alternava os dois sumiu, e com ele o estado global que fazia o
+       mesmo clique significar coisas diferentes. Enter espelha o clique, que é a
+       ação que `role="button"` promete. */
+    await gameCard.focus();await page.keyboard.press("Enter");
     check(await gameCard.evaluate(card=>card.classList.contains("flipped")&&card.dataset.face==="back"),
-      "modo Virar do jogo usa o mesmo controle de face");
-    await page.click("#flipModeBtn");await gameCard.click();
-    check(await gameCard.evaluate(card=>card.classList.contains("sel"))&&
-      await page.locator(".slot.avail").count()>=1,"seleção normal continua funcional");
+      "Enter vira a carta no jogo real, pelo mesmo controle de face");
+    await gameCard.click();
+    check(await gameCard.evaluate(card=>!card.classList.contains("flipped")&&card.dataset.face==="front"),
+      "clique devolve a carta à frente — clicar VIRA, não seleciona");
+    check(await page.locator("#flipModeBtn").count()===0,
+      "o botão de modo virar não voltou a existir");
+    /* Arrastar acima do limiar acende os slots; abaixo dele, nada acontece e o
+       gesto continua sendo um clique. É a prova de que o limiar separa os dois. */
+    const caixa=await gameCard.boundingBox();
+    await page.mouse.move(caixa.x+caixa.width/2,caixa.y+caixa.height/2);
+    await page.mouse.down();
+    await page.mouse.move(caixa.x+caixa.width/2+3,caixa.y+caixa.height/2+2);
+    const abaixoDoLimiar=await page.locator(".slot.avail").count();
+    await page.mouse.move(caixa.x+caixa.width/2+40,caixa.y+caixa.height/2+28);
+    await page.waitForTimeout(30);
+    const acimaDoLimiar=await page.locator(".slot.avail").count();
+    await page.mouse.up();
+    check(abaixoDoLimiar===0&&acimaDoLimiar>=1,
+      `limiar separa clique de arrasto (slots acesos: ${abaixoDoLimiar} abaixo, ${acimaDoLimiar} acima)`);
     check(errors.length===0,`laboratório e jogo terminam sem erro${errors.length?`: ${errors[0]}`:""}`);
 
     const touchContext=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,

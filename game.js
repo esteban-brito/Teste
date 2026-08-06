@@ -36,15 +36,12 @@ const roulette=$("roulette"),track=$("track"),picksEl=$("picks"),lineupEl=$("lin
 const hintEl=$("hint"),spinwrap=$("spinwrap"),picksTag=$("picksTag"),picksNote=$("picksNote"),winnerPill=$("winnerPill");
 const hint=t=>{hintEl.textContent=t};
 
-// MODO VIRAR: quando ativo, clicar numa carta VIRA (frente/verso) em vez de selecioná-la.
-let modoVirar=false;
+/* Não existe mais MODO virar. O botão "Virar cartas" existia porque clique já
+   significava selecionar, e virar precisava de um modo global para caber no
+   mesmo gesto. Com a colocação passando para o arrasto, o clique ficou livre:
+   clicar VIRA, arrastar ESCALA. `limparFlips` sobrevive porque trocar o time
+   sorteado precisa devolver as cartas à frente. */
 const limparFlips=()=>document.querySelectorAll(".card.flipped,.coachcard.flipped").forEach(c=>setCardFlipped(c,false));
-function setModoVirar(on){
-  modoVirar=on;
-  const b=$("flipModeBtn");
-  if(b){b.classList.toggle("ativo",on);b.setAttribute("aria-pressed",on?"true":"false");b.textContent=on?"Virando ✓":"Virar cartas";}
-  if(!on)limparFlips();
-}
 
 function elencoCheio(){return S.jogadores.every(Boolean)&&!!S.treinador}
 
@@ -259,7 +256,7 @@ function renderPicks(){
     picksTag.hidden=true;
     picksNote.hidden=true;
     winnerPill.textContent="";
-    setModoVirar(false); // some o controle junto com as cartas → não vaza o modo pro lineup
+    limparFlips(); // o time saiu de cena: nenhuma carta fica virada para o próximo
     return;
   }
   picksTag.hidden=false;
@@ -297,19 +294,11 @@ function iluminarSlots(){
   }
 }
 
-function selecionar(origem,kind,card){
-  if(S.sel?.origem===origem){
-    S.sel=null;limparHighlights();
-    hint(S.drawn?`Time sorteado: ${S.drawn.nome}. Escolha 1 carta.`:"");
-    return;
-  }
-  S.sel={origem,kind,card};
-  limparHighlights();
-  iluminarSlots();
-  if(origem==="pick"){
-    picksEl.querySelector(`[data-pick="${card.id}"]`)?.classList.add("sel");
-  }
-}
+/* `selecionar()` saiu com o clique-para-selecionar. Ela existia para o estado
+   intermediário "carta escolhida, esperando o slot", que o arrasto elimina: o
+   gesto começa e termina no mesmo movimento, e `S.sel` vive só enquanto o dedo
+   está apertado. Um seletor pendurado entre dois cliques era, aliás, o que
+   obrigava o botão de modo virar a existir. */
 
 function concluirPick(){
   S.drawn=null;
@@ -387,48 +376,175 @@ $("mutebtn").onclick=e=>{Audio.init();Audio.mudo=!Audio.mudo;
   if(!Audio.mudo)Audio.tick();};
 $("respinbtn").onclick=abortarSpin;
 $("resetbtn").onclick=resetar;
-$("flipModeBtn").onclick=()=>{setModoVirar(!modoVirar);
-  hint(modoVirar?"Modo virar ativo: clique numa carta para ver o verso.":(S.drawn?`Time sorteado: ${S.drawn.nome}. Escolha 1 carta.`:""));};
 
-document.addEventListener("click",e=>{
-  if(e.target.closest("#mutebtn,#rollbtn,#respinbtn,#resetbtn,#flipModeBtn"))return; // botões têm handler próprio
-  // MODO VIRAR ativo: qualquer carta clicada VIRA (frente/verso), sem selecionar/posicionar
-  if(modoVirar){const c=e.target.closest(".card,.coachcard");if(c){setCardFlipped(c,!c.classList.contains("flipped"));return;}}
-  if(S.spinning)return;                                                 // trava interação durante o giro
-  const pickEl=e.target.closest("[data-pick]");
-  if(pickEl&&picksEl.contains(pickEl)&&!pickEl.classList.contains("taken")&&!pickEl.classList.contains("dup")&&S.drawn){
-    const carta=[...S.drawn.jogadores,S.drawn.treinador].filter(Boolean).find(c=>c.id===pickEl.dataset.pick);
-    if(!carta)return;
-    if(carta.tipo==="coach"&&S.treinador)return hint("Vaga de treinador já ocupada.");
-    if(carta.tipo!=="coach"&&S.jogadores.some(j=>j&&j.nick===carta.nick))return hint(`${carta.nick} já está na sua line.`);
-    if(carta.tipo!=="coach"&&S.jogadores.every(Boolean))return hint("As 5 vagas estão cheias.");
-    selecionar("pick",carta.tipo==="coach"?"coach":"player",carta);
-    hint("Clique no slot destacado.");
-    return;
+/* ═══ CARTA: clicar VIRA, arrastar ESCALA ═══════════════════════════════════
+   UMA VIA SÓ DE PONTEIRO. Mouse, caneta e toque entram pelo mesmo caminho, e o
+   que separa "virar" de "arrastar" não é o dispositivo nem um modo global: é a
+   DISTÂNCIA percorrida antes de soltar. Dois handlers separados (click para
+   virar, HTML5 drag para escalar) seriam duas verdades sobre o mesmo gesto, e
+   `dragstart` não existe em toque nenhum.
+
+   O LIMIAR EXISTE PORQUE TOQUE NUNCA É IMÓVEL. Um toque de virar percorre 2–4 px
+   sem intenção nenhuma; sem folga, metade das viradas viraria arrasto abortado.
+   8 px é o mesmo patamar que o navegador usa para distinguir tap de scroll. */
+const LIMIAR_ARRASTO=8;
+let arrasto=null;
+
+const arrastavel=el=>!el.classList.contains("taken")&&!el.classList.contains("dup");
+const pickPorId=id=>[...S.drawn.jogadores,S.drawn.treinador].filter(Boolean).find(c=>c.id===id);
+
+/** Por que esta carta NÃO pode entrar agora, ou null. As três regras são as
+    mesmas de antes; só mudou o gesto que as dispara. */
+function motivoBloqueio(carta){
+  if(carta.tipo==="coach"&&S.treinador)return "Vaga de treinador já ocupada.";
+  if(carta.tipo!=="coach"&&S.jogadores.some(j=>j&&j.nick===carta.nick))return `${carta.nick} já está na sua line.`;
+  if(carta.tipo!=="coach"&&S.jogadores.every(Boolean))return "As 5 vagas estão cheias.";
+  return null;
+}
+/* O ALVO SOB O PONTEIRO, ignorando o fantasma. `pointer-events:none` não basta:
+   medido, `elementFromPoint` ainda devolvia a camada do fantasma, e o slot nunca
+   acendia durante o arrasto — o pouso só acertava porque `encerrarArrasto`
+   remove o fantasma ANTES de consultar. `elementsFromPoint` devolve a pilha
+   inteira; o primeiro que não pertence ao fantasma é o alvo de verdade. */
+function alvoSob(x,y){
+  for(const el of document.elementsFromPoint(x,y)){
+    if(el.closest(".fantasma"))continue;
+    const alvo=el.closest(".slot.avail,.swp");
+    if(alvo)return alvo;
   }
-  const slot=e.target.closest(".slot.avail");
-  if(slot&&S.sel)return colocarEm(slot);
-  const swap=e.target.closest(".swp");
-  if(swap&&S.sel&&S.sel.origem!=="pick")return trocarCom(swap);
-  const move=e.target.closest("[data-move]");
-  if(!move)return;
-  const isCoach=move.dataset.move==="coach";
-  const area=isCoach?lineupCoach:lineupEl;
-  if(!area.contains(move))return;
-  selecionar(move.dataset.move,isCoach?"coach":"player",isCoach?S.treinador:S.jogadores[+move.dataset.move]);
-  hint("Mova para um slot ou troque posições.");
+  return null;
+}
+const limparSobre=alvo=>document.querySelectorAll(".sobre")
+  .forEach(n=>{if(n!==alvo)n.classList.remove("sobre");});
+
+function iniciarArrasto(){
+  arrasto.ativo=true;
+  S.sel={origem:arrasto.origem,kind:arrasto.kind,card:arrasto.card};
+  limparHighlights();iluminarSlots();
+  arrasto.el.classList.add("arrastando");
+  const r=arrasto.el.getBoundingClientRect();
+  const g=arrasto.el.cloneNode(true);
+  g.classList.add("fantasma");g.classList.remove("sel","arrastando","deal","land");
+  g.removeAttribute("id");g.setAttribute("aria-hidden","true");g.removeAttribute("tabindex");
+  g.style.width=r.width+"px";g.style.height=r.height+"px";
+  arrasto.ghost=g;arrasto.dx=arrasto.x0-r.left;arrasto.dy=arrasto.y0-r.top;
+  document.body.appendChild(g);
+  moverFantasma(arrasto.x0,arrasto.y0);
+}
+function moverFantasma(x,y){
+  if(arrasto.ghost)arrasto.ghost.style.transform=`translate(${x-arrasto.dx}px,${y-arrasto.dy}px)`;
+}
+
+/* ROLAGEM AUTOMÁTICA NA BORDA. Sem isto o arrasto é impossível no celular: a
+   carta sorteada e os slots do time NÃO cabem na mesma tela. Medido a 390×844,
+   a carta ficava em y=−89 e o slot em y=933 — 1.022 px de vão numa janela de
+   844. Levar o dedo à borda tem de trazer o destino, como em qualquer lista
+   arrastável de sistema.
+   O alvo é reavaliado a cada quadro com a ÚLTIMA posição do ponteiro, porque
+   durante a rolagem o dedo está parado e é a página que se move: sem isso o
+   slot passaria por baixo do dedo sem nunca acender. */
+let autoRolagem=0,autoQuadro=0;
+function pulsoAutoRolagem(){
+  if(!arrasto||!arrasto.ativo||!autoRolagem){autoQuadro=0;return;}
+  window.scrollBy(0,autoRolagem);
+  const alvo=alvoSob(arrasto.x,arrasto.y);
+  limparSobre(alvo);
+  if(alvo)alvo.classList.add("sobre");
+  autoQuadro=requestAnimationFrame(pulsoAutoRolagem);
+}
+function ajustarAutoRolagem(y){
+  const zona=Math.min(110,window.innerHeight*0.18);
+  const passo=v=>Math.ceil(v/zona*20);
+  autoRolagem=y<zona?-passo(zona-y)
+    :y>window.innerHeight-zona?passo(y-(window.innerHeight-zona)):0;
+  if(autoRolagem&&!autoQuadro)autoQuadro=requestAnimationFrame(pulsoAutoRolagem);
+}
+function pararAutoRolagem(){
+  autoRolagem=0;
+  if(autoQuadro)cancelAnimationFrame(autoQuadro);
+  autoQuadro=0;
+}
+/** Fecha o gesto. Devolve `true` se foi arrasto — quem chama vira a carta quando
+    não foi, e é essa a única diferença entre os dois gestos. */
+function encerrarArrasto(x,y){
+  const {el,ativo,ghost}=arrasto;
+  pararAutoRolagem();
+  el.classList.remove("arrastando");
+  if(ghost)ghost.remove();
+  arrasto=null;
+  if(!ativo){limparSobre(null);return false;}
+  const alvo=alvoSob(x,y);
+  limparSobre(null);
+  if(alvo&&alvo.classList.contains("slot"))colocarEm(alvo);
+  else if(alvo&&alvo.classList.contains("swp"))trocarCom(alvo);
+  else{S.sel=null;limparHighlights();hint("Solte a carta sobre um slot do seu time.");}
+  return true;
+}
+
+document.addEventListener("pointerdown",e=>{
+  if(e.button)return;                       // só o botão principal arrasta
+  if(S.spinning)return;                     // trava interação durante o giro
+  const el=e.target.closest(".card,.coachcard");
+  if(!el)return;
+  const ehPick=picksEl.contains(el)&&el.dataset.pick!==undefined;
+  const ehLine=el.dataset.move!==undefined&&(lineupEl.contains(el)||lineupCoach.contains(el));
+  if(!ehPick&&!ehLine)return;
+  let origem,kind,card;
+  if(ehPick){
+    if(!S.drawn)return;
+    card=pickPorId(el.dataset.pick);
+    if(!card)return;
+    origem="pick";kind=card.tipo==="coach"?"coach":"player";
+  }else{
+    const ehCoach=el.dataset.move==="coach";
+    origem=el.dataset.move;kind=ehCoach?"coach":"player";
+    card=ehCoach?S.treinador:S.jogadores[+el.dataset.move];
+  }
+  arrasto={el,origem,kind,card,ehPick,x0:e.clientX,y0:e.clientY,ativo:false,ghost:null};
 });
+
+document.addEventListener("pointermove",e=>{
+  if(!arrasto)return;
+  if(!arrasto.ativo){
+    if(Math.hypot(e.clientX-arrasto.x0,e.clientY-arrasto.y0)<LIMIAR_ARRASTO)return;
+    /* A trava vale no ARRASTO, não no clique: uma carta presa ou repetida ainda
+       pode ser virada para leitura, ela só não pode ser escalada. */
+    if(arrasto.ehPick&&!arrastavel(arrasto.el)){arrasto=null;return;}
+    if(arrasto.ehPick){
+      const motivo=motivoBloqueio(arrasto.card);
+      if(motivo){hint(motivo);arrasto=null;return;}
+    }
+    iniciarArrasto();
+  }
+  e.preventDefault();                       // impede o scroll do toque durante o arrasto
+  arrasto.x=e.clientX;arrasto.y=e.clientY;  // a auto-rolagem reavalia por aqui
+  moverFantasma(e.clientX,e.clientY);
+  ajustarAutoRolagem(e.clientY);
+  const alvo=alvoSob(e.clientX,e.clientY);
+  limparSobre(alvo);
+  if(alvo)alvo.classList.add("sobre");
+},{passive:false});
+
+document.addEventListener("pointerup",e=>{
+  if(!arrasto)return;
+  const el=arrasto.el;
+  if(!encerrarArrasto(e.clientX,e.clientY))
+    setCardFlipped(el,!el.classList.contains("flipped"));
+});
+document.addEventListener("pointercancel",()=>{if(arrasto)encerrarArrasto(-1,-1);});
 
 document.addEventListener("keydown",e=>{
   if(e.key!=="Enter"&&e.key!==" ")return;
   if(S.spinning)return;
-  if(modoVirar){const c=e.target.closest(".card,.coachcard");if(c){e.preventDefault();setCardFlipped(c,!c.classList.contains("flipped"));return;}}
-  // `a[role=button]` promete comportamento de botão: o link responde a Enter por
-  // natureza, mas Espaço rolava a página em vez de abrir o Hall.
-  const alvo=e.target.closest("[data-pick]:not(.taken):not(.dup),[data-move],.slot.avail,a[role=button]");
-  if(!alvo)return;
-  e.preventDefault();
-  alvo.click();
+  /* Enter e Espaço VIRAM a carta: é a ação de botão que o `role="button"`
+     promete, e espelha o clique. Escalar é gesto de arrasto, por decisão de
+     produto de 06/08/2026. */
+  const carta=e.target.closest(".card,.coachcard");
+  if(carta){e.preventDefault();setCardFlipped(carta,!carta.classList.contains("flipped"));return;}
+  /* `a[role=button]` promete comportamento de botão: o link responde a Enter por
+     natureza, mas Espaço rolava a página em vez de abrir o Hall. */
+  const link=e.target.closest("a[role=button]");
+  if(link){e.preventDefault();link.click();}
 });
 
 /* ——— UI · telas de torneio (suíça + playoffs) —————— */
@@ -869,7 +985,9 @@ const MATCH=createMatchState();
 if(new window.URLSearchParams(location.search).get("e2e")==="1"){
   Object.defineProperty(window,"__DRAFT9_E2E__",{
     configurable:true,
-    value:Object.freeze({srand,getMatch:()=>MATCH,forcaDoDia,simularMapa})
+    /* `getDraft` acompanha `getMatch`: a bancada precisa saber por que um gesto
+       não pegou, e sem isso o diagnóstico vira adivinhação sobre estado privado. */
+    value:Object.freeze({srand,getMatch:()=>MATCH,getDraft:()=>S,forcaDoDia,simularMapa})
   });
 }
 

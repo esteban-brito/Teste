@@ -139,12 +139,13 @@ header{display:flex;position:relative;flex-wrap:wrap;flex-direction:row;align-it
   text-transform:uppercase;font-weight:700;margin:18px 0 9px;display:flex;align-items:center;gap:10px}
 .section-tag::after{content:'';flex:1;height:1px;
   background:linear-gradient(90deg,rgba(var(--accent-rgb),.45),rgba(var(--line-base-rgb),.18) 46%,transparent)}
-/* botão "Virar cartas" no cabeçalho do elenco revelado: alterna o modo global de virar carta */
-#picksTag::after{display:none} /* sem a linha: o botão ocupa a direita */
-.flipmode{margin-left:auto;font-size:.6rem;letter-spacing:.1em;padding:6px 11px;border-radius:8px;
-  display:inline-flex;align-items:center;gap:5px;line-height:1;flex:none}
-.flipmode.ativo{border-color:var(--accent);color:var(--accent);
-  background:color-mix(in srgb,var(--accent) 16%,var(--panel2));box-shadow:0 0 12px -3px var(--accent)}
+/* `display:flex` acima ANULA o atributo `hidden`, que é `display:none` da folha
+   do navegador e perde para qualquer declaração de autor. Sem esta linha,
+   `#picksTag` aparecia no carregamento — um rótulo "Elenco revelado" sobre dois
+   pixels de nada. Alguém já tinha tropeçado nisso e remendou UMA instância
+   (`#majorTag[hidden]`, lá embaixo) em vez da classe; a regra certa é aqui, ao
+   lado do `display` que causa o problema. */
+.section-tag[hidden]{display:none}
 .section-note{font-size:.72rem;letter-spacing:.06em;color:var(--dim);margin:-4px 0 8px}
 .section-note strong{color:var(--txt);font-weight:600}
 .winner-pill{display:inline-block;font-family:var(--ff);font-size:.62rem;font-weight:700;
@@ -1019,6 +1020,24 @@ button.ghost.accent{border-color:rgba(var(--accent-deep-rgb),.45);color:var(--ac
 .picks .card.taken::after,.picks .coachcard.taken::after{content:"NO ELENCO"}
 .picks .card.dup::after{content:"JÁ NA LINE"}
 .sel{outline:2px solid var(--sel,var(--accent));outline-offset:3px;z-index:6;filter:brightness(1.08)}
+/* ARRASTO. A carta original desbota no lugar para o olho não perder de onde ela
+   saiu; o fantasma é a que segue o dedo. `pointer-events:none` no fantasma é o
+   que deixa `elementFromPoint` enxergar o slot embaixo dele — sem isso o alvo
+   seria sempre a própria carta. `touch-action:none` nas cartas impede o
+   navegador de tratar o gesto como scroll antes de o limiar decidir. */
+.card,.coachcard{touch-action:none}
+.card.arrastando,.coachcard.arrastando{opacity:.3;filter:grayscale(.4)}
+.fantasma{position:fixed;left:0;top:0;z-index:60;pointer-events:none;margin:0;
+  will-change:transform;filter:drop-shadow(0 20px 34px rgba(0,0,0,.6));
+  transform-origin:top left;cursor:grabbing}
+.slot.sobre{border-style:solid;border-color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 14%,transparent);
+  box-shadow:inset 0 0 0 1px var(--accent),0 0 22px -6px var(--accent)}
+.swp.sobre{outline:2px solid var(--accent);outline-offset:3px}
+@media(hover:hover) and (pointer:fine){
+  #picks .card:not(.taken):not(.dup),#picks .coachcard:not(.taken),
+  #lineup [data-move],#lineupCoach [data-move]{cursor:grab}
+}
 .swp{outline:2px dashed rgba(var(--mine-rgb),.5);outline-offset:2px;cursor:pointer}
 
 @keyframes pop{from{opacity:0;transform:translate3d(0,6px,0)}to{opacity:1;transform:translate3d(0,0,0)}}

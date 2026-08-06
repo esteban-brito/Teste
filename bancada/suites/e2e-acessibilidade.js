@@ -147,18 +147,57 @@ async function revealDraw(pg,sel){
   }
   throw new Error("não foi possível sortear "+sel);
 }
+/* ESCALAR É ARRASTAR desde 06/08/2026 — clicar VIRA a carta. Sem `steps`: o
+   Chromium coalesce `pointermove` e entregava só o primeiro, abaixo do limiar de
+   8 px, o que fazia o gesto não pegar de forma intermitente. */
+/* global PointerEvent */
+/* Duas das três telas rodam com `isMobile`/`hasTouch`, e ali `page.mouse` não
+   reproduz o gesto do dedo. O produto ouve PONTEIRO, que é agnóstico de
+   dispositivo, então o arrasto é disparado como ponteiro de TOQUE — é o gesto
+   real do celular, não uma simulação de mouse. A fidelidade de entrada com
+   ponteiro de mouse continua provada em `e2e-cartas.js` e `e2e-game-flow.js`. */
+async function arrastarCarta(pg,origem,destino){
+  await pg.locator(origem).evaluate(el=>
+    Promise.all(el.getAnimations({subtree:true}).map(a=>a.finished.catch(()=>{}))));
+  await pg.evaluate(async({o,d})=>{
+    const a=document.querySelector(o);
+    if(!a||!document.querySelector(d))throw new Error(`arrasto sem alvo: ${o} → ${d}`);
+    const p=(tipo,x,y)=>a.dispatchEvent(new PointerEvent(tipo,{bubbles:true,cancelable:true,
+      clientX:x,clientY:y,pointerId:1,pointerType:"touch",isPrimary:true,
+      button:0,buttons:tipo==="pointerup"?0:1}));
+    const quadro=()=>new Promise(r=>requestAnimationFrame(r));
+    const caixaDestino=()=>document.querySelector(d).getBoundingClientRect();
+    const ra=a.getBoundingClientRect();
+    const x0=ra.left+ra.width/2,y0=ra.top+ra.height/2;
+    p("pointerdown",x0,y0);
+    p("pointermove",x0+30,y0+20);        // já além do limiar de 8px
+    /* NO CELULAR OS DOIS NÃO CABEM NA MESMA TELA — medido, 1.022 px de vão numa
+       janela de 844. Levar o ponteiro à borda e deixar a AUTO-ROLAGEM do produto
+       trazer o destino é o gesto real do dedo, e de quebra é o que prova que ela
+       existe: sem auto-rolagem este laço nunca converge. */
+    for(let i=0;i<240;i++){
+      const rb=caixaDestino();
+      if(rb.top>=0&&rb.bottom<=window.innerHeight)break;
+      p("pointermove",x0,rb.top<0?24:window.innerHeight-24);
+      await quadro();
+    }
+    const rb=caixaDestino();
+    const x1=rb.left+rb.width/2,y1=rb.top+rb.height/2;
+    p("pointermove",x1,y1);
+    await quadro();
+    p("pointerup",x1,y1);
+  },{o:origem,d:destino});
+}
 async function draftPlayer(pg,slot){
   await revealDraw(pg,"#picks .card[data-pick]:not(.taken):not(.dup)");
   const id=await pg.$$eval("#picks .card[data-pick]:not(.taken):not(.dup)",cards=>
     [...cards].sort((a,b)=>Number(b.querySelector(".ovr")?.textContent)-Number(a.querySelector(".ovr")?.textContent))[0]?.dataset.pick||null);
-  await pg.locator(`#picks [data-pick="${id}"]`).click();
-  await pg.locator(`#lineup [data-slot="${slot}"].avail`).click();
+  await arrastarCarta(pg,`#picks [data-pick="${id}"]`,`#lineup [data-slot="${slot}"]`);
   await pg.waitForFunction(e=>document.getElementById("cnt").textContent===`${e}/6`,slot+1);
 }
 async function draftCoach(pg){
   await revealDraw(pg,"#picks .coachcard[data-pick]:not(.taken)");
-  await pg.locator("#picks .coachcard[data-pick]:not(.taken)").click();
-  await pg.locator('#lineupCoach [data-slot="coach"].avail').click();
+  await arrastarCarta(pg,"#picks .coachcard[data-pick]:not(.taken)",'#lineupCoach [data-slot="coach"]');
   await pg.waitForFunction(()=>document.getElementById("cnt").textContent==="6/6");
 }
 

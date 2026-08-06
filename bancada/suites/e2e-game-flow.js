@@ -34,6 +34,50 @@ async function revealDraw(page,candidateSelector,candidateLabel){
   throw new Error(`não foi possível sortear ${candidateLabel} disponível`);
 }
 
+/* ESCALAR É ARRASTAR desde 06/08/2026. Clicar numa carta VIRA — o botão "Virar
+   cartas" deixou de existir e o clique ficou livre para isso. O arrasto usa
+   eventos de ponteiro reais, com um passo intermediário porque o produto só
+   entra em modo arrasto depois de 8 px: mover direto ao destino num salto só
+   também passaria do limiar, mas não exercitaria o caminho que o dedo faz. */
+async function arrastarCarta(page,origem,destino){
+  /* `boundingBox()` NÃO rola a página: devolve a posição atual, que pode estar
+     fora da viewport — e o ponteiro só acerta o que está visível. Nas rodadas
+     seguintes o slot de destino cai abaixo da dobra, e o arrasto pousava no
+     vazio. Centrar os dois antes de medir é o que torna o gesto reproduzível. */
+  /* A carta entra com `deal` e `animation-delay` de até 275 ms. Medir a caixa no
+     meio da animação devolve uma posição que já mudou quando o ponteiro desce —
+     o `pointerdown` cai ao lado da carta e o arrasto nunca começa. Esperar a
+     animação DELA, e não um tempo fixo, é o que torna o gesto determinístico. */
+  await page.locator(origem).evaluate(el=>
+    Promise.all(el.getAnimations({subtree:true}).map(a=>a.finished.catch(()=>{}))));
+  await page.locator(origem).scrollIntoViewIfNeeded();
+  let a=await page.locator(origem).boundingBox();
+  let b=await page.locator(destino).boundingBox();
+  if(!a||!b)throw new Error(`arrasto sem alvo: ${origem} → ${destino}`);
+  const meio=(a.y+a.height/2+b.y+b.height/2)/2;
+  const desloc=meio-page.viewportSize().height/2;
+  if(Math.abs(desloc)>4){
+    await page.evaluate(d=>window.scrollBy(0,d),desloc);
+    await page.waitForTimeout(140);
+    a=await page.locator(origem).boundingBox();
+    b=await page.locator(destino).boundingBox();
+    if(!a||!b)throw new Error(`arrasto perdeu o alvo ao rolar: ${origem} → ${destino}`);
+  }
+  /* SEM `steps`. O Chromium COALESCE `pointermove`: com `steps:4` chegava um
+     único evento, e justamente o primeiro — a 7,2 px, abaixo do limiar de 8 —,
+     então o arrasto não começava. Medido: 4 eventos numa rodada, 1 na seguinte,
+     o que fazia a suíte falhar de forma intermitente e parecer bug de produto.
+     Dois movimentos discretos, cada um já além do limiar, não dependem de
+     interpolação nenhuma. */
+  await page.mouse.move(a.x+a.width/2,a.y+a.height/2);
+  await page.mouse.down();
+  await page.mouse.move(a.x+a.width/2+30,a.y+a.height/2+20);
+  await page.waitForTimeout(30);
+  await page.mouse.move(b.x+b.width/2,b.y+b.height/2);
+  await page.waitForTimeout(30);
+  await page.mouse.up();
+}
+
 async function draftPlayer(page,slot){
   await revealDraw(page,"#picks .card[data-pick]:not(.taken):not(.dup)","um jogador");
   const pickId=await page.$$eval("#picks .card[data-pick]:not(.taken):not(.dup)",cards=>{
@@ -41,15 +85,13 @@ async function draftPlayer(page,slot){
     return ordered[0]?.dataset.pick||null;
   });
   if(!pickId)throw new Error(`rodada ${slot+1} não ofereceu jogador disponível`);
-  await page.locator(`#picks [data-pick="${pickId}"]`).click();
-  await page.locator(`#lineup [data-slot="${slot}"].avail`).click();
+  await arrastarCarta(page,`#picks [data-pick="${pickId}"]`,`#lineup [data-slot="${slot}"]`);
   await page.waitForFunction(expected=>document.getElementById("cnt").textContent===`${expected}/6`,slot+1);
 }
 
 async function draftCoach(page){
   await revealDraw(page,"#picks .coachcard[data-pick]:not(.taken)","um treinador");
-  await page.locator("#picks .coachcard[data-pick]:not(.taken)").click();
-  await page.locator('#lineupCoach [data-slot="coach"].avail').click();
+  await arrastarCarta(page,"#picks .coachcard[data-pick]:not(.taken)",'#lineupCoach [data-slot="coach"]');
   await page.waitForFunction(()=>document.getElementById("cnt").textContent==="6/6");
 }
 
@@ -251,6 +293,7 @@ async function finishUserSeries(page){
     return done(failures?1:0);
   }catch(error){
     console.log("  ✗ e2e abortou: "+(error.message||error));
+    if(error.stack)console.log(error.stack.split("\n").slice(0,6).join("\n"));
     console.log("✗ e2e do jogo principal falhou");
     return done(1);
   }
