@@ -440,7 +440,17 @@ A afinidade de mapa que já existe (`MAP_PROFILES`, `MAPA_LADO`) continua valend
 dentro do motor por `mapMultiplier`: o que está proibido é a **fase de escolha**,
 não o efeito do mapa.
 
-Exibição passiva é permitida e desejável — mostrar no placar ao vivo ou na
-manchete o que o motor decidiu informa sem cobrar. Antes de propor qualquer
-mecânica, pergunte quantos cliques a mais ela cobra; se não for zero, está fora
-do escopo. Detalhe e motivo na §11-bis de `docs/project-context.md`.
+**Emenda de 05/08/2026: exibição passiva TAMBÉM está fora.** Este parágrafo dizia
+que mostrar o que o motor decidiu era "permitido e desejável, porque informa sem
+cobrar". O responsável revisou diante de uma implementação pronta e verde — a
+antessala descrevendo os dois elencos pela camada tática — e recusou: *"prefiro
+que fique só dentro da IA do jogo mesmo"*. Foi desfeita sem publicar.
+
+O critério, então, **não é o custo de clique**. Uma tela que não cobra nada
+continua fora se o que ela faz é explicar o motor. Estão proibidos dossiê de
+adversário, placar ao vivo narrando a decisão do round, manchete falando de
+tática e fechamento de mapa explicando o mapa — `registro.tatica` segue sem
+consumidor na UI de propósito. Continuam valendo placar, rating, stats e a
+manchete atual: a fronteira é entre **resultado** e **mecanismo**. Antes de
+propor qualquer mecânica, pergunte também se ela explica o motor. Detalhe na
+§11-bis de `docs/project-context.md`.

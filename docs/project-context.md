@@ -1313,9 +1313,34 @@ enxuta. Confundir "jogo complexo" com "jogo com mais telas" mataria o produto.
 
 **Como aplicar:** ao propor qualquer mecânica, pergunte primeiro *quantos cliques
 a mais ela cobra do jogador*. Se a resposta não for zero, ela está fora do escopo
-até o responsável dizer o contrário. Exibição **passiva** — mostrar o que a IA
-decidiu, no placar ao vivo ou na manchete — é permitida e desejável, porque
-informa sem cobrar.
+até o responsável dizer o contrário.
+
+### Emenda de 05/08/2026 — exibição passiva também está FORA
+
+Até esta data este documento dizia que exibição passiva era "permitida e
+desejável, porque informa sem cobrar". **Não é.** O responsável revisou:
+
+> "prefiro que fique só dentro da IA do jogo mesmo"
+
+A decisão foi tomada diante de uma implementação pronta e validada — a antessala
+descrevendo os dois elencos pelo que a camada tática conclui (tipo de jogada e
+quatro traços comparados à liga). Custo zero de clique, `npm run validate` verde,
+golden e snapshot idênticos. Foi recusada assim mesmo, e **desfeita sem
+publicar** — os commits `a08a8d4`, `45e408c` e `f052c59` existem só no reflog.
+
+Ou seja: **o critério não é o custo de clique.** Uma tela que não cobra nada
+continua fora se o que ela faz é explicar o motor. O jogador tira as conclusões
+pelo resultado, não por um briefing.
+
+O que isso proíbe, concretamente: dossiê de adversário, placar ao vivo narrando
+a decisão do round, manchete falando de tática, fechamento de mapa explicando o
+mapa. `registro.tatica` continua existindo por round, e continua sem consumidor
+na UI **de propósito**.
+
+O que isso **não** proíbe: o placar, o rating, os stats e a manchete atuais, que
+descrevem o que ACONTECEU. A fronteira é entre resultado e mecanismo — mostrar
+que um jogador fez 25 kills é resultado; mostrar que o time dele é "de rush e lê
+pouco" é mecanismo.
 
 ## 12. Decisões abertas para o responsável
 
