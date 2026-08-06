@@ -87,6 +87,39 @@ async function revelar(page,seletor){
   throw new Error(`visual-regression: a roleta nunca revelou ${seletor}`);
 }
 
+/* global PointerEvent */
+/* ESCALAR É ARRASTAR. Dispara ponteiro sintético e usa a auto-rolagem do produto
+   para trazer o destino: no celular a carta e os slots não cabem na mesma tela.
+   Mesmo mecanismo de `bancada/suites/e2e-acessibilidade.js`. */
+async function arrastarCarta(page,origem,destino){
+  await page.locator(origem).evaluate(el=>
+    Promise.all(el.getAnimations({subtree:true}).map(a=>a.finished.catch(()=>{}))));
+  await page.evaluate(async({o,d})=>{
+    const a=document.querySelector(o);
+    if(!a||!document.querySelector(d))throw new Error(`arrasto sem alvo: ${o} → ${d}`);
+    const p=(tipo,x,y)=>a.dispatchEvent(new PointerEvent(tipo,{bubbles:true,cancelable:true,
+      clientX:x,clientY:y,pointerId:1,pointerType:"touch",isPrimary:true,
+      button:0,buttons:tipo==="pointerup"?0:1}));
+    const quadro=()=>new Promise(r=>requestAnimationFrame(r));
+    const caixaDestino=()=>document.querySelector(d).getBoundingClientRect();
+    const ra=a.getBoundingClientRect();
+    const x0=ra.left+ra.width/2,y0=ra.top+ra.height/2;
+    p("pointerdown",x0,y0);
+    p("pointermove",x0+30,y0+20);
+    for(let i=0;i<240;i++){
+      const rb=caixaDestino();
+      if(rb.top>=0&&rb.bottom<=window.innerHeight)break;
+      p("pointermove",x0,rb.top<0?24:window.innerHeight-24);
+      await quadro();
+    }
+    const rb=caixaDestino();
+    const x1=rb.left+rb.width/2,y1=rb.top+rb.height/2;
+    p("pointermove",x1,y1);
+    await quadro();
+    p("pointerup",x1,y1);
+  },{o:origem,d:destino});
+}
+
 async function capturar(page,destino,nome){
   await page.addStyleTag({content:CONGELAR});
   await page.waitForTimeout(120);
@@ -103,23 +136,23 @@ async function percorrer(page,tela,destino){
   await page.waitForTimeout(1400);
   await capturar(page,destino,nomear("02-cartas"));
 
-  await page.click("#flipModeBtn");
+  /* Clicar VIRA desde 06/08/2026 — não existe mais modo. Virar todas e voltar
+     todas mantém o estado `03-versos` comparável entre execuções. */
   for(const carta of await page.$$(".picks .card,.picks .coachcard"))await carta.click();
   await page.waitForTimeout(700);
   await capturar(page,destino,nomear("03-versos"));
-  await page.click("#flipModeBtn");
+  for(const carta of await page.$$(".picks .card,.picks .coachcard"))await carta.click();
+  await page.waitForTimeout(400);
 
   for(let slot=0;slot<5;slot++){
     await revelar(page,"#picks .card[data-pick]:not(.taken):not(.dup)");
     const id=await page.$$eval("#picks .card[data-pick]:not(.taken):not(.dup)",
       cards=>cards[0].getAttribute("data-pick"));
-    await page.locator(`#picks [data-pick="${id}"]`).click();
-    await page.locator(`#lineup [data-slot="${slot}"].avail`).click();
+    await arrastarCarta(page,`#picks [data-pick="${id}"]`,`#lineup [data-slot="${slot}"]`);
     await page.waitForFunction(n=>document.getElementById("cnt").textContent===`${n}/6`,slot+1);
   }
   await revelar(page,"#picks .coachcard[data-pick]:not(.taken)");
-  await page.locator("#picks .coachcard[data-pick]:not(.taken)").click();
-  await page.locator('#lineupCoach [data-slot="coach"].avail').click();
+  await arrastarCarta(page,"#picks .coachcard[data-pick]:not(.taken)",'#lineupCoach [data-slot="coach"]');
   await page.waitForFunction(()=>document.getElementById("cnt").textContent==="6/6");
   await page.waitForTimeout(600);
   await capturar(page,destino,nomear("04-elenco"));
