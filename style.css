@@ -1092,7 +1092,18 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .swiss,.bracket{flex:1;overflow:auto;padding:20px}
 .swiss::-webkit-scrollbar,.bracket::-webkit-scrollbar{height:9px;width:9px}
 .swiss::-webkit-scrollbar-thumb,.bracket::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px}
-.swiss{display:flex;align-items:flex-start}
+/* COMPOSIÇÃO CENTRADA, e a razão é aritmética, não gosto. Num Suíço de 16 com
+   3 vitórias/3 derrotas, os grupos vivos de uma rodada R têm sempre
+   vitórias+derrotas = R, então existem no máximo 3 grupos + Classificados +
+   Eliminados = 5 colunas. Com colunas fixas de 172 px encostadas à esquerda, a
+   tela NUNCA enchia: medido, 880 px vazios à direita na rodada 0 (61% da
+   largura) e 686 px na rodada 3 (48%). Não era caso de borda, era o estado
+   permanente.
+   Centrado, o que sobra vira margem simétrica — composição, não buraco. As
+   colunas partem de 300 px e encolhem até 172 px antes de quebrar a linha, então
+   o celular deixa de rolar na horizontal. */
+.swiss{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;
+  align-content:safe center}
 /* `min-width` e `gap` vivem AQUI, e não na camada de refinamento no fim do
    arquivo — 02/08/2026. Lá embaixo eles vinham DEPOIS do
    `@media(max-width:640px)` com a mesma especificidade, então a coluna estreita
@@ -1100,7 +1111,11 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    de desktop. A tela pequena parecia tratada e não estava.
    Foi a única regra responsiva do arquivo nessa condição — o resto da folha foi
    varrido e está limpo. */
-.swiss-col{flex:0 0 auto;display:flex;flex-direction:column;min-width:172px;gap:10px}
+.swiss-col{flex:0 1 300px;min-width:172px;display:flex;flex-direction:column;gap:10px}
+/* Os itens preenchem a largura que a coluna tiver: a 300 px cabem dois por
+   faixa, a 172 px cabe um. É isto que tira a torre de 16 times da rodada 0, que
+   estourava a altura enquanto sobrava largura ao lado. */
+.swiss-col-itens{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
 .swiss-colhead{font-family:var(--ff);font-weight:700;text-align:center;
   text-transform:uppercase}
 .swiss-colhead.qual{background:linear-gradient(180deg,rgba(var(--t2-green-rgb),.18),rgba(var(--t2-green-rgb),.06));
@@ -1378,7 +1393,11 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .majorbtn .mbtxt{display:flex;flex-direction:column;gap:3px}
 .majorbtn .mbt{font-family:var(--ff);font-weight:700;font-size:1.05rem;letter-spacing:.04em;color:var(--txt)}
 .majorbtn .mbs{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-weight:600}
-@media(max-width:640px){.swiss-col{min-width:138px}.series{min-width:158px}}
+/* No celular a coluna ocupa a faixa toda e os times seguem em dois por linha —
+   o `min-width` de 138px era o que permitia duas colunas espremidas lado a lado
+   e forçava rolagem horizontal: o conteúdo media 446px numa tela de 390px, com
+   "ELIMINADOS" cortado fora do quadro. */
+@media(max-width:640px){.swiss-col{flex-basis:100%;min-width:0}.series{min-width:158px}}
 
 @media(prefers-reduced-motion:reduce){
   .result,.deal,.land,.track{animation:none!important;transition:none!important}

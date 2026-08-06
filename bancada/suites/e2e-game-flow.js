@@ -71,6 +71,43 @@ async function seedWinningMap(page){
   });
 }
 
+/* FASE SUÍÇA — composição, não decoração. Num Suíço de 16 com 3 vitórias/3
+   derrotas os grupos vivos de uma rodada R têm sempre vitórias+derrotas = R,
+   então existem no máximo 3 grupos + Classificados + Eliminados = 5 colunas.
+   Com colunas fixas encostadas à esquerda a tela NUNCA enchia: 880 px vazios à
+   direita na rodada 0 (61% da largura) e conteúdo estourando a altura ao mesmo
+   tempo, mais rolagem horizontal no celular com "ELIMINADOS" cortado.
+   A guarda mede as duas margens e a rolagem — nenhuma das três aparecia em
+   captura, e por isso o defeito viveu sem ninguém notar. */
+async function auditarSuica(page){
+  const medir=()=>page.evaluate(()=>{
+    const board=document.getElementById("swissBoard");
+    const colunas=[...board.querySelectorAll(".swiss-col")];
+    const r=board.getBoundingClientRect();
+    const caixas=colunas.map(c=>c.getBoundingClientRect());
+    return {colunas:colunas.length,
+      esquerda:Math.min(...caixas.map(b=>b.left))-r.left,
+      direita:r.right-Math.max(...caixas.map(b=>b.right)),
+      rolaHorizontal:board.scrollWidth>board.clientWidth+1,
+      docRolaHorizontal:document.documentElement.scrollWidth>window.innerWidth+1};
+  });
+  const largo=await medir();
+  check(largo.colunas>0&&Math.abs(largo.esquerda-largo.direita)<2,
+    `suíça centrada no desktop (margens ${largo.esquerda.toFixed(0)} e ${largo.direita.toFixed(0)}px)`);
+  check(!largo.rolaHorizontal&&!largo.docRolaHorizontal,
+    "suíça no desktop não gera rolagem horizontal");
+
+  await page.setViewportSize({width:390,height:844});
+  await page.waitForFunction(()=>window.innerWidth===390);
+  const estreito=await medir();
+  check(!estreito.rolaHorizontal&&!estreito.docRolaHorizontal,
+    "suíça no celular não gera rolagem horizontal");
+  check(Math.abs(estreito.esquerda-estreito.direita)<2,
+    `suíça centrada no celular (margens ${estreito.esquerda.toFixed(0)} e ${estreito.direita.toFixed(0)}px)`);
+  await page.setViewportSize({width:1440,height:900});
+  await page.waitForFunction(()=>window.innerWidth===1440);
+}
+
 async function finishUserSeries(page){
   await page.waitForSelector("#matchOverlay",{state:"visible",timeout:10000});
   await page.waitForSelector("#prematchStart",{state:"visible",timeout:5000});
@@ -145,6 +182,7 @@ async function finishUserSeries(page){
     await page.click("#suicabtn");
     await page.waitForSelector("#suicaOverlay",{state:"visible",timeout:5000});
     check(await page.locator("#swissBoard .match").count()===16,"fase suíça começa com 16 times");
+    await auditarSuica(page);
 
     let swissRounds=0,totalMaps=0;
     while(!(await page.locator("#suicaPlayoffs").isVisible())&&swissRounds<10){
