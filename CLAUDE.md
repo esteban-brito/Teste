@@ -428,6 +428,45 @@ perto de 3 pp** de diferenciação entre bom e mau leitor, mesmo dando ao melhor
 rounds de scouting. O teto é estrutural, não de ajuste — e provavelmente está
 certo assim: no CS real a leitura do IGL é efeito real e modesto.
 
+## Sessão de 05/08/2026 — monograma da carta e Fase Suíça
+
+Ciclo visual sem tocar em dado, OVR, RNG ou balanceamento. O monograma do campo
+sem retrato tinha **três defeitos simultâneos** e **nenhuma guarda**; a Suíça
+nunca enchia a tela. Relato e números em
+`docs/ciclos/monograma-e-suica-2026-08-05.md`.
+
+### Três regras novas
+
+35. **`letter-spacing` sobra DEPOIS da última letra, e centrar caixa não é
+    centrar tinta.** O flex centra a caixa de AVANÇO, que carrega esse espaço
+    fantasma: com `-.05em` a tinta do monograma escorregava +2,83 px em média e
+    até +5,25 px. Quando um elemento precisa parecer uniforme, **normalize a
+    geometria em vez de centrar texto e torcer**: um `viewBox` que É a caixa que
+    você quer centrada resolve os dois eixos sem métrica de fonte no layout e
+    **sem constante de compensação** — que é o que a regra 21 já provou caro.
+    `textLength`+`lengthAdjust="spacing"` iguala o avanço; `spacingAndGlyphs`
+    não serve, porque troca inconsistência de tamanho por inconsistência de peso.
+    Constante de forma sai da FONTE (`WM`, o par mais largo possível), nunca do
+    dado — senão um time novo espreme o desenho em silêncio.
+36. **`getBBox()` de `<text>` devolve a caixa EM no Chromium, não a tinta.**
+    Altura fixa de 1,3em e topo em −41,49 para todo mundo. A primeira versão da
+    guarda vertical media essa constante e reprovava sem defeito nenhum. Serve
+    para largura, que é o que `textLength` governa; **não serve para altura**.
+    É a quinta régua errada deste componente — §18 trocou `getBoundingClientRect`
+    por `Range`, §21 trocou a caixa da fonte pelo glifo, §22 trocou a caixa da
+    placa pela aresta, e agora a caixa da linha pela caixa-alta.
+37. **Antes de consertar layout por gosto, calcule a FAIXA de conteúdo que ele
+    pode receber.** A Suíça parecia vazia por acaso; a conta mostrou que num
+    Suíço de 16 os grupos vivos de uma rodada têm sempre `vitórias+derrotas = R`,
+    logo existem **no máximo 5 colunas** e 172 px fixos jamais enchem 1440. Não
+    era caso de borda, era o estado permanente — e isso muda a correção de
+    "ajustar espaçamento" para "trocar o modelo de layout".
+
+**E a lição que atravessa as três:** `.c-mono` acumulou três defeitos ao mesmo
+tempo porque **não tinha uma única prova**. Componente sem guarda não fica
+parado; ele apodrece em silêncio, e captura bonita não denuncia desvio de 1 px,
+margem assimétrica nem rolagem horizontal.
+
 ## Decisão de produto fechada em 04/08/2026 — raso na mão, profundo por baixo
 
 **Veto de mapa não existe e não vai existir**, nem como tela jogável nem como

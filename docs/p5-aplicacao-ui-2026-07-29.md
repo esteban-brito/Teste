@@ -224,7 +224,7 @@ Medição vigente, provada por `tools/check-doc-measurements.js` a cada
 |---|---:|
 | `game.js` | 964 |
 | `sandbox.html` | 4205 |
-| `style.css` | 1665 |
+| `style.css` | 1693 |
 | `prototipo-cartas.html` | 842 |
 
 Até 01/08/2026 este parágrafo dizia "medição vigente" e errava três dos quatro
