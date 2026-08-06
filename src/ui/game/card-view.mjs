@@ -86,8 +86,45 @@ const escalaCarac=texto=>texto.length<=10?1:texto.length<=12?.8:.7;
    Ele NÃO é emitido quando há foto. Não é uma regra de exceção no CSS: o HTML
    simplesmente não cria o nó. O centro pertence ao retrato — foi por isso que os
    emblemas de função saíram, e o monograma não pode reabrir essa disputa. */
+/* GEOMETRIA NORMALIZADA, e não texto centrado. Medido nas 94 cartas do
+   laboratório a 188 px, o monograma como texto tinha três defeitos ao mesmo
+   tempo: a tinta caía +2,83 px à direita em média (pior caso +5,25 px), porque
+   `letter-spacing` aplica o espaço DEPOIS da última letra e o flex centrava a
+   caixa de avanço, não a tinta; subia 0,93 px, porque `align-items:center`
+   centra a caixa da LINHA e a maiúscula ocupa só o miolo dela — a régua da §21;
+   e variava de 64,18 px (`TI`) a 120,90 px (`SW`), 1,88× do mais estreito ao
+   mais largo, com o mesmo corpo.
+
+   O SVG resolve os três de uma vez, e sem constante de compensação:
+
+     o viewBox É a caixa de caixa-alta — a base do texto fica em y=100 e o corpo
+     vale 100/CAP, então o topo da maiúscula cai exatamente em y=0. Centrar o
+     elemento passa a centrar a LETRA, sem métrica de fonte no layout;
+
+     `textLength` + `lengthAdjust="spacing"` dá a todos o MESMO avanço, mexendo
+     só no vão entre as duas letras. `spacingAndGlyphs` foi descartado: ele
+     esticaria os glifos e trocaria inconsistência de tamanho por inconsistência
+     de peso.
+
+   As duas constantes são MEDIDAS, não estimadas, e saem da FONTE, não do dado:
+   `WM` é o par mais largo possível em A-Z0-9, então nenhum par real comprime, e
+   adicionar um time novo não pode espremer o monograma em silêncio. Um dígito
+   tem exatamente a mesma altura de caixa-alta de uma letra (0,7031em os dois),
+   então `91` e `M0` não precisam de exceção.
+
+   `bancada/suites/e2e-cartas.js` remede as duas na FONTE real e reprova se ela
+   andar por baixo destas contas — a prova vive lá, e não em `tools/`, porque
+   métrica de glifo exige o navegador que de fato desenha. */
+const MONO_CAP=0.7031;              // cap-height / em da Chakra Petch 700
+const MONO_LARGURA=+(1.68/MONO_CAP*100).toFixed(1);   // avanço de `WM` na caixa de caixa-alta
+const MONO_CORPO=+(100/MONO_CAP).toFixed(2);          // corpo que põe a caixa-alta em 100
+const monoHtml=nick=>`<div class="c-mono" aria-hidden="true">`+
+  `<svg viewBox="0 0 ${MONO_LARGURA} 100" focusable="false">`+
+  `<text x="0" y="100" textLength="${MONO_LARGURA}" lengthAdjust="spacing" `+
+  `font-size="${MONO_CORPO}">${esc(monograma(nick||""))}</text></svg></div>`;
+
 const camadasDeFundo=card=>`<div class="c-foto"></div>`+
-  (fotoStyle(card)?"":`<div class="c-mono" aria-hidden="true">${esc(monograma(card.nick||""))}</div>`)+
+  (fotoStyle(card)?"":monoHtml(card.nick||""))+
   `<div class="c-vinheta"></div>`;
 const bandeiraHtml=pais=>{
   const fonte=bandeiraDe(pais);

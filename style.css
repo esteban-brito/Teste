@@ -330,11 +330,20 @@ button.ghost.accent{border-color:rgba(var(--accent-deep-rgb),.45);color:var(--ac
    A tinta é `--m-ink`, a mesma da escada, em opacidade baixa: o monograma é
    textura de fundo, não informação. O nick continua sendo o nome na placa. */
 .card,.coachcard{--mono-topo:30%}
+/* A CAIXA CENTRADA É O SVG, e o viewBox dele é a caixa de caixa-alta — ver o
+   cabeçalho de `monoHtml` em `card-view.mjs`. Por isso não há mais `font-size`,
+   `line-height` nem `letter-spacing` aqui: centrar deixou de depender de métrica
+   de fonte, que é o que fazia a letra subir 0,93 px e escorregar até 5,25 px
+   para a direita. O corpo continua vindo do container (`cqw`), agora pela
+   largura do SVG; `--mono-corpo` é a caixa-alta que a antiga `46cqw` produzia
+   (46 × 0,7031), preservada para a letra não mudar de tamanho. */
+.card,.coachcard{--mono-corpo:32.34cqw;--mono-razao:2.389}
 .c-mono{position:absolute;left:0;right:0;top:var(--mono-topo);bottom:var(--placa);
-  z-index:1;pointer-events:none;display:flex;align-items:center;justify-content:center;
-  font-family:var(--ff);font-weight:700;font-size:46cqw;line-height:1;
-  letter-spacing:-.05em;
+  z-index:1;pointer-events:none;display:grid;place-items:center;
   color:color-mix(in srgb,var(--m-ink) 17%,transparent)}
+.c-mono svg{display:block;width:calc(var(--mono-corpo) * var(--mono-razao));height:auto;
+  overflow:visible}
+.c-mono text{font-family:var(--ff);font-weight:700;fill:currentColor}
 /* No treinador o campo livre termina antes da faixa cromada, que fica acima da
    placa. O topo é o mesmo do jogador, porque o OVR das duas categorias mora no
    mesmo lugar. */
