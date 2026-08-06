@@ -234,6 +234,19 @@ async function main(){
   assert.ok(/\.pm-team \.team-mono\{[^}]*border-radius:18px/.test(folha),
     "`.pm-team .team-mono` não declara mais o tamanho da antessala");
 
+  /* QUEM SAI PINTA POR BAIXO DE QUEM ENTRA. Os cinco overlays compartilham o
+     mesmo `z-index`, então sem este degrau a ordem de pintura cai na ordem do
+     DOM — e `matchOverlay` vem depois de `suicaOverlay` e `playoffOverlay`.
+     Medido numa campanha completa: 23 frames com a tela da partida sumindo POR
+     CIMA da tela que entrava, só no caminho de VOLTA. Ir para a partida parecia
+     certo, porque a ordem do DOM favorece um sentido só. */
+  const zBase=folha.match(/\n\.overlay\{[^}]*z-index:(\d+)/);
+  const zSaindo=folha.match(/\.overlay\.fechando\{[^}]*z-index:(\d+)/);
+  assert.ok(zBase&&zSaindo,"`.overlay` ou `.overlay.fechando` deixou de declarar z-index");
+  assert.ok(Number(zSaindo[1])<Number(zBase[1]),
+    `overlay que fecha (z=${zSaindo[1]}) precisa pintar ABAIXO de um aberto (z=${zBase[1]}), `+
+    `senão voltar da partida mostra a tela que sai por cima da que entra`);
+
   const swiss=tournamentView.swissBoardHtml({times:[alpha,beta],classificados:[alpha],eliminados:[beta]});
   assert.ok(swiss.includes("swiss-colhead neutral\">0:0")&&swiss.includes("match mine")&&swiss.includes("A&amp;B"),
     "grupos ativos da Suíça mudaram");

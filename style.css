@@ -1072,7 +1072,15 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .overlay{position:fixed;inset:0;z-index:50;background:#080b10;
   display:flex;flex-direction:column;animation:overlayIn .28s var(--ease)}
 @keyframes overlayIn{from{opacity:0;transform:scale(.99)}to{opacity:1;transform:scale(1)}}
-.overlay.fechando{animation:overlayOut .2s var(--ease) forwards;pointer-events:none}
+/* QUEM SAI PINTA POR BAIXO DE QUEM ENTRA. Todos os overlays compartilham
+   `z-index:50`, então a ordem de pintura caía na ordem do DOM — e `matchOverlay`
+   vem DEPOIS de `suicaOverlay` e `playoffOverlay`. Voltar da partida para a
+   chave, que é o caminho normal do Major, mostrava a tela da partida sumindo POR
+   CIMA da tela que estava entrando. Medido em 23 frames de uma campanha
+   completa: 18 sobre a suíça e 5 sobre os playoffs. Ir para a partida parecia
+   certo e voltar parecia quebrado, porque a ordem do DOM favorece um sentido só.
+   Um degrau abaixo resolve nos dois sentidos e não depende de ordem nenhuma. */
+.overlay.fechando{animation:overlayOut .2s var(--ease) forwards;pointer-events:none;z-index:49}
 @keyframes overlayOut{to{opacity:0;transform:scale(.992)}}
 .tela-in{animation:telaIn .26s var(--ease)}
 @keyframes telaIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
