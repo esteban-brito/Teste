@@ -76,12 +76,19 @@ export function liveTeamHeaderHtml(team,side,sideElementId){
    primeira leitura, e a força o número que se lê logo em seguida. Antes tudo
    vivia entre 1,3 e 1,8 rem — nada dominava, e sem dominante não há ordem de
    leitura. Agora há degraus reais: nome, força, era. */
+/* O RÓTULO "FORÇA" SAIU — 08/08/2026. Ele era emitido DUAS vezes, uma por lado,
+   a 8,96px, ocupando 448px² cada para nomear o que o desenho já diz. Quem
+   carrega o significado agora é o VEREDITO, na base da lâmina: "Spirit favorito
+   por 12" informa que os dois números são uma comparação de força, em português,
+   uma vez só e no eixo central — em vez de duas legendas minúsculas repetindo a
+   mesma palavra nas pontas. É a regra 53: diante de um rótulo pequeno, a
+   pergunta não é como aumentá-lo, é que elemento já existente pode dizer aquilo. */
 export function prematchTeamHtml(team){
   return `<div class="pm-crest">${monoHtml(team)}</div>`
     +`<div class="pm-info">`
     +`<div class="pm-name">${esc(team.nome)}</div>`
     +(team.camp?`<div class="pm-camp">${esc(team.camp)}</div>`:"")
-    +`<div class="pm-ef"><b>${team.ef}</b><span class="pm-ef-rot">Força</span></div>`
+    +`<div class="pm-ef"><b>${team.ef}</b></div>`
     +`</div>`;
 }
 

@@ -255,6 +255,16 @@
       <div class="prematch-ctx" id="prematchCtx"></div>
     </div>
 
+    <!-- OS MAPAS DA SÉRIE SUBIRAM PARA O CONTEXTO — 08/08/2026. Eles viviam
+         abaixo da lâmina e, num MD1, sobrava uma pílula solta e minúscula sob um
+         bloco grande: um objeto órfão. Aqui eles são o que de fato são — parte do
+         enquadramento do confronto ("que partida é esta, e onde"), ao lado da
+         fase e do formato. O fundo inteiro da tela já veste a cor do mapa, então
+         o nome é CONFIRMAÇÃO, não descoberta, e confirmação pertence à moldura.
+         Continuam fora dos cards: pendurá-los num dos lados sugeriria vantagem
+         de quem os recebeu, que foi a razão original de tirá-los de lá. -->
+    <div id="pmMapa"></div>
+
     <!-- PALCO DO CONFRONTO — reformulação de 07/08/2026.
          Os dois times deixaram de ser cards lado a lado e passaram a ocupar
          METADES OPOSTAS da mesma área, separadas por uma DIAGONAL. A diagonal é
@@ -266,39 +276,42 @@
          esse VS no meio do bloco central da antessala"*. Ela foi retirada
          INTEIRA, com o SVG, o gradiente e as regras de CSS, e não apenas
          escondida: elemento que perde o consumidor sai. A diagonal já diz que
-         são dois lados em confronto — era esse o trabalho que o VS duplicava. -->
+         são dois lados em confronto — era esse o trabalho que o VS duplicava.
+
+         O CONFRONTO DE FORÇA VIVE DENTRO DA LÂMINA — 08/08/2026. Ele era um
+         bloco solto a 29px daqui, com os dois números repetidos nas pontas
+         enquanto os mesmos valores já apareciam 3x maiores nos cards. Aqui, o
+         segmento de cada time nasce EXATAMENTE sob o card dele, e é esse
+         alinhamento que dispensa rótulo: a barra não precisa dizer de quem é
+         cada lado, porque o nome está logo acima. -->
     <div class="pm-palco">
       <div class="pm-lado pm-lado--a" id="pmTeamA"></div>
       <div class="pm-lado pm-lado--b" id="pmTeamB"></div>
-    </div>
-
-    <!-- CONFRONTO DE FORÇA, encostado no palco. A força efetiva já era exibida
-         como número em cada lado; aqui ela vira COMPARAÇÃO, que é o que o número
-         sozinho não dá — ninguém lê "68" e "76" e sente a diferença. -->
-    <div class="pm-forca" id="pmForca" hidden>
-      <div class="pm-forca-trilho">
-        <div class="pm-forca-a" id="pmForcaA"></div>
-        <div class="pm-forca-b" id="pmForcaB"></div>
+      <div class="pm-forca" id="pmForca" hidden>
+        <div class="pm-forca-trilho">
+          <div class="pm-forca-a" id="pmForcaA"></div>
+          <div class="pm-forca-b" id="pmForcaB"></div>
+        </div>
+        <div class="pm-forca-leg" id="pmForcaLeg"></div>
       </div>
-      <div class="pm-forca-leg" id="pmForcaLeg"></div>
     </div>
-
-    <!-- OS MAPAS DA SÉRIE, todos aqui embaixo — 07/08/2026, a pedido: no MD1 o
-         mapa também desce, em vez de virar selo dentro do palco. Um lugar só
-         para a mesma informação, seja um mapa ou três.
-         `#pmMapa` é a LISTA, não uma placa: a classe da peça vive nos filhos,
-         senão o contêiner desenha um retângulo em volta dos retângulos. -->
-    <div id="pmMapa"></div>
 
     <!-- Dois caminhos, e o LIMPO é o padrão de referência, não o degradado: é
          ele que preserva o produto anterior à narração. `#prematchStart` continua
          sendo o botão sem narração de propósito — as suítes de fluxo clicam nele
-         e, com isso, seguem provando o jogo sem nada opcional ligado. -->
+         e, com isso, seguem provando o jogo sem nada opcional ligado.
+
+         A EXPLICAÇÃO MORA NO CONTROLE. Havia aqui uma nota em pílula de vidro
+         dizendo "A narração comenta ao vivo alguns rounds do mapa" — 8.127px², a
+         quarta maior área de texto da tela, para explicar um botão que estava
+         logo acima dela. Dentro do próprio botão ela informa quem hesita e
+         desaparece para quem já decidiu. -->
     <div class="prematch-modos">
-      <button class="roll" id="prematchNarrado">▶ Com narração</button>
-      <button class="roll ghost" id="prematchStart">Sem narração</button>
+      <button class="roll" id="prematchNarrado">▶ Com narração
+        <span class="pm-acao-sub">comenta alguns rounds ao vivo</span></button>
+      <button class="roll ghost" id="prematchStart">Sem narração
+        <span class="pm-acao-sub">só a simulação</span></button>
     </div>
-    <p class="prematch-nota">A narração comenta ao vivo alguns rounds do mapa.</p>
   </div>
 
   <!-- ·· Mapa ao vivo ··········································· -->
