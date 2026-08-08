@@ -657,6 +657,47 @@ Relato em `docs/ciclos/clareza-da-tela-do-mapa-2026-08-07.md`.
     textual. E o dono do time migrou de matiz para RELEVO — o ciano teria apagado
     justamente o lado que o bloco passou a mostrar.
 
+## Sessão de 08/08/2026 — redesenho da antessala
+
+Relato e medições em `docs/ciclos/antessala-redesenho-2026-08-08.md`.
+
+57. **`var()` apontando para token REMOVIDO invalida a declaração inteira, e o
+    defeito é invisível.** `.pm-forca-a` declarava `border-right:2px solid
+    var(--bg)`; `--bg` saiu do `:root` em 01/08 na limpeza de tokens sem
+    consumidor, e a partir dali a shorthand ficou inválida no tempo de valor
+    computado — medido, ela computava `0px none`. O divisor que o comentário
+    logo acima chamava de essencial não existia havia uma semana. Nenhuma guarda
+    pega: `check-design-tokens` prova pares hex↔rgb e literais regredidos, não
+    prova referência a token inexistente. **Ao remover um token, varra os
+    consumidores por `var(--nome)` antes de apagar** — e prefira que o vão seja
+    estrutura (um `gap` que mostra o fundo) a ser uma cor que pode ficar
+    indefinida.
+58. **Separação que depende de cor de DADO pode sumir por luminância, não só por
+    matiz.** A barra de força separava os dois times pela cor de cada clube. O
+    time do jogador é preto, que `--time-traco` clareia até cinza; um adversário
+    claro ao lado disso vira uma linha contínua, e a barra perde exatamente a
+    informação que existe para dar. O sulco de 2px não salva — dois cinzas
+    continuam dois cinzas. **O canal seguro é ACESO × APAGADO**: quem está atrás
+    recua em opacidade, o que independe de qualquer par do catálogo e ainda diz
+    quem é favorito por forma, antes de a frase ser lida. É a mesma família da
+    regra 46: quando o dado é sorteado, prove no domínio inteiro, não na tela que
+    apareceu.
+59. **Mexer no PISO de um `clamp()` é mexer no celular, e só a captura mostra.**
+    A escala nova subiu os mínimos de `--fs-hero` e `--fs-titulo`; no desktop nada
+    mudou, e em 390px os dois nomes de time passaram a se sobrepor. A
+    sobreposição já existia antes — vinha publicada desde 07/08 — porque toda
+    prova funcional pergunta *"o texto está lá?"* e a resposta é sim: o nó existe,
+    tem conteúdo e é `visible`. Quando faltar largura e sobrar altura, a resposta
+    é a da regra 48: **EMPILHE**, não encolha. Aqui a diagonal do palco girou 90°
+    e as metades passaram a dividir o eixo vertical — o vocabulário sobrevive, só
+    muda o eixo.
+
+**E a lição de método do ciclo:** as três correções que mudaram o plano não
+vieram de ler código — vieram de RODAR. "Reduzir para duas superfícies de vidro"
+teria deixado um nível do sistema órfão; a barra só se revelou ilegível na
+primeira foto; e a escala só quebrou onde ninguém olha. Um plano de design é uma
+hipótese, e a captura é o experimento.
+
 ## A ANTESSALA É O PADRÃO DE DESIGN — decisão de 07/08/2026
 
 O responsável elegeu a antessala da partida como referência de estilo para o jogo

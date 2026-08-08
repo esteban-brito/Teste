@@ -1470,13 +1470,27 @@ function montarConfrontoDeForca(A,B){
   $("pmForcaB").setAttribute("style",`${estiloDoTime(B)};width:${100-pctA}%`);
   const dif=Math.abs(efA-efB);
   /* "Equilibrado" tem de ter piso, senão 1 ponto de diferença já nomearia um
-     favorito — e no jogo 1 ponto não decide nada. */
-  const veredito=dif<=3?"Equilibrado"
-    :`${esc((efA>efB?A:B).nome)} favorito por ${dif}`;
-  $("pmForcaLeg").innerHTML=
-    `<span class="pm-forca-n">${efA}</span>`
-    +`<span class="pm-forca-v">${veredito}</span>`
-    +`<span class="pm-forca-n">${efB}</span>`;
+     favorito — e no jogo 1 ponto não decide nada.
+     O ESTADO VIVE NUMA CLASSE, não numa cor escrita aqui: parelho e decidido são
+     dois estados do mesmo objeto, e quem sabe como cada um se apresenta é o CSS.
+     E o texto vai por `textContent`, não por `innerHTML` — sem marcação, o nome
+     do clube (que o jogador digita) não precisa de escape nenhum para ser
+     seguro. Era a única razão de `esc` estar nesta função. */
+  const parelho=dif<=3;
+  caixa.classList.toggle("pm-forca--parelho",parelho);
+  /* Quem está atrás recua na barra. A separação entre os dois segmentos não pode
+     depender da cor do clube: o time do jogador é preto e vira cinza claro, e um
+     adversário claro ao lado dele apaga a fronteira inteira. Aceso × apagado
+     funciona com qualquer par de cores do catálogo. */
+  caixa.classList.toggle("pm-forca--fav-a",!parelho&&efA>efB);
+  caixa.classList.toggle("pm-forca--fav-b",!parelho&&efB>efA);
+  /* OS DOIS NÚMEROS DAS PONTAS SAÍRAM — 08/08/2026. Eles repetiam, a 13px, os
+     mesmos valores que os cards mostram logo acima em corpo 3x maior: duas
+     leituras da mesma grandeza na mesma tela. O que sobra para o texto é a única
+     coisa que a barra não diz sozinha — de quanto é a vantagem, e de quem. */
+  $("pmForcaLeg").textContent=parelho
+    ? "Confronto equilibrado"
+    : `${(efA>efB?A:B).nome} favorito por ${dif}`;
 }
 function mostrarAntessala(){
   $("livemap").classList.add("is-hidden");mostrarTela("prematch");

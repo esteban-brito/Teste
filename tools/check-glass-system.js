@@ -37,12 +37,27 @@ for(const raio of ["lamina","peca","pilula"])
 /* 2 — A TELA DE REFERÊNCIA USA OS TOKENS.
    Cada superfície da antessala tem de consumir o sistema; se uma delas voltar a
    declarar `backdrop-filter` com número próprio, o padrão já divergiu. */
+/* O NÍVEL PASSOU A SIGNIFICAR PAPEL — 08/08/2026, e por isso esta lista mudou.
+   Antes os três níveis eram só três raios de desfoque, e `medio` pintava chip,
+   mapa e botão indistintamente: o material não dizia nada sobre a peça. Agora
+   `alto` é LÂMINA, `medio` é AÇÃO — o que se pressiona — e `raso` é APOIO, a
+   informação que não se toca. Chip e placa de mapa desceram para `raso`.
+
+   `.prematch-nota` saiu da lista porque o ELEMENTO saiu da tela: era uma pílula
+   de vidro de 8.127px² explicando o botão logo acima dela, e a explicação passou
+   a viver dentro do próprio botão. Sem ele, `--vidro-raso-*` ficaria sem nenhum
+   consumidor — era o único —, e token órfão é o que o `:root` desta folha proíbe
+   em texto. Descer chip e mapa para `raso` resolve as duas coisas de uma vez.
+
+   ISTO É UMA DECISÃO DE DESIGN, e a guarda tem de acompanhá-la explicitamente.
+   Ela existe para impedir DIVERGÊNCIA silenciosa — vidro declarado na mão —, não
+   para congelar quantas superfícies a tela tem. Mudar a lista sem mudar a folha,
+   ou o contrário, reprova. */
 const SUPERFICIES=[
   [".pm-palco","--vidro-alto-blur"],
-  [".pm-chip","--vidro-medio-blur"],
-  [".pm-mapa","--vidro-medio-blur"],
   [".prematch-modos .roll","--vidro-medio-blur"],
-  [".prematch-nota","--vidro-raso-blur"],
+  [".pm-chip","--vidro-raso-blur"],
+  [".pm-mapa","--vidro-raso-blur"],
 ];
 for(const [seletor,token] of SUPERFICIES){
   const escapado=seletor.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");

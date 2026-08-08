@@ -263,9 +263,17 @@ async function main(){
      linha só e passou a ter rótulo próprio mais número em corpo grande, tingido
      pela cor do clube. O que a guarda cobra continua sendo o mesmo: o VALOR
      chega à tela, e a geometria não voltou para o HTML. */
+  /* E EM 08/08/2026 O RÓTULO SAIU. Ele era emitido duas vezes, uma por lado, a
+     8,96px, para nomear o que o desenho já diz; o significado passou para o
+     VEREDITO na base da lâmina, que é uma frase só, no eixo central. A guarda
+     inverteu de sinal: antes exigia o rótulo, agora exige que ele NÃO volte —
+     senão a próxima sessão o reintroduz "para ficar claro" e a tela recupera
+     896px² de legenda redundante sem ninguém notar. O número continua sendo
+     cobrado, porque é ele que carrega o dado. */
   const antessala=teamView.prematchTeamHtml(alpha);
-  assert.ok(/<span class="pm-ef-rot">Força<\/span>/.test(antessala)&&/>19<\/b>/.test(antessala),
-    "card da antessala mudou");
+  assert.ok(/>19<\/b>/.test(antessala),"card da antessala perdeu o número da força");
+  assert.ok(!/pm-ef-rot|Força/.test(antessala),
+    "o rótulo 'Força' voltou ao card da antessala — quem diz isso é o veredito");
   /* Time SEM era não emite linha nenhuma — nem vazia. Reservar altura ali
      criava um buraco visível do lado do jogador, lido como assimetria mesmo com
      toda a geometria medindo zero. As metades já têm a mesma altura, e cada
