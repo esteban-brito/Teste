@@ -375,7 +375,10 @@ rodar**. Evidência, comparação pareada e as três hipóteses que a medição 
 estão em `docs/ciclos/tatica-tipo-de-jogada-2026-08-05.md`. **Leia antes de mexer
 em qualquer constante da camada.**
 
-`npm run validate` fecha 26/26 e 20/20; `dificuldade.js` fecha 4/4 em STRICT.
+`npm run validate` fechava 26/26 e 20/20 naquele dia; a contagem VIGENTE está na
+tabela travada de `docs/retomada-2026-08-05.md`, porque este parágrafo já disse
+"hoje são 21 checadores" depois de eles virarem 24 — número solto em prosa não
+tem dono (regra 43). `dificuldade.js` fecha 4/4 em STRICT.
 `Favorito gap 16+` 85,1 → 85,7 e `invicto` 4,2 → 4,5, os dois na direção
 pré-declarada. `CT-round win%` não se moveu um décimo.
 
@@ -467,6 +470,229 @@ tempo porque **não tinha uma única prova**. Componente sem guarda não fica
 parado; ele apodrece em silêncio, e captura bonita não denuncia desvio de 1 px,
 margem assimétrica nem rolagem horizontal.
 
+## Sessão de 06/08/2026 — bracket, comparador visual e o resíduo do gesto
+
+Ciclo sem tocar em dado, OVR, RNG ou balanceamento. Relato em
+`docs/ciclos/bracket-e-comparador-2026-08-06.md`.
+
+### Três regras novas, não negociáveis
+
+38. **Ferramenta que trava sem erro parece ferramenta lenta.**
+    `tools/visual-regression.js` não completava o percurso desde `fccd2e1`:
+    `capturar()` injetava `animation-play-state:paused` e **deixava o `<style>` na
+    página**, e o `arrastarCarta()` seguinte esperava `getAnimations().finished`
+    — que numa animação pausada **não resolve nunca**, sem teto de tempo. O
+    ritual visual obrigatório deste arquivo estava inoperante e nada acusava,
+    porque o commit que mexeu nele descrevia a mudança certa sem nunca ter rodado
+    o comando de ponta a ponta. Estado global injetado numa página é do PERCURSO
+    inteiro, não do passo que o injetou: se ele existe para a foto, some com ela.
+    E toda espera que depende do relógio ou do compositor precisa poder desistir.
+39. **Numa guarda responsiva, o meio é que reprova.** A correção do bracket
+    passava nos dois extremos e falhava só no tablet: a 1440 px sobrava espaço,
+    a 390 px a linha já tinha quebrado, e era a 760 px que a coluna do CAMPEÃO
+    saía da janela. Guarda de duas larguras teria dado verde no defeito. Some-se
+    isso à regra 20 — a guarda também precisa rodar em toda CATEGORIA, e
+    `auditarSuica` só via a Suíça enquanto o quadro irmão apodrecia ao lado.
+    E meça o que sai da JANELA, não o que sai da caixa: com `overflow:auto` o
+    excedente continua no `scrollWidth`, então a caixa nunca denuncia o que o
+    usuário só alcança arrastando a tela de lado.
+40. **Um `MUDOU` na comparação visual não é prova de que VOCÊ mudou.** Quatro
+    estados do tablet acusaram 4,4% a 22,5% de pixels alterados em telas que a
+    fatia não tocava. Duas capturas do MESMO código deram 17/17 idênticas, e duas
+    capturas do código ORIGINAL reproduziram **os mesmos quatro números exatos**:
+    o ruído estava na primeira execução, não no trabalho. **Meça o piso de ruído
+    antes de explicar um diff** — capturar duas vezes custa minutos, e sem isso o
+    critério "estados fora do escopo devem permanecer pixel a pixel idênticos"
+    faz você reescrever trabalho correto para perseguir variação da bancada.
+    Cuidado também com o custo do TAMANHO do texto: a primeira redação do `#hint`
+    era duas palavras mais longa, quebrou linha no tablet e, com captura
+    `fullPage`, empurrou a página inteira.
+41. **Laço de teste que conta QUADRO mede o relógio do teste, não a página.**
+    `e2e-acessibilidade` falhava ~13% dos arrastos no celular, e a causa era uma
+    corrida entre dois `requestAnimationFrame`: o do teste e o
+    `pulsoAutoRolagem` do produto. Em fase, um quadro rende uma rolagem; fora de
+    fase o avanço alterna `0, 7, 0, 7…` e o custo dobra — e a fase inicial muda a
+    cada execução, o que faz o sintoma parecer aleatório. O teto de 240 iterações
+    era insuficiente para o vão real: medido depois, o pico é **299**. Não suba o
+    teto até passar; **troque a régua por PROGRESSO** — desista por N quadros
+    consecutivos sem rolagem, que só ocorre se a página acabou ou o gesto morreu.
+    E faça o laço **falhar alto**: o antigo saía em silêncio e soltava o ponteiro
+    fora do alvo, o que virava um `waitForFunction` cego 30 s depois, longe da
+    causa. Antes de suspeitar do gesto, meça a MARGEM de cada viewport — desktop
+    e tablet usavam 2 e 9 dos 240, e só o celular vivia na borda.
+42. **Vazio grande na tela costuma ser estrutura, não espaçamento.** A roleta
+    ociosa mostrava 475 px de nada à esquerda — 40% da largura —, e a causa não
+    era margem: `.track` tem `padding:0 calc(50% − var(--tw)/2)` porque o GIRO
+    precisa dele para levar qualquer fita ao marcador, e em repouso, com
+    transform zero, a fita 0 nasce no centro. Um estado que não usa a mecânica
+    pode desligá-la — `.track.ocioso{padding:0}` — em vez de compensar com
+    número. Vale também para a hierarquia: **área é o que o olho usa para ordenar
+    importância**, e dois links de consulta com 74.340 px² contra 9.678 px² da
+    ação central invertem a leitura por mais bonita que a página esteja. Meça
+    área antes de discutir estilo.
+    **E rótulo que repete o conteúdo do próprio bloco é altura desperdiçada**:
+    "Hall da Fama" e "Base de elencos" diziam o que o link já dizia, e custavam
+    44 px cada numa página que rolava vazia.
+
+**Nota sobre o ritual visual nessas mudanças:** quando a fatia altera a ALTURA da
+página, a comparação acusa 21 de 21 por **TAMANHO** e não diffa pixel nenhum —
+`fullPage` desloca tudo, inclusive as capturas de overlay. Ali o ritual só fecha
+por inspeção imagem a imagem; não confunda esse "21 de 21" com regressão.
+
+## Sessão de 07/08/2026 — o número que a documentação declara sobre SI MESMA
+
+43. **Todo número vigente precisa de dono, e o dono é a FONTE que o produz.**
+    `check-doc-measurements.js` existia desde 31/07 justamente porque afirmação
+    sobre o repositório envelhece sem ninguém reclamar — mas ele só media LINHA
+    DE ARQUIVO. A outra classe de número, a contagem do próprio aparato de
+    validação, seguia sem guarda: quando o `check-live-commentary` entrou no
+    `npm run check`, "20/20 checadores" sobreviveu em **cinco lugares**
+    (`CLAUDE.md`, o handoff, o relato do ciclo e duas vezes no
+    `project-context.md`), junto com "25/25 suítes" quando já eram 26 e um
+    `game.js` de 882 linhas que hoje tem 1.307. Hoje a marca
+    `<!-- contagem-verificada -->` conta na fonte — `CHECADORES` de
+    `tools/run-checks.js` e `SUITE_GROUPS` de `bancada/run.js` —, nunca num
+    número guardado à parte, que envelheceria junto com a prosa. Grandeza
+    desconhecida é ERRO e não linha ignorada, pela mesma razão que
+    `run-checks.js` recusa descobrir checador por glob: nome digitado errado
+    viraria cobertura ausente em silêncio.
+    **Corolário sobre número histórico:** `game.js` caiu para 882 no piso do P5 e
+    hoje tem 1.307 porque VOLTOU a crescer com funcionalidade — arrasto, elenco
+    aleatório, narração. Um número que descreve um marco passado fica na prosa
+    com a data; o que descreve hoje vai para a tabela. Não trave história e não
+    deixe o presente sem prova.
+44. **Casador escrito antes de olhar o literal erra na abertura, não na lógica.**
+    A primeira versão de `blocoBalanceado` contava só `[` e `]` — e `SUITE_GROUPS`
+    é um objeto, que abre com `{`. Ela nunca fechava a âncora e teria estourado no
+    primeiro uso. É a regra 23 num eixo novo: antes de escrever o que LÊ outro
+    artefato, abra o artefato e veja a forma **real** dos dois casos, não a do
+    caso que você tinha na cabeça.
+
+## Sessão de 07/08/2026 — clareza da tela do mapa
+
+Relato em `docs/ciclos/clareza-da-tela-do-mapa-2026-08-07.md`.
+
+45. **Quem MONTA a peça tem de ser quem a ATUALIZA.** O chip de lado nascia em
+    `match-view`/`team-view` e era virado no round 13 por um
+    `el.textContent="TR"` dentro do `game.js` — duas verdades sobre a mesma peça.
+    Resultado: a estrutura interna do chip era apagada na virada, e o chip da
+    TABELA, que só o módulo montava, **nunca virava**. A partir do round 13 a tela
+    dava duas respostas para "que lado eu sou": topo `TR`, tabela `CT`. Hoje
+    `aplicarLado` mora ao lado de `ladoChipHtml` e `definirLados` toca os quatro
+    chips de uma vez. Corolário: **todo caminho alternativo precisa passar pela
+    mesma função** — `pularMapa` reconstruía placar e strip e deixava os lados na
+    primeira metade, e ninguém via porque o erro só aparece depois do round 13.
+46. **Defeito que depende de dado SORTEADO não aparece numa amostra — varra o
+    DOMÍNIO.** O monograma pinta a sigla sobre a cor do clube, e com tinta fixa
+    dois dos 17 times ficavam abaixo de 4,5:1 (G2 4,01 e Astralis 4,16). A
+    varredura de uma partida acusou no desktop e não acusou no tablet nem no
+    celular — não porque o viewport mudasse nada, mas porque **o adversário era
+    outro**. Ao medir qualquer coisa que dependa de dado sorteado, itere o
+    catálogo inteiro em vez de confiar na tela que apareceu. E quando a correção
+    for escolher entre opções, **prove que a escolha resolve TODOS os casos**:
+    aqui, alternar entre as duas cores da paleta ainda deixava Astralis em 4,35:1,
+    e só as pontas puras fecharam o piso.
+47. **`waitForSelector` dá "visível" com `opacity:0`.** Ele olha caixa e
+    `visibility`, não opacidade — e a antessala entra com transição de 300 ms.
+    Medir ali devolve a tela inteira como invisível e parece defeito grave. É a
+    régua errada outra vez, agora no eixo do TEMPO: espere o estado que você vai
+    medir, não o estado que o framework chama de pronto.
+48. **`min-width:0` num item de flex troca TRUNCAR por SUMIR.** Ao crescer o chip
+    de lado e somar o selo `VOCÊ`, a identidade do time passou a pedir ~217 px num
+    bloco de 154 px no celular; `.ls-team` tinha `min-width:0`, e o nome foi
+    espremido a largura **zero** — nem reticências apareceram. Nenhuma prova
+    funcional pegou, porque todas perguntavam *"o texto está lá?"* e a resposta é
+    SIM: o nó existe, tem conteúdo e é `visible`. **Só a captura denuncia** — foi
+    o ritual visual, imagem a imagem, que achou. Quando faltar largura e sobrar
+    altura, EMPILHE em vez de encolher: cortar informação para caber é a última
+    saída, não a primeira. E ao adicionar qualquer coisa a uma linha apertada,
+    meça a soma das peças contra a caixa antes de confiar no verde.
+49. **Texto livre do jogador que o motor compara vira risco de MOTOR, não de
+    layout.** O nome do clube deixou de ser a constante `"SEU TIME"` e passou a
+    ser digitado. Só que `game.js` conta a série com
+    `jogo.vencedorNome===A.nome`: dois times homônimos no mesmo Major mandam o
+    placar para o lado errado — e "NAVI" e "FURIA" são os primeiros nomes que
+    qualquer jogador tenta. **Antes de abrir um campo de texto, procure onde
+    aquele valor é COMPARADO**, não só onde é exibido. A correção coube no
+    orçamento existente (17 elencos para 15 vagas, então dá para excluir dois
+    homônimos) e não gastou uma chamada de RNG a mais, porque filtra a lista já
+    embaralhada em vez de sortear de novo. `check-team-identity.js` trava a
+    conta: hoje o máximo de repetições no catálogo é 2 e a folga é 2 — **está no
+    limite**, e a guarda avisa antes de estourar.
+    Corolário de persistência: **campo novo não entra no `valido()` do save.**
+    Exigi-lo recusaria todo progresso gravado antes dele e apagaria títulos e
+    recordes de quem já jogava.
+50. **Caixa que se dimensiona pelo conteúdo mente sobre simetria.** Os dois cards
+    da antessala mediam 196×189 e 219×213 — 23 px de diferença — e a causa não
+    era espaçamento: o adversário tem campeonato e o time do jogador não tem
+    nenhum, então o flex dava tamanhos diferentes a conteúdos naturalmente
+    desiguais. Num confronto, isso faz a partida parecer desequilibrada antes de
+    começar. `1fr auto 1fr` com `stretch` iguala os dois eixos sem reservar linha
+    falsa nem inventar texto de preenchimento.
+51. **Classe que sobra num contêiner vira moldura em volta dos filhos.**
+    `#pmMapa` nasceu como a própria placa do mapa, com `class="pm-mapa"`. Quando
+    virou LISTA de placas, a classe ficou onde estava e desenhou um retângulo em
+    volta dos retângulos — o defeito que o responsável recusou em palavras
+    (*"tem um bloco dentro do outro, tipo um retângulo dentro do outro"*). Eu
+    tinha acabado de escrever "sem caixa dentro de caixa" no comentário do CSS e
+    **recriei o defeito na mesma fatia**, porque reli a folha e não o HTML.
+    Ao promover um elemento de peça a CONTÊINER, tire dele a classe da peça — e
+    quando a tela mostrar uma moldura que o CSS não explica, meça o
+    `getComputedStyle` do nó, em vez de reler o seletor.
+52. **Elemento que perde o consumidor sai; não fica "por via das dúvidas".** A
+    sigla de duas letras dos mapas entrou e saiu no mesmo dia. Mantê-la sem uso
+    seria código morto com aparência de API — e este repositório já provou por
+    mutação, em 02/08, que valor morto atravessa meses sem ninguém notar.
+53. **Quando ÁREA pode carregar a informação, o rótulo é dívida.** A tela do mapa
+    dizia o lado três vezes: chip no topo, chip na tabela e nada mais. De manhã a
+    correção foi AUMENTAR os chips — de 8,32 px para 10,56 px —, e à tarde o
+    responsável mostrou o caminho melhor: *"e se eles ficassem inteiramente nas
+    cores de CT ou TR? […] quanto mais visual, design, e menos texto, melhor"*.
+    O bloco do scoreboard tem centenas de vezes a área do chip e não precisa de
+    palavra nenhuma; na virada, os dois trocam de cor ao mesmo tempo, no meio da
+    tela. **A primeira pergunta diante de um rótulo pequeno não é "como aumento",
+    é "que elemento já existe que poderia dizer isso por forma ou cor?"**
+    O limite: não deixe a informação existir SÓ em cor. O chip do topo continua
+    com nome por extenso e `aria-label`; o que saiu foi a repetição, não o canal
+    textual. E o dono do time migrou de matiz para RELEVO — o ciano teria apagado
+    justamente o lado que o bloco passou a mostrar.
+
+## A ANTESSALA É O PADRÃO DE DESIGN — decisão de 07/08/2026
+
+O responsável elegeu a antessala da partida como referência de estilo para o jogo
+inteiro: *"vou usar ela como um padrão de estilo, css, design e tudo mais pra todo
+o jogo"*. As próximas telas herdam dela, uma por vez. Detalhe na §1-quinquies de
+`docs/retomada-2026-08-05.md` e na §10 do relato do ciclo.
+
+54. **Padrão que vive como número repetido não é padrão.** O vidro da antessala
+    virou token em três níveis — `--vidro-alto/medio/raso-*` —, e a diferença
+    entre eles é DISTÂNCIA DO OLHO: lâmina principal, peça sobre ela, apoio.
+    `tools/check-glass-system.js` cobra que as **cinco** superfícies de
+    referência consumam os tokens; se uma voltar a declarar vidro na mão, o
+    padrão já divergiu. É a lição da tokenização de cor de 02–03/08 aplicada a
+    superfície. **Eram "seis" nesta linha até 08/08/2026, e a guarda media
+    cinco** — documentação que promete cobertura que não existe é pior que
+    nenhuma, porque a próxima sessão confia nela. A sexta superfície de vidro do
+    jogo é `.np-card`, o palco da narração, e ela declara `blur(16px)
+    saturate(1.3)` na mão. A guarda hoje trava esse número em 1: vidro novo na
+    mão reprova, e migrar `.np-card` também reprova — porque baixar a dívida é
+    mudança de PIXEL e tem de vir no commit que a explica, com fps medido.
+55. **`backdrop-filter` custa, e o custo é por TELA, não por efeito.** Em 29/07
+    ele derrubou a partida ao vivo para 31 fps e foi removido dos overlays; a
+    antessala com vidro em tudo mede **61,2 fps contra 60,6 do controle**. A
+    diferença não é o filtro — é a condição: superfície PEQUENA sobre fundo
+    ESTÁTICO. Antes de levar o vidro a uma tela nova, meça o fps dela com um
+    braço de controle sem filtro; sem o par, 60 fps não diz se está bom ou se a
+    máquina não passa de 60.
+    E **todo `backdrop-filter` precisa do par `-webkit-`**: sem ele o efeito
+    simplesmente não existe no Safari, o aparelho cujo visual foi pedido como
+    referência.
+56. **Forma diferente para conteúdo do mesmo nível é o que faz uma faixa parecer
+    bagunçada** — mesmo alinhada. O contexto da antessala tinha uma pílula com
+    título, selo e subtítulo dentro, ao lado de outra com rótulo e número: dois
+    objetos distintos para informações equivalentes. Padronizar não é igualar
+    tudo; é usar o MESMO objeto e deixar a diferença ser só ênfase.
+
 ## Decisão de produto fechada em 04/08/2026 — raso na mão, profundo por baixo
 
 **Veto de mapa não existe e não vai existir**, nem como tela jogável nem como
@@ -488,8 +714,24 @@ que fique só dentro da IA do jogo mesmo"*. Foi desfeita sem publicar.
 O critério, então, **não é o custo de clique**. Uma tela que não cobra nada
 continua fora se o que ela faz é explicar o motor. Estão proibidos dossiê de
 adversário, placar ao vivo narrando a decisão do round, manchete falando de
-tática e fechamento de mapa explicando o mapa — `registro.tatica` segue sem
-consumidor na UI de propósito. Continuam valendo placar, rating, stats e a
-manchete atual: a fronteira é entre **resultado** e **mecanismo**. Antes de
-propor qualquer mecânica, pergunte também se ela explica o motor. Detalhe na
-§11-bis de `docs/project-context.md`.
+tática e fechamento de mapa explicando o mapa. Continuam valendo placar, rating,
+stats e a manchete atual: a fronteira é entre **resultado** e **mecanismo**.
+Detalhe na §11-bis de `docs/project-context.md`.
+
+**Emenda de 06/08/2026 — a narração OPCIONAL entra.** O responsável pediu uma
+antessala para escolher com ou sem narração, com dupla de narradores comentando
+3 a 5 rounds sorteados por mapa, ligada a jogadores, táticas e clutchs. Isso
+revoga em parte o parágrafo acima, que proibia nominalmente "placar ao vivo
+narrando a decisão do round". A revogação tem **três condições cumulativas**, e
+fora delas o veto continua de pé:
+
+1. **opt-in explícito** do jogador naquela partida;
+2. **modo limpo equivalente**, sem perda de jogo — e ele é o padrão de
+   referência, não o degradado. No modo limpo até a manchete pós-mapa sai;
+3. **motor intocado**: nem uma chamada de RNG a mais, nem um resultado
+   diferente. A narração LÊ `registro`; nunca escreve nele.
+
+O que foi recusado em 05/08 era um briefing obrigatório ANTES da partida, para
+todo mundo. Isto é entretenimento que o jogador pede, durante o jogo, sobre o que
+já aconteceu. `registro.tatica` deixa de ser "sem consumidor de propósito", mas o
+consumidor é opcional por contrato — e a guarda cobra isso.

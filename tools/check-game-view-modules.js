@@ -215,28 +215,97 @@ async function main(){
     teamView.teamChipHtml(alpha,true).includes("A&amp;B"),"chip do time mudou ou perdeu escaping");
   assert.ok(teamView.teamChipHtml(null).includes("background:#2a3346")&&teamView.teamChipHtml(null).includes("?"),
     "placeholder de time pendente mudou");
+  /* O CHIP DE LADO CARREGA TRÊS COISAS desde 07/08/2026, e as três são cobradas
+     aqui porque cada uma cobre um leitor diferente:
+       · a SIGLA, para quem já joga CS e lê "CT" de relance;
+       · o NOME POR EXTENSO, para quem não joga — medido, "CT" e "TR" eram os dois
+         menores textos da tela (8,32px) e não significam nada fora do jogo;
+       · o `aria-label` com a frase inteira, porque leitor de tela não deve
+         anunciar "CT" e o texto visível sozinho não diz o que ele é.
+     O `data-lado` é o estado que a virada inverte — sem ele `virarLados` teria de
+     adivinhar o lado atual contando rounds. */
   const liveHeader=teamView.liveTeamHeaderHtml(alpha,"ct","sideA");
-  assert.ok(liveHeader.includes('id="sideA">CT')&&liveHeader.includes("&lt;Major&gt;"),
+  assert.ok(liveHeader.includes('id="sideA"')&&liveHeader.includes("&lt;Major&gt;"),
     "cabeçalho ao vivo do time mudou");
+  assert.ok(liveHeader.includes('data-lado="ct"')&&liveHeader.includes(">CT<")&&
+    liveHeader.includes("Defesa")&&liveHeader.includes('aria-label="Defesa (CT)"'),
+  "chip de lado perdeu sigla, nome por extenso ou rótulo acessível");
+  assert.ok(teamView.liveTeamHeaderHtml(alpha,"tr","sideB").includes("Ataque"),
+    "o lado TR perdeu o nome por extenso");
+  /* O SELO `VOCÊ` FOI REMOVIDO em 07/08/2026, a pedido do responsável: *"não
+     precisa disso, eu sei qual time eu sou"*. Ele existia porque o dono do time
+     era marcado só pela cor ciano, e a guarda cobrava o canal textual.
+     A decisão é do dono do produto e está registrada aqui para que uma sessão
+     futura não o "restaure" achando que foi perdido. A cor do clube, a moldura e
+     o realce de `.mine` continuam identificando o lado do jogador. */
+  assert.ok(!liveHeader.includes("VOCÊ"),
+    "o selo de dono voltou ao cabeçalho ao vivo — ele foi removido a pedido em 07/08/2026");
+
+  /* A TINTA DO MONOGRAMA é função da cor do clube. Com tinta fixa, G2 (#e4002b) e
+     Astralis (#e2231a) ficavam em 4,01:1 e 4,16:1, abaixo do piso de 4,5:1 — e o
+     defeito era intermitente porque o adversário é sorteado. */
+  /* A SIGLA É SEMPRE BRANCA e quem cede é o FUNDO. Em cor clara — NAVI #ffd400
+     dá 1,43:1 com branco — o fundo tem de escurecer, e a prova é que ele NÃO
+     sai igual ao dado. Em cor já escura ele passa intacto. */
+  assert.ok(teamView.teamChipHtml({...alpha,cor:"#ffd400"}).includes("color:#ffffff"),
+    "sigla sobre cor clara deixou de ser branca");
+  assert.ok(!teamView.teamChipHtml({...alpha,cor:"#ffd400"}).includes("background:#ffd400"),
+    "cor clara não foi escurecida — a sigla branca ficaria ilegível sobre ela");
+  assert.ok(teamView.teamChipHtml({...alpha,cor:"#e4002b"}).includes("background:#e4002b"),
+    "cor que já passa com branco foi escurecida à toa — o clube perde luz sem motivo");
   /* A antessala carrega DADO inline (a cor do time) e nunca GEOMETRIA.
      Até 02/08/2026 esta linha exigia `border-radius:18px` no HTML — ela congelava
      uma duplicação: os mesmos quatro valores (74px, 74px, 1.5rem, 18px) viviam no
      template E em `.pm-team .team-mono`, e quem mexesse no CSS perdia em silêncio
      para o inline, que vence por especificidade. A guarda passou a cobrar o
      contrário: o tamanho mora no CSS, e o HTML não pode retomá-lo. */
+  /* O card foi reformulado em 07/08/2026: a força saiu de "força <b>19</b>" numa
+     linha só e passou a ter rótulo próprio mais número em corpo grande, tingido
+     pela cor do clube. O que a guarda cobra continua sendo o mesmo: o VALOR
+     chega à tela, e a geometria não voltou para o HTML. */
   const antessala=teamView.prematchTeamHtml(alpha);
-  assert.ok(antessala.includes("força <b>19</b>"),"card da antessala mudou");
+  assert.ok(/<span class="pm-ef-rot">Força<\/span>/.test(antessala)&&/>19<\/b>/.test(antessala),
+    "card da antessala mudou");
+  /* Time SEM era não emite linha nenhuma — nem vazia. Reservar altura ali
+     criava um buraco visível do lado do jogador, lido como assimetria mesmo com
+     toda a geometria medindo zero. As metades já têm a mesma altura, e cada
+     coluna se centra sozinha. */
+  assert.ok(!teamView.prematchTeamHtml({...alpha,camp:""}).includes("pm-camp"),
+    "time sem era voltou a emitir a linha do campeonato");
+  /* A COR DO CLUBE vira variável de estilo do card: é ela que pinta véu, moldura
+     e brasão. Sem isso o confronto volta a ser duas caixas iguais. */
+  assert.ok(teamView.estiloDoTime(alpha).includes("--time-cor:#123")
+    &&/--time-rgb:\d+,\d+,\d+/.test(teamView.estiloDoTime(alpha)),
+  "estilo do time perdeu a cor ou os canais dela");
   assert.ok(!/width:|height:|font-size:|border-radius:/.test(antessala),
     "geometria voltou a ser inline na antessala; ela pertence a `.pm-team .team-mono`");
-  assert.ok(antessala.includes('style="background:#123"'),
+  /* A TINTA viaja junto com a cor, e pelo mesmo motivo: ela é FUNÇÃO do dado.
+     O CSS não sabe qual time vai aparecer, então não tem como escolher uma tinta
+     que sirva para os 17 — foi exatamente essa impossibilidade que deixou G2 e
+     Astralis abaixo do piso de contraste. Geometria continua proibida aqui. */
+  assert.ok(antessala.includes('style="background:#123;color:'),
     "a cor do time deixou de viajar inline — ela é dado, não estilo");
+  assert.ok(/color:#(?:000000|ffffff)\b/.test(antessala),
+    "a tinta do monograma deixou de acompanhar a cor do time");
+  /* A guarda cobra que a GEOMETRIA more no CSS, não um valor específico. Até
+     07/08/2026 ela exigia `border-radius:18px` literal, e a reformulação da
+     antessala — que aumentou o brasão para 86 px — a fez reprovar sem defeito
+     nenhum: o contrato é "o tamanho não volta para o HTML", e ele seguia
+     intacto. Guarda que congela um número de design vira atrito a cada ajuste
+     visual, e atrito é o que faz alguém relaxá-la. */
+  /* `.pm-team` virou `.pm-lado` na reformulação de 07/08/2026, quando os cards
+     lado a lado deram lugar às duas metades em diagonal. O contrato não mudou —
+     a geometria do brasão continua no CSS —, só o nome da peça. */
   const folha=fs.readFileSync(path.join(__dirname,"..","style.css"),"utf8");
-  assert.ok(/\.pm-team \.team-mono\{[^}]*border-radius:18px/.test(folha),
-    "`.pm-team .team-mono` não declara mais o tamanho da antessala");
+  const regraMono=folha.match(/\.pm-lado \.team-mono\{([^}]*)\}/);
+  assert.ok(regraMono,"`.pm-lado .team-mono` sumiu da folha");
+  for(const prop of ["width","height","font-size","border-radius"])
+    assert.ok(new RegExp(`${prop}:`).test(regraMono[1]),
+      `\`.pm-team .team-mono\` não declara mais ${prop} — a geometria da antessala saiu do CSS`);
 
-  /* QUEM SAI PINTA POR BAIXO DE QUEM ENTRA. Os cinco overlays compartilham o
-     mesmo `z-index`, então sem este degrau a ordem de pintura cai na ordem do
-     DOM — e `matchOverlay` vem depois de `suicaOverlay` e `playoffOverlay`.
+  /* QUEM SAI PINTA POR BAIXO DE QUEM ENTRA. Cinco dos seis overlays dividem o
+     mesmo `z-index` base, então sem este degrau a ordem de pintura cai na ordem
+     do DOM — e `matchOverlay` vem depois de `suicaOverlay` e `playoffOverlay`.
      Medido numa campanha completa: 23 frames com a tela da partida sumindo POR
      CIMA da tela que entrava, só no caminho de VOLTA. Ir para a partida parecia
      certo, porque a ordem do DOM favorece um sentido só. */

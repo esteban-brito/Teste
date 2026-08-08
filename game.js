@@ -6,18 +6,22 @@ import {setCardFlipped} from "./src/application/card-face.mjs";
 import {createDraftState,resetDraftState} from "./src/application/draft/draft-state.mjs";
 import {createMajorState,resetMajorState} from "./src/application/major/major-state.mjs";
 import {createMapPlaybackState,createMatchState,resetMatchState} from "./src/application/match/match-state.mjs";
+import {normalizarNomeDoTime,colideComCatalogo} from "./src/application/team-identity.mjs";
+import {estiloDoMapa} from "./src/ui/shared/map-identity.mjs";
 import {PROGRESSO} from "./src/infrastructure/persistence/progress-store.mjs";
 import {escapeHtml as esc} from "./src/ui/shared/html.mjs";
 import {createCardView} from "./src/ui/game/card-view.mjs";
 import {construirCartao} from "./src/ui/game/build-summary-view.mjs";
-import {liveTeamHeaderHtml,prematchTeamHtml} from "./src/ui/game/team-view.mjs";
+import {liveTeamHeaderHtml,prematchTeamHtml,aplicarLado,estiloDoTime} from "./src/ui/game/team-view.mjs";
 import {swissBoardHtml,bracketSubtitle,bracketBoardHtml} from "./src/ui/game/tournament-view.mjs";
+import {escolherMomentos,falasDoRound,falaFechamento}
+  from "./src/domain/narrative/live-commentary.mjs";
 import {scoreboardSideHtml} from "./src/ui/game/match-view.mjs";
 import {headlineHtml,campaignFinalView,campaignScoreHtml,hallView} from "./src/ui/game/history-view.mjs";
 const {TEAMS,POOL,forcaTime,simularMapa,simularSerie,forcaDoDia,
   sortearFormaCampanha,distribuirRoles,STYLE_LABEL,STYLE_ID,STYLE_RECIPE,COACH_RECIPE,CFG_SIM,
   logistica,srand,rndF,coletarMarcos,atualizarRecordes,manchete,narrativaMVP,
-  RECORDE_LABELS}=PublicEngine;
+  RECORDE_LABELS,MAPAS_POOL}=PublicEngine;
 const arred=value=>Math.floor(value+0.4);
 const SPIN_MS=2700; // giro mais rápido (era 4000)
 const WIN_INDEX=44;
@@ -121,9 +125,13 @@ function pararAnimacao(){
   S.spinning=false;
 }
 
+/* `ocioso` zera o padding lateral do trilho para que as fitas encham a roleta em
+   repouso; sem ela a fita 0 nasce no centro e sobra meia caixa vazia. O padding
+   volta em `sortear()`, que é quem precisa dele para centralizar o vencedor. */
 function idleTrack(){
   pararAnimacao();
   track.style.transform="translate3d(0,0,0)";
+  track.classList.add("ocioso");
   track.innerHTML=Array.from({length:7},()=>teamCardHTML(pick(TEAMS),"dim")).join("");
 }
 
@@ -146,7 +154,7 @@ function revelarTime(time,winIndex){
   });
   renderPicks();
   updateSpinUI();
-  hint(`Time sorteado: ${time.nome}${time.camp?" · "+time.camp:""}. Escolha 1 carta.`);
+  hint(`Time sorteado: ${time.nome}${time.camp?" · "+time.camp:""}. Arraste 1 carta.`);
   picksTag.scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 
@@ -172,6 +180,7 @@ function sortear(){
   track.style.willChange="transform";
   track.style.transition="none";
   track.style.transform="translate3d(0,0,0)";
+  track.classList.remove("ocioso");   // o giro precisa do padding de volta
   track.innerHTML=fita.map(t=>teamCardHTML(t,"dim")).join("");
   void track.offsetWidth;
 
@@ -274,7 +283,7 @@ function renderPicks(){
     const dup=!preso&&p.tipo!=="coach"&&nicksNaLine.has(p.nick);
     const trava=preso?" taken":dup?" dup":"";
     return`<div class="${cardClass(p)} deal${trava}" data-pick="${esc(p.id)}" data-face="front" role="button" ${preso||dup?'aria-disabled="true"':'tabindex="0"'}
-      style="--sel:${esc(S.drawn.cor)};animation-delay:${i*55}ms">${cardHTML(p)}</div>`;
+      style="animation-delay:${i*55}ms">${cardHTML(p)}</div>`;
   }).join("");
 
 }
@@ -357,6 +366,43 @@ function trocarCom(el){
   hint("");
 }
 
+/* ELENCO ALEATÓRIO — 5 + 1 de uma vez, sem passar pela roleta.
+   POR QUE POOL EMBARALHADO E NÃO TENTATIVA-E-ERRO: são 85 jogadores para 77
+   nicks, ou seja, o mesmo jogador aparece em eras diferentes. Sortear ao acaso e
+   repetir enquanto o nick colidir termina quase sempre — mas "quase sempre" num
+   laço sem teto é como o produto trava. Embaralhar uma vez e varrer garante
+   término em uma passada, e mantém a regra de nick único que o draft manual já
+   cobra em `colocarEm`. */
+function sortearElencoCompleto(){
+  if(S.spinning)return;
+  pararAnimacao();
+  resetDraftState(S);
+  limparFlips();
+  limparHighlights();
+
+  const pool=TEAMS.flatMap(t=>t.jogadores||[]);
+  for(let i=pool.length-1;i>0;i--){const j=rnd(i+1);[pool[i],pool[j]]=[pool[j],pool[i]];}
+  const nicks=new Set();
+  let n=0;
+  for(const j of pool){
+    if(n>=5)break;
+    if(!j||nicks.has(j.nick))continue;
+    nicks.add(j.nick);
+    S.jogadores[n++]=j;
+    S.taken.add(j.id);
+  }
+  const tr=pick(TEAMS.map(t=>t.treinador).filter(Boolean));
+  if(tr){S.treinador=tr;S.taken.add(tr.id);}
+
+  renderLineup();
+  renderPicks();
+  idleTrack();
+  updateSpinUI();
+  hint(elencoCheio()
+    ?"Elenco aleatório montado. Boa sorte no campeonato invicto."
+    :"Elenco aleatório montado.");
+}
+
 function resetar(){
   if((S.jogadores.some(Boolean)||S.treinador||S.drawn)&&!confirm("Resetar o elenco e perder o progresso?"))return;
   pararAnimacao();
@@ -366,7 +412,7 @@ function resetar(){
   renderPicks();
   idleTrack();
   updateSpinUI();
-  hint("Sorteie um time e escolha 1 jogador por rodada.");
+  hint("Sorteie um time e arraste 1 jogador por rodada.");
 }
 
 $("rollbtn").onclick=sortear;
@@ -376,6 +422,7 @@ $("mutebtn").onclick=e=>{Audio.init();Audio.mudo=!Audio.mudo;
   if(!Audio.mudo)Audio.tick();};
 $("respinbtn").onclick=abortarSpin;
 $("resetbtn").onclick=resetar;
+$("randombtn").onclick=sortearElencoCompleto;
 
 /* ═══ CARTA: clicar VIRA, arrastar ESCALA ═══════════════════════════════════
    UMA VIA SÓ DE PONTEIRO. Mouse, caneta e toque entram pelo mesmo caminho, e o
@@ -419,6 +466,12 @@ const limparSobre=alvo=>document.querySelectorAll(".sobre")
 
 function iniciarArrasto(){
   arrasto.ativo=true;
+  /* A seleção nativa começa no `pointerdown`, ANTES de sabermos que o gesto é um
+     arrasto — só o limiar de 8 px decide isso. Então além de travar a seleção
+     daqui em diante, é preciso desfazer a que o navegador já iniciou. */
+  document.body.classList.add("arrastando-carta");
+  const sel=window.getSelection&&window.getSelection();
+  if(sel&&!sel.isCollapsed)sel.removeAllRanges();
   S.sel={origem:arrasto.origem,kind:arrasto.kind,card:arrasto.card};
   limparHighlights();iluminarSlots();
   arrasto.el.classList.add("arrastando");
@@ -469,6 +522,7 @@ function pararAutoRolagem(){
 function encerrarArrasto(x,y){
   const {el,ativo,ghost}=arrasto;
   pararAutoRolagem();
+  document.body.classList.remove("arrastando-carta");
   el.classList.remove("arrastando");
   if(ghost)ghost.remove();
   arrasto=null;
@@ -481,9 +535,17 @@ function encerrarArrasto(x,y){
   return true;
 }
 
+/* O GIRO NÃO CONGELA O ELENCO — 06/08/2026, a pedido do responsável: "quero que
+   dê pra mexer nas coisas enquanto a roleta tá sorteando, mas não dá pra fazer
+   nada". A trava aqui era `if(S.spinning)return`, e valia para TODA carta —
+   inclusive as que já estão na sua line, que não têm relação nenhuma com o
+   sorteio em curso. Trocar posição ou virar uma carta escalada é seguro durante
+   o giro: `revelarTime` só mexe em `#picks`.
+   Para as cartas do sorteio a trava era redundante: `#picks` fica VAZIO enquanto
+   gira — `sortear()` limpa antes de começar — e o ramo `ehPick` logo abaixo já
+   exige `S.drawn`, que só existe depois que a fita para. */
 document.addEventListener("pointerdown",e=>{
   if(e.button)return;                       // só o botão principal arrasta
-  if(S.spinning)return;                     // trava interação durante o giro
   const el=e.target.closest(".card,.coachcard");
   if(!el)return;
   const ehPick=picksEl.contains(el)&&el.dataset.pick!==undefined;
@@ -535,7 +597,8 @@ document.addEventListener("pointercancel",()=>{if(arrasto)encerrarArrasto(-1,-1)
 
 document.addEventListener("keydown",e=>{
   if(e.key!=="Enter"&&e.key!==" ")return;
-  if(S.spinning)return;
+  /* Sem trava de giro pelo mesmo motivo do `pointerdown`: virar uma carta já
+     escalada não toca no sorteio, e no `#picks` não há carta para virar. */
   /* Enter e Espaço VIRAM a carta: é a ação de botão que o `role="button"`
      promete, e espelha o clique. Escalar é gesto de arrasto, por decisão de
      produto de 06/08/2026. */
@@ -550,6 +613,25 @@ document.addEventListener("keydown",e=>{
 /* ——— UI · telas de torneio (suíça + playoffs) —————— */
 const efT=t=>forcaTime(t.jogadores.map(j=>j._eng),t.treinador?.carac,t.treinador?.ovr);
 const TG=createMajorState();
+/* NOME DO CLUBE — vive no progresso e vale para a campanha inteira.
+   Lido uma vez por partida montada, nunca cacheado em variável de módulo: o
+   jogador pode renomear entre um Major e outro, e o Hall guarda títulos com o
+   nome que valia no dia. */
+const nomeDoMeuTime=()=>normalizarNomeDoTime(PROGRESSO.dados?.nomeDoTime);
+function definirNomeDoMeuTime(bruto){
+  const nome=normalizarNomeDoTime(bruto);
+  /* Guarda o CRU normalizado, não o padrão: se o jogador apagar tudo, o campo
+     volta a ficar vazio e o placeholder reaparece — gravar "SEU TIME" ali faria
+     o padrão parecer uma escolha dele.
+     O teste é só a entrada em branco: entrada em branco JÁ cai em `NOME_PADRAO`
+     dentro de `normalizarNomeDoTime`, então comparar o resultado com o padrão
+     era uma condição sempre verdadeira nesse ramo — e custava mais duas
+     normalizações por gravação. */
+  PROGRESSO.dados.nomeDoTime=String(bruto??"").trim()?nome:"";
+  PROGRESSO.salvar();
+  return nome;
+}
+
 // monta o objeto-time do jogador a partir do elenco montado
 function montarMeuTime(){
   const cartas=S.jogadores.filter(Boolean);
@@ -558,20 +640,44 @@ function montarMeuTime(){
   const js=distribuirRoles(cartas.map(p=>({...p._eng})));
   const cartasSim=cartas.map((c,i)=>({...c,_eng:js[i]}));
   const r=forcaTime(js,S.treinador?.carac||null,S.treinador?.ovr||null);
-  return {time:{nome:"SEU TIME",cor:"#39d3ff",jogadores:cartasSim},nome:"SEU TIME",cor:"#39d3ff",camp:"",
+  const nome=nomeDoMeuTime();
+  /* PRETO, a pedido do responsável em 07/08/2026. O ciano anterior era idêntico
+     ao do Outsiders e vizinho do Cloud9; preto não colide com nenhum dos 17 e
+     dá 21:1 com a sigla branca. O que precisa de luz — número da força, faixa,
+     barra — usa `--time-traco`, derivado em `estiloDoTime`. */
+  const COR_DO_JOGADOR="#000000";
+  return {time:{nome,cor:COR_DO_JOGADOR,jogadores:cartasSim},nome,cor:COR_DO_JOGADOR,camp:"",
     ef:r.efetiva,quim:r.quimica,v:0,d:0,vivo:true,hist:[],meu:true};
 }
 function iniciarTorneio(){
   // sorteia 15 dos times (Fisher-Yates) → Major de 16 com o seu time; campo varia a cada run
   const npc=TEAMS.slice();
   for(let i=npc.length-1;i>0;i--){const j=Math.floor(rndF()*(i+1));[npc[i],npc[j]]=[npc[j],npc[i]];}
-  // o time NPC que mais compartilha jogadores com o SEU elenco sai do Major (só dá pra excluir 1:
-  // melhor esforço contra "donk vs donk"; empate resolve pelo embaralhamento acima)
+  /* COLISÃO DE NOME SAI PRIMEIRO — 07/08/2026, com o nome de clube escolhível.
+     O quadro do Major mostra os dois times pelo NOME, e o jogador não teria como
+     distinguir o seu clube de um homônimo do catálogo na tabela da Suíça nem no
+     bracket. Enquanto o nome era fixo isso não podia acontecer; agora pode, e é
+     o jogador quem escolhe.
+     Cabe no orçamento que já existe: são 17 elencos para 15 vagas de NPC, então
+     dá para tirar DOIS sem faltar time. Nenhuma chamada de RNG é adicionada —
+     isto filtra a lista já embaralhada, não sorteia de novo. */
+  const meuNome=nomeDoMeuTime();
+  const homonimos=npc.filter(t=>colideComCatalogo(meuNome,[t]));
+  for(const t of homonimos)if(npc.length>15)npc.splice(npc.indexOf(t),1);
+
+  /* O time NPC que mais compartilha jogadores com o SEU elenco sai do Major —
+     melhor esforço contra "donk vs donk"; empate resolve pelo embaralhamento
+     acima. É a SEGUNDA exclusão, e ela só acontece se a folga sobrou: com o nome
+     do clube colidindo com dois elencos do catálogo, o orçamento de 17→15 já foi
+     todo gasto acima e o overlap fica para a próxima run. Nomear o clube tem
+     precedência porque o homônimo confunde a leitura de TODA a campanha. */
   const meusNicks=new Set(S.jogadores.filter(Boolean).map(p=>p.nick));
   const overlap=t=>t.jogadores.reduce((n,j)=>n+(meusNicks.has(j.nick)?1:0),0);
-  let fora=15,melhor=0;
-  npc.forEach((t,i)=>{const o=overlap(t);if(o>melhor){melhor=o;fora=i;}});
-  npc.splice(fora,1);
+  if(npc.length>15){
+    let fora=npc.length-1,melhor=0;
+    npc.forEach((t,i)=>{const o=overlap(t);if(o>melhor){melhor=o;fora=i;}});
+    npc.splice(fora,1);
+  }
   const base=npc.slice(0,15).map(t=>{const r=efT(t);         // teto de 15 NPC (independe de quantos times existam) → Major sempre 16
     return {time:t,nome:t.nome,cor:t.cor,camp:t.camp,ef:r.efetiva,quim:r.quimica,v:0,d:0,vivo:true,hist:[]};});
   base.push(montarMeuTime());
@@ -581,10 +687,58 @@ function iniciarTorneio(){
   sortearFormaCampanha(TG.times); // semeia o "humor" da run: cada Major joga diferente
 }
 PROGRESSO.carregar();
+
+/* PORTÃO DO NOME DO CLUBE — 07/08/2026.
+   Ele vive na entrada do Major, não na tela inicial: ali o campo passava
+   despercebido e as pessoas entravam no torneio sem nomear o time. Aqui é
+   obrigatório, e o botão só habilita com um nome válido.
+   O aviso é CONTÍNUO, não só na confirmação: quem digita "NAVI" descobre na
+   hora que existe um elenco com esse nome, em vez de depois de confirmar. */
+function abrirPortaoDoNome(){
+  const campo=$("teamName");
+  campo.value=PROGRESSO.dados?.nomeDoTime||"";
+  campo.dispatchEvent(new Event("input")); // reavalia botão e aviso pelo mesmo caminho
+  abrir("nomeOverlay");
+  /* Foca o CAMPO, e não o contêiner: aqui o primeiro controle é justamente o que
+     o jogador precisa usar, e não há ação destrutiva por perto — o caso que a
+     regra 25 protege é o `finalOverlay`, cujo primeiro botão reinicia a
+     campanha. O `setTimeout` espera o overlay sair de `hidden`. */
+  setTimeout(()=>campo.focus(),0);
+}
+{
+  const campo=$("teamName"),botao=$("nomeConfirmar"),aviso=$("nomeAviso");
+  const cru=()=>String(campo.value||"").trim();
+  const avaliar=()=>{
+    const vazio=!cru();
+    botao.disabled=vazio;
+    if(vazio){aviso.textContent="";aviso.className="gate-aviso";return;}
+    const nome=normalizarNomeDoTime(campo.value);
+    if(colideComCatalogo(nome,TEAMS)){
+      aviso.textContent=`"${nome}" também é um elenco do jogo — ele fica de fora do seu Major.`;
+      aviso.className="gate-aviso gate-aviso--alerta";
+    }else{aviso.textContent="";aviso.className="gate-aviso";}
+  };
+  campo.addEventListener("input",avaliar);
+  campo.addEventListener("keydown",e=>{
+    if(e.key==="Enter"&&!botao.disabled){e.preventDefault();botao.click();}
+  });
+  botao.onclick=()=>{
+    if(!cru())return; // trava dupla: o disabled já barra, mas Enter/AT podem chegar aqui
+    definirNomeDoMeuTime(campo.value);
+    fechar("nomeOverlay");
+    abrirSuica();
+  };
+}
 const dataHoje=()=>new Date().toISOString().slice(0,10);
 // banner de manchete + celebração de recordes no fim do mapa (some no início do próximo)
+/* NO MODO LIMPO A MANCHETE TAMBÉM SAI — 06/08/2026: "o modo normal não vai ter
+   narração nenhuma nem no início nem no fim, zerado, limpo". A manchete é a única
+   voz que o jogo tinha no fim do mapa, então mantê-la deixaria o modo limpo a
+   meio caminho. Os recordes continuam sendo REGISTRADOS nos dois modos — o que
+   muda é só a celebração na tela. */
 function mostrarManchete(jogo,novosRecordes){
   const el=$("manchetePosMapa");if(!el)return;
+  if(!MATCH.narrado){el.hidden=true;el.innerHTML="";return;}
   const h=manchete(jogo);
   el.innerHTML=headlineHtml(h,novosRecordes);
   el.hidden=false;
@@ -699,7 +853,9 @@ function avancarSuica(){
   if(parDoJogador){
     const [a,b]=parDoJogador;const meu=a.meu?a:b,adv=a.meu?b:a;
     const md=decisivo(meu,adv)?3:1; // real: jogos de classificação/eliminação são MD3
-    const ctx=`Rodada ${TG.rodada} · Fase Suíça · você está ${meu.v}-${meu.d}${md===3?" · DECISIVO (MD3)":""}`;
+    /* Contexto em PARTES, não em frase: a antessala dá pesos diferentes a cada
+       uma, e uma string única obrigava a ler tudo para achar o que importa. */
+    const ctx={fase:"Fase Suíça",rodada:String(TG.rodada),situacao:`${meu.v}-${meu.d}`,decisivo:md===3};
     fechar("suicaOverlay");
     abrirPartida(meu,adv,md,ctx,(venc)=>{
       // aplica o resultado da SUA partida
@@ -757,7 +913,7 @@ function avancarPlayoff(){
   if(meuPar){
     const [a,b]=meuPar.par;const meu=a.meu?a:b,adv=a.meu?b:a;
     fechar("playoffOverlay");
-    abrirPartida(meu,adv,3,`${faseNome} · Playoffs · melhor de 3`,(venc,placar)=>{
+    abrirPartida(meu,adv,3,{fase:faseNome,etapa:"Playoffs",decisivo:true},(venc,placar)=>{
       // placar vem como [vMeu, vAdv]; mapeia pra ordem [a,b] do par do bracket
       const [vMeu,vAdv]=placar;
       const pa=(a.meu?vMeu:vAdv),pb=(b.meu?vMeu:vAdv);
@@ -782,12 +938,12 @@ function renderBracket(){
 }
 
 /* ——— UI · diálogos modais —————————————————————————————
-   Os cinco overlays declaram `aria-modal="true"`, o que promete que o resto da
+   Os seis overlays declaram `aria-modal="true"`, o que promete que o resto da
    página está inerte. Até 04/08/2026 a promessa era vazia: o foco continuava no
    fundo ao abrir, sete botões do `.wrap` seguiam alcançáveis por Tab e Escape não
    fechava nada. `inert` no `.wrap` cumpre a promessa de verdade — é o navegador
    tirando o fundo da ordem de foco, não um laço de JS tentando prendê-lo. */
-const OVERLAYS=["suicaOverlay","playoffOverlay","matchOverlay","finalOverlay","hallOverlay"];
+const OVERLAYS=["nomeOverlay","suicaOverlay","playoffOverlay","matchOverlay","finalOverlay","hallOverlay"];
 const wrapEl=document.querySelector(".wrap");
 let focoAnterior=null;
 const overlayAberto=el=>el&&!el.hidden&&!el.classList.contains("fechando");
@@ -868,7 +1024,9 @@ function mostrarTela(id){
 function abrirSuica(){if(!TG.times)iniciarTorneio();renderSwiss();abrir("suicaOverlay");}
 function abrirPlayoffs(){garantirPlayoffs();renderBracket();fechar("suicaOverlay");abrir("playoffOverlay");}
 
-$("suicabtn").onclick=abrirSuica;
+/* O Major passa pelo PORTÃO DO NOME. Só depois de nomear o time é que a Suíça
+   abre — foi o pedido: "deixe impossível da pessoa passar sem escolher o nome". */
+$("suicabtn").onclick=abrirPortaoDoNome;
 $("suicaFechar").onclick=()=>fechar("suicaOverlay");
 $("suicaAvancar").onclick=avancarSuica;
 $("suicaPlayoffs").onclick=abrirPlayoffs;
@@ -877,8 +1035,166 @@ $("playoffAvancar").onclick=avancarPlayoff;
 // mostra a seção do Major só quando o elenco estiver completo
 /* ——— UI · reprodutor de partida (cinematográfico) ——— */
 // ritmo dos rounds: pulso legível e mais pausado (rounds correm devagar pra acompanhar)
-const RITMO={base:260,troca:1000,inicio:500};
+/* `base` é o ritmo do mapa correndo; os quatro de narração são o ritmo de quem
+   FALA, e são muito mais lentos de propósito. Um round narrado não é um round
+   com legenda: ele PARA, ganha destaque e é comentado — 260 ms não dão tempo de
+   ler nem meia frase. */
+/* CURVA DE RITMO — 07/08/2026: "o inicio de uma partida tem q passa um pouco
+   mais lento do que o meio, e o final mesma coisa […] pra ficar mais tranquilo,
+   fluido".
+   `base` é o miolo do mapa; `ponta` é o quanto se acrescenta nas bordas. A curva
+   é senoidal e não linear porque uma rampa reta se percebe como três velocidades
+   (lento, rápido, lento); o seno não tem quina, então a aceleração é contínua e
+   o olho lê como respiração, não como troca de marcha.
+   Custo por round: um `Math.sin`. Nada aqui toca layout ou pintura, então a
+   fluidez não sai do orçamento de quadro. */
+const RITMO={base:240,ponta:380,troca:1000,inicio:500,
+  narrPre:520,      // respiro entre o round acontecer e a primeira voz entrar
+  narrMin:1250,     // piso de leitura: abaixo disso a fala curta pisca
+  narrFala:2600,    // TETO por fala — o tempo real vem de `tempoDaFala()`
+  narrPos:1100,   // silêncio depois da última fala, antes de o mapa voltar a correr
+  narrFecho:4200};// o painel de fim de mapa fala e SAI, liberando o placar
 const MP=createMapPlaybackState();
+
+/* ——— UI · narração ao vivo (só no modo opt-in) ————————————————
+   `Math.random` aqui é DELIBERADO e é o mesmo canal que a roleta do draft já usa:
+   fora do Mulberry32 da simulação. Sortear os rounds narrados com o RNG do motor
+   deslocaria todas as chamadas seguintes e mudaria o resultado do mapa — o
+   sintoma apareceria em golden e snapshot, longe da causa. */
+/* Lento nas pontas, ágil no miolo. `sin(pos·π)` vale 0 nas bordas e 1 no centro,
+   então `1−sin` é o peso da lentidão — máximo no primeiro e no último round,
+   zero na metade. Mapa de um round só não divide por zero: cai no ritmo cheio. */
+function ritmoDoRound(indice,total){
+  if(total<=1)return RITMO.base+RITMO.ponta;
+  const pos=indice/(total-1);
+  /* A curva ganhou EXPOENTE em 07/08/2026, a pedido de "mais fluido".
+     `1-sin(pos·π)` sozinha desacelera cedo demais: já no round 3 de 24 o passo
+     está 30% acima do miolo, e o mapa demora a "engatar". Elevar a curva a 1,6
+     mantém as pontas lentas — que é o efeito dramático que se quer no começo e
+     na reta final — e faz o miolo chegar antes e ficar mais tempo, que é onde a
+     reprodução tem de correr. O seno continua sendo a base porque não tem quina;
+     rampa reta se percebe como três velocidades. */
+  const lentidao=(1-Math.sin(pos*Math.PI))**1.6;
+  return Math.round(RITMO.base+lentidao*RITMO.ponta);
+}
+
+const NARRA={ativa:false,rounds:new Set(),ctx:null};
+/* Os dois NARRAM: um abre a jogada, o outro grita a situação. O rótulo antigo
+   da segunda voz era "Análise", e análise foi justamente o que o responsável
+   recusou — o nome prometia o que a narração não faz mais. */
+const NOME_VOZ={pbp:"Narração",cor:"Comentário"};
+function limparNarracao(){
+  const el=$("narracao");if(el)el.innerHTML="";
+  fecharPalco();
+}
+/* O RÓTULO DO MOMENTO. Diz em duas palavras por que ESTE round parou o jogo —
+   sem ele o painel abre e o espectador não sabe o que foi que valeu a pena. */
+function tagDoRound(rd){
+  if(rd.clutchX>0&&rd.clutchWon)return `clutch 1v${rd.clutchX}`;
+  if(rd.clutchX>0)return `1v${rd.clutchX}`;
+  if(rd.troca)return "virada de lado";
+  if(rd.buyA==="eco"||rd.buyA==="pistol"||rd.buyB==="eco"||rd.buyB==="pistol")return "eco round";
+  if(rd.plantado)return "bomba plantada";
+  return "";
+}
+/* `hidden` é a ÚNICA fonte de verdade do palco: a entrada e a saída são do CSS,
+   via `@starting-style` e `transition-behavior:allow-discrete`. Não há classe de
+   estado nem `setTimeout` espelhando a duração da animação — que era o jeito
+   antigo e desincronizava toda vez que um timer era cancelado no meio. */
+function abrirPalco(rd){
+  const palco=$("narracaoPalco");if(!palco)return;
+  $("npNum").textContent=rd.r??"—";
+  $("npPlacar").textContent=`${rd.pa}-${rd.pb}`;
+  $("npTag").textContent=tagDoRound(rd);
+  $("narracao").innerHTML="";
+  palco.hidden=false;
+}
+function fecharPalco(){
+  const palco=$("narracaoPalco");if(palco)palco.hidden=true;
+}
+const falaHtml=f=>
+  `<div class="fala fala--${esc(f.voz)}"><span class="fala-quem">${esc(NOME_VOZ[f.voz]||"")}</span>`+
+  `<span class="fala-txt">${esc(f.texto)}</span></div>`;
+/* Abertura e fechamento do MAPA também usam o palco, sem número de round: são
+   os dois únicos momentos em que a dupla fala fora de um round sorteado. */
+function dizer(falas,rotulo){
+  const el=$("narracao");if(!el||!NARRA.ativa||!falas||!falas.length)return;
+  const palco=$("narracaoPalco");
+  if(palco){
+    palco.hidden=false;
+    const num=$("npNum"),pl=$("npPlacar"),tag=$("npTag");
+    if(num)num.textContent="—";
+    if(pl)pl.textContent="";
+    if(tag)tag.textContent=rotulo||"";
+  }
+  el.innerHTML=falas.map(falaHtml).join("");
+}
+/* Acrescenta UMA fala, como quem toma a palavra. A faixa guarda no máximo três:
+   ela é uma janela de transmissão, não histórico — deixar acumular empurraria a
+   tabela de stats para fora da tela no meio da leitura. */
+function dizerUma(f){
+  const el=$("narracao");if(!el||!NARRA.ativa)return;
+  el.insertAdjacentHTML("beforeend",falaHtml(f));
+  while(el.children.length>3)el.removeChild(el.firstElementChild);
+}
+/* O ROUND NARRADO CONGELA. Sem isso a fala entra e sai antes de ser lida — o
+   mapa continua correndo a 260 ms por round enquanto alguém tenta acompanhar
+   duas frases. Congelar é o que transforma legenda em transmissão. */
+/* O PAINEL NUNCA ABRE VAZIO. A primeira versão abria o palco e só então esperava
+   `narrPre` para falar — meio segundo de retângulo em branco, medido em 5 de 73
+   amostras, e foi isso que o responsável viu como "bugada quando aparece o
+   retângulo". O respiro agora acontece ANTES de abrir: quando o painel entra,
+   a primeira fala já está nele. */
+/* Tempo de leitura de uma fala. `narrFala` deixou de ser a duração e passou a ser
+   o TETO: nenhuma fala segura o mapa além dele, por mais longa que seja. */
+function tempoDaFala(fala){
+  const texto=String(fala?.texto||"");
+  return Math.min(RITMO.narrFala,RITMO.narrMin+texto.length*17);
+}
+function narrarRound(rd,ant,cel,gen,aoFim){
+  const falas=falasDoRound(rd,ant,NARRA.ctx,Math.random);
+  if(cel){cel.classList.add("narrando");cel.setAttribute("data-r",rd.r!=null?rd.r:"");}
+  let k=0;
+  const proxima=()=>{
+    if(gen!==MP.gen||!MP.ativo)return;   // pulou o mapa ou trocou de reprodução
+    if(k>=falas.length){
+      if(cel)cel.classList.remove("narrando");
+      fecharPalco();
+      MP.timer=setTimeout(aoFim,RITMO.narrPos);
+      return;
+    }
+    const fala=falas[k++];
+    dizerUma(fala);
+    /* CADA FALA FICA O TEMPO DELA — 07/08/2026, a pedido de "narração mais
+       fluida". Os 2.600 ms eram fixos: uma frase de quatro palavras ficava
+       parada tanto quanto uma de vinte, e é essa espera vazia que faz a
+       transmissão arrastar. Agora o tempo é de leitura — um piso para a fala
+       curta não piscar, mais o texto a ~17 ms por caractere, com teto para que
+       uma fala longa não trave o mapa. */
+    MP.timer=setTimeout(proxima,tempoDaFala(fala));
+  };
+  MP.timer=setTimeout(()=>{
+    if(gen!==MP.gen||!MP.ativo)return;
+    abrirPalco(rd);
+    proxima();
+  },RITMO.narrPre);
+}
+function prepararNarracao(jogo,A,B){
+  NARRA.ativa=!!MATCH.narrado;
+  NARRA.ctx={nomeA:A.nome,nomeB:B.nome,mapa:jogo.mapa,
+    /* os nicks vêm na MESMA ordem de snapA/snapB — é isso que liga o delta de
+       kills ao nome de quem fragou */
+    nicksA:(jogo.statsA||[]).map(x=>x.nick),nicksB:(jogo.statsB||[]).map(x=>x.nick),
+    /* quem é o time DELE: a pontuação de emoção pesa a favor do usuário, e a
+       narração fica do lado de quem está torcendo */
+    meuA:!!A.meu,meuB:!!B.meu};
+  /* SELEÇÃO POR MÉRITO, não sorteio: até 3 momentos, e nenhum se o mapa foi
+     morno. Não consome aleatoriedade — o mesmo mapa destaca sempre os mesmos. */
+  NARRA.rounds=NARRA.ativa?escolherMomentos(jogo.rounds,NARRA.ctx):new Set();
+  limparNarracao();
+  /* A PARTIDA NÃO ABRE FALANDO — 07/08/2026: "a partida ta abrindo com a
+     narracao na tela nao quero isso". O palco só entra quando há momento. */
+}
 
 function reproduzirMapa(jogo,A,B,contexto){
   // invalida qualquer reprodução anterior: cancela timer e incrementa a geração
@@ -887,17 +1203,30 @@ function reproduzirMapa(jogo,A,B,contexto){
   MP.ativo=true;MP.jogo=jogo;MP.ctx=contexto;
   $("matchContinue").hidden=true;$("matchSkip").hidden=false;
   $("roundStrip").innerHTML="";
+  /* Mapa novo começa com os lados na origem e sem aviso na tela: o segundo mapa
+     de uma série herdaria a virada do primeiro, e o aviso herdaria o timer. */
+  esconderAvisoVirada();
   const aMine=!!A.meu,bMine=!!B.meu;
   $("sbTeamA").className="sb-team sb-a"+(aMine?" mine":"");
   $("sbTeamB").className="sb-team sb-b"+(bMine?" mine":"");
   $("sbTeamA").innerHTML=liveTeamHeaderHtml(A,"ct","sideA");
   $("sbTeamB").innerHTML=liveTeamHeaderHtml(B,"tr","sideB");
   $("sbScoreA").textContent="0";$("sbScoreB").textContent="0";
-  $("sbMap").textContent=jogo.mapa;$("sbProgress").style.width="0%";
+  /* A MARCA DO MAPA ENTRA NA PARTIDA, não só na antessala: o pedido é que a
+     pessoa saiba onde está jogando "sem nem ler". A tela do mapa recebe a cor em
+     variáveis próprias, e quem quiser tingir mais regiões usa as mesmas. */
+  $("sbMap").innerHTML=`<span class="sb-map-nome">${esc(jogo.mapa)}</span>`;
+  $("sbMap").setAttribute("style",estiloDoMapa(jogo.mapa));
+  $("livemap").setAttribute("style",estiloDoMapa(jogo.mapa));
+  $("sbProgress").style.width="0%";
   const bm=$("manchetePosMapa");if(bm){bm.hidden=true;bm.innerHTML="";} // manchete é do mapa FECHADO
+  prepararNarracao(jogo,A,B);
   montarScoreboard(jogo); // tabela inicial dos 10 jogadores (zerada)
-  // cacheia os elementos quentes do loop (evita $() por round)
-  const elProg=$("sbProgress"),elRS=$("roundStrip"),elScA=$("sbScoreA"),elScB=$("sbScoreB"),elSideA=$("sideA"),elSideB=$("sideB");
+  /* Cacheia os elementos quentes do laço (evita `$()` por round). Os chips de
+     lado saíram do cache: eles são tocados UMA vez por mapa, na virada, e
+     `definirLados` precisa resolvê-los por id de qualquer forma — quem pula o
+     mapa chama a mesma função sem passar por aqui. */
+  const elProg=$("sbProgress"),elRS=$("roundStrip"),elScA=$("sbScoreA"),elScB=$("sbScoreB");
   const total=jogo.rounds.length;
   let i=0;
   const passo=()=>{
@@ -906,32 +1235,102 @@ function reproduzirMapa(jogo,A,B,contexto){
     const rd=jogo.rounds[i];
     const ladoVenc=rd.venceA?rd.ladoA:rd.ladoB;
     if(rd.venceA)setScore(elScA,rd.pa,ladoVenc);else setScore(elScB,rd.pb,ladoVenc);
+    /* A BARRA ANDA DURANTE O ROUND, não depois dele: recebe a duração REAL do
+       passo que vem a seguir, então chega ao fim junto com o round terminando.
+       Com o `.3s` fixo de antes ela vivia atrasada no miolo do mapa, onde o
+       round dura 241 ms — e atraso constante lê como engasgo. */
+    const duracaoDoPasso=rd.troca?RITMO.troca:ritmoDoRound(i,total);
+    elProg.style.setProperty("--passo",`${duracaoDoPasso}ms`);
     elProg.style.width=Math.round((i+1)/total*100)+"%";
-    addCelula(rd,ladoVenc,elRS);
+    const cel=addCelula(rd,ladoVenc,elRS,rd.venceA?aMine:bMine);
     Audio.roundWin(rd.venceA?aMine:bMine);
-    if(rd.troca){elSideA.className="sb-side tr";elSideA.textContent="TR";
-      elSideB.className="sb-side ct";elSideB.textContent="CT";}
+    if(rd.troca)virarLados();
     atualizarScoreboard(jogo,rd); // atualiza K-D e pulsa quem fragou
     if(rd.destaque)Audio.impacto(false);
+    const narrarEste=NARRA.ativa&&NARRA.rounds.has(i);
     i++;
-    MP.timer=setTimeout(passo,rd.troca?RITMO.troca:RITMO.base);
+    if(narrarEste)narrarRound(rd,jogo.rounds[i-2]||null,cel,meuGen,passo);
+    else MP.timer=setTimeout(passo,rd.troca?RITMO.troca:ritmoDoRound(i-1,total));
   };
   MP.timer=setTimeout(passo,RITMO.inicio);
+}
+/* A VIRADA DE LADO, ANUNCIADA — 07/08/2026.
+   Medido antes: o evento mais importante do mapa mudava 686 px² da tela, 0,05%
+   dela, trocando "CT" por "TR" num texto de 9,28 px. Não havia aviso nenhum, e a
+   tabela nem virava. Agora os QUATRO chips viram juntos e um aviso curto passa
+   pela tela dizendo o que o jogador vai fazer a partir dali.
+   O aviso fala de ESTADO ("agora você defende"), nunca de decisão do motor — a
+   fronteira da §11-bis é entre resultado e mecanismo, e lado é resultado.
+
+   E UM lugar só define o lado dos QUATRO chips. Era a existência de dois
+   caminhos — o topo virava aqui, a tabela era pintada em `montarScoreboard` e
+   nunca mais tocada — que deixava a tela com duas respostas para a mesma
+   pergunta a partir do round 13. */
+function definirLados(ladoA,ladoB){
+  aplicarLado($("sideA"),ladoA);aplicarLado($("sideB"),ladoB);
+  /* O BLOCO INTEIRO do scoreboard veste a cor do lado e troca junto. É a
+     substituição do chip que existia aqui: área vale mais que rótulo, e na
+     virada o jogador vê os dois blocos trocarem de cor de uma vez. */
+  pintarBlocoDoLado($("lsSideA"),ladoA);
+  pintarBlocoDoLado($("lsSideB"),ladoB);
+}
+function pintarBlocoDoLado(el,lado){
+  if(!el)return;
+  el.classList.remove("ct","tr");
+  el.classList.add(lado);
+}
+function virarLados(){
+  /* O lado novo sai do lado ATUAL do chip, não de contar rounds: o `data-lado`
+     é o estado real da tela, e é ele que precisa ser invertido. */
+  const novoA=$("sideA")?.dataset.lado==="ct"?"tr":"ct";
+  const novoB=novoA==="ct"?"tr":"ct";
+  definirLados(novoA,novoB);
+  anunciarVirada(MP.jogo?.meuA?novoA:MP.jogo?.meuB?novoB:null);
+}
+const esconderAvisoVirada=()=>{
+  clearTimeout(MP.avisoTimer);
+  const el=$("viradaAviso");if(el)el.hidden=true;
+};
+function anunciarVirada(meuLado){
+  const el=$("viradaAviso");
+  if(!el)return;
+  el.textContent=meuLado
+    ? `Troca de lado · agora você ${meuLado==="ct"?"defende":"ataca"}`
+    : "Troca de lado";
+  el.hidden=false;
+  clearTimeout(MP.avisoTimer);
+  /* Fecha por timer próprio: se ele morresse junto com o passo do round, pular o
+     mapa deixaria o aviso preso na tela — foi assim que o painel da narração
+     ficou preso em 06/08, e o padrão é o mesmo. */
+  MP.avisoTimer=setTimeout(()=>{el.hidden=true;},2600);
 }
 function setScore(elOrId,val,lado){const el=typeof elOrId==="string"?$(elOrId):elOrId;el.textContent=val;
   el.classList.remove("bump","flash-ct","flash-tr");void el.offsetWidth;
   el.classList.add("bump",lado==="CT"?"flash-ct":"flash-tr");}
-function addCelula(rd,lado,strip){
+/* A TIRA PASSOU A DIZER DE QUEM É O ROUND — 07/08/2026.
+   Ela guardava só o LADO vencedor, e os lados trocam no round 13: a mesma cor
+   significava times DIFERENTES nas duas metades do mapa. Quem olhasse a tira não
+   conseguia contar os próprios rounds — que é a única pergunta que se faz a ela.
+   A cor continua sendo o lado, porque é a convenção do CS; o que muda é o PESO:
+   round seu vem em cheio, round do adversário vem apagado. À distância, a tira
+   vira a sua campanha no mapa. */
+function addCelula(rd,lado,strip,meu){
   const s=strip||$("roundStrip");const c=document.createElement("div");
-  c.className=`rs-cell pop ${lado==="CT"?"ct":"tr"}${rd.destaque?" key":""}`;
+  c.className=`rs-cell pop ${lado==="CT"?"ct":"tr"}`
+    +(meu?" mine":"")+(rd.destaque?" key":"");
+  c.setAttribute("aria-hidden","true"); // o placar já é anunciado; a tira é redundante para AT
   s.appendChild(c);
+  return c;   // a narração precisa da célula para destacá-la enquanto fala
 }
 // monta a tabela inicial do scoreboard (10 jogadores, K-D zerado)
 function montarScoreboard(jogo){
-  $("lsSideA").className="ls-side"+(jogo.meuA?" mine":"");
-  $("lsSideB").className="ls-side"+(jogo.meuB?" mine":"");
-  $("lsSideA").innerHTML=scoreboardSideHtml({name:jogo.nomeA,mine:jogo.meuA,side:"ct",color:jogo.corA,stats:jogo.statsA});
-  $("lsSideB").innerHTML=scoreboardSideHtml({name:jogo.nomeB,mine:jogo.meuB,side:"tr",color:jogo.corB,stats:jogo.statsB});
+  /* `ct`/`tr` entram já na montagem: A começa CT e B começa TR, e `definirLados`
+     cuida da virada. Sem isso o bloco nasceria sem cor de lado e só se pintaria
+     no round 13. */
+  $("lsSideA").className="ls-side ct"+(jogo.meuA?" mine":"");
+  $("lsSideB").className="ls-side tr"+(jogo.meuB?" mine":"");
+  $("lsSideA").innerHTML=scoreboardSideHtml({name:jogo.nomeA,mine:jogo.meuA,color:jogo.corA,stats:jogo.statsA});
+  $("lsSideB").innerHTML=scoreboardSideHtml({name:jogo.nomeB,mine:jogo.meuB,color:jogo.corB,stats:jogo.statsB});
   // cacheia linhas e células uma vez (evita re-query a cada round)
   const cacheLado=sideId=>[...$(sideId).querySelectorAll(".ls-row")].map(r=>({row:r,kd:r.querySelector(".ls-kd-val"),kast:r.querySelector(".ls-kast"),adr:r.querySelector(".ls-adr"),rate:r.querySelector(".ls-rate")}));
   MP.sb={A:cacheLado("lsSideA"),B:cacheLado("lsSideB")};
@@ -965,6 +1364,15 @@ function finalizarReproducao(jogo,meuGen){
       if(c.adr)c.adr.textContent=(st.adr!=null?st.adr:"–");
       if(c.rate){c.rate.textContent=st.rating.toFixed(2);c.rate.className="ls-rate "+(st.rating>=1.15?"r-top":st.rating>=0.95?"r-mid":"r-low");}});};
   if(MP.sb){preencheFinais(MP.sb.A,jogo.statsA);preencheFinais(MP.sb.B,jogo.statsB);}
+  /* O FECHAMENTO FALA E SAI DE CENA. Deixar o painel aberto no fim tapava o
+     placar e a tabela — o resultado é o que o jogador veio ver, e a narração não
+     pode ficar por cima dele. Era este o "buga na transição do melhor momento
+     pra simulação": o palco reabria aqui e nada mais o fechava. */
+  if(NARRA.ativa){
+    dizer(falaFechamento(NARRA.ctx,jogo.placar,Math.random),"fim de mapa");
+    const g=MP.gen;
+    setTimeout(()=>{if(g===MP.gen)fecharPalco();},RITMO.narrFecho);
+  }
   $("matchSkip").hidden=true;$("matchContinue").hidden=false;
   if(MP.onFim){const cb=MP.onFim;MP.onFim=null;cb();} // dispara só uma vez
 }
@@ -972,12 +1380,34 @@ function finalizarReproducao(jogo,meuGen){
 function pularMapa(){
   if(!MP.ativo||!MP.jogo)return;
   const jogo=MP.jogo;clearTimeout(MP.timer);
+  /* PULAR NO MEIO DE UM ROUND NARRADO deixava o palco preso na tela por cima do
+     resultado — a "transição do melhor momento pra simulação" bugando. O timer
+     que fecharia o painel acabou de ser cancelado, então quem pula tem de
+     fechá-lo. Medido: palco aberto em 100% das vezes que se pulava narrando. */
+  fecharPalco();
+  document.querySelectorAll(".rs-cell.narrando").forEach(c=>c.classList.remove("narrando"));
   $("roundStrip").innerHTML="";
-  jogo.rounds.forEach(rd=>addCelula(rd,rd.venceA?rd.ladoA:rd.ladoB));
+  jogo.rounds.forEach(rd=>addCelula(rd,rd.venceA?rd.ladoA:rd.ladoB,null,
+    rd.venceA?jogo.meuA:jogo.meuB));
   $("sbScoreA").textContent=jogo.placar[0];$("sbScoreB").textContent=jogo.placar[1];
+  /* PULAR TAMBÉM VIRA OS LADOS. O salto reconstrói placar e strip, mas os chips
+     ficavam no lado da PRIMEIRA metade: quem pulava um mapa que passou do round
+     13 terminava vendo o lado errado, e o erro sobrevivia na tela de resultado.
+     O lado final vem do último round jogado, que é a fonte real — não de contar
+     rounds e supor onde foi a troca. */
+  const fim=jogo.rounds.at(-1);
+  if(fim)definirLados(String(fim.ladoA).toLowerCase(),String(fim.ladoB).toLowerCase());
+  esconderAvisoVirada();
   finalizarReproducao(jogo,MP.gen);
 }
-function pararReproducao(){MP.ativo=false;MP.gen++;clearTimeout(MP.timer);MATCH.rodando=false;}
+/* PARAR PARA TUDO, inclusive o aviso da virada. `MP.timer` já morria aqui, mas o
+   `MP.avisoTimer` não — fechar a partida com o aviso na tela deixava um timer
+   correndo por até 2,6 s depois do overlay sumir. Hoje ele não chega a aparecer
+   porque `reproduzirMapa` limpa na entrada, mas é exatamente a forma do defeito
+   que a regra 38 cobra: todo timer precisa poder desistir, e quem desliga a
+   reprodução tem de desligar os DOIS. */
+function pararReproducao(){MP.ativo=false;MP.gen++;clearTimeout(MP.timer);
+  esconderAvisoVirada();MATCH.rodando=false;}
 
 /* ——— UI · orquestração da partida —————————————————— */
 // MATCH guarda a série em andamento do jogador
@@ -995,16 +1425,108 @@ function abrirPartida(meuTime,adversario,md,contexto,onSerieFim){
   pararReproducao(); // garante que nenhuma reprodução anterior continue rodando
   MATCH.A=meuTime;MATCH.B=adversario;MATCH.md=md;MATCH.mapaIdx=0;MATCH.vA=0;MATCH.vB=0;
   MATCH.contexto=contexto;MATCH.onSerieFim=onSerieFim;MATCH.rodando=false;
+  MATCH.mapas=sortearMapasDaSerie(md); // a série inteira, sem repetir mapa
   mostrarAntessala();
   abrir("matchOverlay");
+}
+/* OS MAPAS DA SÉRIE SÃO SORTEADOS DE UMA VEZ — 07/08/2026.
+   A antessala mostra todos os mapas do confronto, então eles têm de existir
+   antes do primeiro play; e sortear de uma vez é o que permite garantir que
+   NÃO SE REPITAM, exatamente como `simularSerie` faz no motor desde sempre. A
+   UI, que chamava `simularMapa` sem `mapaForcado`, podia jogar Nuke duas vezes
+   no mesmo MD3.
+
+   SOBRE O RNG, declarado sem rodeio: a ordem de consumo MUDA. Era
+   `fdA · fdB · mapa` a cada mapa; passa a ser os `md` sorteios de mapa na
+   abertura da série e depois `fdA · fdB` por mapa jogado. Não é uma constante
+   nova nem um viés: as mesmas grandezas continuam saindo da mesma fonte, com a
+   mesma distribuição. É consequência necessária de mostrar o mapa antes de
+   jogá-lo — o que foi pedido duas vezes — e está registrado aqui porque ninguém
+   deve descobrir isso lendo um diff. */
+function sortearMapasDaSerie(md){
+  const pool=MAPAS_POOL.slice(),mapas=[];
+  for(let i=0;i<md&&pool.length;i++)
+    mapas.push(pool.splice(Math.floor(rndF()*pool.length),1)[0]);
+  return mapas;
+}
+/* CONFRONTO DE FORÇA — a mesma força efetiva dos cards, em forma comparável.
+   A barra é proporcional à PARTICIPAÇÃO de cada time na soma das duas forças,
+   não à força absoluta: o que se quer ler é "quem é favorito e por quanto", e
+   uma barra que fosse de 0 a 100 mostraria dois blocos quase iguais em qualquer
+   confronto real — as forças do jogo vivem entre 60 e 99, então a diferença
+   sumiria justamente onde ela importa.
+   O texto continua sendo o número exato, para quem quer a grandeza e para quem
+   não lê a barra. */
+function montarConfrontoDeForca(A,B){
+  const caixa=$("pmForca");if(!caixa)return;
+  const efA=Number(A?.ef)||0,efB=Number(B?.ef)||0,total=efA+efB;
+  if(!total){caixa.hidden=true;return;}
+  caixa.hidden=false;
+  const pctA=efA/total*100;
+  /* `setAttribute("style")` de uma vez, e não `style.width` antes: o atributo
+     inteiro é reescrito com a cor do time, então qualquer largura posta antes
+     dele seria apagada na mesma linha. Havia duas dessas, mortas. */
+  $("pmForcaA").setAttribute("style",`${estiloDoTime(A)};width:${pctA}%`);
+  $("pmForcaB").setAttribute("style",`${estiloDoTime(B)};width:${100-pctA}%`);
+  const dif=Math.abs(efA-efB);
+  /* "Equilibrado" tem de ter piso, senão 1 ponto de diferença já nomearia um
+     favorito — e no jogo 1 ponto não decide nada. */
+  const veredito=dif<=3?"Equilibrado"
+    :`${esc((efA>efB?A:B).nome)} favorito por ${dif}`;
+  $("pmForcaLeg").innerHTML=
+    `<span class="pm-forca-n">${efA}</span>`
+    +`<span class="pm-forca-v">${veredito}</span>`
+    +`<span class="pm-forca-n">${efB}</span>`;
 }
 function mostrarAntessala(){
   $("livemap").classList.add("is-hidden");mostrarTela("prematch");
   const {A,B,contexto,md}=MATCH;
   if(!A||!B)return; // proteção: par incompleto
-  $("prematchCtx").textContent=contexto+(md>1?" · melhor de "+md:" · 1 mapa");
-  $("pmTeamA").className="pm-team"+(A.meu?" mine":"");$("pmTeamA").innerHTML=prematchTeamHtml(A);
-  $("pmTeamB").className="pm-team"+(B.meu?" mine":"");$("pmTeamB").innerHTML=prematchTeamHtml(B);
+  /* DESTAQUE ANTES DE DETALHE — 07/08/2026, a pedido: "a pessoa tem que bater o
+     olho e já entender, não tem que ficar lendo nada". A linha única de antes
+     dava o mesmo peso tipográfico a quatro informações; agora a FASE é o que se
+     lê de relance, o resto vira apoio, e "decisivo" ganha selo em vez de virar
+     mais um item da mesma frase. */
+  /* A FAIXA DE CONTEXTO É UMA SÓ, EM CHIPS PADRONIZADOS — 07/08/2026, a pedido:
+     *"aquelas infos em cima do bloco do meio, tem que ser tudo padronizado e bem
+     organizado"*. Antes eram duas peças de formatos diferentes: uma pílula com
+     título, selo e subtítulo dentro, e outra com rótulo mais número. Formas
+     diferentes para informações do mesmo nível é o que fazia a faixa parecer
+     bagunçada.
+     Agora todo item é o MESMO objeto — rótulo pequeno em cima, valor embaixo —,
+     e a diferença entre eles é só ênfase: o formato da série vem destacado,
+     porque é o que muda o tamanho do confronto. */
+  const {fase,rodada,situacao,etapa,decisivo}=contexto||{};
+  const chip=(rot,val,classe="")=>
+    `<div class="pm-chip ${classe}"><span class="pm-chip-r">${esc(rot)}</span>`
+    +`<b class="pm-chip-v">${esc(val)}</b></div>`;
+  /* "MELHOR DE N" é a escrita que o responsável pediu, e é também a do CS —
+     quem joga lê "melhor de 3" sem traduzir. */
+  const itens=[chip("Fase",fase||"Partida")];
+  if(rodada)itens.push(chip("Rodada",rodada));
+  if(etapa)itens.push(chip("Etapa",etapa));
+  if(situacao)itens.push(chip("Você está",situacao));
+  itens.push(chip("Série",`Melhor de ${md<=1?1:md}`,"pm-chip--serie"));
+  if(decisivo)itens.push(chip("Vale","Mata-mata","pm-chip--alerta"));
+  $("prematchCtx").innerHTML=itens.join("");
+  $("pmTeamA").className="pm-lado pm-lado--a"+(A.meu?" mine":"");$("pmTeamA").innerHTML=prematchTeamHtml(A);
+  $("pmTeamB").className="pm-lado pm-lado--b"+(B.meu?" mine":"");$("pmTeamB").innerHTML=prematchTeamHtml(B);
+  $("pmTeamA").setAttribute("style",estiloDoTime(A));
+  $("pmTeamB").setAttribute("style",estiloDoTime(B));
+  montarConfrontoDeForca(A,B);
+  /* A ANTESSALA VESTE O AMBIENTE DO MAPA DA VEZ: é ele que vai ser jogado agora,
+     e chegar à partida com o fundo já naquele clima é o que faz a transição
+     parecer contínua em vez de um corte. */
+  $("prematch").setAttribute("style",estiloDoMapa(MATCH.mapas[0]||""));
+  /* TODOS os mapas da série ficam aqui embaixo, inclusive num MD1 — a faixa
+     dentro do palco saiu. Um lugar só para a mesma informação, seja um mapa ou
+     três; o primeiro é o que vai ser jogado agora e vem em cheio, os outros
+     apagados. */
+  $("pmMapa").hidden=!MATCH.mapas.length;
+  $("pmMapa").innerHTML=MATCH.mapas.map((mapa,i)=>
+    `<div class="pm-mapa${i===0?" pm-mapa--agora":""}" style="${estiloDoMapa(mapa)}">`
+    +`<span class="pm-mapa-nome">${esc(mapa)}</span>`
+    +`</div>`).join("");
 }
 function iniciarMapaDaSerie(){
   if(MATCH.rodando)return; // já tem um mapa em curso — ignora clique repetido
@@ -1014,9 +1536,20 @@ function iniciarMapaDaSerie(){
   const {A,B}=MATCH;
   const fdA=forcaDoDia(A.ef,A.quim),fdB=forcaDoDia(B.ef,B.quim);
   const tA={...A.time,nome:A.nome,cor:A.cor,meu:A.meu},tB={...B.time,nome:B.nome,cor:B.cor,meu:B.meu};
-  const jogo=simularMapa(tA,tB,fdA,fdB);
+  /* O mapa vem da lista sorteada na abertura da série — é o mesmo que a
+     antessala mostrou. O `||undefined` mantém o comportamento antigo (sorteio
+     dentro de `simularMapa`) caso a lista falte, para que uma série sem
+     antessala nunca fique sem mapa. */
+  const jogo=simularMapa(tA,tB,fdA,fdB,MATCH.mapas[MATCH.mapaIdx]||undefined);
   MP.onFim=()=>{ // ao fim do mapa: contabiliza a série e libera o botão Continuar
-    if(jogo.vencedorNome===A.nome)MATCH.vA++;else MATCH.vB++;
+    /* IDENTIDADE POR REFERÊNCIA, não por nome — 07/08/2026. Isto era
+       `jogo.vencedorNome===A.nome`, e o nome do clube passou a ser escolhido pelo
+       jogador: um time chamado como o adversário fazia TODO mapa contar para o
+       lado A. A Suíça já resolvia assim desde antes ("robusto a nomes iguais: 2
+       Spirit/FURIA"); a série é que tinha ficado para trás.
+       `simularMapa` devolve `vencedor` como o próprio objeto que recebeu, então a
+       comparação é exata e não depende de texto nenhum. */
+    if(jogo.vencedor===tA)MATCH.vA++;else MATCH.vB++;
     if(jogo.meuA||jogo.meuB)registrarPartida(jogo);
     MATCH.rodando=false;
   };
@@ -1034,7 +1567,10 @@ function continuarPartida(){
     iniciarMapaDaSerie();
   }
 }
-$("prematchStart").onclick=iniciarMapaDaSerie;
+/* A escolha vale para o MAPA que vai começar, e a antessala reaparece a cada
+   mapa da série — foi o pedido: perguntar sempre, sem preferência salva. */
+$("prematchStart").onclick=()=>{MATCH.narrado=false;iniciarMapaDaSerie();};
+$("prematchNarrado").onclick=()=>{MATCH.narrado=true;iniciarMapaDaSerie();};
 $("matchContinue").onclick=continuarPartida;
 $("matchSkip").onclick=pularMapa;
 $("matchClose").onclick=()=>{pararReproducao();fechar("matchOverlay");};

@@ -87,10 +87,11 @@
     <div class="alertbox" id="rAlertas"></div>
   </section>
 
-  <div class="hint" id="hint" aria-live="polite">Sorteie um time e escolha 1 jogador por rodada.</div>
+  <div class="hint" id="hint" aria-live="polite">Sorteie um time e arraste 1 jogador por rodada.</div>
 
   <div class="bar">
     <button class="ghost accent" id="respinbtn" hidden>Sortear de novo</button>
+    <button class="ghost" id="randombtn">⚡ Elenco aleatório</button>
     <button class="ghost" id="resetbtn">Resetar elenco</button>
   </div>
 
@@ -98,16 +99,17 @@
   <div class="majorbar" id="majorSection" hidden>
     <button class="majorbtn" id="suicabtn"><span class="mbtxt"><span class="mbt">Entrar no Major</span><span class="mbs">fase suíça · rumo ao 9-0 invicto</span></span></button>
   </div>
-  <div class="section-tag">Hall da Fama</div>
-  <div class="rosterbar">
+  <!-- Os dois rótulos de seção que ficavam aqui ("Hall da Fama" e "Base de
+       elencos") repetiam o que o próprio link já diz em `.rl-t`, e cada um
+       custava uma faixa de 44px numa página que já rolava vazia. Um rótulo só,
+       com os dois lados a lado, mantém a informação e devolve 107px. -->
+  <div class="section-tag">Acervo</div>
+  <div class="rosterbar rosterbar--duo">
     <a class="ghost rosterlink" id="hallBtn" href="#" role="button">
       <span class="rl-ic" aria-hidden="true">🏆</span>
       <span class="rl-tx"><span class="rl-t">Sua história</span><span class="rl-s">títulos · recordes do clube · campanhas 9-0</span></span>
       <span class="rl-ar" aria-hidden="true">›</span>
     </a>
-  </div>
-  <div class="section-tag">Base de elencos</div>
-  <div class="rosterbar">
     <a class="ghost rosterlink" href="elencos.html">
       <span class="rl-ic" aria-hidden="true">▤</span>
       <span class="rl-tx"><span class="rl-t">Ver todos os elencos</span><span class="rl-s">OVR · funções · atributos · rating — 17 times, 85 jogadores</span></span>
@@ -117,7 +119,34 @@
   <footer>draft9-0 · simulador de counter-strike</footer>
 </div>
 
-<!-- Overlay: Fase Suíça (estilo Major) -->
+<!-- ═══ OVERLAYS, na ordem do fluxo ═══════════════════════════════════════════
+     portão do nome → fase suíça → playoffs → partida → final → hall.
+     A ORDEM NO DOM NÃO É ARBITRÁRIA: cinco dos seis dividem `z-index:50` — só
+     `.final-overlay` sobe para 90 —, e sem o degrau que `style.css` declara para
+     `.overlay.fechando` a pintura cairia na ordem do documento.
+     Mexer aqui já custou 23 frames com a tela da partida sumindo por baixo. -->
+
+<!-- PORTÃO DO NOME DO CLUBE. Aparece ao entrar no Major, não na tela inicial:
+     ali o campo passava despercebido e as pessoas esqueciam de escolher. Aqui é
+     obrigatório — o botão só habilita com um nome válido.
+     NÃO tem botão de fechar, e por isso Escape também não o fecha: a regra 25
+     deste projeto diz que Escape só faz o que o mouse faz. É o mesmo desenho do
+     `finalOverlay`. -->
+<div class="overlay overlay--gate" id="nomeOverlay" tabindex="-1" role="dialog"
+     aria-modal="true" aria-labelledby="nomeTitle" hidden>
+  <div class="gate">
+    <h2 class="gate-t" id="nomeTitle">Qual é o nome do seu time?</h2>
+    <p class="gate-s">Ele vai aparecer no quadro do Major, no placar de cada partida e no seu histórico.</p>
+    <!-- `aria-label` explícito: o `placeholder` NÃO é nome acessível — ele some ao
+         digitar e alguns leitores de tela nem o anunciam. O campo perdeu o
+         `<label>` que tinha no HUD ao mudar de lugar, e a auditoria pegou. -->
+    <input class="gate-i" id="teamName" maxlength="18" autocomplete="off" spellcheck="false"
+           placeholder="Ex.: Fúria Azul" aria-label="Nome do seu time" aria-describedby="nomeAviso">
+    <p class="gate-aviso" id="nomeAviso" role="status"></p>
+    <button class="roll" id="nomeConfirmar" disabled>Entrar no Major</button>
+  </div>
+</div>
+
 <div class="overlay" id="suicaOverlay" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="suicaTitle" hidden>
   <div class="overlay-head">
     <div class="overlay-title" id="suicaTitle">Fase Suíça <span id="suicaSub"></span></div>
@@ -153,13 +182,89 @@
   <button class="match-close" id="matchClose" aria-label="Fechar"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 2L12 12M12 2L2 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
   <!-- Antessala -->
   <div class="prematch" id="prematch">
-    <div class="prematch-ctx" id="prematchCtx"></div>
-    <div class="prematch-vs">
-      <div class="pm-team" id="pmTeamA"></div>
-      <div class="pm-mid"><div class="pm-versus">VS</div></div>
-      <div class="pm-team" id="pmTeamB"></div>
+    <!-- FAIXA DE CONTEXTO. Fase e formato juntos: são a mesma pergunta ("que
+         partida é esta e quanto ela vale"), e separá-los era o que fazia o
+         formato passar despercebido. -->
+    <div class="pm-topo">
+      <div class="prematch-ctx" id="prematchCtx"></div>
     </div>
-    <button class="roll" id="prematchStart">Iniciar partida</button>
+
+    <!-- PALCO DO CONFRONTO — reformulação de 07/08/2026.
+         Os dois times deixaram de ser cards lado a lado e passaram a ocupar
+         METADES OPOSTAS da mesma área, separadas por uma DIAGONAL. A diagonal é
+         o vocabulário que as cartas do jogo já usam, então não cobra
+         aprendizado; e é ela que transforma "dois retângulos" em "confronto",
+         que era exatamente o que a composição anterior não dizia. -->
+    <div class="pm-palco">
+      <div class="pm-lado pm-lado--a" id="pmTeamA"></div>
+      <div class="pm-lado pm-lado--b" id="pmTeamB"></div>
+      <!-- O VS É GEOMETRIA, NÃO TEXTO — 07/08/2026. Como marca d'água ele tem de
+           ocupar a ALTURA do palco, e texto HTML não sabe se dimensionar por
+           altura: com `font-size` em `vw` a letra enchia 85,8% do palco no
+           desktop e só 60,1% no celular, porque o palco trava em 880px enquanto
+           o `vw` continua crescendo. Régua errada — de novo.
+           O `viewBox` É a caixa da TINTA do par "VS" em Chakra Petch 800, medida
+           por `TextMetrics.actualBoundingBox*`: 1368.75 × 703.13 por EM de 1000
+           (cap height 0,7031em). Como a tinta É o viewBox, `meet` faz a letra
+           encostar em cima e embaixo sozinha, e centrar vira responsabilidade do
+           SVG — sem métrica de fonte no layout e sem constante de compensação,
+           que é a lição da regra 35.
+           NÃO USE `textLength` AQUI: ele trava o AVANÇO, e avanço inclui os 183
+           milésimos de espaço fantasma que o `letter-spacing` deixa depois do S.
+           Travar o avanço em 1368.75 espremia a tinta para dentro disso e jogava
+           a letra 3 px para a esquerda do centro — medido. Com o tracking solto e
+           o `viewBox` cortado na tinta (que começa em x=0, side bearing zero), o
+           espaço fantasma cai FORA da caixa e a centragem sai de graça. É
+           literalmente a regra 35: normalize a geometria, não centre e torça. -->
+      <!-- `preserveAspectRatio="none"` é DELIBERADO: o pedido é a letra subir de
+           baixo até em cima SEM engordar para os lados, e isso é exatamente
+           romper a proporção. Como o `viewBox` é a caixa da tinta, "none" faz o
+           glifo preencher a caixa do elemento nos dois eixos — a altura vem do
+           `height`, a largura do `aspect-ratio`, ambos no CSS. -->
+      <svg class="pm-versus" viewBox="0 0 1368.75 703.13"
+           preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <defs>
+          <!-- O VS É VIDRO, e vidro tem LUZ VINDA DE CIMA: a lâmina do palco já
+               faz isso em `--vidro-alto-bg`, que abre em rgba(255,255,255,.07) e
+               fecha escuro. Chapar a letra numa opacidade só a faria parecer
+               tinta sobre a superfície, e não a própria superfície. Como o modo é
+               aditivo, a rampa vai só de claro a MENOS claro — preto aditivo é
+               invisível, então a queda faz o papel da sombra. -->
+          <linearGradient id="pmVsVidro" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ffffff"/>
+            <stop offset=".52" stop-color="#dfe4e9"/>
+            <stop offset="1" stop-color="#aab2bb"/>
+          </linearGradient>
+        </defs>
+        <text x="0" y="703.13" font-size="1000">VS</text>
+      </svg>
+    </div>
+
+    <!-- CONFRONTO DE FORÇA, encostado no palco. A força efetiva já era exibida
+         como número em cada lado; aqui ela vira COMPARAÇÃO, que é o que o número
+         sozinho não dá — ninguém lê "68" e "76" e sente a diferença. -->
+    <div class="pm-forca" id="pmForca" hidden>
+      <div class="pm-forca-trilho">
+        <div class="pm-forca-a" id="pmForcaA"></div>
+        <div class="pm-forca-b" id="pmForcaB"></div>
+      </div>
+      <div class="pm-forca-leg" id="pmForcaLeg"></div>
+    </div>
+
+    <!-- OS MAPAS DA SÉRIE, todos aqui embaixo — 07/08/2026, a pedido: no MD1 o
+         mapa também desce, em vez de virar selo dentro do palco. Um lugar só
+         para a mesma informação, seja um mapa ou três. -->
+    <div id="pmMapa"></div>
+
+    <!-- Dois caminhos, e o LIMPO é o padrão de referência, não o degradado: é
+         ele que preserva o produto anterior à narração. `#prematchStart` continua
+         sendo o botão sem narração de propósito — as suítes de fluxo clicam nele
+         e, com isso, seguem provando o jogo sem nada opcional ligado. -->
+    <div class="prematch-modos">
+      <button class="roll" id="prematchNarrado">▶ Com narração</button>
+      <button class="roll ghost" id="prematchStart">Sem narração</button>
+    </div>
+    <p class="prematch-nota">A narração comenta ao vivo alguns rounds do mapa.</p>
   </div>
   <!-- Tela do mapa -->
   <div class="livemap is-hidden" id="livemap">
@@ -172,7 +277,26 @@
       <div class="sb-team sb-b" id="sbTeamB"></div>
     </div>
     <div class="sb-progress"><div class="sb-progress-fill" id="sbProgress"></div></div>
+    <!-- AVISO DA VIRADA DE LADO. A troca do round 13 mudava 686px² da tela — 0,05%
+         dela — num texto de 9px, sem dizer nada. Aqui ela é anunciada por 2,6s.
+         `role="status"` e não `alert`: é informação de estado, não urgência, e
+         não deve interromper o que o leitor de tela está falando. -->
+    <div class="virada-aviso" id="viradaAviso" role="status" hidden></div>
     <div class="roundstrip" id="roundStrip"></div>
+    <!-- PALCO DA NARRAÇÃO. Só existe no modo com narração: abre sobre o mapa no
+         round sorteado, mostra o NÚMERO do round em destaque e as falas, e some.
+         `aria-live="polite"` porque quem escolheu narração pediu para ser
+         informado; no modo limpo o bloco fica `hidden` e não anuncia nada. -->
+    <div class="narracao-palco" id="narracaoPalco" hidden>
+      <div class="np-card">
+        <div class="np-topo">
+          <div class="np-round"><span class="np-rot">Round</span><b id="npNum">—</b></div>
+          <div class="np-meio"><span class="np-placar" id="npPlacar"></span>
+            <span class="np-tag" id="npTag"></span></div>
+        </div>
+        <div class="narracao" id="narracao" aria-live="polite"></div>
+      </div>
+    </div>
     <div class="livescore" id="liveScore">
       <div class="ls-side" id="lsSideA"></div>
       <div class="ls-side" id="lsSideB"></div>

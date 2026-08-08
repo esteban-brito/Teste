@@ -111,6 +111,41 @@
   /* resultado/pódio */
   --gold:#ffce4a; --gold-lit:#ffd968; --gold-dim:#f0a93a; --win:#7fe6a8; --loss:#e07a6a; --neutral:#cdd6e4; --bronze:#d8985a;
   --tw:230px; --gap:10px; --ease:cubic-bezier(.2,.8,.2,1); --ff:'Chakra Petch';
+
+  /* ══ VIDRO — o sistema de superfície do jogo, nascido na antessala ══════════
+     07/08/2026. A antessala foi eleita PADRÃO de estilo para todas as telas, e
+     um padrão não pode viver como números repetidos em cada regra: seria o mesmo
+     problema que a tokenização de cor de 02–03/08 resolveu, com 225 hex soltos
+     competindo pelo mesmo papel.
+
+     Três níveis, e a diferença entre eles é DISTÂNCIA do olho, não gosto:
+       · `alto`  — a lâmina principal de uma tela (o palco). Desfoque maior,
+                   borda mais clara, sombra que a descola do fundo;
+       · `medio` — peças que vivem sobre ela (chips, botões, faixas);
+       · `raso`  — apoio discreto (notas, legendas), quase sem elevação.
+
+     `backdrop-filter` NÃO é gratuito: em 29/07 ele derrubou a tela da partida
+     para 31 fps e foi removido dos overlays. O que o torna aceitável é a
+     condição medida — superfície pequena sobre fundo estático. A antessala com
+     vidro em tudo mede 61,2 fps contra 60,6 do controle sem filtro.
+     ANTES DE LEVAR ISTO PARA UMA TELA NOVA, MEÇA O FPS DELA. */
+  --vidro-alto-bg:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02) 46%,rgba(0,0,0,.22));
+  --vidro-alto-borda:rgba(255,255,255,.12);
+  --vidro-alto-blur:blur(22px) saturate(150%);
+  --vidro-alto-sombra:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(0,0,0,.3),
+    0 26px 60px -32px rgba(0,0,0,.9);
+
+  --vidro-medio-bg:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.03));
+  --vidro-medio-borda:rgba(255,255,255,.13);
+  --vidro-medio-blur:blur(14px) saturate(140%);
+  --vidro-medio-sombra:inset 0 1px 0 rgba(255,255,255,.18);
+
+  --vidro-raso-bg:rgba(255,255,255,.05);
+  --vidro-raso-borda:rgba(255,255,255,.08);
+  --vidro-raso-blur:blur(12px);
+
+  /* Raios do sistema: uma escala só, para as peças não divergirem sozinhas. */
+  --r-lamina:18px; --r-peca:10px; --r-pilula:20px;
   /* movimento das cartas: curto, sem overshoot e limitado a transform/opacity */
   --ease-card:cubic-bezier(.22,1,.36,1); --motion-card-fast:180ms;
   --motion-card-face:360ms; --motion-card-fade:180ms;
@@ -135,6 +170,26 @@ header{display:flex;position:relative;flex-wrap:wrap;flex-direction:row;align-it
 .hud .v{font-family:var(--ff);font-size:1.45rem;font-weight:700;line-height:1}
 .hud .v.pwr{color:var(--cyan)}
 .hud .l{font-size:.6rem;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+/* PORTÃO DO NOME DO CLUBE — 07/08/2026. Ele começou como campo no HUD e mudou de
+   lugar no mesmo dia: ali "as pessoas esquecem de escolher". Agora é um passo
+   obrigatório na entrada do Major, com uma pergunta só na tela. */
+.overlay--gate{display:flex;align-items:center;justify-content:center;padding:24px}
+.gate{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;
+  width:min(440px,100%);padding:30px 26px;border-radius:var(--radius);
+  background:var(--panel2);border:1px solid rgba(var(--line-panel-rgb),.2)}
+.gate-t{font-family:var(--ff);font-weight:700;font-size:1.35rem;letter-spacing:.06em;
+  color:var(--txt);margin:0;text-wrap:balance}
+.gate-s{font-size:.78rem;color:var(--dim);line-height:1.5;margin:0;text-wrap:pretty}
+.gate-i{width:100%;padding:13px 15px;border-radius:8px;text-align:center;
+  font-family:var(--ff);font-size:1.15rem;font-weight:700;letter-spacing:.06em;
+  color:var(--txt);background:#0c121b;border:1px solid rgba(var(--line-base-rgb),.28)}
+.gate-i::placeholder{color:var(--dim);opacity:.7;font-weight:600;letter-spacing:.02em}
+.gate-i:focus{outline:2px solid var(--cyan);outline-offset:2px;border-color:transparent}
+/* Reserva a altura do aviso para que ele não empurre o botão ao aparecer — um
+   controle que se move sob o cursor é como se perde um clique. */
+.gate-aviso{margin:0;min-height:1.1rem;font-size:.7rem;line-height:1.1rem;color:var(--dim)}
+.gate-aviso--alerta{color:var(--accent)}
+.gate .roll:disabled{opacity:.45;cursor:not-allowed;transform:none}
 .section-tag{font-family:var(--ff);font-size:.82rem;letter-spacing:.18em;color:var(--txt);
   text-transform:uppercase;font-weight:700;margin:18px 0 9px;display:flex;align-items:center;gap:10px}
 .section-tag::after{content:'';flex:1;height:1px;
@@ -167,6 +222,17 @@ header{display:flex;position:relative;flex-wrap:wrap;flex-direction:row;align-it
 .viewport{overflow:hidden;padding:16px 0}
 .track{display:flex;gap:var(--gap);padding:0 calc(50% - var(--tw)/2);align-items:stretch;min-height:78px}
 .track>*{flex:0 0 var(--tw)}
+/* EM REPOUSO A ROLETA SE ENCHE — 06/08/2026. O padding lateral existe para o
+   GIRO: é ele que permite a `offsetParaCentralizar` levar qualquer fita ao
+   marcador. Mas em repouso o transform é zero, então a fita 0 nascia no centro e
+   a metade esquerda ficava vazia por construção — medido, 475 px a 1440, que são
+   40% da largura da roleta, com só 2 fitas inteiras visíveis de 7. O botão
+   "Sortear time" está CENTRADO (desvio medido de 0,0 px); quem estava torto era
+   o fundo atrás dele.
+   Zerar o padding só no estado ocioso enche a caixa sem tocar na matemática do
+   giro: `sortear()` remove esta classe e relê `paddingLeft` do estilo computado
+   antes de calcular o destino. */
+.track.ocioso{padding:0}
 .tcard{position:relative;border-radius:8px;padding:10px 12px;height:78px;display:flex;flex-direction:column;
   align-items:center;justify-content:center;text-align:center;border:1px solid color-mix(in srgb,var(--col) 65%,#333);
   background:linear-gradient(160deg,color-mix(in srgb,var(--col) 38%,#0e1119) 0%,color-mix(in srgb,var(--col) 14%,#0c1018) 60%,#0b0e15 100%)} /* fita da roleta na COR do time */
@@ -205,6 +271,11 @@ header{display:flex;position:relative;flex-wrap:wrap;flex-direction:row;align-it
 .mutebtn.muted{opacity:.4;filter:grayscale(1)}
 .spinwrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:6;
   background:rgba(7,10,15,.68)}
+/* A ação principal tem corpo de ação principal. Cresce só o `#rollbtn`, e não o
+   `button.roll` inteiro, porque a mesma classe veste "Iniciar partida",
+   "Continuar" e "Jogar novamente" — que vivem dentro de overlays e já são o
+   único botão da tela deles. */
+#rollbtn{font-size:1.02rem;padding:16px 36px;letter-spacing:.12em}
 .spinwrap.gone{opacity:0;pointer-events:none;transition:opacity .2s}
 button.roll,button.ghost{font-family:var(--ff);font-weight:700;letter-spacing:.1em;text-transform:uppercase;
   cursor:pointer;border-radius:var(--radius);-webkit-tap-highlight-color:transparent;transition:transform .12s var(--ease)}
@@ -217,7 +288,7 @@ button.roll{font-size:.92rem;padding:13px 28px;border-radius:8px;border:1px soli
   background:linear-gradient(180deg,#ff6a2f,var(--accent-deep))}
 button.roll:hover{transform:translateY(-2px)}
 button.roll:active{transform:translateY(1px) scale(.97)}
-button.ghost,.flipmode{border-radius:8px;background:#0c121b;border-color:rgba(var(--line-base-rgb),.22)}
+button.ghost{border-radius:8px;background:#0c121b;border-color:rgba(var(--line-base-rgb),.22)}
 button.ghost{font-size:.76rem;padding:11px 20px;border:1px solid rgba(var(--line-base-rgb),.22);background:#0c121b;color:var(--txt)}
 button.ghost.accent{border-color:rgba(var(--accent-deep-rgb),.45);color:var(--accent)}
 
@@ -1019,13 +1090,22 @@ button.ghost.accent{border-color:rgba(var(--accent-deep-rgb),.45);color:var(--ac
   background:rgba(8,10,16,.72);-webkit-mask:none;mask:none;padding:0;animation:none}
 .picks .card.taken::after,.picks .coachcard.taken::after{content:"NO ELENCO"}
 .picks .card.dup::after{content:"JÁ NA LINE"}
-.sel{outline:2px solid var(--sel,var(--accent));outline-offset:3px;z-index:6;filter:brightness(1.08)}
 /* ARRASTO. A carta original desbota no lugar para o olho não perder de onde ela
    saiu; o fantasma é a que segue o dedo. `pointer-events:none` no fantasma é o
    que deixa `elementFromPoint` enxergar o slot embaixo dele — sem isso o alvo
    seria sempre a própria carta. `touch-action:none` nas cartas impede o
    navegador de tratar o gesto como scroll antes de o limiar decidir. */
 .card,.coachcard{touch-action:none}
+/* ARRASTAR NÃO PODE SELECIONAR TEXTO — 06/08/2026. Segurar e puxar uma carta
+   iniciava a seleção nativa do navegador e ia pintando de azul todo o texto por
+   onde o ponteiro passava. `touch-action:none` já barrava o dedo, mas não diz
+   nada sobre o MOUSE, e o gesto é o mesmo nos dois.
+   Duas camadas, porque uma só não basta: a carta e o slot deixam de ser origem
+   de seleção — o conteúdo delas é rótulo, não texto para copiar — e, enquanto o
+   arrasto está ativo, a página inteira para de selecionar, o que cobre o
+   caminho percorrido depois que o gesto começou. */
+.card,.coachcard,.slot{user-select:none;-webkit-user-select:none}
+body.arrastando-carta{user-select:none;-webkit-user-select:none}
 .card.arrastando,.coachcard.arrastando{opacity:.3;filter:grayscale(.4)}
 .fantasma{position:fixed;left:0;top:0;z-index:60;pointer-events:none;margin:0;
   will-change:transform;filter:drop-shadow(0 20px 34px rgba(0,0,0,.6));
@@ -1116,6 +1196,139 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
   border-color:rgba(var(--accent-deep-rgb),.5);color:var(--accent)}
 .overlay-actions .ghost.accent:hover{background:linear-gradient(180deg,rgba(var(--accent-deep-rgb),.24),rgba(var(--accent-deep-rgb),.1));transform:translateY(-1px)}
 .overlay-actions .ghost:hover{transform:translateY(-1px)}
+/* ╔══════════════ NARRAÇÃO AO VIVO · só no modo opt-in ══════════════╗
+   A faixa tem ALTURA RESERVADA (`min-height`) mesmo vazia. Sem isso, cada fala
+   que entra empurra o placar e a tabela para baixo no meio da reprodução — e o
+   olho perde a linha que estava lendo. Reservar é mais barato que animar. */
+/* A CÉLULA NARRADA MOSTRA O NÚMERO, não uma bolinha maior. Crescer o ponto só
+   dizia "algo aqui"; o número diz QUAL round parou o jogo, e é o que o olho
+   procura quando volta para a fita depois de ler as falas. */
+.roundstrip{position:relative}
+/* O ROUND NARRADO NÃO EXPANDE — 07/08/2026, a pedido: *"quando congelar a tela
+   pra narração não quero que aquele quadradinho expanda"*.
+   Ele crescia 1,9× e só assim o número do round dentro dele ficava legível (5 px
+   × 1,9). Mas o número é redundante: o palco da narração já mostra "Round N" em
+   corpo grande, logo acima. Tirando a escala, o número sai junto — e o destaque
+   passa a ser feito por LUZ, que não empurra os vizinhos nem muda a geometria da
+   tira no meio da leitura. */
+.rs-cell.narrando{z-index:3;position:relative;opacity:1;
+  box-shadow:0 0 0 2px var(--accent),0 0 16px 2px rgba(var(--accent-rgb),.6)}
+
+/* ╔══════ PALCO · o round importante abre em cima do mapa ══════╗
+   LIQUID GLASS COM CUIDADO. Esta folha removeu `backdrop-filter` dos overlays em
+   29/07/2026 porque lá o fundo é OPACO — o desfoque processava, a cada quadro e
+   em tela cheia, um fundo que ninguém veria, e sozinho segurava a partida ao
+   vivo em 31 fps. Aqui o caso é o oposto e o vidro se justifica: o painel é
+   pequeno, vive sobre o mapa VISÍVEL, e só existe durante os poucos segundos do
+   round narrado. O `will-change` some junto com o painel, e a área desfocada é
+   uma fração da tela. */
+/* ENTRADA E SAÍDA SEM UMA LINHA DE JS — `@starting-style` com
+   `transition-behavior:allow-discrete`. O padrão antigo era: adicionar classe,
+   `setTimeout` do mesmo tamanho da animação, remover no fim. Isso duplica a
+   duração em dois lugares (CSS e JS) e desincroniza na hora em que o timer é
+   cancelado — e aqui timers SÃO cancelados, toda vez que se pula o mapa.
+   Com `allow-discrete` o próprio `display` espera a transição terminar, então
+   `hidden` volta a ser a única fonte de verdade. Onde não houver suporte, o
+   painel aparece e some sem fade: degrada para o comportamento correto. */
+.narracao-palco{position:absolute;inset:0;z-index:12;display:flex;
+  align-items:center;justify-content:center;padding:20px;pointer-events:none;
+  opacity:1;
+  transition:opacity .32s var(--ease),display .32s var(--ease) allow-discrete}
+.narracao-palco[hidden]{display:none;opacity:0}
+@starting-style{.narracao-palco:not([hidden]){opacity:0}}
+
+/* `@property` dá TIPO ao ângulo, e é isso que torna o brilho animável: uma
+   custom property sem tipo é string, e string não interpola — o gradiente
+   saltaria entre valores em vez de girar. */
+@property --np-brilho{syntax:"<angle>";inherits:false;initial-value:150deg}
+.np-card{position:relative;overflow:hidden;
+  width:min(680px,100%);border-radius:18px;padding:18px 22px 20px;
+  background:linear-gradient(var(--np-brilho),rgba(30,40,58,.62),rgba(12,17,26,.72));
+  -webkit-backdrop-filter:blur(16px) saturate(1.3);backdrop-filter:blur(16px) saturate(1.3);
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 24px 60px -20px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.16);
+  animation:cardEntra .4s var(--ease) both,cardBrilho 9s ease-in-out infinite}
+@keyframes cardEntra{from{transform:translateY(14px) scale(.97)}to{transform:none}}
+/* A luz do vidro passeia devagar, como reflexo em superfície real. 9s é lento o
+   bastante para não competir com a leitura das falas. */
+@keyframes cardBrilho{0%,100%{--np-brilho:150deg}50%{--np-brilho:205deg}}
+@media (prefers-reduced-motion:reduce){
+  .np-card{animation:none}
+  .narracao-palco{transition:none}
+}
+/* O brilho de topo é o que faz o vidro parecer vidro: uma linha de luz onde a
+   superfície pega a claridade, e não um retângulo cinza translúcido.
+   `position:relative` e `overflow:hidden` vivem no bloco base de `.np-card`, e
+   não aqui embaixo: a regra de `prefers-reduced-motion` está NO MEIO dos dois, e
+   um segundo bloco depois dela devolveria a `animation` a quem pediu movimento
+   reduzido. Declaração espalhada em duas regras do mesmo seletor é como a
+   cascata desta folha já perdeu 33 declarações em 02/08. */
+.np-card::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.09),transparent 42%)}
+
+.np-topo{display:flex;align-items:center;gap:16px;margin-bottom:14px}
+.np-round{display:flex;align-items:baseline;gap:8px;flex:0 0 auto}
+.np-rot{font-family:var(--ff);font-size:.6rem;font-weight:700;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--dim)}
+.np-round b{font-family:var(--ff);font-size:2.6rem;font-weight:700;line-height:.85;
+  color:var(--accent);text-shadow:0 0 22px rgba(var(--accent-rgb),.5)}
+.np-meio{display:flex;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+.np-placar{font-family:var(--ff);font-size:1.25rem;font-weight:700;color:var(--txt);
+  font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.np-tag{font-family:var(--ff);font-size:.58rem;font-weight:700;letter-spacing:.16em;
+  text-transform:uppercase;padding:4px 9px;border-radius:20px;
+  color:var(--accent);border:1px solid rgba(var(--accent-rgb),.45);
+  background:rgba(var(--accent-rgb),.12)}
+.np-tag:empty{display:none}
+
+.narracao{display:flex;flex-direction:column;gap:9px;min-height:96px;justify-content:flex-start}
+.narracao[hidden]{display:none}
+
+@media(max-width:640px){
+  .np-card{padding:14px 15px 16px;border-radius:14px}
+  .np-round b{font-size:2rem}
+  .np-placar{font-size:1.05rem}
+  .narracao{min-height:120px}
+}
+.fala{display:flex;gap:10px;align-items:baseline;font-size:.95rem;line-height:1.42;
+  animation:falaEntra .34s var(--ease) both}
+@keyframes falaEntra{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.fala-quem{font-family:var(--ff);font-weight:700;font-size:.58rem;letter-spacing:.16em;
+  text-transform:uppercase;flex:0 0 auto;padding-top:2px;min-width:66px}
+/* Duas vozes, duas cores: o olho separa quem fala antes de ler. O narrador usa o
+   laranja da marca; o comentarista, o ciano — a mesma dupla que o resto da folha
+   já usa para "ação" e "leitura". */
+.fala--pbp .fala-quem{color:var(--accent)}
+.fala--cor .fala-quem{color:var(--cyan)}
+.fala--pbp .fala-txt{color:var(--txt)}
+.fala--cor .fala-txt{color:var(--neutral);font-style:italic}
+/* `pretty` em vez de `balance`: a fala pode ter três ou quatro linhas, e
+   `balance` só age até quatro e tenta igualar o comprimento — o que numa fala
+   longa produz linhas curtas demais. `pretty` só evita a órfã da última linha,
+   que é o defeito que realmente incomoda a leitura. */
+.fala-txt{min-width:0;text-wrap:pretty}
+@media (prefers-reduced-motion:reduce){.fala{animation:none}}
+
+/* BOTÕES EM VIDRO — 07/08/2026: *"eu quero absolutamente TUDO em liquid glass
+   na antessala, botoes, blocos, tudo mesmo"*.
+   O botão primário mantém a cor da marca, mas como LUZ atrás do vidro em vez de
+   preenchimento chapado; o secundário é vidro puro. A hierarquia continua — um
+   brilha, o outro não — sem que nenhum dos dois vire bloco opaco. */
+.prematch-modos{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.prematch-modos .roll{border-radius:var(--r-peca);padding:14px 30px;
+  backdrop-filter:var(--vidro-medio-blur);-webkit-backdrop-filter:var(--vidro-medio-blur);
+  box-shadow:var(--vidro-medio-sombra),0 14px 34px -18px rgba(0,0,0,.9)}
+#prematchNarrado{color:var(--txt);border:1px solid rgba(var(--accent-rgb),.55);
+  background:linear-gradient(180deg,rgba(var(--accent-rgb),.42),rgba(var(--accent-deep-rgb),.28))}
+#prematchNarrado:hover{background:linear-gradient(180deg,rgba(var(--accent-rgb),.55),rgba(var(--accent-deep-rgb),.36))}
+#prematchStart{color:var(--txt);border:1px solid var(--vidro-medio-borda);
+  background:var(--vidro-medio-bg)}
+#prematchStart:hover{background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.06))}
+.prematch-nota{font-size:.66rem;color:var(--dim);letter-spacing:.06em;margin:0;text-align:center;
+  padding:7px 16px;border-radius:var(--r-pilula);
+  background:var(--vidro-raso-bg);border:1px solid var(--vidro-raso-borda);
+  backdrop-filter:var(--vidro-raso-blur);-webkit-backdrop-filter:var(--vidro-raso-blur)}
+
 .swiss,.bracket{flex:1;overflow:auto;padding:20px}
 .swiss::-webkit-scrollbar,.bracket::-webkit-scrollbar{height:9px;width:9px}
 .swiss::-webkit-scrollbar-thumb,.bracket::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px}
@@ -1167,7 +1380,20 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .swiss-col-vazio{font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);
   opacity:.5;text-align:center;padding:14px 0}
 .qualified-slot.mine{box-shadow:0 0 0 1px rgba(var(--mine-rgb),.5),0 0 16px rgba(var(--mine-rgb),.2)}
-.bracket{display:flex;gap:clamp(20px,4vw,46px);align-items:center;justify-content:flex-start;min-height:100%}
+/* O BRACKET É A SUÍÇA QUE NÃO FOI CURADA — 06/08/2026. Quando a Fase Suíça
+   deixou de ser uma fila encostada à esquerda, o quadro irmão ficou com a doença
+   inteira: `justify-content:flex-start` sem `flex-wrap`, medido em 20 px à
+   esquerda contra 504 px de vazio à direita no desktop (conteúdo de 916 px numa
+   caixa de 1440). No tablet o conteúdo somava 869 px em 760, e o que saía da
+   janela era a coluna `champ-col` — o TROFÉU do Major. No celular, 712 px em 390.
+   Havia `overflow:auto`, então nada se perdia de vez; perdia-se o enquadramento,
+   que é o mesmo critério pelo qual a Suíça foi corrigida.
+   Aqui `wrap` não desmancha a leitura como desmancharia numa tabela: as rodadas
+   quebram em ordem, e um bracket empilhado de cima para baixo é a convenção da
+   tela estreita. `safe center` é o que impede a centragem de cortar dos dois
+   lados quando nem uma linha inteira cabe. */
+.bracket{display:flex;flex-wrap:wrap;gap:clamp(20px,4vw,46px);align-items:center;
+  align-content:safe center;justify-content:center;min-height:100%}
 .bracket-round{display:flex;flex-direction:column;gap:clamp(16px,3vw,30px);justify-content:center;flex:0 0 auto}
 .bracket-round-title{font-family:var(--ff);font-weight:700;
   text-align:center;margin-bottom:4px;text-transform:uppercase}
@@ -1223,19 +1449,272 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
   transition:.14s;-webkit-tap-highlight-color:transparent}
 .match-close:hover{color:var(--txt);border-color:var(--accent);transform:scale(1.05)}
 .prematch{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;padding:30px}
-.prematch-ctx{font-family:var(--ff);font-weight:700;font-size:.74rem;letter-spacing:.2em;text-transform:uppercase;
-  color:var(--accent);text-align:center}
-.prematch-vs{display:flex;align-items:center;gap:clamp(20px,6vw,70px)}
-.pm-team{display:flex;flex-direction:column;align-items:center;gap:12px;min-width:130px}
-.pm-team .team-mono{width:74px;height:74px;font-size:1.5rem;border-radius:18px}
-.pm-team .pm-name{font-family:var(--ff);font-weight:700;font-size:1.3rem;letter-spacing:.04em;color:var(--txt);text-align:center}
-.pm-team .pm-camp{font-family:var(--ff);font-size:.74rem;color:var(--dim);letter-spacing:.06em;text-align:center;margin-top:-4px}
-.pm-team .pm-ef{font-family:var(--ff);font-size:.8rem;color:var(--dim);letter-spacing:.1em}
-.pm-team .pm-ef b{color:var(--cyan);font-size:1.1rem}
-.pm-team.mine .pm-name{color:var(--cyan)}
-.pm-mid{display:flex;flex-direction:column;align-items:center}
-.pm-versus{font-family:var(--ff);font-weight:700;letter-spacing:.1em}
-.livemap{flex:1;display:flex;flex-direction:column;min-height:0}
+/* CABEÇALHO DA ANTESSALA — 07/08/2026, a pedido: "aquele texto todo lá em cima
+   tá muito pouco destacado e tem coisa demais, a pessoa tem que bater o olho e
+   já entender, não tem que ficar lendo nada".
+   O defeito era de HIERARQUIA, não de tamanho: quatro informações — rodada,
+   fase, seu placar e formato — dividiam a mesma pílula, no mesmo corpo de
+   .74rem, com o mesmo `letter-spacing` largo. Sem peso relativo, nada é lido de
+   relance: tudo tem de ser lido em sequência.
+   Agora a FASE é o que se vê primeiro, "mata-mata" vira selo em vez de mais um
+   item da frase, e rodada/placar/formato descem para a linha de apoio. */
+
+
+
+
+/* ══ PALCO DO CONFRONTO — reformulação de 07/08/2026 ══════════════════════════
+   O que havia antes era uma LISTA: contexto, dois cards, barra, botões, todos
+   empilhados no centro com o mesmo respiro e o mesmo peso. Layout de formulário,
+   não de confronto. E a escala tipográfica era plana — nome 1,3 rem, força
+   1,75, mapa 1,32, VS 1,8: tudo entre 1,3 e 1,8, nada dominando, nenhuma
+   primeira leitura.
+
+   Agora os dois times ocupam METADES OPOSTAS da mesma área, cortadas por uma
+   diagonal. A diagonal não é enfeite: é o que faz dois blocos virarem oposição,
+   e é o vocabulário que as cartas do jogo já usam — não cobra aprendizado.
+
+   O MAPA VIRA CENÁRIO. O nome dele fica em marca d'água atrás de tudo, gigante e
+   apagado: ele é o lugar onde a partida acontece. Placa na frente já foi tentada
+   três vezes e recusada duas — fundo não é bloco. */
+/* LIQUID GLASS — 07/08/2026, a pedido. O palco deixou de ser um painel opaco e
+   passou a ser uma lâmina de vidro sobre o ambiente do mapa: o fundo atravessa
+   desfocado, a borda superior pega a luz e a inferior fica na sombra.
+   `backdrop-filter` NÃO é gratuito neste projeto — em 29/07 ele derrubou a tela
+   da partida para 31 fps e foi removido dos overlays. O que o torna aceitável
+   aqui é a mesma condição do painel da narração: superfície PEQUENA sobre fundo
+   estático, e não uma tela inteira em movimento. O fps foi medido. */
+.pm-palco{position:relative;width:min(880px,100%);
+  display:grid;grid-template-areas:"palco";
+  border-radius:var(--r-lamina);overflow:hidden;
+  border:1px solid var(--vidro-alto-borda);background:var(--vidro-alto-bg);
+  backdrop-filter:var(--vidro-alto-blur);-webkit-backdrop-filter:var(--vidro-alto-blur);
+  box-shadow:var(--vidro-alto-sombra)}
+
+
+/* AS DUAS METADES ocupam a MESMA célula e se recortam por `clip-path`. Ocupar a
+   mesma área é o que faz a diagonal ser uma costura entre elas, e não uma borda
+   de cada uma — duas caixas vizinhas com bordas inclinadas deixariam um vão. */
+.pm-lado{grid-area:palco;position:relative;display:flex;align-items:center;gap:clamp(12px,2.4vw,20px);
+  padding:clamp(22px,3.4vw,34px);min-width:0}
+.pm-lado--a{clip-path:polygon(0 0,58% 0,42% 100%,0 100%);
+  background:linear-gradient(105deg,rgba(var(--time-rgb),.30),rgba(var(--time-rgb),.03) 78%);
+  justify-content:flex-start;padding-right:22%}
+.pm-lado--b{clip-path:polygon(58% 0,100% 0,100% 100%,42% 100%);
+  background:linear-gradient(285deg,rgba(var(--time-rgb),.30),rgba(var(--time-rgb),.03) 78%);
+  /* `row-reverse` inverte o eixo: `flex-start` passa a apontar para a DIREITA.
+     Com `flex-end` o conteúdo ia para a esquerda, que é exatamente a parte que o
+     `clip-path` recorta — o lado inteiro sumia da tela. */
+  justify-content:flex-start;flex-direction:row-reverse;padding-left:22%}
+/* O time do jogador se anuncia por LUZ na aresta, não por outra cor: a cor já é
+   a do clube, e trocá-la apagaria a identidade que o palco existe para mostrar.
+   A LUZ É BRANCA — 07/08/2026. Era ciano (`--mine-rgb`), e a 50% sobre um clube
+   cuja cor é `#000000` ela não lia como realce: lia como MATIZ, um lado
+   azul-esverdeado ao lado de um adversário vermelho. O responsável: *"aquele
+   liquid glass tá mto diferente no lado do time do jogador, é branco no preto e
+   cabou"*. Branco é o material do sistema de vidro — o mesmo `rgba(255,255,255)`
+   de `--vidro-*-bg` e das bordas —, então o lado do jogador passa a ser vidro
+   sobre preto como todo o resto da tela, e o realce continua existindo como
+   RELEVO. É a regra 53 outra vez: o canal certo aqui é forma, não cor. */
+.pm-lado.mine{box-shadow:inset 0 0 42px -12px rgba(255,255,255,.18)}
+
+.pm-crest{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.pm-crest::after{content:"";position:absolute;inset:-14%;border-radius:50%;z-index:0;
+  background:radial-gradient(circle,rgba(var(--time-rgb),.5),transparent 68%)}
+.pm-crest .team-mono{position:relative;z-index:1}
+.pm-lado .team-mono{width:clamp(52px,7vw,74px);height:clamp(52px,7vw,74px);
+  font-size:clamp(1.05rem,2vw,1.5rem);border-radius:18px}
+
+/* ESCALA COM DEGRAUS REAIS: nome, força, era. */
+/* A COLUNA CENTRA-SE SOZINHA — 07/08/2026. A linha da era existe só no lado do
+   adversário; o time do jogador não tem uma. Reservar a altura dela do lado
+   vazio igualava a caixa e criava um BURACO visível, que é o que se lê como
+   "assimétrico" mesmo com toda a geometria em zero.
+   Como as duas metades já têm a mesma altura por construção, centrar o conteúdo
+   de cada uma resolve sem reservar vazio nem inventar informação que não
+   existe. */
+.pm-info{display:flex;flex-direction:column;justify-content:center;gap:2px;min-width:0}
+.pm-lado--b .pm-info{align-items:flex-end;text-align:right}
+/* Sem prefixo de lado: o nome tem a MESMA escala nos dois. Ao remover a regra
+   `.pm-id` num script, este seletor grudou no anterior e virou
+   `.pm-lado--b .pm-name` — o lado A ficava sem estilo de nome e aparecia menor e
+   mais fino que o adversário. Regra 23: reescrita em massa erra por borda. */
+.pm-name{font-family:var(--ff);font-weight:800;font-size:clamp(1.15rem,2.6vw,1.9rem);
+  letter-spacing:.02em;color:var(--txt);line-height:1.05;overflow-wrap:anywhere}
+.pm-camp{font-family:var(--ff);font-size:.68rem;color:var(--dim);letter-spacing:.06em;line-height:1.3}
+.pm-ef{display:flex;align-items:baseline;gap:7px;margin-top:4px}
+.pm-lado--b .pm-ef{flex-direction:row-reverse}
+.pm-ef b{font-family:var(--ff);font-weight:800;font-size:clamp(1.5rem,3.2vw,2.3rem);
+  line-height:1;color:var(--time-traco);font-variant-numeric:tabular-nums}
+.pm-ef-rot{font-family:var(--ff);font-size:.56rem;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--dim)}
+
+/* O VS vive NA COSTURA, por cima das duas metades, como MARCA D'ÁGUA e não como
+   rótulo: ele não carrega informação que o olho precise LER — os dois nomes e a
+   diagonal já dizem que é um confronto —, então pode ser área e textura. É a
+   regra 53 no mesmo eixo do lado preto do jogador.
+
+   ABSOLUTO, E NÃO ITEM DA GRADE, e esta é a parte que mais custou. Como item de
+   grid o SVG DIMENSIONAVA a linha: `<svg width:100%>` com `viewBox` tem altura
+   INTRÍNSECA pela razão de aspecto — 880 × 703,13/1368,75 = 452 px —, e o palco,
+   que mede 160 px de conteúdo, foi esticado para 453. A letra não ficou grande
+   sozinha; ela inchou o bloco inteiro. Fora do fluxo, a altura volta a quem é
+   dona dela: as duas metades.
+
+   ALTURA CHEIA, LARGURA PRESA — 07/08/2026. O pedido é *"esticado de baixo até
+   em cima, mas sem esticar pros lados"*, e isso é romper a proporção de
+   propósito: com `preserveAspectRatio="none"` os dois eixos passam a ser
+   governados aqui. `height:100%` leva a tinta de borda a borda; o `aspect-ratio`
+   congela a largura NA QUE ELA JÁ TINHA — a proporção natural do glifo
+   (1368.75/703.13) tomada à altura de 72% que vigorava antes. Escrito como conta,
+   e não como "1.4016", para a origem continuar legível: mexer na fração muda a
+   largura, mexer no `height` muda só a esticada. */
+.pm-versus{position:absolute;left:50%;top:50%;translate:-50% -50%;
+  height:100%;aspect-ratio:calc(1368.75 / 703.13 * .72);
+  display:block;z-index:0;pointer-events:none}
+/* A TINTA É UMA SÓ NOS DOIS LADOS — 07/08/2026. A diagonal atravessa a letra de
+   ponta a ponta, então metade dela pousa no preto do jogador e metade na cor do
+   adversário. Com pintura normal isso dá DUAS letras: branco a 13% sobre preto
+   vira cinza visível, e sobre um verde claro quase some — foi o que o
+   responsável viu como *"as cores ficam estranhas por causa da linha diagonal"*.
+   `plus-lighter` é ADITIVO: o resultado é fundo + a tinta, então o DELTA que a
+   letra acrescenta é idêntico dos dois lados da costura, e o olho lê uma marca
+   d'água só em vez de duas metades. É o mesmo raciocínio da regra 53 — quando o
+   fundo é variável, o canal tem de ser independente dele. */
+/* `.14em` de 1000 = os mesmos 140 milésimos com que a tinta de 1368.75 foi
+   medida; é o tracking que o `viewBox` pressupõe, então os dois têm de andar
+   juntos. Mudar um sem o outro desalinha a letra dentro da própria caixa.
+
+   O TRAÇO ENGROSSA POR `stroke`, NÃO POR PESO. Chakra Petch para em 700; pedir
+   800 não traz um corte mais gordo, o navegador SINTETIZA o negrito — e fonte
+   sintética engorda de forma desigual e suja a haste. O contorno é o controle
+   contínuo que a família não oferece: `paint-order:stroke` o desenha ATRÁS do
+   preenchimento, então ele só alarga a silhueta em vez de riscar por cima.
+   O contorno usa a mesma pintura do fill para a letra continuar sendo um
+   material só — dois valores diferentes dariam uma borda visível, que é
+   exatamente o que uma marca d'água não pode ter. */
+   A TRANSLUCIDEZ VIVE NO GRUPO, NÃO NA PINTURA. Com `fill` e `stroke` ambos
+   translúcidos eles SOMAM na faixa em que se sobrepõem — o contorno entra metade
+   para dentro do glifo —, e a letra ganhava miolo claro com borda escura: um halo,
+   exatamente o que uma marca d'água não pode ter. Pintura opaca + `opacity` no
+   elemento faz o navegador compor a letra inteira primeiro e só então diluí-la,
+   então silhueta e miolo saem com o mesmo valor. */
+.pm-versus text{font-family:var(--ff);font-weight:700;letter-spacing:.14em;
+  fill:#fff;stroke:#fff;stroke-width:34;
+  paint-order:stroke fill;stroke-linejoin:round;opacity:.13}
+@supports (mix-blend-mode:plus-lighter){
+  /* Sem o `@supports` um navegador que ignore `plus-lighter` cairia em pintura
+     normal com a MESMA tinta, que é justamente o caso ruim. Com ele, quem não tem
+     o modo aditivo recebe um branco chapado mais discreto, que erra menos. */
+  .pm-versus{mix-blend-mode:plus-lighter}
+  /* O gradiente varia a COR, não a opacidade, pela mesma razão: alpha por stop
+     voltaria a somar contra o contorno. Como o modo é aditivo, um cinza escuro
+     acrescenta pouca luz e faz o papel da sombra na base. */
+  .pm-versus text{fill:url(#pmVsVidro);stroke:url(#pmVsVidro);opacity:.15}
+}
+
+/* CHIPS DE CONTEXTO — 07/08/2026, a pedido de padronizar a faixa de cima.
+   Antes havia DUAS peças de formatos diferentes para informações do mesmo nível:
+   uma pílula com título, selo e subtítulo dentro, e outra com rótulo mais
+   número. Forma diferente para conteúdo equivalente é o que faz uma faixa
+   parecer bagunçada, por mais alinhada que ela esteja.
+   Agora todo item é o MESMO objeto — rótulo pequeno em cima, valor embaixo, uma
+   caixa só —, e a diferença entre eles é apenas ÊNFASE. */
+.prematch-ctx{display:flex;align-items:stretch;justify-content:center;gap:8px;flex-wrap:wrap}
+.pm-chip{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  min-width:92px;padding:8px 15px;border-radius:var(--r-peca);
+  background:var(--vidro-medio-bg);border:1px solid var(--vidro-medio-borda);
+  backdrop-filter:var(--vidro-medio-blur);-webkit-backdrop-filter:var(--vidro-medio-blur);
+  box-shadow:var(--vidro-medio-sombra)}
+.pm-chip-r{font-family:var(--ff);font-size:.5rem;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--dim);line-height:1}
+.pm-chip-v{font-family:var(--ff);font-weight:800;font-size:.86rem;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--txt);line-height:1.1;white-space:nowrap}
+/* A SÉRIE é o item que muda o tamanho do confronto — ganha a cor da marca sem
+   mudar de forma, que é o que mantém a faixa padronizada. */
+.pm-chip--serie{background:rgba(var(--accent-rgb),.14);border-color:rgba(var(--accent-rgb),.45)}
+.pm-chip--serie .pm-chip-v{color:var(--accent)}
+.pm-chip--alerta{background:rgba(var(--s-red-rgb),.14);border-color:rgba(var(--s-red-rgb),.45)}
+.pm-chip--alerta .pm-chip-v{color:var(--s-red)}
+
+/* CONFRONTO DE FORÇA, encostado no palco. Uma barra dividida entre os dois
+   clubes na proporção das forças — quem tem mais, ocupa mais.
+   O DIVISOR não é enfeite: cores de clube são dado, e dois azuis podem cair
+   frente a frente. Sem o sulco a barra sairia como bloco único. */
+.pm-forca{display:flex;flex-direction:column;gap:7px;width:min(880px,100%)}
+.pm-forca[hidden]{display:none}
+.pm-forca-trilho{display:flex;height:10px;border-radius:6px;overflow:hidden;
+  background:var(--vidro-raso-bg);border:1px solid var(--vidro-raso-borda);
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.4)}
+.pm-forca-a,.pm-forca-b{background:var(--time-traco);transition:width .5s var(--ease)}
+.pm-forca-a{border-right:2px solid var(--bg)}
+.pm-forca-b{opacity:.92}
+.pm-forca-leg{display:flex;align-items:baseline;justify-content:space-between;gap:14px;
+  font-family:var(--ff);letter-spacing:.1em}
+.pm-forca-n{font-size:.82rem;font-weight:800;color:var(--neutral);font-variant-numeric:tabular-nums}
+.pm-forca-v{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);
+  text-align:center;flex:1}
+/* A declaração de `.pm-versus` que havia aqui — `font-weight:700`,
+   `letter-spacing:.1em` — saiu: ela repetia a família e brigava com o peso e o
+   tracking da regra base, sem query nem estado que justificasse a segunda voz.
+   O VS é definido em UM lugar só, junto do palco a que pertence. */
+/* OS MAPAS. Ficam sob o VS porque são do CONFRONTO, não de um dos lados —
+   pendurá-los num dos cards sugeriria vantagem de quem os recebeu. Num MD3 são
+   três, empilhados na ordem de jogo. */
+/* OS MAPAS EM LINHA, como os chips do topo — 07/08/2026. Eles estavam
+   empilhados na vertical enquanto a faixa de contexto corria na horizontal: duas
+   listas de itens equivalentes em duas orientações, que é a mesma incoerência
+   que padronizar os chips corrigiu.
+   Em linha eles também custam menos altura numa tela que já sobrava espaço
+   embaixo, e `wrap` devolve o empilhamento onde a largura não der — no celular,
+   três nomes de mapa não cabem lado a lado. */
+#pmMapa{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px}
+/* A PLACA DO MAPA — 07/08/2026, segunda versão.
+   A primeira tinha um quadradinho de sigla DENTRO de um retângulo, e foi
+   recusada: *"tem um bloco dentro do outro, tipo um retângulo dentro do outro,
+   nada a ver isso"*. Agora é UMA peça só — sem filho com moldura própria — e o
+   nome do mapa ocupa o lugar que a sigla tomava.
+
+   O MAPA QUE VAI SER JOGADO É SÓLIDO na cor dele; os outros da série ficam em
+   contorno. Nenhum dos dois é rotulado: a diferença entre "agora" e "talvez"
+   está na FORMA, e escrever isso por cima seria legendar o que o desenho já
+   resolveu. Os rótulos existiram por duas rodadas e foram recusados nas duas. */
+/* REFINO DE 07/08/2026: o mapa reserva perdeu a caixa. Um retângulo contornado
+   para cada mapa dava três molduras empilhadas sob o VS, e caixa é peso — o que
+   ela precisa dizer ("existe, mas talvez não seja jogado") cabe num traço na cor
+   do mapa e no nome apagado. Só o mapa da vez continua sendo uma placa. */
+/* O MAPA DA VEZ ganha um destaque LEVE — mesma forma e mesma caixa dos outros,
+   porque selo dentro do palco já foi recusado e caixa dentro de caixa também.
+   O que muda é presença: o traço da cor engrossa e acende, o nome vem em branco
+   e um pouco maior, e a peça recebe um halo curto na cor do mapa. Os demais
+   ficam apagados, esperando a vez. */
+.pm-mapa--agora{opacity:1;border-color:rgba(var(--mapa-rgb),.5);
+  box-shadow:var(--vidro-medio-sombra),0 6px 20px -10px rgba(var(--mapa-rgb),.9)}
+.pm-mapa--agora::before{width:4px;box-shadow:0 0 12px -1px var(--mapa-cor)}
+.pm-mapa--agora .pm-mapa-nome{color:var(--txt);font-size:.94rem;letter-spacing:.16em}
+.pm-mapa{display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:6px 14px 6px 8px;position:relative;opacity:.9;border-radius:var(--r-peca);
+  background:var(--vidro-medio-bg);border:1px solid var(--vidro-medio-borda);
+  backdrop-filter:var(--vidro-medio-blur);-webkit-backdrop-filter:var(--vidro-medio-blur)}
+.pm-mapa::before{content:"";width:3px;align-self:stretch;border-radius:2px;
+  background:var(--mapa-cor);flex:0 0 auto}
+.pm-mapa-nome{font-family:var(--ff);font-weight:700;font-size:.82rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--neutral);white-space:nowrap;line-height:1.2}
+/* O mapa da vez: cor cheia, tinta escolhida por contraste e um halo curto que o
+   destaca do ambiente — que é da mesma família cromática, por construção. */
+
+/* O FORMATO DA SÉRIE — 07/08/2026. Era um item da linha de apoio, em .68 rem e
+   no mesmo cinza de rodada e placar; agora tem número próprio em corpo grande.
+   Ele muda o TAMANHO do confronto: um mapa decide tudo, três dão chance de
+   virada. Isso não pode ter o peso de um detalhe. */
+
+
+
+/* Melhor de 1 é o caso mais tenso, não o menor: sem chance de virada. O selo
+   ganha a cor cheia para dizer isso sem uma palavra a mais. */
+
+/* `relative` porque o palco da narração é `absolute` e precisa se ancorar no
+   mapa, não na janela: assim ele cobre a área de jogo e não a barra de botões. */
+.livemap{flex:1;display:flex;flex-direction:column;min-height:0;position:relative}
 .scorebar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
   border-bottom:1px solid var(--line);background:var(--panel2);
   padding:max(clamp(14px,2.5vw,22px),env(safe-area-inset-top)) clamp(14px,3vw,30px) clamp(14px,2.5vw,22px);gap:clamp(10px,3vw,28px)}
@@ -1248,30 +1727,138 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
   letter-spacing:.02em;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .sb-team.mine .sb-name{color:var(--cyan)}
 .sb-team .sb-camp{font-family:var(--ff);font-size:.6rem;color:var(--dim);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.sb-side{font-family:var(--ff);font-weight:700;font-size:.58rem;letter-spacing:.14em;padding:3px 9px;border-radius:5px;width:fit-content}
-.sb-side.ct{background:rgba(var(--ct-rgb),.16);color:var(--ct-ink);border:1px solid rgba(var(--ct-rgb),.4)}
-.sb-side.tr{background:rgba(var(--tr-rgb),.16);color:var(--tr-ink);border:1px solid rgba(var(--tr-rgb),.4)}
+/* O LADO DEIXOU DE SER O MENOR TEXTO DA TELA — 07/08/2026.
+   Medido antes: 9,28px aqui e 8,32px na tabela, os dois menores de 86 textos,
+   contra 60,8px do placar. A informação de que o jogador mais precisa para ler o
+   mapa era a que menos podia ser lida. Agora a sigla cresce e ganha o nome por
+   extenso ao lado — "CT" não significa nada para quem não joga CS, e "Defesa"
+   significa. O fundo passa de .16 para .22 porque a peça cresceu e precisa
+   continuar lendo como PLACA, não como texto solto sobre o painel. */
+.sb-side{font-family:var(--ff);font-weight:700;font-size:.72rem;letter-spacing:.1em;
+  padding:4px 10px;border-radius:6px;width:fit-content;
+  display:inline-flex;align-items:baseline;gap:7px}
+.lado-sigla{font-weight:800;letter-spacing:.14em}
+/* O nome por extenso é apoio: mesma cor, menor corpo, sem caixa alta forçada. */
+.lado-extenso{font-size:.82em;font-weight:600;letter-spacing:.02em;text-transform:none;opacity:.86}
+.sb-side.ct{background:rgba(var(--ct-rgb),.22);color:var(--ct-ink);border:1px solid rgba(var(--ct-rgb),.5)}
+.sb-side.tr{background:rgba(var(--tr-rgb),.22);color:var(--tr-ink);border:1px solid rgba(var(--tr-rgb),.5)}
+
+/* AVISO DA VIRADA DE LADO. Faixa curta, largura inteira, logo abaixo da barra de
+   progresso — o lugar onde o olho já está, porque é ali que o round avança.
+   `hidden` continua sendo a fonte única de verdade do estado; a animação é só de
+   entrada e some com `prefers-reduced-motion`, como o resto da folha. */
+.virada-aviso{font-family:var(--ff);font-weight:700;font-size:.74rem;letter-spacing:.1em;
+  text-transform:uppercase;text-align:center;padding:9px clamp(16px,3vw,28px);
+  color:var(--txt);background:rgba(var(--accent-rgb),.14);
+  border-block:1px solid rgba(var(--accent-rgb),.34)}
+.virada-aviso[hidden]{display:none}
+@media (prefers-reduced-motion:no-preference){
+  .virada-aviso{animation:viradaEntra .32s var(--ease)}
+}
+@keyframes viradaEntra{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
 .sb-center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
 .sb-score{font-family:var(--ff);font-weight:700;font-size:clamp(2.6rem,8vw,3.8rem);line-height:.9;
   display:flex;align-items:center;gap:clamp(12px,3vw,22px);color:var(--txt);font-variant-numeric:tabular-nums}
 .sb-score>span:not(.sb-dash){min-width:1.1em;text-align:center;display:inline-block}
 .sb-score .sb-dash{color:var(--dim);font-size:.5em;font-weight:400}
-.sb-score .bump{animation:scoreBump .3s var(--ease)}
-@keyframes scoreBump{0%{transform:scale(1)}40%{transform:scale(1.3)}100%{transform:scale(1)}}
-.sb-map{font-family:var(--ff);font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);white-space:nowrap}
+/* Mesma razão da tira: 1,3 num número de 60 px é um solavanco a cada round.
+   1,16 ainda marca quem pontuou sem sacudir o placar. */
+.sb-score .bump{animation:scoreBump .34s var(--ease)}
+@keyframes scoreBump{0%{transform:scale(1)}38%{transform:scale(1.16)}100%{transform:scale(1)}}
+/* O MAPA TRANSFORMA O AMBIENTE — 07/08/2026, correção do próprio pedido:
+   *"era mais sobre o mapa transformar a interface, o fundo, etc… tanto da
+   antessala quanto da partida."* Um chip colorido é rótulo; ambiente é o fundo
+   mudar debaixo de tudo.
+
+   TRÊS CAMADAS, e nenhuma delas é imagem:
+     1. o gradiente `ceu`→`chao`, que dá o clima do lugar;
+     2. um facho superior na cor da marca, muito diluído — a "luz" do mapa;
+     3. uma vinheta inferior, que assenta o conteúdo.
+   `--mapa-ceu`/`--mapa-chao` vêm do DADO, por `estiloDoMapa()`: o CSS não sabe
+   qual mapa vai cair, e é por isso que a ambientação não pode morar só aqui.
+
+   A LEGIBILIDADE É COBRADA, não presumida: `check-map-identity` mede o texto do
+   corpo e o de apoio sobre os dois extremos dos SETE ambientes. */
+.livemap[style*="--mapa-ceu"]{
+  background:
+    radial-gradient(120% 82% at 50% -12%,rgba(var(--mapa-rgb),.13),transparent 62%),
+    radial-gradient(90% 60% at 50% 118%,rgba(0,0,0,.5),transparent 60%),
+    linear-gradient(180deg,var(--mapa-ceu),var(--mapa-chao));
+}
+/* A ANTESSALA PUXA MAIS A COR DO MAPA que a tela da partida — 07/08/2026, a
+   pedido: *"o fundo da antessala tem que destacar mais ainda que mapa foi
+   escolhido"*. Ela pode: aqui o texto vive DENTRO de lâminas de vidro, que têm
+   fundo próprio, enquanto na partida ele fica direto sobre o ambiente.
+   Duas auroras nos cantos superiores mais um facho central dão a sensação de
+   estar no lugar; a vinheta de baixo assenta o conteúdo. */
+.prematch[style*="--mapa-ceu"]{
+  background:
+    radial-gradient(64% 50% at 10% -4%,rgba(var(--mapa-rgb),.62),transparent 68%),
+    radial-gradient(64% 50% at 90% -4%,rgba(var(--mapa-rgb),.5),transparent 68%),
+    radial-gradient(130% 78% at 50% -8%,rgba(var(--mapa-rgb),.4),transparent 62%),
+    radial-gradient(90% 48% at 50% 108%,rgba(var(--mapa-rgb),.24),transparent 66%),
+    radial-gradient(110% 66% at 50% 124%,rgba(0,0,0,.66),transparent 60%),
+    linear-gradient(180deg,var(--mapa-ceu),var(--mapa-chao));
+}
+/* A transição faz o mapa CHEGAR em vez de piscar — e some com reduced-motion,
+   como todo movimento desta folha. */
+@media (prefers-reduced-motion:no-preference){
+  .livemap,.prematch{transition:background .5s var(--ease)}
+}
+
+/* A MARCA DO MAPA DENTRO DA PARTIDA — 07/08/2026. Mesma sigla e mesma cor da
+   antessala: é a repetição que faz o reconhecimento grudar, e é ela que permite
+   saber o mapa "sem nem ler". */
+/* Sem quadradinho aqui também: o nome do mapa é a placa, pintado na cor dele.
+   Uma peça só, pelo mesmo motivo da antessala. */
+.sb-map{display:inline-flex;align-items:center;font-family:var(--ff);
+  font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;white-space:nowrap;
+  padding:4px 12px;border-radius:6px;
+  background:rgba(var(--mapa-rgb),.2);border:1px solid rgba(var(--mapa-rgb),.5)}
+.sb-map-nome{color:var(--txt);font-weight:800;letter-spacing:.18em}
+/* Um fio da cor do mapa sob o placar: presença suficiente para o olho fixar a
+   associação, discreta o bastante para não competir com o placar nem com os
+   lados CT/TR, que são a informação de leitura do round. */
+.livemap .sb-progress{background:rgba(var(--mapa-rgb),.22)}
 .sb-progress{height:3px;background:var(--line)}
+/* A BARRA ANDA NO RITMO DO ROUND — 07/08/2026.
+   Ela tinha `.3s` fixo enquanto o round mais rápido do miolo dura 241 ms: a
+   barra NUNCA alcançava o jogo, e cada round começava com ela ainda a caminho do
+   anterior. O atraso é o que fazia a reprodução parecer engasgada em vez de
+   corrida. `--passo` é escrito pelo JS a cada round, com a duração real daquele
+   round, e a curva vira linear — progresso é grandeza contínua, não gesto, e
+   `ease` num valor que avança sem parar cria uma pulsação que não existe. */
 .sb-progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),#ff8a4a);
-  box-shadow:0 0 8px var(--accent);transition:width .3s var(--ease)}
+  box-shadow:0 0 8px var(--accent);
+  transition:width var(--passo,.3s) linear}
 /* tira de rounds estilo HLTV */
-.roundstrip{display:flex;gap:3px;padding:12px clamp(16px,3vw,28px);flex-wrap:wrap;
-  border-bottom:1px solid var(--line);background:rgba(10,13,20,.4);min-height:38px;align-content:flex-start;
+.roundstrip{display:flex;gap:4px;padding:12px clamp(16px,3vw,28px);flex-wrap:wrap;
+  border-bottom:1px solid var(--line);background:rgba(10,13,20,.4);min-height:44px;align-content:flex-start;
+  row-gap:5px;align-items:flex-end;
   width:100%;max-width:720px;margin:0 auto;box-sizing:border-box;justify-content:center}
-.rs-cell{width:14px;height:14px;border-radius:4px;flex:0 0 auto;position:relative;
-  background:#1a2233;transition:transform .2s var(--ease)}
+/* BARRA, NÃO QUADRADINHO — 07/08/2026. A tira é uma sequência temporal, e barra
+   em pé lê como sequência; quadrado lê como grade. É também a convenção que
+   qualquer placar de CS usa, então não custa aprendizado.
+
+   E O PESO DIZ DE QUEM É O ROUND: cheio é seu, apagado é do adversário. A cor
+   continua sendo o LADO (azul CT, laranja TR) porque é o vocabulário do jogo —
+   mas sozinha ela mentia, já que os lados trocam no round 13 e a mesma cor
+   passava a significar o outro time. */
+.rs-cell{width:9px;height:20px;border-radius:3px;flex:0 0 auto;position:relative;
+  background:#1a2233;transition:box-shadow .2s var(--ease),opacity .2s var(--ease)}
 .rs-cell.ct{background:var(--ct)}
 .rs-cell.tr{background:var(--tr)}
-.rs-cell.pop{animation:rsPop .3s var(--ease)}
-@keyframes rsPop{0%{transform:scale(0)}60%{transform:scale(1.4)}100%{transform:scale(1)}}
+/* Round do adversário: mesma cor, menos presença. Não é `filter`, que criaria
+   camada de composição em até 24 elementos simultâneos. */
+.rs-cell:not(.mine){opacity:.34}
+.rs-cell.mine{box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)}
+/* O overshoot caiu de 1,4 para 1,12 — 07/08/2026. Uma célula que salta 40% acima
+   do tamanho final a cada round faz a tira PIPOCAR, e com o miolo do mapa a
+   241 ms por round são treze estouros seguidos. O gesto continua existindo,
+   agora como assentar em vez de explodir. */
+.rs-cell.pop{animation:rsPop .26s var(--ease)}
+@keyframes rsPop{0%{transform:scale(.2);opacity:.4}62%{transform:scale(1.12);opacity:1}100%{transform:scale(1)}}
 .rs-cell.key::after{content:"";position:absolute;inset:0;border-radius:inherit;
   box-shadow:0 0 0 1.5px #fff,0 0 8px rgba(255,255,255,.7);animation:rsKeyGlow 1.8s ease-in-out infinite}
 @keyframes rsKeyGlow{0%,100%{box-shadow:0 0 0 1.5px rgba(255,255,255,.85),0 0 6px rgba(255,255,255,.5)}
@@ -1358,10 +1945,27 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 /* scoreboard ao vivo: um painel por time, colunas alinhadas (jogador · K-D · rating) */
 .livescore{flex:1;overflow-y:auto;padding:clamp(12px,2.5vw,20px);display:flex;flex-direction:column;gap:14px;
   width:100%;max-width:580px;margin:0 auto;box-sizing:border-box;-webkit-overflow-scrolling:touch}
-.ls-side{display:flex;flex-direction:column;flex:0 0 auto;overflow:hidden;--ls-accent:var(--ct-ink);
-  border:1px solid var(--line)}
-.ls-side.mine{--ls-accent:var(--cyan);border-color:rgba(var(--mine-rgb),.32);
-  box-shadow:0 0 0 1px rgba(var(--mine-rgb),.16),0 10px 28px -18px rgba(var(--mine-rgb),.6)}
+/* O BLOCO VESTE O LADO — 07/08/2026, a pedido: *"e se eles ficassem inteiramente
+   nas cores de CT ou TR? e alternasse na troca de half […] quanto mais visual,
+   design, e menos texto, melhor"*.
+   Trocar o chip por ÁREA é a razão de o pedido funcionar: o chip da tabela media
+   447 px² e precisava de duas palavras para se explicar; o bloco tem centenas de
+   vezes isso e não precisa de nenhuma. E a virada fica óbvia — os dois blocos
+   trocam de cor ao mesmo tempo, no meio da tela.
+
+   O TINGIMENTO É BAIXO DE PROPÓSITO. Aqui vivem dez linhas de estatística com
+   texto claro; a cor tem de identificar sem disputar com o número. A força vem
+   da borda e da faixa do topo, que são as partes sem texto por cima. */
+.ls-side{display:flex;flex-direction:column;flex:0 0 auto;overflow:hidden;
+  --ls-lado-rgb:var(--ct-rgb);--ls-accent:var(--ct-ink);
+  border:1px solid var(--line);
+  transition:background .45s var(--ease),border-color .45s var(--ease)}
+.ls-side.ct{--ls-lado-rgb:var(--ct-rgb);--ls-accent:var(--ct-ink)}
+.ls-side.tr{--ls-lado-rgb:var(--tr-rgb);--ls-accent:var(--tr-ink)}
+/* O time do jogador continua se anunciando, mas por RELEVO, não por matiz: se o
+   ciano voltasse a pintar o bloco, ele apagaria justamente o lado que o bloco
+   agora existe para mostrar. O selo `VOCÊ` e o nome em ciano seguem no lugar. */
+.ls-side.mine{box-shadow:0 0 0 1px rgba(var(--mine-rgb),.28),0 10px 28px -18px rgba(var(--mine-rgb),.6)}
 .ls-head{display:grid;grid-template-columns:1fr 58px 44px 38px 46px;align-items:center;gap:6px;position:relative;
   background:rgba(255,255,255,.03);border-bottom:1px solid var(--line)}
 .ls-head::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ls-accent)}
@@ -1372,9 +1976,6 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .ls-team{font-family:var(--ff);font-weight:700;font-size:.84rem;letter-spacing:.03em;color:var(--txt);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .ls-side.mine .ls-team{color:var(--cyan)}
-.ls-side-tag{font-family:var(--ff);font-weight:700;font-size:.52rem;letter-spacing:.12em;padding:2px 6px;border-radius:4px;flex:0 0 auto}
-.ls-side-tag.ct{background:rgba(var(--ct-rgb),.16);color:var(--ct-ink);border:1px solid rgba(var(--ct-rgb),.4)}
-.ls-side-tag.tr{background:rgba(var(--tr-rgb),.16);color:var(--tr-ink);border:1px solid rgba(var(--tr-rgb),.4)}
 .ls-col{font-family:var(--ff);font-weight:700;font-size:.54rem;letter-spacing:.13em;color:var(--dim);text-transform:uppercase;text-align:right}
 .ls-row{display:grid;grid-template-columns:1fr 58px 44px 38px 46px;align-items:center;gap:6px;
   border-bottom:1px solid rgba(255,255,255,.045);
@@ -1399,9 +2000,30 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .livemap-foot{padding:16px max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
   display:flex;justify-content:center;gap:12px;border-top:1px solid var(--line);
   background:linear-gradient(0deg,rgba(20,27,43,.5),transparent)}
-@media(max-width:640px){.sb-team .sb-name{font-size:.86rem}.pm-team{min-width:96px}.ls-nick{font-size:.8rem}
+/* PULAR É AÇÃO SECUNDÁRIA, E A ÁREA PRECISA DIZER ISSO — 07/08/2026.
+   Medido: "Pular para o resultado" era o MAIOR texto da tela do mapa nos três
+   viewports, 9.015px², contra 5.346px² do maior nick e 3.658px² do placar. Área
+   é o que o olho usa para ordenar importância (regra 42), e o botão que DESCARTA
+   o conteúdo estava no topo dessa ordem.
+   O alvo continua confortável: a suíte de acessibilidade cobra 24px de altura com
+   folga, e o menor alvo do jogo é o `#mutebtn` com 32px — este fica acima disso.
+   `#matchContinue` NÃO encolhe: ele é a ação que segue o jogo. */
+#matchSkip{font-size:.66rem;padding:10px 18px;letter-spacing:.08em;opacity:.82}
+#matchSkip:hover{opacity:1}
+@media(max-width:640px){.sb-team .sb-name{font-size:.86rem}.ls-nick{font-size:.8rem}
   .ls-head,.ls-row{grid-template-columns:1fr 50px 40px 32px 40px;gap:5px;padding-left:11px;padding-right:11px}
-  .ls-kd-val{font-size:.76rem}.ls-kast,.ls-adr{font-size:.64rem}.ls-rate{font-size:.8rem}.ls-col{font-size:.48rem}}
+  .ls-kd-val{font-size:.76rem}.ls-kast,.ls-adr{font-size:.64rem}.ls-rate{font-size:.8rem}.ls-col{font-size:.48rem}
+  /* NO CELULAR A IDENTIDADE QUEBRA EM DUAS LINHAS — 07/08/2026.
+     Medido: o bloco tem 154px e o conteúdo passou a pedir ~217px (mono 24 +
+     nome 63,5 + selo 42,3 + chip 69,6). Como `.ls-team` carrega `min-width:0`,
+     o flex não truncou o nome — ele o espremeu a largura ZERO, que é pior:
+     "SEU TIME" e "Immortals" sumiram por completo da tabela.
+     Empilhar resolve sem cortar informação nenhuma: a altura é o recurso que
+     sobra numa tela que já rola, e a largura é o que falta. Reticências
+     continuam valendo para nome longo, mas a partir de um piso de leitura. */
+  .ls-team-id{flex-wrap:wrap;row-gap:5px}
+  .ls-team{flex:1 1 auto;min-width:5em}
+}
 
 /* botões de acesso ao Major */
 .majorbar[hidden],#majorTag[hidden]{display:none}
@@ -1455,8 +2077,21 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
 
 /* — Fundo em camadas: brilho de palco + grade tática + vinheta — */
 /* — link para a página-irmã "Base de elencos" (elencos.html): usa a linguagem do jogo — */
+/* NAVEGAÇÃO SECUNDÁRIA NÃO OCUPA A LARGURA DA AÇÃO PRINCIPAL — 06/08/2026.
+   Medido a 1440: "Sua história" e "Ver todos os elencos" ocupavam 74.340 px²
+   CADA, contra 9.678 px² do "Sortear time" — a ação central do jogo era 7,7×
+   menor que dois links de consulta (4,8× no tablet, 2,4× no celular). Área é o
+   que o olho usa para ordenar importância, e a ordem estava invertida.
+   Um teto de largura centrado corta a área pela metade sem tirar nada do
+   conteúdo nem mexer no alvo de toque, que continua com 63 px de altura. */
 .rosterbar{margin:2px 0 4px}
-a.rosterlink{display:flex;align-items:center;gap:14px;width:100%;text-decoration:none;
+/* `auto-fit` com piso de 260px, e não media query: duas colunas onde cabem duas,
+   uma onde não cabe — sem um pixel de viewport decidindo um salto. É a mesma
+   regra que governa a grade das cartas (regra 21). */
+.rosterbar--duo{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.rosterbar--duo a.rosterlink{max-width:none;margin-inline:0}
+a.rosterlink{display:flex;align-items:center;gap:14px;width:100%;
+  max-width:560px;margin-inline:auto;text-decoration:none;
   font-family:var(--ff);border:1px solid rgba(var(--line-base-rgb),.18);background:#0d131d;border-radius:var(--radius);
   padding:14px 18px;color:var(--txt);transition:border-color .15s,transform .12s var(--ease),background .15s}
 a.rosterlink:hover{border-color:rgba(var(--accent-deep-rgb),.45);transform:translateY(-1px);background:var(--panel2)}
@@ -1521,7 +2156,11 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(var(--accent-rgb
 
 .match:hover{border-color:rgba(var(--line-panel-rgb),.4)}
 .sb-score{letter-spacing:.01em;text-shadow:0 2px 18px rgba(0,0,0,.6)}
-.pm-versus{font-size:1.8rem;color:var(--accent);text-shadow:0 0 24px rgba(var(--accent-deep-rgb),.5)}
+/* Aqui havia a TERCEIRA voz do `.pm-versus` — `font-size:1.8rem` e
+   `color:var(--accent)` —, e como a camada de refinamento vem depois de tudo, era
+   ELA que chegava à tela: enquanto existisse, mudar o tamanho ou a cor do VS na
+   regra base não produzia efeito nenhum. Exatamente a armadilha de cascata
+   descrita no CLAUDE.md. As três declarações viraram uma. */
 
 /* ════ LINGUAGEM DOS OVERLAYS: brasões no topo dos painéis-chave ════ */
 .overlay-title{font-size:clamp(1.3rem,3.4vw,1.7rem);letter-spacing:.08em}
@@ -1530,10 +2169,6 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(var(--accent-rgb
 .series.done::before{background:linear-gradient(90deg,transparent,var(--t2-green),transparent)}
 .series.mine::before{background:linear-gradient(90deg,transparent,var(--cyan),transparent);box-shadow:0 0 10px -1px var(--cyan)}
 .series.ativa::before{background:linear-gradient(90deg,transparent,var(--accent),transparent);box-shadow:0 0 10px -1px var(--accent)}
-.pm-team{position:relative;overflow:hidden}
-.pm-team::before{content:"";position:absolute;top:0;left:18%;right:18%;height:3px;border-radius:0 0 4px 4px;opacity:.55;
-  background:linear-gradient(90deg,transparent,rgba(var(--line-panel-rgb),.5),transparent)}
-.pm-team.mine::before{background:linear-gradient(90deg,transparent,var(--cyan),transparent);box-shadow:0 0 10px -1px var(--cyan)}
 .ls-side{position:relative}
 .ls-side::before{content:"";position:absolute;top:0;left:18%;right:18%;height:3px;z-index:2;border-radius:0 0 4px 4px;
   background:linear-gradient(90deg,transparent,var(--ls-accent),transparent);opacity:.55}
@@ -1564,18 +2199,21 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(var(--accent-rgb
 .series-sep::after{background:#151b29;border-radius:4px;padding:1px 7px}
 .champion{border-radius:16px}
 /* — Antessala: blocos de time em vidro — */
-.pm-team{padding:20px 22px;border-radius:var(--radius);border:1px solid rgba(var(--line-panel-rgb),.16);
-  background:var(--panel2)}
-.pm-team.mine{border-color:rgba(var(--mine-rgb),.4);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 0 0 1px rgba(var(--mine-rgb),.22),0 18px 40px -24px rgba(var(--mine-rgb),.35)}
-.prematch-ctx{padding:8px 18px;border-radius:20px;border:1px solid rgba(var(--accent-deep-rgb),.35);
-  background:rgba(var(--accent-deep-rgb),.08);box-shadow:0 0 18px -6px rgba(var(--accent-deep-rgb),.5)}
+
 /* — Mapa ao vivo: tira de rounds com divisor de troca de lado (round 13) — */
-.rs-cell:nth-child(13){margin-left:16px;position:relative}
-.rs-cell:nth-child(13)::before{content:"";position:absolute;left:-10px;top:-2px;bottom:-2px;width:2px;
+.rs-cell:nth-child(13){margin-left:18px;position:relative}
+.rs-cell:nth-child(13)::before{content:"";position:absolute;left:-11px;top:-3px;bottom:-3px;width:2px;
   border-radius:2px;background:linear-gradient(180deg,transparent,rgba(var(--line-panel-rgb),.5),transparent)}
-.ls-side{border-radius:var(--radius);border-color:rgba(var(--line-panel-rgb),.16);background:var(--panel2)}
-.ls-head{padding:11px 14px}
+/* A cor do lado entra AQUI, na camada de refinamento, porque é ela que define o
+   `background` final do bloco — declarar antes seria sobrescrito por esta linha,
+   que é a armadilha de cascata registrada na sessão de 02–03/08. */
+.ls-side{border-radius:var(--radius);border-color:rgba(var(--ls-lado-rgb),.42);
+  background:linear-gradient(180deg,rgba(var(--ls-lado-rgb),.13),rgba(var(--ls-lado-rgb),.05) 42%,var(--panel2) 78%)}
+.ls-head{padding:11px 14px;background:rgba(var(--ls-lado-rgb),.14);border-bottom-color:rgba(var(--ls-lado-rgb),.3)}
+/* A faixa do topo é a parte mais forte: sem texto por cima, pode levar a cor
+   cheia e é o que se vê primeiro ao correr o olho pela tela. */
+.ls-side::before{background:linear-gradient(90deg,transparent,var(--ls-accent),transparent);opacity:.9;
+  left:8%;right:8%;height:4px}
 .ls-row{padding:10px 14px}
 /* — Tela final: cartões padronizados — */
 .final-mvp-card{border-radius:var(--radius);background:var(--panel2)}
