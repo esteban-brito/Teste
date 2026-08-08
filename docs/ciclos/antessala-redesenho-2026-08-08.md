@@ -141,6 +141,60 @@ no `index.html`, criados por reescrita que errou na borda (regra 23).
 - **fps com braço de controle** (regra 55): 60,3 com vidro contra 60,3 sem
   nenhum `backdrop-filter`, duas amostras de 3s por braço. Custo zero em repouso.
 
+## 6-bis. A SEGUNDA rodada — reconstrução estrutural do card (mesmo dia)
+
+O responsável levou a tela a uma revisão externa e trouxe a nota: **6,5**. A
+crítica dizia que o card era *reskin, não redesign* — mesmo retângulo, mesmo
+split diagonal, mesmos quadrados de logo, só a cor mudando; sem vidro real, sem
+elevação, sem concentricidade, sem especular. **Ela estava certa, e a causa era
+de PILHA, não de paleta.**
+
+**O diagnóstico que faltava.** O `backdrop-filter` estava em `.pm-palco`, e as
+duas `.pm-lado` pintavam o próprio gradiente POR CIMA dele. O vidro ficava
+embaixo de duas camadas de tinta — e o `clip-path` das metades, além de recortar,
+cria contexto de empilhamento, o que PRENDIA o conteúdo abaixo do material.
+Quatro rodadas trocando cor não iam consertar uma ordem de camada. A prova de
+mutação media 6/255 de delta máximo, e eu tinha atribuído isso só ao fundo liso.
+
+**O card virou três camadas de verdade:**
+
+| z | camada | o que é |
+|---|---|---|
+| 0 | `.pm-palco::before` | CAMPO — as duas cores de clube num gradiente de **parada dura**. A diagonal deixou de ser `clip-path` e virou um *stop* |
+| 1 | `.pm-palco::after` | LÂMINA — o vidro, que amostra a cor dos times **e** a malha do ambiente. Aqui moram o desfoque, o especular e a costura |
+| 2 | conteúdo | brasões, nomes e números **acima** do vidro, nítidos |
+
+**O que isso destravou:**
+
+- **refração real**: delta máximo de canal foi de **6/255 → 33/255** pelo mesmo
+  custo de GPU;
+- **especular de verdade**: um gradiente que corre pela superfície — aceso na
+  quina superior esquerda, apagando no meio, pegando luz na base. Linha branca de
+  opacidade única lê como borda; gradiente lê como reflexo;
+- **concentricidade**: `--r-crest` deixou de ser 18px cravados e passou a ser
+  `--r-lamina − --e-2`. Curvatura derivada, não escolhida;
+- **a costura voltou como ARESTA DO VIDRO**: com o campo atrás da lâmina, o
+  desfoque de 22px transformava a parada dura em ~44px de névoa e a diagonal
+  sumia. A linha agora é pintada no fundo do próprio pseudo-elemento, ou seja
+  DEPOIS do desfoque — nítida sobre o borrão, como a junção de duas placas;
+- **a revelação**: a lâmina entra **cega** (`--vidro-alto-cego`, desfoque alto e
+  saturação baixa) e LIMPA, descobrindo os times por trás. Só é possível porque o
+  vidro está entre o campo e o conteúdo — com a pilha antiga, embaçar a lâmina
+  não esconderia nada. **Estrutura e movimento viraram a mesma decisão.**
+
+**A guarda de vidro pegou meu erro no caminho:** o keyframe da revelação
+declarava `blur(30px) saturate(70%)` na mão, e ela reprovou. O estado cego virou
+token — número de desfoque escrito à mão dentro de um keyframe é exatamente como
+um sistema começa a divergir.
+
+**Por que eu tinha convergido em cor.** Três razões, e a terceira é a que
+importa: otimizei para o que sabia medir (área, tipografia, contraste tinham
+instrumentação; materialidade não tinha número, então virou argumento);
+confundi disciplina com deferência ao que estava "aprovado" em 07/08, tratando a
+estrutura como restrição em vez de como o objeto sob revisão; e **nunca verifiquei
+o que o vidro estava amostrando**. Lição para o próximo ciclo visual: *quando um
+material não aparece, o suspeito não é o valor do filtro — é a ordem da pilha.*
+
 ## 7. O que NÃO foi feito, e por quê
 
 - **não** voltaram a placa grande de mapa, a sigla de duas letras, os selos

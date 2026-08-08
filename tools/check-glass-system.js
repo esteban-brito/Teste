@@ -54,9 +54,13 @@ for(const raio of ["lamina","peca","pilula"])
    para congelar quantas superfícies a tela tem. Mudar a lista sem mudar a folha,
    ou o contrário, reprova. */
 const SUPERFICIES=[
-  [".pm-palco","--vidro-alto-blur"],
+  /* O vidro migrou de `.pm-palco` para o pseudo-elemento em 08/08/2026, e a
+     guarda tem de seguir a PILHA real: a lâmina agora vive ENTRE o campo de cor
+     e o conteúdo. Enquanto ela era o contêiner, as duas metades pintavam por
+     cima dela e o desfoque não amostrava nada — vidro declarado, não acontecendo. */
+  [".pm-palco::after","--vidro-alto-blur"],
   [".prematch-modos .roll","--vidro-medio-blur"],
-  [".pm-chip","--vidro-raso-blur"],
+  [".prematch-ctx","--vidro-raso-blur"],
   [".pm-mapa","--vidro-raso-blur"],
 ];
 for(const [seletor,token] of SUPERFICIES){

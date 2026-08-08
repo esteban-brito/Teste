@@ -92,6 +92,14 @@ export function prematchTeamHtml(team){
     +`</div>`;
 }
 
+/** Canais "r,g,b" da cor do clube — a forma que `rgba(var(--x),a)` consome.
+    Existe porque o CAMPO de cor da antessala é uma camada só, com uma parada
+    dura entre os dois clubes: ela precisa das DUAS cores ao mesmo tempo, e
+    `estiloDoTime` só sabe falar de um time por vez. */
+export function canaisDoTime(team){
+  return canais(team?.cor||COR_AUSENTE).join(",");
+}
+
 /** Estilo do card: a cor do clube e os canais dela, para véu e moldura.
     Os canais vêm de `contrast.mjs` porque hex de três dígitos precisa ser
     expandido — a primeira versão desta função não expandia e devolvia `NaN` no

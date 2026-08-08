@@ -12,7 +12,7 @@ import {PROGRESSO} from "./src/infrastructure/persistence/progress-store.mjs";
 import {escapeHtml as esc} from "./src/ui/shared/html.mjs";
 import {createCardView} from "./src/ui/game/card-view.mjs";
 import {construirCartao} from "./src/ui/game/build-summary-view.mjs";
-import {liveTeamHeaderHtml,prematchTeamHtml,aplicarLado,estiloDoTime} from "./src/ui/game/team-view.mjs";
+import {liveTeamHeaderHtml,prematchTeamHtml,aplicarLado,estiloDoTime,canaisDoTime} from "./src/ui/game/team-view.mjs";
 import {swissBoardHtml,bracketSubtitle,bracketBoardHtml} from "./src/ui/game/tournament-view.mjs";
 import {escolherMomentos,falasDoRound,falaFechamento}
   from "./src/domain/narrative/live-commentary.mjs";
@@ -1463,6 +1463,26 @@ function montarConfrontoDeForca(A,B){
   if(!total){caixa.hidden=true;return;}
   caixa.hidden=false;
   const pctA=efA/total*100;
+  /* A COSTURA DO PALCO É A PROPORÇÃO DE FORÇA — 08/08/2026. A diagonal era uma
+     constante estética em 50%; agora ela se inclina para o favorito, e o palco
+     informa por FORMA antes de qualquer texto ser lido.
+     O GANHO existe porque as forças do jogo vivem entre 60 e 99: a proporção
+     crua se afasta poucos pontos de 50% mesmo num confronto desigual, e essa
+     inclinação não se vê. O TETO existe porque a metade perdedora ainda precisa
+     caber — o CSS deriva o padding do mesmo número, então empurrar o corte
+     encolhe a área de conteúdo do lado que recua. 42–58% foi onde o nome mais
+     longo do catálogo ainda cabe sem quebrar. */
+  const corte=Math.max(42,Math.min(58,50+(pctA-50)*2.2));
+  const palco=document.querySelector(".pm-palco");
+  if(palco){
+    palco.style.setProperty("--pm-corte",corte.toFixed(2)+"%");
+    /* AS DUAS CORES SOBEM PARA O PALCO. O campo de cor é UMA camada só, com uma
+       parada dura entre os dois clubes, então ela precisa conhecer os dois — as
+       metades não pintam mais nada. Era o `clip-path` delas que prendia o texto
+       abaixo do vidro; sem ele, o vidro pôde ir para o meio da pilha. */
+    palco.style.setProperty("--time-a-rgb",canaisDoTime(A));
+    palco.style.setProperty("--time-b-rgb",canaisDoTime(B));
+  }
   /* `setAttribute("style")` de uma vez, e não `style.width` antes: o atributo
      inteiro é reescrito com a cor do time, então qualquer largura posta antes
      dele seria apagada na mesma linha. Havia duas dessas, mortas. */

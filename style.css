@@ -132,8 +132,25 @@
   --vidro-alto-bg:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02) 46%,rgba(0,0,0,.22));
   --vidro-alto-borda:rgba(255,255,255,.12);
   --vidro-alto-blur:blur(22px) saturate(150%);
-  --vidro-alto-sombra:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(0,0,0,.3),
-    0 26px 60px -32px rgba(0,0,0,.9);
+  /* ELEVAÇÃO MEDIDA, não declarada — 08/08/2026. A sombra anterior era
+     `0 26px 60px -32px`: um borrão de 60px com spread negativo de 32, ou seja,
+     quase nada sobrando, e sobre fundo escuro isso é invisível. O resultado foi
+     descrito de fora como "tudo num plano só, flat", e a descrição estava certa.
+     Num tema escuro quem separa uma peça do fundo não é a sombra larga — é o
+     par SOMBRA DE CONTATO + ARESTA ACESA: o olho lê a linha clara no topo como
+     luz batendo na quina e a linha escura logo abaixo da peça como o chão dela.
+     A terceira camada é o LUGAR refletindo na peça: um halo curto na cor do mapa,
+     que é o que integra a lâmina ao ambiente em vez de colá-la por cima dele. */
+  --vidro-alto-sombra:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -1px 0 rgba(0,0,0,.45),
+    0 2px 4px rgba(0,0,0,.55),0 20px 44px -22px rgba(0,0,0,.95),
+    0 0 70px -34px rgba(var(--mapa-rgb,120,140,160),.8);
+
+  /* O ESTADO CEGO DA LÂMINA — o quadro inicial da revelação. Ele é material, não
+     efeito: é o mesmo vidro com desfoque alto e saturação baixa, como um painel
+     embaçado antes de limpar. Vive como token porque a guarda de vidro cobra
+     isso, e a guarda está certa — número de desfoque escrito na mão dentro de um
+     keyframe é exatamente como um sistema começa a divergir. */
+  --vidro-alto-cego:blur(30px) saturate(70%);
 
   --vidro-medio-bg:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.03));
   --vidro-medio-borda:rgba(255,255,255,.13);
@@ -144,8 +161,14 @@
   --vidro-raso-borda:rgba(255,255,255,.08);
   --vidro-raso-blur:blur(12px);
 
-  /* Raios do sistema: uma escala só, para as peças não divergirem sozinhas. */
-  --r-lamina:18px; --r-peca:10px; --r-pilula:20px;
+  /* Raios do sistema: uma escala só, para as peças não divergirem sozinhas.
+     E DESDE 08/08/2026 ELES SÃO CONCÊNTRICOS, não só padronizados: `--r-crest`
+     não é um número escolhido, é o raio da lâmina MENOS o recuo com que a peça
+     se afasta da aresta dela. Era essa a crítica — cada componente com sua
+     própria regra de esquina. Curvatura derivada é o que faz duas peças
+     aninhadas parecerem talhadas do mesmo bloco. */
+  --r-lamina:24px; --r-peca:10px; --r-pilula:20px;
+  --r-crest:calc(var(--r-lamina) - var(--e-2));
   /* Véu de time das duas metades da antessala. Vive aqui, e não repetido nos
      dois seletores, porque foi a repetição que deixou os lados divergirem. */
   --pm-veu:.20;
@@ -1571,12 +1594,66 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    não precisa dizer de quem é cada lado — o nome está em cima.
    Faixa não é caixa dentro de caixa: não há segunda borda nem segundo raio, é a
    mesma lâmina com uma costura. */
+/* ══ O CARD RECONSTRUÍDO EM TRÊS CAMADAS — 08/08/2026 ════════════════════════
+   A crítica externa foi certeira e o defeito era de PILHA, não de paleta: o
+   `backdrop-filter` estava no contêiner e as duas metades pintavam o próprio
+   gradiente POR CIMA dele. O vidro ficava embaixo de duas camadas de tinta, e é
+   por isso que a prova de mutação devolvia delta de 6/255 — não era só o fundo
+   liso, era o vidro no lugar errado da pilha. Quatro rodadas trocando cor não
+   iam consertar uma ordem de camada.
+
+   Agora são três camadas de verdade, na ordem que a Apple usa:
+
+     z0  ::before  CAMPO — a cor dos dois clubes, num gradiente com PARADA DURA.
+                   A diagonal deixou de ser `clip-path` e virou um stop: o
+                   recorte criava contexto de empilhamento e PRENDIA o conteúdo
+                   abaixo do vidro. Sem ele, o texto pode subir.
+     z1  ::after   LÂMINA — o vidro. Ele amostra tudo o que está atrás: a cor dos
+                   times E a malha do ambiente. As duas cores se difundem sob
+                   ela, que é o que "luz colorida atrás de vidro fosco" quer
+                   dizer. É aqui que mora o desfoque e o brilho especular.
+     z2  conteúdo  brasões, nomes e números, POR CIMA do vidro — legíveis, sem
+                   desfoque, como manda o princípio de que o material nunca pode
+                   competir com o conteúdo.
+
+   `--r-lamina` e os raios internos passam a ser CONCÊNTRICOS: quem encosta na
+   aresta interna recebe o raio do pai menos o recuo, e o brasão herda a mesma
+   família de curvatura em vez de ter regra própria. */
 .pm-palco{position:relative;width:min(920px,100%);margin-bottom:var(--e-11);
   display:grid;grid-template-areas:"palco" "base";grid-template-rows:1fr auto;
-  border-radius:var(--r-lamina);overflow:hidden;
-  border:1px solid var(--vidro-alto-borda);background:var(--vidro-alto-bg);
-  backdrop-filter:var(--vidro-alto-blur);-webkit-backdrop-filter:var(--vidro-alto-blur);
+  border-radius:var(--r-lamina);overflow:hidden;isolation:isolate;
+  border:1px solid var(--vidro-alto-borda);
   box-shadow:var(--vidro-alto-sombra)}
+/* z0 — O CAMPO. Uma parada dura entre as duas cores no eixo de 105°: a diagonal
+   passa a ser um limite de gradiente, não um recorte. Os 2px de transição
+   existem para a borda não serrilhar. */
+.pm-palco::before{content:"";position:absolute;inset:0;z-index:0;
+  background:
+    linear-gradient(105deg,
+      rgba(var(--time-a-rgb,120,130,145),var(--pm-veu)) 0 calc(var(--pm-corte,50%) - 1px),
+      rgba(var(--time-b-rgb,120,130,145),var(--pm-veu)) calc(var(--pm-corte,50%) + 1px) 100%),
+    var(--vidro-alto-bg)}
+/* z1 — A LÂMINA. O especular não é uma linha uniforme no topo: é um gradiente
+   que corre pela superfície, aceso na quina superior esquerda, apagando no meio
+   e pegando luz de novo na base — luz batendo num painel inclinado. Uma linha
+   branca de opacidade única lê como borda; um gradiente lê como reflexo. */
+/* A COSTURA VOLTOU, e agora ela é uma ARESTA DO VIDRO. Com o campo de cor atrás
+   da lâmina, o desfoque de 22px transformava a parada dura numa faixa de ~44px
+   de névoa: a diagonal sumia, e junto com ela a inclinação que carrega a
+   proporção de força. A linha vive no PRÓPRIO fundo do pseudo-elemento, ou seja,
+   é pintada DEPOIS do desfoque — fica nítida sobre o borrão, exatamente como a
+   junção de duas placas de vidro. É a costura fazendo o que o `clip-path` fazia,
+   sem o custo de prender o conteúdo abaixo do material. */
+.pm-palco::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:
+    linear-gradient(105deg,transparent calc(var(--pm-corte,50%) - 1px),
+      rgba(255,255,255,.22) calc(var(--pm-corte,50%) - 1px) calc(var(--pm-corte,50%) + 1px),
+      transparent calc(var(--pm-corte,50%) + 1px)),
+    linear-gradient(140deg,rgba(255,255,255,.14),rgba(255,255,255,.02) 34%,
+    rgba(255,255,255,0) 62%,rgba(255,255,255,.07));
+  backdrop-filter:var(--vidro-alto-blur);-webkit-backdrop-filter:var(--vidro-alto-blur);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.42),inset 0 -1px 0 rgba(0,0,0,.4),
+    inset 1px 0 0 rgba(255,255,255,.1),inset -1px 0 0 rgba(255,255,255,.06)}
 
 
 /* AS DUAS METADES ocupam a MESMA célula e se recortam por `clip-path`. Ocupar a
@@ -1608,17 +1685,34 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    E O VÉU CAIU DE .30 PARA .20, que é o "pouca cor" do pedido: com o piso claro
    embaixo, a cor rende mais com menos alfa. `--pm-veu` guarda o número uma vez
    só, para os dois lados não divergirem na próxima mexida. */
-.pm-lado--a{clip-path:polygon(0 0,58% 0,42% 100%,0 100%);
-  background:linear-gradient(105deg,rgba(var(--time-rgb),var(--pm-veu)),
-      rgba(var(--time-rgb),calc(var(--pm-veu) * .12)) 78%),var(--vidro-medio-bg);
-  justify-content:flex-start;padding-right:22%}
-.pm-lado--b{clip-path:polygon(58% 0,100% 0,100% 100%,42% 100%);
-  background:linear-gradient(285deg,rgba(var(--time-rgb),var(--pm-veu)),
-      rgba(var(--time-rgb),calc(var(--pm-veu) * .12)) 78%),var(--vidro-medio-bg);
+/* A COSTURA É O DADO — 08/08/2026, e é o que separa reinvenção de repintura.
+   A diagonal ficava cravada em 58%/42%: uma constante escolhida por gosto, que
+   dizia "isto é um confronto" e mais nada. Agora a posição dela É a proporção
+   de força, então o PALCO INTEIRO se inclina para o favorito e a tela informa
+   antes de qualquer texto ser lido. É a hierarquia por TAMANHO do Material 3
+   Expressive aplicada ao próprio confronto, não a um rótulo.
+
+   `--pm-corte` chega de `game.js`, já com ganho e teto. O ganho existe porque
+   as forças do jogo vivem entre 60 e 99: a proporção crua varia só uns poucos
+   pontos percentuais, e uma inclinação dessas não se vê. O teto existe porque a
+   metade perdedora ainda precisa caber — nenhuma metáfora justifica espremer
+   informação.
+
+   E o PADDING acompanha o corte, senão a caixa de conteúdo invade a região que
+   o `clip-path` recorta — que é exatamente como os dois nomes de time passaram
+   a se sobrepor no celular. Área visível e área de conteúdo têm de andar juntas. */
+/* AS METADES VIRARAM PURO LAYOUT. Elas não pintam mais nada e não recortam nada
+   — a cor foi para o campo, e o `clip-path` saiu porque era ele que prendia o
+   conteúdo abaixo do vidro. O que sobrou é o que elas sempre deveriam ter sido:
+   duas caixas que empurram o conteúdo para lados opostos. Continuam ocupando a
+   MESMA célula, e é o `padding` derivado do corte que as mantém separadas. */
+.pm-lado--a{justify-content:flex-start;padding-right:calc(104% - var(--pm-corte,50%))}
+.pm-lado--b{
   /* `row-reverse` inverte o eixo: `flex-start` passa a apontar para a DIREITA.
      Com `flex-end` o conteúdo ia para a esquerda, que é exatamente a parte que o
      `clip-path` recorta — o lado inteiro sumia da tela. */
-  justify-content:flex-start;flex-direction:row-reverse;padding-left:22%}
+  justify-content:flex-start;flex-direction:row-reverse;
+  padding-left:calc(4% + var(--pm-corte,50%))}
 /* O time do jogador se anuncia por LUZ na aresta, não por outra cor: a cor já é
    a do clube, e trocá-la apagaria a identidade que o palco existe para mostrar.
    A LUZ É BRANCA — 07/08/2026. Era ciano (`--mine-rgb`), e a 50% sobre um clube
@@ -1629,14 +1723,24 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    de `--vidro-*-bg` e das bordas —, então o lado do jogador passa a ser vidro
    sobre preto como todo o resto da tela, e o realce continua existindo como
    RELEVO. É a regra 53 outra vez: o canal certo aqui é forma, não cor. */
-.pm-lado.mine{box-shadow:inset 0 0 42px -12px rgba(255,255,255,.18)}
+/* O time do jogador se anuncia por um ARO no brasão, e não mais por um `inset`
+   na metade: sem `clip-path`, as duas metades ocupam a célula inteira, então uma
+   sombra interna nelas cobriria o card todo. O aro fica ACIMA do vidro, onde a
+   informação tem de estar. */
+.pm-lado.mine .team-mono{box-shadow:0 0 0 2px rgba(255,255,255,.4),0 0 18px -4px rgba(255,255,255,.5)}
 
-.pm-crest{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
-.pm-crest::after{content:"";position:absolute;inset:-14%;border-radius:50%;z-index:0;
+/* z2 — O CONTEÚDO SOBE ACIMA DA LÂMINA. É esta linha que faz o vidro ser
+   material e não névoa: texto desfocado seria o vidro competindo com o
+   conteúdo, que é exatamente o que o princípio proíbe. */
+.pm-crest,.pm-info{position:relative;z-index:2}
+.pm-crest{display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.pm-crest::after{content:"";position:absolute;inset:-14%;border-radius:50%;z-index:-1;
   background:radial-gradient(circle,rgba(var(--time-rgb),.5),transparent 68%)}
-.pm-crest .team-mono{position:relative;z-index:1}
+/* CONCENTRICIDADE REAL: o brasão não tem raio próprio — ele herda a curvatura da
+   lâmina menos o recuo com que se afasta da aresta. Antes eram 18px cravados ao
+   lado de uma lâmina de 22px, dois valores sem relação nenhuma. */
 .pm-lado .team-mono{width:clamp(52px,7vw,74px);height:clamp(52px,7vw,74px);
-  font-size:clamp(1.05rem,2vw,1.5rem);border-radius:18px}
+  font-size:clamp(1.05rem,2vw,1.5rem);border-radius:var(--r-crest)}
 
 /* ESCALA COM DEGRAUS REAIS: nome, força, era. */
 /* A COLUNA CENTRA-SE SOZINHA — 07/08/2026. A linha da era existe só no lado do
@@ -1702,11 +1806,27 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    chip de 27px sobre um gradiente liso não refrata nada, porque não há detalhe
    atrás para desviar. Custa GPU por zero ganho. Na lâmina, larga o bastante para
    o ambiente do mapa variar ao longo dela, o desfoque com saturação lê. */
-.prematch-ctx{display:flex;align-items:stretch;justify-content:center;gap:var(--e-2);flex-wrap:wrap}
+/* UMA FAIXA, NÃO CINCO CAIXAS — 08/08/2026. Cada informação de contexto tinha
+   moldura própria: cinco retângulos enfileirados, cinco bordas, cinco fundos,
+   para dizer quatro coisas que pertencem à MESMA frase ("que partida é esta").
+   Caixa é peso, e peso repetido é ruído — a faixa ficava com mais cromo do que
+   conteúdo. Agora a superfície é uma só e a separação entre os itens é um fio de
+   1px, que é o mínimo necessário para dizer "outro campo". Some quatro molduras
+   e a leitura fica horizontal, como a frase que ela é.
+   O vidro raso mudou de dono junto: ele agora veste a FAIXA, não cada item. */
+.prematch-ctx{display:flex;align-items:stretch;justify-content:center;flex-wrap:wrap;gap:1px;
+  border-radius:var(--r-pilula);overflow:hidden;
+  background:rgba(255,255,255,.02);border:1px solid var(--vidro-raso-borda);
+  backdrop-filter:var(--vidro-raso-blur);-webkit-backdrop-filter:var(--vidro-raso-blur);
+  box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 10px 24px -18px rgba(0,0,0,.9)}
+/* O SEPARADOR É UM VÃO, não uma borda — mesma técnica do sulco da barra de
+   força. Borda esquerda só funciona enquanto a faixa cabe numa linha: no celular
+   ela quebra, e o item que desce aparecia com um fio à esquerda pendurado no
+   nada. Um `gap` de 1px deixa o fundo da própria faixa passar, e isso continua
+   certo em qualquer quebra — inclusive nas que eu não previ. */
 .pm-chip{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--e-1);
-  min-width:88px;padding:var(--e-2) var(--e-3);border-radius:var(--r-peca);
-  background:var(--vidro-raso-bg);border:1px solid var(--vidro-raso-borda);
-  backdrop-filter:var(--vidro-raso-blur);-webkit-backdrop-filter:var(--vidro-raso-blur)}
+  flex:1 0 auto;min-width:88px;padding:var(--e-2) var(--e-4);
+  background:rgba(255,255,255,.05)}
 .pm-chip-r{font-family:var(--ff);font-size:var(--fs-rotulo);letter-spacing:var(--tr-rotulo);
   text-transform:uppercase;color:var(--dim);line-height:1}
 .pm-chip-v{font-family:var(--ff);font-weight:800;font-size:var(--fs-corpo);letter-spacing:.06em;
@@ -1716,10 +1836,10 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    clica", e gastá-la num chip passivo enfraquece o único lugar onde ela precisa
    funcionar sem concorrência: o botão de ação. Ênfase sem cor de marca se faz
    com luz, que é o material que a tela inteira já usa. */
-.pm-chip--serie{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.22)}
+.pm-chip--serie{background:rgba(255,255,255,.08)}
 /* O vermelho FICA, porque não compete com a ação: ele não diz "clique", diz
    RISCO. Mata-mata é a única informação da faixa que muda o que se perde. */
-.pm-chip--alerta{background:rgba(var(--s-red-rgb),.14);border-color:rgba(var(--s-red-rgb),.45)}
+.pm-chip--alerta{background:rgba(var(--s-red-rgb),.16)}
 .pm-chip--alerta .pm-chip-v{color:var(--s-red-lit)}
 
 /* CONFRONTO DE FORÇA — A BASE DA LÂMINA, redesenhado em 08/08/2026.
@@ -1738,8 +1858,10 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    `var()` apontando para token que não existe.
    A correção não repõe outra cor: o sulco passa a ser um `gap` no flex, e quem
    aparece nele é o próprio fundo escuro do trilho. Vão não pode ficar indefinido. */
-.pm-forca{grid-area:base;display:flex;flex-direction:column;
-  border-top:1px solid rgba(255,255,255,.07)}
+/* A base também sobe acima da lâmina: ela é conteúdo, não superfície. */
+.pm-forca{grid-area:base;position:relative;z-index:2;display:flex;flex-direction:column;
+  border-top:1px solid rgba(255,255,255,.12);
+  background:linear-gradient(180deg,rgba(0,0,0,.16),rgba(0,0,0,.34))}
 .pm-forca[hidden]{display:none}
 .pm-forca-trilho{display:flex;gap:3px;height:10px;background:rgba(0,0,0,.6);
   box-shadow:inset 0 1px 2px rgba(0,0,0,.5)}
@@ -1790,12 +1912,41 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    atrás a cada quadro. Foi assim que a tela da partida caiu para 31 fps em
    29/07. O conteúdo se move; o vidro fica parado. */
 @keyframes pmLamina{from{opacity:0}to{opacity:1}}
+/* A REVELAÇÃO. A lâmina entra EMBAÇADA — desfoque alto e um véu branco — e
+   LIMPA, descobrindo os dois times por trás dela. Isto não é um efeito colado
+   por cima: só é possível porque o vidro agora está ENTRE o campo de cor e o
+   conteúdo. Com a pilha antiga, embaçar a lâmina não teria escondido nada,
+   porque não havia nada atrás dela para esconder. Estrutura e movimento aqui
+   são a mesma decisão.
+   E é `animation`, não `transition`, porque o congelador do comparador usa
+   atraso negativo: animação fica no quadro FINAL e a captura é determinística. */
+@keyframes pmRevela{
+  /* A costura entra JUNTO com a limpeza — invisível no quadro cego, nítida no
+     final. Ela viaja nos dois estados porque `background` é shorthand e
+     substitui todas as camadas; deixá-la fora do `from` faria a linha piscar. */
+  from{backdrop-filter:var(--vidro-alto-cego);-webkit-backdrop-filter:var(--vidro-alto-cego);
+    background:
+      linear-gradient(105deg,transparent calc(var(--pm-corte,50%) - 1px),
+        rgba(255,255,255,0) calc(var(--pm-corte,50%) - 1px) calc(var(--pm-corte,50%) + 1px),
+        transparent calc(var(--pm-corte,50%) + 1px)),
+      linear-gradient(140deg,rgba(255,255,255,.3),rgba(255,255,255,.2) 60%,rgba(255,255,255,.24))}
+  to{backdrop-filter:var(--vidro-alto-blur);-webkit-backdrop-filter:var(--vidro-alto-blur);
+    background:
+      linear-gradient(105deg,transparent calc(var(--pm-corte,50%) - 1px),
+        rgba(255,255,255,.22) calc(var(--pm-corte,50%) - 1px) calc(var(--pm-corte,50%) + 1px),
+        transparent calc(var(--pm-corte,50%) + 1px)),
+      linear-gradient(140deg,rgba(255,255,255,.14),rgba(255,255,255,.02) 34%,
+      rgba(255,255,255,0) 62%,rgba(255,255,255,.07))}
+}
 @keyframes pmEntraEsq{from{opacity:0;transform:translateX(-22px)}to{opacity:1;transform:none}}
 @keyframes pmEntraDir{from{opacity:0;transform:translateX(22px)}to{opacity:1;transform:none}}
 @keyframes pmBaseAbre{from{clip-path:inset(0 50% 0 50%)}to{clip-path:inset(0 0 0 0)}}
 @keyframes pmVeredito{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:no-preference){
   .pm-palco{animation:pmLamina 420ms var(--mov-entra) both}
+  /* A lâmina limpa DEPOIS de os times entrarem: eles chegam borrados atrás do
+     vidro e ganham foco — antecipação e depois revelação, nessa ordem. */
+  .pm-palco::after{animation:pmRevela 900ms var(--mov-entra) 260ms both}
   .pm-lado--a .pm-crest,.pm-lado--a .pm-info{animation:pmEntraEsq var(--d-lamina) var(--mov-entra) 120ms both}
   .pm-lado--b .pm-crest,.pm-lado--b .pm-info{animation:pmEntraDir var(--d-lamina) var(--mov-entra) 120ms both}
   .pm-forca-trilho{animation:pmBaseAbre var(--d-barra) var(--mov-entra) 360ms both}
@@ -1839,15 +1990,17 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
   .prematch{padding:var(--e-6) var(--e-4)}
   .pm-palco{--pm-banda:104px}
   .pm-lado{padding:var(--e-4);gap:var(--e-3)}
-  .pm-lado--a{clip-path:polygon(0 0,100% 0,100% 56%,0 44%);
-    background:linear-gradient(170deg,rgba(var(--time-rgb),var(--pm-veu)),
-        rgba(var(--time-rgb),calc(var(--pm-veu) * .12)) 78%),var(--vidro-medio-bg);
-    flex-direction:row;justify-content:flex-start;align-items:flex-start;
+  /* No celular o campo gira junto: a parada dura passa a correr quase na
+     horizontal, e o corte fica fixo em 50% porque a inclinação por força é
+     legível na largura, não na altura de duas faixas empilhadas. */
+  .pm-palco::before{background:
+    linear-gradient(172deg,
+      rgba(var(--time-a-rgb,120,130,145),var(--pm-veu)) 0 calc(50% - 1px),
+      rgba(var(--time-b-rgb,120,130,145),var(--pm-veu)) calc(50% + 1px) 100%),
+    var(--vidro-alto-bg)}
+  .pm-lado--a{flex-direction:row;justify-content:flex-start;align-items:flex-start;
     padding-right:var(--e-4);padding-bottom:var(--pm-banda)}
-  .pm-lado--b{clip-path:polygon(0 44%,100% 56%,100% 100%,0 100%);
-    background:linear-gradient(350deg,rgba(var(--time-rgb),var(--pm-veu)),
-        rgba(var(--time-rgb),calc(var(--pm-veu) * .12)) 78%),var(--vidro-medio-bg);
-    flex-direction:row-reverse;justify-content:flex-start;align-items:flex-end;
+  .pm-lado--b{flex-direction:row-reverse;justify-content:flex-start;align-items:flex-end;
     padding-left:var(--e-4);padding-top:var(--pm-banda)}
   /* Entram de cima e de baixo, no eixo em que agora se opõem. */
   .pm-lado--a .pm-crest,.pm-lado--a .pm-info{animation-name:pmEntraCima}
@@ -1920,7 +2073,10 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    assimétrico calibrado para uma fonte específica, que é exatamente a
    compensação que a §21 provou cara. */
 .pm-mapa{display:flex;align-items:center;justify-content:center;gap:var(--e-2);
-  padding:6px var(--e-2) 6px 6px;position:relative;opacity:.85;border-radius:var(--r-peca);
+  /* Mesma forma da faixa de contexto logo acima: os dois são a MOLDURA do
+     confronto, e forma diferente para conteúdo do mesmo nível é o que faz uma
+     composição parecer bagunçada mesmo alinhada. */
+  padding:6px var(--e-3) 6px var(--e-2);position:relative;opacity:.85;border-radius:var(--r-pilula);
   background:var(--vidro-raso-bg);border:1px solid var(--vidro-raso-borda);
   backdrop-filter:var(--vidro-raso-blur);-webkit-backdrop-filter:var(--vidro-raso-blur)}
 .pm-mapa::before{content:"";width:3px;align-self:stretch;border-radius:2px;
@@ -2029,6 +2185,22 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    fundo próprio, enquanto na partida ele fica direto sobre o ambiente.
    Duas auroras nos cantos superiores mais um facho central dão a sensação de
    estar no lugar; a vinheta de baixo assenta o conteúdo. */
+/* O VIDRO PRECISA TER O QUE REFRATAR — 08/08/2026, e isto foi provado por
+   mutação, não decidido por gosto. Fotografando a antessala com e sem
+   `backdrop-filter` na lâmina: 220.948 pixels diferentes, e o maior delta de
+   canal é 6/255. Ou seja, o filtro rodava, custava GPU e produzia uma diferença
+   abaixo do limiar do olho — porque desfoque sobre gradiente LISO devolve o
+   mesmo gradiente liso. Era o argumento que eu já tinha usado para rebaixar os
+   chips ("não há detalhe atrás para desviar") e que não apliquei aqui.
+
+   A malha resolve isso. Linhas finas espaçadas em 72px, contra um desfoque de
+   22px: espaçamento muito maior que o raio é o que faz a linha VIRAR uma banda
+   macia atrás do vidro em vez de sumir na média. Sob a lâmina elas se dobram e
+   se saturam; fora dela ficam nítidas. É essa diferença entre dentro e fora que
+   o olho lê como espessura de material.
+
+   E ela não é ornamento genérico: corre no mesmo ângulo da costura do palco e
+   veste a cor do mapa, então é o LUGAR que aparece atrás do vidro. */
 .prematch[style*="--mapa-ceu"]{
   background:
     radial-gradient(64% 50% at 10% -4%,rgba(var(--mapa-rgb),.62),transparent 68%),
@@ -2036,6 +2208,12 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
     radial-gradient(130% 78% at 50% -8%,rgba(var(--mapa-rgb),.4),transparent 62%),
     radial-gradient(90% 48% at 50% 108%,rgba(var(--mapa-rgb),.24),transparent 66%),
     radial-gradient(110% 66% at 50% 124%,rgba(0,0,0,.66),transparent 60%),
+    /* A MALHA VEM DEPOIS DAS AURORAS de propósito: assim as manchas de luz
+       lavam a grade nos cantos e ela fica mais presente no miolo, que é
+       justamente onde a lâmina pousa. Grade uniforme de borda a borda vira
+       papel milimetrado; graduada, vira lugar. */
+    repeating-linear-gradient(105deg,rgba(var(--mapa-rgb),.16) 0 1px,transparent 1px 72px),
+    repeating-linear-gradient(15deg,rgba(var(--mapa-rgb),.09) 0 1px,transparent 1px 108px),
     linear-gradient(180deg,var(--mapa-ceu),var(--mapa-chao));
 }
 /* A transição faz o mapa CHEGAR em vez de piscar — e some com reduced-motion,
