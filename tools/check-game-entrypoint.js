@@ -34,7 +34,7 @@ assert.match(game,/import \{construirCartao\} from "\.\/src\/ui\/game\/build-sum
    ATUALIZA na virada do round 13 — a versão anterior trocava o lado com
    `el.textContent="TR"` daqui, o que apagava a estrutura interna do chip montada
    lá. Duas verdades sobre a mesma peça é como a tabela ficou um lado atrás. */
-assert.match(game,/import \{liveTeamHeaderHtml,prematchTeamHtml,aplicarLado,estiloDoTime\} from "\.\/src\/ui\/game\/team-view\.mjs";/,
+assert.match(game,/import \{liveTeamHeaderHtml,prematchTeamHtml,aplicarLado,estiloDoTime,canaisDoTime\} from "\.\/src\/ui\/game\/team-view\.mjs";/,
   "game.js não importa a view compartilhada de times");
 assert.match(game,/import \{swissBoardHtml,bracketSubtitle,bracketBoardHtml\} from "\.\/src\/ui\/game\/tournament-view\.mjs";/,
   "game.js não importa a view do torneio");

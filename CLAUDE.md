@@ -692,6 +692,33 @@ Relato e medições em `docs/ciclos/antessala-redesenho-2026-08-08.md`.
     e as metades passaram a dividir o eixo vertical — o vocabulário sobrevive, só
     muda o eixo.
 
+60. **Quando um material não aparece, o suspeito é a ORDEM DA PILHA, não o valor
+    do filtro.** O `backdrop-filter` da antessala vivia em `.pm-palco`, e as duas
+    `.pm-lado` pintavam o próprio gradiente por cima dele: o vidro estava embaixo
+    de duas camadas de tinta, amostrando quase nada. Pior, o `clip-path` das
+    metades — que existia só para desenhar a diagonal — cria contexto de
+    empilhamento e PRENDIA o conteúdo abaixo do material, então nem subir o texto
+    era possível. Quatro rodadas trocando cor não consertam uma ordem de camada.
+    A pilha correta é a da Apple e tem três níveis: **campo de cor → lâmina →
+    conteúdo**. Diagonal se faz com parada dura de gradiente, não com recorte,
+    justamente porque recorte custa um contexto de empilhamento. E a aresta que o
+    desfoque comer volta como linha no fundo do PRÓPRIO pseudo-elemento, que é
+    pintado depois do filtro.
+61. **Estrutura e movimento são a mesma decisão quando a revelação é material.**
+    A lâmina entra cega e LIMPA, descobrindo os times por trás — e isso só existe
+    porque o vidro está ENTRE o campo e o conteúdo. Com a pilha antiga, embaçar a
+    lâmina não esconderia nada, porque não havia nada atrás dela. Antes de
+    inventar uma animação, pergunte se a estrutura permite que ela signifique
+    alguma coisa.
+62. **Instrumentação decide o que você conserta.** Construí medição de área,
+    tipografia e contraste, e os três melhoraram; materialidade não tinha número
+    no ferramental, então virou argumento — e argumento é onde preservei o
+    esqueleto existente por ele estar "aprovado". Confundir deferência ao
+    histórico com disciplina é o modo silencioso de entregar refino quando foi
+    pedida reconstrução. **Quando faltar régua para um eixo, construa a régua**:
+    aqui foi fotografar a tela com e sem o filtro e contar o delta máximo de
+    canal — 6/255 antes, 33/255 depois, mesmo custo de GPU.
+
 **E a lição de método do ciclo:** as três correções que mudaram o plano não
 vieram de ler código — vieram de RODAR. "Reduzir para duas superfícies de vidro"
 teria deixado um nível do sistema órfão; a barra só se revelou ilegível na
