@@ -3,9 +3,10 @@
 Os documentos desta pasta são **relatórios de ciclos que já terminaram**. Eles
 respondem *"por que este número é este"*, não *"o que eu faço agora"*.
 
-Para saber o que fazer agora, leia `AGENTS.md` e `docs/ciclos/retomada-2026-08-04.md`.
-Nenhum arquivo daqui é ponto de retomada — **inclusive o handoff de 31/07/2026**,
-que chegou aqui em 04/08 depois de ser ultrapassado por três ciclos.
+Para saber o que fazer agora, leia `AGENTS.md` e `docs/retomada-2026-08-05.md`.
+Nenhum arquivo daqui é ponto de retomada — **inclusive os handoffs de 31/07 e de
+04/08/2026**, que chegaram aqui depois de serem ultrapassados. Esta linha já
+apontou para um deles: ponteiro de índice envelhece igual a documento.
 
 Eles foram separados em 31/07/2026 porque `docs/` tinha 39 arquivos num diretório
 plano: guia operacional e evidência histórica disputavam o mesmo espaço, e uma
@@ -63,11 +64,29 @@ evidências. Isso **não** o rebaixa: `AGENTS.md` continua mandando lê-lo antes
 alterar os módulos extraídos, exatamente como manda ler o relatório que produziu
 uma constante antes de mexer nela.
 
+## Ciclo da camada tática (04–05/08/2026)
+
+| Arquivo | Assunto |
+|---|---|
+| `tatica-baseline-2026-08-04.md` | retrato de referência com a camada construída e DESLIGADA; quais eixos não podem render duas vezes |
+| `tatica-tipo-de-jogada-2026-08-05.md` | `CFG_TATICA.ATIVA` em 1 — seis tipos de jogada, anti-strat e o canal que deixou de ser adivinhar. **Leia antes de tocar em qualquer constante da camada** |
+
+A exibição passiva que esse ciclo deixou em aberto foi **recusada** pelo
+responsável em 05/08, com implementação pronta e verde na mesa. O motivo está na
+emenda da §11-bis de `docs/project-context.md`.
+
+## Ciclos visuais
+
+| Arquivo | Assunto |
+|---|---|
+| `monograma-e-suica-2026-08-05.md` | monograma da carta — três defeitos simultâneos e zero guarda — e a Fase Suíça que, por aritmética do formato, nunca enchia a tela |
+
 ## Handoffs superados
 
 | Arquivo | Assunto |
 |---|---|
 | `retomada-2026-07-31.md` | handoff geral entre 31/07 e 04/08/2026 — fechamento do ciclo visual das cartas e o caminho até ele, inclusive direções tentadas e descartadas |
+| `retomada-2026-08-04.md` | handoff geral de 04/08 — superado no dia seguinte, quando a camada tática entrou em jogo |
 
 Um handoff superado é evidência como qualquer outra: ele registra por que a carta
 é o que é e o que já foi tentado. O que ele **não** pode continuar sendo é o

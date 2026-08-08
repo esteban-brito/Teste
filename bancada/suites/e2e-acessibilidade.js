@@ -35,6 +35,8 @@ const path=require("path");
 const {spawn}=require("child_process");
 const {chromium}=require("playwright");
 const {ROOT,okMark,chromiumLaunchOptions}=require("../lib/common");
+const arrasto=require("../lib/arrasto");
+const {entrarNoMajor,reabrirSuica}=require("../lib/major");
 
 const TELAS=[
   {nome:"desktop",width:1440,height:900,toque:false},
@@ -147,18 +149,22 @@ async function revealDraw(pg,sel){
   }
   throw new Error("não foi possível sortear "+sel);
 }
+/* O GESTO VIVE EM `bancada/lib/arrasto.js` — 06/08/2026. Ele estava copiado
+   aqui, em `e2e-game-flow.js` e em `tools/visual-regression.js`, e a correção da
+   corrida de rAF (regra 41) teve de ser escrita duas vezes. Esta suíte usa a
+   estratégia de AUTO-ROLAGEM de propósito: ela é o gesto real do dedo no celular
+   e a única prova de que a auto-rolagem do produto existe. */
+const arrastarCarta=(pg,origem,destino)=>arrasto.porAutoRolagem(pg,origem,destino);
 async function draftPlayer(pg,slot){
   await revealDraw(pg,"#picks .card[data-pick]:not(.taken):not(.dup)");
   const id=await pg.$$eval("#picks .card[data-pick]:not(.taken):not(.dup)",cards=>
     [...cards].sort((a,b)=>Number(b.querySelector(".ovr")?.textContent)-Number(a.querySelector(".ovr")?.textContent))[0]?.dataset.pick||null);
-  await pg.locator(`#picks [data-pick="${id}"]`).click();
-  await pg.locator(`#lineup [data-slot="${slot}"].avail`).click();
+  await arrastarCarta(pg,`#picks [data-pick="${id}"]`,`#lineup [data-slot="${slot}"]`);
   await pg.waitForFunction(e=>document.getElementById("cnt").textContent===`${e}/6`,slot+1);
 }
 async function draftCoach(pg){
   await revealDraw(pg,"#picks .coachcard[data-pick]:not(.taken)");
-  await pg.locator("#picks .coachcard[data-pick]:not(.taken)").click();
-  await pg.locator('#lineupCoach [data-slot="coach"].avail').click();
+  await arrastarCarta(pg,"#picks .coachcard[data-pick]:not(.taken)",'#lineupCoach [data-slot="coach"]');
   await pg.waitForFunction(()=>document.getElementById("cnt").textContent==="6/6");
 }
 
@@ -182,8 +188,7 @@ async function percorrer(browser,tela,port,ruido){
   await draftCoach(pg);
   await auditarEstado("elenco-cheio");
 
-  await pg.click("#suicabtn");
-  await pg.waitForSelector("#suicaOverlay",{state:"visible",timeout:8000});
+  await entrarNoMajor(pg);
   await pg.waitForTimeout(300);
   await auditarEstado("suica");
 
@@ -199,8 +204,7 @@ async function percorrer(browser,tela,port,ruido){
   check(teclado.foco==="suicabtn",`${tela.nome} · foco volta ao controle de origem (${teclado.foco||"nenhum"})`);
   check(teclado.fundoLiberado,`${tela.nome} · fundo deixa de ser inerte ao fechar`);
 
-  await pg.click("#suicabtn");
-  await pg.waitForSelector("#suicaOverlay",{state:"visible",timeout:8000});
+  await reabrirSuica(pg);
   let voltas=0,abriuPartida=false;
   while(voltas<10&&!abriuPartida){
     if(await pg.locator("#suicaPlayoffs").isVisible())break;

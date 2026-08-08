@@ -154,6 +154,26 @@ exceção de fonte, bandeira ausente e trilho encurtado; depois a medição prec
 voltar a zero. Não existe mais estado "publicado versus proposta" nem comparador
 de enquadramento no laboratório.
 
+Desde 05/08/2026 o E2E de cartas cobre também o **monograma do campo sem
+retrato** (`.c-mono`), que até então não tinha guarda nenhuma — e por isso
+acumulou três defeitos ao mesmo tempo: tinta +2,83 px à direita, 0,93 px acima e
+tamanho aparente variando 1,88× entre `TI` e `SW`. As provas remedem
+`cap-height` e o par mais largo do alfabeto **na fonte real**, então uma troca de
+fonte reprova em vez de deslocar o desenho; provam que o avanço é uniforme, que o
+texto está no eixo e que o `viewBox` É a caixa-alta. A sintética tira a
+normalização e confirma que a medição volta a enxergar 1,75×.
+
+Armadilha registrada: **`getBBox()` de `<text>` devolve a caixa EM no Chromium**,
+não a tinta — altura fixa de 1,3em e topo em −41,49 para todos. A primeira versão
+da guarda vertical media essa constante e reprovava sem defeito nenhum. Ela serve
+para largura, que é o que `textLength` governa, e não serve para altura.
+
+`bancada/suites/e2e-game-flow.js` mede, desde a mesma data, as **duas margens da
+Fase Suíça** e a rolagem, em desktop e celular. O layout antigo deixava 880 px
+vazios à direita na rodada 0 (61% da largura) enquanto o conteúdo estourava a
+altura, e rolava na horizontal no celular com "ELIMINADOS" cortado. Nada disso
+aparece numa captura: margem assimétrica e rolagem só existem como número.
+
 `tools/check-card-portraits.js`, parte de `npm run check`, valida os assets ligados
 ao campo cru `foto`: ID seguro, arquivo WebP existente, proporção exata 5:7,
 resolução mínima, limite de peso e ausência de órfãos. O protocolo completo de

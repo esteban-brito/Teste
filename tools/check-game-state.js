@@ -56,17 +56,26 @@ async function main(){
   assert.equal(Object.hasOwn(playback,"sb"),false,"scoreboard deixou de ser campo dinâmico");
 
   const match=createMatchState(),otherMatch=createMatchState();
+  /* `narrado` entrou em 06/08/2026 com a narração opcional. Nasce FALSO de
+     propósito: o modo limpo é o padrão de referência, e um estado novo que
+     começasse ligado mudaria o jogo de quem nunca pediu narração. */
   assert.deepEqual(match,{
-    A:null,B:null,md:1,mapaIdx:0,vA:0,vB:0,contexto:"",onSerieFim:null,
+    A:null,B:null,md:1,mapaIdx:0,vA:0,vB:0,contexto:"",onSerieFim:null,narrado:false,mapas:[],
   },"shape inicial da série mudou");
+  assert.equal(match.narrado,false,"a narração não pode nascer ligada");
   assert.equal(Object.hasOwn(match,"rodando"),false,"rodando passou a existir no estado inicial");
   assert.notEqual(match,otherMatch,"factory da série reutilizou o objeto");
   const matchRef=match;
+  /* `mapas` entra sujo de propósito: se o reset não o limpasse, a série seguinte
+     herdaria os mapas da anterior e jogaria um confronto inteiro no lugar
+     errado — com a antessala mostrando os mapas certos. */
   Object.assign(match,{A:{},B:{},md:3,mapaIdx:2,vA:2,vB:1,contexto:"final",
-    onSerieFim:()=>{},rodando:true});
+    onSerieFim:()=>{},rodando:true,narrado:true,mapas:["Nuke","Mirage","Ancient"]});
   assert.equal(resetMatchState(match),matchRef,"reset da série substituiu o objeto");
+  /* O reset devolve `narrado` a false: começar uma campanha nova herdando a
+     narração da anterior ligaria um modo que ninguém pediu naquela sessão. */
   assert.deepEqual(match,{
-    A:null,B:null,md:1,mapaIdx:0,vA:0,vB:0,contexto:"",onSerieFim:null,rodando:false,
+    A:null,B:null,md:1,mapaIdx:0,vA:0,vB:0,contexto:"",onSerieFim:null,rodando:false,narrado:false,mapas:[],
   },"reset da série mudou shape ou valores");
 
   console.log("game state: ok (shape · isolamento · identidade · quirks de reset)");

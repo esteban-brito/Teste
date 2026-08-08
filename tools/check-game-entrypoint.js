@@ -29,7 +29,12 @@ assert.match(game,/import \{createCardView\} from "\.\/src\/ui\/game\/card-view\
   "game.js não importa o renderizador de cartas");
 assert.match(game,/import \{construirCartao\} from "\.\/src\/ui\/game\/build-summary-view\.mjs";/,
   "game.js não importa o renderizador do resumo de build");
-assert.match(game,/import \{liveTeamHeaderHtml,prematchTeamHtml\} from "\.\/src\/ui\/game\/team-view\.mjs";/,
+/* `aplicarLado` entrou em 07/08/2026 com o chip de lado legível. Ele é importado
+   e não reimplementado de propósito: quem MONTA o chip tem de ser quem o
+   ATUALIZA na virada do round 13 — a versão anterior trocava o lado com
+   `el.textContent="TR"` daqui, o que apagava a estrutura interna do chip montada
+   lá. Duas verdades sobre a mesma peça é como a tabela ficou um lado atrás. */
+assert.match(game,/import \{liveTeamHeaderHtml,prematchTeamHtml,aplicarLado,estiloDoTime\} from "\.\/src\/ui\/game\/team-view\.mjs";/,
   "game.js não importa a view compartilhada de times");
 assert.match(game,/import \{swissBoardHtml,bracketSubtitle,bracketBoardHtml\} from "\.\/src\/ui\/game\/tournament-view\.mjs";/,
   "game.js não importa a view do torneio");
@@ -60,8 +65,12 @@ assert.doesNotMatch(game,/\b(?:const|let|var) (?:S|TG|MP|MATCH)\s*=\s*\{/,
    quando o elenco deixa de estar completo, e `iniciarTorneio()` monta o Major
    campo a campo. Os dois são legítimos e precisam continuar passando — por isso
    a guarda mede chamada e mutação em massa, nunca escrita direta em campo. */
+/* `resetDraftState` passou de 2 para 3 chamadas em 07/08/2026: entrou o botão de
+   ELENCO ALEATÓRIO, que zera o draft antes de montar 5+1 de uma vez. É uso
+   legítimo da mesma função — exatamente o que esta guarda quer proteger, já que
+   a alternativa seria o botão limpar `S` campo a campo e reinlinar o reset. */
 const CHAMADAS_DE_ESTADO=[
-  ["createDraftState",1],["resetDraftState",2],
+  ["createDraftState",1],["resetDraftState",3],
   ["createMajorState",1],["resetMajorState",1],
   ["createMapPlaybackState",1],["createMatchState",1],["resetMatchState",1]
 ];

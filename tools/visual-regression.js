@@ -45,6 +45,8 @@
 const {spawn}=require("child_process");
 const fs=require("fs");
 const path=require("path");
+const arrasto=require("../bancada/lib/arrasto");
+const {entrarNoMajor}=require("../bancada/lib/major");
 
 const RAIZ=path.resolve(__dirname,"..");
 const PORTA=Number(process.env.VISUAL_PORT||5197);
@@ -87,10 +89,16 @@ async function revelar(page,seletor){
   throw new Error(`visual-regression: a roleta nunca revelou ${seletor}`);
 }
 
+/* O GESTO VIVE EM `bancada/lib/arrasto.js` — 06/08/2026. Estava copiado aqui e
+   em duas suítes; a correção da corrida de rAF (regra 41) teve de ser escrita
+   duas vezes, e esta cópia era a que travava a captura no `04-elenco`. */
+const arrastarCarta=(page,origem,destino)=>arrasto.porAutoRolagem(page,origem,destino);
+
 async function capturar(page,destino,nome){
-  await page.addStyleTag({content:CONGELAR});
+  const congelador=await page.addStyleTag({content:CONGELAR});
   await page.waitForTimeout(120);
   await page.screenshot({path:path.join(destino,nome+".png"),fullPage:true});
+  await congelador.evaluate(el=>el.remove());
 }
 
 async function percorrer(page,tela,destino){
@@ -103,30 +111,29 @@ async function percorrer(page,tela,destino){
   await page.waitForTimeout(1400);
   await capturar(page,destino,nomear("02-cartas"));
 
-  await page.click("#flipModeBtn");
+  /* Clicar VIRA desde 06/08/2026 — não existe mais modo. Virar todas e voltar
+     todas mantém o estado `03-versos` comparável entre execuções. */
   for(const carta of await page.$$(".picks .card,.picks .coachcard"))await carta.click();
   await page.waitForTimeout(700);
   await capturar(page,destino,nomear("03-versos"));
-  await page.click("#flipModeBtn");
+  for(const carta of await page.$$(".picks .card,.picks .coachcard"))await carta.click();
+  await page.waitForTimeout(400);
 
   for(let slot=0;slot<5;slot++){
     await revelar(page,"#picks .card[data-pick]:not(.taken):not(.dup)");
     const id=await page.$$eval("#picks .card[data-pick]:not(.taken):not(.dup)",
       cards=>cards[0].getAttribute("data-pick"));
-    await page.locator(`#picks [data-pick="${id}"]`).click();
-    await page.locator(`#lineup [data-slot="${slot}"].avail`).click();
+    await arrastarCarta(page,`#picks [data-pick="${id}"]`,`#lineup [data-slot="${slot}"]`);
     await page.waitForFunction(n=>document.getElementById("cnt").textContent===`${n}/6`,slot+1);
   }
   await revelar(page,"#picks .coachcard[data-pick]:not(.taken)");
-  await page.locator("#picks .coachcard[data-pick]:not(.taken)").click();
-  await page.locator('#lineupCoach [data-slot="coach"].avail').click();
+  await arrastarCarta(page,"#picks .coachcard[data-pick]:not(.taken)",'#lineupCoach [data-slot="coach"]');
   await page.waitForFunction(()=>document.getElementById("cnt").textContent==="6/6");
   await page.waitForTimeout(600);
   await capturar(page,destino,nomear("04-elenco"));
 
   await page.evaluate(semente=>window.__DRAFT9_E2E__.srand(semente),SEMENTE_SIM);
-  await page.click("#suicabtn");
-  await page.waitForSelector("#suicaOverlay",{state:"visible"});
+  await entrarNoMajor(page);
   await page.waitForTimeout(400);
   await capturar(page,destino,nomear("05-suica"));
 

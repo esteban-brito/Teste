@@ -3,7 +3,11 @@
    impede divergência integral entre as duas representações. */
 export const TIMES_DEF=[
   {nome:"NAVI",cor:"#ffd400",coach:"B1ad3",camp:"Stockholm Major 2021",colocacao:"Campeao",jogadores:["s1mple","electroNic","b1t","Perfecto","Boombl4"]},
-  {nome:"Outsiders",cor:"#39d3ff",coach:"dastan",camp:"Rio Major 2022",colocacao:"Campeao",jogadores:["Jame","FL1T","fame","n0rb3r7","Qikert"]},
+  /* ROXO desde 07/08/2026, a pedido. O `#39d3ff` anterior era IDÊNTICO à cor do
+     time do jogador: em ~6% dos confrontos os dois cards saíam da mesma cor e só
+     o selo `VOCÊ` os separava. O tom foi escolhido por medição — 22,2 de
+     distância do roxo do Spirit e 4,81:1 de contraste com a tinta do monograma. */
+  {nome:"Outsiders",cor:"#7c4dff",coach:"dastan",camp:"Rio Major 2022",colocacao:"Campeao",jogadores:["Jame","FL1T","fame","n0rb3r7","Qikert"]},
   {nome:"FURIA",cor:"#00e676",coach:"guerri",camp:"Rio Major 2022",colocacao:"Top4",jogadores:["KSCERATO","yuurih","saffee","arT","drop"]},
   {nome:"SK",cor:"#ff5a1f",coach:"dead",camp:"Cologne Major 2016",colocacao:"Campeao",jogadores:["coldzera","FalleN","fer","fnx","TACO"]},
   {nome:"Vitality",cor:"#f5d020",coach:"XTQZZZ",camp:"Budapest Major 2025",colocacao:"Campeao",jogadores:["ZywOo","ropz","mezii","flameZ","apEX"]},

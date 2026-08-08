@@ -6,12 +6,19 @@ const SWISS_FINAL_SLOTS=8;
 /* Coluna de destino da Suíça (classificados ou eliminados). Mostra apenas os
    times que já chegaram: reservar as oito vagas enchia metade da tela de caixas
    vazias na rodada 0. O contador no cabeçalho preserva quantas faltam. */
+/* Os itens vivem num container próprio, e não soltos ao lado do cabeçalho, para
+   que a coluna possa distribuí-los em mais de uma faixa quando sobra largura. Na
+   rodada 0 o grupo `0:0` tem os 16 times: soltos, eles viravam uma torre de
+   1.033 px numa área de 788 px — a tela rolava para baixo enquanto 61% da
+   largura estava vazia à direita. */
+const itensHtml=conteudo=>`<div class="swiss-col-itens">${conteudo}</div>`;
+
 function finalColumnHtml(label,headClass,slotClass,teams){
   const filled=teams.map(team=>
     `<div class="qualified-slot${slotClass}${team.meu?" mine":""}">${teamChipHtml(team)}</div>`).join("");
   return `<div class="swiss-col"><div class="swiss-colhead ${headClass}">${label}`+
     `<b class="swiss-count">${teams.length}/${SWISS_FINAL_SLOTS}</b></div>`+
-    (filled||`<div class="swiss-col-vazio">nenhum ainda</div>`)+`</div>`;
+    (filled?itensHtml(filled):`<div class="swiss-col-vazio">nenhum ainda</div>`)+`</div>`;
 }
 
 export function swissBoardHtml({times,classificados,eliminados}){
@@ -21,7 +28,8 @@ export function swissBoardHtml({times,classificados,eliminados}){
     const group=times.filter(team=>team.v===wins&&team.d===losses&&team.vivo);
     if(!group.length)return;
     html+=`<div class="swiss-col"><div class="swiss-colhead neutral">${wins}:${losses}</div>`+
-      group.map(team=>`<div class="match${team.meu?" mine":""}">${teamChipHtml(team)}</div>`).join("")+`</div>`;
+      itensHtml(group.map(team=>
+        `<div class="match${team.meu?" mine":""}">${teamChipHtml(team)}</div>`).join(""))+`</div>`;
   });
   html+=finalColumnHtml("Classificados","qual","",classificados);
   html+=finalColumnHtml("Eliminados","elim"," elim-slot",eliminados);

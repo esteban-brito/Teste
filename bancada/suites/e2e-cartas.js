@@ -319,6 +319,113 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       (await page.evaluate(()=>window.__LAB_MEDIR())).ritmo.length===0,
     "medição volta ao verde depois das provas sintéticas");
 
+    /* ——— MONOGRAMA DO CAMPO VAZIO ———————————————————————————————————————
+       Ele não tinha guarda nenhuma até 05/08/2026, e foi por isso que três
+       defeitos conviveram sem ninguém ver: a tinta caía +2,83 px à direita em
+       média (pior caso +5,25 px), subia 0,93 px, e o tamanho aparente variava
+       1,88× entre `TI` e `SW`. Estas provas congelam a geometria nova E as duas
+       constantes de que ela depende — se a fonte mudar por baixo delas, aqui
+       reprova. */
+    const mono=await page.evaluate(()=>{
+      const cv=document.createElement("canvas").getContext("2d");
+      cv.font='700 1000px "Chakra Petch"';
+      /* Constantes que `card-view.mjs` congelou, remedidas na fonte REAL.
+         H I E T F são planos: O e S têm overshoot e mediriam alto demais. */
+      const cap=["H","I","E","T","F"].map(c=>cv.measureText(c).actualBoundingBoxAscent/1000);
+      const capDigito=["0","1","9"].map(c=>cv.measureText(c).actualBoundingBoxAscent/1000);
+      const alfabeto=[..."ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"];
+      const larguras=alfabeto.map(c=>cv.measureText(c).width/1000).sort((a,b)=>b-a);
+      const parMaisLargo=larguras[0]+larguras[1];
+
+      const itens=[];
+      for(const el of document.querySelectorAll("#gElencos .c-mono")){
+        const caixa=el.getBoundingClientRect();
+        if(caixa.width<40)continue;
+        const svg=el.querySelector("svg");
+        if(!svg){itens.push({semSvg:true});continue;}
+        const s=svg.getBoundingClientRect();
+        const carta=el.closest(".card,.coachcard").getBoundingClientRect();
+        /* O AVANÇO do texto, em unidades do viewBox. Medir a caixa do <svg>
+           seria tautológico — ela vem do CSS e é igual por construção. O que
+           precisa ser provado é que o texto DENTRO dela foi mesmo normalizado.
+           `getBBox()` de <text> devolve a caixa EM no Chromium (altura fixa de
+           1,3em, topo em −41,49), não a tinta: serve para a largura, que é o que
+           `textLength` governa, e não serve para altura nenhuma. */
+        const vb=svg.viewBox.baseVal;
+        const texto=svg.querySelector("text");
+        const bb=texto.getBBox();
+        itens.push({texto:el.textContent.trim(),
+          desvioH:(s.left+s.width/2)-(caixa.left+caixa.width/2),
+          desvioV:(s.top+s.height/2)-(caixa.top+caixa.height/2),
+          largura:s.width,altura:s.height,fracaoCarta:s.height/carta.width,
+          avancoLargura:bb.width,avancoCentro:(bb.x+bb.width/2)-vb.width/2,
+          base:Number(texto.getAttribute("y")),
+          corpo:Number(texto.getAttribute("font-size")),vbAltura:vb.height});
+      }
+      return {cap,capDigito,parMaisLargo,itens,vbLargura:238.9};
+    });
+    const capMedida=mono.cap.reduce((s,v)=>s+v,0)/mono.cap.length;
+    /* A caixa-alta É o viewBox: se ela mudar, a base do texto deixa de cair em
+       y=100 e a letra volta a ficar torta na vertical. */
+    check(Math.abs(capMedida-0.7031)<0.002,
+      `caixa-alta da fonte continua 0,7031em (medido ${capMedida.toFixed(4)})`);
+    /* Dígito e letra compartilham a caixa-alta — é o que dispensa exceção para
+       `91`, `S1`, `B1`, `N0` e `M0`. */
+    check(mono.capDigito.every(v=>Math.abs(v-capMedida)<0.002),
+      "dígito e letra continuam com a mesma caixa-alta");
+    /* `WM` é o par mais largo POSSÍVEL em A-Z0-9. A constante sai da FONTE e não
+       do dado: assim, adicionar um time novo não pode espremer o monograma. */
+    check(mono.parMaisLargo<=1.68+1e-6,
+      `par mais largo do alfabeto continua cabendo em 1,68em (medido ${mono.parMaisLargo.toFixed(4)})`);
+
+    check(mono.itens.length>0&&!mono.itens.some(i=>i.semSvg),
+      `os ${mono.itens.length} monogramas usam geometria normalizada`);
+    const desvioMax=Math.max(...mono.itens.map(i=>Math.max(Math.abs(i.desvioH),Math.abs(i.desvioV))));
+    check(desvioMax<0.1,`caixa do monograma centrada nos dois eixos (pior desvio ${desvioMax.toFixed(3)}px)`);
+    /* A prova que NÃO é tautológica: o avanço de todos os pares tem de ser o
+       mesmo. A sintética abaixo mostra que, sem `textLength`, isto volta a
+       1,75× — então a asserção mede o mecanismo, não a própria constante. */
+    const avancos=mono.itens.map(i=>i.avancoLargura);
+    const espalhamento=Math.max(...avancos)/Math.min(...avancos);
+    check(espalhamento<1.02,
+      `avanço dos ${mono.itens.length} monogramas é uniforme (${espalhamento.toFixed(3)}× do menor ao maior; a tinta variava 1,88×)`);
+    const foraDoEixo=Math.max(...mono.itens.map(i=>Math.abs(i.avancoCentro)));
+    check(foraDoEixo<mono.vbLargura*0.02,
+      `texto centrado no eixo do viewBox (pior ${foraDoEixo.toFixed(1)} de ${mono.vbLargura} unidades)`);
+    /* O QUE SUSTENTA A CENTRAGEM VERTICAL: o viewBox tem de SER a caixa-alta.
+       Com a base em y=100 e o corpo valendo 100/cap, o topo da maiúscula cai em
+       zero e centrar o elemento passa a centrar a LETRA — a régua da §21. Esta
+       conta liga a constante do código à fonte medida acima; se uma das duas
+       andar sozinha, o topo sai de zero e aqui reprova. */
+    const topoDaCaixaAlta=mono.itens.map(i=>i.base-capMedida*i.corpo);
+    const topoMax=Math.max(...topoDaCaixaAlta.map(Math.abs));
+    check(topoMax<1,
+      `viewBox É a caixa-alta: topo da maiúscula em ${topoMax.toFixed(2)} de ${mono.itens[0].vbAltura} unidades`);
+    /* O tamanho não pode ter mudado junto com a centragem: 46cqw × 0,7031 era a
+       caixa-alta de antes, e continua sendo. */
+    const fracao=mono.itens[0].fracaoCarta;
+    check(Math.abs(fracao-0.3234)<0.004,
+      `caixa-alta segue em 32,3% da largura da carta (medido ${(fracao*100).toFixed(2)}%)`);
+
+    /* PROVA SINTÉTICA — sem ela as asserções acima poderiam estar sempre verdes.
+       Reencena o defeito antigo tirando a normalização e confere que o
+       espalhamento volta a explodir. */
+    const detectaMonoSolto=await page.evaluate(()=>{
+      const alvos=[...document.querySelectorAll("#gElencos .c-mono")]
+        .filter(el=>el.getBoundingClientRect().width>=40);
+      const medir=()=>alvos.map(el=>el.querySelector("text").getBBox().width);
+      const antes=alvos.map(el=>el.querySelector("text").getAttribute("textLength"));
+      alvos.forEach(el=>el.querySelector("text").removeAttribute("textLength"));
+      const soltos=medir();
+      alvos.forEach((el,i)=>el.querySelector("text").setAttribute("textLength",antes[i]));
+      const voltou=medir();
+      const razao=v=>Math.max(...v)/Math.min(...v);
+      return {solto:razao(soltos),normal:razao(voltou)};
+    });
+    check(detectaMonoSolto.solto>1.5&&detectaMonoSolto.normal<1.06,
+      `prova sintética · sem normalização a tinta volta a variar ${detectaMonoSolto.solto.toFixed(2)}×, `+
+      `e a medição volta a ${detectaMonoSolto.normal.toFixed(3)}×`);
+
     /* O OVR fica sobre o retrato; mede-se o pixel mais claro da zona com o texto
        escondido. A placa já protege a bandeira na nova posição. */
     async function contrasteOvr(card,{x=.06,y=.04,w=.39,h=.18}={}){
@@ -483,12 +590,31 @@ function check(ok,label){console.log(`  ${okMark(!!ok)} ${label}`);if(!ok)failur
       (penhasco?` — ${penhasco.de}px→${penhasco.para}px muda ${((penhasco.razao-1)*100).toFixed(0)}%`:""));
     await page.setViewportSize({width:390,height:844});
     const gameCard=page.locator("#picks [data-pick]").first();
-    await page.click("#flipModeBtn");await gameCard.focus();await page.keyboard.press("Enter");
+    /* NÃO EXISTE MAIS MODO VIRAR. Desde 06/08/2026 clicar VIRA e arrastar ESCALA:
+       o botão que alternava os dois sumiu, e com ele o estado global que fazia o
+       mesmo clique significar coisas diferentes. Enter espelha o clique, que é a
+       ação que `role="button"` promete. */
+    await gameCard.focus();await page.keyboard.press("Enter");
     check(await gameCard.evaluate(card=>card.classList.contains("flipped")&&card.dataset.face==="back"),
-      "modo Virar do jogo usa o mesmo controle de face");
-    await page.click("#flipModeBtn");await gameCard.click();
-    check(await gameCard.evaluate(card=>card.classList.contains("sel"))&&
-      await page.locator(".slot.avail").count()>=1,"seleção normal continua funcional");
+      "Enter vira a carta no jogo real, pelo mesmo controle de face");
+    await gameCard.click();
+    check(await gameCard.evaluate(card=>!card.classList.contains("flipped")&&card.dataset.face==="front"),
+      "clique devolve a carta à frente — clicar VIRA, não seleciona");
+    check(await page.locator("#flipModeBtn").count()===0,
+      "o botão de modo virar não voltou a existir");
+    /* Arrastar acima do limiar acende os slots; abaixo dele, nada acontece e o
+       gesto continua sendo um clique. É a prova de que o limiar separa os dois. */
+    const caixa=await gameCard.boundingBox();
+    await page.mouse.move(caixa.x+caixa.width/2,caixa.y+caixa.height/2);
+    await page.mouse.down();
+    await page.mouse.move(caixa.x+caixa.width/2+3,caixa.y+caixa.height/2+2);
+    const abaixoDoLimiar=await page.locator(".slot.avail").count();
+    await page.mouse.move(caixa.x+caixa.width/2+40,caixa.y+caixa.height/2+28);
+    await page.waitForTimeout(30);
+    const acimaDoLimiar=await page.locator(".slot.avail").count();
+    await page.mouse.up();
+    check(abaixoDoLimiar===0&&acimaDoLimiar>=1,
+      `limiar separa clique de arrasto (slots acesos: ${abaixoDoLimiar} abaixo, ${acimaDoLimiar} acima)`);
     check(errors.length===0,`laboratório e jogo terminam sem erro${errors.length?`: ${errors[0]}`:""}`);
 
     const touchContext=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,

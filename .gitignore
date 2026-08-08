@@ -23,6 +23,10 @@ scratchpad/
 # `git status`, poluindo a leitura do estado real.
 /visual-*/
 /coach-*/
+# Captura de medição avulsa na raiz — `_amb-antessala.png` e `_amb-partida.png`
+# sobraram do ciclo de 07/08/2026 e não têm consumidor nenhum. O prefixo `_`
+# marca "tirei isto para OLHAR agora", que é justamente o que não se versiona.
+/_*.png
 
 # Aviso de GPU que o Chromium do Playwright deixa cair na raiz.
 /debug.log

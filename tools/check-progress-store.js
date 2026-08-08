@@ -3,8 +3,10 @@ const assert=require("node:assert/strict");
 const path=require("node:path");
 const {pathToFileURL}=require("node:url");
 
+/* `nomeDoTime` entrou em 07/08/2026: é o único campo que o jogador escreve à mão.
+   Ele faz parte do progresso VAZIO, mas NÃO de `valido()` — ver abaixo. */
 function progress(overrides={}){return {
-  versao:1,titulos:[],recordes:{},contadores:{campanhas:0,titulos:0,invictos:0},
+  versao:1,titulos:[],recordes:{},contadores:{campanhas:0,titulos:0,invictos:0},nomeDoTime:"",
   ...overrides,
 };}
 
@@ -39,6 +41,20 @@ async function main(){
     assert.deepEqual(store.dados,saved,"progresso válido não foi carregado");
     store.salvar();
     assert.deepEqual(writes.at(-1),[store.KEY,JSON.stringify(saved)],"save mudou chave ou serialização");
+
+    /* COMPATIBILIDADE COM SAVE ANTIGO. Quem já jogava tem um progresso gravado
+       SEM `nomeDoTime`. Se o campo entrasse em `valido()`, esse save seria
+       recusado e o histórico do jogador — títulos, recordes, campanhas — voltaria
+       a zero na primeira carga depois da atualização. O campo ausente tem de
+       carregar, e o jogo cai no nome padrão. */
+    const antigo={versao:1,titulos:[{data:"2026-07-01"}],recordes:{kills:{v:28}},
+      contadores:{campanhas:5,titulos:2,invictos:1}};
+    globalThis.localStorage.value=JSON.stringify(antigo);
+    store.carregar();
+    assert.deepEqual(store.dados,antigo,"save anterior ao nome do time deixou de carregar");
+    assert.equal(store.dados.nomeDoTime,undefined,"campo ausente foi inventado na carga");
+    globalThis.localStorage.value=JSON.stringify(saved);
+    store.carregar();
 
     const beforeInvalid=store.dados;
     assert.equal(store.importar("{"),false,"importação aceitou JSON inválido");

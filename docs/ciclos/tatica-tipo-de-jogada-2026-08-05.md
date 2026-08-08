@@ -185,9 +185,11 @@ fechamento. A guarda inverteu de propósito: `check-tactics-layer.js` agora exig
 
 ## O que ficou aberto
 
-- **exibição passiva**: o motor sabe que tipo de time é cada elenco, que jogada
-  rodou e se foi lida, e **nada disso chega à tela**. A §11-bis permite e deseja
-  mostrar passivamente. É a maior lacuna de retorno do projeto hoje;
+- ~~**exibição passiva**~~ — **FECHADO no mesmo dia, e não como lacuna: como
+  decisão.** Uma implementação pronta e verde foi recusada pelo responsável
+  (*"prefiro que fique só dentro da IA do jogo mesmo"*) e desfeita sem publicar.
+  Esta camada **não vai à tela**; `registro.tatica` fica sem consumidor de
+  propósito. Ver a emenda da §11-bis de `docs/project-context.md`;
 - `dependencia` e `teamAggression` continuam calculados e **sem consumidor**;
 - o vocabulário de seis tipos é julgamento declarado, como `MAP_PROFILES`. O que
   a medição sustenta é que ele **separa**: os seis são o melhor de alguém.

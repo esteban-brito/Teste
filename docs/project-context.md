@@ -90,15 +90,31 @@ Atualização vigente (tem precedência sobre o registro histórico abaixo):
   mudar um pixel**, e `tools/check-design-tokens.js` trava o sistema de cor no
   `npm run check`. `--b1`, `--b2` e `--b3` não existem mais, provados mortos por
   mutação;
-- validação vigente: `npm run check` fecha **20/20 checadores**; o último
-  `npm run validate` de marco amplo fechou **25/25 suítes**, e a comparação visual
-  do ciclo de organização fechou **21/21 idênticas**. Snapshot, golden, consumo de
-  RNG e balanceamento permanecem intactos desde 31/07;
+- validação vigente: `npm run check` e `npm run validate` fecham as contagens
+  abaixo, que são lidas na FONTE que as produz — `CHECADORES` de
+  `tools/run-checks.js` e `SUITE_GROUPS` de `bancada/run.js` — e não guardadas à
+  parte. A comparação visual do ciclo de organização fechou **21/21 idênticas**.
+  Snapshot, golden, consumo de RNG e balanceamento permanecem intactos desde
+  31/07;
+
+<!-- contagem-verificada -->
+
+| grandeza | valor |
+|---|---:|
+| `checadores` | 24 |
+| `suites` | 26 |
+
 - o ciclo **P2 de modularização por paridade está concluído**, Fases 0–7;
-- `game.js` caiu de 3.054 para **882 linhas** — 1.206 ao fim do P2, 938 depois das
-  primeiras fatias do P5, 888 após a remoção do tilt morto e uma linha de import
-  no endurecimento das cartas; a extração da criação/reset dos quatro estados
-  fechou a conta atual — e o arquivo contém somente aplicação, controladores e UI;
+- `game.js` caiu de 3.054 para **882 linhas** no piso do P5 — 1.206 ao fim do P2,
+  938 depois das primeiras fatias do P5, 888 após a remoção do tilt morto e uma
+  linha de import no endurecimento das cartas, e 882 com a extração da
+  criação/reset dos quatro estados. Depois disso ele VOLTOU a crescer com
+  funcionalidade nova — arrasto, elenco aleatório, narração opcional, portão do
+  nome —, não com o que o P2/P5 tirou dali; o conteúdo continua sendo somente
+  aplicação, controladores e UI. A contagem de hoje sai da tabela travada em
+  `docs/retomada-2026-08-05.md`, e não daqui: este parágrafo dizia "hoje são
+  1.307" quando já eram mais de 1.600, porque número solto na prosa não tem dono
+  (regra 43);
 - dados e motores vivem em `src/data`, `src/domain` e `src/public`;
 - jogo, sandbox, worker e bancada usam `src/public/simulation-api.mjs`;
 - `bancada/lib/motor.js` cria estado avaliado e sessão de RNG novos por carga, sem
@@ -1313,9 +1329,71 @@ enxuta. Confundir "jogo complexo" com "jogo com mais telas" mataria o produto.
 
 **Como aplicar:** ao propor qualquer mecânica, pergunte primeiro *quantos cliques
 a mais ela cobra do jogador*. Se a resposta não for zero, ela está fora do escopo
-até o responsável dizer o contrário. Exibição **passiva** — mostrar o que a IA
-decidiu, no placar ao vivo ou na manchete — é permitida e desejável, porque
-informa sem cobrar.
+até o responsável dizer o contrário.
+
+### Emenda de 05/08/2026 — exibição passiva também está FORA
+
+Até esta data este documento dizia que exibição passiva era "permitida e
+desejável, porque informa sem cobrar". **Não é.** O responsável revisou:
+
+> "prefiro que fique só dentro da IA do jogo mesmo"
+
+A decisão foi tomada diante de uma implementação pronta e validada — a antessala
+descrevendo os dois elencos pelo que a camada tática conclui (tipo de jogada e
+quatro traços comparados à liga). Custo zero de clique, `npm run validate` verde,
+golden e snapshot idênticos. Foi recusada assim mesmo, e **desfeita sem
+publicar** — os commits `a08a8d4`, `45e408c` e `f052c59` existem só no reflog.
+
+Ou seja: **o critério não é o custo de clique.** Uma tela que não cobra nada
+continua fora se o que ela faz é explicar o motor. O jogador tira as conclusões
+pelo resultado, não por um briefing.
+
+O que isso proíbe, concretamente: dossiê de adversário, placar ao vivo narrando
+a decisão do round, manchete falando de tática, fechamento de mapa explicando o
+mapa. `registro.tatica` continua existindo por round, e continua sem consumidor
+na UI **de propósito**.
+
+O que isso **não** proíbe: o placar, o rating, os stats e a manchete atuais, que
+descrevem o que ACONTECEU. A fronteira é entre resultado e mecanismo — mostrar
+que um jogador fez 25 kills é resultado; mostrar que o time dele é "de rush e lê
+pouco" é mecanismo.
+
+### Emenda de 06/08/2026 — a narração OPCIONAL entra, e por que ela não contradiz
+
+O responsável pediu, com estas palavras:
+
+> "uma antesala na partida, antes de começar, pra pessoa escolher se ela quer com
+> narração ou sem narração [...] uma narração bem legal com comentarios e tudo
+> mais como se fossem 2 pessoas narrando e comentando ao vivo, mas só durante 3 a
+> 5 rounds por partida, aleatorio, porém totalmente interligado com o jogo, com os
+> players, taticas, clutchs, tudo ao vivo e conectado. E o modo normal que nao vai
+> ter narração nenhuma nem no inicio nem no fim, zerado, limpo"
+
+Isto **revoga em parte** a emenda de 05/08 acima. Ela proibia nominalmente
+"placar ao vivo narrando a decisão do round" e "manchete falando de tática", que
+é exatamente o que a narração faz. A revogação é deliberada e tem limite:
+
+**O que mudou no critério.** "Explica o motor?" deixa de ser eliminatório
+sozinho. Passa a valer quando as três condições abaixo forem satisfeitas ao mesmo
+tempo — e só então:
+
+1. **é opt-in explícito**, escolhido pelo jogador naquela partida;
+2. **existe um modo limpo equivalente**, sem nenhuma perda de jogo — e o modo
+   limpo é o padrão de referência, não o degradado;
+3. **não altera o motor**: nem uma chamada de RNG a mais, nem um resultado
+   diferente. A narração LÊ `registro`; nunca escreve nele.
+
+**Por que isso não reabre o que foi recusado em 05/08.** Aquela antessala
+explicava o motor **antes** da partida, para todo mundo, sem escolha: era um
+briefing que o jogador tinha de atravessar. Esta narração é entretenimento que o
+jogador pede, durante o jogo, sobre o que já aconteceu — e quem não pede continua
+com o produto de 05/08 intacto, agora mais limpo do que era, porque no modo sem
+narração a manchete pós-mapa também sai.
+
+**O que continua proibido:** veto de mapa (regra 1 da §11-bis, intocada), e
+qualquer exibição de mecanismo que seja **obrigatória** ou que não tenha modo
+limpo equivalente. `registro.tatica` deixa de ser "sem consumidor de propósito" —
+mas o consumidor é opcional por contrato, e a guarda cobra isso.
 
 ## 12. Decisões abertas para o responsável
 
