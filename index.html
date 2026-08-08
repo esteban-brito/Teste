@@ -195,49 +195,14 @@
          o vocabulário que as cartas do jogo já usam, então não cobra
          aprendizado; e é ela que transforma "dois retângulos" em "confronto",
          que era exatamente o que a composição anterior não dizia. -->
+    <!-- SEM MARCA D'ÁGUA "VS" — removida a pedido em 08/08/2026: *"detestei esse
+         VS no meio do bloco central da antessala"*. Ela foi retirada INTEIRA, com
+         o SVG, o gradiente e as regras de CSS, e não apenas escondida: elemento
+         que perde o consumidor sai (regra 52). A diagonal já diz que são dois
+         lados em confronto — era esse o trabalho que o VS duplicava. -->
     <div class="pm-palco">
       <div class="pm-lado pm-lado--a" id="pmTeamA"></div>
       <div class="pm-lado pm-lado--b" id="pmTeamB"></div>
-      <!-- O VS É GEOMETRIA, NÃO TEXTO — 07/08/2026. Como marca d'água ele tem de
-           ocupar a ALTURA do palco, e texto HTML não sabe se dimensionar por
-           altura: com `font-size` em `vw` a letra enchia 85,8% do palco no
-           desktop e só 60,1% no celular, porque o palco trava em 880px enquanto
-           o `vw` continua crescendo. Régua errada — de novo.
-           O `viewBox` É a caixa da TINTA do par "VS" em Chakra Petch 800, medida
-           por `TextMetrics.actualBoundingBox*`: 1368.75 × 703.13 por EM de 1000
-           (cap height 0,7031em). Como a tinta É o viewBox, `meet` faz a letra
-           encostar em cima e embaixo sozinha, e centrar vira responsabilidade do
-           SVG — sem métrica de fonte no layout e sem constante de compensação,
-           que é a lição da regra 35.
-           NÃO USE `textLength` AQUI: ele trava o AVANÇO, e avanço inclui os 183
-           milésimos de espaço fantasma que o `letter-spacing` deixa depois do S.
-           Travar o avanço em 1368.75 espremia a tinta para dentro disso e jogava
-           a letra 3 px para a esquerda do centro — medido. Com o tracking solto e
-           o `viewBox` cortado na tinta (que começa em x=0, side bearing zero), o
-           espaço fantasma cai FORA da caixa e a centragem sai de graça. É
-           literalmente a regra 35: normalize a geometria, não centre e torça. -->
-      <!-- `preserveAspectRatio="none"` é DELIBERADO: o pedido é a letra subir de
-           baixo até em cima SEM engordar para os lados, e isso é exatamente
-           romper a proporção. Como o `viewBox` é a caixa da tinta, "none" faz o
-           glifo preencher a caixa do elemento nos dois eixos — a altura vem do
-           `height`, a largura do `aspect-ratio`, ambos no CSS. -->
-      <svg class="pm-versus" viewBox="0 0 1368.75 703.13"
-           preserveAspectRatio="none" aria-hidden="true" focusable="false">
-        <defs>
-          <!-- O VS É VIDRO, e vidro tem LUZ VINDA DE CIMA: a lâmina do palco já
-               faz isso em `--vidro-alto-bg`, que abre em rgba(255,255,255,.07) e
-               fecha escuro. Chapar a letra numa opacidade só a faria parecer
-               tinta sobre a superfície, e não a própria superfície. Como o modo é
-               aditivo, a rampa vai só de claro a MENOS claro — preto aditivo é
-               invisível, então a queda faz o papel da sombra. -->
-          <linearGradient id="pmVsVidro" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#ffffff"/>
-            <stop offset=".52" stop-color="#dfe4e9"/>
-            <stop offset="1" stop-color="#aab2bb"/>
-          </linearGradient>
-        </defs>
-        <text x="0" y="703.13" font-size="1000">VS</text>
-      </svg>
     </div>
 
     <!-- CONFRONTO DE FORÇA, encostado no palco. A força efetiva já era exibida

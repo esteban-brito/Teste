@@ -38,6 +38,7 @@ const CHECADORES=[
   {nome:"check-team-identity",args:["tools/check-team-identity.js"]},
   {nome:"check-map-identity",args:["tools/check-map-identity.js"]},
   {nome:"check-glass-system",args:["tools/check-glass-system.js"]},
+  {nome:"check-css-comments",args:["tools/check-css-comments.js"]},
   {nome:"check-sandbox-engine",args:["tools/check-sandbox-engine.js"]},
   {nome:"check-sandbox-syntax",args:["tools/check-sandbox-syntax.js"]},
   {nome:"check-data-catalog",args:["tools/check-data-catalog.js"]},

@@ -146,6 +146,9 @@
 
   /* Raios do sistema: uma escala só, para as peças não divergirem sozinhas. */
   --r-lamina:18px; --r-peca:10px; --r-pilula:20px;
+  /* Véu de time das duas metades da antessala. Vive aqui, e não repetido nos
+     dois seletores, porque foi a repetição que deixou os lados divergirem. */
+  --pm-veu:.20;
   /* movimento das cartas: curto, sem overshoot e limitado a transform/opacity */
   --ease-card:cubic-bezier(.22,1,.36,1); --motion-card-fast:180ms;
   --motion-card-face:360ms; --motion-card-fade:180ms;
@@ -1496,11 +1499,34 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    de cada uma — duas caixas vizinhas com bordas inclinadas deixariam um vão. */
 .pm-lado{grid-area:palco;position:relative;display:flex;align-items:center;gap:clamp(12px,2.4vw,20px);
   padding:clamp(22px,3.4vw,34px);min-width:0}
+/* OS DOIS LADOS TÊM COR, E O MESMO MATERIAL — 08/08/2026, a pedido: *"pq só o
+   time inimigo tem cor de fundo naquele bloco central liquid glass? […] eu
+   prefiro os dois com cor, e os dois padronizados no liquid glass, pouca cor"*.
+
+   A REGRA JÁ ERA A MESMA PARA OS DOIS — `rgba(var(--time-rgb),.30)` — e era esse
+   o problema. A cor do time do jogador é `#000000`, e preto a 30% sobre um fundo
+   já escuro não pinta nada: some como véu e o lado inteiro lê como vidro puro,
+   ao lado de um adversário claramente tingido. Alfa igual NÃO é peso visual
+   igual quando a cor vem do dado — é a mesma lição de `contrast.mjs`, onde tinta
+   fixa reprovava justamente os dois vermelhos do catálogo.
+
+   A CORREÇÃO É DAR UM PISO CLARO AOS DOIS. Cada metade recebe a lâmina do
+   sistema (`--vidro-medio-bg`) por baixo e o véu do time por cima. Sobre esse
+   piso o preto tem o que escurecer e vira painel fumê; a cor do adversário tem
+   o que tingir e vira painel colorido. Mesmo material, mesma construção, e a
+   única diferença entre os lados passa a ser o MATIZ — que é o que o palco
+   existe para mostrar.
+
+   E O VÉU CAIU DE .30 PARA .20, que é o "pouca cor" do pedido: com o piso claro
+   embaixo, a cor rende mais com menos alfa. `--pm-veu` guarda o número uma vez
+   só, para os dois lados não divergirem na próxima mexida. */
 .pm-lado--a{clip-path:polygon(0 0,58% 0,42% 100%,0 100%);
-  background:linear-gradient(105deg,rgba(var(--time-rgb),.30),rgba(var(--time-rgb),.03) 78%);
+  background:linear-gradient(105deg,rgba(var(--time-rgb),var(--pm-veu)),
+      rgba(var(--time-rgb),calc(var(--pm-veu) * .12)) 78%),var(--vidro-medio-bg);
   justify-content:flex-start;padding-right:22%}
 .pm-lado--b{clip-path:polygon(58% 0,100% 0,100% 100%,42% 100%);
-  background:linear-gradient(285deg,rgba(var(--time-rgb),.30),rgba(var(--time-rgb),.03) 78%);
+  background:linear-gradient(285deg,rgba(var(--time-rgb),var(--pm-veu)),
+      rgba(var(--time-rgb),calc(var(--pm-veu) * .12)) 78%),var(--vidro-medio-bg);
   /* `row-reverse` inverte o eixo: `flex-start` passa a apontar para a DIREITA.
      Com `flex-end` o conteúdo ia para a esquerda, que é exatamente a parte que o
      `clip-path` recorta — o lado inteiro sumia da tela. */
@@ -1548,69 +1574,26 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .pm-ef-rot{font-family:var(--ff);font-size:.56rem;letter-spacing:.2em;
   text-transform:uppercase;color:var(--dim)}
 
-/* O VS vive NA COSTURA, por cima das duas metades, como MARCA D'ÁGUA e não como
-   rótulo: ele não carrega informação que o olho precise LER — os dois nomes e a
-   diagonal já dizem que é um confronto —, então pode ser área e textura. É a
-   regra 53 no mesmo eixo do lado preto do jogador.
+/* O "VS" QUE FICAVA NA COSTURA SAIU — 08/08/2026, a pedido: *"detestei esse VS
+   no meio do bloco central da antessala, apenas retire ele completamente junto
+   com todos os resquicios"*. Saíram o SVG, o gradiente `pmVsVidro`, a regra
+   `.pm-versus`, a variante `plus-lighter` e as duas notas de arqueologia que
+   descreviam vozes já removidas dele. Nada ficou escondido por `display:none`:
+   elemento sem consumidor sai inteiro (regra 52).
 
-   ABSOLUTO, E NÃO ITEM DA GRADE, e esta é a parte que mais custou. Como item de
-   grid o SVG DIMENSIONAVA a linha: `<svg width:100%>` com `viewBox` tem altura
-   INTRÍNSECA pela razão de aspecto — 880 × 703,13/1368,75 = 452 px —, e o palco,
-   que mede 160 px de conteúdo, foi esticado para 453. A letra não ficou grande
-   sozinha; ela inchou o bloco inteiro. Fora do fluxo, a altura volta a quem é
-   dona dela: as duas metades.
+   E UM DEFEITO REAL FOI EMBORA JUNTO: o comentário que explicava o tracking
+   FECHAVA, e as SEIS linhas seguintes — a nota sobre translucidez — tinham
+   ficado sem ABERTURA. Elas eram CSS CRU no meio da folha, e a recuperação de
+   erro do parser engolia prosa e regra até o próximo bloco. Foi uma edição que
+   apagou a abertura e deixou o fechamento: a regra 23 num eixo novo, reescrita
+   erra na BORDA.
 
-   ALTURA CHEIA, LARGURA PRESA — 07/08/2026. O pedido é *"esticado de baixo até
-   em cima, mas sem esticar pros lados"*, e isso é romper a proporção de
-   propósito: com `preserveAspectRatio="none"` os dois eixos passam a ser
-   governados aqui. `height:100%` leva a tinta de borda a borda; o `aspect-ratio`
-   congela a largura NA QUE ELA JÁ TINHA — a proporção natural do glifo
-   (1368.75/703.13) tomada à altura de 72% que vigorava antes. Escrito como conta,
-   e não como "1.4016", para a origem continuar legível: mexer na fração muda a
-   largura, mexer no `height` muda só a esticada. */
-.pm-versus{position:absolute;left:50%;top:50%;translate:-50% -50%;
-  height:100%;aspect-ratio:calc(1368.75 / 703.13 * .72);
-  display:block;z-index:0;pointer-events:none}
-/* A TINTA É UMA SÓ NOS DOIS LADOS — 07/08/2026. A diagonal atravessa a letra de
-   ponta a ponta, então metade dela pousa no preto do jogador e metade na cor do
-   adversário. Com pintura normal isso dá DUAS letras: branco a 13% sobre preto
-   vira cinza visível, e sobre um verde claro quase some — foi o que o
-   responsável viu como *"as cores ficam estranhas por causa da linha diagonal"*.
-   `plus-lighter` é ADITIVO: o resultado é fundo + a tinta, então o DELTA que a
-   letra acrescenta é idêntico dos dois lados da costura, e o olho lê uma marca
-   d'água só em vez de duas metades. É o mesmo raciocínio da regra 53 — quando o
-   fundo é variável, o canal tem de ser independente dele. */
-/* `.14em` de 1000 = os mesmos 140 milésimos com que a tinta de 1368.75 foi
-   medida; é o tracking que o `viewBox` pressupõe, então os dois têm de andar
-   juntos. Mudar um sem o outro desalinha a letra dentro da própria caixa.
-
-   O TRAÇO ENGROSSA POR `stroke`, NÃO POR PESO. Chakra Petch para em 700; pedir
-   800 não traz um corte mais gordo, o navegador SINTETIZA o negrito — e fonte
-   sintética engorda de forma desigual e suja a haste. O contorno é o controle
-   contínuo que a família não oferece: `paint-order:stroke` o desenha ATRÁS do
-   preenchimento, então ele só alarga a silhueta em vez de riscar por cima.
-   O contorno usa a mesma pintura do fill para a letra continuar sendo um
-   material só — dois valores diferentes dariam uma borda visível, que é
-   exatamente o que uma marca d'água não pode ter. */
-   A TRANSLUCIDEZ VIVE NO GRUPO, NÃO NA PINTURA. Com `fill` e `stroke` ambos
-   translúcidos eles SOMAM na faixa em que se sobrepõem — o contorno entra metade
-   para dentro do glifo —, e a letra ganhava miolo claro com borda escura: um halo,
-   exatamente o que uma marca d'água não pode ter. Pintura opaca + `opacity` no
-   elemento faz o navegador compor a letra inteira primeiro e só então diluí-la,
-   então silhueta e miolo saem com o mesmo valor. */
-.pm-versus text{font-family:var(--ff);font-weight:700;letter-spacing:.14em;
-  fill:#fff;stroke:#fff;stroke-width:34;
-  paint-order:stroke fill;stroke-linejoin:round;opacity:.13}
-@supports (mix-blend-mode:plus-lighter){
-  /* Sem o `@supports` um navegador que ignore `plus-lighter` cairia em pintura
-     normal com a MESMA tinta, que é justamente o caso ruim. Com ele, quem não tem
-     o modo aditivo recebe um branco chapado mais discreto, que erra menos. */
-  .pm-versus{mix-blend-mode:plus-lighter}
-  /* O gradiente varia a COR, não a opacidade, pela mesma razão: alpha por stop
-     voltaria a somar contra o contorno. Como o modo é aditivo, um cinza escuro
-     acrescenta pouca luz e faz o papel da sombra na base. */
-  .pm-versus text{fill:url(#pmVsVidro);stroke:url(#pmVsVidro);opacity:.15}
-}
+   NUNCA ESCREVA OS DELIMITADORES DENTRO DE UM COMENTÁRIO, nem entre crases.
+   Esta nota já derrubou a antessala uma vez: ao descrever o defeito acima eu
+   citei o fechamento literalmente, ele encerrou o comentário no meio da frase,
+   e a regra `.prematch-ctx` logo abaixo foi consumida pela recuperação de erro
+   — os quatro chips do topo empilharam. `tools/check-css-comments.js` prova o
+   pareamento E recusa prosa fora de comentário. */
 
 /* CHIPS DE CONTEXTO — 07/08/2026, a pedido de padronizar a faixa de cima.
    Antes havia DUAS peças de formatos diferentes para informações do mesmo nível:
@@ -1653,13 +1636,9 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .pm-forca-n{font-size:.82rem;font-weight:800;color:var(--neutral);font-variant-numeric:tabular-nums}
 .pm-forca-v{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);
   text-align:center;flex:1}
-/* A declaração de `.pm-versus` que havia aqui — `font-weight:700`,
-   `letter-spacing:.1em` — saiu: ela repetia a família e brigava com o peso e o
-   tracking da regra base, sem query nem estado que justificasse a segunda voz.
-   O VS é definido em UM lugar só, junto do palco a que pertence. */
-/* OS MAPAS. Ficam sob o VS porque são do CONFRONTO, não de um dos lados —
+/* OS MAPAS. Ficam abaixo do palco porque são do CONFRONTO, não de um dos lados —
    pendurá-los num dos cards sugeriria vantagem de quem os recebeu. Num MD3 são
-   três, empilhados na ordem de jogo. */
+   três, na ordem de jogo. */
 /* OS MAPAS EM LINHA, como os chips do topo — 07/08/2026. Eles estavam
    empilhados na vertical enquanto a faixa de contexto corria na horizontal: duas
    listas de itens equivalentes em duas orientações, que é a mesma incoerência
@@ -1691,13 +1670,40 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
   box-shadow:var(--vidro-medio-sombra),0 6px 20px -10px rgba(var(--mapa-rgb),.9)}
 .pm-mapa--agora::before{width:4px;box-shadow:0 0 12px -1px var(--mapa-cor)}
 .pm-mapa--agora .pm-mapa-nome{color:var(--txt);font-size:.94rem;letter-spacing:.16em}
+/* SIMETRIA DA PLACA — 08/08/2026, a pedido: *"aquilo tá centralizado certinho?
+   o espaçamento em cima é o mesmo que embaixo? não parece. assimétrico também"*.
+
+   MEDIDO ANTES DE MEXER. O bloco `#pmMapa` estava perfeitamente centrado e com
+   30px de ar acima e abaixo, nos três viewports — a caixa não tinha defeito. A
+   assimetria era DENTRO da placa, no eixo horizontal: 11px de ar entre a barra
+   de cor e o texto contra 17,4px do texto até a borda direita, ou seja 6,4px.
+
+   Duas causas somadas, e nenhuma delas é "espaçamento errado":
+     · `padding-right:14px` contra `gap:10px` — a caixa nunca foi simétrica;
+     · `letter-spacing:.14em` deixa 2,41px de AVANÇO FANTASMA depois da última
+       letra, que entram na caixa do texto e empurram a tinta para a esquerda.
+       É a regra 35, agora no eixo horizontal de uma peça.
+
+   A correção tira o fantasma na origem, com `margin-right` negativo do mesmo
+   `.14em`, e iguala `padding-right` ao `gap`. NÃO é constante de compensação: o
+   valor é o próprio tracking declarado uma linha abaixo, e os dois andam juntos.
+
+   O EIXO VERTICAL FICOU COMO ESTAVA, de propósito: medido pela tinta, com a
+   baseline tirada de `fontBoundingBoxAscent` e não do centro da caixa, ele tem
+   10px acima contra 11,05px abaixo. 1,05px vem de o nome ser CAIXA-ALTA — a
+   linha reserva descida que nenhuma letra usa. Corrigir isso pediria um padding
+   assimétrico calibrado para uma fonte específica, que é exatamente a
+   compensação que a §21 provou cara. */
 .pm-mapa{display:flex;align-items:center;justify-content:center;gap:10px;
-  padding:6px 14px 6px 8px;position:relative;opacity:.9;border-radius:var(--r-peca);
+  padding:6px 10px 6px 8px;position:relative;opacity:.9;border-radius:var(--r-peca);
   background:var(--vidro-medio-bg);border:1px solid var(--vidro-medio-borda);
   backdrop-filter:var(--vidro-medio-blur);-webkit-backdrop-filter:var(--vidro-medio-blur)}
 .pm-mapa::before{content:"";width:3px;align-self:stretch;border-radius:2px;
   background:var(--mapa-cor);flex:0 0 auto}
 .pm-mapa-nome{font-family:var(--ff);font-weight:700;font-size:.82rem;letter-spacing:.14em;
+  /* devolve o avanço fantasma que o tracking deixa DEPOIS da última letra —
+     mesmo valor do `letter-spacing` acima, para os dois nunca divergirem */
+  margin-right:-.14em;
   text-transform:uppercase;color:var(--neutral);white-space:nowrap;line-height:1.2}
 /* O mapa da vez: cor cheia, tinta escolhida por contraste e um halo curto que o
    destaca do ambiente — que é da mesma família cromática, por construção. */
@@ -2156,11 +2162,6 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(var(--accent-rgb
 
 .match:hover{border-color:rgba(var(--line-panel-rgb),.4)}
 .sb-score{letter-spacing:.01em;text-shadow:0 2px 18px rgba(0,0,0,.6)}
-/* Aqui havia a TERCEIRA voz do `.pm-versus` — `font-size:1.8rem` e
-   `color:var(--accent)` —, e como a camada de refinamento vem depois de tudo, era
-   ELA que chegava à tela: enquanto existisse, mudar o tamanho ou a cor do VS na
-   regra base não produzia efeito nenhum. Exatamente a armadilha de cascata
-   descrita no CLAUDE.md. As três declarações viraram uma. */
 
 /* ════ LINGUAGEM DOS OVERLAYS: brasões no topo dos painéis-chave ════ */
 .overlay-title{font-size:clamp(1.3rem,3.4vw,1.7rem);letter-spacing:.08em}
