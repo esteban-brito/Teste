@@ -101,7 +101,7 @@ Atualização vigente (tem precedência sobre o registro histórico abaixo):
 
 | grandeza | valor |
 |---|---:|
-| `checadores` | 25 |
+| `checadores` | 26 |
 | `suites` | 26 |
 
 - o ciclo **P2 de modularização por paridade está concluído**, Fases 0–7;

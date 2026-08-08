@@ -222,6 +222,7 @@ Medição vigente, provada por `tools/check-doc-measurements.js` a cada
 
 | arquivo | linhas |
 |---|---:|
+| `index.html` | 392 |
 | `game.js` | 1618 |
 | `sandbox.html` | 4205 |
 | `style.css` | 2359 |
