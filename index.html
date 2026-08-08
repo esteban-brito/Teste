@@ -1,11 +1,39 @@
 <!DOCTYPE html>
 <!--
   draft9-0 · simulador de Counter-Strike (montagem de elenco + Major)
-  Estrutura: index.html (marcação) · style.css (estilos) · game.js (lógica).
-  Mantenha os três arquivos na mesma pasta. Sem dependências nem build.
+  ════════════════════════════════════════════════════════════════════════════
+
+  SÓ MARCAÇÃO: nenhum script inline, nenhum estilo inline fora do <noscript>,
+  nenhuma lógica. Quem lê estado e escreve DOM é `game.js`, e todo texto que muda
+  em jogo nasce vazio aqui. Por isso este arquivo comenta apenas o que ELE
+  governa — ordem no DOM, identidade e semântica de acessibilidade. Geometria é
+  de `style.css`, comportamento é de `game.js`, contrato de projeto é do
+  `CLAUDE.md`; repetir qualquer um deles aqui criaria uma segunda verdade.
+
+  O PRODUTO NÃO SÃO TRÊS ARQUIVOS. Até 08/08/2026 este cabeçalho mandava "manter
+  os três arquivos na mesma pasta", e seguir isso quebra o jogo: `game.js` é um
+  módulo ES que importa a árvore de `src/`, e o <head> ainda carrega `fonts.css`
+  e a fonte. Continua sendo verdade que não há build nem dependência de runtime.
+
+  `?v=DEV` NÃO É PLACEHOLDER ESQUECIDO: o deploy troca as duas ocorrências pelo
+  hash do conteúdo (`.github/workflows/deploy-pages.yml`) e
+  `tools/check-game-entrypoint.js` casa a tag do script literalmente.
+
+  MAPA. Região abre com `═══`, bloco com `──`. Sirva-se dele para pular direto:
+  `tools/check-html-comments.js` prova que esta lista é igual aos marcadores
+  reais, em nome e em ordem.
+
+    · DOCUMENTO — metadados, ícone e canonical
+    · PWA — barra de status e nome do jogo no aparelho
+    · OPEN GRAPH — como o jogo aparece quando é compartilhado
+    · FOLHAS E FONTE — style.css, fonts.css e o preload do subset latino
+    · PÁGINA DO DRAFT — HUD · roleta · cartas · elenco · análise · dica e
+      ações · Major · acervo
+    · OVERLAYS — portão do nome · suíça · playoffs · partida · final · hall
 -->
 <html lang="pt-BR">
 <head>
+<!-- ═══ DOCUMENTO ══════════════════════════════════════════════════════════ -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="draft9-0 — monte o elenco perfeito de Counter-Strike e busque o título invicto: 9 mapas, 9 a 0.">
@@ -15,12 +43,14 @@
 <link rel="canonical" href="https://esteban-brito.github.io/Teste/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2307090e'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='16' font-weight='700' text-anchor='middle' fill='%23ff5a1f'%3E9%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2307090e'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='16' font-weight='700' text-anchor='middle' fill='%23ff5a1f'%3E9%3C/text%3E%3C/svg%3E">
-<!-- PWA / mobile -->
+
+<!-- ═══ PWA ════════════════════════════════════════════════════════════════ -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="draft9-0">
-<!-- Open Graph / redes sociais -->
+
+<!-- ═══ OPEN GRAPH ═════════════════════════════════════════════════════════ -->
 <meta property="og:title" content="draft9-0 · Simulador de Counter-Strike">
 <meta property="og:description" content="Monte o elenco perfeito de Counter-Strike, domine a química do time e busque o título invicto: 9 mapas, 9 a 0.">
 <meta property="og:type" content="website">
@@ -36,9 +66,15 @@
 <meta name="twitter:description" content="Monte o elenco perfeito de CS e busque o título invicto. 9 mapas, 9 a 0.">
 <meta name="twitter:image" content="https://esteban-brito.github.io/Teste/og-image.png">
 <title>draft9-0 · Simulador de Counter-Strike</title>
+
+<!-- ═══ FOLHAS E FONTE ═════════════════════════════════════════════════════ -->
+<!-- O preload do subset latino existe porque a geometria da carta só é
+     comparável depois de `Chakra Petch 700` carregar de fato: sem ele, a
+     métrica do fallback cria estouro falso — e só no Linux, onde a bancada
+     roda. Ver `docs/testing.md`. -->
 <link rel="preload" href="fonts/chakra-petch-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="fonts.css">
-<link rel="stylesheet" href="style.css?v=8e096e43">
+<link rel="stylesheet" href="style.css?v=bc751f14">
 </head>
 <body>
 <noscript>
@@ -48,7 +84,13 @@
     Ative o JavaScript no seu navegador e recarregue a página.</p>
   </div>
 </noscript>
+
+<!-- ═══ PÁGINA DO DRAFT ═════════════════════════════════════════════════════
+     A tela que abre o jogo, do HUD ao rodapé. Enquanto qualquer overlay estiver
+     aberto, `game.js` marca este contêiner com `inert` — é o que cumpre a
+     promessa de `aria-modal` dos diálogos, tirando o fundo da ordem de foco. -->
 <div class="wrap">
+  <!-- ── Cabeçalho e HUD ───────────────────────────────────────────────── -->
   <header>
     <h1 class="logo">draft<b>9</b>-<b>0</b><span>Montagem de elenco · rumo ao título invicto</span></h1>
     <div class="hud">
@@ -57,6 +99,7 @@
     </div>
   </header>
 
+  <!-- ── Roleta de times ──────────────────────────────────────────────── -->
   <div class="section-tag roulettebar">Draft · roleta de times
     <button class="mutebtn" id="mutebtn" aria-label="Som" title="Ligar/desligar som">🔊</button></div>
   <div class="roulette" id="roulette">
@@ -67,16 +110,19 @@
     <div class="spinwrap" id="spinwrap"><button class="roll" id="rollbtn">⚄ Sortear time</button></div>
   </div>
 
+  <!-- ── Cartas do time sorteado ──────────────────────────────────────── -->
   <div class="section-tag" id="picksTag" hidden>Elenco revelado <span class="winner-pill" id="winnerPill"></span></div>
   <p class="section-note" id="picksNote" hidden>Clique para <strong>virar</strong> · arraste até um slot para <strong>escalar</strong>.</p>
   <div class="picks" id="picks"></div>
 
+  <!-- ── Seu elenco: cinco jogadores e o treinador ────────────────────── -->
   <div class="section-tag">Seu time</div>
   <div class="squad">
     <div class="lineup" id="lineup"></div>
     <div class="lineup lineup--coach" id="lineupCoach"></div>
   </div>
 
+  <!-- ── Análise do elenco · só com os seis escalados ─────────────────── -->
   <section class="result" id="result" hidden>
     <div class="section-tag">Análise do elenco</div>
     <div class="result-grid">
@@ -87,6 +133,11 @@
     <div class="alertbox" id="rAlertas"></div>
   </section>
 
+  <!-- ── Dica e ações do draft ────────────────────────────────────────────
+       `#hint` é `aria-live`: este texto é o que o leitor de tela anuncia a cada
+       mudança de estado, então ele não pode ensinar um gesto que já não existe
+       — foi assim que passou a dizer "escolha 1 carta" enquanto `#picksNote`,
+       logo acima, já dizia "arraste". -->
   <div class="hint" id="hint" aria-live="polite">Sorteie um time e arraste 1 jogador por rodada.</div>
 
   <div class="bar">
@@ -95,11 +146,16 @@
     <button class="ghost" id="resetbtn">Resetar elenco</button>
   </div>
 
+  <!-- ── Entrada do Major ─────────────────────────────────────────────────
+       Só com o elenco completo, e o botão abre o PORTÃO DO NOME, nunca a Suíça
+       direto: é impossível entrar no torneio sem nomear o clube. -->
   <div class="section-tag" id="majorTag" hidden>Major · simulação</div>
   <div class="majorbar" id="majorSection" hidden>
     <button class="majorbtn" id="suicabtn"><span class="mbtxt"><span class="mbt">Entrar no Major</span><span class="mbs">fase suíça · rumo ao 9-0 invicto</span></span></button>
   </div>
-  <!-- Os dois rótulos de seção que ficavam aqui ("Hall da Fama" e "Base de
+
+  <!-- ── Acervo: história do clube e base de elencos ──────────────────────
+       Os dois rótulos de seção que ficavam aqui ("Hall da Fama" e "Base de
        elencos") repetiam o que o próprio link já diz em `.rl-t`, e cada um
        custava uma faixa de 44px numa página que já rolava vazia. Um rótulo só,
        com os dois lados a lado, mantém a informação e devolve 107px. -->
@@ -119,19 +175,23 @@
   <footer>draft9-0 · simulador de counter-strike</footer>
 </div>
 
-<!-- ═══ OVERLAYS, na ordem do fluxo ═══════════════════════════════════════════
+<!-- ═══ OVERLAYS ════════════════════════════════════════════════════════════
+     Seis diálogos, na ordem do fluxo do jogo:
      portão do nome → fase suíça → playoffs → partida → final → hall.
      A ORDEM NO DOM NÃO É ARBITRÁRIA: cinco dos seis dividem `z-index:50` — só
      `.final-overlay` sobe para 90 —, e sem o degrau que `style.css` declara para
      `.overlay.fechando` a pintura cairia na ordem do documento.
-     Mexer aqui já custou 23 frames com a tela da partida sumindo por baixo. -->
+     Mexer aqui já custou 23 frames com a tela da partida sumindo por baixo.
 
-<!-- PORTÃO DO NOME DO CLUBE. Aparece ao entrar no Major, não na tela inicial:
-     ali o campo passava despercebido e as pessoas esqueciam de escolher. Aqui é
-     obrigatório — o botão só habilita com um nome válido.
-     NÃO tem botão de fechar, e por isso Escape também não o fecha: a regra 25
-     deste projeto diz que Escape só faz o que o mouse faz. É o mesmo desenho do
-     `finalOverlay`. -->
+     Os seis declaram `aria-modal="true"`, e quem cumpre essa promessa é o
+     `inert` que `game.js` põe no `.wrap`. Escape só fecha o que o mouse também
+     fecha: por isso o portão e o final, que não têm botão de fechar, ficam de
+     fora dessa tecla. -->
+
+<!-- ── Portão do nome do clube ───────────────────────────────────────────────
+     Aparece ao entrar no Major, não na tela inicial: ali o campo passava
+     despercebido e as pessoas esqueciam de escolher. Aqui é obrigatório — o
+     botão só habilita com um nome válido. -->
 <div class="overlay overlay--gate" id="nomeOverlay" tabindex="-1" role="dialog"
      aria-modal="true" aria-labelledby="nomeTitle" hidden>
   <div class="gate">
@@ -147,6 +207,7 @@
   </div>
 </div>
 
+<!-- ── Fase Suíça ─────────────────────────────────────────────────────────── -->
 <div class="overlay" id="suicaOverlay" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="suicaTitle" hidden>
   <div class="overlay-head">
     <div class="overlay-title" id="suicaTitle">Fase Suíça <span id="suicaSub"></span></div>
@@ -165,7 +226,7 @@
   </div>
 </div>
 
-<!-- Overlay: Playoffs (bracket) -->
+<!-- ── Playoffs (bracket) ─────────────────────────────────────────────────── -->
 <div class="overlay" id="playoffOverlay" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="playoffTitle" hidden>
   <div class="overlay-head">
     <div class="overlay-title" id="playoffTitle">Playoffs <span id="playoffSub"></span></div>
@@ -177,14 +238,19 @@
   <div class="bracket" id="bracketBoard"></div>
 </div>
 
-<!-- Overlay: Partida (antessala + mapa ao vivo) -->
+<!-- ── Partida: antessala e mapa ao vivo ────────────────────────────────────
+     Um overlay só, com duas telas que se alternam por `.is-hidden`. A antessala
+     é o PADRÃO DE DESIGN do jogo desde 07/08/2026: as outras telas herdam dela,
+     uma por vez. -->
 <div class="overlay match-overlay" id="matchOverlay" tabindex="-1" role="dialog" aria-modal="true" aria-label="Partida" hidden>
   <button class="match-close" id="matchClose" aria-label="Fechar"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 2L12 12M12 2L2 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
-  <!-- Antessala -->
+
+  <!-- ·· Antessala ·············································· -->
   <div class="prematch" id="prematch">
     <!-- FAIXA DE CONTEXTO. Fase e formato juntos: são a mesma pergunta ("que
          partida é esta e quanto ela vale"), e separá-los era o que fazia o
-         formato passar despercebido. -->
+         formato passar despercebido. Todo item é o MESMO objeto — a diferença
+         entre eles é só ênfase. -->
     <div class="pm-topo">
       <div class="prematch-ctx" id="prematchCtx"></div>
     </div>
@@ -194,50 +260,16 @@
          METADES OPOSTAS da mesma área, separadas por uma DIAGONAL. A diagonal é
          o vocabulário que as cartas do jogo já usam, então não cobra
          aprendizado; e é ela que transforma "dois retângulos" em "confronto",
-         que era exatamente o que a composição anterior não dizia. -->
+         que era exatamente o que a composição anterior não dizia.
+
+         SEM MARCA D'ÁGUA "VS" — removida a pedido em 08/08/2026: *"detestei
+         esse VS no meio do bloco central da antessala"*. Ela foi retirada
+         INTEIRA, com o SVG, o gradiente e as regras de CSS, e não apenas
+         escondida: elemento que perde o consumidor sai. A diagonal já diz que
+         são dois lados em confronto — era esse o trabalho que o VS duplicava. -->
     <div class="pm-palco">
       <div class="pm-lado pm-lado--a" id="pmTeamA"></div>
       <div class="pm-lado pm-lado--b" id="pmTeamB"></div>
-      <!-- O VS É GEOMETRIA, NÃO TEXTO — 07/08/2026. Como marca d'água ele tem de
-           ocupar a ALTURA do palco, e texto HTML não sabe se dimensionar por
-           altura: com `font-size` em `vw` a letra enchia 85,8% do palco no
-           desktop e só 60,1% no celular, porque o palco trava em 880px enquanto
-           o `vw` continua crescendo. Régua errada — de novo.
-           O `viewBox` É a caixa da TINTA do par "VS" em Chakra Petch 800, medida
-           por `TextMetrics.actualBoundingBox*`: 1368.75 × 703.13 por EM de 1000
-           (cap height 0,7031em). Como a tinta É o viewBox, `meet` faz a letra
-           encostar em cima e embaixo sozinha, e centrar vira responsabilidade do
-           SVG — sem métrica de fonte no layout e sem constante de compensação,
-           que é a lição da regra 35.
-           NÃO USE `textLength` AQUI: ele trava o AVANÇO, e avanço inclui os 183
-           milésimos de espaço fantasma que o `letter-spacing` deixa depois do S.
-           Travar o avanço em 1368.75 espremia a tinta para dentro disso e jogava
-           a letra 3 px para a esquerda do centro — medido. Com o tracking solto e
-           o `viewBox` cortado na tinta (que começa em x=0, side bearing zero), o
-           espaço fantasma cai FORA da caixa e a centragem sai de graça. É
-           literalmente a regra 35: normalize a geometria, não centre e torça. -->
-      <!-- `preserveAspectRatio="none"` é DELIBERADO: o pedido é a letra subir de
-           baixo até em cima SEM engordar para os lados, e isso é exatamente
-           romper a proporção. Como o `viewBox` é a caixa da tinta, "none" faz o
-           glifo preencher a caixa do elemento nos dois eixos — a altura vem do
-           `height`, a largura do `aspect-ratio`, ambos no CSS. -->
-      <svg class="pm-versus" viewBox="0 0 1368.75 703.13"
-           preserveAspectRatio="none" aria-hidden="true" focusable="false">
-        <defs>
-          <!-- O VS É VIDRO, e vidro tem LUZ VINDA DE CIMA: a lâmina do palco já
-               faz isso em `--vidro-alto-bg`, que abre em rgba(255,255,255,.07) e
-               fecha escuro. Chapar a letra numa opacidade só a faria parecer
-               tinta sobre a superfície, e não a própria superfície. Como o modo é
-               aditivo, a rampa vai só de claro a MENOS claro — preto aditivo é
-               invisível, então a queda faz o papel da sombra. -->
-          <linearGradient id="pmVsVidro" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#ffffff"/>
-            <stop offset=".52" stop-color="#dfe4e9"/>
-            <stop offset="1" stop-color="#aab2bb"/>
-          </linearGradient>
-        </defs>
-        <text x="0" y="703.13" font-size="1000">VS</text>
-      </svg>
     </div>
 
     <!-- CONFRONTO DE FORÇA, encostado no palco. A força efetiva já era exibida
@@ -253,7 +285,9 @@
 
     <!-- OS MAPAS DA SÉRIE, todos aqui embaixo — 07/08/2026, a pedido: no MD1 o
          mapa também desce, em vez de virar selo dentro do palco. Um lugar só
-         para a mesma informação, seja um mapa ou três. -->
+         para a mesma informação, seja um mapa ou três.
+         `#pmMapa` é a LISTA, não uma placa: a classe da peça vive nos filhos,
+         senão o contêiner desenha um retângulo em volta dos retângulos. -->
     <div id="pmMapa"></div>
 
     <!-- Dois caminhos, e o LIMPO é o padrão de referência, não o degradado: é
@@ -266,7 +300,8 @@
     </div>
     <p class="prematch-nota">A narração comenta ao vivo alguns rounds do mapa.</p>
   </div>
-  <!-- Tela do mapa -->
+
+  <!-- ·· Mapa ao vivo ··········································· -->
   <div class="livemap is-hidden" id="livemap">
     <div class="scorebar">
       <div class="sb-team sb-a" id="sbTeamA"></div>
@@ -286,7 +321,8 @@
     <!-- PALCO DA NARRAÇÃO. Só existe no modo com narração: abre sobre o mapa no
          round sorteado, mostra o NÚMERO do round em destaque e as falas, e some.
          `aria-live="polite"` porque quem escolheu narração pediu para ser
-         informado; no modo limpo o bloco fica `hidden` e não anuncia nada. -->
+         informado; no modo limpo o bloco fica `hidden` e não anuncia nada.
+         `hidden` é a única fonte de verdade do palco: entrada e saída são do CSS. -->
     <div class="narracao-palco" id="narracaoPalco" hidden>
       <div class="np-card">
         <div class="np-topo">
@@ -308,6 +344,11 @@
     </div>
   </div>
 </div>
+
+<!-- ── Fim da campanha ──────────────────────────────────────────────────────
+     Único overlay em `z-index:90`, porque ele cobre a partida que acabou de
+     fechar. Não tem botão de fechar de propósito: o primeiro botão é "Jogar
+     novamente", e um Escape ou Enter perdido reiniciaria a campanha. -->
 <div class="overlay final-overlay" id="finalOverlay" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="finalTitulo" hidden>
   <div class="final-glow" id="finalGlow"></div>
   <div class="final-wrap">
@@ -329,6 +370,7 @@
   </div>
 </div>
 
+<!-- ── Hall da Fama · lê o progresso persistido, nunca simula ────────────── -->
 <div class="overlay" id="hallOverlay" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="hallTitulo" hidden>
   <div class="overlay-head">
     <div class="overlay-title" id="hallTitulo">Hall da Fama</div>
