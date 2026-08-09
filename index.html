@@ -247,6 +247,15 @@
 
   <!-- ·· Antessala ·············································· -->
   <div class="prematch" id="prematch">
+    <!-- O FUNDO É O LUGAR — 08/08/2026. Uma faixa por mapa da série, recortadas
+         na MESMA diagonal da costura do palco, cada uma com a foto e a cor do
+         seu mapa. Num MD1 é uma faixa só, ocupando tudo: uma implementação para
+         os dois casos, e não duas.
+         É `div` com filhos, e não pseudo-elemento, porque um elemento só tem
+         dois e a série pode ter três mapas. `aria-hidden` porque isto é
+         cenário: os nomes dos mapas já são texto na moldura. -->
+    <div class="pm-fundo" id="pmFundo" aria-hidden="true"></div>
+
     <!-- FAIXA DE CONTEXTO. Fase e formato juntos: são a mesma pergunta ("que
          partida é esta e quanto ela vale"), e separá-los era o que fazia o
          formato passar despercebido. Todo item é o MESMO objeto — a diferença
@@ -255,15 +264,11 @@
       <div class="prematch-ctx" id="prematchCtx"></div>
     </div>
 
-    <!-- OS MAPAS DA SÉRIE SUBIRAM PARA O CONTEXTO — 08/08/2026. Eles viviam
-         abaixo da lâmina e, num MD1, sobrava uma pílula solta e minúscula sob um
-         bloco grande: um objeto órfão. Aqui eles são o que de fato são — parte do
-         enquadramento do confronto ("que partida é esta, e onde"), ao lado da
-         fase e do formato. O fundo inteiro da tela já veste a cor do mapa, então
-         o nome é CONFIRMAÇÃO, não descoberta, e confirmação pertence à moldura.
-         Continuam fora dos cards: pendurá-los num dos lados sugeriria vantagem
-         de quem os recebeu, que foi a razão original de tirá-los de lá. -->
-    <div id="pmMapa"></div>
+    <!-- O MAPA VIROU CHIP DA FAIXA em 08/08/2026: ele vivia aqui, numa
+         segunda linha, como uma pílula de 82x27px centrada sozinha sob uma
+         faixa de 422px — o objeto menos importante da tela ocupando uma linha
+         inteira. Hoje `montarContexto` o emite junto de fase e formato, que é
+         a mesma pergunta: que partida é esta, quanto vale e ONDE. -->
 
     <!-- PALCO DO CONFRONTO — reformulação de 07/08/2026.
          Os dois times deixaram de ser cards lado a lado e passaram a ocupar
@@ -278,22 +283,20 @@
          escondida: elemento que perde o consumidor sai. A diagonal já diz que
          são dois lados em confronto — era esse o trabalho que o VS duplicava.
 
-         O CONFRONTO DE FORÇA VIVE DENTRO DA LÂMINA — 08/08/2026. Ele era um
-         bloco solto a 29px daqui, com os dois números repetidos nas pontas
-         enquanto os mesmos valores já apareciam 3x maiores nos cards. Aqui, o
-         segmento de cada time nasce EXATAMENTE sob o card dele, e é esse
-         alinhamento que dispensa rótulo: a barra não precisa dizer de quem é
-         cada lado, porque o nome está logo acima. -->
+         O VEREDITO SAIU DAQUI DE DENTRO em 08/08/2026: ele virou uma barra
+         logo abaixo do card, com o mesmo material da faixa de contexto que fica
+         acima. O palco voltou a ser UMA superfície com os dois times. -->
     <div class="pm-palco">
       <div class="pm-lado pm-lado--a" id="pmTeamA"></div>
       <div class="pm-lado pm-lado--b" id="pmTeamB"></div>
-      <div class="pm-forca" id="pmForca" hidden>
-        <div class="pm-forca-trilho">
-          <div class="pm-forca-a" id="pmForcaA"></div>
-          <div class="pm-forca-b" id="pmForcaB"></div>
-        </div>
-        <div class="pm-forca-leg" id="pmForcaLeg"></div>
-      </div>
+    </div>
+
+    <!-- O VEREDITO É UMA BARRA ABAIXO DO CARD, e não um rodapé dentro dele —
+         08/08/2026, a pedido: mesma peça da faixa de contexto que fica acima,
+         mesma largura do palco, quase colada e sem encostar. O card volta a ser
+         UMA superfície com os dois times. -->
+    <div class="pm-forca" id="pmForca" hidden>
+      <div class="pm-forca-leg" id="pmForcaLeg"></div>
     </div>
 
     <!-- Dois caminhos, e o LIMPO é o padrão de referência, não o degradado: é

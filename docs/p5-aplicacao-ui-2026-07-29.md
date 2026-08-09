@@ -222,10 +222,10 @@ Medição vigente, provada por `tools/check-doc-measurements.js` a cada
 
 | arquivo | linhas |
 |---|---:|
-| `index.html` | 405 |
-| `game.js` | 1652 |
+| `index.html` | 408 |
+| `game.js` | 1715 |
 | `sandbox.html` | 4205 |
-| `style.css` | 2768 |
+| `style.css` | 3307 |
 | `prototipo-cartas.html` | 842 |
 
 Até 01/08/2026 este parágrafo dizia "medição vigente" e errava três dos quatro

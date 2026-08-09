@@ -274,12 +274,17 @@ async function main(){
   assert.ok(/>19<\/b>/.test(antessala),"card da antessala perdeu o número da força");
   assert.ok(!/pm-ef-rot|Força/.test(antessala),
     "o rótulo 'Força' voltou ao card da antessala — quem diz isso é o veredito");
-  /* Time SEM era não emite linha nenhuma — nem vazia. Reservar altura ali
-     criava um buraco visível do lado do jogador, lido como assimetria mesmo com
-     toda a geometria medindo zero. As metades já têm a mesma altura, e cada
-     coluna se centra sozinha. */
-  assert.ok(!teamView.prematchTeamHtml({...alpha,camp:""}).includes("pm-camp"),
-    "time sem era voltou a emitir a linha do campeonato");
+  /* A ERA DO ELENCO SAIU DO CARD em 08/08/2026, e agora NENHUM dos dois lados a
+     emite. Ela existia num lado só — o adversário vem do catálogo e tem era, o
+     time do jogador é criado e nunca vai ter —, e isso não é diferença de
+     espaçamento, é CONTAGEM DE LINHAS: três de um lado contra duas do outro, com
+     cada bloco centrado por si, punha o nome 10px e o número 9px fora de
+     alinhamento. Medido na captura, não deduzido.
+     Reservar linha vazia continua proibido pelo mesmo motivo de antes; o que
+     mudou é que agora os dois lados têm as MESMAS duas linhas, então o
+     alinhamento não depende de coincidência. */
+  assert.ok(!teamView.prematchTeamHtml(alpha).includes("pm-camp"),
+    "a era do elenco voltou ao card da antessala e desalinha os dois lados");
   /* A COR DO CLUBE vira variável de estilo do card: é ela que pinta véu, moldura
      e brasão. Sem isso o confronto volta a ser duas caixas iguais. */
   assert.ok(teamView.estiloDoTime(alpha).includes("--time-cor:#123")

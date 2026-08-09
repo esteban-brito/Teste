@@ -87,6 +87,17 @@ const GRANDEZAS={
      spread e não contém nome nenhum de arquivo. */
   suites:()=>
     (blocoBalanceado(leia("bancada/run.js"),"const SUITE_GROUPS={").match(/"[^"]+\.js"/g)||[]).length,
+  /* QUANTAS SUPERFÍCIES DE VIDRO A GUARDA COBRE — grandeza nova em 09/08/2026, e
+     ela entrou porque este número já errou DUAS vezes.
+     Em 08/08 a documentação prometia "seis" quando a guarda media cinco, e o
+     próprio `CLAUDE.md` registrou o conserto em texto — escrevendo "cinco" em
+     dois lugares e "quatro" num terceiro, enquanto `SUPERFICIES` tinha três
+     entradas. Prosa que descreve cobertura de guarda envelhece na velocidade da
+     guarda, e corrigi-la à mão só troca qual número está errado.
+     A contagem sai da FONTE, como manda a regra 43: da lista real do checador. */
+  "superficies-de-vidro":()=>
+    (blocoBalanceado(leia("tools/check-glass-system.js"),"const SUPERFICIES=[")
+      .match(/\[\s*"\./g)||[]).length,
 };
 
 function documentos(){

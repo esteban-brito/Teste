@@ -129,9 +129,80 @@
      condição medida — superfície pequena sobre fundo estático. A antessala com
      vidro em tudo mede 61,2 fps contra 60,6 do controle sem filtro.
      ANTES DE LEVAR ISTO PARA UMA TELA NOVA, MEÇA O FPS DELA. */
-  --vidro-alto-bg:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02) 46%,rgba(0,0,0,.22));
-  --vidro-alto-borda:rgba(255,255,255,.12);
-  --vidro-alto-blur:blur(22px) saturate(150%);
+  /* ── UM MATERIAL SÓ, EM TRÊS DENSIDADES — 08/08/2026 ──────────────────────
+     Medido na tela: a antessala tinha TRÊS desfoques (12, 14 e 22px), quatro
+     raios (24, 20, 16, 10) e três opacidades de borda (.12, .14, .15), mais um
+     chip com fundo BRANCO fora do sistema. O responsável descreveu o resultado
+     exatamente como ele é: *"todos os liquid glass parecem diferentes em cada
+     bloco, cada barra, cada botão"*.
+     Nível deixou de significar RAIO DE DESFOQUE. O desfoque e a borda agora são
+     os mesmos em toda a tela — é isso que faz as peças lerem como recortes da
+     mesma placa —, e o que distingue os três níveis é só a DENSIDADE do fundo:
+     lâmina deixa ver mais (tem os times atrás), apoio deixa ver menos (carrega
+     texto pequeno). Um material, três espessuras.
+
+     ── O MATERIAL VEIO DO `.np-card` — 08/08/2026 ───────────────────────────
+     O responsável comparou o palco da narração com a antessala e disse que
+     aquele parecia liquid glass de verdade, e este não. Ele tinha razão, e a
+     diferença não era o desfoque — era a DENSIDADE e a LUZ:
+
+       · o `.np-card` é um painel ESCURO e opaco (62–72%) com uma borda acesa;
+         o vidro daqui era claro e translúcido (branco a 7%), que sobre fundo
+         escuro não lê como material, lê como véu;
+       · o gradiente dele tem ÂNGULO ANIMADO (`--np-brilho`, 150°→205° em 9s):
+         a luz passeia pela superfície, então ela reage em vez de ter um reflexo
+         pintado. Nenhum reflexo estático produz essa leitura;
+       · a sombra dele é `0 24px 60px -20px` — um borrão largo com spread quase
+         inteiro. As daqui somavam camadas curtas e o efeito era de peça colada.
+
+     Os três níveis passam a ser o mesmo material em três densidades. A escala
+     de opacidade é o que distingue papel: lâmina deixa ver mais (ela tem os
+     times atrás), apoio deixa ver menos (ele carrega texto pequeno). */
+  /* A BASE DO VIDRO — 08/08/2026, e ela nasce de uma medição.
+     ────────────────────────────────────────────────────────────────────────
+     Os níveis abaixo são branco translúcido, e branco translúcido só protege
+     texto quando o que está atrás é ESCURO. Enquanto o fundo do jogo era um
+     gradiente quase preto isso nunca apareceu; quando a antessala ganhou a foto
+     do mapa, os rótulos da faixa de contexto caíram de 3,91–4,92:1 para
+     1,92–3,60:1 nos sete mapas — e note que a BASELINE já reprovava em seis
+     deles. O fundo novo não criou o defeito, ele o revelou.
+
+     Uma demão escura sob o realce é o que faz vidro funcionar sobre conteúdo
+     ARBITRÁRIO, que é a condição em que a antessala passou a viver: a foto é
+     sorteada, e nenhuma calibração contra uma delas vale para as outras seis
+     (regra 46). Ela vem por ÚLTIMO na pilha de `background`, ou seja, mais ao
+     fundo — o material continua sendo o mesmo, ganha chão e não troca de cor.
+
+     ── ELA ERA MORTA, E DOIS COMENTÁRIOS DIZIAM O CONTRÁRIO — 09/08/2026 ─────
+     Este token nasceu em 08/08 e NUNCA TEVE CONSUMIDOR: as duas únicas menções
+     a ele na folha eram comentários afirmando que ele estava aplicado (um em
+     `.prematch-ctx`, outro em `#prematchStart`). A proteção que a folha
+     prometia não existia, e é por isso que `.pm-chip-r` media 4,88:1 contra um
+     piso de 4,5 — passando por 8 centésimos, sem que nada explicasse a margem.
+     É a regra 57 pelo avesso: lá um `var()` apontava para token removido e
+     invalidava a declaração; aqui o token existe, a prosa o cita, e nenhuma
+     declaração o chama. Documentação que promete cobertura inexistente é pior
+     que documentação nenhuma, porque a próxima sessão confia nela.
+
+     ── E O VALOR CAIU DE .66 PARA .34, POR MEDIÇÃO ──────────────────────────
+     .66 nunca foi testado — o token estava morto. Medido em 09/08 nos sete
+     mapas e nos três viewports, .34 leva `.pm-chip-r` de 4,16:1 para acima de
+     5,7:1 e tira o rótulo da posição de pior texto da tela. Somado ao realce, o
+     apoio fica a ~52% de opacidade: acima dos 22–34% que a regra 64 pediu, e
+     abaixo dos 58–70% que ela recusou. A conta que justifica o meio: a regra 64
+     baixou a densidade quando o SCRIM global protegia o texto; nesta fatia o
+     scrim foi aliviado para a cor do mapa poder existir, e a proteção desceu
+     para a superfície onde o texto realmente está. O escurecimento total sob a
+     letra é praticamente o mesmo — ele só deixou de ser cobrado da tela inteira.
+
+     Só quem pousa direto sobre a foto precisa dela. A lâmina do palco tem o
+     próprio campo de cor por baixo e não usa. */
+  --vidro-base:rgba(9,13,20,.34);
+
+  --vidro-alto-bg:linear-gradient(var(--luz-ang,165deg),rgba(18,26,40,.3),rgba(8,12,20,.44));
+  --vidro-alto-borda:rgba(255,255,255,.14);
+
+  --vidro-alto-blur:blur(14px) saturate(1.4);
   /* ELEVAÇÃO MEDIDA, não declarada — 08/08/2026. A sombra anterior era
      `0 26px 60px -32px`: um borrão de 60px com spread negativo de 32, ou seja,
      quase nada sobrando, e sobre fundo escuro isso é invisível. O resultado foi
@@ -140,9 +211,15 @@
      par SOMBRA DE CONTATO + ARESTA ACESA: o olho lê a linha clara no topo como
      luz batendo na quina e a linha escura logo abaixo da peça como o chão dela.
      A terceira camada é o LUGAR refletindo na peça: um halo curto na cor do mapa,
-     que é o que integra a lâmina ao ambiente em vez de colá-la por cima dele. */
-  --vidro-alto-sombra:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -1px 0 rgba(0,0,0,.45),
-    0 2px 4px rgba(0,0,0,.55),0 20px 44px -22px rgba(0,0,0,.95),
+     que é o que integra a lâmina ao ambiente em vez de colá-la por cima dele.
+
+     A SOMBRA LARGA VOLTOU, agora com spread quase inteiro (`-20` de 60, e não
+     `-32`), que é a do `.np-card`. O parágrafo acima concluiu que num tema
+     escuro a sombra larga é invisível; estava errado sobre a CAUSA — ela era
+     invisível porque o spread negativo comia o borrão inteiro. A sombra de
+     contato e a aresta acesa continuam, porque somam. */
+  --vidro-alto-sombra:inset 0 1px 0 rgba(255,255,255,.16),inset 0 -1px 0 rgba(0,0,0,.45),
+    0 2px 4px rgba(0,0,0,.55),0 24px 60px -20px rgba(0,0,0,.85),
     0 0 70px -34px rgba(var(--mapa-rgb,120,140,160),.8);
 
   /* O ESTADO CEGO DA LÂMINA — o quadro inicial da revelação. Ele é material, não
@@ -152,14 +229,67 @@
      keyframe é exatamente como um sistema começa a divergir. */
   --vidro-alto-cego:blur(30px) saturate(70%);
 
-  --vidro-medio-bg:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.03));
-  --vidro-medio-borda:rgba(255,255,255,.13);
-  --vidro-medio-blur:blur(14px) saturate(140%);
-  --vidro-medio-sombra:inset 0 1px 0 rgba(255,255,255,.18);
+  --vidro-medio-bg:linear-gradient(var(--luz-ang,165deg),rgba(30,40,58,.6),rgba(12,17,26,.72));
+  --vidro-medio-borda:var(--vidro-alto-borda);
+  /* MESMO DESFOQUE, MESMA SATURAÇÃO, MESMA NOTAÇÃO que o nível `alto`. Os dois
+     já valiam o mesmo — `saturate(140%)` e `saturate(1.4)` são o MESMO valor
+     computado —, mas escritos de formas diferentes eles pareciam dois materiais
+     numa leitura da folha, e "parecem materiais diferentes" foi exatamente a
+     crítica que criou este sistema. Um material, três densidades: é a densidade
+     do `-bg` que separa os níveis, nunca o filtro. (09/08/2026) */
+  --vidro-medio-blur:var(--vidro-alto-blur);
+  --vidro-medio-sombra:inset 0 1px 0 rgba(255,255,255,.16),0 24px 60px -20px rgba(0,0,0,.85);
 
-  --vidro-raso-bg:rgba(255,255,255,.05);
-  --vidro-raso-borda:rgba(255,255,255,.08);
-  --vidro-raso-blur:blur(12px);
+  /* O APOIO É O NÍVEL MAIS FINO, e estava com 58–70% de opacidade: isso é
+     tinta, não vidro. Numa peça de UMA linha de texto essa densidade não servia
+     a nada além de tapar o que está atrás — e o que faz vidro parecer vidro é
+     justamente ver a cor do fundo, desfocada e saturada, através dele.
+     A saturação do filtro sobe junto: é ela que puxa a cor de trás para dentro
+     da peça, que é o que separa vidro de plástico fosco.
+
+     A BASE ENTRA AQUI, no token, e não em cada consumidor — 09/08/2026. Ela
+     valia para toda superfície de apoio (a faixa de contexto E o veredito), e
+     escrevê-la nas duas regras é exatamente como um sistema começa a divergir:
+     bastaria uma esquecer. Quem consome `--vidro-raso-bg` recebe o chão junto,
+     e superfície de apoio nova não tem como nascer desprotegida. */
+  --vidro-raso-bg:linear-gradient(var(--luz-ang,165deg),rgba(30,40,58,.22),rgba(12,17,26,.34)),
+    var(--vidro-base);
+  --vidro-raso-borda:var(--vidro-alto-borda);
+  /* E AQUI TAMBÉM O MESMO FILTRO — 09/08/2026. Este nível declarava
+     `saturate(1.9)` contra `1.4` dos outros dois, e a justificativa escrita era
+     que a peça é fina e precisa puxar mais cor de trás. O argumento era bom e a
+     conclusão, errada: saturação diferente É material diferente, e a queixa que
+     originou este sistema foi exatamente *"todos os liquid glass parecem
+     diferentes em cada bloco"*. Quem compensa a espessura é a DENSIDADE do
+     `-bg`, que é o eixo que o sistema declara. Um material, três densidades — e
+     agora isso é verdade nos três, não em dois de três. */
+  --vidro-raso-blur:var(--vidro-alto-blur);
+
+  /* O PASSEIO DA LUZ. É a assinatura que o `.np-card` tinha e o resto do sistema
+     não: o ângulo do gradiente de TODAS as superfícies caminha junto, devagar,
+     como uma fonte de luz que se move na sala. 9s é lento o bastante para não
+     competir com a leitura — o número é dele, e mantê-lo igual é o que faz as
+     duas telas parecerem o mesmo lugar.
+     Vive num `@property` para que o ângulo INTERPOLE: uma custom property comum
+     salta entre os keyframes, e o salto lê como piscada em vez de reflexo. */
+  --luz-ang:165deg;
+
+
+  /* O BISEL — 08/08/2026, a pedido de *"o mesmo liquid glass absurdo pra tudo
+     na antessala"*.
+     ────────────────────────────────────────────────────────────────────────
+     É a assinatura do material, e é o que faltava para as peças pequenas
+     parecerem do mesmo mundo que a lâmina: uma quina superior que PEGA luz e
+     uma inferior que a perde, mais um fio lateral fraco. Vidro real tem
+     espessura, e espessura aparece na borda antes de aparecer na superfície —
+     por isso um `border` de cor única nunca lê como vidro, por mais desfoque
+     que haja atrás.
+     Existe em duas intensidades porque a luz da tela vem de cima: peça grande
+     recebe mais quina exposta que peça pequena, e usar o mesmo valor nas duas
+     deixa a pequena parecendo cromada. */
+  --vidro-bisel:inset 0 1px 0 rgba(255,255,255,.34),inset 0 -1px 0 rgba(0,0,0,.34),
+    inset 1px 0 0 rgba(255,255,255,.08),inset -1px 0 0 rgba(255,255,255,.05);
+  --vidro-bisel-fino:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(0,0,0,.26);
 
   /* Raios do sistema: uma escala só, para as peças não divergirem sozinhas.
      E DESDE 08/08/2026 ELES SÃO CONCÊNTRICOS, não só padronizados: `--r-crest`
@@ -167,11 +297,32 @@
      se afasta da aresta dela. Era essa a crítica — cada componente com sua
      própria regra de esquina. Curvatura derivada é o que faz duas peças
      aninhadas parecerem talhadas do mesmo bloco. */
-  --r-lamina:24px; --r-peca:10px; --r-pilula:20px;
-  --r-crest:calc(var(--r-lamina) - var(--e-2));
+  /* UM NÚMERO, TRÊS APELIDOS — 09/08/2026. A escala declarava `--r-peca:16px` e
+     `--r-pilula:16px` ao lado de um `--r-crest` DERIVADO da lâmina, e os três
+     davam 16 por coincidência aritmética, não por construção: bastava mexer em
+     `--r-lamina` para o brasão sair do sistema e os outros dois ficarem parados.
+     Pior, `--r-crest` — o token que a folha apresenta como a PROVA de que os
+     raios são concêntricos — não tinha um consumidor sequer: o brasão usava
+     `--r-peca`. O princípio estava escrito e não estava aplicado.
+     Agora o 16 nasce UMA vez, da lâmina menos o recuo, e todo o resto aponta
+     para ele. Mudança de pixel: zero — os quatro já valiam 16. */
+  --r-lamina:24px;
+  --r-peca:calc(var(--r-lamina) - var(--e-2));
+  --r-pilula:var(--r-peca); --r-crest:var(--r-peca);
   /* Véu de time das duas metades da antessala. Vive aqui, e não repetido nos
      dois seletores, porque foi a repetição que deixou os lados divergirem. */
-  --pm-veu:.20;
+  /* O VÉU CEDEU de .20 para .12 em 08/08/2026, e isso é estrutura, não gosto.
+     A lâmina cobre o card inteiro (`inset:0`) e o que ela desfocava era o CAMPO
+     DE COR — uma camada chapada que só existe debaixo dela. Desfocar tinta
+     chapada devolve tinta chapada: era o defeito de 6/255 sobrevivendo numa
+     forma nova, e nenhum ajuste de material o resolvia.
+     O `.np-card` da narração parece melhor porque flutua sobre o SCOREBOARD, que
+     é conteúdo real e continua nítido em volta dele. O olho não lê vidro pelo
+     desfoque — lê pela diferença entre a coisa nítida e a mesma coisa borrada.
+     Baixar o véu deixa a FOTO atravessar o card, e aí essa diferença existe:
+     nítida fora, borrada dentro. O contraste que o véu segurava passou para a
+     vinheta sob o card, que escurece o FUNDO em vez do card. */
+  --pm-veu:.12;
 
   /* ══ ESCALA DA ANTESSALA — redesenho de 08/08/2026 ═════════════════════════
      A tela tinha TREZE corpos de fonte para vinte e poucos textos, cinco deles
@@ -189,7 +340,14 @@
   --fs-titulo:clamp(1.25rem,2.9vw,2.1rem);
   --fs-veredito:clamp(.82rem,1.15vw,.95rem);
   --fs-corpo:.8rem;
-  --fs-nota:.68rem;
+  /* `--fs-nota:.68rem` SAIU em 09/08/2026: ele existia para a pílula de rodapé
+     que explicava o botão narrado, e essa nota virou microcópia DENTRO do botão
+     em 08/08 — passando a usar `--fs-rotulo`. Sem consumidor em nenhum arquivo,
+     ele era o quinto degrau de uma escada que ninguém pisa: a antessala usa
+     cinco corpos e um `clamp` local no monograma, medidos na tela.
+     A escada está declarada como CINCO degraus, e não seis, porque um degrau que
+     nada usa não é hierarquia disponível — é convite a reintroduzir um nível que
+     a composição já provou não precisar. */
   --fs-rotulo:.625rem;
   /* Tracking exclusivo de caixa-alta pequena: sem ele, rótulo de 10px vira
      mancha. Em corpo grande o mesmo valor abriria buraco entre as letras. */
@@ -207,18 +365,52 @@
 
   /* RAIO CONCÊNTRICO. `--r-peca` valia 10px tanto num chip de 27px de altura
      quanto num botão de 51px, e raio fixo em caixas de alturas diferentes faz a
-     maior parecer mais quadrada. O raio da ação escala com a caixa dela. */
-  --r-acao:14px;
+     maior parecer mais quadrada. O raio da ação escala com a caixa dela.
 
-  /* MOVIMENTO COM MASSA. `--ease` é uma curva de UI, correta para abrir painel.
-     A barra de força não é UI: é o placar de uma comparação, e chegar ao valor
-     com um leve excesso é o que lhe dá PESO em vez de duração. É o único
-     empréstimo que faço ao sistema de física de movimento do Material 3
-     Expressive — e faço porque a linguagem da Apple não tem resposta para
-     "isto precisa parecer pesado". */
+     E DESDE 08/08/2026 ELE É DERIVADO, não escolhido. Medindo a antessala, os
+     raios em uso eram SEIS: lâmina 24, faixa 20, pílula 20, brasão 16, ação 14,
+     fechar 10, chip 0. A revisão externa chamou isso de *"cada componente com
+     sua própria regra de esquina"*, e era o único dos cinco itens da crítica que
+     procedia. Botão e brasão são a mesma coisa na composição — peças que pousam
+     SOBRE a lâmina, com o mesmo recuo da aresta dela —, então partilham o mesmo
+     raio, que é o da lâmina menos esse recuo. Curvatura derivada é o que faz
+     duas peças parecerem talhadas do mesmo bloco. */
+  --r-acao:var(--r-crest);
+
+  /* ══ AS TRÊS MEDIDAS DA ANTESSALA — declaradas em 09/08/2026 ═══════════════
+     As três viviam como FALLBACK de `var()` e nunca eram declaradas em lugar
+     nenhum — a forma era `var(--pm-col, 548px)`, com o valor real morando no
+     segundo argumento.
+     Uma varredura de custom properties da folha inteira separou os fantasmas
+     legítimos — `--mapa-*`, `--time-*`, `--pm-corte`, `--x0/--x1`, que o
+     `game.js` injeta em runtime — destes três, que ninguém injeta nunca.
+
+     Variável que só existe como fallback é o pior dos dois mundos: parece um
+     ponto de ajuste do sistema e não é. Mudar a largura da coluna exigia achar
+     os DOIS `var()` e reescrever o fallback nos dois — e um deles esquecido
+     divergiria em silêncio, que é exatamente o defeito que token existe para
+     impedir. `--mapa-blur` ainda tinha um agravante: `check-map-art` cobra que
+     ele apareça na folha, e o fallback satisfazia a guarda sem ser um token. */
+  /* A coluna estreita da moldura: faixa de contexto e barra de ação. O palco e o
+     veredito são mais largos de propósito — o confronto é o herói da tela. */
+  --pm-col:548px;
+  /* Piso de largura das duas ações, para elas terem a MESMA caixa (regra 56).
+     Não é `flex-basis`: ver a nota em `.prematch-modos .roll`. */
+  --pm-acao-w:268px;
+  /* Desfoque da foto de mapa. Moderado de propósito — a nota longa que explica
+     por que ele não pode ser pesado está em `.pm-fundo-faixa::before`. */
+  --mapa-blur:8px;
+
+  /* `--mov-massa` E `--d-barra` SAÍRAM em 09/08/2026, e os dois eram da BARRA DE
+     FORÇA, removida em 08/08 quando a divisão do palco passou a SER a proporção
+     de força. A curva de massa era descrita como "o único empréstimo que faço ao
+     sistema de física do Material 3 Expressive", e o empréstimo não tem mais
+     quem o use: a lâmina só faz fade e o conteúdo entra com `--mov-entra`.
+     Token de movimento sobrevive calado porque ninguém vê curva sem consumidor —
+     e este repositório já provou por mutação, em 02/08, que valor morto
+     atravessa meses. Se a massa voltar, ela volta com a peça que a justifica. */
   --mov-entra:cubic-bezier(.16,1,.3,1);
-  --mov-massa:cubic-bezier(.34,1.26,.64,1);
-  --d-lamina:520ms; --d-barra:820ms; --d-toque:160ms;
+  --d-lamina:520ms; --d-toque:160ms;
   /* movimento das cartas: curto, sem overshoot e limitado a transform/opacity */
   --ease-card:cubic-bezier(.22,1,.36,1); --motion-card-fast:180ms;
   --motion-card-face:360ms; --motion-card-fade:180ms;
@@ -1254,7 +1446,34 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    Um degrau abaixo resolve nos dois sentidos e não depende de ordem nenhuma. */
 .overlay.fechando{animation:overlayOut .2s var(--ease) forwards;pointer-events:none;z-index:49}
 @keyframes overlayOut{to{opacity:0;transform:scale(.992)}}
-.tela-in{animation:telaIn .26s var(--ease)}
+/* ══ A ENTRADA DE TELA, E O DEFEITO INVERTIDO QUE ELA ESCONDIA ══════════════
+   09/08/2026. `mostrarTela()` põe `.tela-in` nas DUAS telas do diálogo de
+   partida — antessala e mapa ao vivo. Medido no navegador, com a classe
+   aplicada, o `animation-name` computado era:
+
+     movimento normal   #prematch → luzPasseia   #livemap → telaIn
+     movimento REDUZIDO #prematch → telaIn       #livemap → (nenhuma)
+
+   Duas coisas erradas de uma vez, e a segunda é a grave:
+
+   1. `animation` é SHORTHAND, e `.prematch{animation:luzPasseia …}` tem a MESMA
+      especificidade que `.tela-in` e vem depois na folha. A antessala nunca
+      tocou a entrada — o que ela declara aqui era apagado por ordem de fonte;
+   2. o passeio da luz vive dentro de `@media (prefers-reduced-motion:
+      no-preference)`. Quando o usuário PEDE menos movimento, aquela regra some,
+      `.tela-in` deixa de ser atropelada e a antessala passa a ser a única tela
+      da aplicação com fade de entrada. **A preferência de acessibilidade LIGAVA
+      uma animação em vez de desligá-la.**
+
+   Pôr esta regra sob a guarda de movimento corrige o item 2 e mantém o 1 como
+   ele já era na prática — o que é a decisão certa e agora está escrita: a
+   antessala tem coreografia PRÓPRIA em três tempos (pmLamina → pmEntra* →
+   pmVeredito), e um fade global por cima brigaria com ela. Quem precisa da
+   entrada genérica é o mapa ao vivo, que não tem coreografia nenhuma.
+   Zero pixel muda para quem não pediu movimento reduzido. */
+@media (prefers-reduced-motion:no-preference){
+  .tela-in{animation:telaIn .26s var(--ease)}
+}
 @keyframes telaIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .overlay-head{display:flex;align-items:center;justify-content:space-between;gap:14px;
   padding:max(18px,env(safe-area-inset-top)) max(clamp(16px,4vw,34px),env(safe-area-inset-right)) 18px max(clamp(16px,4vw,34px),env(safe-area-inset-left));
@@ -1391,11 +1610,31 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    papel, e `medio` é o que se pressiona. O raio é maior que o das peças porque
    a caixa é maior — raio fixo em alturas diferentes faz a caixa alta parecer
    mais quadrada, e concentricidade quer o raio escalando com o objeto. */
-.prematch-modos{display:flex;gap:var(--e-3);flex-wrap:wrap;justify-content:center;align-items:stretch}
-.prematch-modos .roll{border-radius:var(--r-acao);padding:var(--e-4) var(--e-8);
-  display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.15;
+.prematch-modos{display:flex;gap:var(--e-3);flex-wrap:wrap;justify-content:center;align-items:stretch;
+  width:min(var(--pm-col),100%)}
+/* AS DUAS AÇÕES TÊM A MESMA CAIXA — 08/08/2026. Elas mediam 240,2 × 172,8 px
+   porque cada uma se dimensionava pelo próprio texto: duas escolhas do mesmo
+   nível com dois tamanhos, que é a regra 56 (mesmo objeto, diferença só de
+   ênfase).
+   É `min-width`, e não `flex-basis`: `.prematch-modos` é filho de um flex
+   `column` com `align-items:center`, ou seja, tem largura de CONTEÚDO. Com
+   `flex-basis` a largura preferida do container passou a ser calculada a partir
+   das bases e os dois botões empilharam num viewport de 1440px, onde sobravam
+   828px. Piso de largura iguala as caixas sem opinar sobre a do pai. */
+.prematch-modos .roll{border-radius:var(--r-acao);padding:var(--e-4) var(--e-6);
+  flex:0 0 auto;min-width:var(--pm-acao-w);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;line-height:1.15;
+  /* CENTRAR CAIXA NÃO É CENTRAR TINTA — regra 35, agora nos botões. O tracking
+     de `.1em` sobra DEPOIS da última letra, e o flex centra a caixa de AVANÇO,
+     que carrega esse espaço fantasma: a tinta escorrega meia sobra para a
+     esquerda. As duas linhas do botão têm corpos diferentes (14,7px e 10px),
+     então escorregam quantidades diferentes — e é o desencontro entre elas que
+     o olho lê como texto torto, não o desvio de cada uma.
+     `text-indent` devolve a sobra ao início da linha; com `text-align:center`
+     ele desloca o conteúdo inteiro, que é exatamente a compensação necessária. */
+  text-align:center;text-indent:.1em;
   backdrop-filter:var(--vidro-medio-blur);-webkit-backdrop-filter:var(--vidro-medio-blur);
-  box-shadow:var(--vidro-medio-sombra),0 14px 34px -18px rgba(0,0,0,.9);
+  box-shadow:var(--vidro-medio-sombra),var(--vidro-bisel),0 14px 34px -18px rgba(0,0,0,.9);
   transition:transform var(--d-toque) var(--mov-entra),background var(--d-toque) linear}
 /* A MICROCOPY MORA NO BOTÃO — 08/08/2026. A nota "A narração comenta ao vivo
    alguns rounds do mapa" era uma pílula de vidro no rodapé com 8.127px², a
@@ -1404,10 +1643,16 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    informa quem hesita e desaparece para quem já decidiu, sem gastar uma faixa
    inteira nem uma sexta superfície de vidro. */
 .pm-acao-sub{font-family:var(--ff);font-size:var(--fs-rotulo);letter-spacing:.1em;
-  text-transform:none;font-weight:600;color:var(--dim)}
+  text-indent:.1em;text-transform:none;font-weight:600;color:var(--dim)}
 #prematchNarrado{color:var(--txt);border:1px solid rgba(var(--accent-rgb),.55);
   background:linear-gradient(180deg,rgba(var(--accent-rgb),.42),rgba(var(--accent-deep-rgb),.28))}
 #prematchNarrado .pm-acao-sub{color:rgba(255,255,255,.72)}
+/* O botão limpo é vidro branco translúcido e pousa direto sobre a foto do mapa.
+   Ele NÃO usa `--vidro-base`, e isto é decisão, não esquecimento: o nível
+   `medio` já nasce denso (60–72%), que é o bastante para a microcópia. A base é
+   do nível `raso`, que é fino de propósito. Este comentário afirmava o contrário
+   até 09/08 — dizia "a base escura também aqui" para um token que não tinha
+   consumidor nenhum na folha. Ver o bloco de `--vidro-base` no `:root`. */
 #prematchStart{color:var(--txt);border:1px solid var(--vidro-medio-borda);
   background:var(--vidro-medio-bg)}
 @media (hover:hover) and (pointer:fine){
@@ -1531,8 +1776,15 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 
 /* ── PARTIDA: antessala + mapa ao vivo ── */
 .match-overlay{align-items:stretch}
-.match-close{position:absolute;top:max(14px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right));z-index:7;width:38px;height:38px;border-radius:var(--radius);
-  border:1px solid var(--line);background:var(--panel2);color:var(--dim);font-size:1rem;cursor:pointer;
+/* O FECHAR ENTROU NO SISTEMA — 08/08/2026. Era o único controle da tela em
+   painel OPACO (`--panel2`), com raio próprio (`--radius`, 12px) e sem material
+   nenhum: sobre a foto do mapa ele lia como um adesivo colado na tela. Agora usa
+   o vidro de AÇÃO — o nível de quem se pressiona — e o raio da escala. */
+.match-close{position:absolute;top:max(14px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right));z-index:7;width:38px;height:38px;border-radius:var(--r-peca);
+  border:1px solid var(--vidro-medio-borda);
+  background:var(--vidro-medio-bg);color:var(--neutral);font-size:1rem;cursor:pointer;
+  backdrop-filter:var(--vidro-medio-blur);-webkit-backdrop-filter:var(--vidro-medio-blur);
+  box-shadow:var(--vidro-bisel-fino);
   transition:.14s;-webkit-tap-highlight-color:transparent}
 .match-close:hover{color:var(--txt);border-color:var(--accent);transform:scale(1.05)}
 /* RITMO POR GRUPO, não por `gap` único — 08/08/2026. O `gap:30px` de antes dava
@@ -1545,8 +1797,12 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
   gap:0;padding:var(--e-8) var(--e-6)}
 /* Contexto e mapa são o MESMO grupo — a moldura do confronto —, então ficam a
    8px um do outro e a 32px da lâmina. É a proximidade dizendo o parentesco. */
-.pm-topo{margin-bottom:var(--e-2)}
-#pmMapa{margin-bottom:var(--e-8)}
+/* A COLUNA DA TELA — 08/08/2026. Medido: a faixa de contexto tinha 516px e a
+   ação 548px, duas larguras "de conteúdo" que não partilhavam borda com nada e
+   liam como desalinho. Agora as duas saem do MESMO token, e o palco é a única
+   peça mais larga de propósito, porque é o herói da tela. */
+.pm-topo{margin-bottom:var(--e-2);width:min(var(--pm-col),100%);
+  display:flex;justify-content:center}
 /* O vão da lâmina vive na regra dela, lá embaixo, e não aqui: uma SEGUNDA regra
    `.pm-palco` mais acima na folha faz `check-glass-system` casar a errada e
    acusar vidro na mão onde não há. Foi o que aconteceu na primeira escrita
@@ -1619,8 +1875,8 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    `--r-lamina` e os raios internos passam a ser CONCÊNTRICOS: quem encosta na
    aresta interna recebe o raio do pai menos o recuo, e o brasão herda a mesma
    família de curvatura em vez de ter regra própria. */
-.pm-palco{position:relative;width:min(920px,100%);margin-bottom:var(--e-11);
-  display:grid;grid-template-areas:"palco" "base";grid-template-rows:1fr auto;
+.pm-palco{--pm-junc:22px;position:relative;width:min(920px,100%);margin-bottom:var(--e-2);
+  display:grid;grid-template-areas:"palco";
   border-radius:var(--r-lamina);overflow:hidden;isolation:isolate;
   border:1px solid var(--vidro-alto-borda);
   box-shadow:var(--vidro-alto-sombra)}
@@ -1629,7 +1885,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    existem para a borda não serrilhar. */
 .pm-palco::before{content:"";position:absolute;inset:0;z-index:0;
   background:
-    linear-gradient(105deg,
+    linear-gradient(90deg,
       rgba(var(--time-a-rgb,120,130,145),var(--pm-veu)) 0 calc(var(--pm-corte,50%) - 1px),
       rgba(var(--time-b-rgb,120,130,145),var(--pm-veu)) calc(var(--pm-corte,50%) + 1px) 100%),
     var(--vidro-alto-bg)}
@@ -1637,24 +1893,46 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    que corre pela superfície, aceso na quina superior esquerda, apagando no meio
    e pegando luz de novo na base — luz batendo num painel inclinado. Uma linha
    branca de opacidade única lê como borda; um gradiente lê como reflexo. */
-/* A COSTURA VOLTOU, e agora ela é uma ARESTA DO VIDRO. Com o campo de cor atrás
-   da lâmina, o desfoque de 22px transformava a parada dura numa faixa de ~44px
-   de névoa: a diagonal sumia, e junto com ela a inclinação que carrega a
-   proporção de força. A linha vive no PRÓPRIO fundo do pseudo-elemento, ou seja,
-   é pintada DEPOIS do desfoque — fica nítida sobre o borrão, exatamente como a
-   junção de duas placas de vidro. É a costura fazendo o que o `clip-path` fazia,
-   sem o custo de prender o conteúdo abaixo do material. */
+/* A COSTURA E A LENTE SAÍRAM em 08/08/2026, e a segunda foi a lição: a
+   junção virou uma faixa de material com espessura, e o responsável comparou o
+   resultado com o painel da narração — *"o da partida ainda está mil vezes
+   superior, pq é MINIMALISTA e realmente parece liquid glass"*.
+   Estava certo, e a lição é maior que a peça: liquid glass não é um efeito que
+   se ADICIONA, é o que sobra quando se tira o resto. O `.np-card` é um
+   retângulo, uma borda fina e uma sombra; o palco tinha campo, lâmina, lente,
+   véu por lado e sombra de favorito empilhados, e o material não aparecia
+   porque tudo competia com ele. O especular abaixo é o que ficou. */
 .pm-palco::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
   background:
-    linear-gradient(105deg,transparent calc(var(--pm-corte,50%) - 1px),
-      rgba(255,255,255,.22) calc(var(--pm-corte,50%) - 1px) calc(var(--pm-corte,50%) + 1px),
-      transparent calc(var(--pm-corte,50%) + 1px)),
     linear-gradient(140deg,rgba(255,255,255,.14),rgba(255,255,255,.02) 34%,
     rgba(255,255,255,0) 62%,rgba(255,255,255,.07));
   backdrop-filter:var(--vidro-alto-blur);-webkit-backdrop-filter:var(--vidro-alto-blur);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.42),inset 0 -1px 0 rgba(0,0,0,.4),
     inset 1px 0 0 rgba(255,255,255,.1),inset -1px 0 0 rgba(255,255,255,.06)}
 
+/* QUEM É MAIS FORTE MONTA SOBRE O OUTRO — 08/08/2026, a pedido: *"o bloco que
+   fica o time, a cor, etc, fica maior e sobrepõe o outro […] curti mas dá pra
+   melhorar"*.
+   A largura já vinha da força (`--pm-corte`, com ganho 2,2× e teto 42–58%), mas
+   duas placas coplanares não têm "por cima": ser maior não é ser mais próximo.
+   A SOMBRA PROJETADA é o que resolve — ela cai sempre para o lado do mais
+   fraco, logo depois da junção, e some em ~3 larguras de lente. Sombra é a
+   única pista de profundidade que não depende da cor de nenhum dos dois clubes,
+   e por isso funciona nos 289 pares possíveis do catálogo (regra 46).
+   Ela vive na LÂMINA e não na lente porque a lente é mascarada: qualquer coisa
+   pintada fora da faixa seria recortada junto. */
+.pm-palco--fav-a::after{background-image:
+  linear-gradient(90deg,transparent calc(var(--pm-corte,50%) + var(--pm-junc) * .6),
+    rgba(0,0,0,.34) calc(var(--pm-corte,50%) + var(--pm-junc) * 1.1),
+    transparent calc(var(--pm-corte,50%) + var(--pm-junc) * 3.6)),
+  linear-gradient(140deg,rgba(255,255,255,.14),rgba(255,255,255,.02) 34%,
+    rgba(255,255,255,0) 62%,rgba(255,255,255,.07))}
+.pm-palco--fav-b::after{background-image:
+  linear-gradient(270deg,transparent calc(100% - var(--pm-corte,50%) + var(--pm-junc) * .6),
+    rgba(0,0,0,.34) calc(100% - var(--pm-corte,50%) + var(--pm-junc) * 1.1),
+    transparent calc(100% - var(--pm-corte,50%) + var(--pm-junc) * 3.6)),
+  linear-gradient(140deg,rgba(255,255,255,.14),rgba(255,255,255,.02) 34%,
+    rgba(255,255,255,0) 62%,rgba(255,255,255,.07))}
 
 /* AS DUAS METADES ocupam a MESMA célula e se recortam por `clip-path`. Ocupar a
    mesma área é o que faz a diagonal ser uma costura entre elas, e não uma borda
@@ -1706,13 +1984,19 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    conteúdo abaixo do vidro. O que sobrou é o que elas sempre deveriam ter sido:
    duas caixas que empurram o conteúdo para lados opostos. Continuam ocupando a
    MESMA célula, e é o `padding` derivado do corte que as mantém separadas. */
-.pm-lado--a{justify-content:flex-start;padding-right:calc(104% - var(--pm-corte,50%))}
+/* OS DOIS RECUOS SAEM DO MESMO NÚMERO — 08/08/2026. Eram `104% - corte` e
+   `4% + corte`, e essas duas fórmulas só se cancelam quando o corte é exatamente
+   50%: com o favorito em 58% um lado ganhava 8% a mais que o outro, e o conteúdo
+   deixava de estar à mesma distância das bordas. A assimetria era invisível no
+   empate, que é justamente o caso em que se olha para conferir.
+   Agora cada lado ocupa a sua fração e recua o MESMO `--e-4` da divisão. */
+.pm-lado--a{justify-content:flex-start;
+  padding-right:calc(100% - var(--pm-corte,50%) + var(--e-4))}
 .pm-lado--b{
   /* `row-reverse` inverte o eixo: `flex-start` passa a apontar para a DIREITA.
-     Com `flex-end` o conteúdo ia para a esquerda, que é exatamente a parte que o
-     `clip-path` recorta — o lado inteiro sumia da tela. */
+     Com `flex-end` o conteúdo iria para a esquerda, sob o outro lado. */
   justify-content:flex-start;flex-direction:row-reverse;
-  padding-left:calc(4% + var(--pm-corte,50%))}
+  padding-left:calc(var(--pm-corte,50%) + var(--e-4))}
 /* O time do jogador se anuncia por LUZ na aresta, não por outra cor: a cor já é
    a do clube, e trocá-la apagaria a identidade que o palco existe para mostrar.
    A LUZ É BRANCA — 07/08/2026. Era ciano (`--mine-rgb`), e a 50% sobre um clube
@@ -1732,15 +2016,27 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 /* z2 — O CONTEÚDO SOBE ACIMA DA LÂMINA. É esta linha que faz o vidro ser
    material e não névoa: texto desfocado seria o vidro competindo com o
    conteúdo, que é exatamente o que o princípio proíbe. */
-.pm-crest,.pm-info{position:relative;z-index:2}
+.pm-crest,.pm-info{position:relative;z-index:4}
 .pm-crest{display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 .pm-crest::after{content:"";position:absolute;inset:-14%;border-radius:50%;z-index:-1;
   background:radial-gradient(circle,rgba(var(--time-rgb),.5),transparent 68%)}
 /* CONCENTRICIDADE REAL: o brasão não tem raio próprio — ele herda a curvatura da
    lâmina menos o recuo com que se afasta da aresta. Antes eram 18px cravados ao
    lado de uma lâmina de 22px, dois valores sem relação nenhuma. */
+/* O BRASÃO É VIDRO TAMBÉM — 08/08/2026, a pedido de *"o mesmo liquid glass
+   absurdo pra tudo na antessala"*. Ele era o último bloco chapado da tela: cor
+   sólida do clube, sem quina, sem luz. O bisel dá espessura à peça e o realce
+   superior a põe no mesmo mundo da lâmina; a cor do clube continua sendo a cor
+   do clube, porque ela é identidade e não material. */
 .pm-lado .team-mono{width:clamp(52px,7vw,74px);height:clamp(52px,7vw,74px);
-  font-size:clamp(1.05rem,2vw,1.5rem);border-radius:var(--r-crest)}
+  font-size:clamp(1.05rem,2vw,1.5rem);border-radius:var(--r-crest);
+  box-shadow:var(--vidro-bisel);position:relative;overflow:hidden}
+/* O reflexo de superfície: uma lâmina de luz na metade de cima, como a que
+   escorre num botão de vidro real. Vive num pseudo-elemento para não disputar o
+   `box-shadow` do bisel nem o `background` da cor do clube. */
+.pm-lado .team-mono::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(160deg,rgba(255,255,255,.26),rgba(255,255,255,.06) 42%,
+    rgba(255,255,255,0) 62%,rgba(255,255,255,.05))}
 
 /* ESCALA COM DEGRAUS REAIS: nome, força, era. */
 /* A COLUNA CENTRA-SE SOZINHA — 07/08/2026. A linha da era existe só no lado do
@@ -1750,7 +2046,14 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    Como as duas metades já têm a mesma altura por construção, centrar o conteúdo
    de cada uma resolve sem reservar vazio nem inventar informação que não
    existe. */
-.pm-info{display:flex;flex-direction:column;justify-content:center;gap:var(--e-1);min-width:0}
+/* GRADE DE DUAS LINHAS, IGUAL NOS DOIS LADOS. `grid` em vez de `flex` porque a
+   grade garante que as linhas sejam as MESMAS caixas dos dois lados: com flex,
+   dois blocos centrados por si só coincidem por sorte, e qualquer diferença de
+   conteúdo futura volta a desalinhar em silêncio. Aqui, se um lado ganhar
+   conteúdo que o outro não tem, o desalinho aparece na hora — que é o que a
+   guarda também mede. */
+.pm-info{display:grid;grid-template-rows:auto auto;align-content:center;
+  gap:var(--e-1);min-width:0}
 .pm-lado--b .pm-info{align-items:flex-end;text-align:right}
 /* Sem prefixo de lado: o nome tem a MESMA escala nos dois. Ao remover a regra
    `.pm-id` num script, este seletor grudou no anterior e virou
@@ -1758,8 +2061,6 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    mais fino que o adversário. Regra 23: reescrita em massa erra por borda. */
 .pm-name{font-family:var(--ff);font-weight:800;font-size:var(--fs-titulo);
   letter-spacing:.01em;color:var(--txt);line-height:1.02;overflow-wrap:anywhere}
-.pm-camp{font-family:var(--ff);font-size:var(--fs-nota);color:var(--dim);
-  letter-spacing:.06em;line-height:1.3}
 /* O NÚMERO É O DADO DRAMÁTICO e recebe o maior degrau da escala. Ele não é
    decoração de tamanho: é a única grandeza comparável entre os dois lados, e o
    confronto inteiro se resolve em ler dois números e a distância entre eles. */
@@ -1815,20 +2116,48 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    e a leitura fica horizontal, como a frase que ela é.
    O vidro raso mudou de dono junto: ele agora veste a FAIXA, não cada item. */
 .prematch-ctx{display:flex;align-items:stretch;justify-content:center;flex-wrap:wrap;gap:1px;
+  width:100%;
   border-radius:var(--r-pilula);overflow:hidden;
-  background:rgba(255,255,255,.02);border:1px solid var(--vidro-raso-borda);
+  /* A base escura entra por baixo do realce — e desde 09/08/2026 isso é
+     VERDADE: ela mora dentro de `--vidro-raso-bg`, no `:root`, de onde alcança
+     também o veredito. Até então esta linha descrevia um token sem consumidor. */
+  background:var(--vidro-raso-bg);
+  border:1px solid var(--vidro-raso-borda);
   backdrop-filter:var(--vidro-raso-blur);-webkit-backdrop-filter:var(--vidro-raso-blur);
-  box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 10px 24px -18px rgba(0,0,0,.9)}
+  /* O mesmo bisel de todas as peças: é ele que faz a faixa, os botões, o brasão
+     e a lente lerem como o MESMO material em espessuras diferentes. */
+  box-shadow:var(--vidro-bisel-fino),0 10px 24px -18px rgba(0,0,0,.9)}
 /* O SEPARADOR É UM VÃO, não uma borda — mesma técnica do sulco da barra de
    força. Borda esquerda só funciona enquanto a faixa cabe numa linha: no celular
    ela quebra, e o item que desce aparecia com um fio à esquerda pendurado no
    nada. Um `gap` de 1px deixa o fundo da própria faixa passar, e isso continua
    certo em qualquer quebra — inclusive nas que eu não previ. */
-.pm-chip{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--e-1);
-  flex:1 0 auto;min-width:88px;padding:var(--e-2) var(--e-4);
-  background:rgba(255,255,255,.05)}
+/* `position:relative` MORA AQUI desde 09/08/2026. Ele vivia numa declaração
+   solta 38 linhas abaixo, depois do `::after` que depende dele — ou seja, a
+   regra que ancora o pseudo-elemento vinha DEPOIS de quem o usa. Funcionava por
+   cascata e lia como sobra de edição; um leitor que apagasse a linha órfã soltaria
+   o fio aceso do mapa para o canto da tela sem entender por quê.
+   A BASE É `auto`, E ISSO FOI MEDIDO — 09/08/2026. As células têm larguras
+   diferentes (128 e 99 no desktop) porque crescem a partir do próprio texto, e
+   isso parece desalinho numa leitura rápida. Tentei `flex:1 1 0`, que divide a
+   LINHA em partes iguais e faz a faixa ler como controle segmentado — e a
+   medição reprovou: com 5 itens e `min-width:88px`, no celular cabem 4 por
+   linha, então o quinto ficava SOZINHO ocupando 356px, um chip quebrava em duas
+   linhas e a faixa crescia de 91 para 101px de altura. Célula igual só funciona
+   quando o número de itens divide a largura, e cinco não divide 358px.
+   Fica a base de conteúdo: larguras proporcionais ao que cada item diz. */
+.pm-chip{position:relative;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--e-1);
+  flex:1 0 auto;min-width:88px;padding:var(--e-2) var(--e-4)}
+/* O RÓTULO NÃO USA `--dim` — 08/08/2026, e a razão é medida, não estética.
+   `--dim` é calibrado para painel escuro; aqui a faixa pousa sobre a foto do
+   mapa, e a varredura dos sete deu 3,91–4,92:1 já ANTES da foto existir: seis
+   dos sete abaixo de 4,5. Era um defeito antigo que ninguém tinha medido, e a
+   camada nova só o tornou visível.
+   A hierarquia contra o valor continua inteira, porque ela nunca foi cor: são
+   10px regulares contra 14px em peso 800 e caixa-alta. */
 .pm-chip-r{font-family:var(--ff);font-size:var(--fs-rotulo);letter-spacing:var(--tr-rotulo);
-  text-transform:uppercase;color:var(--dim);line-height:1}
+  text-transform:uppercase;color:var(--neutral);opacity:.9;line-height:1}
 .pm-chip-v{font-family:var(--ff);font-weight:800;font-size:var(--fs-corpo);letter-spacing:.06em;
   text-transform:uppercase;color:var(--txt);line-height:1.1;white-space:nowrap}
 /* A SÉRIE é o item que muda o tamanho do confronto e continua com ênfase — mas
@@ -1841,35 +2170,57 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    RISCO. Mata-mata é a única informação da faixa que muda o que se perde. */
 .pm-chip--alerta{background:rgba(var(--s-red-rgb),.16)}
 .pm-chip--alerta .pm-chip-v{color:var(--s-red-lit)}
+/* O MAPA É UM CHIP DA FAIXA desde 08/08/2026 — antes era uma pílula própria numa
+   segunda linha, e lida como objeto órfão. A única diferença para os outros
+   itens é ÊNFASE: o valor vem na marca do mapa, e o que vai ser jogado AGORA
+   ganha o fio aceso na base. Forma igual, peso diferente (regra 56). */
+/* O NOME DO MAPA NÃO USA A COR DA MARCA. A primeira versão deste chip pintava o
+   valor com `--mapa-nome`, e a guarda reprovou nos 21 casos (3,25–3,97:1): essa
+   cor é clareada para ser legível sobre o AMBIENTE do mapa, não sobre o vidro do
+   chip — outro fundo, outra conta. É a regra 46 numa forma nova: a cor era
+   função de um dado, e eu a levei para um lugar onde a função não vale.
+   A marca continua presente onde não custa contraste: no fio aceso da base. */
+.pm-chip--mapa .pm-chip-v{color:var(--txt)}
+.pm-chip--agora{background:linear-gradient(180deg,rgba(var(--mapa-rgb),.16),rgba(var(--mapa-rgb),.06))}
+.pm-chip--agora::after{content:"";position:absolute;left:var(--e-3);right:var(--e-3);bottom:0;
+  height:2px;border-radius:2px 2px 0 0;background:var(--mapa-cor);
+  box-shadow:0 0 10px -1px var(--mapa-cor)}
 
-/* CONFRONTO DE FORÇA — A BASE DA LÂMINA, redesenhado em 08/08/2026.
-   Ele era um bloco solto de 880x34 a 29px do palco, com os números das pontas
-   repetindo, a 13px, valores que já estavam 3x maiores nos cards logo acima.
-   Agora vive na segunda faixa da lâmina: o trilho corre de borda a borda, e o
-   segmento de cada time nasce sob o card dele.
+/* O VEREDITO — A BASE DA LÂMINA. A BARRA SAIU em 08/08/2026, a pedido: *"já que
+   tem esse negócio que eu citei, pode tirar aquela barra horizontal que mostra
+   quem é mais forte, pq o próprio bloco central já faz isso"*.
+   Está certo, e é a regra 53 chegando ao fim natural: a divisão do palco JÁ é a
+   proporção de força, e a sombra da junção já diz quem monta sobre quem. Um
+   trilho repetindo isso em 10px era a terceira leitura da mesma grandeza na
+   mesma tela — os números dos cards eram a primeira, a inclinação a segunda.
+   Saíram junto o trilho, os dois segmentos, o recuo do lado em desvantagem e o
+   keyframe `pmBaseAbre`, que só ele animava: elemento que perde o consumidor sai
+   (regra 52). O que fica é a frase, porque de QUANTO é a vantagem a forma não
+   diz — inclinação não tem número.
 
-   O SULCO VOLTOU A EXISTIR, e a história dele vale registro. A regra era
-   `border-right:2px solid var(--bg)` — e `--bg` foi REMOVIDO do `:root` em
-   01/08/2026, na limpeza de tokens sem consumidor. `var()` indefinido invalida a
-   shorthand no tempo de valor computado, então o navegador devolvia o inicial:
-   medido, `border-right` computava `0px none`. O divisor que o comentário
-   chamava de essencial não existia havia uma semana, e nada acusou —
-   `check-design-tokens` prova pares hex↔rgb e literais regredidos, mas não prova
-   `var()` apontando para token que não existe.
-   A correção não repõe outra cor: o sulco passa a ser um `gap` no flex, e quem
-   aparece nele é o próprio fundo escuro do trilho. Vão não pode ficar indefinido. */
-/* A base também sobe acima da lâmina: ela é conteúdo, não superfície. */
-.pm-forca{grid-area:base;position:relative;z-index:2;display:flex;flex-direction:column;
-  border-top:1px solid rgba(255,255,255,.12);
-  background:linear-gradient(180deg,rgba(0,0,0,.16),rgba(0,0,0,.34))}
+   A base sobe acima da lâmina: ela é conteúdo, não superfície. */
+/* O VEREDITO SAIU DE DENTRO DO CARD — 08/08/2026, a pedido: *"procure um jeito
+   minimalista de não deixar o texto solto dentro do bloco central […] uma barra
+   embaixo, quase colada, de uma borda à outra, sem encostar, com o mesmo liquid
+   glass"*.
+   É a mesma peça da faixa de contexto que fica acima do card, agora embaixo:
+   mesmo material, mesmo raio, mesma largura do palco. O card volta a ser UMA
+   superfície com os dois times, e o julgamento vira uma legenda que pertence ao
+   conjunto — não um rodapé grudado dentro dele. */
+/* A MESMA SOMBRA DA FAIXA DE CONTEXTO — 09/08/2026. As duas são o nível `raso`,
+   têm o mesmo papel (apoio que não se toca) e o mesmo material, e uma tinha
+   sombra de contato enquanto a outra não. Duas peças do mesmo nível com
+   elevações diferentes é o que faz uma faixa parecer colada e a outra flutuar;
+   medido lado a lado, a de baixo lia como impressa no fundo. Diferença entre
+   níveis é decisão do sistema; diferença DENTRO de um nível é sobra de edição. */
+.pm-forca{position:relative;z-index:4;width:min(920px,100%);
+  margin-bottom:var(--e-11);
+  display:flex;align-items:center;justify-content:center;
+  padding:var(--e-2) var(--e-4);border-radius:var(--r-pilula);
+  background:var(--vidro-raso-bg);border:1px solid var(--vidro-raso-borda);
+  backdrop-filter:var(--vidro-raso-blur);-webkit-backdrop-filter:var(--vidro-raso-blur);
+  box-shadow:var(--vidro-bisel-fino),0 10px 24px -18px rgba(0,0,0,.9)}
 .pm-forca[hidden]{display:none}
-.pm-forca-trilho{display:flex;gap:3px;height:10px;background:rgba(0,0,0,.6);
-  box-shadow:inset 0 1px 2px rgba(0,0,0,.5)}
-.pm-forca-a,.pm-forca-b{background:var(--time-traco);
-  transition:width var(--d-barra) var(--mov-massa),opacity var(--d-barra) linear}
-/* O brilho especular corre na aresta superior do próprio segmento: é o material
-   do vidro reagindo à luz, não uma cor nova inventada para dizer "favorito". */
-.pm-forca-a,.pm-forca-b{box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
 /* QUEM ESTÁ ATRÁS RECUA, e isto não é enfeite — é o que salva a barra.
    A primeira versão confiava na cor de clube para separar os dois segmentos, e a
    primeira foto derrubou a ideia: o time do jogador é PRETO, que `--time-traco`
@@ -1880,15 +2231,13 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    resolvia. Recuar o lado em desvantagem cria uma fronteira que independe da cor
    do dado: um segmento aceso, um apagado. E de brinde diz quem é o favorito por
    forma, antes de a frase abaixo ser lida. */
-.pm-forca--fav-a .pm-forca-b,
-.pm-forca--fav-b .pm-forca-a{opacity:.34;box-shadow:none}
 /* O VEREDITO É A SEGUNDA LEITURA DA TELA. Media 9,6px em peso 400 — o terceiro
    menor corpo da antessala — para carregar a única frase que diz o que está em
    jogo. Ele não ficou grande: tudo em volta encolheu, e ele ficou SOZINHO no
    eixo central da lâmina, que é o lugar de mais atenção do desenho inteiro. */
 .pm-forca-leg{font-family:var(--ff);font-weight:800;font-size:var(--fs-veredito);
   letter-spacing:var(--tr-rotulo);text-transform:uppercase;color:var(--txt);
-  text-align:center;padding:var(--e-3) var(--e-4);line-height:1.2}
+  text-align:center;line-height:1.2}
 /* Confronto parelho não tem favorito, e a tinta acompanha: a frase deixa de
    apontar um lado e desce para o tom de apoio. Estado é classe, não cor inline. */
 .pm-forca--parelho .pm-forca-leg{color:var(--neutral);font-weight:700}
@@ -1921,26 +2270,21 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    E é `animation`, não `transition`, porque o congelador do comparador usa
    atraso negativo: animação fica no quadro FINAL e a captura é determinística. */
 @keyframes pmRevela{
-  /* A costura entra JUNTO com a limpeza — invisível no quadro cego, nítida no
-     final. Ela viaja nos dois estados porque `background` é shorthand e
-     substitui todas as camadas; deixá-la fora do `from` faria a linha piscar. */
+  /* A LINHA DE 2px SAIU DAQUI TAMBÉM — 08/08/2026. Ela já tinha saído do
+     `::after`, mas este keyframe a repintava: `background` é shorthand, então o
+     estado final da animação REESCREVE todas as camadas da regra. A costura
+     voltava pela porta do movimento, e ainda em 105°, depois de a divisão do
+     campo ter virado vertical. Ao remover uma camada de um elemento animado,
+     varra os keyframes dele — eles carregam a declaração inteira. */
   from{backdrop-filter:var(--vidro-alto-cego);-webkit-backdrop-filter:var(--vidro-alto-cego);
-    background:
-      linear-gradient(105deg,transparent calc(var(--pm-corte,50%) - 1px),
-        rgba(255,255,255,0) calc(var(--pm-corte,50%) - 1px) calc(var(--pm-corte,50%) + 1px),
-        transparent calc(var(--pm-corte,50%) + 1px)),
-      linear-gradient(140deg,rgba(255,255,255,.3),rgba(255,255,255,.2) 60%,rgba(255,255,255,.24))}
+    background:linear-gradient(140deg,rgba(255,255,255,.3),rgba(255,255,255,.2) 60%,
+      rgba(255,255,255,.24))}
   to{backdrop-filter:var(--vidro-alto-blur);-webkit-backdrop-filter:var(--vidro-alto-blur);
-    background:
-      linear-gradient(105deg,transparent calc(var(--pm-corte,50%) - 1px),
-        rgba(255,255,255,.22) calc(var(--pm-corte,50%) - 1px) calc(var(--pm-corte,50%) + 1px),
-        transparent calc(var(--pm-corte,50%) + 1px)),
-      linear-gradient(140deg,rgba(255,255,255,.14),rgba(255,255,255,.02) 34%,
+    background:linear-gradient(140deg,rgba(255,255,255,.14),rgba(255,255,255,.02) 34%,
       rgba(255,255,255,0) 62%,rgba(255,255,255,.07))}
 }
 @keyframes pmEntraEsq{from{opacity:0;transform:translateX(-22px)}to{opacity:1;transform:none}}
 @keyframes pmEntraDir{from{opacity:0;transform:translateX(22px)}to{opacity:1;transform:none}}
-@keyframes pmBaseAbre{from{clip-path:inset(0 50% 0 50%)}to{clip-path:inset(0 0 0 0)}}
 @keyframes pmVeredito{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:no-preference){
   .pm-palco{animation:pmLamina 420ms var(--mov-entra) both}
@@ -1949,18 +2293,16 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
   .pm-palco::after{animation:pmRevela 900ms var(--mov-entra) 260ms both}
   .pm-lado--a .pm-crest,.pm-lado--a .pm-info{animation:pmEntraEsq var(--d-lamina) var(--mov-entra) 120ms both}
   .pm-lado--b .pm-crest,.pm-lado--b .pm-info{animation:pmEntraDir var(--d-lamina) var(--mov-entra) 120ms both}
-  .pm-forca-trilho{animation:pmBaseAbre var(--d-barra) var(--mov-entra) 360ms both}
   .pm-forca-leg{animation:pmVeredito 420ms var(--mov-entra) 900ms both}
 }
-/* Hover só no ponteiro fino: este projeto já pagou por elevação presa no toque.
-   E o que reage é o MATERIAL — o véu do lado ganha luz —, não uma cor nova:
-   trocar a tinta apagaria a identidade do clube, que é o que o palco existe
-   para mostrar. */
-@media (hover:hover) and (pointer:fine){
-  .pm-lado{transition:box-shadow var(--d-toque) linear}
-  .pm-lado:hover{box-shadow:inset 0 0 60px -10px rgba(255,255,255,.14)}
-  .pm-lado.mine:hover{box-shadow:inset 0 0 60px -10px rgba(255,255,255,.26)}
-}
+/* SEM HOVER NAS METADES — 08/08/2026. Elas acendiam ao passar o mouse e nada
+   ali é clicável: o gesto prometia uma ação que não existe, e o responsável leu
+   exatamente assim. Numa tela em que só dois botões agem, qualquer outra reação
+   a ponteiro é ruído.
+   Esta nota morava dentro de um `@media (hover:hover)` VAZIO, o que é uma regra
+   que o navegador avalia para não aplicar nada — e um bloco vazio convida a
+   próxima sessão a preenchê-lo. A decisão é não haver regra; então não há
+   bloco. (09/08/2026) */
 
 /* ══ NO CELULAR A DIAGONAL VIRA, E OS DOIS LADOS EMPILHAM ═══════════════════
    08/08/2026. O palco lado a lado não cabe em 390px: com ~150px úteis por
@@ -1994,7 +2336,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
      horizontal, e o corte fica fixo em 50% porque a inclinação por força é
      legível na largura, não na altura de duas faixas empilhadas. */
   .pm-palco::before{background:
-    linear-gradient(172deg,
+    linear-gradient(180deg,
       rgba(var(--time-a-rgb,120,130,145),var(--pm-veu)) 0 calc(50% - 1px),
       rgba(var(--time-b-rgb,120,130,145),var(--pm-veu)) calc(50% + 1px) 100%),
     var(--vidro-alto-bg)}
@@ -2005,105 +2347,46 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
   /* Entram de cima e de baixo, no eixo em que agora se opõem. */
   .pm-lado--a .pm-crest,.pm-lado--a .pm-info{animation-name:pmEntraCima}
   .pm-lado--b .pm-crest,.pm-lado--b .pm-info{animation-name:pmEntraBaixo}
+  /* E AS DUAS TÊM A MESMA ALTURA. Empilhadas, cada uma se dimensionava pelo
+     próprio texto e elas mediam 65,4 × 62,5px. `align-items:stretch` NÃO
+     resolve — ele já estava lá: num flex com `wrap`, cada linha tem altura
+     própria, e dois botões em duas linhas nunca se esticam um para o outro.
+     `grid` com `auto-rows:1fr` iguala as faixas sem cravar altura, que quebraria
+     se o texto crescesse. */
+  .prematch-modos{display:grid;grid-auto-rows:1fr;justify-items:stretch}
   /* A ação empilha e cada botão ocupa a largura toda: dois botões lado a lado em
-     390px deixavam o secundário com metade do alvo do primário. */
-  .prematch-modos{flex-direction:column;width:100%;max-width:320px}
-  .prematch-modos .roll{width:100%}
+     390px deixavam o secundário com metade do alvo do primário.
+     E A COLUNA ALINHA COM O RESTO DA TELA — 09/08/2026. Havia um
+     `max-width:320px` aqui que deixava a barra de ação 38px mais estreita que a
+     faixa de contexto, o palco e o veredito, todos em 358px. Medido: era a ÚNICA
+     aresta vertical fora de prumo da antessala no celular, e a captura mostrava
+     os quatro blocos empilhados com o último recuado sem motivo. Num viewport
+     estreito toda borda alinhada é ganho de ordem; e o botão continua com alvo
+     de sobra, porque ele CRESCEU 38px em vez de encolher. */
+  /* `grid-template-columns:1fr` É OBRIGATÓRIO AQUI, e a ausência dele custou uma
+     medição: a regra base tem `justify-content:center`, e num grid isso faz a
+     coluna implícita ser dimensionada por CONTEÚDO em vez de esticar. Com o
+     piso de 268px removido, os botões encolheram para 225,2px dentro de um
+     contêiner de 358 — mais estreitos do que antes da correção que deveria
+     alargá-los. Coluna declarada tira a largura da mão do alinhamento. */
+  .prematch-modos{flex-direction:column;width:100%;grid-template-columns:1fr}
+  /* O piso de largura das ações é do desktop, onde elas dividem a linha. Aqui
+     cada uma ocupa a coluna inteira, e manter o piso só criaria estouro numa
+     tela mais estreita que 300px. */
+  .prematch-modos .roll{width:100%;min-width:0}
 }
 @keyframes pmEntraCima{from{opacity:0;transform:translateY(-18px)}to{opacity:1;transform:none}}
 @keyframes pmEntraBaixo{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
-/* OS MAPAS. Ficam abaixo do palco porque são do CONFRONTO, não de um dos lados —
-   pendurá-los num dos cards sugeriria vantagem de quem os recebeu. Num MD3 são
-   três, na ordem de jogo. */
-/* OS MAPAS EM LINHA, como os chips do topo — 07/08/2026. Eles estavam
-   empilhados na vertical enquanto a faixa de contexto corria na horizontal: duas
-   listas de itens equivalentes em duas orientações, que é a mesma incoerência
-   que padronizar os chips corrigiu.
-   Em linha eles também custam menos altura numa tela que já sobrava espaço
-   embaixo, e `wrap` devolve o empilhamento onde a largura não der — no celular,
-   três nomes de mapa não cabem lado a lado. */
-#pmMapa{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:var(--e-2)}
-/* A PLACA DO MAPA — 07/08/2026, segunda versão.
-   A primeira tinha um quadradinho de sigla DENTRO de um retângulo, e foi
-   recusada: *"tem um bloco dentro do outro, tipo um retângulo dentro do outro,
-   nada a ver isso"*. Agora é UMA peça só — sem filho com moldura própria — e o
-   nome do mapa ocupa o lugar que a sigla tomava.
-
-   O MAPA QUE VAI SER JOGADO É SÓLIDO na cor dele; os outros da série ficam em
-   contorno. Nenhum dos dois é rotulado: a diferença entre "agora" e "talvez"
-   está na FORMA, e escrever isso por cima seria legendar o que o desenho já
-   resolveu. Os rótulos existiram por duas rodadas e foram recusados nas duas. */
-/* REFINO DE 07/08/2026: o mapa reserva perdeu a caixa. Um retângulo contornado
-   para cada mapa dava três molduras empilhadas sob o VS, e caixa é peso — o que
-   ela precisa dizer ("existe, mas talvez não seja jogado") cabe num traço na cor
-   do mapa e no nome apagado. Só o mapa da vez continua sendo uma placa. */
-/* O MAPA DA VEZ ganha um destaque LEVE — mesma forma e mesma caixa dos outros,
-   porque selo dentro do palco já foi recusado e caixa dentro de caixa também.
-   O que muda é presença: o traço da cor engrossa e acende, o nome vem em branco
-   e um pouco maior, e a peça recebe um halo curto na cor do mapa. Os demais
-   ficam apagados, esperando a vez. */
-.pm-mapa--agora{opacity:1;border-color:rgba(var(--mapa-rgb),.5);
-  box-shadow:var(--vidro-medio-sombra),0 6px 20px -10px rgba(var(--mapa-rgb),.9)}
-.pm-mapa--agora::before{width:4px;box-shadow:0 0 12px -1px var(--mapa-cor)}
-/* O mapa da vez se distingue por PESO e TINTA, não por corpo: um 14º tamanho de
-   fonte na tela seria mais um degrau que o olho não consegue ordenar. */
-.pm-mapa--agora .pm-mapa-nome{color:var(--txt);font-weight:800}
-/* SIMETRIA DA PLACA — 08/08/2026, a pedido: *"aquilo tá centralizado certinho?
-   o espaçamento em cima é o mesmo que embaixo? não parece. assimétrico também"*.
-
-   MEDIDO ANTES DE MEXER. O bloco `#pmMapa` estava perfeitamente centrado e com
-   30px de ar acima e abaixo, nos três viewports — a caixa não tinha defeito. A
-   assimetria era DENTRO da placa, no eixo horizontal: 11px de ar entre a barra
-   de cor e o texto contra 17,4px do texto até a borda direita, ou seja 6,4px.
-
-   Duas causas somadas, e nenhuma delas é "espaçamento errado":
-     · `padding-right:14px` contra `gap:10px` — a caixa nunca foi simétrica;
-     · `letter-spacing:.14em` deixa 2,41px de AVANÇO FANTASMA depois da última
-       letra, que entram na caixa do texto e empurram a tinta para a esquerda.
-       É a regra 35, agora no eixo horizontal de uma peça.
-
-   A correção tira o fantasma na origem, com `margin-right` negativo do mesmo
-   `.14em`, e iguala `padding-right` ao `gap`. NÃO é constante de compensação: o
-   valor é o próprio tracking declarado uma linha abaixo, e os dois andam juntos.
-
-   O EIXO VERTICAL FICOU COMO ESTAVA, de propósito: medido pela tinta, com a
-   baseline tirada de `fontBoundingBoxAscent` e não do centro da caixa, ele tem
-   10px acima contra 11,05px abaixo. 1,05px vem de o nome ser CAIXA-ALTA — a
-   linha reserva descida que nenhuma letra usa. Corrigir isso pediria um padding
-   assimétrico calibrado para uma fonte específica, que é exatamente a
-   compensação que a §21 provou cara. */
-.pm-mapa{display:flex;align-items:center;justify-content:center;gap:var(--e-2);
-  /* Mesma forma da faixa de contexto logo acima: os dois são a MOLDURA do
-     confronto, e forma diferente para conteúdo do mesmo nível é o que faz uma
-     composição parecer bagunçada mesmo alinhada. */
-  padding:6px var(--e-3) 6px var(--e-2);position:relative;opacity:.85;border-radius:var(--r-pilula);
-  background:var(--vidro-raso-bg);border:1px solid var(--vidro-raso-borda);
-  backdrop-filter:var(--vidro-raso-blur);-webkit-backdrop-filter:var(--vidro-raso-blur)}
-.pm-mapa::before{content:"";width:3px;align-self:stretch;border-radius:2px;
-  background:var(--mapa-cor);flex:0 0 auto}
-.pm-mapa-nome{font-family:var(--ff);font-weight:700;font-size:var(--fs-corpo);letter-spacing:.14em;
-  /* devolve o avanço fantasma que o tracking deixa DEPOIS da última letra —
-     mesmo valor do `letter-spacing` acima, para os dois nunca divergirem.
-     E É POR ISSO QUE O TRACKING É ÚNICO NOS DOIS ESTADOS: a variante `--agora`
-     declarava `.16em` enquanto esta compensação continuava em `.14em`, ou seja,
-     a placa do mapa da vez ficava com 0,02em de fantasma sobrando — exatamente
-     o par que este comentário jurava que nunca divergiria. Divergiu no dia
-     seguinte. Distinguir o mapa da vez por TRACKING nunca foi necessário: ele já
-     tem barra grossa, halo e tinta cheia. */
-  margin-right:-.14em;
-  text-transform:uppercase;color:var(--dim);white-space:nowrap;line-height:1.2}
-/* O mapa da vez: cor cheia, tinta escolhida por contraste e um halo curto que o
-   destaca do ambiente — que é da mesma família cromática, por construção. */
-
-/* O FORMATO DA SÉRIE — 07/08/2026. Era um item da linha de apoio, em .68 rem e
-   no mesmo cinza de rodada e placar; agora tem número próprio em corpo grande.
-   Ele muda o TAMANHO do confronto: um mapa decide tudo, três dão chance de
-   virada. Isso não pode ter o peso de um detalhe. */
-
-
-
-/* Melhor de 1 é o caso mais tenso, não o menor: sem chance de virada. O selo
-   ganha a cor cheia para dizer isso sem uma palavra a mais. */
+/* `#pmMapa` E QUATRO BLOCOS DE PROSA SAÍRAM DAQUI — 09/08/2026.
+   O elemento deixou de existir no HTML em 08/08, quando o mapa virou chip da
+   faixa de contexto, mas DUAS regras dele sobreviveram na folha (um
+   `margin-bottom` lá em cima e o `display:flex` aqui) junto de quatro
+   comentários que descreviam a pílula do mapa, o selo de formato e o caso de
+   melhor-de-1 — peças que também já não existem. Uma varredura dos 30 seletores
+   da antessala contra o HTML e o JS achou exatamente um órfão, e era este.
+   Regra 52 aplicada à PROSA também: documentação de código removido não é
+   história, é armadilha — ela descreve a tela para quem chega e a tela não é
+   mais assim. O que era história de verdade está nos relatos de `docs/ciclos/`. */
 
 /* `relative` porque o palco da narração é `absolute` e precisa se ancorar no
    mapa, não na janela: assim ele cobre a área de jogo e não a barra de botões. */
@@ -2190,31 +2473,249 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    `backdrop-filter` na lâmina: 220.948 pixels diferentes, e o maior delta de
    canal é 6/255. Ou seja, o filtro rodava, custava GPU e produzia uma diferença
    abaixo do limiar do olho — porque desfoque sobre gradiente LISO devolve o
-   mesmo gradiente liso. Era o argumento que eu já tinha usado para rebaixar os
-   chips ("não há detalhe atrás para desviar") e que não apliquei aqui.
+   mesmo gradiente liso.
 
-   A malha resolve isso. Linhas finas espaçadas em 72px, contra um desfoque de
-   22px: espaçamento muito maior que o raio é o que faz a linha VIRAR uma banda
-   macia atrás do vidro em vez de sumir na média. Sob a lâmina elas se dobram e
-   se saturam; fora dela ficam nítidas. É essa diferença entre dentro e fora que
-   o olho lê como espessura de material.
+   A PRIMEIRA RESPOSTA FOI UMA MALHA DIAGONAL, e ela foi descartada no mesmo dia
+   pelo responsável: *"genérica, tipo textura de tech, sem relação nenhuma com
+   CS2, e ainda compete com o card em vez de sustentar ele"*. A crítica procede,
+   e tinha um agravante que ninguém citou: a malha era IDÊNTICA nos sete mapas,
+   então ocupava o lugar visual da identidade do mapa sem carregar nenhuma.
 
-   E ela não é ornamento genérico: corre no mesmo ângulo da costura do palco e
-   veste a cor do mapa, então é o LUGAR que aparece atrás do vidro. */
-.prematch[style*="--mapa-ceu"]{
-  background:
-    radial-gradient(64% 50% at 10% -4%,rgba(var(--mapa-rgb),.62),transparent 68%),
-    radial-gradient(64% 50% at 90% -4%,rgba(var(--mapa-rgb),.5),transparent 68%),
-    radial-gradient(130% 78% at 50% -8%,rgba(var(--mapa-rgb),.4),transparent 62%),
-    radial-gradient(90% 48% at 50% 108%,rgba(var(--mapa-rgb),.24),transparent 66%),
-    radial-gradient(110% 66% at 50% 124%,rgba(0,0,0,.66),transparent 60%),
-    /* A MALHA VEM DEPOIS DAS AURORAS de propósito: assim as manchas de luz
-       lavam a grade nos cantos e ela fica mais presente no miolo, que é
-       justamente onde a lâmina pousa. Grade uniforme de borda a borda vira
-       papel milimetrado; graduada, vira lugar. */
-    repeating-linear-gradient(105deg,rgba(var(--mapa-rgb),.16) 0 1px,transparent 1px 72px),
-    repeating-linear-gradient(15deg,rgba(var(--mapa-rgb),.09) 0 1px,transparent 1px 108px),
+   ATENÇÃO, para quem for mexer aqui: a malha não era ornamento — ela existia
+   para dar substrato ao vidro. Removê-la SEM pôr conteúdo real no lugar devolve
+   a refração para 6/255, ou seja, o `backdrop-filter` volta a custar GPU para
+   nada. As duas coisas andam no mesmo commit, sempre.
+
+   ── AS QUATRO CAMADAS ──────────────────────────────────────────────────────
+   Substrato real, na ordem em que o olho as encontra:
+
+     z-2  `::before`  a FOTO do mapa, desfocada e ampliada
+     z-1  `::after`   a ATMOSFERA (cor do mapa) e o SCRIM (legibilidade)
+     z0   `background` o gradiente `ceu`→`chao`, que é o fallback sem foto
+     z1+  conteúdo, cujas lâminas refratam tudo o que está abaixo
+
+   POR QUE A FOTO NÃO VAI NO `background` DESTA REGRA. Ela precisa de
+   `filter:blur()` próprio, e `filter` se aplica ao elemento inteiro — borraria
+   também o texto. Camada própria é o que permite desfocar SÓ a imagem, que foi
+   exatamente o pedido. */
+/* `isolation:isolate` CONTÉM os dois pseudo-elementos de z-index negativo. Sem
+   ele, eles sobem até o contexto de empilhamento mais próximo e passam a ser
+   pintados ATRÁS do `background` deste mesmo elemento — que é opaco. Foi o
+   primeiro defeito desta fatia: a foto carregava (HTTP 200, 20 kB) e não
+   aparecia, porque o gradiente de fallback estava por cima dela.
+   Por isso o fallback NÃO mora aqui: ele desceu para dentro do `::before`, sob
+   a imagem, onde nada pode tapá-lo. */
+.prematch[style*="--mapa-ceu"]{position:relative;isolation:isolate}
+/* A OBLIQUIDADE das faixas de mapa. Mora no `:root` da tela para que a diagonal
+   do fundo e a costura do palco possam ser afinadas juntas — são o mesmo
+   vocabulário e divergir seria ruído. */
+.prematch{--pm-obliq:7%}
+/* `@property` é o que faz o ângulo INTERPOLAR em vez de saltar entre keyframes:
+   custom property sem tipo declarado é string, e string não anima. Sem isto o
+   passeio da luz vira uma piscada a cada 4,5s. */
+@property --luz-ang{syntax:"<angle>";inherits:true;initial-value:165deg}
+@keyframes luzPasseia{0%,100%{--luz-ang:150deg}50%{--luz-ang:205deg}}
+@media (prefers-reduced-motion:no-preference){
+  /* Uma fonte de luz só para a tela inteira: o ângulo é herdado, então lâmina,
+     botões, faixa e chips reagem JUNTOS. Duas peças com luzes independentes
+     leem como dois materiais diferentes, que é exatamente o que a comparação
+     com o `.np-card` apontou. */
+  .prematch{animation:luzPasseia 9s ease-in-out infinite}
+}
+/* AS FAIXAS DE MAPA — uma por mapa da série, na diagonal do palco.
+   ══════════════════════════════════════════════════════════════════════════════
+   Pedido de 08/08/2026: *"na md3, quero que os 3 mapas apareçam, os 3 na
+   diagonal assim sabe? distribuídos, recortados"*.
+
+   `--x0`/`--x1` vêm do JS porque dependem de quantos mapas a série tem, e as
+   PONTAS precisam transbordar: sem isso a primeira e a última faixa mostrariam
+   o corte inclinado dentro da tela, como uma folha torta sobre o fundo. O CSS
+   desenha; o JS só diz onde cada faixa começa e termina.
+
+   `clip-path` aqui é seguro, ao contrário do caso da regra 60: o contexto de
+   empilhamento que ele cria só prende o que está DENTRO, e dentro de uma faixa
+   de cenário não há conteúdo nenhum. Era isso que o tornava proibido no palco —
+   lá havia texto por cima do material. */
+/* A SATURAÇÃO VIVE NO CONTÊINER, e isso é escolha de custo — 09/08/2026.
+   O gel de `mix-blend-mode` entrega matiz; o que ele não entrega é AMPLITUDE, e
+   a faixa que a guarda mede fica na parte baixa da tela, onde o scrim derruba a
+   luminância para ~22–34. Croma em sRGB escala com luminância, então sem
+   amplificação o celular parava em 8,5 contra um piso de 10.
+   `saturate` é a alavanca certa porque a matriz PRESERVA luminância: ela move
+   croma sem mexer em brilho, ou seja, sem tocar na medida da foto nem na do
+   texto. E fica aqui, no `.pm-fundo`, e não em cada `.pm-fundo-faixa`: num MD3
+   são três faixas, e três filtros são três camadas de composição para o mesmo
+   efeito. Medido — as duas colocações dão número IDÊNTICO nos três viewports.
+   1,7 e não 2,2: acima disso Anubis e Dust2 clipam no mesmo canal e voltam a
+   colidir (croma cai de 13,1 para 6,0). Mais saturação não é mais separação. */
+.pm-fundo{position:absolute;inset:0;z-index:-2;overflow:hidden;pointer-events:none;
+  filter:saturate(1.7)}
+.pm-fundo-faixa{position:absolute;inset:0;
+  /* O SENTIDO DA OBLIQUIDADE ACOMPANHA A COSTURA DO PALCO. Na primeira versão
+     ele era o inverso, e as duas diagonais formavam um X na tela: o fundo
+     descia para a direita enquanto a costura do card subia. Duas diagonais em
+     sentidos opostos não somam, competem. */
+  clip-path:polygon(
+    calc(var(--x0) - var(--pm-obliq)) 0,calc(var(--x1) - var(--pm-obliq)) 0,
+    calc(var(--x1) + var(--pm-obliq)) 100%,calc(var(--x0) + var(--pm-obliq)) 100%)}
+/* A FOTO. `inset` negativo, e não `transform:scale()`: o desfoque puxa
+   transparência de fora da caixa e deixa as quatro bordas lavadas, então a
+   camada precisa nascer MAIOR que o vão que ela preenche. A sobra é ~2× o raio,
+   que é onde a contribuição da gaussiana deixa de ser visível. Ela vive num
+   pseudo-elemento para que o `clip-path` do pai recorte a imagem JÁ desfocada —
+   recortar antes deixaria a borda da faixa lavada.
+
+   O DESFOQUE É MODERADO DE PROPÓSITO, e este é o número mais fácil de errar da
+   tela. A referência pedida foi a capa de álbum borrada do Spotify — mas lá o
+   usuário JÁ VIU a capa, e aqui o mapa é informação nova: sob desfoque pesado o
+   campanário vira uma mancha laranja, e mancha laranja um gradiente entrega por
+   0 kB. Pior: fundo uniformemente borrado é liso outra vez, e o `blur(22px)` da
+   lâmina volta a não ter o que distorcer — o defeito de 6/255 entrando por
+   outra porta. O valor é medido pela régua de refração, não escolhido; 8px foi
+   a escolha do responsável dentro da faixa que a régua aprova. */
+.pm-fundo-faixa::before{
+  content:"";position:absolute;inset:calc(var(--mapa-blur) * -2.4);
+  background:var(--mapa-arte) center/cover no-repeat,
     linear-gradient(180deg,var(--mapa-ceu),var(--mapa-chao));
+  /* A EXPOSIÇÃO É PARTE DO ASSET, não acabamento. As prints do CS2 são CLARAS —
+     céu branco em Cache, azul alto em Nuke, areia em Anubis — e o jogo inteiro é
+     escuro com texto claro. Na primeira versão desta camada o scrim sozinho
+     tentava segurar isso, e o topo da tela ficou quase branco: os rótulos da
+     faixa de contexto sumiram e Inferno deixou de parecer Inferno.
+
+     E A FOTO É DESSATURADA DE PROPÓSITO — 08/08/2026, a pedido: *"eu quero mais
+     cor específica pra cada mapa, como um filtro"*. Tingir por cima de uma foto
+     que já tem cor própria dá uma mistura das duas, e a mistura é sempre mais
+     fraca que qualquer uma delas: a areia de Anubis puxando âmbar e a água
+     turquesa da mesma print puxando ciano se anulam. Baixar o croma da foto
+     primeiro deixa a MARCA do mapa mandar, e aí o resultado é um filtro de
+     verdade — Inferno lê como brasa, Nuke como aço frio, Ancient como selva.
+     O contraste sobe junto porque `grayscale` achata, e é o relevo da luz que o
+     vidro precisa para ter o que refratar. */
+  /* O CONTRASTE SUBIU e o `grayscale` cedeu — 08/08/2026, por causa de Nuke.
+     A guarda mede quanto a FOTO muda a tela (delta com × sem `background-image`),
+     e Nuke ficava em 16–22/255 contra um piso de 24: a print dele é a mais
+     acinzentada das sete, e com croma quase zero o que sobrava era luminância —
+     que o `grayscale(.78)` achatava junto. Menos dessaturação e mais contraste
+     devolvem relevo à foto sem devolver a cor original dela, que é o que o
+     filtro existe para tirar. Baixar o piso da guarda seria o caminho proibido. */
+  /* ⚠ E ESTE NÚMERO ESTÁ NO MESMO CONFLITO da camada de baixo. Menos
+     `grayscale` devolve croma da FOTO — o que salva Nuke, cuja print é a mais
+     acinzentada — mas Ancient e Cache são as duas esverdeadas, e a .66 elas
+     passam a colidir. Medido: .66/1.46 dá 7 achados, .78/1.28 dá 5. */
+  filter:blur(var(--mapa-blur)) grayscale(.78) brightness(.5) contrast(1.28);
+  pointer-events:none;
+}
+/* O BANHO DE COR VIVE NUMA CAMADA PRÓPRIA, e essa separação é o ponto inteiro.
+   Na primeira versão ele era a camada de cima do MESMO `background` da foto — e
+   `filter` se aplica ao elemento inteiro, então o `grayscale(.78)` dessaturava
+   justamente a cor que existe para identificar o mapa. Os três mapas de um MD3
+   chegavam cinza, cada um pelo mesmo motivo, e nenhuma quantidade de tinta
+   resolveria: o filtro estava depois dela.
+   Aqui, fora do elemento filtrado, a marca chega pura — e é ela que faz Inferno
+   ler como brasa, Nuke como aço e Ancient como selva sobre a MESMA base
+   dessaturada. É o que transforma tingimento em filtro de verdade. */
+/* ══ O CONFLITO BANHO × FOTO, RESOLVIDO POR ESTRUTURA — 09/08/2026 ═══════════
+   O que estava aqui era um BANHO: `rgba(cor,.5→.34)` empilhado por cima da foto,
+   em composição normal. Como toda camada chapada, ele somava o MESMO em cada
+   pixel, e por isso governava duas grandezas em sentidos opostos — as duas
+   medidas por `e2e-antessala`:
+
+     · mais forte → os sete mapas se distinguem (`mapas-iguais`) e a foto some
+       (`foto-ausente`), porque a tinta SUBSTITUI a imagem em vez de vesti-la.
+
+   Medido em 08/08: a .50/.34 sobravam 5 achados; a .72/.52, 15. Não existia
+   valor que zerasse os dois, e perseguir o número era calibrar contra um
+   conflito estrutural (regra 68).
+
+   ── A SAÍDA NÃO É UM NÚMERO, É UMA OPERAÇÃO ────────────────────────────────
+   `mix-blend-mode:overlay` deixa de SOMAR e passa a MODULAR: onde a foto é
+   escura o gel multiplica, onde é clara ele clareia. O resultado carrega a
+   estrutura de luz da imagem E o matiz do mapa, que é literalmente o que foi
+   pedido — *"eu quero mais cor específica pra cada mapa, como um filtro"*. Um
+   filtro fotográfico é um gel colorido, e gel é multiplicativo; tinta por cima
+   é o que ele nunca foi.
+
+   Medido nos 7 mapas × 3 viewports, contra os pisos de 24 (foto) e 10 (croma):
+
+     antes  desktop 5,2 / 24 · tablet 7,2 / 21 · celular 4,4 / 18   → 5 achados
+     agora  desktop 13,4 / 79 · tablet 19,6 / 86 · celular 13,1 / 40 → 0 achados
+
+   ── DUAS RECUSAS REGISTRADAS, para a próxima sessão não repetir ────────────
+   `mix-blend-mode:color` parece a escolha óbvia — ela separa croma de
+   luminância por definição — e foi MEDIDA: resolve a foto (53) e PIORA o croma
+   (5,1 no desktop, 2,8 no celular). A causa é que o banho antigo não só tingia,
+   ele CLAREAVA, e croma em sRGB é limitado pela luminância: devolvendo a
+   luminância à foto, a tela cai de 36,7 para 23,2 e a cor deixa de caber. O par
+   pior ainda muda para Anubis×Dust2, que diferem em SATURAÇÃO — justamente o
+   que `color` comprime ao reancorar a luminosidade.
+   `multiply` escurece demais (luminância 13,5) e `color-burn` destrói a tela
+   (2,1). `overlay` foi o único que subiu as duas medidas juntas. */
+.pm-fundo-faixa::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  mix-blend-mode:overlay;
+  background:var(--mapa-cor);
+}
+/* A COSTURA ENTRE DUAS FAIXAS. Sem ela as fotos encostam e a divisão some
+   justamente onde dois mapas têm luminância parecida — a regra 58 outra vez, e
+   agora com dado que é sorteado duas vezes. Só as faixas internas a recebem:
+   a primeira não tem vizinha à esquerda. */
+.pm-fundo-faixa+.pm-fundo-faixa{box-shadow:inset 1px 0 0 rgba(255,255,255,.16)}
+/* ATMOSFERA + SCRIM na mesma camada, porque são a mesma decisão: quanto do
+   lugar passa e quanto o texto precisa. As auroras vestem a foto com a cor da
+   marca — é o que mantém Mirage e Dust2 distinguíveis mesmo desfocados, já que
+   as duas são areia sob sol. A vinheta assenta o conteúdo.
+
+   AS PRINTS SÃO CLARAS e o jogo é escuro: céu branco em Cache, azul alto em
+   Nuke, areia em Anubis. O scrim não é acabamento, é o que segura o contraste
+   do texto sobre a foto — `check-map-identity` mede os sete. */
+.prematch[style*="--mapa-ceu"]::after{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:
+    /* SCRIM DE TOPO, e ele vem PRIMEIRO — ou seja, na frente de tudo. Em
+       `background` a primeira camada listada é a mais próxima do olho, e as
+       auroras estavam à frente do scrim justamente onde são mais fortes: o topo.
+       Resultado medido nos sete mapas, com a faixa de contexto ali: os rótulos
+       caíram para 1,69–2,55:1. Escurecer o topo INTEIRO custaria a foto; uma
+       faixa curta, que morre em 26%, protege só onde há texto sobre a imagem.
+       É a mesma lógica do scrim inferior — densidade onde há leitura, não
+       densidade uniforme. */
+    linear-gradient(180deg,rgba(0,0,0,.62),rgba(0,0,0,.34) 12%,transparent 26%),
+    /* AS AURORAS SÃO A LUZ DA ARENA, não a cor do lugar — e essa distinção só
+       apareceu quando a série passou a mostrar TRÊS mapas. Com a carga que elas
+       tinham (.62 no canto), a cor do mapa da vez lavava as outras duas faixas:
+       Nuke e Ancient chegavam avermelhados porque Inferno era o mapa de agora.
+       A COR pertence a cada faixa; a luz é comum aos três, e por isso fica fraca
+       o bastante para unir sem tingir. */
+    /* O FUNDO GANHOU DIREÇÃO DE LUZ — 08/08/2026. Ele tinha duas auroras
+       simétricas nos cantos e um facho central: iluminação de estúdio, que é o
+       mesmo que iluminação nenhuma. Sem uma fonte dominante o olho não constrói
+       volume, e a tela lê como foto mal exposta em vez de lugar.
+       Agora há UM sol, alto à esquerda, e a vinheta cresce na diagonal oposta.
+       Também é o que faz o card se destacar: o fundo escurece justamente onde a
+       lâmina termina, do lado de baixo e à direita. */
+    radial-gradient(84% 62% at 16% -10%,rgba(var(--mapa-rgb),.3),transparent 66%),
+    radial-gradient(46% 38% at 12% -6%,rgba(255,255,255,.1),transparent 62%),
+    /* ── A BASE DO SCRIM CEDEU, E A PROTEÇÃO MUDOU DE DONO — 09/08/2026 ──────
+       Estes três números eram .66, .58 e .6. Eles faziam DOIS trabalhos ao mesmo
+       tempo: assentar a composição (atmosfera) e segurar o contraste do texto
+       (legibilidade). O segundo trabalho custava caro no lugar errado — preto
+       puro é o desaturador perfeito, ele multiplica croma e luminância pelo
+       MESMO fator, então proteger o texto aqui apagava a identidade do mapa na
+       TELA INTEIRA. Medido: a faixa lateral, onde o scrim é fraco, entregava
+       10,6 de croma enquanto a faixa de baixo, onde ele é denso, entregava 5,2.
+       A mesma tela, o mesmo código, o dobro de cor onde havia o dobro de luz.
+       Hoje a legibilidade vive em `--vidro-base`, na superfície onde o texto
+       realmente pousa, e o scrim volta a fazer só o que é dele. É a regra 53 no
+       eixo da responsabilidade: a peça que carrega a informação é quem paga por
+       ela. Aliviar sem essa contrapartida derrubaria `.pm-chip-r` — foi medido,
+       e é por isso que os dois lados desta troca vão no MESMO commit. */
+    radial-gradient(130% 96% at 88% 112%,rgba(0,0,0,.46),transparent 60%),
+    radial-gradient(120% 74% at 50% 118%,rgba(0,0,0,.4),transparent 62%),
+    /* O SCRIM É MAIS DENSO NAS PONTAS que no miolo, e não uniforme: o miolo é
+       onde a lâmina pousa e onde a foto precisa sobreviver para o vidro ter o
+       que refratar; as pontas é que carregam texto solto sobre a imagem. */
+    linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,.14) 46%,rgba(0,0,0,.42));
 }
 /* A transição faz o mapa CHEGAR em vez de piscar — e some com reduced-motion,
    como todo movimento desta folha. */
@@ -2766,3 +3267,41 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(var(--accent-rgb
 @container (max-width:150px){.card .c-vstats{--stats-simetria:calc(.109*var(--t-style))}}
 .coachcard .cback .c-vdesc{
   --desc-simetria:calc(.85*var(--t-style)*(1 - var(--carac-esc,1)))}
+
+/* ╔══════ MOVIMENTO REDUZIDO · a rede que faltava ══════╗
+   09/08/2026. A folha honrava `prefers-reduced-motion` em alguns lugares e não
+   em outros, e a divisão não era decisão — era o acaso de quem escreveu cada
+   bloco. Varrendo as declarações de `animation` fora de um
+   `@media (prefers-reduced-motion:no-preference)`, sobravam TRINTA: os overlays
+   (`overlayIn`/`overlayOut`), a entrada de tela, o palco e as falas da narração,
+   a tela final inteira, a tira de rounds, o placar, o HUD, a roleta, a manchete
+   e as cartas do sorteio. Entre elas, QUATRO INFINITAS — `seriesPulse`,
+   `cupGlow`, `rsKeyGlow` e `glowPulse` — que nunca param enquanto a tela existe.
+
+   O sistema de cartas e a antessala tratavam o assunto com cuidado; o resto da
+   aplicação simplesmente não tratava. Uma preferência de acessibilidade honrada
+   em metade da interface não é honrada: o usuário que a liga continua vendo
+   pulsar, saltar e brilhar em toda tela de resultado.
+
+   POR QUE `.01ms` E NÃO `none`. Várias animações desta folha carregam o estado
+   FINAL no `fill-mode` (`both`, `forwards`) — `finRise`, `pmRevela`,
+   `trophyRise` e as entradas do palco. Com `animation:none` o elemento volta ao
+   estilo base e o quadro final se perde; com duração desprezível ele salta
+   direto para o fim, que é exatamente "sem movimento" sem mudar o resultado.
+   `animation-iteration-count:1` é o que desarma as quatro infinitas: sem ele
+   elas continuariam repetindo, só que instantaneamente.
+
+   ESTA REGRA VEM POR ÚLTIMO de propósito. Ela é uma rede, não uma política: um
+   bloco que queira movimento sob `reduce` — não há nenhum hoje — teria de dizer
+   isso com especificidade maior, e essa é a conversa certa para se ter.
+   Verificado por travessia completa do jogo com `reducedMotion:"reduce"`:
+   draft, Major, antessala, mapa e resultado, sem erro de console e sem
+   travamento — porque animação instantânea ainda DISPARA `animationend`, e o
+   produto não espera nenhum evento de transição para avançar. ╚════════════╝ */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+  }
+}

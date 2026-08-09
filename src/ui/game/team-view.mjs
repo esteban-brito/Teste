@@ -83,11 +83,22 @@ export function liveTeamHeaderHtml(team,side,sideElementId){
    uma vez só e no eixo central — em vez de duas legendas minúsculas repetindo a
    mesma palavra nas pontas. É a regra 53: diante de um rótulo pequeno, a
    pergunta não é como aumentá-lo, é que elemento já existente pode dizer aquilo. */
+/* O CAMPEONATO SAIU DO CARD — 08/08/2026.
+   Ele existia num lado só: o adversário vem do catálogo e tem era de elenco, o
+   time do jogador é criado e nunca vai ter. O resultado era um desnível que
+   nenhuma regra de CSS conserta, porque não é espaçamento — é CONTAGEM DE
+   LINHAS. Medido na captura: com três linhas de um lado e duas do outro, e cada
+   bloco centrado por si, o nome ficava 10px fora e o número 9px fora. Os
+   brasões batiam só porque têm altura fixa.
+   A regra 50 já proibia a saída fácil (reservar linha falsa ou inventar texto de
+   preenchimento). Sobra igualar de verdade: os dois lados passam a ter as mesmas
+   duas linhas, e aí nome e número alinham sem ninguém alinhá-los.
+   A informação não era essencial aqui — a antessala responde "quem joga e quanto
+   vale", não a biografia do elenco. */
 export function prematchTeamHtml(team){
   return `<div class="pm-crest">${monoHtml(team)}</div>`
     +`<div class="pm-info">`
     +`<div class="pm-name">${esc(team.nome)}</div>`
-    +(team.camp?`<div class="pm-camp">${esc(team.camp)}</div>`:"")
     +`<div class="pm-ef"><b>${team.ef}</b></div>`
     +`</div>`;
 }
@@ -115,6 +126,21 @@ export function estiloDoTime(team){
      Clarear preserva o matiz; para o preto, que não tem matiz, o resultado é o
      cinza claro que a escala produz. A cor CHEIA continua valendo onde ela é
      fundo. */
+  /* O FUNDO DE REFERÊNCIA SUBIU EM 08/08/2026. `--time-traco` era clareado
+     contra `#0b0f15`, o painel escuro do jogo — e desde que a antessala ganhou a
+     foto do mapa por baixo do campo, o fundo real ficou bem mais claro que isso.
+     O número da força media 4,08–4,17:1 em Inferno e Ancient, abaixo do piso.
+     O número de referência é `#232c3b`, medido: é o campo do CELULAR com a foto
+     atrás, que é o caso mais claro dos três viewports — no desktop o palco é
+     mais largo e o scrim pesa mais. Calibrar pelo desktop deixava o celular em
+     4,17:1. A cor do clube não muda: `--time-traco` é só a versão dela trazida
+     à luz para virar TEXTO. `e2e-antessala` mede isso nos sete mapas × três
+     viewports, que é o domínio inteiro. */
+  /* O ALVO É 5,2 e não 4,5, e a folga não é preguiça: `clarearAte` calcula
+     contra uma cor CHAPADA, e o fundo real é a foto do mapa variando por trás do
+     campo. Calibrar no limite deixava os sete mapas entre 4,28 e 4,47 — todos
+     reprovando por pouco, cada um por um motivo diferente. A margem absorve a
+     variação do dado, que é o que a regra 46 pede quando o fundo é sorteado. */
   return `--time-cor:${cor};--time-rgb:${canais(cor).join(",")}`
-    +`;--time-traco:${clarearAte(cor,"#0b0f15",4.5)}`;
+    +`;--time-traco:${clarearAte(cor,"#232c3b",7.6)}`;
 }

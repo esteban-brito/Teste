@@ -45,3 +45,8 @@ scratchpad/
 # Só o WebP normalizado de `fotos/` entra no Git; guardar o original aqui evita
 # ter de caçá-lo na pasta de downloads na próxima vez que o recorte mudar.
 /fotos-origem/
+
+# Prints cruas dos mapas — mesma regra, mesmo motivo. São 3,9 MB de JPEG/PNG que
+# `tools/build-map-art.js` transforma nos 82 kB de `assets/mapas/`. Ficam aqui
+# para que mudar a resolução alvo seja um comando, e não uma caçada.
+/mapas-origem/
