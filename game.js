@@ -1314,9 +1314,19 @@ function setScore(elOrId,val,lado){const el=typeof elOrId==="string"?$(elOrId):e
    A cor continua sendo o lado, porque é a convenção do CS; o que muda é o PESO:
    round seu vem em cheio, round do adversário vem apagado. À distância, a tira
    vira a sua campanha no mapa. */
-function addCelula(rd,lado,strip,meu){
+/* `pop` É DA REPRODUÇÃO, NÃO DA MONTAGEM — 09/08/2026.
+   A classe entrava em TODA célula criada, e `pularMapa` recria a tira inteira de
+   uma vez: pular fazia as ~24 células dispararem `rsPop` no mesmo quadro, uma
+   pipoca coletiva onde o gesto deveria ser "a tira já está pronta". O salto
+   existe justamente para quem não quer esperar a animação round a round.
+   O comentário de `.rs-cell.pop` no CSS já dizia que treze estouros seguidos
+   eram demais e por isso o overshoot caiu de 1,4 para 1,12; o caso do salto é o
+   mesmo defeito levado ao extremo, e ninguém tinha olhado porque o pulo termina
+   com a tela certa — o defeito está só no CAMINHO até ela.
+   Medido antes: 13 células ficavam com `.pop` grudada e a classe nunca saía. */
+function addCelula(rd,lado,strip,meu,animar=true){
   const s=strip||$("roundStrip");const c=document.createElement("div");
-  c.className=`rs-cell pop ${lado==="CT"?"ct":"tr"}`
+  c.className=`rs-cell${animar?" pop":""} ${lado==="CT"?"ct":"tr"}`
     +(meu?" mine":"")+(rd.destaque?" key":"");
   c.setAttribute("aria-hidden","true"); // o placar já é anunciado; a tira é redundante para AT
   s.appendChild(c);
@@ -1387,8 +1397,10 @@ function pularMapa(){
   fecharPalco();
   document.querySelectorAll(".rs-cell.narrando").forEach(c=>c.classList.remove("narrando"));
   $("roundStrip").innerHTML="";
+  /* `false` no último argumento: a tira é REMONTADA, não reproduzida. Ver a nota
+     em `addCelula`. */
   jogo.rounds.forEach(rd=>addCelula(rd,rd.venceA?rd.ladoA:rd.ladoB,null,
-    rd.venceA?jogo.meuA:jogo.meuB));
+    rd.venceA?jogo.meuA:jogo.meuB,false));
   $("sbScoreA").textContent=jogo.placar[0];$("sbScoreB").textContent=jogo.placar[1];
   /* PULAR TAMBÉM VIRA OS LADOS. O salto reconstrói placar e strip, mas os chips
      ficavam no lado da PRIMEIRA metade: quem pulava um mapa que passou do round
@@ -1476,6 +1488,13 @@ function montarConfrontoDeForca(A,B){
   const palco=document.querySelector(".pm-palco");
   if(palco){
     palco.style.setProperty("--pm-corte",corte.toFixed(2)+"%");
+    /* QUEM MONTA SOBRE QUEM. Ser maior não é ser mais próximo: duas placas
+       coplanares não têm "por cima", e a largura sozinha não entregava a
+       sobreposição pedida. A classe diz para que lado a sombra da junção cai —
+       sempre para o do mais fraco. No empate não cai para lado nenhum, porque
+       aí não há quem monte em quem. */
+    palco.classList.toggle("pm-palco--fav-a",efA>efB);
+    palco.classList.toggle("pm-palco--fav-b",efB>efA);
     /* AS DUAS CORES SOBEM PARA O PALCO. O campo de cor é UMA camada só, com uma
        parada dura entre os dois clubes, então ela precisa conhecer os dois — as
        metades não pintam mais nada. Era o `clip-path` delas que prendia o texto
@@ -1483,11 +1502,16 @@ function montarConfrontoDeForca(A,B){
     palco.style.setProperty("--time-a-rgb",canaisDoTime(A));
     palco.style.setProperty("--time-b-rgb",canaisDoTime(B));
   }
-  /* `setAttribute("style")` de uma vez, e não `style.width` antes: o atributo
-     inteiro é reescrito com a cor do time, então qualquer largura posta antes
-     dele seria apagada na mesma linha. Havia duas dessas, mortas. */
-  $("pmForcaA").setAttribute("style",`${estiloDoTime(A)};width:${pctA}%`);
-  $("pmForcaB").setAttribute("style",`${estiloDoTime(B)};width:${100-pctA}%`);
+  /* A BARRA HORIZONTAL SAIU — 08/08/2026, a pedido: *"já que tem esse negócio
+     que eu citei, pode tirar aquela barra horizontal que mostra quem é mais
+     forte, pq o próprio bloco central já faz isso"*. Está certo, e é a regra 53:
+     quando a FORMA passa a carregar a informação, o elemento que a repetia vira
+     dívida. A divisão do palco já é a proporção de força, e a sombra da junção
+     já diz quem monta sobre quem.
+     Ela saiu inteira — HTML, CSS e as duas larguras que eram calculadas aqui —
+     em vez de ficar escondida: elemento que perde o consumidor sai (regra 52).
+     O que sobrevive é o VEREDITO, que diz de quanto é a vantagem e de quem;
+     isso a forma não dá em número. */
   const dif=Math.abs(efA-efB);
   /* "Equilibrado" tem de ter piso, senão 1 ponto de diferença já nomearia um
      favorito — e no jogo 1 ponto não decide nada.
@@ -1498,16 +1522,10 @@ function montarConfrontoDeForca(A,B){
      seguro. Era a única razão de `esc` estar nesta função. */
   const parelho=dif<=3;
   caixa.classList.toggle("pm-forca--parelho",parelho);
-  /* Quem está atrás recua na barra. A separação entre os dois segmentos não pode
-     depender da cor do clube: o time do jogador é preto e vira cinza claro, e um
-     adversário claro ao lado dele apaga a fronteira inteira. Aceso × apagado
-     funciona com qualquer par de cores do catálogo. */
-  caixa.classList.toggle("pm-forca--fav-a",!parelho&&efA>efB);
-  caixa.classList.toggle("pm-forca--fav-b",!parelho&&efB>efA);
   /* OS DOIS NÚMEROS DAS PONTAS SAÍRAM — 08/08/2026. Eles repetiam, a 13px, os
      mesmos valores que os cards mostram logo acima em corpo 3x maior: duas
      leituras da mesma grandeza na mesma tela. O que sobra para o texto é a única
-     coisa que a barra não diz sozinha — de quanto é a vantagem, e de quem. */
+     coisa que a forma não diz sozinha — de quanto é a vantagem, e de quem. */
   $("pmForcaLeg").textContent=parelho
     ? "Confronto equilibrado"
     : `${(efA>efB?A:B).nome} favorito por ${dif}`;
@@ -1542,6 +1560,18 @@ function mostrarAntessala(){
   if(situacao)itens.push(chip("Você está",situacao));
   itens.push(chip("Série",`Melhor de ${md<=1?1:md}`,"pm-chip--serie"));
   if(decisivo)itens.push(chip("Vale","Mata-mata","pm-chip--alerta"));
+  /* O MAPA VIROU CHIP DA FAIXA — 08/08/2026. Ele vivia numa segunda linha, numa
+     pílula de 82×27px centrada sozinha sob uma faixa de 422px: o objeto menos
+     importante da tela ocupando uma linha inteira, e lido como órfão.
+     É a regra 56 — mesmo objeto, diferença só de ênfase. "Que partida é esta,
+     quanto ela vale e ONDE" é a mesma pergunta, então mora na mesma faixa. O
+     estilo do mapa viaja no chip para que a marca continue tingindo o valor;
+     num MD3 os três entram, e o primeiro é o que vai ser jogado agora.
+     De brinde some a linha que empurrava o conteúdo 32px para baixo do centro. */
+  MATCH.mapas.forEach((mapa,i)=>itens.push(
+    `<div class="pm-chip pm-chip--mapa${i===0?" pm-chip--agora":""}" style="${estiloDoMapa(mapa)}">`
+    +`<span class="pm-chip-r">${MATCH.mapas.length>1?`Mapa ${i+1}`:"Mapa"}</span>`
+    +`<b class="pm-chip-v">${esc(mapa)}</b></div>`));
   $("prematchCtx").innerHTML=itens.join("");
   $("pmTeamA").className="pm-lado pm-lado--a"+(A.meu?" mine":"");$("pmTeamA").innerHTML=prematchTeamHtml(A);
   $("pmTeamB").className="pm-lado pm-lado--b"+(B.meu?" mine":"");$("pmTeamB").innerHTML=prematchTeamHtml(B);
@@ -1556,11 +1586,31 @@ function mostrarAntessala(){
      dentro do palco saiu. Um lugar só para a mesma informação, seja um mapa ou
      três; o primeiro é o que vai ser jogado agora e vem em cheio, os outros
      apagados. */
-  $("pmMapa").hidden=!MATCH.mapas.length;
-  $("pmMapa").innerHTML=MATCH.mapas.map((mapa,i)=>
-    `<div class="pm-mapa${i===0?" pm-mapa--agora":""}" style="${estiloDoMapa(mapa)}">`
-    +`<span class="pm-mapa-nome">${esc(mapa)}</span>`
-    +`</div>`).join("");
+  montarFundoDaSerie(MATCH.mapas);
+}
+/* O FUNDO DA ANTESSALA É A SÉRIE INTEIRA — 08/08/2026, a pedido: os três mapas
+   de um MD3 aparecem juntos, recortados na diagonal.
+
+   MONTAR AQUI, ao lado da lista de nomes, é a regra 45: quem monta a peça é
+   quem a atualiza. As duas leituras — o nome na moldura e a foto no fundo —
+   saem da MESMA linha de `MATCH.mapas`, então não existe caminho em que uma
+   mostre três mapas e a outra mostre um.
+
+   O JS calcula só ONDE cada faixa começa e termina, porque isso depende de
+   quantos mapas a série tem; o desenho é todo do CSS. As PONTAS transbordam de
+   propósito: sem isso o corte inclinado da primeira e da última faixa apareceria
+   dentro da tela, como uma folha torta pousada sobre o fundo. */
+function montarFundoDaSerie(mapas){
+  const fundo=$("pmFundo");
+  if(!fundo)return;
+  const n=mapas.length;
+  if(!n){fundo.innerHTML="";return;}
+  fundo.innerHTML=mapas.map((mapa,i)=>{
+    const x0=i===0?-60:i/n*100;
+    const x1=i===n-1?160:(i+1)/n*100;
+    return `<i class="pm-fundo-faixa" style="${estiloDoMapa(mapa)}`
+      +`;--x0:${x0}%;--x1:${x1}%"></i>`;
+  }).join("");
 }
 function iniciarMapaDaSerie(){
   if(MATCH.rodando)return; // já tem um mapa em curso — ignora clique repetido
@@ -1601,8 +1651,21 @@ function continuarPartida(){
     iniciarMapaDaSerie();
   }
 }
-/* A escolha vale para o MAPA que vai começar, e a antessala reaparece a cada
-   mapa da série — foi o pedido: perguntar sempre, sem preferência salva. */
+/* A ESCOLHA VALE PARA A SÉRIE INTEIRA, e este comentário dizia o contrário —
+   corrigido em 09/08/2026.
+   Ele afirmava que "a antessala reaparece a cada mapa da série — foi o pedido:
+   perguntar sempre", enquanto `continuarPartida` chama `iniciarMapaDaSerie`
+   direto, com o próprio comentário de lá dizendo "sem antessala". Código e
+   prosa discordavam desde 06/08, e o handoff registrava a contradição em aberto
+   sem dizer qual dos dois estava errado.
+
+   QUEM ESTÁ CERTO É O CÓDIGO, e por uma razão de produto que já estava decidida:
+   a decisão de 04/08 diz que nenhuma complexidade nova pode cobrar um clique,
+   uma tela ou uma decisão a mais do jogador — o laço é sortear → escolher carta
+   → jogar, e ele não cresce. Uma antessala por mapa somaria dois cliques a um
+   MD3 para repetir uma pergunta que o jogador já respondeu.
+   Se a preferência por perguntar sempre voltar, ela volta como pedido explícito,
+   e aí muda o CÓDIGO — não este comentário. */
 $("prematchStart").onclick=()=>{MATCH.narrado=false;iniciarMapaDaSerie();};
 $("prematchNarrado").onclick=()=>{MATCH.narrado=true;iniciarMapaDaSerie();};
 $("matchContinue").onclick=continuarPartida;

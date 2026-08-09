@@ -24,6 +24,11 @@ const RAIZ=path.resolve(__dirname,"..");
 const folha=fs.readFileSync(path.join(RAIZ,"style.css"),"utf8");
 
 /* 1 — OS TOKENS EXISTEM. */
+/* O nível `lente` entrou e SAIU no mesmo dia. Ele existia para a junção dos
+   dois times, que virou uma faixa de material com espessura — e a comparação
+   com o painel da narração derrubou a ideia inteira: *"o da partida ainda está
+   mil vezes superior, pq é MINIMALISTA"*. Liquid glass é o que sobra quando se
+   tira o resto, não mais uma camada. Três níveis, e cada um é um PAPEL. */
 const NIVEIS=["alto","medio","raso"];
 const FACETAS={alto:["bg","borda","blur","sombra"],medio:["bg","borda","blur","sombra"],
   raso:["bg","borda","blur"]};
@@ -60,8 +65,12 @@ const SUPERFICIES=[
      cima dela e o desfoque não amostrava nada — vidro declarado, não acontecendo. */
   [".pm-palco::after","--vidro-alto-blur"],
   [".prematch-modos .roll","--vidro-medio-blur"],
+  /* `.pm-mapa` saiu da lista em 08/08/2026 porque o ELEMENTO saiu da tela: a
+     pílula do mapa vivia numa segunda linha e lia como órfã, e o mapa virou mais
+     um chip da faixa de contexto. Ele não deixou `--vidro-raso-*` sem
+     consumidor — `.prematch-ctx` continua sendo um, e agora o chip do mapa mora
+     dentro dela. */
   [".prematch-ctx","--vidro-raso-blur"],
-  [".pm-mapa","--vidro-raso-blur"],
 ];
 for(const [seletor,token] of SUPERFICIES){
   const escapado=seletor.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");

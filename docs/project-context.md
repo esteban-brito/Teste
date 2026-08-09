@@ -101,8 +101,8 @@ Atualização vigente (tem precedência sobre o registro histórico abaixo):
 
 | grandeza | valor |
 |---|---:|
-| `checadores` | 26 |
-| `suites` | 26 |
+| `checadores` | 28 |
+| `suites` | 27 |
 
 - o ciclo **P2 de modularização por paridade está concluído**, Fases 0–7;
 - `game.js` caiu de 3.054 para **882 linhas** no piso do P5 — 1.206 ao fim do P2,

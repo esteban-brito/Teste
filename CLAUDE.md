@@ -725,6 +725,170 @@ teria deixado um nível do sistema órfão; a barra só se revelou ilegível na
 primeira foto; e a escala só quebrou onde ninguém olha. Um plano de design é uma
 hipótese, e a captura é o experimento.
 
+## Sessão de 08/08/2026 (noite) — a antessala vira vidro, e o que isso ensinou
+
+Relato e números na §1-septies de `docs/retomada-2026-08-05.md`. O fundo passou a
+ser foto real do CS2 (`docs/map-art.md`), e nasceu `bancada/suites/e2e-antessala.js`.
+
+63. **LIQUID GLASS NÃO É UM EFEITO QUE SE ADICIONA — É O QUE SOBRA QUANDO SE TIRA
+    O RESTO.** Passei três rodadas SOMANDO camadas ao palco (lente de junção,
+    anel de borda, véu por lado, bisel em tudo) e o material ficava pior a cada
+    uma. O responsável apontou o `.np-card` da narração: *"é MINIMALISTA e
+    realmente parece liquid glass"*. Ele é um retângulo, uma borda fina, uma
+    sombra e conteúdo nítido. Cada camada nova rouba do material a chance de
+    aparecer, porque o olho lê material por CONTRASTE com o que está em volta —
+    e camada nenhuma é contraste, é competição. Quando um material não convencer,
+    a primeira pergunta é o que REMOVER, não o que somar.
+64. **NÍVEL DE VIDRO NÃO PODE SIGNIFICAR RAIO DE DESFOQUE.** O sistema tinha três
+    níveis com três desfoques (12, 14 e 22px), quatro raios e três opacidades de
+    borda — e o resultado foi descrito como *"todos os liquid glass parecem
+    diferentes em cada bloco, cada barra, cada botão"*. Estava certo: três
+    desfoques são três MATERIAIS. Hoje o desfoque e a borda são os mesmos na tela
+    inteira — é isso que faz as peças lerem como recortes da mesma placa — e o
+    que distingue os níveis é só a DENSIDADE do fundo.
+    **Corolário:** densidade alta é TINTA, não vidro. O nível de apoio estava a
+    58–70% de opacidade numa peça de uma linha de texto; a 22–34% a foto
+    atravessa e a peça vira vidro. O que faz vidro parecer vidro é ver a cor de
+    trás, desfocada e saturada, ATRAVÉS dele.
+65. **VIDRO PRECISA DE CONTEÚDO ESTRUTURADO ATRÁS, e copiar valores não transporta
+    isso.** O `.np-card` flutua sobre o SCOREBOARD, que continua nítido em volta
+    dele; a lâmina da antessala cobria o card inteiro e desfocava o próprio campo
+    de cor — uma camada chapada que só existia debaixo dela. Copiei os valores do
+    `.np-card` (gradiente, ângulo animado, sombra) e não adiantou, porque o que
+    faltava era a CONDIÇÃO, não o material. É o defeito de 6/255 da regra 60
+    sobrevivendo numa forma nova, e a saída foi deixar a foto ATRAVESSAR o card.
+66. **`background` em keyframe é shorthand e REESCREVE todas as camadas.** A linha
+    de 2px da costura já tinha sido removida do `::after` e voltava pelo
+    `pmRevela`, ainda no ângulo antigo, depois de a divisão já ter virado
+    vertical. Ao remover uma camada de um elemento animado, varra os keyframes
+    dele — eles carregam a declaração inteira, não o delta.
+67. **Duas fórmulas que se cancelam num valor específico são assimetria com hora
+    marcada.** Os paddings das metades eram `104% − corte` e `4% + corte`: iguais
+    só quando o corte é exatamente 50%. Com o favorito em 58% um lado ganhava 8%
+    a mais — e o defeito era invisível justamente no EMPATE, que é o caso em que
+    se olha para conferir. Recuo simétrico sai do mesmo número, sempre.
+68. **Camada chapada não separa cores; ela SOMA o mesmo em todo pixel.** O banho
+    de cor por mapa governa duas grandezas em sentidos opostos — mais forte
+    distingue os sete mapas e SUBSTITUI a foto; mais fraco mostra a foto e apaga
+    a diferença. Medido: .50 dá 5 achados, .72 dá 15. Não existe valor que zere
+    os dois, e perseguir o número é calibrar contra um conflito estrutural. A
+    saída é multiplicar em vez de somar. **Antes de calibrar, verifique se as
+    duas métricas que você quer satisfazer não são a mesma alavanca em sentidos
+    opostos.**
+69. **Cor que é FUNÇÃO de um fundo não viaja para outro fundo.** `--mapa-nome` é
+    clareada para ser legível sobre o AMBIENTE do mapa; usei-a no chip, cujo
+    fundo é vidro, e reprovou nos 21 casos (3,25–3,97:1). É a regra 46 numa forma
+    nova: a função continua valendo, o argumento é que mudou.
+
+**E a lição de método:** dos seis erros de CSS deste ciclo, cinco eram escrever
+por intenção LOCAL num sistema que resolve por efeito GLOBAL — ordem de camada,
+`filter` agindo no elemento inteiro, contexto shrink-to-fit do pai, cascata. O
+pior não foi limitação: inventei um breakpoint de 560px e um ângulo de 195°
+quando 640px e 172° estavam escritos no mesmo arquivo. **Antes de escrever
+qualquer regra IRMÃ de uma existente — variante responsiva, estado, override —,
+leia a original.** Isso teria evitado três dos seis.
+
+## Sessão de 09/08/2026 — o gel de mapa, a faxina da antessala e a rede de movimento
+
+Ciclo sem tocar em dado, OVR, RNG ou balanceamento. Três frentes pedidas na
+mesma sessão: fechar o conflito banho × foto, revisar a antessala linha por
+linha e caçar bugs de transição. `e2e-antessala` saiu de **5 achados para 0**
+sem que um piso fosse tocado, e ganhou 2 provas sintéticas (8 no total).
+`check-reduced-motion.js` entrou no `npm run check`, que foi de 27 para 28.
+
+### Cinco regras novas, não negociáveis
+
+70. **CAMADA CHAPADA GOVERNA DUAS GRANDEZAS EM SENTIDOS OPOSTOS; TROQUE A
+    OPERAÇÃO, NÃO O NÚMERO.** O banho de cor do mapa somava o mesmo em todo
+    pixel: mais forte separava os sete mapas e apagava a foto, mais fraco fazia
+    o inverso. `mix-blend-mode:overlay` deixa de somar e passa a MODULAR — onde
+    a foto é escura ele multiplica, onde é clara ele clareia —, e as duas
+    medidas sobem JUNTAS: croma 5,2 → 13,4 e foto 24 → 79 no desktop. É também a
+    leitura correta do pedido: *"cor específica pra cada mapa, como um filtro"* —
+    filtro fotográfico é gel, e gel é multiplicativo.
+    **Duas recusas medidas, não as repita.** `mix-blend-mode:color` parece a
+    escolha óbvia (separa croma de luminância por definição) e PIORA o croma:
+    5,1 no desktop, 2,8 no celular. A causa é que o banho antigo não só tingia,
+    ele CLAREAVA, e croma em sRGB é limitado pela luminância — devolvendo a
+    luminância à foto a tela cai de 36,7 para 23,2 e a cor não tem mais onde
+    caber. `multiply` escurece demais e `color-burn` destrói a tela.
+    **E saturação tem teto**: 1,7 dá croma 13,1 no celular; 2,2 derruba para 6,0,
+    porque Anubis e Dust2 clipam no mesmo canal e voltam a colidir.
+71. **TOKEN QUE SÓ EXISTE COMO FALLBACK DE `var()` NÃO É TOKEN, E TOKEN CITADO
+    SÓ EM COMENTÁRIO É PIOR.** `--vidro-base` foi criado em 08/08 com racional
+    escrito, e as duas únicas menções a ele na folha eram comentários AFIRMANDO
+    que estava aplicado. Nenhuma regra o chamava. A proteção de contraste que a
+    folha prometia não existia — e é por isso que `.pm-chip-r` vivia a 4,88:1
+    contra um piso de 4,5, passando por 8 centésimos sem que nada explicasse a
+    margem. É a regra 57 pelo avesso: lá um `var()` apontava para token removido
+    e invalidava a declaração; aqui o token existe, a prosa o cita, e ninguém o
+    consome. Outros três — `--pm-col`, `--pm-acao-w`, `--mapa-blur` — viviam como
+    `var(--x, valor)`, com o número real no segundo argumento: parecem ponto de
+    ajuste do sistema e não são, porque mudar exige achar cada consumidor.
+    **Ao varrer custom properties, separe o fantasma legítimo** — `--mapa-*`,
+    `--time-*`, `--pm-corte`, `--x0/--x1` são injetados por `game.js` em runtime
+    — **do fantasma real, e tire os comentários antes de casar**: `--b1` aparece
+    seis vezes na folha, todas em arqueologia, e um casador ingênuo manda a
+    próxima sessão caçar um bug que não existe.
+72. **PREFERÊNCIA DE ACESSIBILIDADE HONRADA PELA METADE PODE INVERTER DE SINAL.**
+    `mostrarTela()` põe `.tela-in` nas duas telas do diálogo. Medido no
+    navegador: com movimento normal a antessala tinha a classe e NÃO a animação
+    — `animation` é shorthand e `.prematch{animation:luzPasseia}` tem a mesma
+    especificidade vindo depois. Com `prefers-reduced-motion:reduce` aquela regra
+    some, `.tela-in` deixa de ser atropelada, e a antessala vira a ÚNICA tela da
+    aplicação com fade de entrada. **A preferência LIGAVA uma animação em vez de
+    desligá-la.** Defeito que não aparece em captura nem em prova funcional —
+    ele só existe para quem tem a preferência ligada, e ninguém do time tem.
+    A varredura mostrou que era sistêmico: **30 declarações de `animation` fora
+    de qualquer guarda**, quatro delas INFINITAS. A rede global no fim da folha
+    resolve todas de uma vez, e ela usa duração desprezível — **nunca
+    `animation:none`**, que descartaria o quadro final das animações com
+    `fill-mode:both` e apagaria o pódio da tela final. `check-reduced-motion.js`
+    trava a rede, as três propriedades, o alcance a pseudo-elementos e a posição
+    dela como última palavra (ela ganha por ORDEM, não por especificidade).
+73. **CLASSE DE ANIMAÇÃO POSTA NA MONTAGEM DISPARA EM MASSA NA REMONTAGEM.**
+    `addCelula` carimbava `pop` em toda célula criada, e `pularMapa` recria a
+    tira inteira: pular fazia ~24 células estourarem no mesmo quadro. O salto
+    existe para quem NÃO quer esperar a animação round a round. O defeito estava
+    só no CAMINHO — a tela final era a certa —, e por isso ninguém tinha olhado.
+    Animação de entrada é da REPRODUÇÃO; montagem em lote passa `false`.
+74. **MEDIR CUSTO DE COMPOSIÇÃO EM `headless` SEM GPU MEDE O APARELHO ERRADO.**
+    O Playwright rasteriza por software (SwiftShader) por padrão, e nesse regime
+    os DOIS braços caíram para ~24 fps — o material acusando 1,9 fps a menos que
+    o controle, o que sugeriria um custo que não existe. Com GPU e vsync: **60,3
+    contra 60,1**, diferença de 0,2. E sem vsync o número perde sentido no outro
+    extremo (602 contra 368, com o material "mais rápido"). A pergunta certa é
+    *"a tela sustenta a taxa do monitor?"*, e ela só se responde com GPU ligada e
+    limite de quadro ATIVO.
+
+### O que a faxina achou, e o que ela NÃO mexeu
+
+Removidos por prova de ausência de consumidor: `#pmMapa` (duas regras de CSS
+para um elemento que saiu do HTML em 08/08) e quatro blocos de prosa descrevendo
+peças que já não existem; `--fs-nota`, `--mov-massa` e `--d-barra`. Uma varredura
+dos 30 seletores da antessala contra HTML e JS achou exatamente um órfão.
+**Ficaram** `--gold-glow`, `--line-base`, `--line-panel` e `--mine`, que parecem
+órfãos e são as metades hex de pares que `check-design-tokens` exige; e
+`--r-awper`/`--r-igl` e irmãos, consumidos por `sandbox.html` e `history-view`.
+
+**Uma tentativa foi medida e revertida:** células de chip iguais (`flex:1 1 0`).
+No celular, com 5 itens e piso de 88px, cabem 4 por linha — o quinto ficava
+sozinho ocupando 356px, um chip quebrava em duas linhas e a faixa crescia de 91
+para 101px. Célula igual só funciona quando o número de itens divide a largura,
+e cinco não divide 358px.
+
+### Nota sobre o ritual visual: o piso de ruído é INTERMITENTE
+
+`antes-1 × antes-2` deu **21/21 idênticas**; `depois × depois-2`, com o mesmo
+código, deu **6 de 21**, sendo quatro no tablet com 4,7% a 74,8% dos pixels. As
+imagens são visualmente IGUAIS — mesmo elenco, mesma tipografia —, e o desvio
+está espalhado pela área do gradiente do `body`, com ~7/255: é dithering de
+gradiente do Chromium. A regra 40 continua valendo e ganha um corolário: **um
+piso de ruído medido em ZERO não prova que a próxima execução também será zero.**
+Quando um estado fora do escopo acusar diferença, recapture e veja se ela se
+INVERTE — foi assim que o resíduo de `celular-07-mapa` (+1/255 em 0,3%) se
+revelou ruído.
+
 ## A ANTESSALA É O PADRÃO DE DESIGN — decisão de 07/08/2026
 
 O responsável elegeu a antessala da partida como referência de estilo para o jogo
@@ -735,11 +899,15 @@ o jogo"*. As próximas telas herdam dela, uma por vez. Detalhe na §1-quinquies 
 54. **Padrão que vive como número repetido não é padrão.** O vidro da antessala
     virou token em três níveis — `--vidro-alto/medio/raso-*` —, e a diferença
     entre eles é DISTÂNCIA DO OLHO: lâmina principal, peça sobre ela, apoio.
-    `tools/check-glass-system.js` cobra que as **cinco** superfícies de
-    referência consumam os tokens; se uma voltar a declarar vidro na mão, o
-    padrão já divergiu. É a lição da tokenização de cor de 02–03/08 aplicada a
-    superfície. **Eram "seis" nesta linha até 08/08/2026, e a guarda media
-    cinco** — documentação que promete cobertura que não existe é pior que
+    `tools/check-glass-system.js` cobra que as superfícies de referência
+    consumam os tokens; se uma voltar a declarar vidro na mão, o padrão já
+    divergiu. **Quantas são NÃO se escreve aqui** — o número está na tabela
+    travada de `docs/retomada-2026-08-05.md` §1, sob `superficies-de-vidro`, e
+    sai da lista real do checador desde 09/08/2026. Esta linha dizia "seis"
+    quando a guarda media cinco, foi "corrigida" para cinco quando ela media
+    três, e só parou de envelhecer quando ganhou dono (regra 43). É a lição da
+    tokenização de cor de 02–03/08 aplicada a superfície —
+    documentação que promete cobertura que não existe é pior que
     nenhuma, porque a próxima sessão confia nela. A sexta superfície de vidro do
     jogo é `.np-card`, o palco da narração, e ela declara `blur(16px)
     saturate(1.3)` na mão. A guarda hoje trava esse número em 1: vidro novo na

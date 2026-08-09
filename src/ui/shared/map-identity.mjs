@@ -55,6 +55,15 @@ export const MAPA_MARCA={
      duas telas indistinguíveis. A guarda reprovou, e a saída foi puxar cada um
      para o que ele REALMENTE é: Mirage é terracota (vermelho), Anubis é ouro
      (âmbar), Dust2 é poeira sob sol alto (oliva claro). */
+  /* MIRAGE FICA ONDE ESTAVA, e isto é registro de uma tentativa que falhou.
+     Em 08/08/2026 ela foi empurrada para `#d9633a` porque chegava à tela a 6,1
+     de croma de Anubis. O resultado: colidiu com INFERNO, que é vermelho-tijolo,
+     a 10,8 em Lab — abaixo do piso de 18. O espaço de matiz quente já tem
+     quatro mapas (Inferno, Mirage, Anubis, Dust2) e não comporta mais um.
+     A CAUSA nunca foi a cor: as sete separam a 23 em Lab nos tokens e chegavam
+     a 6 na tela. Quem achatava era o FILTRO. Corrigir a identidade para
+     compensar o filtro seria calibrar contra a régua errada — a mesma armadilha
+     que este repositório já registrou cinco vezes. */
   Mirage: {cor:"#e08a3c",ceu:"#2c1c0c",chao:"#160e06"}, // terracota de Marrocos
   Inferno:{cor:"#c4472f",ceu:"#2a0f0b",chao:"#170806"}, // tijolo e telha
   Nuke:   {cor:"#5b8fb9",ceu:"#131c25",chao:"#0b1116"}, // concreto industrial frio
@@ -88,6 +97,28 @@ export function canaisDoMapa(mapa){
   return canais(marcaDoMapa(mapa).cor).join(",");
 }
 
+/* A ARTE DO MAPA — 08/08/2026.
+   ══════════════════════════════════════════════════════════════════════════════
+   O bloco "POR QUE COR, E NÃO ARTE" no topo deste arquivo dizia que o
+   repositório não tinha arte de mapa e que criar sete ilustrações era outro
+   ofício. Continua verdade sobre ILUSTRAR; deixou de ser sobre TER: o
+   responsável forneceu sete capturas do próprio CS2 em 08/08/2026, e
+   `tools/build-map-art.js` as normaliza.
+
+   A COR NÃO FOI SUBSTITUÍDA. `cor`, `ceu` e `chao` continuam governando a
+   atmosfera, a placa e as bordas — a arte ACRESCENTA a camada que faltava:
+   estrutura de luz real para o vidro refratar. Um mapa sem arte cai no ambiente
+   de gradiente e a tela não quebra; é o mesmo contrato de fallback do `NEUTRO`.
+
+   O SLUG É MINÚSCULO porque `Dust2.webp` funciona no Windows e some no CI
+   Linux. `tools/check-map-art.js` prova os dois lados. */
+const ARTE_DIR="assets/mapas";
+
+/** Caminho do asset de arte, ou `null` para mapa sem arte declarada. */
+export function arteDoMapa(mapa){
+  return MAPA_MARCA[mapa]?`${ARTE_DIR}/${String(mapa).toLowerCase()}.webp`:null;
+}
+
 /* Variáveis CSS da marca, para quem pinta um elemento com ela.
    O RGB VIAJA JUNTO porque translucidez neste projeto se faz com
    `rgba(var(--x-rgb),a)`, nunca com `color-mix(...,transparent)`: as duas são
@@ -95,6 +126,18 @@ export function canaisDoMapa(mapa){
    deslocadas em 1/255, medido em 02–03/08/2026 e registrado em `docs/testing.md`. */
 export function estiloDoMapa(mapa){
   const {cor,tinta,ceu,chao,nome}=marcaDoMapa(mapa);
+  const arte=arteDoMapa(mapa);
   return `--mapa-cor:${cor};--mapa-tinta:${tinta};--mapa-rgb:${canaisDoMapa(mapa)}`
-    +`;--mapa-ceu:${ceu};--mapa-chao:${chao};--mapa-nome:${nome}`;
+    +`;--mapa-ceu:${ceu};--mapa-chao:${chao};--mapa-nome:${nome}`
+    /* Sem arte, a variável fica em `none` em vez de ausente: assim a regra de
+       CSS é uma só e o fallback é o próprio valor, não um seletor a mais.
+
+       AS ASPAS SÃO SIMPLES, e isto não é estilo — 08/08/2026. Esta string vai
+       para dentro de `style="..."` em `innerHTML` (as pílulas de mapa e as
+       faixas de fundo), e `url("...")` com aspas duplas FECHA o atributo no
+       parser de HTML: o estilo inteiro se perde e o elemento aparece sem cor e
+       sem foto. O `#prematch` não sofria porque recebe o valor por
+       `setAttribute`, que não passa por parser — o mesmo dado, dois caminhos, e
+       só um deles quebrava. */
+    +`;--mapa-arte:${arte?`url('${arte}')`:"none"}`;
 }
