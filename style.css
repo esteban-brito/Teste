@@ -1714,9 +1714,19 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    em Anubis, Dust2 e Mirage, contra o piso de 4,5. `--dim` é calibrado para
    painel escuro, e este texto pousa sobre vidro com foto atrás — é a regra 46:
    a cor era função de um fundo que mudou. Continua a MESMA nos dois botões,
-   que é o que o pedido de padronização exige. */
+   que é o que o pedido de padronização exige.
+   ── E SUBIU DE NOVO, DE `--neutral` PARA `--txt` — 10/08/2026 ───────────────
+   Pelo mesmo motivo e na terceira vez: o primário escureceu e virou laranja, e
+   `--neutral` caiu para 3,99–4,44:1 nos VINTE casos. Microcópia cinza sobre uma
+   superfície colorida saturada não é hierarquia, é sujeira — sobre laranja, a
+   tinta natural é branca. A hierarquia entre rótulo e subtexto não some com
+   isso: ela vive no CORPO, no peso e na caixa, que são canais mais fortes que
+   dois cinzas a um degrau de distância. E a tinta segue única nos dois botões.
+   A lição, já registrada duas vezes nesta folha: toda cor que é FUNÇÃO de um
+   fundo precisa ser revisitada quando o fundo muda — ela não é escolha, é
+   consequência. */
 .pm-acao-sub{font-family:var(--ff);font-size:var(--fs-rotulo);letter-spacing:.1em;
-  text-indent:.1em;text-transform:none;font-weight:600;color:var(--neutral)}
+  text-indent:.1em;text-transform:none;font-weight:600;color:var(--txt)}
 /* A COR DA MARCA VIRA LUZ POR `screen`, NÃO POR TINTA — 09/08/2026.
    O primário era `rgba(laranja,.42)` sobre fundo escuro, e medido na tela isso
    dava `rgb(105,72,68)`: um TERRACOTA OPACO ao lado de um secundário que é vidro
@@ -1753,8 +1763,12 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    claro pede tinta escura, e isso não quebra a padronização pedida — os dois
    botões continuam com a mesma caixa, o mesmo corpo, o mesmo material e a mesma
    construção. O que muda é a COR, e a cor do texto é consequência dela, não uma
-   segunda decisão de estilo. */
-#prematchNarrado,#prematchNarrado .pm-acao-sub{color:#150800}
+   segunda decisão de estilo.
+   ── E A CONSEQUÊNCIA MUDOU DE SINAL EM 10/08/2026 ───────────────────────────
+   O botão escureceu (bloco abaixo), então a tinta escura saiu junto: ela era
+   consequência, não escolha, e seguir com ela daria 2,84:1. O rótulo voltou a
+   `var(--txt)` da regra dos dois botões, e com isso a tinta deixou de ser mais
+   uma coisa que os separa. Medido nos sete mapas: 5,28:1 no pior. */
 /* O CLAREAMENTO É UMA CAMADA, NÃO UM FILTRO PRÓPRIO — e a guarda foi quem
    exigiu. Pôr `brightness` no `backdrop-filter` deste botão criava um SEGUNDO
    material de vidro na tela (`blur(14px) saturate(1.7) brightness(1.85)` ao lado
@@ -1764,9 +1778,28 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    Uma base branca translúcida SOB o laranja faz o mesmo trabalho óptico:
    clareia o que vem de trás antes de tingir, sem tocar no material. O botão
    continua sendo o mesmo vidro `medio` do irmão ao lado. */
+/* ══ A BASE BRANCA SAIU, E O BOTÃO PASSOU A SER O VIDRO DO IRMÃO TINGIDO ═════
+   10/08/2026, a pedido: *"o botão do COM NARRAÇÃO ta muito claro, quero que ele
+   seja só laranja e liquid glass, e clareie só quando eu colocar o mouse em
+   cima, igual com o botão do lado"*.
+   O que a base branca fazia era clarear para caber a tinta escura do rótulo, e
+   medido ela entregava `rgb(225,131,82)` — um pêssego lavado, com o croma que o
+   branco tirou. O laranja estava lá; o que faltava era ele ser o único.
+
+   A construção nova não empilha uma cor sobre outra: ela TINGE `--vidro-medio-bg`,
+   a mesma base que `#prematchStart` usa. Os dois botões passam a ser o mesmo
+   material com uma camada de cor de diferença, que é o que "igual ao botão do
+   lado" quer dizer, e é a regra 56 — mesmo objeto, diferença só de ênfase.
+   Medido nos sete mapas: `rgb(148,74,38)`, laranja de verdade e mais escuro,
+   com o rótulo claro a 5,87:1.
+
+   A alternativa medida e recusada foi preto translúcido sob o laranja
+   (`rgb(160,72,25)`, 5,63:1): dá quase a mesma cor com um pouco mais de croma,
+   mas inventa um material só para este botão em vez de reusar o do sistema —
+   e era exatamente essa divergência que 09/08 tinha acabado de fechar. */
 #prematchNarrado{border-color:rgba(var(--accent-rgb),.55);
-  background:linear-gradient(0deg,rgba(255,255,255,.22),rgba(255,255,255,.22)),
-    rgba(var(--accent-rgb),.72)}
+  background:linear-gradient(0deg,rgba(var(--accent-rgb),.46),rgba(var(--accent-rgb),.46)),
+    var(--vidro-medio-bg)}
 /* O PRIMÁRIO É LARANJA POR INTEIRO, E EM VIDRO — 09/08/2026, a pedido: *"o botão
    COM NARRAÇÃO era pra ser inteiramente laranja liquid glass […] QUERO
    MINIMALISMO, E LIQUID GLASS ABSOLUTO"*.
@@ -1804,7 +1837,18 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
      que o secundário não tem em repouso. Agora cada um sobe a própria tinta um
      degrau — laranja continua laranja, vidro continua vidro — e a única
      diferença entre os dois hovers é a mesma diferença que eles têm parados. */
-  #prematchNarrado:hover{background:linear-gradient(0deg,rgba(255,255,255,.30),rgba(255,255,255,.30)),rgba(var(--accent-rgb),.78)}
+  /* O PRIMÁRIO CLAREIA ACENDENDO, NÃO LAVANDO — 10/08/2026. O irmão sobe uma
+     lâmina branca porque em repouso ele é vidro nu: ali o branco é a única luz
+     disponível. Aqui há cor, e a mesma lâmina branca sobre laranja não clareia,
+     DESSATURA — é o pêssego que este commit acabou de tirar do repouso, voltando
+     pela porta do hover. Subir o tingimento faz o botão ficar mais luminoso E
+     mais laranja, que é o gesto certo para uma peça que É a cor.
+     Os números decidiram entre as duas formas: o véu branco a `.07` deixa o
+     rótulo a 4,60:1 e a `.14`, a 3,96:1 — o gesto do irmão, copiado literalmente,
+     reprovaria. Acender de .46 para .58 dá 4,82:1 e ainda ABRE o intervalo entre
+     os dois estados, porque o repouso pôde descer junto. */
+  #prematchNarrado:hover{background:linear-gradient(0deg,rgba(var(--accent-rgb),.58),
+    rgba(var(--accent-rgb),.58)),var(--vidro-medio-bg)}
   #prematchStart:hover{background:rgba(255,255,255,.14)}
 }
 
@@ -2822,9 +2866,15 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    são três faixas, e três filtros são três camadas de composição para o mesmo
    efeito. Medido — as duas colocações dão número IDÊNTICO nos três viewports.
    1,7 e não 2,2: acima disso Anubis e Dust2 clipam no mesmo canal e voltam a
-   colidir (croma cai de 13,1 para 6,0). Mais saturação não é mais separação. */
+   colidir (croma cai de 13,1 para 6,0). Mais saturação não é mais separação.
+   ── 1,38 → 1,6 em 10/08/2026 ────────────────────────────────────────────────
+   Ela SUBIU no mesmo commit em que a tela ficou mais calma, e isso não é
+   contradição: a máscara logo abaixo tira o gel do miolo, e sem compensação a
+   separação entre mapas — que a guarda mede na faixa BAIXA — cairia junto. A
+   saturação devolve croma onde ele identifica o mapa; a máscara o tira de onde
+   ele competia com o conteúdo. Teto continua 1,7. */
 .pm-fundo{position:absolute;inset:0;z-index:-2;overflow:hidden;pointer-events:none;
-  filter:saturate(1.38)}
+  filter:saturate(1.6)}
 .pm-fundo-faixa{position:absolute;inset:0;
   /* O SENTIDO DA OBLIQUIDADE ACOMPANHA A COSTURA DO PALCO. Na primeira versão
      ele era o inverso, e as duas diagonais formavam um X na tela: o fundo
@@ -2897,7 +2947,16 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
      O que envelhece é `sepia` leve mais o grão da camada acima: emulsão velha
      não é cinza, é uma cor que amarelou. E `contrast` baixo, porque foto antiga
      não tem preto puro. */
-  filter:blur(var(--mapa-blur)) sepia(.10) brightness(.78) contrast(1.26);
+  /* O CONTRASTE CEDEU PARA AS ALTAS LUZES — 10/08/2026, a pedido: *"as cores
+     estão muito fortes […] o fundo se destaca mais do que o card central"*.
+     Medido, o fundo tinha p95 de luminância em 53 contra 24 do card: os
+     ESTOUROS da foto — céu, areia sob sol, o vagão laranja de Mirage — é que
+     puxavam o olho, não o brilho médio. `contrast` de 1,26 empurra justamente
+     esses pixels para cima, então baixá-lo para 1,08 comprime o topo da faixa
+     sem lavar a imagem. `brightness` acompanha de leve (.78 → .74). Resultado:
+     p95 53 → 37, e a foto continua chegando com folga (pior mapa a 29/255
+     contra o piso de 24). Não é escurecer a tela — é tirar o pico. */
+  filter:blur(var(--mapa-blur)) sepia(.10) brightness(.74) contrast(1.08);
   pointer-events:none;
 }
 /* A SUJEIRA É GRÃO, e o grão é a mesma técnica que a carta já usa em `.c-grao`:
@@ -2960,10 +3019,47 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    exatamente o que se leu como *"a cor está muito forte"*. A .42 ele tinge sem
    substituir: a identidade do mapa continua chegando, agora somada à cor real
    da imagem em vez de no lugar dela. */
+/* ══ O GEL DEIXOU DE SER CHAPADO — 10/08/2026 ═══════════════════════════════
+   Pedido: *"as cores estão muito fortes […] o fundo se destaca mais do que o
+   card central e as outras infos"*. Medido nos 7 mapas × 3 viewports, a queixa
+   tinha número: na banda em torno do palco o fundo entregava croma 53 contra 26
+   do card — DUAS VEZES mais cor na peça que não é o assunto da tela.
+
+   E a alavanca óbvia estava travada pelo conflito de sempre (regra 68): baixar
+   o gel acalma a tela E aproxima os sete mapas, que a guarda exige separados em
+   croma. Foi medido — a .42 a separação cai a 10,7 no celular, contra piso 10.
+
+   ── A SAÍDA É DISTRIBUIÇÃO, NÃO INTENSIDADE ────────────────────────────────
+   O gel era uma cor CHAPADA: por definição ele somava o mesmo em cada pixel, e
+   por isso não sabia distinguir "aqui há conteúdo" de "aqui há só cenário".
+   A máscara dá a ele essa distinção — transparente no miolo, opaca nas bordas.
+   A identidade do mapa continua inteira onde ela é lida (a periferia, que é
+   também onde `e2e-antessala` mede a separação) e recua onde competia.
+
+   Medido, desktop: croma da banda do card 53 → 30, luminância 34 → 25 contra
+   as 21 do card. A tela inverteu de "fundo na frente" para "conteúdo na
+   frente" sem que um piso fosse tocado — foto e separação de mapas continuam
+   acima, com folga maior que a de 08/08.
+
+   Por que MÁSCARA e não um segundo gradiente por cima: uma camada a mais
+   pintaria tinta sobre a foto, que é o defeito que 09/08 acabou de tirar daqui.
+   `mask` não pinta nada — ela decide onde ESTE gel existe. E vem com o par
+   `-webkit-`, pelo mesmo motivo do `backdrop-filter` (regra 55): sem ele o
+   Safari ignora a máscara e volta ao gel chapado, que é o pior dos dois mundos
+   — cor cheia no miolo E a saturação de 1,6 que existe para compensá-la. */
 .pm-fundo-faixa::after{
   content:"";position:absolute;inset:0;pointer-events:none;
   mix-blend-mode:overlay;opacity:.55;
   background:var(--mapa-cor);
+  /* Escrita duas vezes, e não guardada num token: ela tem UM consumidor, e a
+     regra 71 é sobre isto — custom property com um consumidor só parece ponto
+     de ajuste do sistema sem ser um. As paradas não são lineares de propósito:
+     o miolo precisa de um platô limpo, e o gel volta rápido depois dele para
+     que a transição não vire uma vinheta de cor visível. */
+  -webkit-mask-image:radial-gradient(86% 70% at 50% 46%,transparent 0%,
+    rgba(0,0,0,.18) 34%,rgba(0,0,0,.66) 60%,#000 82%);
+  mask-image:radial-gradient(86% 70% at 50% 46%,transparent 0%,
+    rgba(0,0,0,.18) 34%,rgba(0,0,0,.66) 60%,#000 82%);
 }
 /* A COSTURA ENTRE DUAS FAIXAS. Sem ela as fotos encostam e a divisão some
    justamente onde dois mapas têm luminância parecida — a regra 58 outra vez, e
@@ -3023,8 +3119,19 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
     radial-gradient(120% 74% at 50% 118%,rgba(0,0,0,.4),transparent 62%),
     /* O SCRIM É MAIS DENSO NAS PONTAS que no miolo, e não uniforme: o miolo é
        onde a lâmina pousa e onde a foto precisa sobreviver para o vidro ter o
-       que refratar; as pontas é que carregam texto solto sobre a imagem. */
-    linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,.14) 46%,rgba(0,0,0,.42));
+       que refratar; as pontas é que carregam texto solto sobre a imagem.
+       ── O MIOLO FOI DE .14 PARA .34 — 10/08/2026 ────────────────────────────
+       O racional acima continua certo, o VALOR é que estava calibrado contra
+       uma foto que ainda era dessaturada. Com a imagem na cor dela (09/08), um
+       miolo quase sem scrim deixava a banda do card em luminância 34 contra 24
+       da própria lâmina: o fundo mais claro que a peça na frente dele.
+       A margem para isto existir é grande — a foto chega a 57/255 onde o piso
+       é 24, então o vidro continua com muito o que refratar. Uma advertência
+       para quem for adiante: ATRÁS do card, escurecer não separa. A lâmina é
+       translúcida e amostra o fundo, então ela cai junto — foi medido, um véu
+       radial central levou o card de 24,7 para 22,3 e a razão não se moveu.
+       O que funciona é escurecer a FAIXA, não o ponto atrás da peça. */
+    linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,.34) 46%,rgba(0,0,0,.42));
 }
 /* A transição faz o mapa CHEGAR em vez de piscar — e some com reduced-motion,
    como todo movimento desta folha. */

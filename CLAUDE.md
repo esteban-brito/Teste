@@ -991,6 +991,56 @@ de uma observação dele e fechou por medição. Relato na §1-decies do handoff
     transforma em corte. E o defeito **dependia do nome sorteado** — "Time Teste"
     não tem descendente e não mostrava nada (regra 46).
 
+## Sessão de 10/08/2026 — a hierarquia do fundo e o botão que era pêssego
+
+Ciclo visual sem tocar em dado, OVR, RNG ou balanceamento. Duas queixas do
+responsável com a tela aberta, as duas resolvidas por medição: *"as cores estão
+muito fortes […] o fundo se destaca mais do que o card central"* e *"o botão do
+COM NARRAÇÃO ta muito claro, quero que ele seja só laranja e liquid glass"*.
+
+84. **CAMADA CHAPADA NÃO SABE ONDE ESTÁ O CONTEÚDO — dê a ela uma MÁSCARA
+    antes de mexer no valor dela.** O gel de mapa somava o mesmo em todo pixel,
+    e por isso a queixa estava travada no conflito da regra 68: baixá-lo acalma
+    a tela E aproxima os sete mapas, que a guarda exige separados (medido, a .42
+    a separação cai a 10,7 contra piso 10). A régua mostrou o defeito com
+    número — na banda em torno do palco o fundo entregava croma **53 contra 26
+    do card**, e luminância 34 contra 24. `mask-image` resolve o que nenhum
+    valor resolvia: transparente no miolo, opaca nas bordas. A identidade do
+    mapa fica onde é lida e some de onde competia; a saturação global SOBE
+    (1,38 → 1,6) para repor a periferia, e a tela fica mais calma mesmo assim.
+    É a regra 70 num eixo novo: lá a operação virou multiplicativa, aqui virou
+    espacial. Antes de calibrar uma camada, pergunte se ela precisa ser
+    uniforme.
+85. **ATRÁS DE UMA PEÇA TRANSLÚCIDA, ESCURECER NÃO SEPARA.** A tentativa óbvia
+    — um véu escuro centrado atrás do card — foi medida e PIOROU: a lâmina
+    amostra o fundo, então ela cai junto, e o card foi de 24,7 para 22,3 sem
+    que a razão se movesse. O que funciona é escurecer a FAIXA em volta, não o
+    ponto atrás. Vale para todo material de vidro deste projeto.
+86. **A COR DE UM TEXTO É CONSEQUÊNCIA DO FUNDO, e por isso ela precisa ser
+    REVISITADA toda vez que o fundo muda.** O rótulo do primário era escuro
+    (`#150800`) porque o botão era claro; ao escurecer o botão, ele foi a
+    2,84:1 — e a microcópia em `--neutral`, que já tinha subido de `--dim` em
+    09/08 pelo mesmo motivo, reprovou nos **vinte** casos a 3,99–4,44:1. É a
+    terceira vez que uma cor desta tela migra por dependência, e a lição é que
+    ela nunca foi uma escolha de estilo. **E o ensaio pode medir a régua
+    errada:** eu medi o contraste do RÓTULO e dei a variante por aprovada; quem
+    reprovou foi o SUBTEXTO, que tem tinta própria. Ao ensaiar cor de fundo,
+    enumere TODAS as tintas que pousam nela.
+87. **CLAREAR UMA PEÇA COLORIDA COM BRANCO NÃO CLAREIA — DESSATURA.** O hover
+    do primário copiava o gesto do irmão (véu branco), e sobre laranja isso
+    devolve exatamente o pêssego que o repouso tinha acabado de perder. Medido,
+    o gesto do irmão copiado ao pé da letra também reprovava o texto (`.14` →
+    3,96:1). Subir o próprio tingimento (.46 → .58) deixa o botão mais luminoso
+    E mais laranja, dá 4,82:1 e ainda ABRE o intervalo entre os dois estados,
+    porque o repouso pôde descer junto. Peça que É a cor acende; peça que é
+    vidro nu recebe luz branca.
+
+**E a lição de método:** as duas queixas eram sobre "cor forte" e "claro
+demais", que soam como pedidos de ajuste fino de número. Nenhuma das duas se
+resolveu por número — uma virou máscara, a outra virou troca do material do
+botão. **Quando um valor não fecha, é porque ele está governando duas coisas ao
+mesmo tempo**, e o trabalho é separá-las.
+
 ## A ANTESSALA É O PADRÃO DE DESIGN — decisão de 07/08/2026
 
 O responsável elegeu a antessala da partida como referência de estilo para o jogo
