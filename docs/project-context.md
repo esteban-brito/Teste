@@ -52,10 +52,12 @@ produziu são as 28–31 do `CLAUDE.md`.
 
 Atualização vigente (tem precedência sobre o registro histórico abaixo):
 
-- `origin/sandbox-test` aponta para `da322b9`, e há **8 commits locais não
-  publicados** do ciclo de organização — parados por escolha do responsável, que
-  preferiu revisar antes, não por pendência técnica. O checkpoint visual anterior,
-  `7175c26`, foi validado e publicado pela execução `30652005186`;
+- **estado de publicação não mora aqui.** Esta linha dizia que `origin/sandbox-test`
+  apontava para `da322b9` com 8 commits locais parados; os 8 foram publicados em
+  07–08/08/2026 e o resto do trabalho virou `b0f19a7` em 09/08. Um SHA digitado à
+  mão em prosa é a regra 43 esperando acontecer: quem quer o estado roda
+  `git status --short --branch`, e quem quer o histórico lê a §1 de
+  `docs/retomada-2026-08-05.md`, que tem dono e é atualizada por ciclo;
 - o handoff operacional do ciclo P5 está em
   `docs/p5-aplicacao-ui-2026-07-29.md`; ele registra commits, validações, contratos
   dos estados restantes e a próxima fatia segura;
@@ -102,7 +104,7 @@ Atualização vigente (tem precedência sobre o registro histórico abaixo):
 | grandeza | valor |
 |---|---:|
 | `checadores` | 28 |
-| `suites` | 27 |
+| `suites` | 28 |
 
 - o ciclo **P2 de modularização por paridade está concluído**, Fases 0–7;
 - `game.js` caiu de 3.054 para **882 linhas** no piso do P5 — 1.206 ao fim do P2,
