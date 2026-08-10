@@ -421,6 +421,26 @@
   /* A coluna estreita da moldura: faixa de contexto e barra de ação. O palco e o
      veredito são mais largos de propósito — o confronto é o herói da tela. */
   --pm-col:548px;
+  /* A COLUNA LARGA — palco e veredito. Era `min(920px,100%)` escrito DUAS vezes,
+     uma em cada regra, e número repetido não é sistema (regra 54).
+     920 CAÍRAM PARA 760 EM 09/08/2026, por medição: com 920 o palco ficava
+     4,81:1 e o vão entre os dois blocos de time media 364px — um buraco no meio
+     do card, herdado de quando o "VS" morava ali. Sem ele, os dois times
+     estavam a meia tela um do outro e o confronto não tinha tensão nenhuma.
+     A 760 o vão cai para 204px e a proporção para 3,4:1. O tablet não muda
+     (712px já vinham do `100%`) e o celular também não (358px). */
+  --pm-palco-w:780px;
+  /* A ESCALA DO CARD É PRÓPRIA, e é uma só — 09/08/2026, a pedido: *"as fontes
+     do bloco central estão muito grandes, diminua um pouco por padrão e deixe
+     tudo padronizado, tanto nome do time quanto força"*.
+     O nome vinha de `--fs-titulo` e a força de `--fs-hero`, dois tokens gerais
+     da tela com curvas de crescimento diferentes (2,9vw contra 5,2vw): eles se
+     afastavam conforme a janela crescia, e no desktop a força chegava a 60px
+     contra 33 do nome. Agora os dois saem da MESMA base, com um degrau fixo
+     entre eles — mudar a base move os dois juntos, que é o que "padronizado"
+     quer dizer aqui. */
+  --pm-fs-nome:clamp(1.05rem,2.1vw,1.55rem);
+  --pm-fs-forca:clamp(1.6rem,3.3vw,2.45rem);
   /* Piso de largura das duas ações, para elas terem a MESMA caixa (regra 56).
      Não é `flex-basis`: ver a nota em `.prematch-modos .roll`. */
   --pm-acao-w:268px;
@@ -1663,7 +1683,12 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    `flex-basis` a largura preferida do container passou a ser calculada a partir
    das bases e os dois botões empilharam num viewport de 1440px, onde sobravam
    828px. Piso de largura iguala as caixas sem opinar sobre a do pai. */
-.prematch-modos .roll{border-radius:var(--r-acao);padding:var(--e-4) var(--e-6);
+/* O CORPO DO TEXTO É O MESMO NOS DOIS — 09/08/2026, e o defeito era real: o
+   primário é `.roll` (.92rem) e o secundário é `.roll.ghost` (.76rem), então o
+   rótulo de um media 14,72px e o do outro 12,16px — 21% de diferença entre
+   botões que devem ser idênticos. Ninguém tinha medido; o olho do responsável
+   pegou antes da régua. Declarar aqui vence as duas heranças de uma vez. */
+.prematch-modos .roll{font-size:.86rem;border-radius:var(--r-acao);padding:var(--e-4) var(--e-6);
   flex:0 0 auto;min-width:var(--pm-acao-w);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;line-height:1.15;
   /* CENTRAR CAIXA NÃO É CENTRAR TINTA — regra 35, agora nos botões. O tracking
@@ -1684,23 +1709,103 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    acima dela. Explicação de um controle pertence ao controle: dentro dele ela
    informa quem hesita e desaparece para quem já decidiu, sem gastar uma faixa
    inteira nem uma sexta superfície de vidro. */
+/* A TINTA DO SUBTEXTO SUBIU DE `--dim` PARA `--neutral` — 09/08/2026, e foi a
+   régua que exigiu: com o fundo do mapa mais claro, `--dim` caiu para 4,16–4,44:1
+   em Anubis, Dust2 e Mirage, contra o piso de 4,5. `--dim` é calibrado para
+   painel escuro, e este texto pousa sobre vidro com foto atrás — é a regra 46:
+   a cor era função de um fundo que mudou. Continua a MESMA nos dois botões,
+   que é o que o pedido de padronização exige. */
 .pm-acao-sub{font-family:var(--ff);font-size:var(--fs-rotulo);letter-spacing:.1em;
-  text-indent:.1em;text-transform:none;font-weight:600;color:var(--dim)}
-#prematchNarrado{color:var(--txt);border:1px solid rgba(var(--accent-rgb),.55);
-  background:linear-gradient(180deg,rgba(var(--accent-rgb),.42),rgba(var(--accent-deep-rgb),.28))}
-#prematchNarrado .pm-acao-sub{color:rgba(255,255,255,.72)}
+  text-indent:.1em;text-transform:none;font-weight:600;color:var(--neutral)}
+/* A COR DA MARCA VIRA LUZ POR `screen`, NÃO POR TINTA — 09/08/2026.
+   O primário era `rgba(laranja,.42)` sobre fundo escuro, e medido na tela isso
+   dava `rgb(105,72,68)`: um TERRACOTA OPACO ao lado de um secundário que é vidro
+   puro. A folha dizia "cor da marca como LUZ atrás do vidro em vez de
+   preenchimento chapado" desde 07/08 e entregava exatamente o preenchimento
+   chapado — cobrir um fundo escuro com laranja translúcido só pode dar marrom,
+   porque a operação é a errada. É a regra 70 num eixo novo: troque a OPERAÇÃO,
+   não o número. `screen` sobre escuro clareia preservando a saturação, e a
+   mesma tinta passa a medir `rgb(149,84,61)` — laranja de verdade.
+   O ALFA TEM TETO, e ele é o contraste: a 0,85 o fundo vai a `rgb(195,97,55)` e
+   o rótulo branco cai para 4,13:1, abaixo do piso. A 0,62 fica em 5,77:1. */
+/* OS DOIS BOTÕES SÃO A MESMA PEÇA — 09/08/2026, a pedido: *"os dois devem ser
+   absolutamente idênticos, exceto pela cor laranja do COM NARRAÇÃO"*.
+   Eles tinham construções diferentes: o secundário usava o vidro `medio` do
+   sistema, e o primário declarava fundo e borda próprios. Duas peças do mesmo
+   nível montadas de jeitos diferentes é a regra 56 — a diferença entre elas
+   tinha de ser só ÊNFASE, e virou material.
+   Agora a base é uma só, e o primário acrescenta exatamente duas coisas: a cor
+   na borda e a luz por `screen`. Nada mais. */
+#prematchStart,#prematchNarrado{color:var(--txt);
+  border:1px solid var(--vidro-medio-borda);background:var(--vidro-medio-bg)}
+/* O VIDRO COLORIDO CLAREIA ANTES DE TINGIR, e essa é a parte que faltava.
+   Tinta translúcida sobre fundo escuro só pode ESCURECER — por isso todas as
+   tentativas anteriores deram marrom, medidas em `rgb(105,72,68)`, `rgb(87,64,66)`
+   e `rgb(108,78,68)`. Vidro âmbar real não faz isso: ele amostra a luz de trás e
+   a devolve tingida. `brightness` no `backdrop-filter` é exatamente essa etapa,
+   e ela precisa vir ANTES da tinta na pilha — é o filtro do fundo, não do
+   elemento. Com o fundo clareado, o mesmo laranja finalmente lê como laranja.
+   O secundário mantém o vidro `medio` do sistema: a única diferença entre os
+   dois botões continua sendo a COR, agora inclusive no material. */
+/* A TINTA DO TEXTO É FUNÇÃO DO FUNDO — regra 46, aplicada aqui.
+   Com o vidro laranja claro, texto claro reprova em TODOS os sete mapas
+   (1,87 a 4,19:1 contra piso 4,5): não é ajuste fino, é o par errado. Um botão
+   claro pede tinta escura, e isso não quebra a padronização pedida — os dois
+   botões continuam com a mesma caixa, o mesmo corpo, o mesmo material e a mesma
+   construção. O que muda é a COR, e a cor do texto é consequência dela, não uma
+   segunda decisão de estilo. */
+#prematchNarrado,#prematchNarrado .pm-acao-sub{color:#150800}
+/* O CLAREAMENTO É UMA CAMADA, NÃO UM FILTRO PRÓPRIO — e a guarda foi quem
+   exigiu. Pôr `brightness` no `backdrop-filter` deste botão criava um SEGUNDO
+   material de vidro na tela (`blur(14px) saturate(1.7) brightness(1.85)` ao lado
+   de `blur(14px) saturate(1.4)`), e `check-glass-system` existe justamente para
+   impedir isso: nível de vidro significa PAPEL, e o que distingue os níveis é a
+   densidade do fundo — nunca o raio nem o filtro (regra 64).
+   Uma base branca translúcida SOB o laranja faz o mesmo trabalho óptico:
+   clareia o que vem de trás antes de tingir, sem tocar no material. O botão
+   continua sendo o mesmo vidro `medio` do irmão ao lado. */
+#prematchNarrado{border-color:rgba(var(--accent-rgb),.55);
+  background:linear-gradient(0deg,rgba(255,255,255,.22),rgba(255,255,255,.22)),
+    rgba(var(--accent-rgb),.72)}
+/* O PRIMÁRIO É LARANJA POR INTEIRO, E EM VIDRO — 09/08/2026, a pedido: *"o botão
+   COM NARRAÇÃO era pra ser inteiramente laranja liquid glass […] QUERO
+   MINIMALISMO, E LIQUID GLASS ABSOLUTO"*.
+   O caminho até aqui está registrado porque cada tentativa ensinou o limite:
+   laranja CHAPADO sobre fundo escuro mede `rgb(105,72,68)` e lê como terracota
+   opaco; `screen` cobrindo tudo mede `rgb(149,84,61)` e continua bloco; cor só
+   na borda vira minimalismo demais e perde a hierarquia da ação principal.
+   O que faz vidro COLORIDO é a mesma coisa que faz vidro incolor: deixar ver
+   ATRAVÉS. Por isso a tinta é translúcida de verdade (.30) e fica SOB o
+   `backdrop-filter` que a peça já tem — a foto do mapa continua atravessando,
+   só que tingida de laranja, exatamente como acontece no vidro âmbar. Sem
+   `screen`, sem camada extra, sem gradiente: uma cor, uma superfície. */
+
+/* O conteúdo sobe acima da luz — mesma razão da regra do palco: texto sob uma
+   camada de blend deixa de ser texto e vira parte do material. */
+#prematchNarrado>*{position:relative;z-index:1}
+/* O SUBTEXTO É O MESMO NOS DOIS. Ele tinha uma tinta própria no primário, do
+   tempo em que o fundo ali era laranja chapado e `--dim` não aguentava; com o
+   vidro tingido o fundo dos dois é praticamente o mesmo, e manter a exceção era
+   a última diferença de material entre peças que devem ser idênticas. */
 /* O botão limpo é vidro branco translúcido e pousa direto sobre a foto do mapa.
    Ele NÃO usa `--vidro-base`, e isto é decisão, não esquecimento: o nível
    `medio` já nasce denso (60–72%), que é o bastante para a microcópia. A base é
    do nível `raso`, que é fino de propósito. Este comentário afirmava o contrário
    até 09/08 — dizia "a base escura também aqui" para um token que não tinha
    consumidor nenhum na folha. Ver o bloco de `--vidro-base` no `:root`. */
-#prematchStart{color:var(--txt);border:1px solid var(--vidro-medio-borda);
-  background:var(--vidro-medio-bg)}
+/* A base dos dois botões vive junto do primário, acima — esta regra separada
+   era o que fazia o secundário parecer "o outro material" (regra 56). */
 @media (hover:hover) and (pointer:fine){
   .prematch-modos .roll:hover{transform:translateY(-2px)}
-  #prematchNarrado:hover{background:linear-gradient(180deg,rgba(var(--accent-rgb),.55),rgba(var(--accent-deep-rgb),.36))}
-  #prematchStart:hover{background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.06))}
+  /* O HOVER SÓ CLAREIA — 09/08/2026, a pedido: *"quando eu colocar o mouse em
+     cima ele só dar uma clareada, a mesma coisa com o outro botão só que sem ser
+     laranja"*. Os dois trocavam de GRADIENTE ao passar o mouse, ou seja, de
+     material: um virava laranja mais forte, o outro ganhava um degradê branco
+     que o secundário não tem em repouso. Agora cada um sobe a própria tinta um
+     degrau — laranja continua laranja, vidro continua vidro — e a única
+     diferença entre os dois hovers é a mesma diferença que eles têm parados. */
+  #prematchNarrado:hover{background:linear-gradient(0deg,rgba(255,255,255,.30),rgba(255,255,255,.30)),rgba(var(--accent-rgb),.78)}
+  #prematchStart:hover{background:rgba(255,255,255,.14)}
 }
 
 /* ═══ TORNEIO · SUÍÇA E PLAYOFFS ════════════════════════════════════════════ */
@@ -1839,8 +1944,18 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    32px separam contexto de confronto, 44px isolam a AÇÃO de toda a informação.
    Os vãos vivem como margem nos próprios blocos porque um `gap` só não sabe
    distinguir grupos. */
-.prematch{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:0;padding:var(--e-8) var(--e-6)}
+/* O RECUO LATERAL CRESCE COM A TELA — 09/08/2026. Era `--e-6` fixo, 24px, e no
+   TABLET isso deixava o palco encostado nas bordas (24px de folga) enquanto a
+   faixa e os botões flutuavam a 106px: o card lia como espremido contra a
+   janela, e as duas larguras brigavam. No desktop o palco já para em 760px pelo
+   token, então nada muda lá; o celular tem regra própria na `@media` de 640px e
+   também não muda. Só o meio se move — que é onde estava o defeito (regra 39). */
+/* `--pm-obliq` é a OBLIQUIDADE das faixas de mapa, e mora aqui, no topo da
+   tela, para que a diagonal do fundo e a costura do palco sejam afinadas
+   juntas: são o mesmo vocabulário, e divergir seria ruído. */
+.prematch{--pm-obliq:7%;
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:0;padding:var(--e-8) clamp(24px,5vw,64px)}
 /* Contexto e mapa são o MESMO grupo — a moldura do confronto —, então ficam a
    8px um do outro e a 32px da lâmina. É a proximidade dizendo o parentesco. */
 /* A COLUNA DA TELA — 08/08/2026. Medido: a faixa de contexto tinha 516px e a
@@ -1921,7 +2036,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    `--r-lamina` e os raios internos passam a ser CONCÊNTRICOS: quem encosta na
    aresta interna recebe o raio do pai menos o recuo, e o brasão herda a mesma
    família de curvatura em vez de ter regra própria. */
-.pm-palco{--pm-junc:22px;position:relative;width:min(920px,100%);margin-bottom:var(--e-2);
+.pm-palco{--pm-junc:22px;position:relative;width:min(var(--pm-palco-w),100%);margin-bottom:var(--e-2);
   display:grid;grid-template-areas:"palco";
   border-radius:var(--r-lamina);overflow:hidden;isolation:isolate;
   border:1px solid var(--vidro-alto-borda);
@@ -1986,8 +2101,12 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 /* O PALCO CRESCE PARA DENTRO DO VAZIO. Medido antes: a lâmina ocupava 161px de
    900 — 18% da altura — e sobravam 199px de nada abaixo do conteúdo. Numa
    antessala, o confronto é o herói e tem de dominar o eixo vertical. */
+/* O RECUO VERTICAL É MAIOR QUE O HORIZONTAL — 09/08/2026, e é ele que dá ALTURA
+   ao palco. Com o recuo único de `clamp(28px,4.4vw,46px)` o card media 920×191,
+   uma faixa de 4,81:1 esticada no meio da tela; o confronto virava uma linha de
+   placar. Estreitar sem crescer teria só encolhido o herói da tela. */
 .pm-lado{grid-area:palco;position:relative;display:flex;align-items:center;gap:clamp(14px,2.6vw,24px);
-  padding:clamp(28px,4.4vw,46px);min-width:0}
+  padding:clamp(34px,5.2vw,62px) clamp(26px,3.4vw,40px);min-width:0}
 /* OS DOIS LADOS TÊM COR, E O MESMO MATERIAL — 08/08/2026, a pedido: *"pq só o
    time inimigo tem cor de fundo naquele bloco central liquid glass? […] eu
    prefiro os dois com cor, e os dois padronizados no liquid glass, pouca cor"*.
@@ -2057,7 +2176,28 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    na metade: sem `clip-path`, as duas metades ocupam a célula inteira, então uma
    sombra interna nelas cobriria o card todo. O aro fica ACIMA do vidro, onde a
    informação tem de estar. */
-.pm-lado.mine .team-mono{box-shadow:0 0 0 2px rgba(255,255,255,.4),0 0 18px -4px rgba(255,255,255,.5)}
+/* O ARO LUMINOSO DO BRASÃO DO JOGADOR SAIU — 09/08/2026, a pedido: *"retire
+   aquela borda luminosa em volta da logo do MEU TIME […] TUDO IGUALMENTE
+   PADRONIZADO"*. Ele era o último resíduo da ideia de marcar o dono do time por
+   realce; a mesma ideia já tinha sido recusada em texto no mesmo dia. Os dois
+   brasões passam a ser a mesma peça, e quem é você a tela diz pela POSIÇÃO —
+   seu time é sempre o da esquerda, como no placar da partida. */
+/* OS DOIS LADOS TÊM O MESMO TRATAMENTO DE TEXTO — 09/08/2026, a pedido:
+   *"quero os dois times igualmente padronizados no bloco central"*.
+   O problema era real e estava medido: a cor do clube do jogador é `#000000`, e
+   a regra que traz a cor à luz para virar texto devolve CINZA quando a cor não
+   tem matiz — com você em 90 e o adversário em 85, o SEU lado era o que parecia
+   mais fraco. Tentei resolver com realce luminoso no lado do jogador e foi
+   recusado: *"detestei esse luminoso"*. Estava certo — era mais uma camada
+   somada, e a regra 63 já diz que material se conserta tirando, não pondo.
+   A saída é padronizar em vez de compensar: nome e força usam a MESMA tinta nos
+   dois lados, e a cor do clube continua inteira onde ela é identidade — no
+   brasão e no campo de fundo da metade. Nenhum lado precisa de exceção, e a
+   assimetria some porque deixou de existir, não porque foi maquiada.
+   A tinta é trocada NA REGRA DE ORIGEM, logo abaixo, e não numa declaração
+   extra aqui: a primeira tentativa foi um override neste ponto do arquivo, e
+   ele não pintou nada — `.pm-ef b` é declarada DEPOIS e ganha por ordem, que é
+   a mesma cascata que já matou uma regra responsiva inteira em 02/08. */
 
 /* z2 — O CONTEÚDO SOBE ACIMA DA LÂMINA. É esta linha que faz o vidro ser
    material e não névoa: texto desfocado seria o vidro competindo com o
@@ -2074,8 +2214,14 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    sólida do clube, sem quina, sem luz. O bisel dá espessura à peça e o realce
    superior a põe no mesmo mundo da lâmina; a cor do clube continua sendo a cor
    do clube, porque ela é identidade e não material. */
-.pm-lado .team-mono{width:clamp(52px,7vw,74px);height:clamp(52px,7vw,74px);
-  font-size:clamp(1.05rem,2vw,1.5rem);border-radius:var(--r-crest);
+/* O BRASÃO ENCOLHEU COM O CARD — 09/08/2026. Ele media 74px num palco de 920;
+   a 680 aquele mesmo quadrado comia a largura de que o NOME precisa, e "Time
+   Teste" passou a quebrar em duas linhas no lado do jogador — que é o lado
+   estreito sempre que o adversário é favorito. O nome do clube é digitado e vai
+   até 18 caracteres, então o pior caso não é um time do catálogo: é o do
+   jogador. Espaço para a palavra vale mais que 10px de brasão. */
+.pm-lado .team-mono{width:clamp(48px,5.6vw,62px);height:clamp(48px,5.6vw,62px);
+  font-size:clamp(1rem,1.7vw,1.3rem);border-radius:var(--r-crest);
   box-shadow:var(--vidro-bisel);position:relative;overflow:hidden}
 /* O reflexo de superfície: uma lâmina de luz na metade de cima, como a que
    escorre num botão de vidro real. Vive num pseudo-elemento para não disputar o
@@ -2099,20 +2245,70 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    conteúdo que o outro não tem, o desalinho aparece na hora — que é o que a
    guarda também mede. */
 .pm-info{display:grid;grid-template-rows:auto auto;align-content:center;
-  gap:var(--e-1);min-width:0}
-.pm-lado--b .pm-info{align-items:flex-end;text-align:right}
+  gap:var(--e-1);min-width:0;
+  /* O container do NOME. `inline-size` porque só a largura interessa e só ela
+     pode ser consultada sem circularidade — a regra 4 vale aqui como vale na
+     carta: quem consulta é o descendente (`.pm-name`), nunca o próprio
+     container pela medida dele.
+     `flex:1 1 0` NÃO É OPCIONAL, e custou uma captura para descobrir:
+     `container-type:inline-size` implica `contain:inline-size`, ou seja, o
+     CONTEÚDO deixa de influenciar a largura. Num item de flex com base `auto`
+     isso zera a largura base — o bloco colapsou, o nome com `nowrap`
+     transbordou e o brasão do adversário ficou POR CIMA do número da força.
+     Com base 0 e crescimento 1 a largura passa a vir do espaço que sobra no
+     lado, que é justamente a medida que `100cqi` precisa significar. */
+  flex:1 1 0;
+  container-type:inline-size}
+/* `justify-items`, E NÃO `align-items` — 09/08/2026. `.pm-info` é GRID, e em
+   grid `align-items` alinha no eixo de BLOCO, ou seja, na vertical: a
+   declaração antiga não fazia nada na horizontal. Isso passou despercebido
+   enquanto o bloco tinha largura de conteúdo, porque aí nome e número já
+   nasciam colados um sobre o outro; ao ganhar `flex:1 1 0` ele passou a ocupar
+   o lado inteiro, e o número do adversário escorregou para o meio do card. */
+.pm-lado--a .pm-info{justify-items:start}
+.pm-lado--b .pm-info{justify-items:end;text-align:right}
 /* Sem prefixo de lado: o nome tem a MESMA escala nos dois. Ao remover a regra
    `.pm-id` num script, este seletor grudou no anterior e virou
    `.pm-lado--b .pm-name` — o lado A ficava sem estilo de nome e aparecia menor e
    mais fino que o adversário. Regra 23: reescrita em massa erra por borda. */
-.pm-name{font-family:var(--ff);font-weight:800;font-size:var(--fs-titulo);
-  letter-spacing:.01em;color:var(--txt);line-height:1.02;overflow-wrap:anywhere}
+/* O NOME ENCOLHE ATÉ CABER, E NUNCA QUEBRA — 09/08/2026, a pedido.
+   A conta é `largura ÷ (letras × avanço médio)`. `100cqi` é a largura REAL que
+   sobrou para o texto naquele lado, `--nome-ch` vem de `prematchTeamHtml` e
+   `--nome-av` é o avanço médio de um glifo em fração do corpo.
+
+   `--nome-av` FOI MEDIDO, não estimado: `.pm-name` é Chakra Petch 800, e a
+   média de avanço dos nomes reais do catálogo mais os nomes digitáveis deu
+   0,54em. Chutar aqui é o erro que a regra 21 registra — constante calibrada
+   contra a régua errada não conserta o desvio, cria. A margem de 4% no divisor
+   cobre a variação entre um nome só de maiúsculas e um em caixa mista.
+
+   O `min()` faz o teto valer para nome curto — "FURIA" não fica gigante só
+   porque sobra espaço — e o `max()` dá piso, porque abaixo de 1rem o nome
+   deixaria de ser a segunda leitura da tela e viraria legenda. */
+.pm-name{font-family:var(--ff);font-weight:800;
+  --nome-av:.54;
+  font-size:max(.92rem,min(var(--pm-fs-nome),
+    calc(100cqi / (var(--nome-ch,8) * var(--nome-av) * 1.04))));
+  letter-spacing:.01em;color:var(--txt);
+  /* 1,02 CORTAVA A PERNA DAS LETRAS — medido em 09/08/2026: `scrollHeight` 29
+     contra `clientHeight` 25. A caixa de linha ficava menor que a altura real da
+     fonte, e sozinho isso não faria mal; junto do `overflow:hidden` que o
+     `ellipsis` exige, virou tesoura — o "p" de Spirit e o "y" de Vitality saíam
+     decepados. Não dava para ver em texto sem descendente, que é justamente o
+     caso de "Time Teste": o defeito dependia do NOME sorteado (regra 46).
+     1,22 acomoda ascendente e descendente de Chakra Petch com folga. */
+  line-height:1.22;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* O NÚMERO É O DADO DRAMÁTICO e recebe o maior degrau da escala. Ele não é
    decoração de tamanho: é a única grandeza comparável entre os dois lados, e o
    confronto inteiro se resolve em ler dois números e a distância entre eles. */
-.pm-ef{display:flex;align-items:baseline;margin-top:var(--e-1)}
-.pm-ef b{font-family:var(--ff);font-weight:800;font-size:var(--fs-hero);
-  line-height:.92;color:var(--time-traco);font-variant-numeric:tabular-nums;
+/* O VÃO ENTRE NOME E FORÇA VEM DO `gap` DO GRID, e só dele — 09/08/2026.
+   Havia também um `margin-top:var(--e-1)` aqui, então o espaço era cobrado duas
+   vezes: `.pm-info` é grid e já separa as duas linhas. Duas fontes para a mesma
+   medida é o que faz um ajuste futuro mover metade do que deveria. */
+.pm-ef{display:flex;align-items:baseline}
+.pm-ef b{font-family:var(--ff);font-weight:800;font-size:var(--pm-fs-forca);
+  line-height:1.06;color:var(--txt);font-variant-numeric:tabular-nums;
   letter-spacing:-.015em}
 
 /* O "VS" QUE FICAVA NA COSTURA SAIU — 08/08/2026, a pedido: *"detestei esse VS
@@ -2195,6 +2391,23 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .pm-chip{position:relative;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--e-1);
   flex:1 0 auto;min-width:88px;padding:var(--e-2) var(--e-4)}
+/* O SEPARADOR DE VIDRO VOLTOU — 09/08/2026, a pedido: *"antes tinha separadores
+   em liquid glass ali naquele card superior com as infos […] eu gostava
+   daquilo"*.
+   Ele tinha saído por um motivo real: como `border-left`, o fio ficava pendurado
+   no nada quando a faixa quebrava de linha no celular. A correção de então foi
+   trocá-lo por um `gap` de 1px, que some junto com a quebra — só que o vão
+   sozinho quase não lê sobre o vidro, e o que se perdeu foi o desenho.
+   Volta como LUZ, não como borda: um fio de duas paradas — claro em cima,
+   escuro embaixo —, que é como uma aresta de vidro real se comporta. E volta só
+   ACIMA de 640px, largura em que a faixa nunca quebra; no celular continua o
+   `gap`, porque lá o defeito antigo é real. `box-shadow` não ocupa espaço, então
+   nenhuma medida de caixa muda. */
+@media (min-width:641px){
+  .pm-chip+.pm-chip{box-shadow:
+    -1px 0 0 rgba(255,255,255,.13),
+    -1px 0 0 rgba(0,0,0,.22) inset}
+}
 /* O RÓTULO NÃO USA `--dim` — 08/08/2026, e a razão é medida, não estética.
    `--dim` é calibrado para painel escuro; aqui a faixa pousa sobre a foto do
    mapa, e a varredura dos sete deu 3,91–4,92:1 já ANTES da foto existir: seis
@@ -2203,7 +2416,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    A hierarquia contra o valor continua inteira, porque ela nunca foi cor: são
    10px regulares contra 14px em peso 800 e caixa-alta. */
 .pm-chip-r{font-family:var(--ff);font-size:var(--fs-rotulo);letter-spacing:var(--tr-rotulo);
-  text-transform:uppercase;color:var(--neutral);opacity:.9;line-height:1}
+  text-transform:uppercase;color:#e8eef6;opacity:.95;line-height:1}
 .pm-chip-v{font-family:var(--ff);font-weight:800;font-size:var(--fs-corpo);letter-spacing:.06em;
   text-transform:uppercase;color:var(--txt);line-height:1.1;white-space:nowrap}
 /* A SÉRIE é o item que muda o tamanho do confronto e continua com ênfase — mas
@@ -2226,7 +2439,10 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    chip — outro fundo, outra conta. É a regra 46 numa forma nova: a cor era
    função de um dado, e eu a levei para um lugar onde a função não vale.
    A marca continua presente onde não custa contraste: no fio aceso da base. */
-.pm-chip--mapa .pm-chip-v{color:var(--txt)}
+/* `.pm-chip--mapa .pm-chip-v` declarava `color:var(--txt)` — exatamente o que
+   `.pm-chip-v` já define. A regra não pintava nada; era uma NOTA escrita como
+   código, e o comentário acima já diz o que ela queria dizer. Regra sem efeito
+   é pior que comentário: parece contrato e não é. */
 .pm-chip--agora{background:linear-gradient(180deg,rgba(var(--mapa-rgb),.16),rgba(var(--mapa-rgb),.06))}
 .pm-chip--agora::after{content:"";position:absolute;left:var(--e-3);right:var(--e-3);bottom:0;
   height:2px;border-radius:2px 2px 0 0;background:var(--mapa-cor);
@@ -2259,7 +2475,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    elevações diferentes é o que faz uma faixa parecer colada e a outra flutuar;
    medido lado a lado, a de baixo lia como impressa no fundo. Diferença entre
    níveis é decisão do sistema; diferença DENTRO de um nível é sobra de edição. */
-.pm-forca{position:relative;z-index:4;width:min(920px,100%);
+.pm-forca{position:relative;z-index:4;width:min(var(--pm-palco-w),100%);
   margin-bottom:var(--e-11);
   display:flex;align-items:center;justify-content:center;
   padding:var(--e-2) var(--e-4);border-radius:var(--r-pilula);
@@ -2386,9 +2602,15 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
       rgba(var(--time-a-rgb,120,130,145),var(--pm-veu)) 0 calc(50% - 1px),
       rgba(var(--time-b-rgb,120,130,145),var(--pm-veu)) calc(50% + 1px) 100%),
     var(--vidro-alto-bg)}
-  .pm-lado--a{flex-direction:row;justify-content:flex-start;align-items:flex-start;
+  /* `align-items` PASSOU A SER `center` — 09/08/2026. Com `flex-start` no lado A
+     e `flex-end` no B, o brasão e o bloco de texto alinhavam pela ARESTA, e como
+     eles têm alturas diferentes os CENTROS ficavam 3,8px fora — nos dois lados,
+     em direções opostas, o que dobra o efeito na leitura. Alinhar pelo centro
+     resolve os dois de uma vez; a separação entre as metades continua vindo do
+     `--pm-banda`, que é quem tem esse trabalho. */
+  .pm-lado--a{flex-direction:row;justify-content:flex-start;align-items:center;
     padding-right:var(--e-4);padding-bottom:var(--pm-banda)}
-  .pm-lado--b{flex-direction:row-reverse;justify-content:flex-start;align-items:flex-end;
+  .pm-lado--b{flex-direction:row-reverse;justify-content:flex-start;align-items:center;
     padding-left:var(--e-4);padding-top:var(--pm-banda)}
   /* Entram de cima e de baixo, no eixo em que agora se opõem. */
   .pm-lado--a .pm-crest,.pm-lado--a .pm-info{animation-name:pmEntraCima}
@@ -2399,7 +2621,13 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
      própria, e dois botões em duas linhas nunca se esticam um para o outro.
      `grid` com `auto-rows:1fr` iguala as faixas sem cravar altura, que quebraria
      se o texto crescesse. */
-  .prematch-modos{display:grid;grid-auto-rows:1fr;justify-items:stretch}
+  /* UMA REGRA SÓ — 09/08/2026. Havia DUAS `.prematch-modos` neste mesmo bloco,
+     separadas por 16 linhas de comentário, e a segunda trazia
+     `flex-direction:column`: declaração MORTA, porque o elemento é `display:grid`
+     desde a primeira. Duas regras para o mesmo seletor no mesmo contexto é
+     cascata escondida — quem lê a primeira não sabe que existe a segunda. */
+  .prematch-modos{display:grid;grid-auto-rows:1fr;justify-items:stretch;
+    width:100%;grid-template-columns:1fr}
   /* A ação empilha e cada botão ocupa a largura toda: dois botões lado a lado em
      390px deixavam o secundário com metade do alvo do primário.
      E A COLUNA ALINHA COM O RESTO DA TELA — 09/08/2026. Havia um
@@ -2415,7 +2643,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
      piso de 268px removido, os botões encolheram para 225,2px dentro de um
      contêiner de 358 — mais estreitos do que antes da correção que deveria
      alargá-los. Coluna declarada tira a largura da mão do alinhamento. */
-  .prematch-modos{flex-direction:column;width:100%;grid-template-columns:1fr}
+
   /* O piso de largura das ações é do desktop, onde elas dividem a linha. Aqui
      cada uma ocupa a coluna inteira, e manter o piso só criaria estouro numa
      tela mais estreita que 300px. */
@@ -2552,10 +2780,11 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    Por isso o fallback NÃO mora aqui: ele desceu para dentro do `::before`, sob
    a imagem, onde nada pode tapá-lo. */
 .prematch[style*="--mapa-ceu"]{position:relative;isolation:isolate}
-/* A OBLIQUIDADE das faixas de mapa. Mora no `:root` da tela para que a diagonal
-   do fundo e a costura do palco possam ser afinadas juntas — são o mesmo
-   vocabulário e divergir seria ruído. */
-.prematch{--pm-obliq:7%}
+/* A obliquidade das faixas de mapa (`--pm-obliq`) foi para a regra `.prematch`
+   principal em 09/08/2026. Ela vivia numa declaração SOLTA aqui, 816 linhas
+   depois — funcionava por cascata e lia como sobra de edição, que é o mesmo
+   defeito que `position:relative` já teve nesta folha. Um leitor que apagasse a
+   linha órfã achataria a diagonal do fundo sem entender por quê. */
 /* `@property` é o que faz o ângulo INTERPOLAR em vez de saltar entre keyframes:
    custom property sem tipo declarado é string, e string não anima. Sem isto o
    passeio da luz vira uma piscada a cada 4,5s. */
@@ -2595,7 +2824,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    1,7 e não 2,2: acima disso Anubis e Dust2 clipam no mesmo canal e voltam a
    colidir (croma cai de 13,1 para 6,0). Mais saturação não é mais separação. */
 .pm-fundo{position:absolute;inset:0;z-index:-2;overflow:hidden;pointer-events:none;
-  filter:saturate(1.7)}
+  filter:saturate(1.38)}
 .pm-fundo-faixa{position:absolute;inset:0;
   /* O SENTIDO DA OBLIQUIDADE ACOMPANHA A COSTURA DO PALCO. Na primeira versão
      ele era o inverso, e as duas diagonais formavam um X na tela: o fundo
@@ -2649,9 +2878,38 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
      `grayscale` devolve croma da FOTO — o que salva Nuke, cuja print é a mais
      acinzentada — mas Ancient e Cache são as duas esverdeadas, e a .66 elas
      passam a colidir. Medido: .66/1.46 dá 7 achados, .78/1.28 dá 5. */
-  filter:blur(var(--mapa-blur)) grayscale(.78) brightness(.5) contrast(1.28);
+  /* EXPOSIÇÃO E ENVELHECIMENTO — 09/08/2026, a pedido: o mapa mais visível *"e
+     com aspecto de sujo ou velho"*.
+     `brightness` sobe de .5 para .62 — o lugar passa a ser reconhecível — e o
+     `grayscale` cai de .78 para .70, porque o gel de cor precisa de croma para
+     multiplicar. O que envelhece é o `sepia(.24)`: ele puxa a foto para o âmbar
+     de emulsão vencida antes do gel entrar, então a cor do mapa continua sendo
+     a cor do mapa, só que sobre um filme velho. `contrast` desce de 1,28 para
+     1,16 pelo mesmo motivo que uma foto antiga não tem preto puro. */
+  /* A FOTO FICA NA COR DELA — 09/08/2026, a pedido: *"deixe o mapa da cor
+     original, coloque um filtro de cor específica pro mapa tipo areia pra
+     dust2, e coloque um efeito que fique meio sujo, velho"*.
+     O `grayscale(.78)` saiu, e com ele a contradição que eu vinha calibrando: a
+     foto era dessaturada e o gel tentava devolver a cor depois — dois passos
+     que se anulavam e brigavam pelas mesmas duas medidas. Sem ele, Dust2 chega
+     com a areia dela, Nuke com o concreto, Inferno com o tijolo, e o gel volta
+     a ser o que o nome diz: um TINGIMENTO por cima, não um recolorimento.
+     O que envelhece é `sepia` leve mais o grão da camada acima: emulsão velha
+     não é cinza, é uma cor que amarelou. E `contrast` baixo, porque foto antiga
+     não tem preto puro. */
+  filter:blur(var(--mapa-blur)) sepia(.10) brightness(.78) contrast(1.26);
   pointer-events:none;
 }
+/* A SUJEIRA É GRÃO, e o grão é a mesma técnica que a carta já usa em `.c-grao`:
+   ruído fractal num SVG embutido, sem asset e sem requisição. Ele mora no
+   CONTÊINER das faixas, e não em cada uma: num MD3 são três, e três camadas de
+   ruído dariam três densidades diferentes de sujeira na mesma tela.
+   Fica ACIMA do desfoque de propósito — poeira sobre a lente, não dentro dela.
+   `.045` foi medido contra `.035` da carta: aqui a superfície é muito maior e o
+   mesmo valor sumia. */
+.pm-fundo::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+  opacity:.075;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)'/%3E%3C/svg%3E")}
 /* O BANHO DE COR VIVE NUMA CAMADA PRÓPRIA, e essa separação é o ponto inteiro.
    Na primeira versão ele era a camada de cima do MESMO `background` da foto — e
    `filter` se aplica ao elemento inteiro, então o `grayscale(.78)` dessaturava
@@ -2697,9 +2955,14 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    que `color` comprime ao reancorar a luminosidade.
    `multiply` escurece demais (luminância 13,5) e `color-burn` destrói a tela
    (2,1). `overlay` foi o único que subiu as duas medidas juntas. */
+/* O GEL FICOU LEVE — 09/08/2026. Ele era opaco porque precisava RECOLORIR uma
+   foto dessaturada; com a imagem na cor dela, essa força vira excesso e foi
+   exatamente o que se leu como *"a cor está muito forte"*. A .42 ele tinge sem
+   substituir: a identidade do mapa continua chegando, agora somada à cor real
+   da imagem em vez de no lugar dela. */
 .pm-fundo-faixa::after{
   content:"";position:absolute;inset:0;pointer-events:none;
-  mix-blend-mode:overlay;
+  mix-blend-mode:overlay;opacity:.55;
   background:var(--mapa-cor);
 }
 /* A COSTURA ENTRE DUAS FAIXAS. Sem ela as fotos encostam e a divisão some

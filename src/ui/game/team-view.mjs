@@ -95,10 +95,26 @@ export function liveTeamHeaderHtml(team,side,sideElementId){
    duas linhas, e aí nome e número alinham sem ninguém alinhá-los.
    A informação não era essencial aqui — a antessala responde "quem joga e quanto
    vale", não a biografia do elenco. */
+/* `--nome-ch` É O QUE PERMITE O NOME ENCOLHER EM VEZ DE QUEBRAR — 09/08/2026.
+   O card do confronto é estreito de propósito, e o lado do jogador fica mais
+   estreito ainda sempre que o adversário é favorito, porque a divisão É a
+   proporção de força. Nesse espaço, "Time Teste" já quebrava em duas linhas — e
+   o nome do clube é DIGITADO, com até 18 caracteres, então o pior caso nem
+   sequer está no catálogo.
+
+   Container query sozinha não resolve: `cqi` sabe a largura disponível, mas não
+   sabe quantas letras precisam caber nela, e por isso encolheria "FURIA" tanto
+   quanto "CAMPEONATO BRASIL". Medir no DOM resolveria, ao custo de um laço de
+   layout a cada montagem. O comprimento é a única coisa que falta ao CSS, e
+   quem o conhece é quem monta a peça (regra 45) — daí ele viajar como variável.
+
+   Fica no elemento, e não numa classe por faixa de tamanho: faixa criaria
+   degraus visíveis entre um nome de 9 e um de 10 letras. */
 export function prematchTeamHtml(team){
+  const nome=team?.nome||"";
   return `<div class="pm-crest">${monoHtml(team)}</div>`
-    +`<div class="pm-info">`
-    +`<div class="pm-name">${esc(team.nome)}</div>`
+    +`<div class="pm-info" style="--nome-ch:${Math.max(1,nome.length)}">`
+    +`<div class="pm-name">${esc(nome)}</div>`
     +`<div class="pm-ef"><b>${team.ef}</b></div>`
     +`</div>`;
 }
