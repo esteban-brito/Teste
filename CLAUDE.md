@@ -889,6 +889,39 @@ Quando um estado fora do escopo acusar diferença, recapture e veja se ela se
 INVERTE — foi assim que o resíduo de `celular-07-mapa` (+1/255 em 0,3%) se
 revelou ruído.
 
+## Sessão de 09/08/2026 (tarde) — publicação e o detector de órfãos
+
+A fatia 0 do plano de organização entrou: `bancada/suites/css-orfaos.js` compara
+o que a folha DECLARA com o DOM REAL do jogo. Relato na seção "Fatia 0 executada"
+de `docs/ciclos/plano-organizacao-do-codigo.md`.
+
+75. **GUARDA MEDE UM SENTIDO, NÃO UM EIXO.** O detector foi pedido para achar
+    regra de CSS sem consumidor, e nesse sentido a folha estava LIMPA: 339
+    classes, 8 ids, **zero órfãos**. O defeito existia no sentido contrário —
+    `sb-a` e `neutro` são montadas pelo jogo e não têm nenhuma regra —, e ele
+    sobreviveu meses porque toda varredura anterior perguntava só *"esta regra é
+    usada?"*, nunca *"esta classe é estilizada?"*. É a regra 20 num eixo novo:
+    lá a guarda só via a categoria em que rodava, aqui só vê a direção em que
+    pergunta. Ao escrever uma guarda de correspondência entre dois conjuntos,
+    **meça as duas diferenças** — e decida explicitamente qual das duas é dívida,
+    porque quase nunca são as duas: classe sem regra é gancho legítimo de JS, e
+    travá-la em lista transformaria dezenas de ganchos vivos em falsa dívida.
+76. **IDENTIDADE GERADA SÓ SE RESOLVE EXECUTANDO — parar de inferir foi o que
+    fez o detector funcionar.** Três tentativas anteriores morreram casando texto
+    no código-fonte, e a terceira produziu 390 falsos (`#Ataque`, `#UTF-8`,
+    `#pt-BR`) porque afrouxou o casador para salvar dois casos legítimos. Carregar
+    a página e coletar o DOM dissolve o problema: `fn-${slugFuncao(…)}` chega
+    resolvido. Duas condições, e as duas foram medidas: o observador entra por
+    `addInitScript`, **antes da primeira navegação** — `.pop` e `.fechando` nascem
+    e morrem no mesmo quadro —, e o veredito precisa de um balde para "não
+    visitada", senão `is-champ` e `is-elim`, que são exclusivas entre si,
+    acusariam uma órfã a cada campanha.
+    **Corolário sobre determinismo:** semear o RNG não fecha a variação, porque a
+    roleta do draft usa `Math.random` cru por decisão de produto (`game.js:28`).
+    A cobertura oscila entre 298 e 310 classes; as órfãs, não. **Antes de travar
+    um número, rode a guarda DUAS vezes** — o que oscila vira diagnóstico, o que
+    não oscila vira contrato.
+
 ## A ANTESSALA É O PADRÃO DE DESIGN — decisão de 07/08/2026
 
 O responsável elegeu a antessala da partida como referência de estilo para o jogo

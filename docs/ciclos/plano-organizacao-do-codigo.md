@@ -112,6 +112,57 @@ runtime deixa de ser um problema de casador porque ela É gerada. O que sobrar e
 `style.css` sem nunca ter aparecido no DOM é candidato a órfão — e aí sim, provado
 por mutação, com a dívida travada num número como já se faz com o vidro.
 
+### Fatia 0 EXECUTADA — 09/08/2026, `bancada/suites/css-orfaos.js`
+
+O caminho acima foi seguido e funcionou. A suíte instala um `MutationObserver`
+por `addInitScript`, **antes da primeira navegação** — identidade que nasce e
+morre no mesmo quadro (`.pop`, `.fechando`, `.dragging`) não existiria para uma
+varredura feita depois —, atravessa a campanha inteira e compara o DOM real com
+o que a folha declara.
+
+**O veredito tem QUATRO baldes, e essa é a decisão de projeto que evita o ruído
+da tentativa 3.** Um percurso não alcança tudo — `is-champ` e `is-elim` são
+exclusivas, nenhuma campanha visita as duas —, então "não apareceu" não pode
+significar "morto":
+
+| balde | significa | conta como dívida? |
+|---|---|---|
+| VIVA | apareceu no DOM | não |
+| NÃO VISITADA | não apareceu, mas é literal numa fonte | não — é lacuna do percurso |
+| GERADA | casa um prefixo concatenado real (`fn-${…}`) | não — é o falso positivo de 06/08 |
+| ÓRFÃ | nenhuma das três | **sim**, e é o único balde travado |
+
+**Resultado da primeira execução: 339 classes e 8 ids declarados, 0 órfãos.** A
+folha está limpa nesse eixo — o que também explica por que as três tentativas
+anteriores pareciam plausíveis: elas acusavam falsos, porque verdadeiros não
+havia.
+
+**O achado real veio da direção INVERSA**, que o plano não previa: classe que o
+jogo MONTA e a folha nunca estiliza. São duas — `sb-a`, já registrada na tabela
+da fatia 1, e `neutro`. Essa direção **não é travada em lista**: classe sem regra
+é legítima como gancho de JS, e travá-la obrigaria a declarar dezenas de ganchos
+vivos como dívida.
+
+**O que a execução ensinou, e que muda a fatia 2:**
+
+- **o percurso NÃO é determinístico, e a causa é do produto.** `game.js:28`
+  define `rnd` sobre `Math.random` cru, e o comentário da linha 1060 declara a
+  escolha. `srand` governa a simulação, não a roleta do draft. Medido em quatro
+  execuções: 298 a 310 classes vistas. Isso não contamina o veredito — tudo que
+  oscila é literal em `src/ui`, logo cai em "não visitada" —, mas significa que
+  **o número de cobertura não serve para comparar entre dias**;
+- **o parser precisou ser de verdade, não regex.** Comentário não é seletor
+  (regra 71: `.pm-mapa` saiu em 09/08 e segue citado em prosa) e declaração não
+  é seletor (`content:".d"`). A pilha distingue `@media`, que contém regras, de
+  `@keyframes`, cujo prelúdio é `0%`/`from`;
+- **o casador de literal precisou de borda dos DOIS lados.** Sem elas `.pm-ef`
+  casa dentro de `pm-efeito` e uma órfã real passa por viva — é a regra 23.
+
+**Cinco provas sintéticas**, e três delas provam que o auditor CALA: a órfã real
+tem de ser acusada; a concatenada, a literal e a que só existe em comentário,
+não. A quarta checa que o detector ainda enxerga o prefixo `fn-` — sem o alvo, a
+prova não prova nada.
+
 **Fatia 1 — `index.html`** — o pedido explícito do responsável, e o arquivo mais
 seguro: sem lógica nenhuma. **ENTREGUE em 08/08/2026**; o relato está na §
 "Fatia 1 executada", abaixo.

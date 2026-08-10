@@ -94,6 +94,44 @@ lição que deixou 135 cartas tortas por meses.
 exigem que o auditor acuse cada defeito, mais uma que exige o retorno ao verde.
 Sem elas, um auditor sempre verde passaria por cobertura.
 
+## A suíte que pergunta o que na folha ainda tem consumidor (09/08/2026)
+
+`bancada/suites/css-orfaos.js` é a **fatia 0** do plano de organização: antes de
+mexer em `style.css`, saber o que ali ainda é usado. Ela não infere por texto —
+carrega o jogo no Chromium, atravessa a campanha inteira e coleta o DOM REAL.
+
+**Por que executar em vez de casar strings.** Três tentativas anteriores morreram
+casando identidade no código-fonte, e estão registradas no plano: `id="${id}"`
+esconde `sideA`/`sideB`; `OVERLAYS.map($)` esconde os seis overlays; e afrouxar o
+casador para salvar esses dois produziu **390 falsos** (`#Ataque`, `#UTF-8`).
+Identidade gerada deixa de ser problema de casador quando ela é de fato gerada:
+`fn-${slugFuncao(…)}` chega ao DOM resolvida.
+
+**Dois detalhes de implementação que são a diferença entre funcionar e não:**
+
+- o `MutationObserver` entra por `addInitScript`, **antes da primeira
+  navegação**. `.pop`, `.fechando` e `.dragging` nascem e morrem no mesmo quadro,
+  e uma varredura feita depois não os veria;
+- o parser de CSS é uma pilha, não um regex. Comentário não é seletor — `.pm-mapa`
+  saiu em 09/08 e continua citado em prosa (regra 71) — e `@media` contém regras
+  enquanto `@keyframes` contém quadros, cujo prelúdio é `0%`/`from`.
+
+**Quatro baldes, e só um é dívida.** VIVA (apareceu no DOM), NÃO VISITADA (não
+apareceu, mas é literal numa fonte), GERADA (casa um prefixo concatenado real) e
+ÓRFÃ. Sem o balde "não visitada", `is-champ` e `is-elim` — exclusivas entre si —
+acusariam uma órfã a cada campanha.
+
+**O percurso é um laço tolerante**, e não a travessia roteirizada da
+`e2e-game-flow`: aquela precisa que o jogador VENÇA, e aqui vencer não importa,
+importa VISITAR. Cada clique tem teto de 2,5 s e desiste em silêncio, porque
+entre o `isVisible()` e o `click()` a tela avança sozinha — sem isso o Playwright
+espera 30 s por um botão que já fechou, estourando longe da causa (regra 41).
+
+**A cobertura oscila e as órfãs não.** A roleta do draft usa `Math.random` cru
+por decisão de produto, então `srand` não fecha a variação: 298 a 310 classes
+vistas em quatro execuções. O que oscila é diagnóstico; o que não oscila é
+contrato. Rode a guarda duas vezes antes de travar qualquer número dela.
+
 Uma dessas provas ensina algo sobre o próprio produto: injetar "foco fora do
 modal" nos overlays reais **não funciona**, porque o `focusout` de `game.js`
 devolve o foco antes de o auditor olhar. A prova usa um diálogo sintético, fora
