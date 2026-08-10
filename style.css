@@ -5,13 +5,40 @@
    MARÉ·PÓLVORA·FALLEnANGELs), este arquivo é a VITRINE: dá rosto às cartas,
    à roleta, à química e ao veredito do mapa que aqueles motores produzem.
    ────────────────────────────────────────────────────────────────────
-   Ordem das seções (a ORDEM importa — é cascata):
-     :root (tokens de cor/tipografia) · roleta · grids · cartas · resultado
-     · overlays de torneio (suíça/playoffs) · partida ao vivo · tela final
-     · responsivo · movimento reduzido · CAMADA DE REFINAMENTO (no fim).
-   A camada de refinamento, ao final, sobrescreve o tema base por cascata —
-   é o lugar para ajustes visuais sem mexer nas regras estruturais acima.
+   MAPA DAS REGIÕES. Busque o marcador pelo nome — `═══ CARTAS ═══` — em vez
+   de rolar o arquivo. Dois níveis, e só dois: `═══ NOME ═══` abre uma REGIÃO,
+   `── Nome ──` abre um bloco dentro dela.
+
+     1. TOKENS
+     2. BASE, CHROME E ENTRADA
+     3. GRADES DO DRAFT
+     4. CARTAS
+     5. RESULTADO DO DRAFT
+     6. OVERLAYS · BASE, NARRAÇÃO E AÇÕES
+     7. TORNEIO · SUÍÇA E PLAYOFFS
+     8. PARTIDA · ANTESSALA E MAPA AO VIVO
+     9. TELA FINAL
+    10. PARTIDA · PLACAR DE JOGADORES
+    11. BARRA DO MAJOR
+    12. CAMADA DE REFINAMENTO
+    13. MOVIMENTO REDUZIDO
+
+   ESTA LISTA TEM DONO: `tools/check-css-comments.js` prova que ela é igual aos
+   marcadores reais, em nome e em ordem. Renomear uma região sem mexer aqui
+   reprova o `npm run check`. A versão anterior deste mapa prometia seções
+   "responsivo" e "movimento reduzido" que não existiam — as media queries estão
+   espalhadas por todas as regiões, junto do que elas ajustam.
+
+   A ORDEM IMPORTA, PORQUE É CASCATA. Duas consequências que já custaram caro:
+
+     · a CAMADA DE REFINAMENTO (12) vem depois de tudo e ganha por ORDEM, não
+       por especificidade. Foi ela que deixou `.swiss-col{min-width:138px}`
+       morto no `@media(max-width:640px)` — o valor de topo vinha depois;
+     · a região 10 é da PARTIDA e vive depois da TELA FINAL. Isso é
+       fragmentação real, não cascata; a nota no marcador dela explica por que
+       mover é fatia própria.
    ════════════════════════════════════════════════════════════════════ */
+/* ═══ TOKENS ═══════════════════════════════════════════════════════════════ */
 /* Todo token aqui tem consumidor. Dez foram removidos em 01/08/2026 por não
    terem nenhum — `--bg`, `--panel3`, `--s-red-bg`, os três `--t3-silver*` e os
    quatro `--c-*-dim`. Antes de acrescentar um token "para o caso de", declare o
@@ -415,6 +442,10 @@
   --ease-card:cubic-bezier(.22,1,.36,1); --motion-card-fast:180ms;
   --motion-card-face:360ms; --motion-card-fade:180ms;
   --motion-card-deal:400ms; --motion-card-land:280ms}
+/* ═══ BASE, CHROME E ENTRADA ═══════════════════════════════════════════════ */
+/* Reset, corpo, cabeçalho e HUD; o portão do nome do clube; os rótulos de
+   seção; a roleta do sorteio e os botões. É tudo o que a tela do draft mostra
+   antes de existir uma carta. */
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:linear-gradient(180deg,#090d14 0%,#070a0f 100%);
   color:var(--txt);font-family:'Barlow Semi Condensed',sans-serif;min-height:100vh;min-height:100dvh;overflow-x:hidden;
@@ -558,6 +589,7 @@ button.ghost{font-size:.76rem;padding:11px 20px;border:1px solid rgba(var(--line
 button.ghost.accent{border-color:rgba(var(--accent-deep-rgb),.45);color:var(--accent)}
 
 /* ╔══════════════ GRIDS · elenco e bancada ══════════════╗ */
+/* ═══ GRADES DO DRAFT ═══════════════════════════════════════════════════════ */
 /* AS DUAS GRADES SÃO A MESMA GRADE — 02/08/2026.
 
    Dois defeitos medidos, com a mesma raiz: a largura da carta era consequência
@@ -609,6 +641,11 @@ button.ghost.accent{border-color:rgba(var(--accent-deep-rgb),.45);color:var(--ac
    Estrutura compartilhada pelas duas faces. A anatomia e os tokens canônicos
    ficam no bloco "CARTA CANÔNICA" abaixo; aqui vivem apenas o envelope e os
    dois eixos herdados por jogador e treinador. */
+/* ═══ CARTAS ════════════════════════════════════════════════════════════════ */
+/* A maior região do arquivo, e a que tem mais contrato: as regras 1–21 do
+   `CLAUDE.md` governam quase tudo daqui até o resultado do draft. Leia-as antes
+   de mexer — várias medidas aqui parecem arbitrárias e são resultado de
+   medição, com o número e a data no comentário ao lado. */
 .card,.coachcard{position:relative;border-radius:var(--radius);cursor:pointer;overflow:hidden;
   min-height:148px;aspect-ratio:5/7;background:#080b11;container-type:inline-size;
   isolation:isolate;perspective:800px;-webkit-perspective:800px;
@@ -633,7 +670,7 @@ button.ghost.accent{border-color:rgba(var(--accent-deep-rgb),.45);color:var(--ac
 .coach-desenvolvedor{--cc-main:var(--c-desenvolvedor);--cc-metal:var(--c-desenvolvedor-metal)}
 .coach-motivador{--cc-main:var(--c-motivador);--cc-metal:var(--c-motivador-metal)}
 
-/* ═══ FLIP ═════════════════════════════════════════════════════════════════
+/* ── Flip ──────────────────────────────────────────────────────────────────
    Cada face gira independente e o que define o que aparece é a OPACIDADE (0/1).
    Assim nunca há sobreposição nem texto espelhado, mesmo se o Safari achatar o
    3D. Virar é por modo global (botão no cabeçalho do elenco revelado). */
@@ -650,7 +687,7 @@ button.ghost.accent{border-color:rgba(var(--accent-deep-rgb),.45);color:var(--ac
 .card.flipped .cback,.coachcard.flipped .cback{transform:rotateY(0deg);opacity:1;pointer-events:auto}
 @media(prefers-reduced-motion:reduce){.cface{transition:none}}
 
-/* ═══ FRENTE ═══════════════════════════════════════════════════════════════ */
+/* ── Frente ────────────────────────────────────────────────────────────────── */
 .c-foto{position:absolute;inset:0;z-index:0}
 .c-vinheta{position:absolute;inset:0;z-index:2;
   background:linear-gradient(180deg,transparent 46%,rgba(3,5,9,.55) 100%)}
@@ -738,7 +775,7 @@ button.ghost.accent{border-color:rgba(var(--accent-deep-rgb),.45);color:var(--ac
   font-size:var(--t4);letter-spacing:.16em;text-transform:uppercase;color:#9ba9bb}
 .c-meta span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 
-/* ═══ VERSO ════════════════════════════════════════════════════════════════
+/* ── Verso ─────────────────────────────────────────────────────────────────
    A espinha é o PLAYSTYLE. A contribuição real ainda ordena os atributos, mas
    pesos técnicos e ratings duplicados não disputam espaço com o que interessa. */
 .c-vfio,.c-vfaixa{position:absolute;left:0;right:0;top:0;
@@ -811,7 +848,7 @@ button.ghost.accent{border-color:rgba(var(--accent-deep-rgb),.45);color:var(--ac
 .c-vef b{font-family:var(--ff);font-size:clamp(9px,6cqw,13px);font-weight:700;
   color:var(--r-ink);line-height:1}
 
-/* ═══ CARTA CANÔNICA · 31/07/2026 ═══════════════════════════════════════════
+/* ── Carta canônica · 31/07/2026 ───────────────────────────────────────────
    A carta aprovada no laboratório é agora o único contrato visual. Jogadores
    compartilham a mesma grade, os mesmos corpos e o mesmo recorte de retrato;
    conteúdo nunca desaparece para "fazer caber". */
@@ -1394,6 +1431,7 @@ body.arrastando-carta{user-select:none;-webkit-user-select:none}
 @keyframes cardLandEditorial{from{transform:scale(.985)}to{transform:scale(1)}}
 .land{animation:cardLandEditorial var(--motion-card-land) var(--ease-card) both}
 
+/* ═══ RESULTADO DO DRAFT ════════════════════════════════════════════════════ */
 .bar{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px}
 .result{margin-top:14px;animation:pop .4s var(--ease) both}
 .result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
@@ -1426,7 +1464,11 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 
 /* proporção de card (5/7) padroniza a altura em todas as telas; min-height é só o piso no mobile estreito */
 
-/* ╔══════════════ OVERLAYS DE TORNEIO · suíça e playoffs ══════════════╗ */
+/* ═══ OVERLAYS · BASE, NARRAÇÃO E AÇÕES ═════════════════════════════════════ */
+/* O marcador anterior aqui dizia "OVERLAYS DE TORNEIO · suíça e playoffs", e
+   estava 237 linhas ADIANTADO: suíça e bracket só começam na região seguinte.
+   O que vive aqui é o contêiner comum a TODOS os overlays, a entrada de tela, o
+   palco da narração e os botões em vidro. */
 .overlay[hidden]{display:none}
 .is-hidden{display:none!important}
 /* SEM backdrop-filter. O fundo é #080b10 OPACO, então o desfoque processava, a
@@ -1661,6 +1703,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
   #prematchStart:hover{background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.06))}
 }
 
+/* ═══ TORNEIO · SUÍÇA E PLAYOFFS ════════════════════════════════════════════ */
 .swiss,.bracket{flex:1;overflow:auto;padding:20px}
 .swiss::-webkit-scrollbar,.bracket::-webkit-scrollbar{height:9px;width:9px}
 .swiss::-webkit-scrollbar-thumb,.bracket::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px}
@@ -1774,7 +1817,10 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .leg-dot.mine{background:var(--cyan);box-shadow:0 0 6px rgba(var(--mine-rgb),.5)}
 .leg-note{margin-left:auto;font-size:.66rem;color:var(--dim);opacity:.7;letter-spacing:.08em;text-transform:uppercase}
 
-/* ── PARTIDA: antessala + mapa ao vivo ── */
+/* ═══ PARTIDA · ANTESSALA E MAPA AO VIVO ════════════════════════════════════ */
+/* A antessala é o PADRÃO DE DESIGN do jogo desde 07/08/2026, e o sistema de
+   vidro em três níveis nasce aqui. `bancada/suites/e2e-antessala.js` mede esta
+   região na tela, em 3 viewports × 7 mapas. */
 .match-overlay{align-items:stretch}
 /* O FECHAR ENTROU NO SISTEMA — 08/08/2026. Era o único controle da tela em
    painel OPACO (`--panel2`), com raio próprio (`--radius`, 12px) e sem material
@@ -2784,6 +2830,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .sb-score .flash-tr{animation:flashTR .5s var(--ease)}
 @keyframes flashCT{0%,100%{color:var(--txt)}40%{color:var(--ct-ink);text-shadow:0 0 16px rgba(var(--ct-rgb),.6)}}
 @keyframes flashTR{0%,100%{color:var(--txt)}40%{color:var(--tr-ink);text-shadow:0 0 16px rgba(var(--tr-rgb),.6)}}
+/* ═══ TELA FINAL ════════════════════════════════════════════════════════════ */
 /* tela final de campanha (campeão / eliminado) */
 .final-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:14px;
   padding:max(28px,env(safe-area-inset-top)) 24px max(36px,env(safe-area-inset-bottom));width:100%;max-width:448px;margin:0 auto;text-align:center}
@@ -2858,6 +2905,13 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 .final-ratings .fr-row:nth-child(1){animation-delay:.55s}.final-ratings .fr-row:nth-child(2){animation-delay:.62s}
 .final-ratings .fr-row:nth-child(3){animation-delay:.69s}.final-ratings .fr-row:nth-child(4){animation-delay:.76s}
 .final-ratings .fr-row:nth-child(5){animation-delay:.83s}
+/* ═══ PARTIDA · PLACAR DE JOGADORES ═════════════════════════════════════════ */
+/* ESTA REGIÃO É DA PARTIDA E VIVE DEPOIS DA TELA FINAL. Não é cascata, é
+   fragmentação real — `.ls-*` não sobrescreve nada de `.final-*`. Mover para
+   junto da região da partida exigiria provar, par a par, que nenhuma
+   especificidade depende da ordem atual: `.r-top`/`.r-mid`/`.r-low` são
+   declaradas na tela final e reaparecem aqui como `.ls-rate.r-top`.
+   Fica declarado em vez de escondido; mexer nisso é fatia própria. */
 /* scoreboard ao vivo: um painel por time, colunas alinhadas (jogador · K-D · rating) */
 .livescore{flex:1;overflow-y:auto;padding:clamp(12px,2.5vw,20px);display:flex;flex-direction:column;gap:14px;
   width:100%;max-width:580px;margin:0 auto;box-sizing:border-box;-webkit-overflow-scrolling:touch}
@@ -2941,6 +2995,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
   .ls-team{flex:1 1 auto;min-width:5em}
 }
 
+/* ═══ BARRA DO MAJOR ════════════════════════════════════════════════════════ */
 /* botões de acesso ao Major */
 .majorbar[hidden],#majorTag[hidden]{display:none}
 .majorbar{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:18px}
@@ -2972,6 +3027,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
   .rs-cell.pop,.sb-score .bump,.sb-score .flash-ct,.sb-score .flash-tr,.rs-cell.key::after{animation:none!important}
 }
 
+/* ═══ CAMADA DE REFINAMENTO ═════════════════════════════════════════════════ */
 /* ════════════════════════════════════════════════════════════════════
    CAMADA DE REFINAMENTO DE DESIGN · "Tactical Broadcast"
    Adições não-destrutivas sobre o tema base. Cada bloco sobrescreve por
@@ -3268,6 +3324,7 @@ button.ghost:hover{transform:translateY(-2px);border-color:rgba(var(--accent-rgb
 .coachcard .cback .c-vdesc{
   --desc-simetria:calc(.85*var(--t-style)*(1 - var(--carac-esc,1)))}
 
+/* ═══ MOVIMENTO REDUZIDO ════════════════════════════════════════════════════ */
 /* ╔══════ MOVIMENTO REDUZIDO · a rede que faltava ══════╗
    09/08/2026. A folha honrava `prefers-reduced-motion` em alguns lugares e não
    em outros, e a divisão não era decisão — era o acaso de quem escreveu cada

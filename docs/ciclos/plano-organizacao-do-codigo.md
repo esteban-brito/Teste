@@ -249,6 +249,47 @@ todos foram verificados por varredura do repositório inteiro, não por leitura:
 por mutação → tokenizar literais repetidos → agrupar por região com índice no
 topo. Nunca as três no mesmo commit.
 
+### Fatia 2a EXECUTADA — 09/08/2026: o mapa, e por que NÃO agrupei
+
+**O terceiro passo foi feito primeiro, e o "agrupar" saiu dele.** A ordem acima
+supunha que reagrupar por região fosse arrumação; medindo, é mudança de
+comportamento. Fica registrado para não ser tentado de novo sem prova.
+
+**O que a medição mostrou.** Classificando as 682 regras de nível 0 por tema e
+contando blocos contíguos: `torneio` em 11 blocos, `aovivo` em 11, `final` em 8,
+`carta` em 7. Parece bagunça e em boa parte **não é** — a CAMADA DE REFINAMENTO
+do fim toca todos os temas de novo, por desenho, e o cabeçalho sempre declarou
+isso. Em CSS, mover uma regra muda quem ganha por ordem; juntar `.ls-*` ao resto
+da partida exigiria provar par a par que nenhuma especificidade depende da
+posição atual — `.r-top`/`.r-mid`/`.r-low` nascem na tela final e reaparecem
+como `.ls-rate.r-top` 60 linhas depois.
+
+**O que foi feito, então: só marcação.** Treze regiões, num formato único de dois
+níveis (`═══ REGIÃO ═══` e `── Bloco ──`), e um mapa no cabeçalho. Antes havia
+**seis formatos concorrendo** (`═══`, `══`, `╔══╗`, `──`, `════` e o do
+cabeçalho), pior que os três que a fatia 1 achou no HTML.
+
+**O mapa antigo mentia**, e de duas formas: prometia seções "responsivo" e
+"movimento reduzido" que não existem — as media queries vivem espalhadas, junto
+do que ajustam —, e o marcador `OVERLAYS DE TORNEIO · suíça e playoffs` estava
+**237 linhas adiantado**, nomeando uma coisa que só começa na região seguinte.
+
+**A prova de zero pixel NÃO foi a comparação visual, e isso é a lição de método.**
+O ritual do `CLAUDE.md` tem piso de ruído intermitente (regra 40 e o corolário de
+09/08), e para uma mudança que só toca comentário ele responde devagar e com
+incerteza. A prova certa é o **CSSOM**: carregar as duas versões no Chromium e
+comparar as regras que o navegador entendeu, uma a uma e em ordem — porque em
+CSS ordem é cascata. Resultado: **845 regras, idênticas em todas as posições.**
+É mais forte que pixel, roda em segundos e não tem ruído.
+
+**A guarda foi provada por mutação nos quatro modos de falha**: renomear a região
+no arquivo, trocar duas de ordem no mapa, remover um marcador e acrescentar uma
+região sem citá-la. Os quatro reprovam; e o arquivo volta ao verde depois.
+
+**O que continua aberto na fatia 2:** remover morto (o detector de órfãos já diz
+que não há classe sem consumidor — o morto aqui é DECLARAÇÃO que não chega à
+tela, outra varredura) e tokenizar literais repetidos.
+
 **Fatia 3 — `game.js`.** Extrair para `src/ui/` o que é montagem de HTML. É a
 fatia com mais risco de comportamento e deve vir por último, com golden e
 snapshot conferidos.

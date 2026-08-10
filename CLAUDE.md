@@ -922,6 +922,28 @@ de `docs/ciclos/plano-organizacao-do-codigo.md`.
     um número, rode a guarda DUAS vezes** — o que oscila vira diagnóstico, o que
     não oscila vira contrato.
 
+77. **PARA PROVAR QUE UMA EDIÇÃO NÃO MUDOU A FOLHA, COMPARE O CSSOM — NÃO
+    PIXELS.** A marcação de regiões do `style.css` só tocou comentário, e o
+    ritual visual do projeto responderia devagar e com incerteza, porque tem
+    piso de ruído intermitente (regra 40). Carregar as duas versões no Chromium
+    e comparar `document.styleSheets` regra a regra devolve o que o NAVEGADOR
+    entendeu: **845 regras idênticas em todas as posições**, em segundos e sem
+    ruído. Compare em ORDEM, nunca como conjunto — em CSS a posição é cascata, e
+    duas folhas com as mesmas regras em ordens diferentes são folhas diferentes.
+    Vale para qualquer edição que se declare cosmética: reindentar, reagrupar,
+    reescrever comentário.
+78. **REAGRUPAR CSS POR TEMA É MUDANÇA DE COMPORTAMENTO, NÃO ARRUMAÇÃO.** O
+    plano previa "agrupar por região" como terceiro passo da faxina; medindo, os
+    temas ocupam 7 a 11 blocos cada, e boa parte disso é DELIBERADA — a camada de
+    refinamento do fim toca todos os temas de novo, por cascata. Mover uma regra
+    muda quem ganha por ordem, e provar que não muda exige conferir par a par
+    cada seletor que reaparece com especificidade diferente (`.r-top` na tela
+    final × `.ls-rate.r-top` no placar). **Marcar onde as coisas estão entrega
+    quase todo o ganho de navegação com zero risco**; mover é fatia própria, com
+    a prova do CSSOM ao lado. E quando um arquivo tiver seis formatos de
+    marcador concorrendo, o defeito que importa não é a estética — é que um
+    deles estava 237 linhas adiantado, nomeando uma seção que começa depois.
+
 ## A ANTESSALA É O PADRÃO DE DESIGN — decisão de 07/08/2026
 
 O responsável elegeu a antessala da partida como referência de estilo para o jogo
