@@ -70,7 +70,7 @@ export const MAPA_MARCA={
   Ancient:{cor:"#3f8f5e",ceu:"#0d2113",chao:"#07140b"}, // pedra e selva úmida
   Anubis: {cor:"#d4a83a",ceu:"#282108",chao:"#151105"}, // areia e ouro do deserto
   Dust2:  {cor:"#c9a86a",ceu:"#1e2016",chao:"#10120c"}, // poeira sob sol alto
-  Cache:  {cor:"#7d9481",ceu:"#0e1d1a",chao:"#081210"}, // cinza-verde de Chernobyl
+  Cache:  {cor:"#93a6ad",ceu:"#101c20",chao:"#0a1215"}, // aço frio de Chernobyl
 };
 
 /* Mapa desconhecido não pode quebrar a tela: um mapa novo entrando no pool sem
