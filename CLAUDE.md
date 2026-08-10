@@ -944,6 +944,53 @@ de `docs/ciclos/plano-organizacao-do-codigo.md`.
     marcador concorrendo, o defeito que importa não é a estética — é que um
     deles estava 237 linhas adiantado, nomeando uma seção que começa depois.
 
+## Sessão de 09/08/2026 (noite) — o refino da antessala, conduzido ao vivo
+
+O responsável acompanhou com a tela aberta e foi apontando; cada correção saiu
+de uma observação dele e fechou por medição. Relato na §1-decies do handoff.
+
+79. **TINTA TRANSLÚCIDA SOBRE FUNDO ESCURO SÓ PODE ESCURECER — vidro colorido
+    CLAREIA antes de tingir.** O botão primário devia ser "laranja liquid glass"
+    e saía terracota; medido, o corpo dele dava `rgb(105,72,68)`. Baixar o alfa
+    (.42 → .34) deu `rgb(87,64,66)`: mais escuro, igualmente marrom. `screen`
+    deu `rgb(149,84,61)` e continuou bloco. Nenhum número resolve, porque a
+    OPERAÇÃO está errada — é a regra 70 num eixo novo. Vidro âmbar real amostra
+    a luz de trás e devolve tingida, e isso é uma etapa a MAIS, não um valor.
+    **Mas ela não pode ser um `backdrop-filter` próprio**: `brightness` ali cria
+    um SEGUNDO material de vidro na tela, e `check-glass-system` acusa — nível de
+    vidro significa papel, nunca filtro (regra 64). Uma base branca translúcida
+    SOB a cor faz o mesmo trabalho óptico sem tocar no material.
+80. **COR DE TEXTO É FUNÇÃO DA COR DO FUNDO, e isso NÃO quebra padronização.**
+    Com o botão claro, o rótulo claro reprovou nos SETE mapas (1,87 a 4,19:1).
+    Não é ajuste fino, é o par errado: superfície clara pede tinta escura. Duas
+    peças continuam "absolutamente idênticas" quando compartilham caixa, corpo,
+    material e construção — o que muda é a cor, e a tinta do texto é consequência
+    dela, não uma segunda decisão de estilo. É a regra 46 aplicada dentro de um
+    componente.
+81. **`container-type:inline-size` NUM ITEM DE FLEX ZERA A LARGURA BASE.** Ele
+    implica `contain:inline-size`, ou seja, o conteúdo deixa de influenciar a
+    largura; com `flex-basis:auto` a base vira 0, o bloco colapsa e o texto com
+    `nowrap` transborda por cima do vizinho — aqui, o brasão do adversário ficou
+    SOBRE o número da força. `flex:1 1 0` devolve a largura pelo espaço que
+    sobra, que é justamente o que `100cqi` precisa significar. E ao ganhar
+    largura real, alinhamentos que "funcionavam" por acaso aparecem: `.pm-info` é
+    grid, e ali quem alinha na horizontal é `justify-items` — `align-items`
+    alinha no eixo de bloco e nunca fez nada.
+82. **DUAS CLASSES IRMÃS COM CORPOS DIFERENTES SÃO UMA DIFERENÇA QUE NINGUÉM
+    DECLAROU.** Os dois botões da antessala mediam 14,72px e 12,16px de fonte —
+    21% — porque um é `.roll` e o outro `.roll.ghost`, e cada base traz o próprio
+    `font-size`. Nenhuma guarda olhava tipografia de botão, e foi o OLHO do
+    responsável que pegou: *"o botão COM NARRAÇÃO parece que o texto está
+    maior"*. Ao montar duas peças que devem ser idênticas a partir de classes
+    utilitárias diferentes, declare no componente o que as bases divergem —
+    herança não é padronização.
+83. **`line-height` MENOR QUE A FONTE, JUNTO DE `overflow:hidden`, É TESOURA.**
+    `.pm-name` tinha 1,02 e `scrollHeight` 29 contra `clientHeight` 25: o "p" de
+    Spirit e o "y" de Vitality saíam decepados. Sozinho, o line-height apertado
+    não faz mal; o `overflow:hidden` que o `text-overflow:ellipsis` exige é que o
+    transforma em corte. E o defeito **dependia do nome sorteado** — "Time Teste"
+    não tem descendente e não mostrava nada (regra 46).
+
 ## A ANTESSALA É O PADRÃO DE DESIGN — decisão de 07/08/2026
 
 O responsável elegeu a antessala da partida como referência de estilo para o jogo

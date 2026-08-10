@@ -20,7 +20,7 @@ const SUITE_GROUPS={
   benchmark:["realismo.js","assists.js","kda.js","rating.js","perfis.js","dificuldade.js"],
   fidelity:["fidelity-score.test.js","fidelity-corpus.test.js"],
   e2e:["e2e-intent.js","e2e-simulation.js","e2e-game-flow.js","e2e-cartas.js","e2e-acessibilidade.js",
-    "e2e-antessala.js","css-orfaos.js"]
+    "e2e-antessala.js","e2e-composicao.js","css-orfaos.js"]
 };
 SUITE_GROUPS.all=[
   ...SUITE_GROUPS.data,

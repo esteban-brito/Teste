@@ -94,6 +94,41 @@ lição que deixou 135 cartas tortas por meses.
 exigem que o auditor acuse cada defeito, mais uma que exige o retorno ao verde.
 Sem elas, um auditor sempre verde passaria por cobertura.
 
+## A suíte que mede COMPOSIÇÃO, e não material (09/08/2026)
+
+`bancada/suites/e2e-composicao.js` nasceu de um refino conduzido ao vivo, em que
+o responsável apontou três defeitos que a `e2e-antessala` atravessou verde.
+A diferença entre as duas é o eixo: aquela pergunta se o material está certo —
+foto, contraste, distinção de mapa, sistema de vidro —, esta pergunta se as
+coisas estão no LUGAR.
+
+Os três defeitos que ela existe para não deixar voltar:
+
+- **letra cortada.** `line-height:1.02` com o `overflow:hidden` que o
+  `text-overflow:ellipsis` exige: a caixa de linha fica menor que a fonte e
+  deceba o "p" e o "y". Só aparece em nome COM descendente — dependia do time
+  sorteado;
+- **3,8px de desvio** entre o centro do brasão e o do texto, no celular, nos
+  dois lados e em direções opostas;
+- **número escorregando para o meio do card**, porque em grid quem alinha na
+  horizontal é `justify-items` e a folha usava `align-items`.
+
+**Nenhum deles quebra nada**, e é por isso que a régua tem de ser geométrica: o
+nó existe, tem conteúdo e é `visible`, então toda prova funcional passa (regra
+48). A medida de centro usa `Range`, não a caixa do bloco — centrar caixa não é
+centrar tinta (regra 35).
+
+**Dois falsos positivos são ignorados por decisão declarada**: `.pm-fundo`
+transborda porque as pontas da diagonal são desenhadas fora da tela, e no
+celular as metades empilham. Sem essas duas exceções a guarda acusaria 13
+defeitos que são o desenho — e guarda que acusa desenho é guarda que alguém
+desliga.
+
+**A prova sintética usa `text-indent`, não `padding`**, e a diferença importa: o
+auditor DESCONTA o padding de propósito, porque recuo declarado é desenho. A
+primeira versão da prova injetava padding e o auditor não acusava — parecia
+guarda cega, e era prova mal escrita.
+
 ## A suíte que pergunta o que na folha ainda tem consumidor (09/08/2026)
 
 `bancada/suites/css-orfaos.js` é a **fatia 0** do plano de organização: antes de

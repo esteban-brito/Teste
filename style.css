@@ -1950,7 +1950,11 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    janela, e as duas larguras brigavam. No desktop o palco já para em 760px pelo
    token, então nada muda lá; o celular tem regra própria na `@media` de 640px e
    também não muda. Só o meio se move — que é onde estava o defeito (regra 39). */
-.prematch{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+/* `--pm-obliq` é a OBLIQUIDADE das faixas de mapa, e mora aqui, no topo da
+   tela, para que a diagonal do fundo e a costura do palco sejam afinadas
+   juntas: são o mesmo vocabulário, e divergir seria ruído. */
+.prematch{--pm-obliq:7%;
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:0;padding:var(--e-8) clamp(24px,5vw,64px)}
 /* Contexto e mapa são o MESMO grupo — a moldura do confronto —, então ficam a
    8px um do outro e a 32px da lâmina. É a proximidade dizendo o parentesco. */
@@ -2298,7 +2302,11 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
 /* O NÚMERO É O DADO DRAMÁTICO e recebe o maior degrau da escala. Ele não é
    decoração de tamanho: é a única grandeza comparável entre os dois lados, e o
    confronto inteiro se resolve em ler dois números e a distância entre eles. */
-.pm-ef{display:flex;align-items:baseline;margin-top:var(--e-1)}
+/* O VÃO ENTRE NOME E FORÇA VEM DO `gap` DO GRID, e só dele — 09/08/2026.
+   Havia também um `margin-top:var(--e-1)` aqui, então o espaço era cobrado duas
+   vezes: `.pm-info` é grid e já separa as duas linhas. Duas fontes para a mesma
+   medida é o que faz um ajuste futuro mover metade do que deveria. */
+.pm-ef{display:flex;align-items:baseline}
 .pm-ef b{font-family:var(--ff);font-weight:800;font-size:var(--pm-fs-forca);
   line-height:1.06;color:var(--txt);font-variant-numeric:tabular-nums;
   letter-spacing:-.015em}
@@ -2431,7 +2439,10 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    chip — outro fundo, outra conta. É a regra 46 numa forma nova: a cor era
    função de um dado, e eu a levei para um lugar onde a função não vale.
    A marca continua presente onde não custa contraste: no fio aceso da base. */
-.pm-chip--mapa .pm-chip-v{color:var(--txt)}
+/* `.pm-chip--mapa .pm-chip-v` declarava `color:var(--txt)` — exatamente o que
+   `.pm-chip-v` já define. A regra não pintava nada; era uma NOTA escrita como
+   código, e o comentário acima já diz o que ela queria dizer. Regra sem efeito
+   é pior que comentário: parece contrato e não é. */
 .pm-chip--agora{background:linear-gradient(180deg,rgba(var(--mapa-rgb),.16),rgba(var(--mapa-rgb),.06))}
 .pm-chip--agora::after{content:"";position:absolute;left:var(--e-3);right:var(--e-3);bottom:0;
   height:2px;border-radius:2px 2px 0 0;background:var(--mapa-cor);
@@ -2610,7 +2621,13 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
      própria, e dois botões em duas linhas nunca se esticam um para o outro.
      `grid` com `auto-rows:1fr` iguala as faixas sem cravar altura, que quebraria
      se o texto crescesse. */
-  .prematch-modos{display:grid;grid-auto-rows:1fr;justify-items:stretch}
+  /* UMA REGRA SÓ — 09/08/2026. Havia DUAS `.prematch-modos` neste mesmo bloco,
+     separadas por 16 linhas de comentário, e a segunda trazia
+     `flex-direction:column`: declaração MORTA, porque o elemento é `display:grid`
+     desde a primeira. Duas regras para o mesmo seletor no mesmo contexto é
+     cascata escondida — quem lê a primeira não sabe que existe a segunda. */
+  .prematch-modos{display:grid;grid-auto-rows:1fr;justify-items:stretch;
+    width:100%;grid-template-columns:1fr}
   /* A ação empilha e cada botão ocupa a largura toda: dois botões lado a lado em
      390px deixavam o secundário com metade do alvo do primário.
      E A COLUNA ALINHA COM O RESTO DA TELA — 09/08/2026. Havia um
@@ -2626,7 +2643,7 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
      piso de 268px removido, os botões encolheram para 225,2px dentro de um
      contêiner de 358 — mais estreitos do que antes da correção que deveria
      alargá-los. Coluna declarada tira a largura da mão do alinhamento. */
-  .prematch-modos{flex-direction:column;width:100%;grid-template-columns:1fr}
+
   /* O piso de largura das ações é do desktop, onde elas dividem a linha. Aqui
      cada uma ocupa a coluna inteira, e manter o piso só criaria estouro numa
      tela mais estreita que 300px. */
@@ -2763,10 +2780,11 @@ footer{text-align:center;color:#3d4f6b;font-size:.6rem;letter-spacing:.22em;marg
    Por isso o fallback NÃO mora aqui: ele desceu para dentro do `::before`, sob
    a imagem, onde nada pode tapá-lo. */
 .prematch[style*="--mapa-ceu"]{position:relative;isolation:isolate}
-/* A OBLIQUIDADE das faixas de mapa. Mora no `:root` da tela para que a diagonal
-   do fundo e a costura do palco possam ser afinadas juntas — são o mesmo
-   vocabulário e divergir seria ruído. */
-.prematch{--pm-obliq:7%}
+/* A obliquidade das faixas de mapa (`--pm-obliq`) foi para a regra `.prematch`
+   principal em 09/08/2026. Ela vivia numa declaração SOLTA aqui, 816 linhas
+   depois — funcionava por cascata e lia como sobra de edição, que é o mesmo
+   defeito que `position:relative` já teve nesta folha. Um leitor que apagasse a
+   linha órfã achataria a diagonal do fundo sem entender por quê. */
 /* `@property` é o que faz o ângulo INTERPOLAR em vez de saltar entre keyframes:
    custom property sem tipo declarado é string, e string não anima. Sem isto o
    passeio da luz vira uma piscada a cada 4,5s. */
