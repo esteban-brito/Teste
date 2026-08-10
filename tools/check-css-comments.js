@@ -100,7 +100,39 @@ for(const relativo of FOLHAS){
   }
 }
 
-assert.equal(erros.length,0,`comentário de CSS desbalanceado ou prosa solta:\n  ${erros.join("\n  ")}`);
+/* 3 — O MAPA DO CABEÇALHO É VERDADE.
+   O topo de `style.css` lista as regiões do arquivo para que uma sessão nova
+   busque `═══ CARTAS ═══` em vez de rolar 3.300 linhas. Uma lista dessas é
+   exatamente o tipo de afirmação sobre o próprio repositório que envelhece sem
+   ninguém reclamar — a regra 43 nasceu disso, e este mapa JÁ tinha envelhecido:
+   até 09/08/2026 ele prometia seções "responsivo" e "movimento reduzido" que
+   não existiam, e uma "ordem" que o arquivo não seguia havia meses.
+
+   Aqui ele tem dono: os mesmos nomes dos marcadores REAIS, na mesma ordem.
+   Renomear uma região sem mexer no mapa reprova; acrescentar uma e esquecer o
+   mapa reprova; e trocar duas de lugar reprova, porque em CSS a ordem não é
+   estética — é cascata. */
+const RE_MAPA=/^\s+\d+\. ([A-ZÀ-Ú][A-ZÀ-Ú0-9 ·,]*?)\s*$/gm;
+const RE_MARCA=/^\/\* ═══ ([A-ZÀ-Ú][A-ZÀ-Ú0-9 ·,]*?) ═+/gm;
+const colher=(re,texto)=>[...texto.matchAll(re)].map(m=>m[1].trim());
+
+let regioes=0;
+for(const relativo of FOLHAS){
+  const fonte=fs.readFileSync(path.join(RAIZ,relativo),"utf8");
+  const fim=fonte.indexOf("*/");
+  if(fim<0){erros.push(`${relativo} não tem nenhum comentário — o mapa sumiu`);continue;}
+  const noMapa=colher(RE_MAPA,fonte.slice(0,fim));
+  const marcadores=colher(RE_MARCA,fonte);
+  regioes=marcadores.length;
+  if(!noMapa.length)erros.push(`${relativo}: o cabeçalho não lista nenhuma região`);
+  if(!marcadores.length)erros.push(`${relativo}: o arquivo não tem nenhum marcador de região`);
+  if(noMapa.join(" | ")!==marcadores.join(" | "))
+    erros.push(`${relativo}: o mapa do cabeçalho diverge dos marcadores do arquivo`
+      +`\n      mapa      : ${noMapa.join(" · ")||"(vazio)"}`
+      +`\n      marcadores: ${marcadores.join(" · ")||"(vazio)"}`);
+}
+
+assert.equal(erros.length,0,`comentário de CSS desbalanceado, prosa solta ou mapa divergente:\n  ${erros.join("\n  ")}`);
 
 console.log(`css comments: ok (${FOLHAS.length} folha(s) · ${abertos} comentários pareados`
-  +" · nenhuma prosa fora de comentário)");
+  +` · nenhuma prosa fora de comentário · mapa igual aos ${regioes} marcadores de região)`);
